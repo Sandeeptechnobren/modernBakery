@@ -6,72 +6,7 @@ import { Icon } from "@iconify-icon/react";
 import { useState } from "react";
 import CustomDropdown from "@/app/components/customDropdown";
 import FilterDropdown from "@/app/components/filterDropdown";
-
-const CustomCheckbox = ({
-    id,
-    label,
-    checked,
-    indeterminate,
-    onChange,
-}: {
-    id: string;
-    label: string;
-    checked: boolean;
-    indeterminate?: boolean;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) => {
-    const checkboxClass = `
-    relative flex items-center justify-center w-5 h-5 cursor-pointer rounded-md
-    transition-all duration-200 ease-in-out
-    ${
-        checked || indeterminate
-            ? "border-2 border-red-500 bg-red-500"
-            : "border-2 border-gray-400"
-    }
-  `;
-
-    // The visual icon (dash or checkmark)
-    const icon = indeterminate ? (
-        <span className="w-3 h-0.5 bg-white"></span>
-    ) : (
-        <svg
-            className={`w-3 h-3 text-white transition-opacity duration-200 ease-in-out ${
-                checked ? "opacity-100" : "opacity-0"
-            }`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-        >
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="3"
-                d="M5 13l4 4L19 7"
-            />
-        </svg>
-    );
-
-    return (
-        <div className="flex items-center gap-3">
-            <input
-                type="checkbox"
-                id={id}
-                checked={checked || indeterminate}
-                onChange={onChange}
-                className="peer hidden"
-            />
-            <label htmlFor={id} className={checkboxClass}>
-                {icon}
-            </label>
-            <label
-                htmlFor={id}
-                className="text-gray-700 select-none cursor-pointer"
-            >
-                {label}
-            </label>
-        </div>
-    );
-};
+import CustomCheckbox from "@/app/components/customCheckbox";
 
 type RowProps = {
     id: number;
@@ -161,23 +96,21 @@ export default function Customer() {
                     {showDropdown && (
                         <div className="w-[226px] absolute top-[40px] right-0 z-30">
                             <CustomDropdown>
-                                {dropdownDataList.map(
-                                    (link, index: number) => (
-                                        <div
-                                            key={index}
-                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                        >
-                                            <Icon
-                                                icon={link.icon}
-                                                width={link.iconWidth}
-                                                className="text-[#717680]"
-                                            />
-                                            <span className="text-[#181D27] font-[500] text-[16px]">
-                                                {link.label}
-                                            </span>
-                                        </div>
-                                    )
-                                )}
+                                {dropdownDataList.map((link, index: number) => (
+                                    <div
+                                        key={index}
+                                        className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                    >
+                                        <Icon
+                                            icon={link.icon}
+                                            width={link.iconWidth}
+                                            className="text-[#717680]"
+                                        />
+                                        <span className="text-[#181D27] font-[500] text-[16px]">
+                                            {link.label}
+                                        </span>
+                                    </div>
+                                ))}
                             </CustomDropdown>
                         </div>
                     )}
@@ -187,7 +120,9 @@ export default function Customer() {
                 {/* Table */}
                 <div className="w-full h-full flex flex-col">
                     <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-1 sm:gap-0">
-                        <SearchBar />
+                        <div className="w-[320px]">
+                            <SearchBar />
+                        </div>
                         <button
                             className="rounded-lg bg-[#EA0A2A] text-white px-4 py-[10px] flex items-center gap-[8px]"
                             onClick={() => alert("Add Customer")}
@@ -247,7 +182,9 @@ export default function Customer() {
                                                 icon="circum:filter"
                                                 width={16}
                                                 onClick={() =>
-                                                    setShowFilterDropdown(!showFilterDropdown)
+                                                    setShowFilterDropdown(
+                                                        !showFilterDropdown
+                                                    )
                                                 }
                                             />
                                             {showFilterDropdown && (
@@ -339,14 +276,8 @@ export default function Customer() {
                                                     <CustomCheckbox
                                                         id={row.id.toString()}
                                                         label={row.code}
-                                                        checked={selectedItems.includes(
-                                                            row.id
-                                                        )}
-                                                        onChange={() =>
-                                                            handleSelectItem(
-                                                                row.id
-                                                            )
-                                                        }
+                                                        checked={selectedItems.includes(row.id)}
+                                                        onChange={() => handleSelectItem(row.id)}
                                                     />
                                                 </div>
                                             </td>

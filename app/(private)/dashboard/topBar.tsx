@@ -40,7 +40,9 @@ export default function TopBar({
                                 width={24}
                             />
                         )}
-                        <SearchBar />
+                        <div className="w-full sm:w-[320px]">
+                            <SearchBar />
+                        </div>
                     </div>
                     <div className="flex items-center gap-[10px]">
                         <IconButton icon="humbleicons:maximize" />
