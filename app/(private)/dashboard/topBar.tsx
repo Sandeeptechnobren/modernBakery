@@ -4,6 +4,7 @@ import IconButton from "../../components/iconButton";
 import ImageButton from "../../components/imageButton";
 import HorizontalSidebar from "./horizontalSidebar";
 import Logo from "../../components/logo";
+import { useRouter } from "next/navigation";
 
 export default function TopBar({
     horizontalSidebar,
@@ -12,6 +13,8 @@ export default function TopBar({
     horizontalSidebar: boolean;
     toggleSidebar: () => void;
 }) {
+
+    const router = useRouter();
     return (
         <div
             className={`fixed peer-hover:pl-[250px] w-full flex flex-col items-center ${
@@ -29,7 +32,7 @@ export default function TopBar({
                 )}
 
                 {/* top bar main content */}
-                <div className="w-full h-full px-[16px] py-[14px] flex justify-between items-center bg-white border-b-[1px] border-[#E9EAEB]">
+                <div className="w-full h-full px-[16px] py-[14px] flex justify-between items-center gap-1 sm:gap-0 bg-white border-b-[1px] border-[#E9EAEB]">
                     <div className="flex items-center gap-[20px]">
                         {!horizontalSidebar && (
                             <Icon
@@ -45,7 +48,7 @@ export default function TopBar({
                         <IconButton
                             icon="mi:settings"
                             onClick={() => {
-                                toggleSidebar();
+                                router.push("/dashboard/settings");
                             }}
                         />
                         <ImageButton
@@ -53,6 +56,9 @@ export default function TopBar({
                             height={32}
                             alt="Profile Picture"
                             src="/dummyuser.jpg"
+                            onClick={() => {
+                                toggleSidebar();
+                            }}
                         />
                     </div>
                 </div>
