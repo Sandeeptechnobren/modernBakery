@@ -2,7 +2,7 @@
 
 import Logo from "../../components/logo";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { LinkDataType, SidebarDataType } from "./layout";
+import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
 
 export default function Sidebar({ data, onClickHandler }: { data: SidebarDataType[], onClickHandler: (href: string) => void }) {
     return (

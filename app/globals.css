@@ -7,3 +7,10 @@ body{
     /* box-sizing:border-box; */
     line-height: 20px;
 }
+
+@theme {
+    --color-primary: #1E40AF;
+    --color-secondary: #2563EB;
+    --color-text-primary: #252b37;
+    --color-text-secondary: #414651;
+}
