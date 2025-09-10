@@ -115,7 +115,9 @@ export default function Overview() {
                         <div className="text-[18px] font-semibold mb-[25px]">
                             Financial Information
                         </div>
-                        <div className="p-[20px]"></div>
+                        <ContainerCard className="w-full sm:w-[440px]">
+                            <h1>hi</h1>
+                        </ContainerCard>
                         <KeyValueData
                             data={[
                                 { key: "Payment Type", value: "Cash Only" },

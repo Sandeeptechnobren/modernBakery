@@ -1,10 +1,8 @@
 "use client";
 
-import ContainerCard from "@/app/components/containerCard";
 import { useParams } from "next/navigation";
 import Overview from "./overview";
 import CustomerInfo from "./customerInfo";
-import { url } from "inspector";
 import Balance from "./balance";
 import Settings from "./settings";
 import SalesSummary from "./salesSummary";
@@ -48,11 +46,7 @@ export default function Page() {
 
     return (
         <>
-            {tabs.find((tab) => tab.url === tabName)?.component || (
-                <div className="text-2xl p-[10px] w-fit h-[50px] flex items-center text-white bg-[#f49d9d] font-semibold rounded-[8px]">
-                    Please select the tab
-                </div>
-            )}
+            {tabs.find((tab) => tab.url === tabName)?.component || tabs[0].component}
         </>
     );
 }
