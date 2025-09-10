@@ -1,23 +1,26 @@
-import CustomerDetails from "@/app/components/addCustomer/customerDetails";
-import ContactInfo from "@/app/components/addCustomer/contactInfo";
-import LocationInfo from "@/app/components/addCustomer/locationInfo";
-import FinancialInfo from "@/app/components/addCustomer/financialInfo";
-import TransactionPromo from "@/app/components/addCustomer/transactionPromo";
-import AdditionalInfo from "@/app/components/addCustomer/additionalInfo";
+"use client";
 
-export default function AddCustomerPage() {
-  return (
-    <div className=" bg-gray-50 min-h-screen">
-      <h1 className="font-semibold text-[20px] leading-[30px] tracking-[0] mb-6">← Add New Customer</h1>
+import { Icon } from "@iconify-icon/react";
+import Link from "next/link";
 
-      <div className="space-y-6">
-        <CustomerDetails />
-        <ContactInfo />
-        <LocationInfo />
-        <FinancialInfo />
-        <TransactionPromo />
-        <AdditionalInfo />
-      </div>
-    </div>
-  );
+export default function AddCustomer() {
+
+    return (
+        <>
+            {/* header */}
+            <div className="flex justify-between items-center mb-[20px]">
+                <div className="flex items-center gap-[16px]">
+                    <Link href="/dashboard/customer">
+                        <Icon icon="lucide:arrow-left" width={24} />
+                    </Link>
+                    <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
+                        Add New Customer
+                    </h1>
+                </div>
+            </div>
+
+            {/* content */}
+            <div></div>
+        </>
+    );
 }
