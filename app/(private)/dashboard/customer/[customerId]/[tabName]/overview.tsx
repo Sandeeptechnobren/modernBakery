@@ -4,7 +4,8 @@ import { useParams } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 import Toggle from "@/app/components/toggle";
 import { useState } from "react";
-import InfoCard from "@/app/components/infoCard";
+// import InfoCard from "@/app/components/infoCard";
+import InfoCard from "@/app/components/InfoCard";
 
 export default function Overview() {
     const { tabName } = useParams();

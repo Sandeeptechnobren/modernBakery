@@ -2,7 +2,7 @@
 
 import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import InfoCard from "@/app/components/infoCard";
+import InfoCard from "@/app/components/InfoCard";
 import KeyValueData from "../keyValueData";
 
 export default function CustomerInfo() {
