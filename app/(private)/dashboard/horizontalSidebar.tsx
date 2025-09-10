@@ -40,6 +40,13 @@ export default function HorizontalSidebar() {
                         className="rotate-90"
                     />
                 </Link>
+                <Link href="/dashboard/route" className="text-[#414651] flex items-center gap-[4px] justify-between">
+                    <div className="flex items-center gap-[8px] whitespace-nowrap">
+                        <Icon icon="mdi:map" width={20} />
+                        <span>Route</span>
+                    </div>
+                  
+                </Link>
                 <Link href="/dashboard/report" className="text-[#414651] flex items-center gap-[4px] justify-between">
                     <div className="flex items-center gap-[8px] whitespace-nowrap">
                         <Icon icon="tabler:file-text" width={20} />

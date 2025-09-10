@@ -61,6 +61,20 @@ export const initialLinkData: SidebarDataType[] = [
             },
             {
                 isActive: false,
+                href: "/dashboard/route",
+                label: "Route",
+                leadingIcon: "mdi:map",
+                iconColor: "text-yellow-400"
+            },
+            {
+                isActive: false,
+                href: "/dashboard/vehicle",
+                label: "Vehicle",
+                leadingIcon: "mdi:car",
+                iconColor: "text-yellow-400"
+            },
+            {
+                isActive: false,
                 href: "/dashboard/report",
                 label: "Report",
                 leadingIcon: "tabler:file-text",
