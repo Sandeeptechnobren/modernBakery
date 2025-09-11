@@ -11,22 +11,10 @@ export default function HorizontalSidebar() {
                         <span>Dashboard</span>
                     </div>
                 </Link>
-                <Link href="/dashboard/customer" className="text-[#414651] flex items-center gap-[4px] justify-between">
+                <Link href="/dashboard/company" className="text-[#414651] flex items-center gap-[4px] justify-between">
                     <div className="flex items-center gap-[8px] whitespace-nowrap">
                         <Icon icon="lucide:user" width={20} />
-                        <span>Customer</span>
-                    </div>
-                </Link>
-                <Link href="/dashboard/landmark" className="text-[#414651] flex items-center gap-[4px] justify-between">
-                    <div className="flex items-center gap-[8px] whitespace-nowrap">
-                        <Icon icon="hugeicons:truck-delivery" width={20} />
-                        <span>Landmark</span>
-                    </div>
-                </Link>
-                <Link href="/dashboard/inbox" className="text-[#414651] flex items-center gap-[4px] justify-between">
-                    <div className="flex items-center gap-[8px] whitespace-nowrap">
-                        <Icon icon="lucide:inbox" width={20} />
-                        <span>Items</span>
+                        <span>Company</span>
                     </div>
                 </Link>
                 <Link href="/dashboard/masters" className="text-[#414651] flex items-center gap-[4px] justify-between">
@@ -40,13 +28,7 @@ export default function HorizontalSidebar() {
                         className="rotate-90"
                     />
                 </Link>
-                <Link href="/dashboard/route" className="text-[#414651] flex items-center gap-[4px] justify-between">
-                    <div className="flex items-center gap-[8px] whitespace-nowrap">
-                        <Icon icon="mdi:map" width={20} />
-                        <span>Route</span>
-                    </div>
-                  
-                </Link>
+                
                 <Link href="/dashboard/report" className="text-[#414651] flex items-center gap-[4px] justify-between">
                     <div className="flex items-center gap-[8px] whitespace-nowrap">
                         <Icon icon="tabler:file-text" width={20} />

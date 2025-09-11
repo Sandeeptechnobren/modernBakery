@@ -100,11 +100,12 @@ export default function Route() {
               </div>
               <div>
                 <InputFields
-                  label="Item Description"
-                  value={itemDesc}
-                  onChange={(e) => setItemDesc(e.target.value)}
+                  label="Item Base Price"
+                  value={itemBasePrice}
+                  onChange={(e) => setItemBasePrice(e.target.value)}
                 />
               </div>
+              
             </div>
           </div>
         </div>
@@ -115,18 +116,54 @@ export default function Route() {
               Location Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* <div>
+              <div>
                 <InputFields
-                  label="Warehouse"
-                  value={warehouse}
-                  onChange={(e) => setWarehouse(e.target.value)}
+                  label="Item Category"
+                  value={itemCategory}
+                  onChange={(e) => setItemCategory(e.target.value)}
                   options={[
-                    { value: "warehouseA", label: "warehouse A" },
-                    { value: "warehouseB", label: "warehouse B" },
-                    { value: "warehouseC", label: "warehouse C" },
+                    { value: "cat1", label: "Category A" },
+                    { value: "cat2", label: "Category B" },
+                    { value: "cat3", label: "Category C" },
                   ]}
                 />
-              </div> */}
+              </div>
+              <div>
+                <InputFields
+                  label="Item Sub Category"
+                  value={itemSubCategory}
+                  onChange={(e) => setSubItemCategory(e.target.value)}
+                  options={[
+                    { value: "cat1", label: "Sub Category A" },
+                    { value: "cat2", label: "Sub Category B" },
+                    { value: "cat3", label: "Sub Category C" },
+                  ]}
+                />
+              </div>
+              <div>
+                <InputFields
+                  label="Item Group"
+                  value={itemGroup}
+                  onChange={(e) => setItemGroup(e.target.value)}
+                  options={[
+                    { value: "grp1", label: "Group 1" },
+                    { value: "grp2", label: "Group 2" },
+                    { value: "grp3", label: "Group 3" },
+                  ]}
+                />
+              </div>
+              <div>
+                <InputFields
+                  label="Item UOM"
+                  value={itemUom}
+                  onChange={(e) => setItemUom(e.target.value)}
+                  options={[
+                    { value: "uom1", label: "Uom 1" },
+                    { value: "uom2", label: "Uom 2" },
+                    { value: "uom3", label: "Uom 3" },
+                  ]}
+                />
+              </div>
 
             </div>
           </div>
@@ -138,6 +175,27 @@ export default function Route() {
               Additional Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  label="Item Description"
+                  value={itemDesc}
+                  onChange={(e) => setItemDesc(e.target.value)}
+                />
+              </div>
+              <div>
+                <InputFields
+                  label="Item UPC"
+                  value={itemUpc}
+                  onChange={(e) => setItemUpc(e.target.value)}
+                />
+              </div>
+              <div>
+                <InputFields
+                  label="Shelf Life"
+                  value={shelfLife}
+                  onChange={(e) => setShelfLife(e.target.value)}
+                />
+              </div>
               <div>
                 <InputFields
                   label="Status"

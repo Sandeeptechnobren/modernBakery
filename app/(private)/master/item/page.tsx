@@ -486,6 +486,11 @@ export default function AddItem() {
                                             </td>
                                             <td className="px-[24px] py-[12px]">
                                                 <div className="flex items-center">
+                                                    {row.exciseCode}
+                                                </div>
+                                            </td>
+                                            <td className="px-[24px] py-[12px]">
+                                                <div className="flex items-center">
                                                     {row.itemName}
                                                 </div>
                                             </td>
@@ -522,11 +527,6 @@ export default function AddItem() {
                                             <td className="px-[24px] py-[12px]">
                                                 <div className="flex items-center">
                                                     {row.itemBasePrice}
-                                                </div>
-                                            </td>
-                                            <td className="px-[24px] py-[12px]">
-                                                <div className="flex items-center">
-                                                    {row.exciseCode}
                                                 </div>
                                             </td>
                                             <td className="px-[24px] py-[12px]">
