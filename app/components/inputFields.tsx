@@ -55,7 +55,7 @@ export default function InputFields({
           id={label}
           type="file"
           onChange={onChange}
-          className="border border-gray-300 h-[44px] w-full rounded-md px-3 py-2 mt-[6px] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold"
+          className="border border-gray-300 h-[44px] w-full rounded-md px-3 py-1 mt-[6px] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold"
         />
       ) : (
         <input

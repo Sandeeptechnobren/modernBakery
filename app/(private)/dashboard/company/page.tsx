@@ -124,7 +124,7 @@ export default function Customer() {
                         <div className="w-[320px]">
                             <SearchBar />
                         </div>
-                        <Link href="/dashboard/company/add">
+                        <Link href="/dashboard/company/addCompany">
                             <button
                                 className="rounded-lg bg-[#EA0A2A] text-white px-4 py-[10px] flex items-center gap-[8px] cursor-pointer"
                                 onClick={() => {}}

@@ -1,10 +1,11 @@
 "use client";
-import WarehouseDetails from "@/app/components/warehouseManagement/warehouseDetails";
-import WarehouseContact from "@/app/components/warehouseManagement/warehouseContact";
-import WarehouseLocationInformation from "@/app/components/warehouseManagement/warehouseLocationInfo";
+import WarehouseDetails from "@/app/(private)/dashboard/warehouse/warehouseManagement/warehouseDetails";
+import WarehouseContact from "@/app/(private)/dashboard/warehouse/warehouseManagement/warehouseContact";
+import WarehouseLocationInformation from "@/app/(private)/dashboard/warehouse/warehouseManagement/warehouseLocationInfo";
 import ContainerCard from "@/app/components/containerCard";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 
 export default function addwarehouse() {
 
@@ -38,6 +39,24 @@ export default function addwarehouse() {
                     <h2 className="mb-4 font-semibold text-[18px] leading-[100%] text-[#181D27] tracking-[0%]"> Location Information</h2>
     <WarehouseLocationInformation/>
                 </ContainerCard>
+
+                <div className="flex justify-end gap-3 mt-6">
+                                    {/* Cancel button */}
+                                    <button
+                                        className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                        type="button"
+                                    >
+                                        Cancel
+                                    </button>
+                
+                                    {/* Submit button with icon */}
+                                    <SidebarBtn
+                                        label="Submit"
+                                        isActive={true}
+                                        leadingIcon="mdi:check"   // checkmark icon
+                                        onClick={() => console.log("Form submitted ✅")}
+                                    />
+                                </div>
             
             </div>
               

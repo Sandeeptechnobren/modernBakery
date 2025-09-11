@@ -124,7 +124,7 @@ export default function Customer() {
                         <div className="w-[320px]">
                             <SearchBar />
                         </div>
-                        <Link href="/dashboard/customer/add">
+                        <Link href="/dashboard/customer/addCustomer">
                               <button
                             className="rounded-lg bg-[#EA0A2A] text-white px-4 py-[10px] flex items-center gap-[8px]"
                           
