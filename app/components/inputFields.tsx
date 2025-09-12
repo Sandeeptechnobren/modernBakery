@@ -14,7 +14,8 @@ type Props = {
   ) => void;
   options?: Option[]; // if present → render select
   type?: "text" | "select" | "file";
-  id?: string; // supported types
+  id?: string; 
+  width?: string;
 };
 
 export default function InputFields({
@@ -24,10 +25,11 @@ export default function InputFields({
   onChange,
   options,
   type = "text",
+  width = "max-w-[406px]",
 }: Props) {
 
   return (
-    <div className="flex flex-col gap-2 w-full max-w-[406px]">
+    <div className={`flex flex-col gap-2 w-full ${width}`}>
       <label
         htmlFor={label}
         className="text-sm font-medium text-gray-700"

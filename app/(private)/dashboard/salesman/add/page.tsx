@@ -55,7 +55,7 @@ export default function AddCustomer() {
                         label="Submit"
                         isActive={true}
                         leadingIcon="mdi:check"   // checkmark icon
-                        onClick={() => console.log("Form submitted ✅")}
+                        onClick={() => console.log()}
                     />
                 </div>
 

@@ -7,9 +7,11 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useState } from "react";
 import InputFields from "@/app/components/inputFields";
 import FormInputField from "@/app/components/formInputField";
-
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 
 export default function AddCustomer() {
+    const [isOpen, setIsOpen] = useState(false);
     const [customerType, setCustomerType] = useState("");
     const [customerCode, setCustomerCode] = useState("");
     const [sapId, setSapId] = useState("");
@@ -118,13 +120,24 @@ export default function AddCustomer() {
                             ]}
                         />
                         
-
-
-                        <InputFields
-                            label="Customer Code"
-                            value={customerCode}
-                            onChange={(e) => setCustomerCode(e.target.value)}
-                        />
+                             <div className="flex items-end gap-2 max-w-[406px]">
+                              <InputFields
+                                label="Customer Code"
+                                value={customerCode}
+                                onChange={(e) => setCustomerCode(e.target.value)}
+                              />
+                            
+                              <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
+                                icon="mi:settings"
+                                onClick={() => setIsOpen(true)}
+                              />
+                            
+                              <SettingPopUp
+                                isOpen={isOpen}
+                                onClose={() => setIsOpen(false)}
+                                title="Customer Code"
+                              />
+                            </div>
 
                         <InputFields
                             label="SAP ID"

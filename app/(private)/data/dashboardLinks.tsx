@@ -58,6 +58,20 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [ 
                     {
                         isActive: false,
+                        href: "/master/user",
+                        label: "User",
+                        leadingIcon: "mdi:account-circle",
+                        iconColor: "text-green-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/master/role",
+                        label: "Role",
+                        leadingIcon: "mdi:account-tie",
+                        iconColor: "text-green-500"
+                    },
+                    {
+                        isActive: false,
                         href: "/master/customer",
                         label: "Customer",
                         leadingIcon: "lucide:user",

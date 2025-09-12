@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import InputFields from "@/app/components/inputFields";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 
 export default function WarehouseDetails() {
+  const [isOpen,setIsOpen] = useState(false);
   const [warehouseType, setWarehouseType] = useState("");
   const [warehouseCode, setWarehouseCode] = useState("");
   const [agentId, setAgentId] = useState("");
@@ -33,11 +36,25 @@ export default function WarehouseDetails() {
         onChange={(e) => setWarehouseCode(e.target.value)}
       />
 
-      <InputFields
-        label="Warehouse Code"
-        value={warehouseCode}
-        onChange={(e) => setWarehouseCode(e.target.value)}
-      />
+      <div className="flex items-end gap-2 max-w-[406px]">
+                        <InputFields
+                          label="Warehouse Code"
+                          value={warehouseCode}
+                          onChange={(e) => setWarehouseCode(e.target.value)}
+                        />
+      
+                        <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
+                          icon="mi:settings"
+                          onClick={() => setIsOpen(true)}
+                        />
+      
+                        <SettingPopUp
+                          isOpen={isOpen}
+                          onClose={() => setIsOpen(false)}
+                          title="Warehouse Code"
+                        />
+                      </div>
+      
        <InputFields
         label="Agent ID"
         value={agentId}

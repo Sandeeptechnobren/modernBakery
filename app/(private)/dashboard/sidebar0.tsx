@@ -88,21 +88,22 @@ export default function Sidebar({
                         />
 
                         {hasChildren && isOpen && link.children && (
-                          <ul className="ml-6 mt-1 flex flex-col gap-[4px]">
-                            {link.children.map((child: LinkDataType) => (
-                              <SidebarBtn
-                                key={child.href}
-                                isActive={child.href === activeHref}
-                                href={child.href}
-                                label={child.label}
-                                labelTw="hidden group-hover:block"
-                                leadingIcon={child.leadingIcon}
-                                onClick={() => {
-                                  setActiveHref(child.href);
-                                  onClickHandler(child.href);
-                                }}
-                              />
-                            ))}
+                          <ul className="gap-[6px] mt-1">
+                          {link.children.map((child: LinkDataType) => (
+                            <SidebarBtn
+                              key={child.href}
+                              isActive={child.href === activeHref}
+                              href={child.href}
+                              label={child.label}
+                              labelTw="hidden group-hover:block"
+                              leadingIcon={child.leadingIcon}
+                              isSubmenu={true}
+                              onClick={() => {
+                                setActiveHref(child.href);
+                                onClickHandler(child.href);
+                              }}
+                            />
+                          ))}
                           </ul>
                         )}
                       </li>

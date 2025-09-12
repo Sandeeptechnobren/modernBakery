@@ -9,7 +9,6 @@ import SettingPopUp from "@/app/components/settingPopUp";
 import IconButton from "@/app/components/iconButton";
 export default function Route() {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [itemCode, setItemCode] = useState("");
   const [itemName, setItemName] = useState("");
   const [sapId, setSapId] = useState("");
@@ -24,7 +23,7 @@ export default function Route() {
   const [exciseCode, setExciseCode] = useState("");
   const [shelfLife, setShelfLife] = useState("");
   const [status, setStatus] = useState("");
- 
+
 
   return (
     <>
@@ -51,25 +50,26 @@ export default function Route() {
               Item Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
+              <div className="flex items-end gap-2 max-w-[406px]">
                 <InputFields
                   label="Item Code"
                   value={itemCode}
                   onChange={(e) => setItemCode(e.target.value)}
-                  
                 />
-                 <IconButton
+
+                <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
                   icon="mi:settings"
-                  onClick={() => {
-                    setIsOpen(true)
-                  }}
+                  onClick={() => setIsOpen(true)}
                 />
+
                 <SettingPopUp
                   isOpen={isOpen}
                   onClose={() => setIsOpen(false)}
                   title="Item Code"
                 />
               </div>
+
+
               <div>
                 <InputFields
                   label="SAP Id"
@@ -105,7 +105,7 @@ export default function Route() {
                   onChange={(e) => setItemBasePrice(e.target.value)}
                 />
               </div>
-              
+
             </div>
           </div>
         </div>

@@ -28,7 +28,7 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
             "LayoutSelector must be used within a SettingsContext.Provider"
         );
     }
-    const { settings, dispatchSettings } = context;
+    const { settings } = context;
 
     return (
         <>

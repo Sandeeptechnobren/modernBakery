@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import InputFields from "@/app/components/inputFields";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 
 export default function SalesmanDetailsForm() {
+  const [isOpen,setIsOpen] = useState(false)
      const [salesmanCode, setSalesmanCode] = useState("");
      const [salesmanName, setSalesmanName] = useState("");
       const [sapId, setSapId] = useState("");
@@ -16,13 +19,26 @@ export default function SalesmanDetailsForm() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="flex items-end gap-2 max-w-[406px]">
+                                                    <InputFields
+                                                      label="Salesman Code"
+                                                      value={salesmanCode}
+                                                      onChange={(e) => setSalesmanCode(e.target.value)}
+                                                    />
+                                                  
+                                                    <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
+                                                      icon="mi:settings"
+                                                      onClick={() => setIsOpen(true)}
+                                                    />
+                                                  
+                                                    <SettingPopUp
+                                                      isOpen={isOpen}
+                                                      onClose={() => setIsOpen(false)}
+                                                      title="Salesman Code"
+                                                    />
+                                                  </div>
 
-
-      <InputFields
-        label="Salesman Code"
-        value={salesmanCode}
-        onChange={(e) => setSalesmanCode(e.target.value)}
-      />
+      
       
       <InputFields
         label="Salesman Name"

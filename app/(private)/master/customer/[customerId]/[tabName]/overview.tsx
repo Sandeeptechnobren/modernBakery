@@ -7,7 +7,6 @@ import { useState } from "react";
 import SummaryCard from "@/app/components/summaryCard";
 
 export default function Overview() {
-    const { tabName } = useParams();
     const [isChecked, setIsChecked] = useState(true);
     const [isDataShareChecked, setIsDataShareChecked] = useState(false);
 

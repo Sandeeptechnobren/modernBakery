@@ -6,9 +6,12 @@ import ContainerCard from "@/app/components/containerCard";
 import FormInputField from "@/app/components/formInputField";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import { useState } from "react";
 
 export default function AddCustomer() {
+  const[isOpen,setIsOpen] = useState(false)
   const [companyType, setCompanyType] = useState("");
   const [companyCode, setCompanyCode] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -89,12 +92,25 @@ export default function AddCustomer() {
               ]}
             />
 
-
-            <InputFields
-              label="Company Code"
-              value={companyCode}
-              onChange={(e) => setCompanyCode(e.target.value)}
-            />
+               <div className="flex items-end gap-2 max-w-[406px]">
+                                            <InputFields
+                                              label="Company Code"
+                                              value={companyCode}
+                                              onChange={(e) => setCompanyCode(e.target.value)}
+                                            />
+                                          
+                                            <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
+                                              icon="mi:settings"
+                                              onClick={() => setIsOpen(true)}
+                                            />
+                                          
+                                            <SettingPopUp
+                                              isOpen={isOpen}
+                                              onClose={() => setIsOpen(false)}
+                                              title="Company Code"
+                                            />
+                                          </div>
+           
 
 
             <InputFields

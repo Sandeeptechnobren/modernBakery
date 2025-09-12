@@ -91,9 +91,8 @@ export default function SettingPopUp({ isOpen, onClose, title }: ModalProps) {
           </button>
 
           <SidebarBtn
-            label="Save"
+            label={`Save ${title}`}
             isActive={true}
-            leadingIcon="mdi:check"
             onClick={() =>
               console.log({
                 option,

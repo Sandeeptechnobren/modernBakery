@@ -9,18 +9,12 @@ import SettingPopUp from "@/app/components/settingPopUp";
 import IconButton from "@/app/components/iconButton";
 export default function Route() {
   const [isOpen, setIsOpen] = useState(false);
-  const [option, setOption] = useState("auto");
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [routeCode, setRouteCode] = useState("");
   const [routeName, setRouteName] = useState("");
   const [routeType, setRouteType] = useState("");
   const [warehouse, setWarehouse] = useState("");
   const [status, setStatus] = useState("");
-  const toggleDay = (day: string) => {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
-  };
+
 
   return (
     <>
@@ -47,25 +41,25 @@ export default function Route() {
               Route Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
+              <div className="flex items-end gap-2 max-w-[406px]">
                 <InputFields
                   label="Route Code"
                   value={routeCode}
                   onChange={(e) => setRouteCode(e.target.value)}
-                  
                 />
-                 <IconButton
+
+                <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
                   icon="mi:settings"
-                  onClick={() => {
-                    setIsOpen(true)
-                  }}
+                  onClick={() => setIsOpen(true)}
                 />
+
                 <SettingPopUp
                   isOpen={isOpen}
                   onClose={() => setIsOpen(false)}
-                  title="Region Code"
+                  title="Route Code"
                 />
               </div>
+
               <div>
                 <InputFields
                   label="Route Name"

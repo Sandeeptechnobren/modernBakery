@@ -197,7 +197,7 @@ export default function CustomerInfo() {
                             },
                             {
                                 icon: "lucide:trash-2",
-                                onClick: (data) => {
+                                onClick: () => {
                                     confirm("Are you sure you want to delete this customer?");
                                 }
                             }
