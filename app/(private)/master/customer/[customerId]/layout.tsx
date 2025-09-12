@@ -21,15 +21,7 @@ export default function CustomerDetails({
     children: React.ReactNode;
 }) {
     const [showDropdown, setShowDropdown] = useState(false);
-    const { customerId } = useParams();
     const router = useRouter();
-
-    const [activeTab, setActiveTab] = useState(0);
-
-    const onTabClick = (index: number) => {
-        setActiveTab(index);
-        router.replace(`/master/customer/${customerId}/${tabs[index].url}`);
-    };
 
     return (
         <>
@@ -106,45 +98,7 @@ export default function CustomerDetails({
                 />
             </ContainerCard>
 
-            {/* tabs */}
-            <ContainerCard
-                className="w-full flex gap-[4px] overflow-x-auto"
-                padding="5px"
-            >
-                {tabs.map((tab, index) => (
-                    <TabBtn
-                        key={index}
-                        label={tab.name}
-                        isActive={activeTab === index}
-                        onClick={() => {
-                            onTabClick(index);
-                        }}
-                    />
-                ))}
-            </ContainerCard>
-
             {children}
         </>
-    );
-}
-
-function TabBtn({
-    label,
-    isActive,
-    onClick,
-}: {
-    label: string;
-    isActive: boolean;
-    onClick: () => void;
-}) {
-    return (
-        <button
-            className={`${
-                isActive ? "bg-[#FFF0F2] text-[#EA0A2A]" : "text-[#535862]"
-            } text-[16px] font-semibold px-[16px] py-[10px] rounded-[8px] cursor-pointer whitespace-nowrap`}
-            onClick={onClick}
-        >
-            {label}
-        </button>
     );
 }

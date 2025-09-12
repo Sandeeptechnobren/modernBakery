@@ -169,11 +169,12 @@ function TableBody({ data }: { data: tableDataType[] }) {
     return (
         <>
             <div className="overflow-x-auto rounded-lg border border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent">
-                <table className="table-auto min-w-max">
+                <table className="table-auto min-w-max w-full">
                     <thead className="text-[12px] bg-[#FAFAFA] text-[#535862] sticky top-0 z-20">
                         <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
+                            {/* checkbox */}
                             {rowSelection && (
-                                <th className="w-fit px-[24px] py-[12px] font-[500]">
+                                <th className="sm:sticky left-0 bg-[#FAFAFA] w-fit px-[10px] py-[12px] font-[500]">
                                     <div className="flex items-center gap-[12px] whitespace-nowrap">
                                         <CustomCheckbox
                                             id="selectAll"
@@ -185,13 +186,15 @@ function TableBody({ data }: { data: tableDataType[] }) {
                                     </div>
                                 </th>
                             )}
+
+                            {/* main data */}
                             {columns.map((col, index) => {
                                 return (
                                     <th
-                                        className={`w-[${col.width}px] px-[24px] py-[12px] font-[500]`}
+                                        className={`w-[${col.width}px] px-[24px] py-[12px] font-[500] whitespace-nowrap`}
                                         key={index}
                                     >
-                                        <div className="flex items-center gap-[4px] whitespace-nowrap">
+                                        <div className="flex items-center gap-[4px]">
                                             {col.label}{" "}
                                             {col.isFilterable && (
                                                 <Icon
@@ -208,6 +211,8 @@ function TableBody({ data }: { data: tableDataType[] }) {
                                     </th>
                                 );
                             })}
+
+                            {/* actions */}
                             {rowActions && (
                                 <th className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]">
                                     <div className="flex items-center gap-[4px] whitespace-nowrap">
@@ -226,8 +231,8 @@ function TableBody({ data }: { data: tableDataType[] }) {
                                     key={row.id}
                                 >
                                     {rowSelection && (
-                                        <td className="sm:sticky px-[24px] py-[12px]">
-                                            <div className="flex items-center gap-[12px] whitespace-nowrap font-[500]">
+                                        <td className="sm:sticky left-0 bg-white px-[10px] py-[12px]">
+                                            <div className="flex items-center gap-[12px] font-[500]">
                                                 <CustomCheckbox
                                                     id={row.id.toString()}
                                                     label=""
@@ -247,7 +252,7 @@ function TableBody({ data }: { data: tableDataType[] }) {
                                             <td
                                                 key={index}
                                                 width={col.width}
-                                                className={`px-[24px] py-[12px] whitespace-nowrap`}
+                                                className={`px-[24px] py-[12px]`}
                                             >
                                                 <div className="flex items-center">
                                                     {col.render ? col.render(row[col.key as keyof typeof row]) : row[col.key as keyof typeof row]}
