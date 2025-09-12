@@ -15,7 +15,7 @@ type configType = {
             | {
                   placeholder: string;
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-              };
+              }; // yet to implement
         columnFilter?: boolean;
         actions?: React.ReactNode[];
     };
@@ -28,17 +28,20 @@ type configType = {
         pagination?: boolean;
     };
     pageSize?: number;
-    pageSizeOptions?: number[];
+    pageSizeOptions?: number[]; // yet to implement
     rowSelection?: boolean;
-    dragableColumn?: boolean;
+    dragableColumn?: boolean; // yet to implement
     columns: {
         key: string;
         label: string;
         width?: number;
         render?: (row: TableDataType) => React.ReactNode;
-        align?: "left" | "center" | "right";
+        align?: "left" | "center" | "right"; // yet to implement
         isSortable?: boolean;
-        isFilterable?: boolean;
+        filter?: {
+            isFilterable?: boolean;
+            render: (data: TableDataType[]) => React.ReactNode;
+        }
     }[];
 };
 
@@ -277,10 +280,10 @@ function TableBody() {
                                         >
                                             <div className="flex items-center gap-[4px]">
                                                 {col.label}{" "}
-                                                {col.isFilterable && (
-                                                    <FilterTableHeader
-                                                        filterData={filterData}
-                                                    />
+                                                {col.filter?.isFilterable && (
+                                                    <FilterTableHeader>
+                                                        { col.filter.render(tableData) }
+                                                    </FilterTableHeader>
                                                 )}
                                                 {col.isSortable && (
                                                     <Icon
@@ -393,7 +396,7 @@ function TableBody() {
     );
 }
 
-function FilterTableHeader({ filterData }: { filterData: filterDataType[] }) {
+function FilterTableHeader({ children }: { children: React.ReactNode }) {
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
     return (
         <>
@@ -405,23 +408,7 @@ function FilterTableHeader({ filterData }: { filterData: filterDataType[] }) {
             {showFilterDropdown && (
                 <div className="absolute top-[40px] z-40">
                     <FilterDropdown>
-                        {filterData.map(
-                            (item: filterDataType, index: number) => {
-                                return (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                                    >
-                                        <span className="font-[500] text-[#181D27]">
-                                            {item.depotId}
-                                        </span>
-                                        <span className="w-full overflow-hidden text-ellipsis">
-                                            {item.depotName}
-                                        </span>
-                                    </div>
-                                );
-                            }
-                        )}
+                        {children}
                     </FilterDropdown>
                 </div>
             )}

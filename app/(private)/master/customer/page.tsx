@@ -24,7 +24,15 @@ const data = new Array(100).fill(null).map((_, i) => ({
 }));
 
 const columns = [
-    { key: "code", label: "Code", render: (row: TableDataType) => <span className="font-semibold text-[#181D27] text-[14px]">{row.code}</span> },
+    {
+        key: "code",
+        label: "Code",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.code}
+            </span>
+        ),
+    },
     { key: "sapId", label: "Sap ID" },
     {
         key: "customerName",
@@ -40,12 +48,50 @@ const columns = [
         isSortable: true,
     },
     { key: "ownerName", label: "Owner Name", isSortable: true },
-    { key: "depotName", label: "Depot Name", isFilterable: true, width: 218 },
+    {
+        key: "depotName",
+        label: "Depot Name",
+        filter: {
+            isFilterable: true,
+            render: (data: TableDataType[]) =>
+                data.map((row: TableDataType, index: number) => (
+                    <div
+                        key={index}
+                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                    >
+                        <span className="font-[500] text-[#181D27]">
+                            {row.depotId}
+                        </span>
+                        <span className="w-full overflow-hidden text-ellipsis">
+                            {row.depotName}
+                        </span>
+                    </div>
+                )),
+        },
+        width: 218,
+    },
     { key: "depotLocation", label: "Depot Location", isSortable: true },
     { key: "phoneNumber", label: "Phone Number", width: 150 },
     { key: "address", label: "Address" },
     { key: "district", label: "District" },
-    { key: "route", label: "Route", isFilterable: true },
+    {
+        key: "route",
+        label: "Route",
+        filter: {
+            isFilterable: true,
+            render: (data: TableDataType[]) =>
+                data.map((row: TableDataType, index: number) => (
+                    <div
+                        key={index}
+                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                    >
+                        <span className="font-[500] text-[#181D27]">
+                            {row.route}
+                        </span>
+                    </div>
+                )),
+        },
+    },
     {
         key: "status",
         label: "Status",
@@ -122,49 +168,49 @@ export default function Customer() {
 
             {/* Table */}
             <div className="h-[calc(100%-60px)]">
-            <Table
-                data={data}
-                config={{
-                    header: {
-                        searchBar: true,
-                        columnFilter: true,
-                        actions: [
-                            <SidebarBtn
-                                key={0}
-                                isActive={true}
-                                leadingIcon="lucide:plus"
-                                label="Add Customer"
-                            />,
+                <Table
+                    data={data}
+                    config={{
+                        header: {
+                            searchBar: true,
+                            columnFilter: true,
+                            actions: [
+                                <SidebarBtn
+                                    key={0}
+                                    isActive={true}
+                                    leadingIcon="lucide:plus"
+                                    label="Add Customer"
+                                />,
+                            ],
+                        },
+                        footer: {
+                            nextPrevBtn: true,
+                            pagination: true,
+                        },
+                        columns: columns,
+                        rowSelection: true,
+                        rowActions: [
+                            {
+                                icon: "lucide:eye",
+                            },
+                            {
+                                icon: "lucide:edit-2",
+                                onClick: (data) => {
+                                    console.log(data);
+                                },
+                            },
+                            {
+                                icon: "lucide:more-vertical",
+                                onClick: () => {
+                                    confirm(
+                                        "Are you sure you want to delete this customer?"
+                                    );
+                                },
+                            },
                         ],
-                    },
-                    footer: {
-                        nextPrevBtn: true,
-                        pagination: true,
-                    },
-                    columns: columns,
-                    rowSelection: true,
-                    rowActions: [
-                        {
-                            icon: "lucide:eye",
-                        },
-                        {
-                            icon: "lucide:edit-2",
-                            onClick: (data) => {
-                                console.log(data);
-                            },
-                        },
-                        {
-                            icon: "lucide:more-vertical",
-                            onClick: () => {
-                                confirm(
-                                    "Are you sure you want to delete this customer?"
-                                );
-                            },
-                        },
-                    ],
-                    pageSize: 10,
-                }}
-            />
+                        pageSize: 10,
+                    }}
+                />
             </div>
         </>
     );
