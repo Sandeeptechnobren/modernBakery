@@ -1,10 +1,11 @@
 import { Icon } from "@iconify-icon/react";
-import SearchBar from "./searchBar";
+import SearchBar from "../../components/searchBar";
 import IconButton from "../../components/iconButton";
 import ImageButton from "../../components/imageButton";
 import HorizontalSidebar from "./horizontalSidebar";
 import Logo from "../../components/logo";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function TopBar({
     horizontalSidebar,
@@ -15,6 +16,8 @@ export default function TopBar({
 }) {
 
     const router = useRouter();
+    const [searchBarValue, setSearchBarValue] = useState("");
+
     return (
         <div
             className={`fixed peer-hover:pl-[250px] w-full flex flex-col items-center ${
@@ -41,7 +44,8 @@ export default function TopBar({
                             />
                         )}
                         <div className="w-full sm:w-[320px]">
-                            <SearchBar />
+                            <SearchBar value={searchBarValue} onChange={(e) => setSearchBarValue(e.target.value)} />
+
                         </div>
                     </div>
                     <div className="flex items-center gap-[10px]">

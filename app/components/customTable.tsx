@@ -1,12 +1,12 @@
 "use client";
 
-import SearchBar from "../(private)/dashboard/searchBar";
 import { Icon } from "@iconify-icon/react";
 import CustomDropdown from "./customDropdown";
 import BorderIconButton from "./borderIconButton";
 import { createContext, useContext, useState } from "react";
 import FilterDropdown from "./filterDropdown";
 import CustomCheckbox from "./customCheckbox";
+import SearchBar from "./searchBar";
 
 type configType = {
     header?: {
@@ -121,13 +121,14 @@ function TableContainer() {
 
 function TableHeader() {
     const { header } = useContext(Config);
+    const [searchBarValue, setSearchBarValue] = useState("");
 
     return (
         header && (
             <>
                 <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-1 sm:gap-0">
                     <div className="w-[320px]">
-                        {header?.searchBar && <SearchBar />}
+                        {header?.searchBar && <SearchBar value={searchBarValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchBarValue(e.target.value)} />}
                     </div>
 
                     {/* actions */}

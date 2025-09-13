@@ -1,7 +1,7 @@
 "use client";
 
 import BorderIconButton from "@/app/components/borderIconButton";
-import SearchBar from "../searchBar";
+import SearchBar from "../../../components/searchBar";
 import { Icon } from "@iconify-icon/react";
 import { useState } from "react";
 import CustomDropdown from "@/app/components/customDropdown";
@@ -122,7 +122,6 @@ export default function Customer() {
                 <div className="w-full h-full flex flex-col">
                     <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-1 sm:gap-0">
                         <div className="w-[320px]">
-                            <SearchBar />
                         </div>
                         <Link href="/dashboard/company/add">
                             <button
