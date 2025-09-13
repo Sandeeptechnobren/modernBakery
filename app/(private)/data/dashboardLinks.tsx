@@ -56,58 +56,45 @@ export const initialLinkData: SidebarDataType[] = [
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [ 
+                   
                     {
                         isActive: false,
-                        href: "/master/user",
-                        label: "User",
-                        leadingIcon: "mdi:account-circle",
-                        iconColor: "text-green-500"
-                    },
-                    {
-                        isActive: false,
-                        href: "/master/role",
-                        label: "Role",
-                        leadingIcon: "mdi:account-tie",
-                        iconColor: "text-green-500"
-                    },
-                    {
-                        isActive: false,
-                        href: "/master/customer",
+                        href: "/dashboard/master/customer",
                         label: "Customer",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500"
                     },
                     {
                 isActive: false,
-                href: "/master/item",
+                href: "/dashboard/master/item",
                 label: "Items",
                 leadingIcon: "mdi:package-variant",
                 iconColor: "text-cyan-500"
             },
                     {
                 isActive: false,
-                href: "/master/route",
+                href: "/dashboard/master/route",
                 label: "Route",
                 leadingIcon: "mdi:map",
                 iconColor: "text-yellow-400"
             },
                     {
                 isActive: false,
-                href: "/master/pricing",
+                href: "/dashboard/master/pricing",
                 label: "Pricing",
                 leadingIcon: "mdi:currency-usd",
                 iconColor: "text-yellow-400"
             },
             {
                 isActive: false,
-                href: "/master/vehicle",
+                href: "/dashboard/master/vehicle",
                 label: "Vehicle",
                 leadingIcon: "mdi:car",
                 iconColor: "text-yellow-400"
             },
              {
                 isActive: false,
-                href: "/master/warehouse",
+                href: "/dashboard/master/warehouse",
                 label: "Warehouse",
                 leadingIcon: "tabler:building-warehouse",
                 iconColor: "text-violet-500"

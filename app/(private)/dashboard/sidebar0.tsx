@@ -88,24 +88,52 @@ export default function Sidebar({
                         />
 
                         {hasChildren && isOpen && link.children && (
-                          <ul className="gap-[6px] mt-1">
-                          {link.children.map((child: LinkDataType) => (
-                            <SidebarBtn
-                              key={child.href}
-                              isActive={child.href === activeHref}
-                              href={child.href}
-                              label={child.label}
-                              labelTw="hidden group-hover:block"
-                              leadingIcon={child.leadingIcon}
-                              isSubmenu={true}
-                              onClick={() => {
-                                setActiveHref(child.href);
-                                onClickHandler(child.href);
-                              }}
-                            />
-                          ))}
+                          <ul className="gap-[6px] mt-1 ml-[10px]">
+                            {link.children.map((child: LinkDataType) => {
+                              const isChildActive = child.href === activeHref;
+
+                              return (
+
+
+                                <li
+                                  key={child.href}
+                                  className={`w-full cursor-pointer transition-all rounded-md ${isChildActive ? "bg-[#EA0A2A] text-white" : "hover:bg-[#FFF0F2]"
+                                    }`}
+                                  onClick={() => {
+                                    setActiveHref(child.href);
+                                    onClickHandler(child.href);
+                                  }}
+                                >
+                                  {/* Container for dot + label */}
+                                  <div className="flex items-center gap-2 w-full">
+                                    {/* Dot indicator */}
+                                    <span
+                                      className={`w-3 h-3 flex items-center justify-center rounded-full ml-1.5 flex-shrink-0 ${isChildActive ? "bg-white" : "bg-gray-300"
+                                        }`}
+                                    >
+                                      {isChildActive && (
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#EA0A2A]"></span>
+                                      )}
+                                    </span>
+
+                                    {/* Label */}
+                                    <SidebarBtn
+                                      isActive={isChildActive}
+                                      href={child.href}
+                                      label={child.label}
+                                      labelTw="hidden group-hover:block"
+                                      isSubmenu={true}
+                                    />
+                                  </div>
+                                </li>
+
+
+
+                              );
+                            })}
                           </ul>
                         )}
+
                       </li>
                     );
                   })}
