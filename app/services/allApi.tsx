@@ -11,11 +11,7 @@ const API = axios.create({
 API.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-<<<<<<< HEAD
-      const token = localStorage.getItem("token"); // or whatever key you use
-=======
       const token = localStorage.getItem("token")
->>>>>>> 90313c9b9fdea781b6a442a617484306ddf96aa3
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -32,7 +28,6 @@ export const login = async (credentials: { email: string; password: string }) =>
 };
 
 export const isVerify = async () => {
-<<<<<<< HEAD
  
   const res = await API.get("/master/auth/tokenCheck");
   return res.data;
@@ -48,10 +43,7 @@ export const companyById = async (id: string) => {
   return res.data;
 };
 
-export const addCompany = async (data: object) => {
-  const res = await API.post("/master/company/add_company", data);
-  return res.data;
-};
+
 
 export const updateCompany = async (id: string, data: object) => {
   const res = await API.put(`/master/company/${id}`, data);
@@ -64,15 +56,6 @@ export const deleteCompany = async (id: string) => {
 };
 
 
-
-=======
-  try{
-    const res = await API.get("/api/master/auth/me");
-    return res.data;
-  } catch (error) {
-    console.log(error)
-  }
-};
 
 export const logout = async () => {
   try{
@@ -104,4 +87,4 @@ export const countryList = async (data: Record<string, string>) => {
     throw error;
   }
 };
->>>>>>> 90313c9b9fdea781b6a442a617484306ddf96aa3
+
