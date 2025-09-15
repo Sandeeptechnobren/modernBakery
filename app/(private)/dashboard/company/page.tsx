@@ -161,52 +161,70 @@ export default function Customer() {
                     )}
                 </div>
             </div>
-             <div className="h-[calc(100%-60px)]">
-                            <Table
-                                data={data}
-                                config={{
-                                    header: {
-                                        searchBar: true,
-                                        columnFilter: true,
-                                        actions: [
-                                            <SidebarBtn
-                                                key={0}
-                                                href="/dashboard/company/add"
-                                                isActive={true}
-                                                leadingIcon="lucide:plus"
-                                                label="Add Company"
-                                            />,
-                                        ],
-                                    },
-                                    footer: {
-                                        nextPrevBtn: true,
-                                        pagination: true,
-                                    },
-                                    columns: columns,
-                                    rowSelection: true,
-                                    rowActions: [
-                                        {
-                                            icon: "lucide:eye",
-                                        },
-                                        {
-                                            icon: "lucide:edit-2",
-                                            onClick: (data) => {
-                                                console.log(data);
-                                            },
-                                        },
-                                        {
-                                            icon: "lucide:more-vertical",
-                                            onClick: () => {
-                                                confirm(
-                                                    "Are you sure you want to delete this customer?"
-                                                );
-                                            },
-                                        },
-                                    ],
-                                    pageSize: 10,
-                                }}
-                            />
-                        </div>
+            <div className="h-[calc(100%-60px)]">
+                <Table
+                    data={data}
+                    config={{
+                        header: {
+                            searchBar: true,
+                            columnFilter: true,
+                            actions: [
+
+                                // Desktop button with text
+                                <span key="desktop" className="hidden sm:inline">
+                                    <SidebarBtn
+                                        href="/dashboard/company/add"
+                                        isActive={true}
+                                        leadingIcon="lucide:plus"
+                                        label="Add Company"
+                                    />
+                                </span>,
+
+                                // Mobile button only icon centered
+                                <span
+                                    key="mobile"
+                                    className="inline sm:hidden justify-center w-12"
+                                >
+                                    <SidebarBtn
+                                        href="/dashboard/company/add"
+                                        isActive={true}
+                                        leadingIcon="lucide:plus"
+                                        label="" // no text
+                                    />
+                                </span>,
+
+
+                            ],
+                        },
+                        footer: {
+                            nextPrevBtn: true,
+                            pagination: true,
+                        },
+                        columns: columns,
+                        rowSelection: true,
+                        rowActions: [
+                            {
+                                icon: "lucide:eye",
+                            },
+                            {
+                                icon: "lucide:edit-2",
+                                onClick: (data) => {
+                                    console.log(data);
+                                },
+                            },
+                            {
+                                icon: "lucide:more-vertical",
+                                onClick: () => {
+                                    confirm(
+                                        "Are you sure you want to delete this customer?"
+                                    );
+                                },
+                            },
+                        ],
+                        pageSize: 10,
+                    }}
+                />
+            </div>
         </>
     );
 }

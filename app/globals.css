@@ -2,35 +2,38 @@
 @plugin 'tailwind-scrollbar';
 @custom-variant dark (&:where(.dark, .dark *));
 
-body{
-    margin:0;
-    padding:0;
-    /* box-sizing:border-box; */
-    line-height: 20px;
+body {
+  margin: 0;
+  padding: 0;
+  /* box-sizing:border-box; */
+  line-height: 20px;
 }
 
 @theme {
-    --color-primary: #1E40AF;
-    --color-secondary: #2563EB;
-    --color-text-primary: #252b37;
-    --color-text-secondary: #414651;
+  --color-primary: #1E40AF;
+  --color-secondary: #2563EB;
+  --color-text-primary: #252b37;
+  --color-text-secondary: #414651;
 }
 
 .layoutTheme {
   --primary-btn-color: #EA0A2A;
   --secondary-btn-color: #FFF0F2;
-  --primary-btn-text-color: #181d27;
+  --primary-btn-text-color: #FFFFFF;
   --secondary-btn-text-color: #EA0A2A;
-  --primary-btn-border-color: #EA0A2A; 
+  --primary-btn-border-color: #EA0A2A;
   --secondary-btn-border-color: #EA0A2A;
   --text-primary-color: #181D27;
+  /* --text-secondary-color: #535862; */
   --text-secondary-color: #535862;
   --bg-color: #FFF;
 }
 
 .layoutTheme2 {
   --primary-btn-color: #1E40AF;
-  --secondary-btn-color: #7a869e;
+  --secondary-btn-color: #ccd9f7;
+  --primary-btn-text-color: #FFFFFF;
+  --secondary-btn-text-color: #1E40AF;
   --text-primary-color: #252B37;
   --text-secondary-color: #F5F5F5;
   --bg-color: #F5F5F5;

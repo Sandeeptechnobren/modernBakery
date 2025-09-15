@@ -35,7 +35,7 @@ export default function SidebarBtn({
         <Link
             href={href}
             onClick={onClick}
-            className={`p-2 h-10 rounded-lg px-3 py-2 flex items-center gap-[12px] justify-between ${isActive ? "bg-[var(--primary-btn-color)] text-white" : "bg-transparent text-[#414651] hover:bg-[var(--secondary-btn-color)] hover:text-[var(--text-secondary-color)]"}`}
+            className={`p-2 h-10 rounded-lg px-3 py-2 flex items-center gap-[12px] justify-between ${isActive ? "bg-[var(--primary-btn-color)] text-white" : "bg-transparent text-[#414651] hover:bg-[var(--secondary-btn-color)] hover:text-[var(--secondary-btn-text-color)]"}`}
         >
             <div className={`flex items-center ${isSubmenu ? "gap-[8px]" : "gap-[12px]"}`}>
                 {leadingIcon && <Icon icon={leadingIcon} width={leadingIconSize} className={`${leadingIconTw ? leadingIconTw : ""} ${isSubmenu ? "" : ""}`} />}

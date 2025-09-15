@@ -189,14 +189,32 @@ export default function Vehicle() {
                             searchBar: true,
                             columnFilter: true,
                             actions: [
-                                <SidebarBtn
-                                    key={0}
-                                    isActive={true}
-                                     href="/dashboard/master/vehicle/add"
-                                    leadingIcon="lucide:plus"
-                                    label="Add Vehicle"
-                                />,
-                            ],
+                            
+                             // Desktop button with text
+                                            <span key="desktop" className="hidden sm:inline">
+                                              <SidebarBtn
+                                                href="/dashboard/master/vehicle/add"
+                                                isActive={true}
+                                                leadingIcon="lucide:plus"
+                                                label="Add Item"
+                                              />
+                                            </span>,
+                            
+                                            // Mobile button only icon centered
+                                            <span
+                                              key="mobile"
+                                              className="inline sm:hidden justify-center w-12"
+                                            >
+                                              <SidebarBtn
+                                                href="/dashboard/master/vehicle/add"
+                                                isActive={true}
+                                                leadingIcon="lucide:plus"
+                                                label="" // no text
+                                              />
+                                            </span>,
+                                          
+                            
+                                                        ],
                         },
                         footer: {
                             nextPrevBtn: true,

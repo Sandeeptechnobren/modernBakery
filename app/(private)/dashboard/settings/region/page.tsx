@@ -2,97 +2,47 @@
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import { Icon } from "@iconify-icon/react";
+import Link from "next/link";
 import { useState } from "react";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 
 const data = new Array(100).fill(null).map((_, i) => ({
     id: (i + 1).toString(),
-    code: "AC0001604",
-    sapId: "-",
-    warehouseName: `Abdul Retail Shop`,
-    ownerName: `Musinguzi Abdul`,
-    depotName: `DP01 - Zuwote Trading Group Ltd - Ggaba`,
-    depotLocation: "Ggaba",
-    phoneNumber: "0789517400, 0702563915",
-    address: "Kansanga Road",
-    district: "kampala",
-    route: "RT0671",
-    status: "Active",
+    code:`7348grh`,
+ name: `Abdul`,
+    activity: `Retail`,
+    description: 'Super Admin',
 }));
 
 const columns = [
-    {
+     {
         key: "code",
-        label: "Warehouse Code",
+        label: "Region Code",isSortable:true,
         render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
+            <Link
+                href={`/dashboard/settings/region/${row.id}/region`}
+                className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
+            >
                 {row.code}
-            </span>
+            </Link>
         ),
     },
-    { key: "sapId", label: "SAP ID" },
-    { key: "warehouseName", label: "Warehouse Name",isSortable:true},
-    { key: "ownerName", label: "Owner Name",isSortable:true },
-    { key: "depotName", label: "Depot Name", filter: {
-            isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.depotName}
-                        </span>
-                       
-                    </div>
-                )),
-                width:218,
-        },  },
-    { key: "depotLocation", label: "Depot Location",isSortable:true },
-    { key: "phoneNumber", label: "Phone Number"},
-    { key: "address", label: "Address" },
-    { key: "district", label: "District"},
-
-
-    { key: "route", label: "Route",filter: {
-            isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.vehicleRoute}
-                        </span>
-                       
-                    </div>
-                )),
-                width:218,
-        }, },
-   
-    
-
     {
-        key: "status",
-        label: "Status",
+        key: "name",
+        label: "Region Name",isSortable:true,
         render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {row.status ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
+            <Link
+                href={`/dashboard/settings/region/${row.id}/region`}
+                className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
+            >
+                {row.name}
+            </Link>
         ),
     },
+    { key: "activity", label: "Activity" },
+    { key: "description", label: "Description"},
+
 ];
 
 const dropdownDataList = [
@@ -103,23 +53,23 @@ const dropdownDataList = [
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
-export default function Warehouse() {
+export default function Region() {
     const [showDropdown, setShowDropdown] = useState(false);
     return (
         <>
             {/* header */}
-            <div className="flex justify-between items-center mb-[20px]">
+            <div className="w-full">
+            <div className="flex justify-between items-center p-5">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                    Warehouse
-                    
+                    Region 
                 </h1>
 
                 {/* top bar action buttons */}
-                <div className="flex gap-[12px] relative">
+                <div className="flex gap-[12px] items-center text-center">
                     <BorderIconButton
                         icon="gala:file-document"
                         label="Export CSV"
-                        labelTw="text-[12px] hidden sm:block"
+                        labelTw="text-[12px] hidden sm:block items-center"
                     />
                     <BorderIconButton icon="mage:upload" />
                     <BorderIconButton
@@ -152,40 +102,14 @@ export default function Warehouse() {
             </div>
 
             {/* Table */}
-            <div className="h-[calc(100%-60px)]">
+            <div className="h-[calc(100%-70px)]">
                 <Table
                     data={data}
                     config={{
                         header: {
                             searchBar: true,
                             columnFilter: true,
-                            actions: [
-
- // Desktop button with text
-                <span key="desktop" className="hidden sm:inline">
-                  <SidebarBtn
-                    href="/dashboard/master/warehouse/addwarehouse"
-                    isActive={true}
-                    leadingIcon="lucide:plus"
-                    label="Add Item"
-                  />
-                </span>,
-
-                // Mobile button only icon centered
-                <span
-                  key="mobile"
-                  className="inline sm:hidden justify-center w-12"
-                >
-                  <SidebarBtn
-                    href="/dashboard/master/warehouse/addwarehouse"
-                    isActive={true}
-                    leadingIcon="lucide:plus"
-                    label="" // no text
-                  />
-                </span>,
-              
-
-                            ],
+                            
                         },
                         footer: {
                             nextPrevBtn: true,
@@ -207,7 +131,7 @@ export default function Warehouse() {
                                 icon: "lucide:more-vertical",
                                 onClick: () => {
                                     confirm(
-                                        "Are you sure you want to delete this Warehouse?"
+                                        "Are you sure you want to delete this Region?"
                                     );
                                 },
                             },
@@ -216,13 +140,7 @@ export default function Warehouse() {
                     }}
                 />
             </div>
+            </div>
         </>
     );
 }
-
-
-
-
-
-
-

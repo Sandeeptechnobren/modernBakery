@@ -11,7 +11,11 @@ const API = axios.create({
 API.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
+<<<<<<< HEAD
       const token = localStorage.getItem("token"); // or whatever key you use
+=======
+      const token = localStorage.getItem("token"); 
+>>>>>>> 90313c9b9fdea781b6a442a617484306ddf96aa3
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -23,11 +27,12 @@ API.interceptors.request.use(
 
 
 export const login = async (credentials: { email: string; password: string }) => {
-  const res = await API.post("/master/auth/login", credentials);
+  const res = await API.post("/api/master/auth/login", credentials);
   return res.data;
 };
 
 export const isVerify = async () => {
+<<<<<<< HEAD
  
   const res = await API.get("/master/auth/tokenCheck");
   return res.data;
@@ -60,3 +65,43 @@ export const deleteCompany = async (id: string) => {
 
 
 
+=======
+  try{
+    const res = await API.get("/api/master/auth/me");
+    return res.data;
+  } catch (error) {
+    console.log(error)
+  }
+};
+
+export const logout = async () => {
+  try{
+    const res = await API.post("/api/master/auth/logout");
+    console.log(res);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+  }
+};
+
+export const addCompany = async (data: Record<string, string>) => {
+  try {
+    const res = await API.post("/api/master/company/add_company", data);
+    return res.data;
+  } catch (error) {
+    console.error("Add company failed ❌", error);
+    throw error;
+  }
+};
+
+
+export const countryList = async (data: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/master/country/list_country", data);
+    return res.data;
+  } catch (error) {
+    console.error("Country List failed ❌", error);
+    throw error;
+  }
+};
+>>>>>>> 90313c9b9fdea781b6a442a617484306ddf96aa3

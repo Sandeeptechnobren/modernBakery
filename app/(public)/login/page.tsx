@@ -173,36 +173,29 @@ const LoginPage = () => {
                   password: values.password,
                 });
 
-                // ✅ if login success
-                localStorage.setItem("token", res.data.access_token);
-                showSnackbar("Login successful!", "success");
-                router.push("/dashboard");
-              } 
-              catch (err:any) {
-                // ✅ if login fails → show snackbar
-                showSnackbar(
-                  err.response?.data?.message || "Invalid credentials",
-                  "error"
-                );
-
-                // also keep form error (Formik)
-                setErrors({
-                  userId: "Invalid credentials",
-                });
-              }
-            }}
-          >
-            {({ isSubmitting, values, handleChange }) => (
-              <Form className="flex flex-col gap-[32px] w-[360px]">
-                <Logo twClass="m-auto" />
-                <div className="text-center">
-                  <h1 className="text-3xl font-semibold text-gray-900 mb-[12px]">
-                    Welcome back
-                  </h1>
-                  <p className="text-gray-600 text-[16px]">
-                    Please log in with your details to continue.
-                  </p>
-                </div>
+                                localStorage.setItem("token", res.token);
+                                router.push("/dashboard");
+                            } catch (err: unknown) {
+                                if (err instanceof Error) {
+                                    setErrors({
+                                        userId: "Invalid credentials",
+                                    });
+                                }
+                            }
+                        }}
+                    >
+                        {({ isSubmitting, values, handleChange }) => (
+                            <Form className="flex flex-col gap-[32px] w-[360px]">
+                                <Logo twClass="m-auto" />
+                                <div className="text-center">
+                                    <h1 className="text-3xl font-semibold text-gray-900 mb-[12px]">
+                                        Welcome back
+                                    </h1>
+                                    <p className="text-gray-600 text-[16px]">
+                                        Please log in with your details to
+                                        continue.
+                                    </p>
+                                </div>
 
                 <div className="flex flex-col gap-[24px] m-[20px] lg:m-0">
                   <div className="flex flex-col gap-[20px]">

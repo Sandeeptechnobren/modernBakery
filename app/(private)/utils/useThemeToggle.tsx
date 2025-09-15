@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { SettingsContext } from "../dashboard/contexts";
 
 export function useThemeToggle() {
@@ -11,27 +11,18 @@ export function useThemeToggle() {
 
   const { dispatchSettings, settings } = context;
 
-   
-  const [theme, setTheme] = useState<string>(settings.theme);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setTheme(localStorage.theme)
     document.body.classList.remove("layoutTheme", "layoutTheme2");
-    document.body.classList.add(theme);
-
-    dispatchSettings({ type: "themeChange", payload: { theme } });
-    dispatchSettings({ type: "layoutToggle", payload: { } });
-  }, [theme, dispatchSettings]);
+    document.body.classList.add(settings.theme);
+  }, [settings.theme]);
 
   const toggle = ()=>{
-    const newTheme=theme === "layoutTheme2" ? "layoutTheme" : "layoutTheme2"
-    localStorage.theme=newTheme
-    setTheme(newTheme);
-
+    const newTheme = settings.theme === "layoutTheme2" ? "layoutTheme" : "layoutTheme2";
+    localStorage.theme = newTheme;
+    dispatchSettings({ type: "themeChange", payload: { theme: newTheme } });
+    dispatchSettings({ type: "layoutToggle", payload: { } });
   }
-    
-  
 
-  return { theme, toggle };
+  return { theme: settings.theme, toggle };
 }
