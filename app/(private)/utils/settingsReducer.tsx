@@ -10,12 +10,6 @@ export default function SettingsReducer(
   action: Action
 ): SettingsDataType {
   switch (action.type) {
-    case "themeChange":
-      return {
-        ...state,
-        theme: action.payload?.theme || state.theme,
-      };
-
     case "layoutToggle":
       return {
         ...state,
@@ -27,6 +21,12 @@ export default function SettingsReducer(
           },
         },
       };
+      case "themeChange":
+      return {
+        ...state,
+        theme: action.payload?.theme || state.theme,
+      };
+
 
     default:
       return state;

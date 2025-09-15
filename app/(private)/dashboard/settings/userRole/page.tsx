@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import Popup from "@/app/components/popUp";
-import AddRole from "./addRole";
-import Toggle from "@/app/components/toggle";
 import { useThemeToggle } from "@/app/(private)/utils/useThemeToggle";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import Popup from "@/app/components/popUp";
+import Toggle from "@/app/components/toggle";
+import { useState } from "react";
+import AddRole from "./addRole";
 
 export default function UserRole() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);

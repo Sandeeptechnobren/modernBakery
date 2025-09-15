@@ -5,7 +5,7 @@ import { initialSettingsData, SettingsDataType } from "../data/settings";
 
 export interface SettingsContextValue {
   settings: SettingsDataType;
-  dispatchSettings: ActionDispatch<[action: { type: string; payload: object; }]>;
+  dispatchSettings: ActionDispatch<[action: { type: string; payload?: { [key: string]: string }}]>;
 }
 
 export const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
