@@ -93,39 +93,41 @@ export default function Sidebar({
                               const isChildActive = child.href === activeHref;
 
                               return (
-
-
                                 <li
                                   key={child.href}
-                                  className={`w-full cursor-pointer transition-all rounded-md ${isChildActive ? "bg-[#EA0A2A] text-white" : "hover:bg-[#FFF0F2]"
+                                  className={`w-full cursor-pointer transition-all rounded-md ${isChildActive ? "text-[#2563eb] font-medium" : "hover:bg-[#FFF0F2]"
                                     }`}
-                                  onClick={() => {
-                                    setActiveHref(child.href);
-                                    onClickHandler(child.href);
-                                  }}
                                 >
-                                  {/* Container for dot + label */}
-                                  <div className="flex items-center gap-2 w-full">
-                                    {/* Dot indicator */}
+                                  <div
+                                    className="flex items-center gap-2 w-full"
+                                    onClick={() => {
+                                      setActiveHref(child.href);
+                                      onClickHandler(child.href);
+                                    }}
+                                  >
+                                    {/* Line indicator */}
                                     <span
-                                      className={`w-3 h-3 flex items-center justify-center rounded-full ml-1.5 flex-shrink-0 ${isChildActive ? "bg-white" : "bg-gray-300"
+                                      className={`w-0.5 h-8 ml-4 flex-shrink-0 rounded ${isChildActive ? "bg-red-500" : "bg-gray-300"
                                         }`}
-                                    >
-                                      {isChildActive && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-[#EA0A2A]"></span>
-                                      )}
-                                    </span>
+                                    ></span>
 
-                                    {/* Label */}
-                                    <SidebarBtn
-                                      isActive={isChildActive}
-                                      href={child.href}
-                                      label={child.label}
-                                      labelTw="hidden group-hover:block"
-                                      isSubmenu={true}
-                                    />
+                                    {/* Label (fills remaining space, clickable too) */}
+                                    <div className="flex-1">
+                                      <SidebarBtn
+                                        isActive={false} // no background
+                                        href={child.href}
+                                        label={child.label}
+                                        labelTw="hidden group-hover:block"
+                                        isSubmenu={true}
+                                      />
+                                    </div>
                                   </div>
                                 </li>
+
+
+
+
+
 
 
 
