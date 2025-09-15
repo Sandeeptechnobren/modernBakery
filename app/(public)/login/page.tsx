@@ -40,7 +40,7 @@ const LoginPage = () => {
                                     password: values.password,
                                 });
 
-                                localStorage.setItem("token", res.token);
+                                localStorage.setItem("token", res.data.access_token);
                                 router.push("/dashboard");
                             } catch (err: unknown) {
                                 if (err instanceof Error) {

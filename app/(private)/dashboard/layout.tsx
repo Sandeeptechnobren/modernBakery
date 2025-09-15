@@ -3,7 +3,8 @@
 import DashboardLayout0 from "./layout0";
 import DashboardLayout1 from "./layout1";
 import Contexts, { SettingsContext, SettingsContextValue } from "./contexts";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
+import { isVerify } from "@/app/services/allApi";
 
 export default function DashboardLayout({
     children,
@@ -20,6 +21,13 @@ export default function DashboardLayout({
 }
 
 function LayoutSelector({ children }: { children: React.ReactNode }) {
+
+  useEffect(()=>{
+    isVerify().then((res)=>{
+        console.log(res)
+    })
+  },[])
+
     const context = useContext<SettingsContextValue | undefined>(
         SettingsContext
     );
