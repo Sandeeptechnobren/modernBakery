@@ -34,7 +34,7 @@ export default function SettingPopUp({ isOpen, onClose, title }: ModalProps) {
 
         {/* Message */}
         <p className="text-sm text-gray-600 mb-4">
-          Your Region Code number is set in auto-generate mode to save your time.
+          Your {title} number is set in auto-generate mode to save your time.
           Are you sure about changing this setting?
         </p>
 
@@ -48,7 +48,7 @@ export default function SettingPopUp({ isOpen, onClose, title }: ModalProps) {
               checked={option === "auto"}
               onChange={(e) => setOption(e.target.value)}
             />
-            Continue auto-generating Region Code
+            Continue auto-generating {title}
           </label>
 
           {/* Show input fields only when auto is selected */}

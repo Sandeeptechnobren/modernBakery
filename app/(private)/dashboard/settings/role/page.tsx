@@ -7,6 +7,8 @@ import { useState } from "react";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import Popup from "@/app/components/popUp";
+import AddRole from "./addRole";
 
 const data = new Array(100).fill(null).map((_, i) => ({
     id: (i + 1).toString(),
@@ -43,6 +45,7 @@ const dropdownDataList = [
 
 export default function Role() {
     const [showDropdown, setShowDropdown] = useState(false);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
     return (
         <>
             {/* header */}
@@ -100,13 +103,17 @@ export default function Role() {
                                 actions: [
                                     <SidebarBtn
                                         key={0}
-                                        href="/dashboard/company/add"
                                         isActive={true}
                                         leadingIcon="lucide:plus"
                                         label="Add Role"
-                                    />,
+                                        onClick={() => setIsPopupOpen(true)}
+                                    />
+                                    ,
+                                    
                                 ],
+                                
                             },
+                            
                             footer: {
                                 nextPrevBtn: true,
                                 pagination: true,
@@ -136,6 +143,11 @@ export default function Role() {
                         }}
                     />
                 </div>
+                {isPopupOpen && (
+        <Popup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)}>
+          <AddRole onClose={() => setIsPopupOpen(false)} />
+        </Popup>
+      )}
             </div>
         </>
     );

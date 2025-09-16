@@ -20,9 +20,9 @@ export const initialLinkData: SidebarDataType[] = [
         data: [
             {
                 isActive: false,
-                href: "/dashboard/settings/userRole",
-                label: "Add Roles",
-                leadingIcon: "hugeicons:workflow-square-06",
+                href: "/dashboard/settings/changeTheme",
+                label: "Change Theme",
+                leadingIcon: "mdi:white-balance-sunny",
                 iconColor: "text-green-500",
             },
             {
@@ -41,9 +41,9 @@ export const initialLinkData: SidebarDataType[] = [
             },
             {
                 isActive: false,
-                href: "/dashboard/settings/changePassword",
-                label: "Change Password",
-                leadingIcon: "mynaui:lock",
+                href: "/dashboard/settings/country",
+                label: "Country",
+                leadingIcon: "mdi:earth",
                 iconColor: "text-green-500",
             },
             {

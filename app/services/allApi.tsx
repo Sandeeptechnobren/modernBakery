@@ -82,3 +82,17 @@ export const countryList = async (data: Record<string, string>) => {
   }
 };
 
+export const addCountry = async (payload:object) => {
+    const res = await API.post("/api/master/country/add_country", payload);
+    return res.data;
+};
+
+export const editCountry = async (id:string,payload:object) => {
+    const res = await API.put(`/api/master/country/update_country/${id}`,payload);
+    return res.data;
+};
+export const deleteCountry = async (id:string) => {
+    const res = await API.delete(`/api/master/country/${id}`);
+    return res.data;
+};
+
