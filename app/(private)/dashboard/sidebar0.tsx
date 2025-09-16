@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Logo from "../../components/logo";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
@@ -8,9 +8,11 @@ import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
 export default function Sidebar({
   data,
   onClickHandler,
+  isOpen
 }: {
   data: SidebarDataType[];
   onClickHandler: (href: string) => void;
+  isOpen?: boolean;
 }) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [activeHref, setActiveHref] = useState<string>("");
@@ -37,12 +39,16 @@ export default function Sidebar({
     return Boolean(children.some((child) => child.href === activeHref));
   };
 
+  useEffect(() => {
+    setActiveHref(window.location.pathname);
+  }, [])
+
   return (
     <div className="group peer">
-      <div className="w-[80px] group-hover:w-[250px] h-[100vh] fixed ease-in-out duration-300 bg-white">
+      <div className={`${isOpen ? "w-[250px]" : "w-[80px]"} group-hover:w-[250px] h-[100vh] fixed ease-in-out duration-300 bg-white`}>
         {/* logo */}
         <div className="w-full h-[60px] px-[16px] py-[12px] border-r-[1px] border-b-[1px] border-[#E9EAEB]">
-          <div className="w-[24px] group-hover:w-full h-full m-auto">
+          <div className={`${isOpen ? "w-full" : "w-[24px]"}  group-hover:w-full h-full m-auto`}>
             <Logo
               width={128}
               height={35}
@@ -52,21 +58,21 @@ export default function Sidebar({
         </div>
 
         {/* menu */}
-        <div className="w-full h-[900px] py-5 px-4 border-[1px] border-[#E9EAEB] border-t-0">
+        <div className="w-full h-[900px] py-5 px-4 border-[1px] border-[#E9EAEB] border-t-0 overflow-y-auto scrollbar-none">
           <div className="mb-5 w-full h-full">
             {data.map((group: SidebarDataType) => (
-              <div key={group.name} className="group-hover:mb-[20px]">
-                <div className="text-[#717680] text-[14px] mb-3 hidden group-hover:block">
+              <div key={group.name} className={`${isOpen ? "mb-[20px]" : "m-0" } group-hover:mb-[20px]`}>
+                <div className={`text-[#717680] text-[14px] mb-3 ${isOpen ? "block" : "hidden"} group-hover:block`}>
                   {group.name}
                 </div>
                 <ul className="w-full flex flex-col gap-[6px]">
                   {group.data.map((link: LinkDataType) => {
                     const hasChildren = Boolean(link.children && link.children.length > 0);
-                    const isOpen = openMenus[link.label] ?? false;
+                    const isChildrenOpen = openMenus[link.label] ?? false;
 
                     // Determine trailing icon based on open state for menus with children
                     const trailingIcon = hasChildren
-                      ? isOpen
+                      ? isChildrenOpen
                         ? "mdi-light:chevron-down"
                         : "mdi-light:chevron-right"
                       : link.trailingIcon;
@@ -80,14 +86,14 @@ export default function Sidebar({
                           isActive={isActive}
                           href={hasChildren ? "#" : link.href} // don't redirect if parent
                           label={link.label}
-                          labelTw="hidden group-hover:block"
+                          labelTw={`${isOpen ? "block" : "hidden" } group-hover:block`}
                           leadingIcon={link.leadingIcon}
                           trailingIcon={trailingIcon}
-                          trailingIconTw="hidden group-hover:block"
+                          trailingIconTw={`${isOpen ? "block" : "hidden" } group-hover:block`}
                           onClick={() => handleClick(link.href, link.label, hasChildren)}
                         />
 
-                        {hasChildren && isOpen && link.children && (
+                        {hasChildren && isChildrenOpen && link.children && (
                           <ul className="gap-[6px] mt-1 ml-[10px]">
                             {link.children.map((child: LinkDataType) => {
                               const isChildActive = child.href === activeHref;
@@ -117,7 +123,7 @@ export default function Sidebar({
                                         isActive={false} // no background
                                         href={child.href}
                                         label={child.label}
-                                        labelTw="hidden group-hover:block"
+                                        labelTw={`${isOpen ? "block" : "hidden"} group-hover:block`}
                                         isSubmenu={true}
                                       />
                                     </div>

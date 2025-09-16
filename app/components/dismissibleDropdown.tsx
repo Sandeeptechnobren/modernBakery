@@ -43,7 +43,7 @@ export default function DismissibleDropdown({
     }, []); // The dependency array is empty because the logic doesn't depend on wrapperRef
 
     return (
-        <div className="relative inline-block" ref={wrapperRef}>
+        <div className="relative" ref={wrapperRef}>
             <div onClick={toggleDropdown} className="cursor-pointer flex items-center">{button}</div>
             {isOpen && (
                 <div>

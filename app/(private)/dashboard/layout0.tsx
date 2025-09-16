@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useReducer } from "react";
+import { useContext, useEffect, useReducer, useState } from "react";
 import Main from "./main";
 import Sidebar from "./sidebar0";
 import TopBar from "./topBar";
@@ -17,6 +17,7 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
 
     const { settings, dispatchSettings } = context;
     const horizontalSidebar = settings.layout.dashboard.horizontalSidebar;
+    const [isOpen, setIsOpen] = useState(false);
 
     const toggleSidebar = () => {
         localStorage?.setItem(
@@ -42,12 +43,14 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
 
     return (
         <div className="h-[100vh] w-[100%] m-auto overflow-hidden bg-[#FAFAFA]">
-            {!horizontalSidebar && <Sidebar data={sidebarData} onClickHandler={handleLinkClick} />}
+            {!horizontalSidebar && <Sidebar data={sidebarData} onClickHandler={handleLinkClick} isOpen={isOpen} />}
             <TopBar
                 horizontalSidebar={horizontalSidebar}
                 toggleSidebar={toggleSidebar}
+                isOpen={isOpen}
+                toggleOpen={() => setIsOpen(!isOpen)}
             />
-            <Main horizontalSidebar={horizontalSidebar}>{children}</Main>
+            <Main horizontalSidebar={horizontalSidebar} isOpen={isOpen}>{children}</Main>
         </div>
     );
 };

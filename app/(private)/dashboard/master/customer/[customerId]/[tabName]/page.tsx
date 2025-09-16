@@ -9,6 +9,7 @@ import SalesSummary from "./salesSummary";
 import CallHistory from "./callHistory";
 import ContainerCard from "@/app/components/containerCard";
 import { useEffect, useState } from "react";
+import TabBtn from "@/app/components/tabBtn";
 
 export const tabs = [
     {
@@ -50,7 +51,9 @@ export default function Page() {
 
     const onTabClick = (index: number) => {
         setActiveTab(index);
-        router.replace(`/dashboard/master/customer/${customerId}/${tabs[index].url}`);
+        router.replace(
+            `/dashboard/master/customer/${customerId}/${tabs[index].url}`
+        );
     };
 
     useEffect(() => {
@@ -65,39 +68,19 @@ export default function Page() {
                 padding="5px"
             >
                 {tabs.map((tab, index) => (
-                    <TabBtn
-                        key={index}
-                        label={tab.name}
-                        isActive={activeTab === index}
-                        onClick={() => {
-                            onTabClick(index);
-                        }}
-                    />
+                    <div key={index}>
+                        <TabBtn
+                            label={tab.name}
+                            isActive={activeTab === index}
+                            onClick={() => {
+                                onTabClick(index);
+                            }}
+                        />
+                    </div>
                 ))}
             </ContainerCard>
             {tabs.find((tab) => tab.url === tabName)?.component ||
                 tabs[0].component}
         </>
-    );
-}
-
-function TabBtn({
-    label,
-    isActive,
-    onClick,
-}: {
-    label: string;
-    isActive: boolean;
-    onClick: () => void;
-}) {
-    return (
-        <button
-            className={`${
-                isActive ? "bg-[#FFF0F2] text-[#EA0A2A]" : "text-[#535862]"
-            } text-[16px] font-semibold px-[16px] py-[10px] rounded-[8px] cursor-pointer whitespace-nowrap`}
-            onClick={onClick}
-        >
-            {label}
-        </button>
     );
 }

@@ -13,20 +13,24 @@ import { logout } from "@/app/services/allApi";
 export default function TopBar({
     horizontalSidebar,
     toggleSidebar,
+    isOpen,
+    toggleOpen
 }: {
     horizontalSidebar: boolean;
     toggleSidebar: () => void;
+    isOpen: boolean;
+    toggleOpen: () => void;
 }) {
-    const [isOpen, setIsOpen] = useState(false);
-
+    const [isOpenDropdown, setIsOpenDropdown] = useState(false);
     const router = useRouter();
     const [searchBarValue, setSearchBarValue] = useState("");
 
+    const paddingIfOpen = isOpen ? "pl-[250px]" : "pl-[80px]";
+    const paddingLeft = horizontalSidebar ? "pl-[0px]" : paddingIfOpen;
+
     return (
         <div
-            className={`fixed peer-hover:pl-[250px] w-full flex flex-col items-center ${
-                !horizontalSidebar ? "pl-[80px]" : "pl-[0px]"
-            }`}
+            className={`fixed w-full flex flex-col items-center ${paddingLeft} peer-hover:pl-[250px]`}
         >
             {/* Top Bar start */}
             <div className="w-full h-[60px] flex">
@@ -44,6 +48,7 @@ export default function TopBar({
                             <Icon
                                 icon="heroicons-outline:menu-alt-1"
                                 width={24}
+                                onClick={toggleOpen}
                             />
                         )}
                         <div className="w-full hidden sm:w-[320px] sm:block">
@@ -73,8 +78,8 @@ export default function TopBar({
 
                         {/* Profile Dropdown */}
                         <DismissibleDropdown
-                            isOpen={isOpen}
-                            setIsOpen={setIsOpen}
+                            isOpen={isOpenDropdown}
+                            setIsOpen={setIsOpenDropdown}
                             button={
                                 <ImageButton
                                     width={32}
@@ -91,7 +96,7 @@ export default function TopBar({
                                                 icon: "mynaui:lock",
                                                 label: "Change Password",
                                                 onClick: () => {
-                                                    setIsOpen(false);
+                                                    setIsOpenDropdown(false);
                                                     router.push(
                                                         "/dashboard/settings/changePassword"
                                                     );

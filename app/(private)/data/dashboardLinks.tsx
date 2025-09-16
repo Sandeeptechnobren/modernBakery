@@ -31,18 +31,23 @@ export const initialLinkData: SidebarDataType[] = [
                 isActive: false,
                 href: "/dashboard/company",
                 label: "Company",
-                leadingIcon: "lucide:user",
-                iconColor: "text-green-500"
+                leadingIcon: "mdi:company",
+                iconColor: "text-[#79e3f8]"
             },
             {
                 isActive: false,
                 href: "/dashboard/salesman",
                 label: "Salesman",
-                leadingIcon: "lucide:user",
+                leadingIcon: "carbon:sales-ops",
                 iconColor: "text-green-500"
             },
-            
-            
+            {
+                isActive: false,
+                href: "/dashboard/promotion",
+                label: "Promotion",
+                leadingIcon: "hugeicons:promotion",
+                iconColor: "text-red-500"
+            },
         ],
     },
     {
