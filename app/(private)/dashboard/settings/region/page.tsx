@@ -2,113 +2,47 @@
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import { Icon } from "@iconify-icon/react";
+import Link from "next/link";
 import { useState } from "react";
 import CustomDropdown from "@/app/components/customDropdown";
-import Link from "next/link";
 import Table, { TableDataType } from "@/app/components/customTable";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 
 const data = new Array(100).fill(null).map((_, i) => ({
     id: (i + 1).toString(),
-    salesmanCode: "AC0001604",
-    sapId: "-",
-    salesmanName: `Abdul Retail Shop ${i + 1}`,
-    salesmanType: `Musinguzi Abdul`,
-    salesmanSubType: `DP01 - Zuwote Trading Group Ltd - Ggaba`,
-    joiningDate: "20/04/2005",
-    phoneNumber: "0789517400, 0702563915",
-    mobileDivice: "Kansanga Road",
-    diviceId: "kampala",
-    salesmanRoute: "RT0671",
-    status: "Active",
+    code:`7348grh`,
+ name: `Abdul`,
+    activity: `Retail`,
+    description: 'Super Admin',
 }));
 
 const columns = [
-    {
-        key: "salesmanCode",
-        label: "Salesmancode",
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.salesmanCode}
-            </span>
-        ),
-    },
-    { key: "sapId", label: "Sap ID" },
-    {
-        key: "salesmanName",
-        label: "Salesman Name",
+     {
+        key: "code",
+        label: "Region Code",isSortable:true,
         render: (row: TableDataType) => (
             <Link
-                href={`/master/customer/${row.id}/overview`}
+                href={`/dashboard/settings/region/${row.id}/region`}
                 className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
             >
-                {row.salesmanName}
+                {row.code}
             </Link>
         ),
-        isSortable: true,
-    },
-    { key: "salesmanType", label: "Salesman Type", isSortable: true },
-    {
-        key: "salesmanSubType",
-        label: "Salesman Sub Type",
-        filter: {
-            isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.salesmanSubType}
-                        </span>
-                        <span className="w-full overflow-hidden text-ellipsis">
-                            {row.salesmanSubType}
-                        </span>
-                    </div>
-                )),
-        },
-        width: 218,
-    },
-    { key: "joiningDate", label: "Joining Date", isSortable: true },
-    { key: "phoneNumber", label: "Phone Number", width: 150 },
-    { key: "mobileDivice", label: "Mobile Divice" },
-    { key: "diviceId", label: "Divice Id" },
-    {
-        key: "salesmanRoute",
-        label: "Salesman Route",
-        filter: {
-            isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.salesmanRoute}
-                        </span>
-                    </div>
-                )),
-        },
     },
     {
-        key: "status",
-        label: "Status",
+        key: "name",
+        label: "Region Name",isSortable:true,
         render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {row.status ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
+            <Link
+                href={`/dashboard/settings/region/${row.id}/region`}
+                className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
+            >
+                {row.name}
+            </Link>
         ),
     },
+    { key: "activity", label: "Activity" },
+    { key: "description", label: "Description"},
+
 ];
 
 const dropdownDataList = [
@@ -119,22 +53,23 @@ const dropdownDataList = [
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
-export default function Customer() {
+export default function Region() {
     const [showDropdown, setShowDropdown] = useState(false);
     return (
         <>
             {/* header */}
-            <div className="flex justify-between items-center mb-[20px]">
+            <div className="w-full">
+            <div className="flex justify-between items-center p-5">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                    Salesman
+                    Region 
                 </h1>
 
                 {/* top bar action buttons */}
-                <div className="flex gap-[12px] relative">
+                <div className="flex gap-[12px] items-center text-center">
                     <BorderIconButton
                         icon="gala:file-document"
                         label="Export CSV"
-                        labelTw="text-[12px] hidden sm:block"
+                        labelTw="text-[12px] hidden sm:block items-center"
                     />
                     <BorderIconButton icon="mage:upload" />
                     <BorderIconButton
@@ -167,23 +102,14 @@ export default function Customer() {
             </div>
 
             {/* Table */}
-            <div className="h-[calc(100%-60px)]">
+            <div className="h-[calc(100%-70px)]">
                 <Table
                     data={data}
                     config={{
                         header: {
                             searchBar: true,
                             columnFilter: true,
-                            actions: [
-                                <SidebarBtn
-                                    key={0}
-                                    href="/dashboard/salesman/add"
-                                    isActive={true}
-                                    leadingIcon="lucide:plus"
-                                    label="Add Salesman"
-                                    labelTw="hidden sm:block"
-                                />,
-                            ],
+                            
                         },
                         footer: {
                             nextPrevBtn: true,
@@ -205,7 +131,7 @@ export default function Customer() {
                                 icon: "lucide:more-vertical",
                                 onClick: () => {
                                     confirm(
-                                        "Are you sure you want to delete this customer?"
+                                        "Are you sure you want to delete this Region?"
                                     );
                                 },
                             },
@@ -213,6 +139,7 @@ export default function Customer() {
                         pageSize: 10,
                     }}
                 />
+            </div>
             </div>
         </>
     );

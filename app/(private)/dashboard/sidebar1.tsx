@@ -3,8 +3,11 @@ import Image from "next/image";
 import { useState } from "react";
 import { miscLinks, SidebarDataType } from "../data/dashboardLinks";
 import Link from "next/link";
-import SearchBar1 from "./searchBar1";
 import SidebarBtn1 from "@/app/components/iconButton1";
+import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import CustomDropdown from "@/app/components/customDropdown";
+import { useRouter } from "next/navigation";
+import { logout } from "@/app/services/allApi";
 
 export default function Sidebar({
     data,
@@ -13,7 +16,11 @@ export default function Sidebar({
     data: SidebarDataType[];
     onClickHandler: (href: string) => void;
 }>) {
-    const [isOpen, setIsOpen] = useState<boolean>(true);
+    const [isOpen, setIsOpen] = useState<boolean>(false);
+    const [showDropdown, setShowDropdown] = useState<boolean>(false);
+    const [currentPageForSecondSidebar, setCurrentPageForSecondSidebar] =
+        useState("");
+    const router = useRouter();
 
     return (
         <div className="flex">
@@ -48,7 +55,21 @@ export default function Sidebar({
                                     className="w-full relative cursor-pointer group"
                                     key={index}
                                     href={link.href}
-                                    onClick={() => onClickHandler(link.href)}
+                                    onClick={() => {
+                                        onClickHandler(link.href);
+                                        if (
+                                            link.children &&
+                                            link.children.length > 0
+                                        ) {
+                                            setIsOpen(true);
+                                            setCurrentPageForSecondSidebar(
+                                                link.href
+                                            );
+                                        } else {
+                                            setIsOpen(false);
+                                            setCurrentPageForSecondSidebar("");
+                                        }
+                                    }}
                                 >
                                     <div
                                         className={`w-full h-[40px] p-[6px] flex justify-center items-center relative rounded-l-[8px] ${
@@ -113,19 +134,61 @@ export default function Sidebar({
                                 </div>
                             </Link>
                         ) : (
-                            <Link
-                                href={link.href}
+                            <DismissibleDropdown
                                 key={index}
-                                className="flex items-center w-[32px] h-[32px] rounded-full overflow-hidden"
-                            >
-                                <Image
-                                    src={link.src || "/dummyuser.jpg"}
-                                    alt="Logo"
-                                    width={20}
-                                    height={20}
-                                    className="w-full object-cover"
-                                />
-                            </Link>
+                                isOpen={showDropdown}
+                                setIsOpen={setShowDropdown}
+                                button={
+                                    <Link
+                                        href={link.href}
+                                        className="flex items-center w-[32px] h-[32px] rounded-full overflow-hidden"
+                                    >
+                                        <Image
+                                            src={link.src || "/dummyuser.jpg"}
+                                            alt="Logo"
+                                            width={20}
+                                            height={20}
+                                            className="w-full object-cover"
+                                        />
+                                    </Link>
+                                }
+                                dropdown={
+                                    <div className="absolute w-[200px] bottom-0 left-[40px] z-30">
+                                        <CustomDropdown
+                                            data={[
+                                                {
+                                                    icon: "mynaui:lock",
+                                                    label: "Change Password",
+                                                    onClick: () => {
+                                                        setIsOpen(false);
+                                                        router.push(
+                                                            "/dashboard/settings/changePassword"
+                                                        );
+                                                    },
+                                                },
+                                                {
+                                                    icon: "tabler:logout",
+                                                    label: "Logout",
+                                                    onClick: () => {
+                                                        logout().then((res) => {
+                                                            if (
+                                                                res?.code ===
+                                                                    200 ||
+                                                                res?.code ===
+                                                                    401
+                                                            ) {
+                                                                router.push(
+                                                                    "/"
+                                                                );
+                                                            }
+                                                        });
+                                                    },
+                                                },
+                                            ]}
+                                        />
+                                    </div>
+                                }
+                            />
                         )
                     )}
                 </div>
@@ -138,29 +201,29 @@ export default function Sidebar({
                 } h-screen bg-[#223458] group transition-all ease-in-out duration-300`}
             >
                 {/* second sidebar toggle button */}
-                <span
-                    className="hidden group-hover:flex absolute bottom-[50px] -right-3 p-1 bg-white rounded-full w-[20px] h-[20px] items-center justify-center"
-                    onClick={() => setIsOpen(!isOpen)}
-                >
-                    <Icon
-                        icon={
-                            isOpen
-                                ? "lucide:chevron-left"
-                                : "lucide:chevron-right"
-                        }
-                        width={20}
-                    />
-                </span>
+                {currentPageForSecondSidebar !== "" && (
+                    <>
+                        <span
+                            className="hidden group-hover:flex absolute bottom-[50px] -right-3 p-1 bg-white rounded-full w-[20px] h-[20px] items-center justify-center"
+                            onClick={() => setIsOpen(!isOpen)}
+                        >
+                            <Icon
+                                icon={
+                                    isOpen
+                                        ? "lucide:chevron-left"
+                                        : "lucide:chevron-right"
+                                }
+                                width={20}
+                            />
+                        </span>
+                    </>
+                )}
 
                 {/* inner content */}
-                <div
-                    className={`w-full h-full flex-col px-[8px] py-[10px] gap-[5px] overflow-hidden text-[14px] text-white ${
-                        isOpen ? " flex" : "hidden"
-                    }`}
-                >
-                    <span className="text-[16px] font-semibold">Modules</span>
-                    <SearchBar1 />
-                    <SidebarBtn1
+                <div>
+                    
+                </div>
+                {/* <SidebarBtn1
                         isActive={true}
                         label="Home"
                         labelTw="text-[#C2CBDE]"
@@ -191,9 +254,7 @@ export default function Sidebar({
                                 leadingIconSize={20}
                             /> 
                         </SidebarBtn1>
-                    </SidebarBtn1>
-                </div>
-
+                    </SidebarBtn1> */}
                 <div className="w-full h-full flex flex-col items-center p-[8px] gap-[10px]"></div>
             </div>
         </div>

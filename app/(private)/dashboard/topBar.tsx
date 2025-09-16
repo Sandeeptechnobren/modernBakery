@@ -6,6 +6,9 @@ import HorizontalSidebar from "./horizontalSidebar";
 import Logo from "../../components/logo";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import CustomDropdown from "@/app/components/customDropdown";
+import { logout } from "@/app/services/allApi";
 
 export default function TopBar({
     horizontalSidebar,
@@ -14,6 +17,7 @@ export default function TopBar({
     horizontalSidebar: boolean;
     toggleSidebar: () => void;
 }) {
+    const [isOpen, setIsOpen] = useState(false);
 
     const router = useRouter();
     const [searchBarValue, setSearchBarValue] = useState("");
@@ -24,18 +28,17 @@ export default function TopBar({
                 !horizontalSidebar ? "pl-[80px]" : "pl-[0px]"
             }`}
         >
-            {/* Top Bar start from here */}
+            {/* Top Bar start */}
             <div className="w-full h-[60px] flex">
-
-                {/* logo on horizontal sidebar */}
+                {/* Logo on horizontal sidebar */}
                 {horizontalSidebar && (
-                    <div className="w-[230px] px-[16px] py-[14px] bg-white border-b-[1px] border-[#E9EAEB]">
+                    <div className="w-[230px] px-[16px] py-[14px] bg-white border-b border-[#E9EAEB]">
                         <Logo width={128} height={35} />
                     </div>
                 )}
 
-                {/* top bar main content */}
-                <div className="w-full h-full px-[16px] py-[14px] flex justify-between items-center gap-1 sm:gap-0 bg-white border-b-[1px] border-[#E9EAEB]">
+                {/* Top bar main content */}
+                <div className="w-full h-full px-[16px] py-[14px] flex justify-between items-center gap-1 sm:gap-0 bg-white border-b border-[#E9EAEB]">
                     <div className="flex items-center gap-[20px]">
                         {!horizontalSidebar && (
                             <Icon
@@ -43,13 +46,23 @@ export default function TopBar({
                                 width={24}
                             />
                         )}
-                        <div className="w-full sm:w-[320px]">
-                            <SearchBar value={searchBarValue} onChange={(e) => setSearchBarValue(e.target.value)} />
-
+                        <div className="w-full hidden sm:w-[320px] sm:block">
+                            <SearchBar
+                                value={searchBarValue}
+                                onChange={(e) =>
+                                    setSearchBarValue(e.target.value)
+                                }
+                            />
                         </div>
                     </div>
+
                     <div className="flex items-center gap-[10px]">
-                        <IconButton icon="humbleicons:maximize" />
+                        <IconButton
+                            icon="humbleicons:maximize"
+                            onClick={() => {
+                                toggleSidebar();
+                            }}
+                        />
                         <IconButton icon="lucide:bell" notification={true} />
                         <IconButton
                             icon="mi:settings"
@@ -57,14 +70,48 @@ export default function TopBar({
                                 router.push("/dashboard/settings");
                             }}
                         />
-                        <ImageButton
-                            width={32}
-                            height={32}
-                            alt="Profile Picture"
-                            src="/dummyuser.jpg"
-                            onClick={() => {
-                                toggleSidebar();
-                            }}
+
+                        {/* Profile Dropdown */}
+                        <DismissibleDropdown
+                            isOpen={isOpen}
+                            setIsOpen={setIsOpen}
+                            button={
+                                <ImageButton
+                                    width={32}
+                                    height={32}
+                                    alt="Profile Picture"
+                                    src="/dummyuser.jpg"
+                                />
+                            }
+                            dropdown={
+                                <div className="absolute w-[200px] top-[40px] right-0 z-30">
+                                    <CustomDropdown
+                                        data={[
+                                            {
+                                                icon: "mynaui:lock",
+                                                label: "Change Password",
+                                                onClick: () => {
+                                                    setIsOpen(false);
+                                                    router.push(
+                                                        "/dashboard/settings/changePassword"
+                                                    );
+                                                },
+                                            },
+                                            {
+                                                icon: "tabler:logout",
+                                                label: "Logout",
+                                                onClick: () => {
+                                                    logout().then((res) => {
+                                                        if(res?.code === 200 || res?.code === 401) {
+                                                            router.push("/");
+                                                        }
+                                                    })
+                                                }
+                                            }
+                                        ]}
+                                    />
+                                </div>
+                            }
                         />
                     </div>
                 </div>

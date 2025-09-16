@@ -179,12 +179,14 @@ export default function Item() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
+                                    href="/dashboard/master/item/add"
                                     isActive={true}
-                                     href="/dashboard/master/item/add"
                                     leadingIcon="lucide:plus"
                                     label="Add Item"
-                                />,
+                                    labelTw="hidden sm:block"
+                                />
                             ],
+                           
                         },
                         footer: {
                             nextPrevBtn: true,

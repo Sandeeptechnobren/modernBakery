@@ -111,6 +111,7 @@ export default function Warehouse() {
             <div className="flex justify-between items-center mb-[20px]">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
                     Warehouse
+                    
                 </h1>
 
                 {/* top bar action buttons */}
@@ -161,11 +162,12 @@ export default function Warehouse() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
+                                    href="/dashboard/master/warehouse/addwarehouse"
                                     isActive={true}
-                                     href="/dashboard/master/warehouse/addwarehouse"
                                     leadingIcon="lucide:plus"
-                                    label="Add Warehouse"
-                                />,
+                                    label="Add Item"
+                                    labelTw="hidden sm:block"
+                                />
                             ],
                         },
                         footer: {
@@ -200,3 +202,10 @@ export default function Warehouse() {
         </>
     );
 }
+
+
+
+
+
+
+

@@ -48,16 +48,16 @@ const columns = [
                     {["Customer", "Channel", "Category"].map((item, index) => {
                         return (
                             <div
-                            key={index+1}
-                            className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                        >
-                            <span className="font-[500] text-[#181D27]">
-                                {index}
-                            </span>
-                            <span className="w-full overflow-hidden text-ellipsis">
-                                {item}
-                            </span>
-                        </div>
+                                key={index + 1}
+                                className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                            >
+                                <span className="font-[500] text-[#181D27]">
+                                    {index}
+                                </span>
+                                <span className="w-full overflow-hidden text-ellipsis">
+                                    {item}
+                                </span>
+                            </div>
                         );
                     })}
                 </>
@@ -132,10 +132,11 @@ export default function Customer() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
+                                    href="/dashboard/master/pricing/add"
                                     isActive={true}
                                     leadingIcon="lucide:plus"
-                                    label="Add Pricing Plan"
-                                    href="/dashboard/master/pricing/add"
+                                    label="Add Pricing"
+                                    labelTw="hidden sm:block"
                                 />,
                             ],
                         },

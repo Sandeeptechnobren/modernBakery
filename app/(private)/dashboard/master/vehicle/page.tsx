@@ -191,11 +191,12 @@ export default function Vehicle() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
+                                    href="/dashboard/master/vehicle/add"
                                     isActive={true}
-                                     href="/dashboard/master/vehicle/add"
                                     leadingIcon="lucide:plus"
-                                    label="Add Vehicle"
-                                />,
+                                    label="Add Item"
+                                    labelTw="hidden sm:block"
+                                />
                             ],
                         },
                         footer: {

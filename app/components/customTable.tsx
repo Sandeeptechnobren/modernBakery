@@ -138,7 +138,7 @@ function TableHeader() {
         header && (
             <>
                 <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-1 sm:gap-0">
-                    <div className="w-[320px]">
+                    <div className="w-[320px] invisible sm:visible">
                         {header?.searchBar && <SearchBar value={searchBarValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchBarValue(e.target.value)} />}
                     </div>
 

@@ -149,11 +149,12 @@ export default function Route() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
+                                    href="/dashboard/master/route/add"
                                     isActive={true}
-                                     href="/dashboard/master/route/add"
                                     leadingIcon="lucide:plus"
-                                    label="Add Route"
-                                />,
+                                    label="Add ROute"
+                                    labelTw="hidden sm:block"
+                                />
                             ],
                         },
                         footer: {

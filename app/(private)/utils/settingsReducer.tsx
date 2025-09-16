@@ -1,21 +1,45 @@
 import { SettingsDataType } from "../data/settings";
 
-export default function SettingsReducer(state: SettingsDataType, action: { type: string; payload: object }) {
-    console.log("hi from settings reducer");
+type Action = {
+    type: string;
+    payload?: { [key: string]: string };
+};
+
+export default function SettingsReducer(
+    state: SettingsDataType,
+    action: Action
+): SettingsDataType {
     switch (action.type) {
         case "layoutToggle":
-            // Return a new state based on the dispatched action
             return {
                 ...state,
                 layout: {
                     ...state.layout,
                     dashboard: {
                         ...state.layout.dashboard,
-                        value: state.layout.dashboard.value === "0" ? "1" : "0"
-                    }
-                }
+                        value: state.layout.dashboard.value === "0" ? "1" : "0",
+                    },
+                },
             };
+        case "themeChange":
+            return {
+                ...state,
+                theme: action.payload?.theme || state.theme,
+            };
+
+        case "toggleHorizontalSidebar":
+            return {
+                ...state,
+                layout: {
+                    ...state.layout,
+                    dashboard: {
+                        ...state.layout.dashboard,
+                        horizontalSidebar: !state.layout.dashboard.horizontalSidebar,
+                    },
+                },
+            };
+
         default:
             return state;
     }
-};
+}
