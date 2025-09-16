@@ -260,7 +260,7 @@ function TableBody() {
         useContext<columnFilterConfigType>(ColumnFilterConfig);
     const [selectedItems, setSelectedItems] = useState<Array<number>>([]);
     if(!Array.isArray(tableData)) throw new Error("Data must me in Array format")
-    const allItemsCount: number = tableData.length;
+    const allItemsCount: number = tableData.length || 0;
     const isAllSelected = selectedItems.length === allItemsCount;
     const isIndeterminate = selectedItems.length > 0 && !isAllSelected;
 

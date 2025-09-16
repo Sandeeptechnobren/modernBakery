@@ -117,7 +117,7 @@ export default function Customer() {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                const listRes = await companyList(); // assume it returns Company[]
+                const listRes = await companyList();
                 setCompanies(listRes.data);
             } catch (error: unknown) {
                 if (error instanceof Error) {
@@ -199,6 +199,7 @@ export default function Customer() {
                                 />,
                             ],
                         },
+                        pageSize: 5,
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
@@ -213,7 +214,7 @@ export default function Customer() {
                                     ),
                             },
                         ],
-                        pageSize: 10,
+                        
                     }}
                 />
             </div>
