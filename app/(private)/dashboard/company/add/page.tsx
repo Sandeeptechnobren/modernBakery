@@ -9,37 +9,12 @@ import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useState, useEffect } from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { countryList, addCompany } from "@/app/services/allApi";
 
 export default function AddCustomer() {
   const [isOpen, setIsOpen] = useState(false);
-
-  // Form states
-  const [companyType, setCompanyType] = useState("");
-  const [companyCode, setCompanyCode] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [companyLogo, setCompanyLogo] = useState("");
-  const [companyWebsite, setCompanyWebsite] = useState("");
-  const [primaryCode, setPrimaryCode] = useState("uae");
-  const [primaryContact, setPrimaryContact] = useState("");
-  const [tollFreeCode, setTollFreeCode] = useState("uae");
-  const [tollFreeNumber, setTollfreeNumber] = useState("");
-  const [email, setEmail] = useState("");
-  const [region, setRegion] = useState("");
-  const [subRegion, setSubRegion] = useState("");
-  const [district, setDistrict] = useState("");
-  const [town, setTown] = useState("");
-  const [street, setStreet] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [country, setCountry] = useState("");
-  const [tinNumber, setTinNumber] = useState("");
-  const [sellingCurrency, setSellingCurrency] = useState("USD");
-  const [purchaseCurrency, setPurchaseCurrency] = useState("USD");
-  const [vatNo, setVatNo] = useState("");
-  const [modules, setModules] = useState("");
-  const [serviceType, setServiceType] = useState("");
-
- 
   const [countries, setCountries] = useState<{ value: string; label: string }[]>([]);
   const [currency, setCurrency] = useState<{ value: string; label: string }[]>([]);
 
@@ -51,14 +26,84 @@ export default function AddCustomer() {
     currency?: string;
   };
 
-  // type ApiCompany = {
-  //   id?: string;
-  //   company_code?: string;
-  //   company_type?: string;
-  //   service_type?: string;
-  // };
+  // ✅ Yup Validation Schema
+  const validationSchema = Yup.object({
+    companyName: Yup.string().required("Company name is required"),
+    companyCode: Yup.string().required("Company code is required"),
+    email: Yup.string().email("Invalid email").required("Email is required"),
+    tinNumber: Yup.string().required("TIN Number is required"),
+    vatNo: Yup.number().typeError("VAT must be a number"),
+    primaryContact: Yup.string().required("Primary contact is required"),
+    country: Yup.string().required("Country is required"),
+  });
 
-  // ✅ Fetch dropdown data
+  // ✅ Formik
+  const formik = useFormik({
+    initialValues: {
+      companyType: "",
+      companyCode: "",
+      companyName: "",
+      companyLogo: "",
+      companyWebsite: "",
+      primaryCode: "uae",
+      primaryContact: "",
+      tollFreeCode: "uae",
+      tollFreeNumber: "",
+      email: "",
+      region: "",
+      subRegion: "",
+      district: "",
+      town: "",
+      street: "",
+      landmark: "",
+      country: "",
+      tinNumber: "",
+      sellingCurrency: "USD",
+      purchaseCurrency: "USD",
+      vatNo: "",
+      modules: "",
+      serviceType: "",
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      const payload = {
+        company_code: values.companyCode,
+        company_name: values.companyName,
+        email: values.email,
+        tin_number: values.tinNumber,
+        vat: values.vatNo,
+        country_id: values.country,
+        selling_currency: values.sellingCurrency,
+        purchase_currency: values.purchaseCurrency,
+        toll_free_no: `${values.tollFreeCode}${values.tollFreeNumber}`,
+        logo: values.companyLogo,
+        website: values.companyWebsite,
+        service_type: values.serviceType,
+        company_type: values.companyType,
+        status: "active",
+        module_access: values.modules,
+        district: values.district,
+        town: values.town,
+        street: values.street,
+        landmark: values.landmark,
+        region: values.region,
+        sub_region: values.subRegion,
+        primary_contact: `${values.primaryCode}${values.primaryContact}`,
+      };
+
+      try {
+        const res = await addCompany(payload);
+        console.log("Company Added ✅", res);
+        alert("Company added successfully!");
+        formik.resetForm();
+      } catch (error) {
+        console.error("Add Company failed ❌", error);
+        alert("Failed to add company!");
+      }
+    },
+  });
+
+
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
@@ -73,18 +118,6 @@ export default function AddCustomer() {
         }));
         setCurrency(countryCurrency);
         setCountries(countryOptions);
-
-        // const companyRes = await companyList();
-        // const companyOptions = companyRes.data.map((c: ApiCompany) => ({
-        //   value: c.company_code ?? "",
-        //   label: c.company_type ?? "",
-        // }));
-        // const companyService = companyRes.data.map((c: ApiCompany) => ({
-        //   value: c.company_code ?? "",
-        //   label: c.service_type ?? "",
-        // }));
-        // setCompanies(companyOptions);
-        // setServiceType(companyService);
       } catch (error) {
         console.error("Failed to fetch dropdown data ❌", error);
       }
@@ -92,43 +125,6 @@ export default function AddCustomer() {
 
     fetchDropdowns();
   }, []);
-
-  
-  const handleSubmit = async () => {
-    const payload = {
-      company_code: companyCode,
-      company_name: companyName,
-      email,
-      tin_number: tinNumber,
-      vat: vatNo,
-      country_id: country,
-      selling_currency: sellingCurrency,
-      purchase_currency: purchaseCurrency,
-      toll_free_no: `${tollFreeCode}${tollFreeNumber}`,
-      logo: companyLogo,
-      website: companyWebsite,
-      service_type: serviceType, 
-      company_type: companyType,
-      status: "active",
-      module_access: modules,
-      district,
-      town,
-      street,
-      landmark,
-      region,
-      sub_region: subRegion,
-      primary_contact: `${primaryCode}${primaryContact}`,
-    };
-
-    try {
-      const res = await addCompany(payload);
-      console.log("Company Added ✅", res);
-      alert("Company added successfully!");
-    } catch (error) {
-      console.error("Add Company failed ❌", error);
-      alert("Failed to add company!");
-    }
-  };
 
   return (
     <>
@@ -144,7 +140,12 @@ export default function AddCustomer() {
         </div>
       </div>
 
-      <div>
+      <form
+  onSubmit={(e) => {
+    e.preventDefault();
+    formik.handleSubmit();
+  }}
+>
         {/* Company Details */}
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Company Details</h2>
@@ -152,25 +153,27 @@ export default function AddCustomer() {
             <InputFields
               name="companyName"
               label="Company Name"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
+              value={formik.values.companyName}
+              onChange={formik.handleChange}
+              error={formik.touched.companyName && formik.errors.companyName}
             />
             <InputFields
               name="companyType"
               label="Company Type"
-              value={companyType}
-              onChange={(e) => setCompanyType(e.target.value)}
+              value={formik.values.companyType}
+              onChange={formik.handleChange}
               options={[
-                                {value: "manufacturing", label: "Manufacturing"},
-                                { value: "trading", label: "Trading" },
-                            ]}
+                { value: "manufacturing", label: "Manufacturing" },
+                { value: "trading", label: "Trading" },
+              ]}
             />
             <div className="flex items-end gap-2 max-w-[406px]">
               <InputFields
                 name="companyCode"
                 label="Company Code"
-                value={companyCode}
-                onChange={(e) => setCompanyCode(e.target.value)}
+                value={formik.values.companyCode}
+                onChange={formik.handleChange}
+                error={formik.touched.companyCode && formik.errors.companyCode}
               />
               <IconButton
                 bgClass="white"
@@ -188,14 +191,15 @@ export default function AddCustomer() {
               name="companyLogo"
               label="Company Logo"
               type="file"
-              value={companyLogo}
-              onChange={(e) => setCompanyLogo(e.target.value)}
+              onChange={(e) =>
+                formik.setFieldValue("companyLogo", (e.currentTarget as HTMLInputElement).files?.[0])
+              }
             />
             <InputFields
               name="companyWebsite"
               label="Company Website"
-              value={companyWebsite}
-              onChange={(e) => setCompanyWebsite(e.target.value)}
+              value={formik.values.companyWebsite}
+              onChange={formik.handleChange}
             />
           </div>
         </ContainerCard>
@@ -207,26 +211,38 @@ export default function AddCustomer() {
             <FormInputField
               type="contact"
               label="Primary Contact"
-              contact={primaryContact}
-              code={primaryCode}
-              onContactChange={(e) => setPrimaryContact(e.target.value)}
-              onCodeChange={(e) => setPrimaryCode(e.target.value)}
+              contact={formik.values.primaryContact}
+              code={formik.values.primaryCode}
+              onContactChange={(e) =>
+                formik.setFieldValue("primaryContact", e.target.value)
+              }
+              onCodeChange={(e) =>
+                formik.setFieldValue("primaryCode", e.target.value)
+              }
               options={countries}
+              error={
+                formik.touched.primaryContact && formik.errors.primaryContact
+              }
             />
             <FormInputField
               type="contact"
               label="Toll Free Number"
-              contact={tollFreeNumber}
-              code={tollFreeCode}
-              onContactChange={(e) => setTollfreeNumber(e.target.value)}
-              onCodeChange={(e) => setTollFreeCode(e.target.value)}
+              contact={formik.values.tollFreeNumber}
+              code={formik.values.tollFreeCode}
+              onContactChange={(e) =>
+                formik.setFieldValue("tollFreeNumber", e.target.value)
+              }
+              onCodeChange={(e) =>
+                formik.setFieldValue("tollFreeCode", e.target.value)
+              }
               options={countries}
             />
             <InputFields
               name="email"
               label="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              error={formik.touched.email && formik.errors.email}
             />
           </div>
         </ContainerCard>
@@ -238,51 +254,53 @@ export default function AddCustomer() {
             <InputFields
               name="region"
               label="Region"
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
+              value={formik.values.region}
+              onChange={formik.handleChange}
             />
             <InputFields
               name="subRegion"
               label="Sub Region"
-              value={subRegion}
-              onChange={(e) => setSubRegion(e.target.value)}
+              value={formik.values.subRegion}
+              onChange={formik.handleChange}
             />
             <InputFields
               name="district"
               label="District"
-              value={district}
-              onChange={(e) => setDistrict(e.target.value)}
+              value={formik.values.district}
+              onChange={formik.handleChange}
             />
             <InputFields
               name="town"
               label="Town/Village"
-              value={town}
-              onChange={(e) => setTown(e.target.value)}
+              value={formik.values.town}
+              onChange={formik.handleChange}
             />
             <InputFields
               name="street"
               label="Street"
-              value={street}
-              onChange={(e) => setStreet(e.target.value)}
+              value={formik.values.street}
+              onChange={formik.handleChange}
             />
             <InputFields
               name="landmark"
               label="Landmark"
-              value={landmark}
-              onChange={(e) => setLandmark(e.target.value)}
+              value={formik.values.landmark}
+              onChange={formik.handleChange}
             />
             <InputFields
               name="country"
               label="Country"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
+              value={formik.values.country}
+              onChange={formik.handleChange}
               options={countries}
+              error={formik.touched.country && formik.errors.country}
             />
             <InputFields
               name="tinNumber"
               label="TIN Number"
-              value={tinNumber}
-              onChange={(e) => setTinNumber(e.target.value)}
+              value={formik.values.tinNumber}
+              onChange={formik.handleChange}
+              error={formik.touched.tinNumber && formik.errors.tinNumber}
             />
           </div>
         </ContainerCard>
@@ -294,22 +312,23 @@ export default function AddCustomer() {
             <InputFields
               name="sellingCurrency"
               label="Selling Currency"
-              value={sellingCurrency}
-              onChange={(e) => setSellingCurrency(e.target.value)}
+              value={formik.values.sellingCurrency}
+              onChange={formik.handleChange}
               options={currency}
             />
             <InputFields
               name="purchaseCurrency"
               label="Purchase Currency"
-              value={purchaseCurrency}
-              onChange={(e) => setPurchaseCurrency(e.target.value)}
+              value={formik.values.purchaseCurrency}
+              onChange={formik.handleChange}
               options={currency}
             />
             <InputFields
               name="vatNo"
               label="VAT No (%)"
-              value={vatNo}
-              onChange={(e) => setVatNo(e.target.value)}
+              value={formik.values.vatNo}
+              onChange={formik.handleChange}
+              error={formik.touched.vatNo && formik.errors.vatNo}
             />
           </div>
         </ContainerCard>
@@ -318,41 +337,42 @@ export default function AddCustomer() {
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Additional Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <InputFields name="modules" label="Modules" 
-            value={modules}
-             onChange={(e) => 
-             setModules(e.target.value)} />
-
-             
             <InputFields
-              name="company"
+              name="modules"
+              label="Modules"
+              value={formik.values.modules}
+              onChange={formik.handleChange}
+            />
+            <InputFields
+              name="serviceType"
               label="Service Type"
-              value={serviceType}
-              onChange={(e) => setServiceType(e.target.value)}
+              value={formik.values.serviceType}
+              onChange={formik.handleChange}
               options={[
-                                {value: "branch", label: "Branch"},
-                                { value: "warehouse", label: "Warehouse" },
-                            ]}
+                { value: "branch", label: "Branch" },
+                { value: "warehouse", label: "Warehouse" },
+              ]}
             />
           </div>
         </ContainerCard>
-      </div>
 
-      {/* Footer Actions */}
-      <div className="flex justify-end gap-3 mt-6">
-        <button
-          className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
-          type="button"
-        >
-          Cancel
-        </button>
-        <SidebarBtn
-          label="Submit"
-          isActive={true}
-          leadingIcon="mdi:check"
-          onClick={handleSubmit}
-        />
-      </div>
+        {/* Footer Actions */}
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
+            type="button"
+            onClick={() => formik.resetForm()}
+          >
+            Cancel
+          </button>
+          <SidebarBtn
+            label="Submit"
+            isActive={true}
+            leadingIcon="mdi:check"
+            type="submit"
+          />
+        </div>
+      </form>
     </>
   );
 }

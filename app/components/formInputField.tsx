@@ -10,6 +10,7 @@ type Option = {
 type Props = {
   label: string;
   type: "amount" | "contact";
+  error?: string | false | undefined;
   // Amount with currency
   amount?: string;
   currency?: string;
@@ -38,6 +39,7 @@ export default function FormInputField({
   onContactChange,
   onCodeChange,
   options,
+  error,
 }: Props) {
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -67,25 +69,28 @@ export default function FormInputField({
         </div>
       ) : (
         // 📞 Contact with Code
-        <div className="flex w-full">
-          <select
-            value={code}
-            onChange={onCodeChange}
-            className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
-          >
-            {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <input
-            type="tel"
-            value={contact}
-            onChange={onContactChange}
-            placeholder="Enter contact number"
-            className="border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px]"
-          />
+        <div className="flex flex-col w-full">
+          <div className="flex">
+            <select
+              value={code}
+              onChange={onCodeChange}
+              className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
+            >
+              {options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="tel"
+              value={contact}
+              onChange={onContactChange}
+              placeholder="Enter contact number"
+              className="border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px]"
+            />
+          </div>
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
       )}
     </div>

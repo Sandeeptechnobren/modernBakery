@@ -61,9 +61,9 @@ export const logout = async () => {
   }
 };
 
-export const addCompany = async (data: Record<string, string>) => {
+export const addCompany = async (payload: Record<string, string>) => {
   try {
-    const res = await API.post("/api/master/company/add_company", data);
+    const res = await API.post("/api/master/company/add_company", payload);
     return res.data;
   } catch (error) {
     console.error("Add company failed ❌", error);
@@ -74,13 +74,14 @@ export const addCompany = async (data: Record<string, string>) => {
 
 
 
-export const countryList = async (data: Record<string, string>) => {
+export const countryList = async (params: Record<string, string>) => {
   try {
-    const res = await API.get("/api/master/country/list_country", data);
+    const res = await API.get("/api/master/country/list_country", { params });
     return res.data;
   } catch (error) {
     console.error("Country List failed ❌", error);
     throw error;
   }
 };
+
 
