@@ -32,6 +32,21 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "mdi:account-circle",
                 iconColor: "text-green-500",
             },
+              {
+                isActive: false,
+                href: "/dashboard/settings/user-types",
+                label: "Users Types",
+                leadingIcon: "mdi:account-circle",
+                iconColor: "text-green-500",
+            },
+
+             {
+                isActive: false,
+                href: "/dashboard/settings/outlet-channel",
+                label: "Outlet Channel",
+                leadingIcon: "mdi:account-circle",
+                iconColor: "text-green-500",
+            },
             {
                 isActive: false,
                 href: "/dashboard/settings/role",

@@ -1,5 +1,7 @@
 // app/services/allApi.ts
-import axios from "axios";
+
+import axios, { AxiosError } from "axios"; 
+
 
 const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, 
