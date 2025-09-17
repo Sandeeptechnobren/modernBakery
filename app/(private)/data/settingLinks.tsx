@@ -39,13 +39,7 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "mdi:account-tie",
                 iconColor: "text-green-500",
             },
-            {
-                isActive: false,
-                href: "/dashboard/settings/country",
-                label: "Country",
-                leadingIcon: "mdi:earth",
-                iconColor: "text-green-500",
-            },
+            
             {
                 isActive: false,
                 href: "#",
@@ -111,12 +105,12 @@ export const initialLinkData: SidebarDataType[] = [
                         iconColor: "text-yellow-400",
                     },
                     {
-                        isActive: false,
-                        href: "/dashboard/master/pricing",
-                        label: "Country",
-                        leadingIcon: "mdi:currency-usd",
-                        iconColor: "text-yellow-400",
-                    },
+                            isActive: false,
+                            href: "/dashboard/settings/country",
+                            label: "Country",
+                            leadingIcon: "mdi:earth",
+                            iconColor: "text-green-500",
+                        },
                     {
                         isActive: false,
                         href: "/dashboard/master/vehicle",

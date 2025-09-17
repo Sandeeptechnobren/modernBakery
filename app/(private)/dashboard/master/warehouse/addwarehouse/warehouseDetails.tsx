@@ -1,46 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import React from 'react';
 import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-export default function WarehouseDetails() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [warehouseType, setWarehouseType] = useState("");
-    const [warehouseCode, setWarehouseCode] = useState("");
-    const [agentId, setAgentId] = useState("");
-    const [ownerName, setOwnerName] = useState("");
-    const [bussinessType, setBussinessType] = useState("");
+type Props = {
+    values: Record<string, string>;
+    errors?: Record<string, string>;
+    touched?: Record<string, boolean>;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    setFieldValue: (field: string, value: string) => void;
+};
+
+export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue }: Props) {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const { warehouseOptions, loading } = useAllDropdownListData();
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <InputFields
+            <InputFields
                 label="Registration Number "
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
+                name="registrationNumber"
+                value={values.registrationNumber}
+                onChange={handleChange}
+                error={errors?.registrationNumber && touched?.registrationNumber ? errors.registrationNumber : false}
             />
+
             <InputFields
                 label="Warehouse Type"
-                value={warehouseType}
-                onChange={(e) => setWarehouseType(e.target.value)}
-                options={[
-                    { value: "agent", label: "Agent" },
-                    { value: "hariss outlet", label: "Hariss Outlet" },
-                ]}
+                name="warehouseType"
+                value={values.warehouseType}
+                onChange={handleChange}
+                options={
+                    [{value:"1", label:"Type 1"},
+                    {value:"2", label:"Type 2"},
+                    {value:"3", label:"Type 3"}
+                    ]
+                }
+                error={errors?.warehouseType && touched?.warehouseType ? errors.warehouseType : false}
             />
 
             <InputFields
                 label="Warehouse Name"
-                value={warehouseCode}
-                onChange={(e) => setWarehouseCode(e.target.value)}
+                name="warehouseName"
+                value={values.warehouseName}
+                onChange={handleChange}
+                error={errors?.warehouseName && touched?.warehouseName ? errors.warehouseName : false}
             />
 
             <div className="flex items-end gap-2 max-w-[406px]">
                 <InputFields
                     label="Warehouse Code"
-                    value={warehouseCode}
-                    onChange={(e) => setWarehouseCode(e.target.value)}
+                    name="warehouseCode"
+                    value={values.warehouseCode}
+                    onChange={handleChange}
+                    error={errors?.warehouseCode && touched?.warehouseCode ? errors.warehouseCode : false}
                 />
 
                 <IconButton
@@ -50,41 +66,32 @@ export default function WarehouseDetails() {
                     onClick={() => setIsOpen(true)}
                 />
 
-                <SettingPopUp
-                    isOpen={isOpen}
-                    onClose={() => setIsOpen(false)}
-                    title="Warehouse Code"
-                />
+                <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Warehouse Code" />
             </div>
 
-            <InputFields
-                label="Agent ID"
-                value={agentId}
-                onChange={(e) => setAgentId(e.target.value)}
-            />
+            <InputFields label="Agent ID" name="agentId" value={values.agentId} onChange={handleChange} error={errors?.agentId && touched?.agentId ? errors.agentId : false} />
 
-            <InputFields
-                label="Warehouse Owner Name "
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
-            />
+            <InputFields label="Warehouse Owner Name " name="ownerName" value={values.ownerName} onChange={handleChange} error={errors?.ownerName && touched?.ownerName ? errors.ownerName : false} />
 
             <InputFields
                 label="Bussiness Type"
-                value={bussinessType}
-                onChange={(e) => setBussinessType(e.target.value)}
+                name="bussinessType"
+                value={values.bussinessType}
+                onChange={handleChange}
                 options={[{ value: "B2B ", label: "B2B " }]}
+                error={errors?.bussinessType && touched?.bussinessType ? errors.bussinessType : false}
             />
-            
-            
+
             <InputFields
                 label="Status"
-                value={bussinessType}
-                onChange={(e) => setBussinessType(e.target.value)}
-               options={[
+                name="statusType"
+                value={values.statusType}
+                onChange={handleChange}
+                options={[
                     { value: "active", label: "Active" },
                     { value: "inactive", label: "Inactive" },
                 ]}
+                error={errors?.statusType && touched?.statusType ? errors.statusType : false}
             />
         </div>
     );

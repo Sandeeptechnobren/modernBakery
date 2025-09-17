@@ -10,8 +10,15 @@ import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useState, useEffect } from "react";
 import { countryList, addCompany } from "@/app/services/allApi";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function AddCustomer() {
+    const { countryOptions,companyCustomersType, companyOptions } = useAllDropdownListData();
+
+    // Debug: print companyOptions to the console
+    useEffect(() => {
+        console.log('companyOptions:', countryOptions);
+    }, [companyOptions]);
     const [isOpen, setIsOpen] = useState(false);
 
     // Form states
@@ -356,10 +363,7 @@ export default function AddCustomer() {
                             label="Service Type"
                             value={serviceType}
                             onChange={(e) => setServiceType(e.target.value)}
-                            options={[
-                                { value: "branch", label: "Branch" },
-                                { value: "warehouse", label: "Warehouse" },
-                            ]}
+                            options={companyOptions}
                         />
                     </div>
                 </ContainerCard>

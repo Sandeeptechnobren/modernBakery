@@ -35,14 +35,20 @@ export default function EditCountry() {
   const [isOpen, setIsOpen] = useState(false);
 
   // ✅ Pre-filled initial values
-  const initialValues = {
+  type CountryFormValues = {
+    country_code: string;
+    country_name: string;
+    currency: string;
+  };
+
+  const initialValues: CountryFormValues = {
     country_code: queryCode,
     country_name: queryName,
     currency: queryCurrency,
   };
 
-  // ✅ Submit handler for editing only
-  const handleSubmit = async (values: any) => {
+  // ✅ Submit handler for editing only (Formik signature)
+  const handleSubmit = async (values: CountryFormValues) => {
     if (!queryId) return;
 
     try {
@@ -154,12 +160,7 @@ export default function EditCountry() {
                 Cancel
               </button>
 
-              <SidebarBtn
-                label="Update"
-                isActive={true}
-                leadingIcon="mdi:check"
-                onClick={() => handleSubmit()}
-              />
+              <SidebarBtn label="Update" isActive={true} leadingIcon="mdi:check" type="submit" />
             </div>
           </Form>
         )}
