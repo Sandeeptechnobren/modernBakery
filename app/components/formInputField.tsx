@@ -11,6 +11,7 @@ type Props = {
   label: string;
   type: "amount" | "contact";
   error?: string | false | undefined;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   // Amount with currency
   amount?: string;
   currency?: string;
@@ -40,6 +41,7 @@ export default function FormInputField({
   onCodeChange,
   options,
   error,
+  onBlur,
 }: Props) {
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -52,6 +54,7 @@ export default function FormInputField({
             type="number"
             value={amount}
             onChange={onAmountChange}
+            onBlur={onBlur}
             placeholder="0.00"
             className="border border-gray-300 rounded-l-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px]"
           />
@@ -86,6 +89,7 @@ export default function FormInputField({
               type="tel"
               value={contact}
               onChange={onContactChange}
+              onBlur={onBlur}
               placeholder="Enter contact number"
               className="border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px]"
             />

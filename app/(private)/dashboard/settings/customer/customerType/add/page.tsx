@@ -1,14 +1,15 @@
 "use client";
 
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
 import ContainerCard from "@/app/components/containerCard";
-import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { useState, useEffect } from "react";
-import { customerTypeList, addCustomerType } from "@/app/services/allApi";
+import InputFields from "@/app/components/inputFields";
+import { addCustomerType, customerTypeList } from "@/app/services/allApi";
+import { Icon } from "@iconify-icon/react";
+import { useFormik } from "formik";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import * as Yup from "yup";
 
-// API response type
 type ApiCustomerType = {
   id: string;
   code: string;
@@ -20,13 +21,8 @@ export default function AddCustomerType() {
   const [customerTypes, setCustomerTypes] = useState<
     { value: string; label: string }[]
   >([]);
-  const [formData, setFormData] = useState({
-    customerType: "",
-    customerCode: "",
-    status: "active",
-  });
 
-
+  // ✅ Fetch customer type list for dropdown
   useEffect(() => {
     const fetchCustomerTypes = async () => {
       try {
@@ -44,23 +40,32 @@ export default function AddCustomerType() {
     fetchCustomerTypes();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // ✅ Formik setup
+  const formik = useFormik({
+    initialValues: {
+      customerType: "",
+      customerCode: "",
+      status: "active",
+    },
+    validationSchema: Yup.object({
+      customerType: Yup.string().required("Customer type is required"),
+      customerCode: Yup.string().required("Customer code is required"),
+      status: Yup.string().required("Status is required"),
+    }),
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await addCustomerType(formData);
-      console.log("✅ Customer Type Added:", res);
-      alert("Customer type added successfully!");
-      setFormData({ customerType: "", customerCode: "", status: "active" });
-    } catch (error) {
-      console.error("❌ Add Customer Type failed", error);
-      alert("Failed to add customer type");
-    }
-  };
+    onSubmit: async (values, { resetForm }) => {
+        console.log("Submitting values:", values);
+      try {
+        const res = await addCustomerType(values);
+        console.log("✅ Customer Type Added:", res);
+        alert("Customer type added successfully!");
+        resetForm();
+      } catch (error) {
+        console.error("❌ Add Customer Type failed", error);
+        alert("Failed to add customer type");
+      }
+    },
+  });
 
   return (
     <>
@@ -76,7 +81,7 @@ export default function AddCustomerType() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={formik.handleSubmit}>
         {/* Customer Type Details */}
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Customer Type Details</h2>
@@ -85,8 +90,10 @@ export default function AddCustomerType() {
             <InputFields
               name="customerType"
               label="Customer Type"
-              value={formData.customerType}
-              onChange={handleChange}
+              value={formik.values.customerType}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.customerType && formik.errors.customerType}
               options={customerTypes}
             />
 
@@ -94,16 +101,20 @@ export default function AddCustomerType() {
             <InputFields
               name="customerCode"
               label="Customer Code"
-              value={formData.customerCode}
-              onChange={handleChange}
+              value={formik.values.customerCode}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.customerCode && formik.errors.customerCode}
             />
 
-            {/* Status Dropdown */}
+            {/* Status */}
             <InputFields
               name="status"
               label="Status"
-              value={formData.status}
-              onChange={handleChange}
+              value={formik.values.status}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.status && formik.errors.status}
               options={[
                 { value: "active", label: "Active" },
                 { value: "inactive", label: "Inactive" },
@@ -117,16 +128,16 @@ export default function AddCustomerType() {
           <button
             className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
             type="button"
-            onClick={() => setFormData({ customerType: "", customerCode: "", status: "active" })}
           >
             Cancel
           </button>
-          <SidebarBtn
-            label="Submit"
-            isActive={true}
-            leadingIcon="mdi:check"
+          <button
+            className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 bg-red-600 text-white-500 text-gray-700 hover:bg-gray-100"
             type="submit"
-          />
+           
+          >
+            submit
+          </button>
         </div>
       </form>
     </>

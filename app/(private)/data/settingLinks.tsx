@@ -20,8 +20,8 @@ export const initialLinkData: SidebarDataType[] = [
         data: [
             {
                 isActive: false,
-                href: "/dashboard/settings/userRole",
-                label: "Add Roles",
+                href: "/dashboard/settings/theme",
+                label: "Theme",
                 leadingIcon: "hugeicons:workflow-square-06",
                 iconColor: "text-green-500",
             },
@@ -37,13 +37,6 @@ export const initialLinkData: SidebarDataType[] = [
                 href: "/dashboard/settings/role",
                 label: "Roles",
                 leadingIcon: "mdi:account-tie",
-                iconColor: "text-green-500",
-            },
-            {
-                isActive: false,
-                href: "/dashboard/settings/changePassword",
-                label: "Change Password",
-                leadingIcon: "mynaui:lock",
                 iconColor: "text-green-500",
             },
             {
@@ -126,7 +119,7 @@ export const initialLinkData: SidebarDataType[] = [
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/master/warehouse",
+                        href: "/dashboard/settings/company/subRegion",
                         label: "Sub Region",
                         leadingIcon: "tabler:building-warehouse",
                         iconColor: "text-violet-500",
@@ -164,7 +157,7 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [
                     {
                         isActive: false,
-                        href: "/dashboard/master/customer",
+                        href: "/dashboard/settings/customer/customerType",
                         label: "Customer Type",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",

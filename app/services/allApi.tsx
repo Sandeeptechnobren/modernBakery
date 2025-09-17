@@ -85,3 +85,49 @@ export const countryList = async (params: Record<string, string>) => {
 };
 
 
+
+
+export const regionList = async (params: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/master/region/list_region", { params }); 
+    return res.data;
+  } catch (error) {
+    console.error("Region List failed ❌", error);
+    throw error;
+  }
+};
+
+
+export const subRegionList = async (params: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/master/area/list_area", { params });
+    return res.data;
+  } catch (error) {
+    console.error("Sub Region List failed ❌", error);
+    throw error;
+  }
+};
+
+
+
+
+export const customerTypeList = async (params?: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/customer-type/list", { params });
+    return res.data;
+  } catch (error) {
+    console.error("Customer Type List failed ❌", error);
+    throw error;
+  }
+};
+
+
+export const addCustomerType = async (payload: Record<string, string>) => {
+  try {
+    const res = await API.post("/api/settings/customer-type/create", payload);
+    return res.data;
+  } catch (error) {
+    console.error("Add Customer Type failed ❌", error);
+    throw error;
+  }
+};
