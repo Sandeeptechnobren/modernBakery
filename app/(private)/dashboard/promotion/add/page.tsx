@@ -4,7 +4,7 @@ import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import SelectKeyCombination from "./selectKeyCombination";
 import KeyValue from "./keyValue";
 import Promotion from "./promotion";

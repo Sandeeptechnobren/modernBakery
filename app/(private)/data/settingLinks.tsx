@@ -62,8 +62,15 @@ export const initialLinkData: SidebarDataType[] = [
             },
             {
                 isActive: false,
-                href: "/dashboard",
-                label: "Reason",
+                href: "/dashboard/settings/region",
+                label: "Region",
+                leadingIcon: "lucide:life-buoy",
+                iconColor: "text-green-500",
+            },
+               {
+                isActive: false,
+                href: "/dashboard/settings/routetype",
+                label: "Route Type",
                 leadingIcon: "lucide:life-buoy",
                 iconColor: "text-green-500",
             },

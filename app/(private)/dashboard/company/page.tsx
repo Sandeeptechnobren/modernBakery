@@ -54,53 +54,6 @@ const dropdownDataList: DropdownItem[] = [
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
-// const columns = [
-//     {
-//         key: "code",
-//         label: "Code",
-//         render: (row: TableDataType) => (
-//             <span className="font-semibold text-[#181D27] text-[14px]">
-//                 {row.code}
-//             </span>
-//         ),
-//     },
-//     {
-//         key: "companyName",
-//         label: "Company Name",
-//         render: (row: TableDataType) => (
-//             <Link
-//                 href={`/dashboard/company/${row.id}/overview`}
-//                 className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
-//             >
-//                 {row.companyName}
-//             </Link>
-//         ),
-//         isSortable: true,
-//     },
-//     { key: "companyType", label: "Company Type", isSortable: true },
-//     { key: "phoneNumber", label: "Phone Number", width: 150 },
-//     { key: "region", label: "Region" },
-//     { key: "subRegion", label: "Sub Region" },
-//     { key: "district", label: "District" },
-//     { key: "country", label: "Country" },
-//     {
-//         key: "status",
-//         label: "Status",
-//         render: (row: TableDataType) => (
-//             <div className="flex items-center">
-//                 {row.status === "Active" ? (
-//                     <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-//                         Active
-//                     </span>
-//                 ) : (
-//                     <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-//                         Inactive
-//                     </span>
-//                 )}
-//             </div>
-//         ),
-//     },
-// ];
 
 const columns = [
   { key: "company_code", label: "Company Code" },
@@ -221,3 +174,5 @@ export default function Customer() {
         </>
     );
 }
+
+

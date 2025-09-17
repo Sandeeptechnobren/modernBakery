@@ -1,7 +1,6 @@
 import { Icon } from "@iconify-icon/react";
 import { useState } from "react";
 import DismissibleDropdown from "./dismissibleDropdown";
-import BorderIconButton from "./borderIconButton";
 import CustomDropdown from "./customDropdown";
 
 export default function InputDropdown({
