@@ -40,7 +40,7 @@ export default function DismissibleDropdown({
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, []); // The dependency array is empty because the logic doesn't depend on wrapperRef
+    }); // The dependency array is empty because the logic doesn't depend on wrapperRef
 
     return (
         <div className="relative" ref={wrapperRef}>

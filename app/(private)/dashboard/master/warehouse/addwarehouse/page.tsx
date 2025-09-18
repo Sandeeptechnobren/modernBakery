@@ -28,12 +28,12 @@ type FormValues = {
     region_id: string;
     area_id: string;
     district: string;
-    town: string;
+    town_village: string;
     street: string;
     landmark: string;
     latitude: string;
     longitude: string;
-    thresholdRadius: string;
+    threshold_radius: string;
     device_no: string;
     is_efris: string;
     stock_capital: string;
@@ -58,12 +58,12 @@ export default function addwarehouse() {
         region_id: '',
         area_id: '',
         district: '',
-        town: '',
+        town_village: '',
         street: '',
         landmark: '',
         latitude: '',
         longitude: '',
-        thresholdRadius: '',
+        threshold_radius: '',
         device_no: '',
         is_efris: '',
         stock_capital: '',
@@ -85,7 +85,7 @@ export default function addwarehouse() {
         area_id: Yup.string().required('Sub Region is required'),
         latitude: Yup.string().required('Latitude is required').matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Latitude must be a valid decimal number'),
         longitude: Yup.string().required('Longitude is required').matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Longitude must be a valid decimal number'),
-        thresholdRadius: Yup.string().required('Threshold Radius is required').matches(/^\d+(?:\.\d+)?$/, 'Threshold Radius must be numeric'),
+        threshold_radius: Yup.string().required('Threshold Radius is required').matches(/^\d+(?:\.\d+)?$/, 'Threshold Radius must be numeric'),
         device_no: Yup.string().required('Device No. is required').matches(/^\d+$/, 'Device No. must be numeric'),
         is_efris: Yup.string().required('EFRIS Configuration is required').min(3, 'EFRIS Configuration must be at least 3 characters'),
     });

@@ -19,6 +19,7 @@ type Props = {
   id?: string;
   width?: string;
   error?: string | false;
+  disabled?: boolean;
 };
 
 export default function InputFields({
@@ -31,7 +32,8 @@ export default function InputFields({
   type = "text",
   width = "max-w-[406px]",
   error,
-  onBlur,
+  disabled,
+  onBlur
 }: Props) {
   return (
     <div className={`flex flex-col gap-2 w-full ${width}`}>
@@ -78,9 +80,9 @@ export default function InputFields({
           type="text"
           value={value ?? ""}
           onChange={onChange}
+          disabled={disabled}
           onBlur={onBlur}
-          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 ${error ? "border-red-500" : "border-gray-300"
-            }`}
+          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
           placeholder={`Enter ${label}`}
         />
       )}

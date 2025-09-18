@@ -13,7 +13,7 @@ export default function Home() {
         isVerify().then((res) => {
             if (res.code === 200) router.push("/dashboard");
             else setIsLoading(false);
-        }).catch(err => setIsLoading(false));
-    }, []);
+        }).catch(() => setIsLoading(false));
+    });
     return isLoading ? <Loading /> : <LoginPage />;
 }

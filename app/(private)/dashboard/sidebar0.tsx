@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Logo from "../../components/logo";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
@@ -16,6 +17,7 @@ export default function Sidebar({
 }) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [activeHref, setActiveHref] = useState<string>("");
+  const pathname = usePathname();
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) => ({
@@ -40,7 +42,22 @@ export default function Sidebar({
   };
 
   useEffect(() => {
-    setActiveHref(window.location.pathname);
+    const current = pathname ?? window.location.pathname;
+    setActiveHref(current);
+
+    const initialOpen: Record<string, boolean> = {};
+    data.forEach((group) => {
+      group.data.forEach((link) => {
+        if (link.children && link.children.length > 0) {
+          const shouldOpen = link.children.some((child) => child.href === current);
+          if (shouldOpen) {
+            initialOpen[link.label] = true;
+          }
+        }
+      });
+    });
+
+    setOpenMenus((prev) => ({ ...prev, ...initialOpen }));
   }, [])
 
   return (

@@ -3,42 +3,12 @@
 import ContainerCard from "@/app/components/containerCard";
 import InputDropdown from "@/app/components/inputDropdown";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import CustomCheckbox from "@/app/components/customCheckbox";
-
-const initialKeys = [
-    {
-        type: "Location",
-        options: [
-            { label: "Country", value: "0", isSelected: false },
-            { label: "Region", value: "1", isSelected: false },
-            { label: "Area", value: "2", isSelected: false },
-            { label: "Route", value: "3", isSelected: false },
-        ],
-    },
-    {
-        type: "Customer",
-        options: [
-            { label: "Sales Organisation", value: "0", isSelected: false },
-            { label: "Channel", value: "1", isSelected: false },
-            { label: "Customer Category", value: "2", isSelected: false },
-            { label: "Customer", value: "3", isSelected: false },
-        ],
-    },
-    {
-        type: "Item",
-        options: [
-            { label: "Major Category", value: "0", isSelected: false },
-            { label: "Item Group", value: "1", isSelected: false },
-            { label: "Item", value: "2", isSelected: false },
-        ],
-    },
-];
-
-type keysTypes = typeof initialKeys;
+import { initialKeys, KeysArray, keysTypes } from "./page";
 
 export default function SelectKeyCombination() {
-    const [keysArray, setKeyArray] = useState(initialKeys);
+    const [keysArray, setKeyArray] = useContext(KeysArray);
     const [showKeyCombination, setShowKeyCombination] = useState(true);
     const [keyCombination, setKeyCombination] = useState("");
 

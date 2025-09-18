@@ -1,15 +1,17 @@
 import { Icon } from "@iconify-icon/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DismissibleDropdown from "./dismissibleDropdown";
 import CustomDropdown from "./customDropdown";
 
 export default function InputDropdown({
     label,
+    defaultOption = 0,
     defaultText = "",
     options,
     onOptionSelect
 }: {
     label: string;
+    defaultOption?: number;
     defaultText?: string;
     options: { label: string; value: string }[];
     onOptionSelect: (option: { label: string; value: string }) => void;
@@ -22,6 +24,10 @@ export default function InputDropdown({
         setIsOpen(false);
         onOptionSelect(option);
     }
+
+    useEffect(() => {
+        if(options[defaultOption]?.label) setSelectedOptionLabel(options[defaultOption]?.label);
+    }, [options, defaultOption]);
 
     return (
         <DismissibleDropdown
@@ -37,7 +43,9 @@ export default function InputDropdown({
                         className="relative text-[#717680] border h-[44px] w-full border-gray-300 rounded-md px-[14px] py-[10px] mt-[6px] text-[16px] flex items-center justify-between"
                         onClick={() => setIsOpen(!isOpen)}
                     >
-                        <div>{selectedOptionLabel}</div>
+                        <div className="w-full overflow-hidden">
+                            <div className="whitespace-nowrap">{selectedOptionLabel}</div>
+                        </div>
                         <Icon
                             icon="material-symbols:expand-more-rounded"
                             className="aboslute right-[14px] top-0 h-full"

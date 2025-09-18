@@ -7,6 +7,7 @@ import CustomDropdown from "@/app/components/customDropdown";
 import Link from "next/link";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import StatusBtn from "@/app/components/statusBtn2";
 
 const data = new Array(100).fill(null).map((_, i) => ({
   id: (i + 1).toString(),
@@ -96,15 +97,7 @@ const columns = [
     label: "Status",
     render: (row: TableDataType) => (
       <div className="flex items-center">
-        {row.status ? (
-          <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-            Active
-          </span>
-        ) : (
-          <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-            Inactive
-          </span>
-        )}
+          <StatusBtn isActive={row.status === "Active" ? true : false }/>
       </div>
     ),
   },
