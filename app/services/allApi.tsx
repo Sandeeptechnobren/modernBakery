@@ -1,6 +1,7 @@
 // app/services/allApi.ts
 import axios from "axios";
 
+
 const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, 
   headers: {
@@ -69,19 +70,23 @@ export const updateCompany = async (id: string, data: object) => {
 };
 
 export const editCompany = async (id: string, data: object) => {
-   try {
+  try {
     const res = await API.put(`/api/master/company/company/${id}`, data);
-  console.log("gbfjgb",res);
-  return res.data;
-}
-
-export const getCompanyById = async (id: string) => {
-  const res = await API.get(`/api/master/company/company/${id}`);
+    console.log("Response:", res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
-}
+};
+
+export const getCompanyById = async (id: string) => {
+  try {
+    const res = await API.get(`/api/master/company/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 
 
@@ -688,15 +693,7 @@ export const customerTypeList = async (params?: Record<string, string>) => {
   }
 };
 
-export const deleteCustomerType = async (id: string) => {
-  try {
-    const res = await API.delete(`/api/settings/customer-type/${id}`);
-    return res.data;
-  } catch (error) {
-    console.error("Delete Customer Type failed ❌", error);
-    throw error;
-  }
-};
+
 
 export const getCustomerType = async (id: string) => {
   try {
@@ -708,15 +705,7 @@ export const getCustomerType = async (id: string) => {
   }
 };
 
-export const updateCustomerType = async (id: string, payload: Record<string, string>) => {
-  try {
-    const res = await API.put(`/api/settings/customer-type/${id}`, payload);
-    return res.data;
-  } catch (error) {
-    console.error("Update Customer Type failed ❌", error);
-    throw error;
-  }
-};
+
 
 
 export const addRegion = async  (payload?: {regionName: string, countryId: number, status: number}) => {
@@ -1007,25 +996,9 @@ export const customerCategoryList = async (params?: Record<string, string>) => {
   } 
 };
 
-export const deleteCustomerCategory = async (id: string) => {
-  try {
-    const res = await API.delete(`/api/settings/customer-category/${id}/delete`);
-    return res.data;
-  } catch (error) {
-    console.error("Delete Customer Category failed ❌", error);
-    throw error;
-  }
-};
 
-export const getCustomerCategory = async (id: string) => {
-  try {
-    const res = await API.get(`/api/settings/customer-category/${id}`);
-    return res.data;
-  } catch (error) {
-    console.error("Get Customer Category by ID failed ❌", error);
-    throw error;
-  }
-};
+
+
 
 
 export const addCustomerCategory = async (payload: Record<string, string | number>) => {
