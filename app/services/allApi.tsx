@@ -54,7 +54,7 @@ export const editCompany = async (id: string, data: object) => {
 }
 
 export const getCompanyById = async (id: string) => {
-  const res = await API.get(`/api/master/company/${id}`);
+  const res = await API.get(`/api/master/company/company/${id}`);
   return res.data;
 }
 
@@ -410,7 +410,7 @@ export const customerCategoryList = async (params?: Record<string, string>) => {
 
 export const deleteCustomerCategory = async (id: string) => {
   try {
-    const res = await API.delete(`/api/settings/customer-category/${id}`);
+    const res = await API.delete(`/api/settings/customer-category/${id}/delete`);
     return res.data;
   } catch (error) {
     console.error("Delete Customer Category failed ❌", error);

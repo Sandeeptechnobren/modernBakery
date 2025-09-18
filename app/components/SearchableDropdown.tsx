@@ -35,10 +35,10 @@ export default function SearchableDropdown({
 
   // Filter options based on search
   const filteredOptions = useMemo(() => {
-    return options.filter((opt) =>
-      opt.label.toLowerCase().includes(query.toLowerCase())
-    );
-  }, [query, options]);
+  return options
+    .filter(opt => opt.label) // only include items with a label
+    .filter(opt => opt.label!.toLowerCase().includes(query.toLowerCase()));
+}, [query, options]);
 
   const selectedLabel =
     options.find((opt) => opt.value === value)?.label || "";

@@ -1,22 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Formik, Form, ErrorMessage } from "formik";
+import { ErrorMessage, Form, Formik } from "formik";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import * as Yup from "yup";
 
 import ContainerCard from "@/app/components/containerCard";
-import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import InputFields from "@/app/components/inputFields";
 import Loading from "@/app/components/Loading";
-import { useSnackbar } from "@/app/services/snackbarContext";
 import { getCustomerType, updateCustomerType } from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface CustomerTypeForm {
   code: string;
   name: string;
-  status: string;
+  status: "Active" | "Inactive";
 }
+
+const validationSchema = Yup.object({
+  code: Yup.string().required("Code is required"),
+  name: Yup.string().required("Name is required"),
+  status: Yup.string().oneOf(["Active", "Inactive"]).required(),
+});
 
 export default function UpdateCustomerType() {
   const [loading, setLoading] = useState(true);
@@ -27,19 +33,28 @@ export default function UpdateCustomerType() {
   });
 
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const params = useParams();
   const { showSnackbar } = useSnackbar();
 
-  const customerId = searchParams.get("id") || "";
+  const customerId = params?.id as string | undefined;
 
   useEffect(() => {
+    if (!customerId) {
+      setLoading(false);
+      return;
+    }
+
     const fetchCustomer = async () => {
       try {
         const res = await getCustomerType(customerId);
+        const customer = res?.data?.data || res?.data;
+
+        if (!customer) throw new Error("Customer not found");
+
         setInitialValues({
-          code: res.data.code,
-          name: res.data.name,
-          status: res.data.status === "active" ? "Active" : "Inactive",
+          code: customer.code || "",
+          name: customer.name || "",
+          status: customer.status === "active" ? "Active" : "Inactive",
         });
       } catch (error) {
         console.error("Failed to fetch customer ❌", error);
@@ -49,23 +64,21 @@ export default function UpdateCustomerType() {
       }
     };
 
-    if (customerId) fetchCustomer();
-  }, [customerId]);
-
-  const validationSchema = Yup.object({
-    code: Yup.string().required("Code is required"),
-    name: Yup.string().required("Name is required"),
-    status: Yup.string().oneOf(["Active", "Inactive"]).required(),
-  });
+    fetchCustomer();
+  }, [customerId, showSnackbar]);
 
   const handleSubmit = async (values: CustomerTypeForm) => {
+    if (!customerId) return;
+
     try {
       await updateCustomerType(customerId, {
         ...values,
         status: values.status.toLowerCase(),
       });
+
       showSnackbar("Customer Type updated ✅", "success");
       router.push("/dashboard/settings/customer/customerType");
+      router.refresh();
     } catch (error) {
       console.error("Update failed ❌", error);
       showSnackbar("Failed to update customer ❌", "error");
@@ -76,11 +89,16 @@ export default function UpdateCustomerType() {
 
   return (
     <ContainerCard>
+      {/* Header */}
       <div className="flex justify-between mb-4">
         <h1 className="text-[20px] font-semibold">Update Customer Type</h1>
-        <SidebarBtn href="/dashboard/settings/customer/customerType" label="Back" />
+        <SidebarBtn
+          href="/dashboard/settings/customer/customerType"
+          label="Back"
+        />
       </div>
 
+      {/* Form */}
       <Formik
         enableReinitialize
         initialValues={initialValues}
@@ -89,41 +107,75 @@ export default function UpdateCustomerType() {
       >
         {({ values, handleChange }) => (
           <Form className="flex flex-col gap-4">
-            <InputFields
-              label="Code"
-              name="code"
-              value={values.code}
-              onChange={handleChange}
-            
-            />
-            <ErrorMessage name="code" component="div" className="text-red-500 text-sm" />
+            {/* Code */}
+            <div>
+              <InputFields
+                label="Code"
+                name="code"
+                value={values.code}
+                onChange={handleChange}
+              />
+              <ErrorMessage
+                name="code"
+                component="div"
+                className="text-red-500 text-sm"
+              />
+            </div>
 
-            <InputFields
-              label="Name"
-              name="name"
-              value={values.name}
-              onChange={handleChange}
-             
-            />
-            <ErrorMessage name="name" component="div" className="text-red-500 text-sm" />
+            {/* Name */}
+            <div>
+              <InputFields
+                label="Name"
+                name="name"
+                value={values.name}
+                onChange={handleChange}
+              />
+              <ErrorMessage
+                name="name"
+                component="div"
+                className="text-red-500 text-sm"
+              />
+            </div>
 
-            <label className="font-medium">Status</label>
-            <select
-              name="status"
-              value={values.status}
-              onChange={handleChange}
-              className="border p-2 rounded-md"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+            {/* Status */}
+            <div>
+              <InputFields
+                label="Status"
+                name="status"
+                value={values.status}
+                onChange={handleChange}
+                type="select"
+                options={[
+                  { label: "Active", value: "Active" },
+                  { label: "Inactive", value: "Inactive" },
+                ]}
+              />
+              <ErrorMessage
+                name="status"
+                component="div"
+                className="text-red-500 text-sm"
+              />
+            </div>
 
-            <button
-              type="submit"
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Update Customer Type
-            </button>
+            {/* Buttons */}
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                type="button"
+                onClick={() =>
+                  router.push("/dashboard/settings/customer/customerType")
+                }
+                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+
+              <SidebarBtn
+                label="Update"
+                isActive
+                leadingIcon="mdi:check"
+                type="submit"
+              />
+            </div>
           </Form>
         )}
       </Formik>

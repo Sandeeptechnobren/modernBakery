@@ -3,7 +3,7 @@
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
@@ -14,6 +14,7 @@ import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { editCompany, getCompanyById } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
+import { useParams } from "next/navigation";
 
 // ✅ Yup Schema for company
 const CompanySchema = Yup.object().shape({
@@ -33,12 +34,11 @@ type CompanyFormValues = {
 };
 
 export default function EditCompany() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
   // ✅ Get company id from query
-  const queryId = searchParams.get("id") || "";
+  const queryId = useParams().id as string | undefined;
 
   const [isOpen, setIsOpen] = useState(false);
   const [initialValues, setInitialValues] = useState<CompanyFormValues | null>(
@@ -49,7 +49,7 @@ export default function EditCompany() {
   // ✅ Fetch company details by ID
   useEffect(() => {
     if (!queryId) {
-      setLoading(false); // prevent infinite loading if no ID
+      setLoading(false); 
       return;
     }
 

@@ -66,6 +66,7 @@ export default function CompanyPage() {
     email: c.email ?? "",
   }));
 
+  // fetch companies
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -82,30 +83,32 @@ export default function CompanyPage() {
     fetchCompanies();
   }, [showSnackbar]);
 
+  // handle delete
   const handleConfirmDelete = async () => {
-  if (!selectedRow?.id) return;
+    if (!selectedRow?.id) return;
 
-  try {
-    await deleteCompany(String(selectedRow.id));
-    showSnackbar("Company deleted successfully ✅", "success");
+    const res = await deleteCompany(String(selectedRow.id));
 
-    // Ensure both sides are strings for comparison
-    setCompanies((prev) =>
-      prev.filter((c) => String(c.id) !== String(selectedRow.id))
-    );
-  } catch (error) {
-    console.error("Delete failed ❌:", error);
-    showSnackbar("Failed to delete company ❌", "error");
-  } finally {
-    setShowDeletePopup(false);
-    setSelectedRow(null);
-  }
-};
+    if (res.error) {
+      showSnackbar("Failed to delete company ❌", "error");
+    }
+    if (res.status === 200) {
+      showSnackbar("Company deleted successfully ✅", "success");
 
+      // Ensure both sides are strings for comparison
+      setCompanies((prev) =>
+        prev.filter((c) => String(c.id) !== String(selectedRow.id))
+      );
 
-  return loading ? (
-    <Loading />
-  ) : (
+      setShowDeletePopup(false);
+      setSelectedRow(null);
+    }
+  };
+
+  // ✅ Main Render
+  if (loading) return <Loading />;
+
+  return (
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">

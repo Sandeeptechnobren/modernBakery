@@ -40,7 +40,7 @@ export default function SidebarBtn({
 }) {
     return (
         <Link href={href} className={className}>
-            <button type={type} onClick={(e) => {e.stopPropagation(); if(onClick) onClick(e)}} disabled={disabled} className={`${buttonTw} w-full rounded-lg flex items-center gap-[12px] justify-between ${
+            <button type={type} onClick={(e) => { if(onClick) onClick(e)}} disabled={disabled} className={`${buttonTw} w-full rounded-lg flex items-center gap-[12px] justify-between ${
                 isActive
                     ? "bg-[var(--primary-btn-color)] text-white"
                     : "bg-transparent text-[#414651] hover:bg-[var(--secondary-btn-color)] hover:text-[var(--secondary-btn-text-color)]"

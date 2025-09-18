@@ -22,7 +22,6 @@ export default function DashboardLayout({
 
 function LayoutSelector({ children }: { children: React.ReactNode }) {
     const router = useRouter();
-    const { theme, toggle } = useThemeToggle();
     const context = useContext<SettingsContextValue | undefined>(
         SettingsContext
     );
@@ -36,10 +35,10 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         isVerify().then((res) => {
             if(res.status === 401) router.push("/");
-        }).catch((error) => {
+        }).catch(() => {
             router.push("/");
         });
-    }, []);
+    }, );
 
     return (
         <>

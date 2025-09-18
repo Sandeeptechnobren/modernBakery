@@ -12,77 +12,76 @@ import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { customerCategoryList, deleteCustomerType } from "@/app/services/allApi";
+import {
+  customerCategoryList,
+  deleteCustomerCategory,
+} from "@/app/services/allApi";
+
+// ✅ Define proper types for API response
+interface CustomerCategoryAPI {
+  id: string;
+  outlet_channel_id: string;
+  customer_category_code: string;
+  customer_category_name: string;
+  status: "1" | "0"; // 1 = Active, 0 = Inactive
+}
 
 interface CustomerCategory {
   id: string;
   outlet_channel_id: string;
   customer_category_code: string;
   customer_category_name: string;
-  status: string;
+  status: "Active" | "Inactive";
 }
-
-interface DropdownItem {
-  icon: string;
-  label: string;
-  iconWidth: number;
-}
-
-const dropdownDataList: DropdownItem[] = [
-  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
-  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
-
-const columns = [
-    { key: "outlet_channel_id", label: "ID", hidden: true },
-  { key: "customer_category_code", label: "Code" },
-  { key: "customer_category_name", label: "Name" },
-  { key: "status", label: "Status" },
-];
 
 export default function CustomerCategoryPage() {
   const [categories, setCategories] = useState<CustomerCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<CustomerCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<CustomerCategory | null>(null);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
+  // ✅ Fetch list
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const listRes = await customerCategoryList();
-        const formatted: CustomerCategory[] = (listRes.data || []).map((c: any) => ({
-          id: c.id,
+        const res = await customerCategoryList();
+        const formatted: CustomerCategory[] = (res.data || []).map(
+          (c: CustomerCategoryAPI) => ({
+            id: c.id,
             outlet_channel_id: c.outlet_channel_id,
-          customer_category_code: c.customer_category_code,
-          customer_category_name: c.customer_category_name,
-          status: c.status === "active" ? "Active" : "Inactive",
-        }));
+            customer_category_code: c.customer_category_code,
+            customer_category_name: c.customer_category_name,
+            status: c.status === "1" ? "Active" : "Inactive",
+          })
+        );
         setCategories(formatted);
       } catch (error) {
-        console.error("API Error:", error);
-        setCategories([]);
+        console.error("API Error ❌", error);
+        showSnackbar("Failed to load customer categories ❌", "error");
       } finally {
         setLoading(false);
       }
     };
 
     fetchCategories();
-  }, []);
+  }, [showSnackbar]);
 
+  // ✅ Delete handler
   const handleDelete = async () => {
     if (!selectedCategory?.id) return;
 
     try {
-      await deleteCustomerType(selectedCategory.id);
+      await deleteCustomerCategory(selectedCategory.id);
       showSnackbar("Customer Category deleted ✅", "success");
-      setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
+
+      setCategories((prev) =>
+        prev.filter((c) => c.id !== selectedCategory.id)
+      );
     } catch (error) {
       console.error("Delete failed ❌", error);
       showSnackbar("Failed to delete category ❌", "error");
@@ -92,6 +91,7 @@ export default function CustomerCategoryPage() {
     }
   };
 
+  // ✅ Transform data for table
   const tableData: TableDataType[] = categories.map((c) => ({
     id: c.id,
     outlet_channel_id: c.outlet_channel_id,
@@ -100,17 +100,27 @@ export default function CustomerCategoryPage() {
     status: c.status,
   }));
 
-  return loading ? (
-    <Loading />
-  ) : (
+  const columns = [
+    { key: "outlet_channel_id", label: "Outlet Channel ID", hidden: true },
+    { key: "customer_category_code", label: "Code" },
+    { key: "customer_category_name", label: "Name" },
+    { key: "status", label: "Status" },
+  ];
+
+  if (loading) return <Loading />;
+
+  return (
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Customer Category</h1>
+        <h1 className="text-[20px] font-semibold text-[#181D27]">
+          Customer Category
+        </h1>
 
         <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
           <BorderIconButton icon="mage:upload" />
+
           <DismissibleDropdown
             isOpen={showDropdown}
             setIsOpen={setShowDropdown}
@@ -118,17 +128,18 @@ export default function CustomerCategoryPage() {
             dropdown={
               <div className="absolute top-[40px] right-0 z-30 w-[226px]">
                 <CustomDropdown>
-                  {dropdownDataList.map((link, idx) => (
-                    <div
-                      key={idx}
-                      className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                    >
-                      <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
-                      <span className="text-[#181D27] font-[500] text-[16px]">
-                        {link.label}
-                      </span>
-                    </div>
-                  ))}
+                  {["SAP", "Download QR Code", "Print QR Code", "Inactive", "Delete"].map(
+                    (label, idx) => (
+                      <div
+                        key={idx}
+                        className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                      >
+                        <span className="text-[#181D27] font-[500] text-[16px]">
+                          {label}
+                        </span>
+                      </div>
+                    )
+                  )}
                 </CustomDropdown>
               </div>
             }
@@ -164,21 +175,26 @@ export default function CustomerCategoryPage() {
                 icon: "lucide:eye",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
-                  router.push(`/dashboard/settings/customer/customerCategory/view/${r.id}`);
+                  router.push(
+                    `/dashboard/settings/customer/customerCategory/view/${r.id}`
+                  );
                 },
               },
               {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
-                  router.push(`/dashboard/settings/customer/customerCategory/update/${r.id}`);
+                  router.push(
+                    `/dashboard/settings/customer/customerCategory/updateCustomerCategory/${r.id}`
+                  );
                 },
               },
               {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
-                  const category = categories.find((c) => c.id === r.id) || null;
+                  const category =
+                    categories.find((c) => c.id === r.id) || null;
                   setSelectedCategory(category);
                   setShowDeletePopup(true);
                 },
