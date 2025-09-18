@@ -13,10 +13,9 @@ import {
   itemCategory,
   itemSubCategory,
   channelList,
-  userTypes,
+  userTypes
 } from '@/app/services/allApi';
 
-// ---------- TypeScript Interfaces ----------
 interface DropdownDataContextType {
   companyList: CompanyItem[];
   countryList: CountryItem[];
@@ -31,7 +30,7 @@ interface DropdownDataContextType {
   itemSubCategory: ItemSubCategoryItem[];
   channelList: ChannelItem[];
   userTypes: UserTypeItem[];
-
+  // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
   regionOptions: { value: string; label: string }[];
@@ -45,37 +44,99 @@ interface DropdownDataContextType {
   itemSubCategoryOptions: { value: string; label: string }[];
   channelOptions: { value: string; label: string }[];
   userTypeOptions: { value: string; label: string }[];
-
   refreshDropdowns: () => Promise<void>;
   loading: boolean;
 }
 
-// Minimal interfaces
-interface CompanyItem { id?: number | string; company_code?: string; company_name?: string; }
-interface CountryItem { id?: number | string; country_code?: string; country_name?: string; }
-interface RegionItem { id?: number | string; region_code?: string; region_name?: string; }
-interface RouteItem { id?: number | string; route_code?: string; route_name?: string; }
-interface WarehouseItem { id?: number | string; warehouse_code?: string; warehouse_name?: string; }
-interface RouteTypeItem { id?: number | string; route_type_code?: string; route_type_name?: string; }
-interface AreaItem { id?: number | string; area_code?: string; area_name?: string; }
-interface CustomerItem { id?: number | string; customer_code?: string; owner_name?: string; }
-interface CustomerTypeItem { id?: number | string; code?: string; name?: string; }
-interface ItemCategoryItem { id?: number | string; category_name?: string; }
-interface ItemSubCategoryItem { id?: number | string; sub_category_name?: string; }
-interface ChannelItem { id?: number | string; outlet_channel_code?: string; outlet_channel?: string; }
-interface UserTypeItem { id?: number | string; code?: string; name?: string; }
+// Minimal interfaces reflecting the expected fields returned by API for dropdown lists
+interface CompanyItem {
+  id?: number | string;
+  company_code?: string;
+  company_name?: string;
+}
 
-// ---------- Context ----------
+interface CountryItem {
+  id?: number | string;
+  country_code?: string;
+  country_name?: string;
+}
+
+interface RegionItem {
+  id?: number | string;
+  region_code?: string;
+  region_name?: string;
+}
+
+interface RouteItem {
+  id?: number | string;
+  route_code?: string;
+  route_name?: string;
+}
+
+interface WarehouseItem {
+  id?: number | string;
+  warehouse_code?: string;
+  warehouse_name?: string;
+}
+
+interface RouteTypeItem {
+  id?: number | string;
+  route_type_code?: string;
+  route_type_name?: string;
+}
+
+interface AreaItem {
+  id?: number | string;
+  area_code?: string;
+  area_name?: string;
+}
+
+interface CustomerItem {
+  id?: number | string;
+  customer_code?: string;
+  owner_name?: string;
+}
+
+interface CustomerTypeItem {
+  id?: number | string;
+  code?: string;
+  name?: string;
+}
+
+interface ItemCategoryItem {
+  id?: number | string;
+  category_name?: string;
+}
+
+interface ItemSubCategoryItem {
+  id?: number | string;
+  sub_category_name?: string;
+}
+
+interface ChannelItem {
+  id?: number | string;
+  outlet_channel_code?: string;
+  outlet_channel?: string;
+}
+
+interface UserTypeItem {
+  id?: number | string;
+  code?: string;
+  name?: string;
+}
+
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
 
 export const useAllDropdownListData = () => {
   const context = useContext(AllDropdownListDataContext);
-  if (!context) throw new Error('useAllDropdownListData must be used within AllDropdownListDataProvider');
+  if (!context) {
+    throw new Error('useAllDropdownListData must be used within AllDropdownListDataProvider');
+  }
   return context;
 };
 
-// ---------- Provider ----------
 export const AllDropdownListDataProvider = ({ children }: { children: ReactNode }) => {
+  // define typed state for each dropdown list
   const [companyListData, setCompanyListData] = useState<CompanyItem[]>([]);
   const [countryListData, setCountryListData] = useState<CountryItem[]>([]);
   const [regionListData, setRegionListData] = useState<RegionItem[]>([]);
@@ -89,46 +150,80 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [itemSubCategoryData, setItemSubCategoryData] = useState<ItemSubCategoryItem[]>([]);
   const [channelListData, setChannelListData] = useState<ChannelItem[]>([]);
   const [userTypesData, setUserTypesData] = useState<UserTypeItem[]>([]);
-
   const [loading, setLoading] = useState(false);
 
-  // mapped dropdown options
-  const mapOptions = <T extends Record<string, any>>(arr: T[] | unknown, fn: (item: T) => { value: string; label: string }) =>
-    (Array.isArray(arr) ? arr : []).map(fn);
+  // mapped dropdown options (explicit typed mappings)
+  const companyOptions = (Array.isArray(companyListData) ? companyListData : []).map((c: CompanyItem) => ({
+    value: String(c.id ?? ''),
+    label: c.company_code && c.company_name ? `${c.company_code} - ${c.company_name}` : (c.company_name ?? '')
+  }));
 
-  const companyOptions = mapOptions(companyListData, (c) => ({ value: String(c.id ?? ''), label: c.company_code && c.company_name ? `${c.company_code} - ${c.company_name}` : (c.company_name ?? '') }));
-  const countryOptions = mapOptions(countryListData, (c) => ({ value: String(c.id ?? ''), label: c.country_code && c.country_name ? `${c.country_code} - ${c.country_name}` : (c.country_name ?? '') }));
-  const regionOptions = mapOptions(regionListData, (c) => ({ value: String(c.id ?? ''), label: c.region_code && c.region_name ? `${c.region_code} - ${c.region_name}` : (c.region_name ?? '') }));
-  const routeOptions = mapOptions(routeListData, (c) => ({ value: String(c.id ?? ''), label: c.route_code && c.route_name ? `${c.route_code} - ${c.route_name}` : (c.route_name ?? '') }));
-  const warehouseOptions = mapOptions(warehouseListData, (c) => ({ value: String(c.id ?? ''), label: c.warehouse_code && c.warehouse_name ? `${c.warehouse_code} - ${c.warehouse_name}` : (c.warehouse_name ?? '') }));
-  const routeTypeOptions = mapOptions(routeTypeData, (c) => ({ value: String(c.id ?? ''), label: c.route_type_code && c.route_type_name ? `${c.route_type_code} - ${c.route_type_name}` : (c.route_type_name ?? '') }));
-  const areaOptions = mapOptions(areaListData, (c) => ({ value: String(c.id ?? ''), label: c.area_code && c.area_name ? `${c.area_code} - ${c.area_name}` : (c.area_name ?? '') }));
-  const companyCustomersOptions = mapOptions(companyCustomersData, (c) => ({ value: String(c.id ?? ''), label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? '') }));
-  const companyCustomersTypeOptions = mapOptions(companyCustomersTypeData, (c) => ({ value: String(c.id ?? ''), label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '') }));
-  const itemCategoryOptions = mapOptions(itemCategoryData, (c) => ({ value: String(c.id ?? ''), label: c.category_name ?? '' }));
-  const itemSubCategoryOptions = mapOptions(itemSubCategoryData, (c) => ({ value: String(c.id ?? ''), label: c.sub_category_name ?? '' }));
-  const channelOptions = mapOptions(channelListData, (c) => ({ value: String(c.id ?? ''), label: c.outlet_channel_code && c.outlet_channel ? `${c.outlet_channel_code} - ${c.outlet_channel}` : (c.outlet_channel ?? '') }));
-  const userTypeOptions = mapOptions(userTypesData, (c) => ({ value: String(c.id ?? ''), label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '') }));
+  const countryOptions = (Array.isArray(countryListData) ? countryListData : []).map((c: CountryItem) => ({
+    value: String(c.id ?? ''),
+    label: c.country_code && c.country_name ? `${c.country_code} - ${c.country_name}` : (c.country_name ?? '')
+  }));
 
-  // ---------- Fetch all dropdown data ----------
+  const regionOptions = (Array.isArray(regionListData) ? regionListData : []).map((c: RegionItem) => ({
+    value: String(c.id ?? ''),
+    label: c.region_code && c.region_name ? `${c.region_code} - ${c.region_name}` : (c.region_name ?? '')
+  }));
+
+  const routeOptions = (Array.isArray(routeListData) ? routeListData : []).map((c: RouteItem) => ({
+    value: String(c.id ?? ''),
+    label: c.route_code && c.route_name ? `${c.route_code} - ${c.route_name}` : (c.route_name ?? '')
+  }));
+
+  const warehouseOptions = (Array.isArray(warehouseListData) ? warehouseListData : []).map((c: WarehouseItem) => ({
+    value: String(c.id ?? ''),
+    label: c.warehouse_code && c.warehouse_name ? `${c.warehouse_code} - ${c.warehouse_name}` : (c.warehouse_name ?? '')
+  }));
+
+  const routeTypeOptions = (Array.isArray(routeTypeData) ? routeTypeData : []).map((c: RouteTypeItem) => ({
+    value: String(c.id ?? ''),
+    label: c.route_type_code && c.route_type_name ? `${c.route_type_code} - ${c.route_type_name}` : (c.route_type_name ?? '')
+  }));
+
+  const areaOptions = (Array.isArray(areaListData) ? areaListData : []).map((c: AreaItem) => ({
+    value: String(c.id ?? ''),
+    label: c.area_code && c.area_name ? `${c.area_code} - ${c.area_name}` : (c.area_name ?? '')
+  }));
+
+  const companyCustomersOptions = (Array.isArray(companyCustomersData) ? companyCustomersData : []).map((c: CustomerItem) => ({
+    value: String(c.id ?? ''),
+    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? '')
+  }));
+
+  const companyCustomersTypeOptions = (Array.isArray(companyCustomersTypeData) ? companyCustomersTypeData : []).map((c: CustomerTypeItem) => ({
+    value: String(c.id ?? ''),
+    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+  }));
+
+  const itemCategoryOptions = (Array.isArray(itemCategoryData) ? itemCategoryData : []).map((c: ItemCategoryItem) => ({
+    value: String(c.id ?? ''),
+    label: c.category_name ?? ''
+  }));
+
+  const itemSubCategoryOptions = (Array.isArray(itemSubCategoryData) ? itemSubCategoryData : []).map((c: ItemSubCategoryItem) => ({
+    value: String(c.id ?? ''),
+    label: c.sub_category_name ?? ''
+  }));
+
+  const channelOptions = (Array.isArray(channelListData) ? channelListData : []).map((c: ChannelItem) => ({
+    value: String(c.id ?? ''),
+    label: c.outlet_channel_code && c.outlet_channel ? `${c.outlet_channel_code} - ${c.outlet_channel}` : (c.outlet_channel ?? '')
+  }));
+
+  const userTypeOptions = (Array.isArray(userTypesData) ? userTypesData : []).map((c: UserTypeItem) => ({
+    value: String(c.id ?? ''),
+    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+  }));
+
+
+
   const refreshDropdowns = async () => {
     setLoading(true);
     try {
-      const [
-        company,
-        country,
-        region,
-        route,
-        warehouse,
-        routeTypeRes,
-        area,
-        companyCustomers,
-        companyCustomersType,
-        itemCategoryRes,
-        itemSubCategoryRes,
-        channelListRes,
-        userTypesRes,
-      ] = await Promise.all([
+      const res = await Promise.all([
         companyList(),
         countryList({}),
         regionList(),
@@ -141,10 +236,18 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemCategory(),
         itemSubCategory(),
         channelList(),
-        userTypes(),
+        userTypes()
       ]);
 
-      const normalize = (r: any) => (Array.isArray(r?.data) ? r.data : (r?.data ?? r) ?? []);
+      // normalize: accept unknown response and extract array of items from `.data` when present
+      const normalize = (r: unknown): unknown[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as unknown[];
+        }
+        if (Array.isArray(r)) return r as unknown[];
+        return (r as unknown) ? [r as unknown] : [];
+      };
 
       setCompanyListData(normalize(res[0]) as CompanyItem[]);
       setCountryListData(normalize(res[1]) as CountryItem[]);
@@ -161,6 +264,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setUserTypesData(normalize(res[12]) as UserTypeItem[]);
     } catch (error) {
       console.error('Error loading dropdown data:', error);
+      // on error clear to empty arrays
       setCompanyListData([]);
       setCountryListData([]);
       setRegionListData([]);
@@ -183,6 +287,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     refreshDropdowns();
   }, []);
 
+
+
   return (
     <AllDropdownListDataContext.Provider
       value={{
@@ -197,7 +303,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         companyCustomersType: companyCustomersTypeData,
         itemCategory: itemCategoryData,
         itemSubCategory: itemSubCategoryData,
-        channelList: channelListData,
+        channelList: Array.isArray(channelListData) ? channelListData : [],
         userTypes: userTypesData,
         companyOptions,
         countryOptions,
