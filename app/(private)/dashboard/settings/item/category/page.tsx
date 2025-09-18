@@ -18,6 +18,7 @@ const mockCategoryData = new Array(100).fill(null).map((_, i) => ({
 }));
 
 const columns = [
+    { key: "id", label: "Category Id" },
     { key: "category_name", label: "Category Name" },
     { key: "status", label: "Status", render: (data: TableDataType) => <StatusBtn isActive={data.status === "0" ? false : true} /> },
 ];
@@ -53,19 +54,10 @@ export default function Category() {
 
     useEffect(() => {
         const fetchItemCategory = async () => {
-            try {
-                const listRes = await itemCategoryList();
-                setCategoryData(listRes);
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    console.error("API Error:", error.message);
-                } else {
-                    console.error("Unexpected error:", error);
-                }
-                setCategoryData(mockCategoryData); // fallback to mock
-            } finally {
-                setLoading(false);
-            }
+            const listRes = await itemCategoryList();
+            if (listRes.error) return showSnackbar(listRes.message, "error");
+            setCategoryData(listRes.data);
+            setLoading(false);
         };
 
         fetchItemCategory();
