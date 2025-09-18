@@ -10,6 +10,7 @@ type Props = {
   label: string;
   name?: string;
   value?: string;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
@@ -18,6 +19,7 @@ type Props = {
   id?: string;
   width?: string;
   error?: string | false;
+  disabled?: boolean;
 };
 
 export default function InputFields({
@@ -30,6 +32,8 @@ export default function InputFields({
   type = "text",
   width = "max-w-[406px]",
   error,
+  disabled,
+  onBlur
 }: Props) {
   return (
     <div className={`flex flex-col gap-2 w-full ${width}`}>
@@ -46,6 +50,7 @@ export default function InputFields({
           name={name}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           className={`border h-[44px] w-full rounded-md px-3 mt-[6px] ${error ? "border-red-500" : "border-gray-300"
             } text-gray-900`}
         >
@@ -64,6 +69,7 @@ export default function InputFields({
           name={name}
           type="file"
           onChange={onChange}
+          onBlur={onBlur}
           className={`border h-[44px] w-full rounded-md px-3 py-1 mt-[6px] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
             }`}
         />
@@ -74,8 +80,9 @@ export default function InputFields({
           type="text"
           value={value}
           onChange={onChange}
-          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 ${error ? "border-red-500" : "border-gray-300"
-            }`}
+          disabled={disabled}
+          onBlur={onBlur}
+          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
           placeholder={`Enter ${label}`}
         />
       )}

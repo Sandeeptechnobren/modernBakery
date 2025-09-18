@@ -9,7 +9,6 @@ export default function AddRole({ onClose }: { onClose: () => void }) {
   const [roleName, setRoleName] = useState("");
   const [parentRole, setParentRole] = useState("");
   const [isLastEntity, setIsLastEntity] = useState(false);
-
   return (
     <div
       className="

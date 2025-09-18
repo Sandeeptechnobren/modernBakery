@@ -38,7 +38,7 @@ type configType = {
     };
     rowActions?: {
         icon: string;
-        onClick?: (data: object) => void;
+        onClick?: (data: TableDataType) => void;
     }[];
     footer?: {
         nextPrevBtn?: boolean;
@@ -443,9 +443,7 @@ function TableBody() {
                                                                     className="p-[10px] cursor-pointer"
                                                                     onClick={() =>
                                                                         action.onClick &&
-                                                                        action.onClick(
-                                                                            row as object
-                                                                        )
+                                                                        action.onClick(row)
                                                                     }
                                                                 />
                                                             );

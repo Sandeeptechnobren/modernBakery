@@ -3,7 +3,6 @@ import Image from "next/image";
 import { useState } from "react";
 import { miscLinks, SidebarDataType } from "../data/dashboardLinks";
 import Link from "next/link";
-import SidebarBtn1 from "@/app/components/iconButton1";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import { useRouter } from "next/navigation";

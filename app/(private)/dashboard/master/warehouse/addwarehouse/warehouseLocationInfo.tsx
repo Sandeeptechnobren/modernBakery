@@ -1,18 +1,18 @@
 "use client";
-import { useState } from "react";
+
 import InputFields from "@/app/components/inputFields";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-export default function WarehouseLocationInformation() {
-  const [region, setRegion] = useState("");
-  const [subRegion, setSubRegion] = useState("");
-  const [district, setDistrict] = useState("");
-  const [town, setTown] = useState("");
-  const [street, setStreet] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [thresholdRadius, setThresholdRadius] = useState("");
+type Props = {
+  values: Record<string, string>;
+  errors?: Record<string, string>;
+  touched?: Record<string, boolean>;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  setFieldValue: (field: string, value: string) => void;
+};
 
+export default function WarehouseLocationInfo({ values, errors, touched, handleChange, setFieldValue }: Props) {
+  const { regionOptions, loading, areaOptions } = useAllDropdownListData();
 
   return (
     <>
@@ -22,64 +22,31 @@ export default function WarehouseLocationInformation() {
         {/* Row 1 */}
         <InputFields
           label="Region"
-        value={region}
-        onChange={(e) => setRegion(e.target.value)}
-        options={[
-          { value: "north", label: "North" },
-           { value: "south", label: "South" }, 
-           { value: "east", label: "East" }, 
-          { value: "west", label: "West" },
-        ]}
+          name="region"
+          value={values.region}
+          onChange={handleChange}
+          options={loading ? [{ value: '', label: 'Loading...' }] : (regionOptions && regionOptions.length > 0 ? regionOptions : [{ value: '', label: 'No options available' }])}
+          error={errors?.region && touched?.region ? errors.region : false}
         />
         <InputFields
           label="Sub Region"
-        value={subRegion}
-        onChange={(e) => setSubRegion(e.target.value)}
-        options={[
-        { value: "zone1", label: "Zone 1" }, 
-        { value: "zone2", label: "Zone 2" }, 
-        { value: "zone3", label: "Zone 3" },
-        ]}
+          name="subRegion"
+          value={values.subRegion}
+          onChange={handleChange}
+          options={loading ? [{ value: '', label: 'Loading...' }] : (areaOptions && areaOptions.length > 0 ? areaOptions : [{ value: '', label: 'No options available' }])}
+          error={errors?.subRegion && touched?.subRegion ? errors.subRegion : false}
         />
-        <InputFields
-          label="District"
-        value={district}
-        onChange={(e) => setDistrict(e.target.value)}
-        />
+        <InputFields label="District" name="district" value={values.district} onChange={handleChange} />
 
         {/* Row 2 */}
-        <InputFields
-          label="Town/Village"
-        value={town}
-        onChange={(e) => setTown(e.target.value)}
-        />
-        <InputFields
-          label="Street"
-        value={street}
-        onChange={(e) => setStreet(e.target.value)}
-        />
-        <InputFields
-         label="Landmark"
-        value={landmark}
-        onChange={(e) => setLandmark(e.target.value)}
-        />
+        <InputFields label="Town/Village" name="town" value={values.town} onChange={handleChange} />
+        <InputFields label="Street" name="street" value={values.street} onChange={handleChange} />
+        <InputFields label="Landmark" name="landmark" value={values.landmark} onChange={handleChange} />
 
         {/* Row 3 */}
-        <InputFields
-          label="Latitude"
-        value={latitude}
-        onChange={(e) => setLatitude(e.target.value)}
-        />
-        <InputFields
-          label="Longitude"
-        value={longitude}
-        onChange={(e) => setLongitude(e.target.value)}
-        />
-        <InputFields
-          label="Threshold Radius"
-        value={thresholdRadius}
-        onChange={(e) => setThresholdRadius(e.target.value)}
-        />
+        <InputFields label="Latitude" name="latitude" value={values.latitude} onChange={handleChange} error={errors?.latitude && touched?.latitude ? errors.latitude : false} />
+        <InputFields label="Longitude" name="longitude" value={values.longitude} onChange={handleChange} error={errors?.longitude && touched?.longitude ? errors.longitude : false} />
+        <InputFields label="Threshold Radius" name="thresholdRadius" value={values.thresholdRadius} onChange={handleChange} error={errors?.thresholdRadius && touched?.thresholdRadius ? errors.thresholdRadius : false} />
       </div>
 
     </>
