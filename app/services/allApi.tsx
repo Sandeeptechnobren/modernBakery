@@ -87,6 +87,11 @@ export const addCountry = async (payload:object) => {
     return res.data;
 };
 
+export const countryById = async (id: string) => {
+  const res = await API.get(`/api/master/country/country/${id}`);
+  return res.data;
+};
+
 export const editCountry = async (id:string,payload:object) => {
     const res = await API.put(`/api/master/country/update_country/${id}`,payload);
     return res.data;
@@ -234,4 +239,14 @@ export const addRouteType = async (payload: Record<string, string | number>) => 
     console.error("Add Route Type failed ❌", error);
     throw error;
   }
+};
+
+export const getWarehouseById = async (id: string) => {
+  const res = await API.get(`/api/master/warehouse/${id}`);
+  return res.data;
+};
+
+export const updateWarehouse = async (id: string, payload: object) => {
+  const res = await API.put(`/api/master/warehouse/${id}`, payload);
+  return res.data;
 };

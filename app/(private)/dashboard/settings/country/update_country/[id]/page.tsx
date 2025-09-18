@@ -2,8 +2,8 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
@@ -12,7 +12,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { editCountry } from "@/app/services/allApi";
+import { editCountry, countryById } from "@/app/services/allApi";
 
 // ✅ Yup Schema for edit
 const CountrySchema = Yup.object().shape({
@@ -26,11 +26,36 @@ export default function EditCountry() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  // ✅ Get query params
-  const queryId = searchParams.get("id") || "";
+  // Try reading id from route params first, then fall back to query params
+  const params = useParams();
+  const routeId = params?.id ?? "";
+  const queryId = searchParams.get("id") || routeId || "";
   const queryCode = searchParams.get("code") || "";
   const queryName = searchParams.get("name") || "";
   const queryCurrency = searchParams.get("currency") || "";
+
+  const [loading, setLoading] = useState<boolean>(false);
+  const [fetched, setFetched] = useState<null | { country_code?: string; country_name?: string; currency?: string }>(null);
+
+  // fetch by id if available
+  useEffect(() => {
+    if (!queryId) return;
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await countryById(String(queryId));
+        const data = res?.data ?? res;
+        if (!mounted) return;
+        setFetched({ country_code: data?.country_code, country_name: data?.country_name, currency: data?.currency });
+      } catch (err) {
+        console.error('Failed to fetch country by id', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [queryId]);
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -42,9 +67,9 @@ export default function EditCountry() {
   };
 
   const initialValues: CountryFormValues = {
-    country_code: queryCode,
-    country_name: queryName,
-    currency: queryCurrency,
+    country_code: fetched?.country_code ?? queryCode,
+    country_name: fetched?.country_name ?? queryName,
+    currency: fetched?.currency ?? queryCurrency,
   };
 
   // ✅ Submit handler for editing only (Formik signature)
@@ -52,12 +77,12 @@ export default function EditCountry() {
     if (!queryId) return;
 
     try {
-      await editCountry(queryId, { ...values, status: 1 });
-      showSnackbar("Country updated successfully ✅", "success");
+  await editCountry(String(queryId), { ...values, status: 1 });
+      showSnackbar("Country updated successfully", "success");
       router.push("/dashboard/settings/country");
     } catch (error) {
       console.error("Failed to edit country:", error);
-      showSnackbar("Failed to update country ❌", "error");
+      showSnackbar("Failed to update country", "error");
     }
   };
 

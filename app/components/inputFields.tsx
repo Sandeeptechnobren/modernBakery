@@ -46,7 +46,7 @@ export default function InputFields({
         <select
           id={id ?? name}
           name={name}
-          value={value}
+          value={value ?? ""}
           onChange={onChange}
           onBlur={onBlur}
           className={`border h-[44px] w-full rounded-md px-3 mt-[6px] ${error ? "border-red-500" : "border-gray-300"
@@ -76,7 +76,7 @@ export default function InputFields({
           id={id ?? name}
           name={name}
           type="text"
-          value={value}
+          value={value ?? ""}
           onChange={onChange}
           onBlur={onBlur}
           className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 ${error ? "border-red-500" : "border-gray-300"

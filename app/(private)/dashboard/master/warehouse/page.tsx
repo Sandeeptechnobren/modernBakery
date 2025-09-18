@@ -56,6 +56,7 @@ export default function Warehouse() {
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
+  type TableRow = TableDataType & { id?: string };
     // typed row for warehouse table
     type WarehouseRow = TableDataType & {
       id?: number | string;
@@ -195,7 +196,14 @@ export default function Warehouse() {
             rowSelection: true,
             rowActions: [
               { icon: "lucide:eye" },
-              { icon: "lucide:edit-2", onClick: console.log },
+              {
+                icon: "lucide:edit-2",
+                onClick: (data: object) => {
+                  const row = data as TableRow;
+                  router.push(`/dashboard/master/warehouse/${row.id}`);
+                },
+              },
+              // { icon: "lucide:edit-2", onClick: console.log },
               {
                 icon: "lucide:more-vertical",
                 onClick: () =>

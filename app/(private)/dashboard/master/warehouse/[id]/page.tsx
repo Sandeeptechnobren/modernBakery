@@ -9,7 +9,10 @@ import Link from "next/link";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { Formik, Form, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
-import { addWarehouse } from '@/app/services/allApi';
+import { addWarehouse, getWarehouseById, updateWarehouse } from '@/app/services/allApi';
+import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { useState } from 'react';
 
 type FormValues = {
     registation_no: string;
@@ -40,7 +43,7 @@ type FormValues = {
     deposite_amount: string;
 };
 
-export default function addwarehouse() {
+export default function editWarehouse() {
     const initialValues: FormValues = {
         registation_no: '',
         warehouse_type: '',
@@ -70,6 +73,54 @@ export default function addwarehouse() {
         deposite_amount: '',
     };
 
+    const params = useParams();
+    const routeId = params?.id ?? "";
+    const [fetched, setFetched] = useState<any>(null);
+
+    useEffect(() => {
+        if (!routeId) return;
+        let mounted = true;
+        (async () => {
+            try {
+                const res = await getWarehouseById(String(routeId));
+                const data = res?.data ?? res;
+                if (!mounted) return;
+                // map API fields to form keys used in this page
+                setFetched({
+                    registation_no: data?.registration_no ?? '',
+                    warehouse_type: data?.warehouse_type?.toString() ?? '',
+                    warehouse_name: data?.warehouse_name ?? '',
+                    warehouse_code: data?.warehouse_code ?? '',
+                    agent_id: data?.agent_id?.toString() ?? '',
+                    owner_name: data?.owner_name ?? '',
+                    business_type: data?.business_type ?? '',
+                    statusType: data?.status ?? '',
+                    ownerContactCountry: data?.ownerContactCountry ?? '',
+                    tinCode: data?.tinCode ?? '',
+                    tin_no: data?.tin_no ?? '',
+                    owner_number: data?.owner_number ?? '',
+                    owner_email: data?.owner_email ?? '',
+                    region_id: data?.region_id ?? '',
+                    area_id: data?.area_id ?? '',
+                    district: data?.district ?? '',
+                    town: data?.town ?? '',
+                    street: data?.street ?? '',
+                    landmark: data?.landmark ?? '',
+                    latitude: data?.latitude ?? '',
+                    longitude: data?.longitude ?? '',
+                    thresholdRadius: data?.thresholdRadius ?? '',
+                    device_no: data?.device_no ?? '',
+                    is_efris: data?.is_efris ?? '',
+                    stock_capital: data?.stock_capital ?? '',
+                    deposite_amount: data?.deposite_amount ?? '',
+                });
+            } catch (err) {
+                console.error('Failed to fetch warehouse', err);
+            }
+        })();
+        return () => { mounted = false; };
+    }, [routeId]);
+
     const validationSchema = Yup.object().shape({
         registation_no: Yup.string().required('Registration Number is required'),
         warehouse_type: Yup.string().required('Warehouse Type is required'),
@@ -93,24 +144,29 @@ export default function addwarehouse() {
     const handleSubmit = async (values: FormValues, { setSubmitting, resetForm }: FormikHelpers<FormValues>) => {
         try {
             const payload = { ...values };
-            console.log('addWarehouse payload:', JSON.stringify(payload, null, 2));
-            await addWarehouse(payload);
+            console.log('updateWarehouse payload:', JSON.stringify(payload, null, 2));
+            if (routeId) {
+                await updateWarehouse(String(routeId), payload);
+                // after update, you probably want to navigate back
+                // router.push('/dashboard/master/warehouse');
+            } else {
+                await addWarehouse(payload);
+            }
             resetForm();
         } catch (err: unknown) {
-            // if axios error, show server response details when available
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const anyErr = err as any;
             if (anyErr?.response) {
-                // response exists but may contain empty body; log full response for debugging
-                console.error('Error adding warehouse - response.status:', anyErr.response.status);
+                console.error('Error saving warehouse - response.status:', anyErr.response.status);
             }
         } finally {
             setSubmitting(false);
         }
     };
 
+    const formInitial = fetched ?? initialValues;
+
     return (
-        <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
+        <Formik initialValues={formInitial} validationSchema={validationSchema} enableReinitialize onSubmit={handleSubmit}>
             {({ isSubmitting, values, handleChange, setFieldValue, errors, touched }) => (
                 <Form>
                     {/* header */}
