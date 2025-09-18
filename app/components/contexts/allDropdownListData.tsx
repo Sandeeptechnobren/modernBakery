@@ -14,7 +14,6 @@ import {
   itemSubCategory,
   channelList,
   userTypes,
-  outletChannelList, // added
 } from '@/app/services/allApi';
 
 // ---------- TypeScript Interfaces ----------
@@ -32,9 +31,7 @@ interface DropdownDataContextType {
   itemSubCategory: ItemSubCategoryItem[];
   channelList: ChannelItem[];
   userTypes: UserTypeItem[];
-  outletChannelList: ChannelItem[]; // added
 
-  // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
   regionOptions: { value: string; label: string }[];
@@ -48,13 +45,12 @@ interface DropdownDataContextType {
   itemSubCategoryOptions: { value: string; label: string }[];
   channelOptions: { value: string; label: string }[];
   userTypeOptions: { value: string; label: string }[];
-  outletChannelOptions: { value: string; label: string }[]; // added
 
   refreshDropdowns: () => Promise<void>;
   loading: boolean;
 }
 
-// Minimal interfaces reflecting API structure
+// Minimal interfaces
 interface CompanyItem { id?: number | string; company_code?: string; company_name?: string; }
 interface CountryItem { id?: number | string; country_code?: string; country_name?: string; }
 interface RegionItem { id?: number | string; region_code?: string; region_name?: string; }
@@ -93,7 +89,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [itemSubCategoryData, setItemSubCategoryData] = useState<ItemSubCategoryItem[]>([]);
   const [channelListData, setChannelListData] = useState<ChannelItem[]>([]);
   const [userTypesData, setUserTypesData] = useState<UserTypeItem[]>([]);
-  const [outletChannelListData, setOutletChannelListData] = useState<ChannelItem[]>([]); // added
 
   const [loading, setLoading] = useState(false);
 
@@ -111,7 +106,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const itemSubCategoryOptions = itemSubCategoryData.map(c => ({ value: String(c.id ?? ''), label: c.sub_category_name ?? '' }));
   const channelOptions = channelListData.map(c => ({ value: String(c.id ?? ''), label: c.outlet_channel_code ? `${c.outlet_channel_code} - ${c.outlet_channel}` : (c.outlet_channel ?? '') }));
   const userTypeOptions = userTypesData.map(c => ({ value: String(c.id ?? ''), label: c.code ? `${c.code} - ${c.name}` : (c.name ?? '') }));
-  const outletChannelOptions = outletChannelListData.map(c => ({ value: String(c.id ?? ''), label: c.outlet_channel_code ? `${c.outlet_channel_code} - ${c.outlet_channel}` : (c.outlet_channel ?? '') })); // added
 
   // ---------- Fetch all dropdown data ----------
   const refreshDropdowns = async () => {
@@ -131,7 +125,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategoryRes,
         channelListRes,
         userTypesRes,
-        outletChannelRes // added
       ] = await Promise.all([
         companyList(),
         countryList({}),
@@ -146,7 +139,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategory(),
         channelList(),
         userTypes(),
-        outletChannelList(), // added
       ]);
 
       setCompanyListData(company?.data || company || []);
@@ -162,11 +154,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setItemSubCategoryData(itemSubCategoryRes?.data || itemSubCategoryRes || []);
       setChannelListData(channelListRes?.data || channelListRes || []);
       setUserTypesData(userTypesRes?.data || userTypesRes || []);
-      setOutletChannelListData(outletChannelRes?.data || outletChannelRes || []); // added
-
     } catch (error) {
       console.error('Error loading dropdown data:', error);
-      // Reset all arrays on error
       setCompanyListData([]);
       setCountryListData([]);
       setRegionListData([]);
@@ -180,7 +169,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setItemSubCategoryData([]);
       setChannelListData([]);
       setUserTypesData([]);
-      setOutletChannelListData([]); // added
     } finally {
       setLoading(false);
     }
@@ -206,7 +194,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategory: itemSubCategoryData,
         channelList: channelListData,
         userTypes: userTypesData,
-        outletChannelList: outletChannelListData, // added
         companyOptions,
         countryOptions,
         regionOptions,
@@ -220,7 +207,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategoryOptions,
         channelOptions,
         userTypeOptions,
-        outletChannelOptions, // added
         refreshDropdowns,
         loading
       }}

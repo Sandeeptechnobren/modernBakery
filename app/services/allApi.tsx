@@ -1065,10 +1065,7 @@ export const outletChannelList = async (data: Record<string, string>) => {
   }
 };
 
-export const addOutletChannel = async (payload:object) => {
-const res = await API.post("/api/settings/outlet-channels", payload);
-return res.data;
-};
+
 
 
 export const deleteChannel = async (id:string) => {
@@ -1082,12 +1079,3 @@ export const updateChannel = async (id:string,payload:object) => {
 };
 
 
-export const outletChannelList = async () => {
-  try {
-    const res = await API.get("/api/settings/outlet-channels/list");
-    return res.data;
-  } catch (error) {
-    console.error("Outlet Channel List failed ❌", error);
-    throw error;
-  }
-};
