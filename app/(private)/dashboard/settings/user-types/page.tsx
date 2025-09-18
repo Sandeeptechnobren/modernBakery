@@ -1,142 +1,195 @@
 "use client";
 
-import BorderIconButton from "@/app/components/borderIconButton";
+import { useState, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import { userList, deleteUser } from "@/app/services/allApi";
+import Loading from "@/app/components/Loading";
+import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 
-const data = new Array(100).fill(null).map((_, i) => ({
-    id: (i + 1).toString(),
-    name: `Abdul`,
-    activity: `Retail`,
-    description: 'Super Admin',
-}));
+interface DropdownItem {
+  icon: string;
+  label: string;
+  iconWidth: number;
+}
+
+const dropdownDataList: DropdownItem[] = [
+  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
+  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
+  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
+  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
+];
 
 const columns = [
-    {
-        key: "name",
-        label: "Role Name", isSortable: true,
-        render: (row: TableDataType) => (
-            <Link
-                href={`/dashboard/settings/role/${row.id}/details`}
-                className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
-            >
-                {row.name}
-            </Link>
-        ),
-    },
-    { key: "activity", label: "Activity" },
-    { key: "description", label: "Description" },
-
+  { key: "code", label: "User Code" },
+  { key: "name", label: "User Name" },
+ 
 ];
 
-const dropdownDataList = [
-    { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-    { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-    { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
-    { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-    { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
+export default function Country() {
+  interface CountryItem {
+    id?: number | string;
+    code?: string;
+    name?: string;
+   
+  }
 
-export default function Role() {
-    const [showDropdown, setShowDropdown] = useState(false);
-    return (
-        <>
-            {/* header */}
-            <div className="w-full">
-                <div className="flex justify-between items-center p-5">
-                    <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                        Role
-                    </h1>
+  const [countries, setCountries] = useState<CountryItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
+  type TableRow = TableDataType & { id?: string };
 
-                    {/* top bar action buttons */}
-                    <div className="flex gap-[12px] items-center text-center">
-                        <BorderIconButton
-                            icon="gala:file-document"
-                            label="Export CSV"
-                            labelTw="text-[12px] hidden sm:block items-center"
-                        />
-                        <BorderIconButton icon="mage:upload" />
-                        <BorderIconButton
-                            icon="ic:sharp-more-vert"
-                            onClick={() => setShowDropdown(!showDropdown)}
-                        />
+  // normalize countries to TableDataType for the Table component
+  const tableData: TableDataType[] = countries.map((c) => ({
+    id: c.id?.toString() ?? "",
+    code: c.code ?? "",
+    name: c.name ?? "",
+   
+  }));
 
-                        {showDropdown && (
-                            <div className="w-[226px] absolute top-[40px] right-0 z-30">
-                                <CustomDropdown>
-                                    {dropdownDataList.map((link, index: number) => (
-                                        <div
-                                            key={index}
-                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                        >
-                                            <Icon
-                                                icon={link.icon}
-                                                width={link.iconWidth}
-                                                className="text-[#717680]"
-                                            />
-                                            <span className="text-[#181D27] font-[500] text-[16px]">
-                                                {link.label}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </CustomDropdown>
-                            </div>
-                        )}
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const listRes = await userList({});
+        setCountries(listRes.data);
+      } catch (error: unknown) {
+        console.error("API Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+ const handleConfirmDelete = async () => {
+  if (!selectedRow?.id) {
+    showSnackbar("No row selected ❌", "error");
+    return;
+  }
+
+  try {
+    await deleteUser(String(selectedRow.id));
+
+    // ✅ Update state immediately without full refresh
+    setCountries((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
+
+    showSnackbar("User deleted successfully ✅", "success");
+  } catch (error) {
+    console.error("Delete failed:", error);
+    showSnackbar("Failed to delete user ❌", "error");
+  } finally {
+    setShowDeletePopup(false);
+    setSelectedRow(null);
+  }
+};
+
+  return loading ? (
+    <Loading />
+  ) : (
+    <>
+      <div className="flex justify-between items-center mb-[20px]">
+        <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
+          Country
+        </h1>
+
+        <div className="flex gap-[12px] relative">
+          <BorderIconButton icon="gala:file-document" label="Export CSV" />
+          <BorderIconButton icon="mage:upload" />
+          <DismissibleDropdown
+            isOpen={showDropdown}
+            setIsOpen={setShowDropdown}
+            button={<BorderIconButton icon="ic:sharp-more-vert" />}
+            dropdown={
+              <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                <CustomDropdown>
+                  {dropdownDataList.map((link, idx) => (
+                    <div
+                      key={idx}
+                      className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                    >
+                      <Icon
+                        icon={link.icon}
+                        width={link.iconWidth}
+                        className="text-[#717680]"
+                      />
+                      <span className="text-[#181D27] font-[500] text-[16px]">
+                        {link.label}
+                      </span>
                     </div>
-                </div>
+                  ))}
+                </CustomDropdown>
+              </div>
+            }
+          />
+        </div>
+      </div>
 
-                {/* Table */}
-                <div className="h-[calc(100%-70px)]">
-                    <Table
-                        data={data}
-                        config={{
-                            header: {
-                                searchBar: true,
-                                columnFilter: true,
-                                actions: [
-                                    <SidebarBtn
-                                        key={0}
-                                        href="/dashboard/settings/user-types/add"
-                                        isActive={true}
-                                        leadingIcon="lucide:plus"
-                                        label="Add Region"
-                                    />,
-                                ],
-                            },
-                            footer: {
-                                nextPrevBtn: true,
-                                pagination: true,
-                            },
-                            columns: columns,
-                            rowSelection: true,
-                            rowActions: [
-                                {
-                                    icon: "lucide:eye",
-                                },
-                                {
-                                    icon: "lucide:edit-2",
-                                    onClick: (data) => {
-                                        console.log(data);
-                                    },
-                                },
-                                {
-                                    icon: "lucide:more-vertical",
-                                    onClick: () => {
-                                        confirm(
-                                            "Are you sure you want to delete this Role?"
-                                        );
-                                    },
-                                },
-                            ],
-                            pageSize: 10,
-                        }}
-                    />
-                </div>
-            </div>
-        </>
-    );
+      <div className="h-[calc(100%-60px)]">
+        <Table
+          data={tableData}
+          config={{
+            header: {
+              searchBar: true,
+              columnFilter: true,
+              actions: [
+                <SidebarBtn
+                  key={0}
+                  href="/dashboard/settings/user-types/add"
+                  isActive
+                  leadingIcon="lucide:plus"
+                  label="Add User"
+                  labelTw="hidden sm:block"
+                />,
+              ],
+            },
+            footer: { nextPrevBtn: true, pagination: true },
+            columns,
+            rowSelection: true,
+            rowActions: [
+              { icon: "lucide:eye" },
+              {
+                icon: "lucide:edit-2",
+                onClick: (data: object) => {
+                  const row = data as TableRow;
+                  router.push(`/dashboard/settings/user-type/update_user-type/${row.id}`);
+                //   /api/settings/user-type/{id}
+                },
+              },
+              {
+                icon: "lucide:more-vertical",
+                onClick: (data: object) => {
+                  const row = data as TableRow;
+                  setSelectedRow({ id: row.id, code: row.code, name: row.name });
+                  setShowDeletePopup(true);
+                },
+              },
+            ],
+            pageSize: 10,
+          }}
+        />
+      </div>
+
+      {showDeletePopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <DeleteConfirmPopup
+            title="Country"
+            onClose={() => setShowDeletePopup(false)}
+            onConfirm={handleConfirmDelete}
+          />
+        </div>
+      )}
+    </>
+  );
 }

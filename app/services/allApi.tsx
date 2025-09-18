@@ -346,3 +346,63 @@ export const addRouteType = async (payload: Record<string, string | number>) => 
     throw error;
   }
 };
+
+
+
+export const userList = async (data: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/user-type/list", data);
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const addUser = async (payload:object) => {
+    const res = await API.post("/api/settings/user-type/create", payload);
+
+    return res.data;
+};
+
+
+export const editUser = async (id:string,payload:object) => {
+    const res = await API.put(`/api/master/country/update_country/${id}`,payload);
+    return res.data;
+};
+
+
+export const deleteUser = async (id:string) => {
+    const res = await API.delete(`/api/settings/user-type/${id}`);
+   
+    
+    return res.data;
+};
+
+
+export const outletChannelList = async (data: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/outlet-channels/list", data);
+   
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const addOutletChannel = async (payload:object) => {
+const res = await API.post("/api/settings/outlet-channels", payload);
+return res.data;
+};
+
+
+export const deleteChannel = async (id:string) => {
+    const res = await API.delete(`/api/settings/outlet-channels/${id}`);
+    return res.data;
+};
+
+export const updateChannel = async (id:string,payload:object) => {
+    const res = await API.put(`/api/settings/outlet-channels/{id}/${id}`,payload);
+    return res.data;
+};

@@ -45,13 +45,10 @@ export default function Country() {
   const [countries, setCountries] = useState<CountryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
-
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
-
   const router = useRouter();
   const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
-
   type TableRow = TableDataType & { id?: string };
 
   // normalize countries to TableDataType for the Table component
@@ -107,7 +104,6 @@ export default function Country() {
         <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
           <BorderIconButton icon="mage:upload" />
-
           <DismissibleDropdown
             isOpen={showDropdown}
             setIsOpen={setShowDropdown}
