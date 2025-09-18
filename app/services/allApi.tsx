@@ -29,13 +29,15 @@ export const login = async (credentials: { email: string; password: string }) =>
 
 export const isVerify = async () => {
   const res = await API.get("/api/master/auth/me");
-  return res.data;
+  return res.data; 
 };
 
 export const companyList = async () => {
   const res = await API.get("/api/master/company/list_company");
   return res.data;
 };
+
+
 
 export const companyById = async (id: string) => {
   const res = await API.get(`/api/master/company/${id}`);
@@ -70,6 +72,15 @@ export const addCompany = async (data: Record<string, string>) => {
     throw error;
   }
 };
+export const addSubRegion = async (data: Record<string, string>) => {
+  try {
+    const res = await API.post("/api/master/area/add_area", data);
+    return res.data;
+  } catch (error) {
+    console.error("Add company failed ❌", error);
+    throw error;
+  }
+};
 
 
 export const countryList = async (data: Record<string, string>) => {
@@ -82,3 +93,24 @@ export const countryList = async (data: Record<string, string>) => {
   }
 };
 
+
+export const subRegionList = async () => {
+  const res = await API.get("/api/master/area/list_area");
+  return res.data;
+};
+
+
+// export const countryList = async (data: Record<string, string>) => {
+//   try {
+//     const res = await API.get("/api/master/country/list_country", data);
+//     return res.data;
+//   } catch (error) {
+//     console.error("Country List failed ❌", error);
+//     throw error;
+//   }
+// };
+
+// export const addCountry = async (payload:object) => {
+//     const res = await API.post("/api/master/country/add_country", payload);
+//     return res.data;
+// };

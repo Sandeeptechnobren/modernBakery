@@ -8,7 +8,7 @@ import CustomDropdown from "@/app/components/customDropdown";
 import Table from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
-    companyList,
+    companyList, 
 } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";

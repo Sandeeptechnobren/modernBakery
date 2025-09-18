@@ -126,7 +126,7 @@ export const initialLinkData: SidebarDataType[] = [
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/master/warehouse",
+                        href: "/dashboard/settings/company/subRegion",
                         label: "Sub Region",
                         leadingIcon: "tabler:building-warehouse",
                         iconColor: "text-violet-500",
