@@ -56,7 +56,7 @@ export default function AddCountry() {
     } finally {
       setSubmitting(false);
     }
-  };
+  }; 
 
   return (
     <div className="w-full h-full overflow-x-hidden p-4">

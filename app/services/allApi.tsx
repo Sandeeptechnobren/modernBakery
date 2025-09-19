@@ -159,6 +159,22 @@ export const countryById = async (id: string) => {
   }
 };
 
+
+// export const getAreaById = async (id:string) => {
+//   try {
+//     const res = await API.get(`/api/master/area/area/${id}`);
+
+//     return res.data;
+//   } catch (error: unknown) {
+//     return handleError(error);
+//   }
+// };
+
+
+
+
+
+
 export const editCountry = async (id:string,payload:object) => {
   try {
            const res = await API.put(`/api/master/country/update_country/${id}`,payload);
@@ -797,7 +813,7 @@ export const getArea = async () => {
   }
 };
 
-export const addArea = async (body:object) => {
+export const addArea = async (body: object) => {
   try {
     const res = await API.post(`/api/master/area/add_area`,body);
 
@@ -817,9 +833,9 @@ export const getAreaById = async (id:string) => {
   }
 };
 
-export const updateAreaById = async (id:string) => {
+export const updateAreaById = async (id:string,payload:object) => {
   try {
-    const res = await API.get(`/api/master/area/area/${id}`);
+    const res = await API.get(`/api/master/area/area/${id}`,payload);
 
     return res.data;
   } catch (error: unknown) {

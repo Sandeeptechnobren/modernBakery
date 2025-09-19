@@ -5,7 +5,6 @@ import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import CustomPasswordInput from '@/app/components/customPasswordInput';
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 type Props = {
     values: Record<string, string>;
