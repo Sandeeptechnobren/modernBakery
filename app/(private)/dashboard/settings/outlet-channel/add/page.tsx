@@ -3,21 +3,21 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useState } from "react";
+// import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
+// import IconButton from "@/app/components/iconButton";
+// import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { addOutletChannel } from "@/app/services/allApi";
-import { TableDataType } from "@/app/components/customTable";
+// import { TableDataType } from "@/app/components/customTable";
 
 // ✅ Yup Schema
 const CountrySchema = Yup.object().shape({
-  outlet_channel: Yup.string().required("Channel Code is required."),
+  outlet_channel: Yup.string().required("Outlet Channel Code is required."),
  
 });
 
@@ -105,7 +105,7 @@ export default function AddOutletChannel() {
                       }
                     />
                     <ErrorMessage
-                      name="Outlet Channel"
+                      name="outlet_channel"
                       component="span"
                       className="text-xs text-red-500"
                     />

@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
@@ -38,7 +37,6 @@ export default function Country() {
     id?: number | string;
     code?: string;
     name?: string;
-   
   }
 
   const [countries, setCountries] = useState<CountryItem[]>([]);
@@ -58,11 +56,29 @@ export default function Country() {
    
   }));
 
+  const fetchCountries = async () => {
+  try {
+    setLoading(true);
+    const listRes = await userList({});
+    setCountries(listRes.data);
+    console.log("Fetched users:", listRes.data);
+  } catch (error: unknown) {
+    console.error("API Error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  fetchCountries();
+}, []);
+
   useEffect(() => {
     const fetchCountries = async () => {
       try {
         const listRes = await userList({});
         setCountries(listRes.data);
+        console.log("Fetched users:", listRes.data);
       } catch (error: unknown) {
         console.error("API Error:", error);
       } finally {
@@ -81,6 +97,7 @@ export default function Country() {
 
   try {
     await deleteUser(String(selectedRow.id));
+      await fetchCountries();
 
     // ✅ Update state immediately without full refresh
     setCountries((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
@@ -101,9 +118,8 @@ export default function Country() {
     <>
       <div className="flex justify-between items-center mb-[20px]">
         <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-          Country
+          User Types
         </h1>
-
         <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
           <BorderIconButton icon="mage:upload" />
@@ -135,7 +151,6 @@ export default function Country() {
           />
         </div>
       </div>
-
       <div className="h-[calc(100%-60px)]">
         <Table
           data={tableData}
@@ -163,7 +178,7 @@ export default function Country() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/settings/user-type/update_user-type/${row.id}`);
+                  router.push(`/dashboard/settings/user-types/update/${row.id}`);
                 //   /api/settings/user-type/{id}
                 },
               },
@@ -181,15 +196,18 @@ export default function Country() {
         />
       </div>
 
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Country"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
+    {showDeletePopup && selectedRow && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+    <DeleteConfirmPopup
+      title={`Delete User: ${selectedRow.name}?`}
+      onClose={() => {
+        setShowDeletePopup(false);
+        setSelectedRow(null);
+      }}
+      onConfirm={handleConfirmDelete}
+    />
+  </div>
+)}
     </>
   );
 }

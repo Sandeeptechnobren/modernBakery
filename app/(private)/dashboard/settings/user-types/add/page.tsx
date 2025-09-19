@@ -13,7 +13,7 @@ import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { addUser } from "@/app/services/allApi";
-import { TableDataType } from "@/app/components/customTable";
+// import { TableDataType } from "@/app/components/customTable";
 
 // ✅ Yup Schema
 const CountrySchema = Yup.object().shape({

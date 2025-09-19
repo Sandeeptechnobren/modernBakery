@@ -320,7 +320,7 @@ export const initialLinkData: SidebarDataType[] = [
             },
             {
                 isActive: false,
-                href: "/dashboard/company",
+                href: "/dashboard/settings/salesman-type",
                 label: "Salesman Type",
                 leadingIcon: "mdi:account-tie",
                 iconColor: "text-green-500",

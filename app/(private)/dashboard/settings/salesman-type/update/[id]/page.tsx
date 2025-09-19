@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getUserById, updateUser } from "@/app/services/allApi";
+import {
+  getSalesmanTypeById,
+  updateSalesmanType, // ✅ better naming for update function
+} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
@@ -13,44 +16,44 @@ import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 
 // ✅ Yup Validation Schema
-const UserSchema = Yup.object().shape({
-  code: Yup.string().required("Code is required."),
-  name: Yup.string().required("Name is required."),
-  status: Yup.string().required("Status is required."),
+const SalesmanSchema = Yup.object().shape({
+  salesman_type_code: Yup.string().required("Salesman Type Code is required."),
+  salesman_type_name: Yup.string().required("Salesman Type Name is required."),
+  salesman_type_status: Yup.string().required("Status is required."),
 });
 
-type UserForm = {
-  code: string;
-  name: string;
-  status: string;
+type SalesmanTypeForm = {
+  salesman_type_code: string;
+  salesman_type_name: string;
+  salesman_type_status: string;
 };
 
-export default function UpdateUserPage() {
+export default function UpdateSalesmanTypePage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-
   const { id } = useParams<{ id: string }>();
 
-  const [initialValues, setInitialValues] = useState<UserForm>({
-    code: "",
-    name: "",
-    status: "active",
+  const [initialValues, setInitialValues] = useState<SalesmanTypeForm>({
+    salesman_type_code: "",
+    salesman_type_name: "",
+    salesman_type_status: "1", // default active
   });
 
-  // ✅ Fetch existing user by id
+  // ✅ Fetch existing salesman type by id
   useEffect(() => {
     if (!id) return;
     const fetchData = async () => {
       try {
-        const res = await getUserById(String(id));
+        const res = await getSalesmanTypeById(String(id));
         const data = res.data;
+        console.log("RRRR",data)
         setInitialValues({
-          code: data.code ?? "",
-          name: data.name ?? "",
-          status: data.status ?? "active",
+          salesman_type_code: data.salesman_type_code ?? "",
+          salesman_type_name: data.salesman_type_name ?? "",
+          salesman_type_status: data.salesman_type_status ?? "1",
         });
       } catch (err) {
-        console.error("Failed to fetch user:", err);
+        console.error("Failed to fetch salesman type:", err);
       }
     };
     fetchData();
@@ -58,13 +61,13 @@ export default function UpdateUserPage() {
 
   // ✅ Submit update
   const handleSubmit = async (
-    values: UserForm,
-    { setSubmitting }: FormikHelpers<UserForm>
+    values: SalesmanTypeForm,
+    { setSubmitting }: FormikHelpers<SalesmanTypeForm>
   ) => {
     try {
-      await updateUser(String(id), values);
-      showSnackbar("User updated successfully ✅", "success");
-      router.push("/dashboard/settings/user-types");
+      await updateSalesmanType(String(id), values);
+      showSnackbar("Salesman Type updated successfully ✅", "success");
+      router.push("/dashboard/settings/salesman-type");
     } catch (err) {
       console.error("Update failed:", err);
       showSnackbar("Failed to update ❌", "error");
@@ -78,10 +81,12 @@ export default function UpdateUserPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/settings/user-types">
+          <Link href="/dashboard/settings/salesman-type">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
-          <h1 className="text-xl font-semibold text-gray-900">Update User</h1>
+          <h1 className="text-xl font-semibold text-gray-900">
+            Update Salesman Type
+          </h1>
         </div>
       </div>
 
@@ -89,7 +94,7 @@ export default function UpdateUserPage() {
       <Formik
         enableReinitialize
         initialValues={initialValues}
-        validationSchema={UserSchema}
+        validationSchema={SalesmanSchema}
         onSubmit={handleSubmit}
       >
         {({ values, handleChange }) => (
@@ -97,50 +102,55 @@ export default function UpdateUserPage() {
             <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
               <div className="p-6">
                 <h2 className="text-lg font-medium text-gray-800 mb-4">
-                  User Type Details
+                  Salesman Type Details
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Code */}
+                  {/* Salesman Type Code */}
                   <div>
                     <InputFields
-                      label="Code"
-                      name="code"
-                      value={values.code}
+                      label="Salesman Type Code"
+                      name="salesman_type_code"
+                      value={values.salesman_type_code}
                       onChange={handleChange}
                     />
                     <ErrorMessage
-                      name="code"
+                      name="salesman_type_code"
                       component="span"
                       className="text-xs text-red-500"
                     />
                   </div>
 
-                  {/* Name */}
+                  {/* Salesman Type Name */}
                   <div>
                     <InputFields
-                      label="Name"
-                      name="name"
-                      value={values.name}
+                      label="Salesman Type Name"
+                      name="salesman_type_name"
+                      value={values.salesman_type_name}
                       onChange={handleChange}
                     />
                     <ErrorMessage
-                      name="name"
+                      name="salesman_type_name"
                       component="span"
                       className="text-xs text-red-500"
                     />
                   </div>
 
-                  {/* Status */}
+                  {/* Status Dropdown */}
                   <div>
                     <InputFields
                       label="Status"
-                      name="status"
-                      value={values.status}
+                      type="select"
+                      name="salesman_type_status"
+                      value={values.salesman_type_status}
                       onChange={handleChange}
+                      options={[
+                        { value: "1", label: "Active" },
+                        { value: "0", label: "Inactive" },
+                      ]}
                     />
                     <ErrorMessage
-                      name="status"
+                      name="salesman_type_status"
                       component="span"
                       className="text-xs text-red-500"
                     />
@@ -153,7 +163,7 @@ export default function UpdateUserPage() {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 type="button"
-                onClick={() => router.push("/dashboard/settings/user-types")}
+                onClick={() => router.push("/dashboard/settings/salesman-type")}
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Cancel

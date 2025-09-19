@@ -167,7 +167,7 @@ export default function Country() {
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   router.push(
-                    `/dashboard/settings/country/update_country/${row.id}`
+                    `/dashboard/settings/routetype/update/${row.id}`
                   );
                 },
               },

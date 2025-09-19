@@ -1065,7 +1065,7 @@ export const updateCustomerCategory = async (id: string, payload: Record<string,
   } catch (error) {
     console.error("Update Customer Category failed ❌", error);
     throw error;
-  }
+  } 
 };
 
 
@@ -1100,7 +1100,25 @@ export const deleteUser = async (id:string) => {
     return res.data;
 };
 
+export const getUserById = async (id:string) => {
+    const res = await API.get(`/api/settings/user-type/${id}`);
+    return res.data;
+  
+};
 
+
+export const updateUser = async (id:string,payload:object) => {
+    const res = await API.put(`/api/settings/user-type/${id}`,payload);
+    return res.data;
+};
+
+
+
+
+
+
+
+// outlet channel APIs
 export const outletChannelList = async (data: Record<string, string>) => {
   try {
     const res = await API.get("/api/settings/outlet-channels/list", data);
@@ -1120,8 +1138,14 @@ export const deleteChannel = async (id:string) => {
     return res.data;
 };
 
+export const getChannelById = async (id:string) => {
+    const res = await API.get(`/api/settings/outlet-channels/${id}`);
+    return res.data;
+};
+
+
 export const updateChannel = async (id:string,payload:object) => {
-    const res = await API.put(`/api/settings/outlet-channels/{id}/${id}`,payload);
+    const res = await API.put(`/api/settings/outlet-channels/${id}`,payload);
     return res.data;
 };
 
@@ -1173,4 +1197,45 @@ export const getVehicleById = async (id: string) => {
   }
 };
 
+// salesman type APIs
+export const salesmanTypeList = async (data: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/salesman_type/list", data);
+   
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+
+export const addSalesmanType = async (payload:object) => {
+    const res = await API.post("/api/settings/salesman_type/create", payload);
+
+    return res.data;
+};
+
+
+export const getSalesmanTypeById = async (id:string) => {
+    const res = await API.get(`/api/settings/salesman_type/${id}`);
+ 
+    return res.data;
+  
+};
+
+
+export const updateSalesmanType = async (id:string,payload:object) => {
+    const res = await API.put(`/api/settings/salesman_type/${id}/update`,payload);
+ 
+    return res.data;
+};
+
+//{id}/delete
+
+
+export const deleteSalesmanType = async (id:string) => {
+    const res = await API.delete(`api/settings/salesman_type/${id}/delete`);
+    return res.data;
+};
 
