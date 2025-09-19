@@ -57,23 +57,27 @@ export default function CompanyPage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // normalize to TableDataType
+  // ✅ Map companies → TableDataType safely
   const tableData: TableDataType[] = companies.map((c) => ({
-    id: c.id?.toString() ?? "",
+    id: String(c.id ?? ""),
     company_code: c.company_code ?? "",
     company_name: c.company_name ?? "",
     company_type: c.company_type ?? "",
     email: c.email ?? "",
   }));
 
-  // fetch companies
+  // ✅ Fetch companies from API
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const listRes = await companyList();
-        setCompanies(listRes.data);
-      } catch (error) {
-        console.error("Failed to fetch companies ❌", error);
+        const res = await companyList();
+        if (res?.data && Array.isArray(res.data)) {
+          setCompanies(res.data);
+        } else {
+          setCompanies([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch companies ❌", err);
         showSnackbar("Failed to fetch companies ❌", "error");
       } finally {
         setLoading(false);
@@ -83,29 +87,26 @@ export default function CompanyPage() {
     fetchCompanies();
   }, [showSnackbar]);
 
-  // handle delete
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
+  // ✅ Delete handler with proper snackbar
+ const handleConfirmDelete = async () => {
+  if (!selectedRow?.id) return;
 
     const res = await deleteCompany(String(selectedRow.id));
-
     if (res.error) {
-      showSnackbar("Failed to delete company ❌", "error");
-    }
-    if (res.status === 200) {
-      showSnackbar("Company deleted successfully ✅", "success");
+      showSnackbar(res.message || "Failed to delete company ❌", "error");
 
-      // Ensure both sides are strings for comparison
       setCompanies((prev) =>
         prev.filter((c) => String(c.id) !== String(selectedRow.id))
       );
-
       setShowDeletePopup(false);
       setSelectedRow(null);
+    } else {
+      // show message from API if exists, else generic error
+      showSnackbar("Company deleted successfully ✅", "success");
     }
-  };
+};
 
-  // ✅ Main Render
+
   if (loading) return <Loading />;
 
   return (
@@ -171,13 +172,6 @@ export default function CompanyPage() {
             rowSelection: true,
             rowActions: [
               {
-                icon: "lucide:eye",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  router.push(`/dashboard/company/view/${r.id}`);
-                },
-              },
-              {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
@@ -185,7 +179,7 @@ export default function CompanyPage() {
                 },
               },
               {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
                   setSelectedRow({ id: r.id });

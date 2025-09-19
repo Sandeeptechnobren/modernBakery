@@ -197,7 +197,7 @@ export const initialLinkData: SidebarDataType[] = [
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/master/route",
+                        href: "/dashboard/settings/customer/customerSubCategory",
                         label: "Customer Sub Category",
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",

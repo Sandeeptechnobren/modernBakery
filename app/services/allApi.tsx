@@ -2,6 +2,7 @@
 import axios from "axios";
 
 
+
 const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, 
   headers: {
@@ -649,7 +650,7 @@ export const deleteWarehouse = async (id:string) => {
   }
 }
 
-export const addCustomerType = async (payload: Record<string, string>) => {
+export const addCustomerType = async (payload:{ name: string; status: number }) => {
   try {
     const res = await API.post("/api/settings/customer-type/create", payload);
 
@@ -866,15 +867,6 @@ export const createCustomerCategory = async (body:object) => {
   }
 };
 
-export const cupdateCustomerCategory = async (body:object,id:string) => {
-  try {
-    const res = await API.put(`/api/settings/customer-category/${id}/update`,body);
-
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
 
 export const deleteCustomerCategory = async (id:string) => {
   try {
@@ -885,6 +877,60 @@ export const deleteCustomerCategory = async (id:string) => {
     return handleError(error);
   }
 };
+
+export const customerSubCategoryList = async (params?: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/customer-sub-category/list", { params });
+    return res.data;
+  }
+  catch (error) {
+    console.error("Customer Sub Category List failed ❌", error);
+    throw error;
+  }
+};
+
+export const addCustomerSubCategory = async (payload: Record<string, string | number>) => {
+  try {
+    const res = await API.post("/api/settings/customer-sub-category/create", payload);
+    return res.data;
+  } catch (error) {
+    console.error("Add Customer Sub Category failed ❌", error);
+    throw error;
+  }
+};
+
+
+export const updateCustomerSubCategory = async (id: string, payload: Record<string, string | number>) => {
+  try {
+    const res = await API.put(`/api/settings/customer-sub-category/${id}/update`, payload);
+    return res.data;
+  } catch (error) {
+    console.error("Update Customer Sub Category failed ❌", error);
+    throw error;
+  }
+};
+
+export const deleteCustomerSubCategory = async (id: number) => {
+  try {
+    const res = await API.delete(`/api/settings/customer-sub-category/${id}/delete`);
+    return res.data;
+  } catch (error) {
+    console.error("Delete Customer Sub Category failed ❌", error);
+    throw error;
+  }
+};
+
+export const getCustomerSubCategoryById = async (id: number) => {
+  try {
+    const res = await API.get(`/api/settings/customer-sub-category/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Get Customer Sub Category by ID failed ❌", error);
+    throw error;
+  }
+};
+
+
 
 export const getItemCategory = async () => {
   try {
@@ -1019,12 +1065,12 @@ export const addCustomerCategory = async (payload: Record<string, string | numbe
 
 export const updateCustomerCategory = async (id: string, payload: Record<string, string | number>) => {
   try {
-    const res = await API.put(`/api/settings/customer-category/${id}`, payload);
+    const res = await API.put(`/api/settings/customer-category/${id}/update`, payload);
     return res.data;
   } catch (error) {
     console.error("Update Customer Category failed ❌", error);
     throw error;
-  }
+  } 
 };
 
 
@@ -1059,7 +1105,25 @@ export const deleteUser = async (id:string) => {
     return res.data;
 };
 
+export const getUserById = async (id:string) => {
+    const res = await API.get(`/api/settings/user-type/${id}`);
+    return res.data;
+  
+};
 
+
+export const updateUser = async (id:string,payload:object) => {
+    const res = await API.put(`/api/settings/user-type/${id}`,payload);
+    return res.data;
+};
+
+
+
+
+
+
+
+// outlet channel APIs
 export const outletChannelList = async (data: Record<string, string>) => {
   try {
     const res = await API.get("/api/settings/outlet-channels/list", data);
@@ -1084,9 +1148,15 @@ export const deleteChannel = async (id:string) => {
   }
 };
 
+export const getChannelById = async (id:string) => {
+    const res = await API.get(`/api/settings/outlet-channels/${id}`);
+    return res.data;
+};
+
+
 export const updateChannel = async (id:string,payload:object) => {
   try {
-           const res = await API.put(`/api/settings/outlet-channels/{id}/${id}`,payload);
+           const res = await API.put(`/api/settings/outlet-channels/${id}`,payload);
 
     return res.data;
   } catch (error) {

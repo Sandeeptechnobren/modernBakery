@@ -2,25 +2,98 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
+import { addVehicle, warehouseList } from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext";
+
+interface Warehouse {
+  id: number;
+  warehouse_name: string;
+}
+
+interface VehicleFormValues {
+  vehicleBrand: string;
+  numberPlate: string;
+  chassisNumber: string;
+  vehicleType: string;
+  ownerType: string;
+  warehouseId: string;
+  odoMeter: string;
+  capacity: string;
+  status: "active" | "inactive";
+}
+
+// Yup validation
+const VehicleSchema = Yup.object().shape({
+  vehicleBrand: Yup.string().required("Vehicle Brand is required"),
+  numberPlate: Yup.string().required("Number Plate is required"),
+  chassisNumber: Yup.string().required("Chassis Number is required"),
+  vehicleType: Yup.string().required("Vehicle Type is required"),
+  ownerType: Yup.string().required("Owner Type is required"),
+  warehouseId: Yup.string().required("Warehouse is required"),
+  odoMeter: Yup.string().required("Odometer is required"),
+  capacity: Yup.string().required("Capacity is required"),
+  status: Yup.string().oneOf(["active", "inactive"]).required(),
+});
 
 export default function AddVehicle() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [vehicleCode, setVehicleCode] = useState("");
-  const [numberPlate, setNumberPlate] = useState("");
-  const [chassisNumber, setChassisNumber] = useState("");
-  const [capacity, setCapacity] = useState("");
-  const [vehicleBrand, setVehicleBrand] = useState("");
-  const [vehicleType, setVehicleType] = useState("");
-  const [ownerType, setOwnerType] = useState("");
-  const [reference, setReference] = useState("");
-  const [routeType, setRouteType] = useState("");
-  const [odoMeter, setOdoMeter] = useState("");
-  const [status, setStatus] = useState("");
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const { showSnackbar } = useSnackbar();
+  const router = useRouter();
+
+  // fetch warehouses
+  useEffect(() => {
+    const fetchWarehouses = async () => {
+      try {
+        const res = await warehouseList();
+        if (res?.data && Array.isArray(res.data)) {
+          setWarehouses(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch warehouses ❌", err);
+        showSnackbar("Failed to fetch warehouses ❌", "error");
+      }
+    };
+    fetchWarehouses();
+  }, [showSnackbar]);
+
+  // submit handler
+  const handleSubmit = async (values: VehicleFormValues) => {
+    try {
+      // convert all values to string
+      const payload: Record<string, string> = {
+        number_plat: values.numberPlate,
+        vehicle_chesis_no: values.chassisNumber,
+        description: values.vehicleBrand,
+        capacity: values.capacity,
+        vehicle_type: values.vehicleType,
+        owner_type: values.ownerType,
+        warehouse_id: values.warehouseId,
+        opening_odometer: values.odoMeter,
+        status: values.status === "active" ? "1" : "0",
+        valid_from: new Date().toISOString().split("T")[0],
+        valid_to: "2026-09-01",
+      };
+
+      const res = await addVehicle(payload);
+      if (res?.error) {
+        showSnackbar(res.message || "Failed to add vehicle ❌", "error");
+      } else {
+        showSnackbar("Vehicle added successfully ✅", "success");
+        router.push("/dashboard/master/vehicle");
+      }
+    } catch (err) {
+      console.error("Add vehicle failed ❌", err);
+      showSnackbar("Add vehicle failed ❌", "error");
+    }
+  };
+
   return (
     <>
       <div className="flex justify-between items-center mb-[20px]">
@@ -34,177 +107,108 @@ export default function AddVehicle() {
         </div>
       </div>
 
-      <div>
-        <form className="space-y-8">
-          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-            <div className="p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">
-                Vehicle Details
-              </h2>
+      <Formik<VehicleFormValues>
+        initialValues={{
+          vehicleBrand: "",
+          numberPlate: "",
+          chassisNumber: "",
+          vehicleType: "",
+          ownerType: "",
+          warehouseId: "",
+          odoMeter: "",
+          capacity: "",
+          status: "active",
+        }}
+        validationSchema={VehicleSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ values, handleChange }) => (
+          <Form className="space-y-8">
+            {/* Vehicle Details */}
+            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6 p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">Vehicle Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-end gap-2 max-w-[406px]">
-                  <InputFields
-                    label="Vehicle Code"
-                    value={vehicleCode}
-                    onChange={(e) => setVehicleCode(e.target.value)}
-                  />
-
-                  <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
-                    icon="mi:settings"
-                    onClick={() => setIsOpen(true)}
-                  />
-
-                  <SettingPopUp
-                    isOpen={isOpen}
-                    onClose={() => setIsOpen(false)}
-                    title="Vehicle Code"
-                  />
-                </div>
-
-                <div>
-                  <InputFields
-                    label="Vehicle Brand"
-                    value={vehicleBrand}
-                    onChange={(e) => setVehicleBrand(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <InputFields
-                    label="Number Plate"
-                    value={numberPlate}
-                    onChange={(e) => setNumberPlate(e.target.value)}
-                  />
-
-                </div>
-                <div>
-                  <InputFields
-                    label="Chassis Number"
-                    value={chassisNumber}
-                    onChange={(e) => setChassisNumber(e.target.value)}
-                  />
-
-                </div>
-                <div>
-                  <InputFields
-                    label="Vehicle Type"
-                    value={vehicleType}
-                    onChange={(e) => setVehicleType(e.target.value)}
-                    options={[
-                      { value: "tuktuk", label: "Tuktuk" },
-                      { value: "truck", label: "Truck" },
-                      { value: "bike", label: "Bike" },
-                      { value: "van", label: "Van" },
-                    ]}
-                  />
-                </div>
-
+                <InputFields label="Vehicle Brand" value={values.vehicleBrand} onChange={handleChange} name="vehicleBrand" />
+                <InputFields label="Number Plate" value={values.numberPlate} onChange={handleChange} name="numberPlate" />
+                <InputFields label="Chassis Number" value={values.chassisNumber} onChange={handleChange} name="chassisNumber" />
+                <InputFields
+                  label="Vehicle Type"
+                  value={values.vehicleType}
+                  onChange={handleChange}
+                  name="vehicleType"
+                  options={[
+                    { value: "1", label: "Truck" },
+                    { value: "2", label: "Van" },
+                    { value: "3", label: "Bike" },
+                    { value: "4", label: "Tuktuk" },
+                  ]}
+                />
               </div>
             </div>
-          </div>
-          {/* Location Information */}
-          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-            <div className="p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">
-                Location Information
-              </h2>
+
+            {/* Location Info */}
+            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6 p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">Location Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <InputFields
-                    label="Owner Type"
-                    value={ownerType}
-                    onChange={(e) => setOwnerType(e.target.value)}
-                    options={[
-                      { value: "central", label: "Central" },
-                      { value: "warehouse", label: "Warehouse" },
-                    ]}
-                  />
-                </div>
-                <div>
-                  <InputFields
-                    label="Reference"
-                    value={reference}
-                    onChange={(e) => setReference(e.target.value)}
-                    options={[
-                      { value: "warehouseA", label: "Warehouse A" },
-                      { value: "warehouseB", label: "Warehouse B" },
-                      { value: "warehouseC", label: "Warehouse C" },
-                      { value: "warehouseD", label: "Warehouse D" },
-                    ]}
-                  />
-                </div>
-                <div>
-                  <InputFields
-                    label="Route Type"
-                    value={routeType}
-                    onChange={(e) => setRouteType(e.target.value)}
-                    options={[
-                      { value: "route1", label: "Route 1" },
-                      { value: "route2", label: "Route 2" },
-                      { value: "route3", label: "Route 3" },
-                    ]}
-                  />
-                </div>
+                <InputFields
+                  label="Owner Type"
+                  value={values.ownerType}
+                  onChange={handleChange}
+                  name="ownerType"
+                  options={[
+                    { value: "0", label: "Company Owned" },
+                    { value: "1", label: "Contractor" },
+                  ]}
+                />
+                <InputFields
+                  label="Warehouse"
+                  value={values.warehouseId}
+                  onChange={handleChange}
+                  name="warehouseId"
+                  options={warehouses.map((w) => ({ value: String(w.id), label: w.warehouse_name }))}
+                />
+                <InputFields
+                  label="Route Type"
+                  value={values.odoMeter}
+                  onChange={handleChange}
+                  name="odoMeter"
+                />
               </div>
             </div>
-          </div>
-          {/* Additional Information */}
-          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 ">
-            <div className="p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">
-                Additional Information
-              </h2>
 
+            {/* Additional Info */}
+            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <InputFields
-                    label="Odo Meter"
-                    value={odoMeter}
-                    onChange={(e) => setOdoMeter(e.target.value)}
-                  />
-
-                </div>
-                <div>
-                  <InputFields
-                    label="Capacity"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
-                  />
-
-                </div>
-                <div>
-                  <InputFields
-                    label="Status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    options={[
-                      { value: "active", label: "Active" },
-                      { value: "inActive", label: "In Active" },
-                    ]}
-                  />
-
-                </div>
-
+                <InputFields label="Odo Meter" value={values.odoMeter} onChange={handleChange} name="odoMeter" />
+                <InputFields label="Capacity" value={values.capacity} onChange={handleChange} name="capacity" />
+                <InputFields
+                  label="Status"
+                  value={values.status}
+                  onChange={handleChange}
+                  name="status"
+                  options={[
+                    { value: "active", label: "Active" },
+                    { value: "inactive", label: "Inactive" },
+                  ]}
+                />
               </div>
             </div>
-          </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-4  pr-0">
-            <button
-              type="button"
-              className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-
-            <SidebarBtn
-              label="Submit"
-              isActive={true}
-              leadingIcon="mdi:check"   // checkmark icon
-              onClick={() => console.log("Form submitted ✅")} />
-          </div>
-        </form>
-      </div>
+            {/* Buttons */}
+            <div className="flex justify-end gap-4 pr-0 mt-4">
+              <button
+                type="button"
+                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+                onClick={() => router.push("/dashboard/master/vehicle")}
+              >
+                Cancel
+              </button>
+              <SidebarBtn label="Submit" isActive={true} leadingIcon="mdi:check" type="submit" />
+            </div>
+          </Form>
+        )}
+      </Formik>
     </>
   );
 }

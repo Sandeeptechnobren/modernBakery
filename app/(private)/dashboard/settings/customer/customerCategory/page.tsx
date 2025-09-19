@@ -2,61 +2,82 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
-import BorderIconButton from "@/app/components/borderIconButton";
-import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Loading from "@/app/components/Loading";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import {
-  customerCategoryList,
-  deleteCustomerCategory,
-} from "@/app/services/allApi";
+import { customerCategoryList, deleteCustomerCategory, channelList } from "@/app/services/allApi";
+import BorderIconButton from "@/app/components/borderIconButton";
+import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import CustomDropdown from "@/app/components/customDropdown";
+
+// ✅ API types
+interface OutletChannel {
+  id: string;
+  outlet_channel_code: string;
+}
 
 interface CustomerCategoryAPI {
   id: string;
   outlet_channel_id: string;
   customer_category_code: string;
   customer_category_name: string;
-  status: "1" | "0"; // 1 = Active, 0 = Inactive
+  status: "1" | "0" | 1 | 0; // backend can send string or number
 }
 
 interface CustomerCategory {
   id: string;
-  outlet_channel_id: string;
+  outlet_channel_code: string;
   customer_category_code: string;
   customer_category_name: string;
-  status: "Active" | "Inactive";
+  status: "0" | "1"; // keep raw for backend compatibility
 }
 
 export default function CustomerCategoryPage() {
   const [categories, setCategories] = useState<CustomerCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [outletChannels, setOutletChannels] = useState<Record<string, string>>({});
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedCategory, setSelectedCategory] =
-    useState<CustomerCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CustomerCategory | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // ✅ Fetch list
+  // ✅ Fetch outlet channels to map id → code
+  useEffect(() => {
+    const fetchChannels = async () => {
+      try {
+        const res = await channelList();
+        const map: Record<string, string> = {};
+        (res.data || []).forEach((oc: OutletChannel) => {
+          map[oc.id] = oc.outlet_channel_code;
+        });
+        setOutletChannels(map);
+      } catch (error) {
+        console.error("Failed to fetch outlet channels ❌", error);
+      }
+    };
+    fetchChannels();
+  }, []);
+
+  // ✅ Fetch categories and map status & outlet code
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await customerCategoryList();
-        const formatted: CustomerCategory[] = (res.data || []).map(
-          (c: CustomerCategoryAPI) => ({
-            id: c.id,
-            outlet_channel_id: c.outlet_channel_id,
-            customer_category_code: c.customer_category_code,
-            customer_category_name: c.customer_category_name,
-            status: c.status === "1" ? "Active" : "Inactive",
-          })
-        );
+        console.log("API Categories Raw ✅", res.data);
+
+        const formatted: CustomerCategory[] = (res.data || []).map((c: CustomerCategoryAPI) => ({
+          id: c.id,
+          outlet_channel_code: outletChannels[c.outlet_channel_id] || c.outlet_channel_id,
+          customer_category_code: c.customer_category_code,
+          customer_category_name: c.customer_category_name,
+          status: c.status === "1" || c.status === 1 ? "1" : "0", // normalize to "1"/"0"
+        }));
+
+        console.log("Fetched Categories ✅", formatted);
         setCategories(formatted);
       } catch (error) {
         console.error("API Error ❌", error);
@@ -66,20 +87,16 @@ export default function CustomerCategoryPage() {
       }
     };
 
-    fetchCategories();
-  }, [showSnackbar]);
+    if (Object.keys(outletChannels).length > 0) fetchCategories(); // wait for channels
+  }, [outletChannels, showSnackbar]);
 
   // ✅ Delete handler
   const handleDelete = async () => {
     if (!selectedCategory?.id) return;
-
     try {
       await deleteCustomerCategory(selectedCategory.id);
       showSnackbar("Customer Category deleted ✅", "success");
-
-      setCategories((prev) =>
-        prev.filter((c) => c.id !== selectedCategory.id)
-      );
+      setCategories(prev => prev.filter(c => c.id !== selectedCategory.id));
     } catch (error) {
       console.error("Delete failed ❌", error);
       showSnackbar("Failed to delete category ❌", "error");
@@ -89,17 +106,17 @@ export default function CustomerCategoryPage() {
     }
   };
 
-  // ✅ Transform data for table
-  const tableData: TableDataType[] = categories.map((c) => ({
+  // ✅ Table data with status converted for display
+  const tableData: TableDataType[] = categories.map(c => ({
     id: c.id,
-    outlet_channel_id: c.outlet_channel_id,
+    outlet_channel_code: c.outlet_channel_code,
     customer_category_code: c.customer_category_code,
     customer_category_name: c.customer_category_name,
-    status: c.status,
+    status: c.status === "1" ? "Active" : "Inactive",
   }));
 
   const columns = [
-    { key: "outlet_channel_id", label: "Outlet Channel ID", hidden: true },
+    { key: "outlet_channel_code", label: "Outlet Channel Code" },
     { key: "customer_category_code", label: "Code" },
     { key: "customer_category_name", label: "Name" },
     { key: "status", label: "Status" },
@@ -111,9 +128,7 @@ export default function CustomerCategoryPage() {
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">
-          Customer Category
-        </h1>
+        <h1 className="text-[20px] font-semibold text-[#181D27]">Customer Category</h1>
 
         <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
@@ -132,9 +147,7 @@ export default function CustomerCategoryPage() {
                         key={idx}
                         className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
                       >
-                        <span className="text-[#181D27] font-[500] text-[16px]">
-                          {label}
-                        </span>
+                        <span className="text-[#181D27] font-[500] text-[16px]">{label}</span>
                       </div>
                     )
                   )}
@@ -170,15 +183,6 @@ export default function CustomerCategoryPage() {
             rowSelection: true,
             rowActions: [
               {
-                icon: "lucide:eye",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  router.push(
-                    `/dashboard/settings/customer/customerCategory/view/${r.id}`
-                  );
-                },
-              },
-              {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
@@ -191,8 +195,7 @@ export default function CustomerCategoryPage() {
                 icon: "lucide:trash-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
-                  const category =
-                    categories.find((c) => c.id === r.id) || null;
+                  const category = categories.find(c => c.id === r.id) || null;
                   setSelectedCategory(category);
                   setShowDeletePopup(true);
                 },

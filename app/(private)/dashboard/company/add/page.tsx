@@ -145,15 +145,17 @@ export default function AddCustomer() {
 
       console.log("📦 Prepared payload:", [...formData.entries()]);
 
-      try {
-        const res = await addCompany(formData); // API should handle multipart/form-data
-        console.log("Company Added ✅", res);
-         showSnackbar("COMPANY added successfully ", "success");
+
+      const res = await addCompany(formData); // API should handle multipart/form-data
+      console.log("🛢️ API response:", res);
+      if (res.error) {
+        showSnackbar(res.data.message || "Failed to add company!", "error");
+      } else {
+        showSnackbar("COMPANY added successfully ", "success");
         formik.resetForm();
-      } catch (error) {
-        console.error("Add Company failed ❌", error);
-        showSnackbar("Failed to add company!", "error");
       }
+
+
     },
   });
 
@@ -414,7 +416,7 @@ export default function AddCustomer() {
               label="Modules"
               value={formik.values.modules}
               onChange={formik.handleChange}
-             
+
             />
             <InputFields
               name="serviceType"

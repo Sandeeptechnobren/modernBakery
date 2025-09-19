@@ -92,19 +92,20 @@ export default function EditCompany() {
     fetchCompany();
   }, [queryId, showSnackbar]);
 
-  // ✅ Submit handler
-  const handleSubmit = async (values: CompanyFormValues) => {
-    if (!queryId) return;
+ const handleSubmit = async (values: CompanyFormValues) => {
+  if (!queryId) return;
 
-    try {
-      await editCompany(queryId, { ...values, status: 1 });
+  
+    const res = await editCompany(queryId, { ...values, status: 1 });
+
+    if (res?.error) {
+      showSnackbar(res?.data?.message || "Failed to update company ❌", "error");
+    } else {
       showSnackbar("Company updated successfully ✅", "success");
       router.push("/dashboard/company");
-    } catch (error) {
-      console.error("Failed to edit company:", error);
-      showSnackbar("Failed to update company ❌", "error");
     }
-  };
+};
+
 
   if (loading || !initialValues) return <Loading />;
 

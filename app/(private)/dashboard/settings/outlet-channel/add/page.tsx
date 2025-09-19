@@ -13,7 +13,7 @@ import { addOutletChannel } from "@/app/services/allApi";
 
 // ✅ Yup Schema
 const CountrySchema = Yup.object().shape({
-  outlet_channel: Yup.string().required("Channel Code is required."),
+  outlet_channel: Yup.string().required("Outlet Channel Code is required."),
  
 });
 
@@ -101,7 +101,7 @@ export default function AddOutletChannel() {
                       }
                     />
                     <ErrorMessage
-                      name="Outlet Channel"
+                      name="outlet_channel"
                       component="span"
                       className="text-xs text-red-500"
                     />
