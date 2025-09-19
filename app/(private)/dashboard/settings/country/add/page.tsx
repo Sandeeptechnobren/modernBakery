@@ -52,7 +52,7 @@ export default function AddCountry() {
       const res = await addCountry(payload);
       showSnackbar("Country added successfully ", "success");
 
-      console.log("API response ✅:", res);
+      
       router.push("/dashboard/settings/country");
     } catch (error) {
       console.error("Error submitting country ❌:", error);

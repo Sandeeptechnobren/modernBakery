@@ -10,6 +10,7 @@ import Popup from "@/app/components/popUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import CreateUpdate from "./createUpdate";
 import StatusBtn from "@/app/components/statusBtn2";
+import { useRouter } from "next/navigation";
 
 const mockCategoryData = new Array(100).fill(null).map((_, i) => ({
     id: (i + 1).toString(),
@@ -18,6 +19,7 @@ const mockCategoryData = new Array(100).fill(null).map((_, i) => ({
 }));
 
 const columns = [
+    { key: "id", label: "Category Id" },
     { key: "category_name", label: "Category Name" },
     { key: "status", label: "Status", render: (data: TableDataType) => <StatusBtn isActive={data.status === "0" ? false : true} /> },
 ];
@@ -29,6 +31,7 @@ export type categoryType = {
 };
 
 export default function Category() {
+    const router = useRouter();
     const [categoryData, setCategoryData] = useState<TableDataType[]>(
         [] as TableDataType[]
     );
@@ -46,26 +49,18 @@ export default function Category() {
     async function deleteCategory() {
         if (!deleteItemCategoryId) return;
         const listRes = await deleteItemCategory(deleteItemCategoryId);
-        if (listRes.error) return showSnackbar(listRes.message, "error")
+        if (listRes.error) return showSnackbar(listRes.data.message, "error")
         showSnackbar("Category deleted successfully", "success");
         setShowDeletePopup(false);
+        router.refresh();
     }
 
     useEffect(() => {
         const fetchItemCategory = async () => {
-            try {
-                const listRes = await itemCategoryList();
-                setCategoryData(listRes);
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    console.error("API Error:", error.message);
-                } else {
-                    console.error("Unexpected error:", error);
-                }
-                setCategoryData(mockCategoryData); // fallback to mock
-            } finally {
-                setLoading(false);
-            }
+            const listRes = await itemCategoryList();
+            if (listRes.error) return showSnackbar(listRes.message, "error");
+            setCategoryData(listRes.data);
+            setLoading(false);
         };
 
         fetchItemCategory();

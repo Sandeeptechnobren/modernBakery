@@ -2,7 +2,7 @@
 import React from 'react';
 import CustomSecurityCode from "@/app/components/customSecurityCode";
 import InputFields from "@/app/components/inputFields";
-
+import { useFormik } from "formik";
 type Props = {
     values: Record<string, string>;
     errors?: Record<string, string>;
@@ -15,34 +15,102 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <InputFields
-                label="Device No. "
+                label="Device No. *"
                 name="device_no"
                 value={values.device_no}
                 onChange={handleChange}
                 error={errors?.device_no && touched?.device_no ? errors.device_no : false}
             />
             <InputFields
-                label="EFRIS Configuration  "
+                label="EFRIS Configuration *"
                 name="is_efris"
                 value={values.is_efris}
                 onChange={handleChange}
                 error={errors?.is_efris && touched?.is_efris ? errors.is_efris : false}
             />
 
+            <InputFields
+                label="P12 File *"
+                name="p12_file"
+                type="file"
+                value={values.p12_file}
+                onChange={(e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                        setFieldValue('p12_file', file.name);
+                    }
+                }}
+                error={errors?.p12_file && touched?.p12_file ? errors.p12_file : false}
+            />
+
             <CustomSecurityCode
-                label="Stock Capital "
+                label="Stock Capital"
                 value={values.stock_capital}
                 onChange={(e)=> setFieldValue('stock_capital', e.target.value)}
                 placeholder="Enter Stock Capital"
             />
             <CustomSecurityCode
-                label="Deposit  "
+                label="Deposit Amount"
                 value={values.deposite_amount}
                 onChange={(e) => setFieldValue('deposite_amount', e.target.value)}
                 placeholder="Enter Deposit"
             />
 
-            {/* Second Row - Accuracy + Days */}
+            <InputFields
+                label="Branch ID"
+                name="branch_id"
+                value={values.branch_id}
+                onChange={handleChange}
+                error={errors?.branch_id && touched?.branch_id ? errors.branch_id : false}
+            />
+
+            <InputFields
+                label="Is Branch"
+                name="is_branch"
+                value={values.is_branch}
+                onChange={handleChange}
+                options={[
+                    { value: "yes", label: "Yes" },
+                    { value: "no", label: "No" },
+                ]}
+                error={errors?.is_branch && touched?.is_branch ? errors.is_branch : false}
+            />
+
+            <InputFields
+                label="Invoice Sync"
+                name="invoice_sync"
+                value={values.invoice_sync}
+                onChange={handleChange}
+                options={[
+                    { value: "enabled", label: "Enabled" },
+                    { value: "disabled", label: "Disabled" },
+                ]}
+                error={errors?.invoice_sync && touched?.invoice_sync ? errors.invoice_sync : false}
+            />
+
+                        <InputFields
+                          name="companyLogo"
+                          label="Company Logo"
+                          type="file"
+                          onChange={(e) =>
+                              (e.currentTarget as HTMLInputElement).files?.[0]
+                          }
+                        />
+
+                        <InputFields
+                label="Created User *"
+                name="created_user"
+                value={values.created_user}
+                onChange={handleChange}
+                error={errors?.created_user && touched?.created_user ? errors.created_user : false}
+            />
+            <InputFields
+                label="Updated User *"
+                name="updated_user"
+                value={values.updated_user}
+                onChange={handleChange}
+                error={errors?.updated_user && touched?.updated_user ? errors.updated_user : false}
+            />
         </div>
     );
 }

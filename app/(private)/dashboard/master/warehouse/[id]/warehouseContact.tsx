@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function WarehouseContactDetails({ values, errors, touched, handleChange, setFieldValue }: Props) {
-  const { countryOptions } = useAllDropdownListData();
+  const { countryOptions,onlyCountryOptions } = useAllDropdownListData();
   // fallback if context not populated
   const fallbackCountries = [
     { value: "uae", label: "UAE" },
@@ -21,17 +21,17 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
     { value: "uk", label: "UK" },
   ];
 
-  const countries = countryOptions && countryOptions.length > 0 ? countryOptions : fallbackCountries;
+  const countries = onlyCountryOptions && onlyCountryOptions.length > 0 ? onlyCountryOptions : fallbackCountries;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full overflow-x-hidden">
       {/* Contact */}
       <div className="flex flex-col gap-2 w-full">
-        <label className="text-sm font-medium text-gray-700 mb-2">Owner Contact Number </label>
+        <label className="text-sm font-medium text-gray-700 mb-2">Owner Contact Number</label>
         <div className="flex w-full">
           <select
             name="ownerContactCountry"
-            value={values.ownerContactCountry ?? countries[0]?.value ?? ""}
+            value={values.ownerContactCountry ?? onlyCountryOptions ?? ""}
             onChange={handleChange}
             className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
           >
@@ -50,12 +50,12 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
             className={`border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px] w-full ${errors?.owner_number && touched?.owner_number ? 'border-red-500' : ''}`}
           />
         </div>
-        {errors?.contact && touched?.contact && <span className="text-xs text-red-500 mt-1">{errors.contact}</span>}
+  {errors?.owner_number && touched?.owner_number && <span className="text-xs text-red-500 mt-1">{errors.owner_number}</span>}
       </div>
 
       {/* Tin Number */}
       <div className="flex flex-col gap-4 w-full">
-        <label className="text-sm font-medium text-gray-700">Tin Number</label>
+        <label className="text-sm font-medium text-gray-700">Tin Number *</label>
         <div className="flex w-full">
           <select
             name="tinCode"
@@ -75,9 +75,10 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
             value={values.tin_no ?? ""}
             onChange={handleChange}
             placeholder="TIN Number"
-            className="border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px] w-full"
+            className={`border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px] w-full ${errors?.tin_no && touched?.tin_no ? 'border-red-500' : ''}`}
           />
         </div>
+        {errors?.tin_no && touched?.tin_no && <span className="text-xs text-red-500 mt-1">{errors.tin_no}</span>}
       </div>
 
       {/* Email */}

@@ -9,6 +9,7 @@ import { useState } from "react";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import { logout } from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 export default function TopBar({
     horizontalSidebar,
@@ -21,12 +22,20 @@ export default function TopBar({
     isOpen: boolean;
     toggleOpen: () => void;
 }) {
+    const { showSnackbar } = useSnackbar();
     const [isOpenDropdown, setIsOpenDropdown] = useState(false);
     const router = useRouter();
     const [searchBarValue, setSearchBarValue] = useState("");
 
     const paddingIfOpen = isOpen ? "pl-[250px]" : "pl-[80px]";
     const paddingLeft = horizontalSidebar ? "pl-[0px]" : paddingIfOpen;
+
+    async function logoutHandler() {
+        const res = await logout();
+        if(res.error) showSnackbar(res.data.message, "error");
+        localStorage.removeItem("token");
+        router.push("/");
+    }
 
     return (
         <div
@@ -105,13 +114,7 @@ export default function TopBar({
                                             {
                                                 icon: "tabler:logout",
                                                 label: "Logout",
-                                                onClick: () => {
-                                                    logout().then((res) => {
-                                                        if(res?.code === 200 || res?.code === 401) {
-                                                            router.push("/");
-                                                        }
-                                                    })
-                                                }
+                                                onClick: logoutHandler
                                             }
                                         ]}
                                     />

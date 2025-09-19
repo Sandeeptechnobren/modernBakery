@@ -8,6 +8,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { categoryType } from "./page";
+import { useRouter } from "next/navigation";
 
 export default function CreateUpdate({
     type,
@@ -19,6 +20,7 @@ export default function CreateUpdate({
     onClose: () => void;
 }) {
     const { showSnackbar } = useSnackbar();
+    const router = useRouter();
 
     const formik = useFormik({
         initialValues: {
@@ -40,10 +42,11 @@ export default function CreateUpdate({
                     values.categoryName,
                     values.status as 0 | 1
                 );
-                if (res.error) return showSnackbar(res.message, "error")
+                if (res.error) return showSnackbar(res.data.message, "error")
                 else {
                     showSnackbar("Item Category Created Successfully", "success");
                     onClose();
+                    router.refresh();
                 }
             }
             if (type === "update") {
@@ -64,10 +67,11 @@ export default function CreateUpdate({
                         values.categoryName,
                         values.status as 0 | 1
                     );
-                    if (res.error) return showSnackbar(res.message, "error");
+                    if (res.error) return showSnackbar(res.data.message, "error");
                     else {
                         showSnackbar("Item Category Updated Successfully", "success");
                         onClose();
+                        router.refresh();
                     }
                 }
             }

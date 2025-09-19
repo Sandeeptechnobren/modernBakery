@@ -33,6 +33,7 @@ interface DropdownDataContextType {
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
+  onlyCountryOptions: { value: string; label: string }[];
   regionOptions: { value: string; label: string }[];
   routeOptions: { value: string; label: string }[];
   warehouseOptions: { value: string; label: string }[];
@@ -162,6 +163,10 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     value: String(c.id ?? ''),
     label: c.country_code && c.country_name ? `${c.country_code} - ${c.country_name}` : (c.country_name ?? '')
   }));
+  const onlyCountryOptions = (Array.isArray(countryListData) ? countryListData : []).map((c: CountryItem) => ({
+    value: String(c.id ?? ''),
+    label: c.country_name ? `${c.country_name}` : (c.country_name ?? '')
+  }));
 
   const regionOptions = (Array.isArray(regionListData) ? regionListData : []).map((c: RegionItem) => ({
     value: String(c.id ?? ''),
@@ -228,7 +233,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         countryList({}),
         regionList(),
         routeList(),
-        warehouseType(2),
+        warehouseType(1),
         routeType(),
         getSubRegion(),
         getCompanyCustomers(),
@@ -307,6 +312,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         userTypes: userTypesData,
         companyOptions,
         countryOptions,
+        onlyCountryOptions,
         regionOptions,
         routeOptions,
         warehouseOptions,

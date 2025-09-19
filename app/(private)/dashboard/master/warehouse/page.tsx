@@ -125,11 +125,11 @@ export default function Warehouse() {
         if (!selectedRow?.id) throw new Error('Missing id');
         await deleteWarehouse(String(selectedRow.id)); // call API
         
-        showSnackbar("Country deleted successfully ", "success"); 
+        showSnackbar("Warehouse deleted successfully ", "success"); 
         router.refresh();
       } catch (error) {
-        console.error("Delete failed ❌:", error);
-        showSnackbar("Failed to delete country ❌", "error"); 
+        console.error("Delete failed :", error);
+        showSnackbar("Failed to delete Warehouse", "error"); 
       } finally {
         setShowDeletePopup(false);
         setSelectedRow(null);
@@ -222,7 +222,7 @@ export default function Warehouse() {
       {showDeletePopup && (
               <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                 <DeleteConfirmPopup
-                  title="Country"
+                  title="Warehouse"
                   onClose={() => setShowDeletePopup(false)}
                   onConfirm={handleConfirmDelete}
                 />
