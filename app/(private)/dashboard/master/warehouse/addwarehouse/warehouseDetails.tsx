@@ -14,18 +14,18 @@ type Props = {
     setFieldValue: (field: string, value: string) => void;
 };
 
-export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue }: Props) {
+export default function WarehouseDetails({ values, errors, touched, handleChange, }: Props) {
     const [isOpen, setIsOpen] = React.useState(false);
-    const { warehouseOptions, loading } = useAllDropdownListData();
+    const {  loading } = useAllDropdownListData();
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <InputFields
                 label="Registration Number "
-                name="registation_no"
-                value={values.registation_no}
+                name="registration_no"
+                value={values.registration_no}
                 onChange={handleChange}
-                error={errors?.registation_no && touched?.registation_no ? errors.registation_no : false}
+                error={errors?.registration_no && touched?.registration_no ? errors.registration_no : false}
             />
 
             <InputFields
@@ -74,7 +74,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             <InputFields label="Warehouse Owner Name " name="owner_name" value={values.owner_name} onChange={handleChange} error={errors?.owner_name && touched?.owner_name ? errors.owner_name : false} />
 
             <InputFields
-                label="Bussiness Type"
+                label="Business Type"
                 name="business_type"
                 value={values.business_type}
                 onChange={handleChange}
