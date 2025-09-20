@@ -198,14 +198,9 @@ export const deleteCountry = async (id:string) => {
 
 
 // Item Category
-export const itemCategoryList = async () => {
+export const itemCategoryList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/settings/item_category/list", {
-      params: {
-        per_page: 5,
-        page: 2
-      },
-    });
+    const res = await API.get("/api/settings/item_category/list", params);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

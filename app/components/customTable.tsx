@@ -21,7 +21,7 @@ type configType = {
             total: number;
         };
         filter?: () => TableDataType[];
-        list: (pageNo: number) => Promise<listReturnType> | listReturnType;
+        list: (pageNo: number, pageSize: number) => Promise<listReturnType> | listReturnType;
     };
     header?: {
         searchBar?:
@@ -535,7 +535,7 @@ function TableFooter() {
 
     async function handlePageChange(pageNo: number) {
         if (api?.list) {
-            const result = await api.list(pageNo);
+            const result = await api.list(pageNo, pageSize);
             const resolvedResult = result instanceof Promise ? await result : result;
             const { data, total, currentPage } = resolvedResult;
             setTableData(data);
