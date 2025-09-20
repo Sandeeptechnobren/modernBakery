@@ -332,14 +332,6 @@ export const deleteRegion = async (id:string) => {
   }
 };
 
-export const updateRegion = async (id:string,body:object) => {
-  try {
-              const res = await API.put(`/api/master/region/update_region/${id}`,body);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
 
 export const routeList = async () => {
   try {
@@ -536,10 +528,9 @@ export const updateCompanyCustomer = async (id:string,body:object) => {
   }
 };
 
-export const deleteCompanyCustomer = async (id:string,body:object) => {
+export const deleteCompanyCustomer = async (id: string, body?: object) => {
   try {
-  const res = await API.put(`/api/master/companycustomer/${id}/delete`,body);
-
+    const res = await API.delete(`/api/master/companycustomer/delete/${id}`, { data: body ?? {} });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -731,15 +722,38 @@ export const getCustomerType = async (id: string) => {
 
 
 
-export const addRegion = async  (payload?: {regionName: string, countryId: number, status: number}) => {
-  try {
-    const res = await API.post("/api/master/region/add_region", { payload });
+type Payload = {
+  region_name: string;
+  country_id: number;
+  status: number;
+};
 
+export const addRegion = async (payload: Payload) => {
+  try {
+    // ✅ Send the object directly, not wrapped inside { payload }
+    const res = await API.post("/api/master/region/add_region", payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
+
+type ipdatePayload = {
+  region_name: string;
+  country_id: number;
+  status: number;
+};
+
+export const updateRegion = async (id: string, payload: ipdatePayload) => {
+  try {
+    // ✅ Send payload directly
+    const res = await API.put(`/api/master/region/update_region/${id}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 
 export const listCountries = async () => {
   try {

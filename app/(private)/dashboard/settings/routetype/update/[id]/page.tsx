@@ -9,12 +9,6 @@ import InputFields from "@/app/components/inputFields";
 import { getRouteTypeById, updateRouteTypeById } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
-interface RouteTypeData {
-  id: string;
-  route_type_name: string;
-  status: number;
-}
-
 export default function UpdateRouteType() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -23,15 +17,12 @@ export default function UpdateRouteType() {
 
   const [routeTypeName, setRouteTypeName] = useState<string>("");
   const [status, setStatus] = useState<"1" | "0">("1");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // -----------------------
-  // Fetch existing route type
-  // -----------------------
+  // ✅ Fetch the existing route type
   useEffect(() => {
     if (!routeId) return;
-
-    const fetchRouteType = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const res = await getRouteTypeById(routeId);
@@ -39,42 +30,37 @@ export default function UpdateRouteType() {
           setRouteTypeName(res.data.route_type_name ?? "");
           setStatus(String(res.data.status ?? "1") as "1" | "0");
         } else {
-          showSnackbar("Route Type not found", "error");
+          showSnackbar("Route Type not found ❌", "error");
         }
       } catch (err) {
         console.error(err);
-        showSnackbar("Failed to load Route Type", "error");
+        showSnackbar("Failed to fetch Route Type ❌", "error");
       } finally {
         setLoading(false);
       }
     };
-
-    fetchRouteType();
+    fetchData();
   }, [routeId, showSnackbar]);
 
-  // -----------------------
-  // Handle form submit
-  // -----------------------
-  const handleSubmit = async () => {
+  // ✅ Update handler
+  const handleUpdate = async () => {
     if (!routeTypeName.trim()) {
-      return showSnackbar("Please enter a Route Type Name", "error");
+      return showSnackbar("Please enter a Route Type Name ❌", "error");
     }
-
     try {
       const res = await updateRouteTypeById(routeId, {
         route_type_name: routeTypeName.trim(),
         status: Number(status),
       });
-
       if (res?.status) {
         showSnackbar("Route Type updated successfully ✅", "success");
         router.push("/dashboard/settings/routetype?updated=1");
       } else {
-        showSnackbar(res?.message || "Failed to update Route Type", "error");
+        showSnackbar(res?.message || "Failed to update Route Type ❌", "error");
       }
     } catch (err) {
       console.error(err);
-      showSnackbar("Error updating Route Type ❌", "error");
+      showSnackbar("Error while updating ❌", "error");
     }
   };
 
@@ -82,7 +68,7 @@ export default function UpdateRouteType() {
 
   return (
     <div className="p-6">
-      {/* Header */}
+      {/* 🔹 Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link href="/dashboard/settings/routetype">
           <Icon icon="lucide:arrow-left" width={24} />
@@ -90,7 +76,7 @@ export default function UpdateRouteType() {
         <h1 className="text-xl font-semibold">Update Route Type</h1>
       </div>
 
-      {/* Form */}
+      {/* 🔹 Form */}
       <div className="bg-white rounded-xl shadow p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputFields
@@ -112,34 +98,24 @@ export default function UpdateRouteType() {
           />
         </div>
 
-        {/* Buttons */}
-     {/* Buttons */}
-<div className="flex justify-end gap-4 mt-6">
-  <button
-    className="px-4 py-2 border rounded-lg"
-    onClick={() => router.push("/dashboard/settings/routetype")}
-  >
-    Cancel
-  </button>
+        {/* 🔹 Buttons */}
+        <div className="flex justify-end gap-4 mt-6">
+          {/* Cancel Button */}
+          <button
+            className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+            onClick={() => router.push("/dashboard/settings/routetype")}
+          >
+            Cancel
+          </button>
 
-  <button
-    className="px-4 py-2 border rounded-lg bg-red-500 text-white"
-    onClick={() => {
-      setRouteTypeName(""); // clear route type name
-      setStatus("1");        // reset status
-      showSnackbar("Form cleared ✅", "success");
-    }}
-  >
-    Clear
-  </button>
-
-  <SidebarBtn
-    label="Update"
-    isActive
-    leadingIcon="mdi:check"
-    onClick={handleSubmit}
-  />
-</div>
+          {/* ✅ Update using SidebarBtn */}
+          <SidebarBtn
+            label="Update"
+            isActive
+            leadingIcon="mdi:check" // you can change the icon if needed
+            onClick={handleUpdate}
+          />
+        </div>
       </div>
     </div>
   );

@@ -110,6 +110,13 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [
                     {
                         isActive: false,
+                        href: "/dashboard/settings/company/companyCustomer",
+                        label: "Company Customer",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500",
+                    },
+                    {
+                        isActive: false,
                         href: "/dashboard/settings/customer/companyType",
                         label: "Company Type",
                         leadingIcon: "lucide:user",
@@ -345,6 +352,13 @@ export const initialLinkData: SidebarDataType[] = [
                 isActive: false,
                 href: "/dashboard/settings/expenseType",
                 label: "Expense Type",
+                leadingIcon: "mdi:currency-usd",
+                iconColor: "text-green-500",
+            },
+              {
+                isActive: false,
+                href: "/dashboard/settings/salesman-type",
+                label: "Salesman Type",
                 leadingIcon: "mdi:currency-usd",
                 iconColor: "text-green-500",
             },
