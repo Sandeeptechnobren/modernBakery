@@ -89,7 +89,7 @@ export default function CustomerSubCategoryPage() {
     }
   };
 
-  // ✅ map table data with correct typing
+  
   const tableData: TableDataType[] = subCategories.map((c) => ({
     id: String(c.id), // Table expects string
     customer_category_name: c.customer_category_name,

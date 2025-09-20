@@ -60,7 +60,7 @@ export const companyById = async (id: string) => {
 
 export const updateCompany = async (id: string, data: object) => {
    try {
-    const res = await API.put(`/api/master/company/${id}`, data);
+    const res = await API.put(`/api/master/company/company/${id}`, data);
 
     return res.data;
   } catch (error: unknown) {
@@ -70,7 +70,7 @@ export const updateCompany = async (id: string, data: object) => {
 
 export const deleteCompany = async (id: string) => {
    try {
-    const res = await API.delete(`/api/master/company/${id}`);
+    const res = await API.delete(`/api/master/company/company/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -672,7 +672,7 @@ export const getCustomerTypeById = async (id:string) => {
 
 export const updateCustomerType = async (id:string,body:object) => {
   try {
-    const res = await API.get(`/api/settings/customer-type/${id}`,body);
+    const res = await API.put(`/api/settings/customer-type/${id}`,body);
 
     return res.data;
   } catch (error: unknown) {
@@ -1284,7 +1284,7 @@ export const updateVehicle = async (id: string, data: FormData | Record<string, 
 
 export const getVehicleById = async (id: string) => {
   try {
-    const res = await API.get(`/api/master/vehicle/${id}`);
+    const res = await API.get(`/api/master/vehicle/${id}/update`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

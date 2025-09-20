@@ -1,8 +1,8 @@
 "use client";
 
-import { ErrorMessage, Form, Formik } from "formik";
-import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { useFormik } from "formik";
 import * as Yup from "yup";
 
 import ContainerCard from "@/app/components/containerCard";
@@ -60,10 +60,11 @@ export default function UpdateCustomerCategory() {
         setOutletChannels(options);
       } catch (error) {
         console.error("Failed to fetch outlet channels ❌", error);
+        showSnackbar("Failed to fetch outlet channels ❌", "error");
       }
     };
     fetchChannels();
-  }, []);
+  }, [showSnackbar]);
 
   // Fetch category data
   useEffect(() => {
@@ -74,13 +75,13 @@ export default function UpdateCustomerCategory() {
 
     const fetchCategory = async () => {
       try {
-        const res = await getCustomerCategoryById(categoryId);
+        const res = await getCustomerCategoryById((categoryId));
         const category = res?.data?.data || res?.data;
 
         if (!category) throw new Error("Customer Category not found");
 
         setInitialValues({
-          outlet_channel_id: category.outlet_channel_id, // set the ID
+          outlet_channel_id: String(category.outlet_channel_id || ""),
           code: category.customer_category_code || "",
           name: category.customer_category_name || "",
           status: category.status === 1 ? "Active" : "Inactive",
@@ -96,26 +97,33 @@ export default function UpdateCustomerCategory() {
     fetchCategory();
   }, [categoryId, showSnackbar]);
 
-  const handleSubmit = async (values: CustomerCategoryForm) => {
-    if (!categoryId) return;
+  const formik = useFormik({
+    enableReinitialize: true,
+    initialValues,
+    validationSchema,
+    onSubmit: async (values: CustomerCategoryForm) => {
+      if (!categoryId) return;
 
-    try {
-      const payload = {
-        outlet_channel_id: values.outlet_channel_id, // send ID
-        customer_category_code: values.code,
-        customer_category_name: values.name,
-        status: values.status === "Active" ? 1 : 0,
-      };
+      try {
+        const payload = {
+          outlet_channel_id: Number(values.outlet_channel_id),
+          customer_category_code: values.code.trim(),
+          customer_category_name: values.name.trim(),
+          status: values.status === "Active" ? 1 : 0,
+        };
 
-      await updateCustomerCategory(categoryId, payload);
+        console.log("Submitting payload:", payload);
 
-      showSnackbar("Customer Category updated ✅", "success");
-      router.push("/dashboard/settings/customer/customerCategory");
-    } catch (error) {
-      console.error("Update failed ❌", error);
-      showSnackbar("Failed to update customer category ❌", "error");
-    }
-  };
+        await updateCustomerCategory((categoryId), payload);
+
+        showSnackbar("Customer Category updated ✅", "success");
+        router.push("/dashboard/settings/customer/customerCategory");
+      } catch (error) {
+        console.error("Update failed ❌", error);
+        showSnackbar("Failed to update customer category ❌", "error");
+      }
+    },
+  });
 
   if (loading) return <Loading />;
 
@@ -129,102 +137,85 @@ export default function UpdateCustomerCategory() {
         />
       </div>
 
-      <Formik
-        enableReinitialize
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ values, setFieldValue }) => (
-          <Form className="flex flex-col gap-4">
-            {/* Outlet Channel */}
-            <div>
-              <SearchableDropdown
-                label="Outlet Channel"
-                name="outlet_channel_id"
-                value={values.outlet_channel_id}
-                options={outletChannels}
-                onChange={(val) => setFieldValue("outlet_channel_id", val)}
-              />
-              <ErrorMessage
-                name="outlet_channel_id"
-                component="div"
-                className="text-red-500 text-sm"
-              />
-            </div>
+      <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
+        {/* Outlet Channel */}
+        <div>
+          <SearchableDropdown
+            label="Outlet Channel"
+            name="outlet_channel_id"
+            value={formik.values.outlet_channel_id}
+            options={outletChannels}
+            onChange={(val) => formik.setFieldValue("outlet_channel_id", String(val))}
+          />
+          {formik.touched.outlet_channel_id && formik.errors.outlet_channel_id && (
+            <div className="text-red-500 text-sm">{formik.errors.outlet_channel_id}</div>
+          )}
+        </div>
 
-            {/* Code */}
-            <div>
-              <InputFields
-                label="Code"
-                name="code"
-                value={values.code}
-                onChange={(e) => setFieldValue("code", e.target.value)}
-              />
-              <ErrorMessage
-                name="code"
-                component="div"
-                className="text-red-500 text-sm"
-              />
-            </div>
+        {/* Code */}
+        <div>
+          <InputFields
+            label="Code"
+            name="code"
+            value={formik.values.code}
+            onChange={(e) => formik.setFieldValue("code", e.target.value)}
+          />
+          {formik.touched.code && formik.errors.code && (
+            <div className="text-red-500 text-sm">{formik.errors.code}</div>
+          )}
+        </div>
 
-            {/* Name */}
-            <div>
-              <InputFields
-                label="Name"
-                name="name"
-                value={values.name}
-                onChange={(e) => setFieldValue("name", e.target.value)}
-              />
-              <ErrorMessage
-                name="name"
-                component="div"
-                className="text-red-500 text-sm"
-              />
-            </div>
+        {/* Name */}
+        <div>
+          <InputFields
+            label="Name"
+            name="name"
+            value={formik.values.name}
+            onChange={(e) => formik.setFieldValue("name", e.target.value)}
+          />
+          {formik.touched.name && formik.errors.name && (
+            <div className="text-red-500 text-sm">{formik.errors.name}</div>
+          )}
+        </div>
 
-            {/* Status */}
-            <div>
-              <InputFields
-                label="Status"
-                name="status"
-                value={values.status}
-                type="select"
-                options={[
-                  { label: "Active", value: "Active" },
-                  { label: "Inactive", value: "Inactive" },
-                ]}
-                onChange={(e) => setFieldValue("status", e.target.value)}
-              />
-              <ErrorMessage
-                name="status"
-                component="div"
-                className="text-red-500 text-sm"
-              />
-            </div>
+        {/* Status */}
+        <div>
+          <InputFields
+            label="Status"
+            name="status"
+            type="select"
+            value={formik.values.status}
+            options={[
+              { label: "Active", value: "Active" },
+              { label: "Inactive", value: "Inactive" },
+            ]}
+            onChange={(e) => formik.setFieldValue("status", e.target.value)}
+          />
+          {formik.touched.status && formik.errors.status && (
+            <div className="text-red-500 text-sm">{formik.errors.status}</div>
+          )}
+        </div>
 
-            {/* Buttons */}
-            <div className="flex justify-end gap-4 mt-6">
-              <button
-                type="button"
-                onClick={() =>
-                  router.push("/dashboard/settings/customer/customerCategory")
-                }
-                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-              >
-                Cancel
-              </button>
+        {/* Buttons */}
+        <div className="flex justify-end gap-4 mt-6">
+          <button
+            type="button"
+            onClick={() =>
+              router.push("/dashboard/settings/customer/customerCategory")
+            }
+            className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            Cancel
+          </button>
 
-              <SidebarBtn
-                label="Update"
-                isActive
-                leadingIcon="mdi:check"
-                type="submit"
-              />
-            </div>
-          </Form>
-        )}
-      </Formik>
+          <SidebarBtn
+            label="Update"
+            isActive
+            leadingIcon="mdi:check"
+            type="submit"
+          />
+        </div>
+      </form>
     </ContainerCard>
   );
 }

@@ -10,9 +10,12 @@ import InputFields from "@/app/components/inputFields";
 import { addCustomerType } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 
 export default function AddCustomerTypePage() {
   const { showSnackbar } = useSnackbar();
+  const router = useRouter();
 
   // ✅ Formik setup
   const formik = useFormik({
@@ -37,6 +40,7 @@ export default function AddCustomerTypePage() {
         console.log("✅ Add Customer Type response:", res);
         showSnackbar("Customer type added successfully!", "success");
         resetForm();
+        router.push("/dashboard/settings/customer/customerType");
       } catch (error) {
         console.error("❌ Add Customer Type failed", error);
         showSnackbar("Failed to add customer type", "error");

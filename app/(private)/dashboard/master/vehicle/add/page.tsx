@@ -12,6 +12,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { addVehicle, warehouseList } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
+
 interface Warehouse {
   id: number;
   warehouse_name: string;
@@ -21,6 +22,7 @@ interface VehicleFormValues {
   vehicleBrand: string;
   numberPlate: string;
   chassisNumber: string;
+  description: string;
   vehicleType: string;
   ownerType: string;
   warehouseId: string;
@@ -33,6 +35,7 @@ interface VehicleFormValues {
 const VehicleSchema = Yup.object().shape({
   vehicleBrand: Yup.string().required("Vehicle Brand is required"),
   numberPlate: Yup.string().required("Number Plate is required"),
+  description: Yup.string().required("Description is required"),
   chassisNumber: Yup.string().required("Chassis Number is required"),
   vehicleType: Yup.string().required("Vehicle Type is required"),
   ownerType: Yup.string().required("Owner Type is required"),
@@ -72,6 +75,7 @@ export default function AddVehicle() {
         vehicle_chesis_no: values.chassisNumber,
         description: values.vehicleBrand,
         capacity: values.capacity,
+        discription: values.description,
         vehicle_type: values.vehicleType,
         owner_type: values.ownerType,
         warehouse_id: values.warehouseId,
@@ -113,6 +117,7 @@ export default function AddVehicle() {
           numberPlate: "",
           chassisNumber: "",
           vehicleType: "",
+          description: "",
           ownerType: "",
           warehouseId: "",
           odoMeter: "",
@@ -142,6 +147,13 @@ export default function AddVehicle() {
                     { value: "3", label: "Bike" },
                     { value: "4", label: "Tuktuk" },
                   ]}
+                />
+
+                <InputFields
+                  label="Discription"
+                  value={values.description}
+                  onChange={handleChange}
+                  name="description"
                 />
               </div>
             </div>

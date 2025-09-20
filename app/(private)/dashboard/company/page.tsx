@@ -87,8 +87,8 @@ export default function CompanyPage() {
     fetchCompanies();
   }, [showSnackbar]);
 
-  // ✅ Delete handler with proper snackbar
- const handleConfirmDelete = async () => {
+
+  const handleConfirmDelete = async () => {
   if (!selectedRow?.id) return;
 
     const res = await deleteCompany(String(selectedRow.id));
