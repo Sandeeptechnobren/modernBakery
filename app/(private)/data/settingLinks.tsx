@@ -369,6 +369,13 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "hugeicons:promotion",
                 iconColor: "text-green-500",
             },
+            {
+                isActive: false,
+                href: "/dashboard/settings/salesman-type",
+                label: "Salesman Type",
+                leadingIcon: "mdi:currency-usd",
+                iconColor: "text-green-500",
+            },
 
     //         {
     //             isActive: false,

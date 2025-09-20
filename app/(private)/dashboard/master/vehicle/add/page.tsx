@@ -8,6 +8,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { addVehicle, warehouseList } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
+
 interface Warehouse {
   id: number;
   warehouse_name: string;
@@ -17,6 +18,7 @@ interface VehicleFormValues {
   vehicleBrand: string;
   numberPlate: string;
   chassisNumber: string;
+  description: string;
   vehicleType: string;
   ownerType: string;
   warehouseId: string; // form value is string
@@ -135,6 +137,7 @@ export default function AddVehicle() {
           numberPlate: "",
           chassisNumber: "",
           vehicleType: "",
+          description: "",
           ownerType: "",
           warehouseId: "",
           odoMeter: "",

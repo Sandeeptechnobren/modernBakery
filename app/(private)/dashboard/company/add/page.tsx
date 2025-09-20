@@ -8,12 +8,12 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { useRouter } from "next/navigation";
 import {
   countryList,
   addCompany,
   regionList,
   getArea,
-
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
@@ -48,7 +48,7 @@ export default function AddCustomer() {
 
   const { showSnackbar } = useSnackbar();
 
-  // ✅ Yup Validation
+  // Yup Validation
   const CompanySchema = Yup.object({
     companyName: Yup.string().required("Company name is required"),
     companyCode: Yup.string().required("Company code is required"),
@@ -57,9 +57,11 @@ export default function AddCustomer() {
     vatNo: Yup.number().typeError("VAT must be a number"),
     primaryContact: Yup.string().required("Primary contact is required"),
     country: Yup.string().required("Country is required"),
+    companyType: Yup.string().required("Company type is required"),
+    serviceType: Yup.string().required("Service type is required"),
   });
 
-  // ✅ Formik Setup
+  // Formik Setup
   const formik = useFormik({
     initialValues: {
       companyType: "",
@@ -87,17 +89,44 @@ export default function AddCustomer() {
       serviceType: "",
       status: "1",
     },
-
     validationSchema: CompanySchema,
     onSubmit: async (values) => {
-      console.log("✅ Form submitted with values:", values);
+      try {
+        // Convert modules string to object
+        const modulesArray = values.modules
+          ? values.modules.split(",").map((m) => m.trim())
+          : [];
+        const moduleAccess: Record<string, boolean> = {};
+        modulesArray.forEach((m) => {
+          if (m) moduleAccess[m] = true;
+        });
 
-      // Convert modules string → array
-      const modulesArray = values.modules
-        ? values.modules.split(",").map((m) => m.trim())
-        : [];
+        // Prepare payload
+        const payload = {
+          company_name: values.companyName,
+          company_type: values.companyType,
+          email: values.email,
+          tin_number: values.tinNumber,
+          vat: values.vatNo,
+          country_id: Number(values.country),
+          selling_currency: values.sellingCurrency,
+          purchase_currency: values.purchaseCurrency,
+          toll_free_no: values.tollFreeNumber,
+          logo: values.companyLogo,
+          website: values.companyWebsite,
+          service_type: values.serviceType,
+          status: values.status === "1" ? "active" : "inactive",
+          module_access: moduleAccess,
+          district: values.district,
+          town: values.town,
+          street: values.street,
+          landmark: values.landmark,
+          region: Number(values.region),
+          sub_region: Number(values.subRegion),
+          primary_contact: values.primaryContact,
+        };
 
-      // Build FormData for file + array support
+        // Convert to FormData to support file upload
       const formData = new FormData();
 
       formData.append("company_code", values.companyCode);
@@ -156,12 +185,10 @@ export default function AddCustomer() {
         formik.resetForm();
        
       }
-
-
     },
   });
 
-  // ✅ Fetch Dropdown Data
+  // Fetch Dropdown Data
   useEffect(() => {
     const fetchCustomerTypes = async () => {
       try {
@@ -233,6 +260,7 @@ export default function AddCustomer() {
                 { value: "manufacturing", label: "Manufacturing" },
                 { value: "trading", label: "Trading" },
               ]}
+              error={formik.touched.companyType && formik.errors.companyType}
             />
             <div className="flex items-end gap-2 max-w-[406px]">
               <InputFields
@@ -262,7 +290,7 @@ export default function AddCustomer() {
               onChange={(e) =>
                 formik.setFieldValue(
                   "companyLogo",
-                  (e.currentTarget as HTMLInputElement).files?.[0]
+                  (e.currentTarget as HTMLInputElement).files?.[0] ?? null
                 )
               }
             />
@@ -287,9 +315,7 @@ export default function AddCustomer() {
               onContactChange={(e) =>
                 formik.setFieldValue("primaryContact", e.target.value)
               }
-              onCodeChange={(e) =>
-                formik.setFieldValue("primaryCode", e.target.value)
-              }
+              onCodeChange={(e) => formik.setFieldValue("primaryCode", e.target.value)}
               options={countries}
               onBlur={formik.handleBlur}
               error={formik.touched.primaryContact && formik.errors.primaryContact}
@@ -302,9 +328,7 @@ export default function AddCustomer() {
               onContactChange={(e) =>
                 formik.setFieldValue("tollFreeNumber", e.target.value)
               }
-              onCodeChange={(e) =>
-                formik.setFieldValue("tollFreeCode", e.target.value)
-              }
+              onCodeChange={(e) => formik.setFieldValue("tollFreeCode", e.target.value)}
               options={countries}
             />
             <InputFields
@@ -417,7 +441,6 @@ export default function AddCustomer() {
               label="Modules"
               value={formik.values.modules}
               onChange={formik.handleChange}
-
             />
             <InputFields
               name="serviceType"
