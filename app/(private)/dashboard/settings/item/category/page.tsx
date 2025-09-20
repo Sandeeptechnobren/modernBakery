@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
+import Table, {
+    TableDataType,
+} from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Loading from "@/app/components/Loading";
 import { deleteItemCategory, itemCategoryList } from "@/app/services/allApi";
@@ -10,9 +12,6 @@ import Popup from "@/app/components/popUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import CreateUpdate from "./createUpdate";
 import StatusBtn from "@/app/components/statusBtn2";
-import { useRouter } from "next/navigation";
-
-
 
 const columns = [
     { key: "id", label: "Category Id" },
@@ -21,7 +20,7 @@ const columns = [
         key: "status",
         label: "Status",
         render: (data: TableDataType) => (
-            <StatusBtn isActive={data.status === "0" ? false : true} />
+            <StatusBtn isActive={data.status ? true : false} />
         ),
     },
 ];
@@ -53,7 +52,10 @@ export default function Category() {
         if (listRes.error) {
             showSnackbar(listRes.data.message, "error");
         } else {
-            showSnackbar(listRes.message || "Category deleted successfully", "success");
+            showSnackbar(
+                listRes.message || "Category deleted successfully",
+                "success"
+            );
             fetchItemCategory();
         }
         setShowDeletePopup(false);
@@ -65,7 +67,7 @@ export default function Category() {
         if (listRes.error) showSnackbar(listRes.data.message, "error");
         else setCategoryData(listRes.data);
         setLoading(false);
-    };
+    }
 
     useEffect(() => {
         fetchItemCategory();
@@ -118,14 +120,18 @@ export default function Category() {
                         data={categoryData}
                         config={{
                             api: {
-                                list: (pageNo: number) => {
+                                list: async (pageNo: number, pageSize: number) => {
+                                    const result = await itemCategoryList({
+                                        page: pageNo.toString(),
+                                        per_page: pageSize.toString(),
+                                    });
                                     return {
-                                        data: [] as TableDataType[],
-                                        currentPage: 1,
-                                        pageSize: 10,
-                                        total: 20,
+                                        data: result.data || [],
+                                        currentPage: result.pagination.page || 0,
+                                        pageSize: result.pagination.limit || 10,
+                                        total: result.pagination.totalPages || 0,
                                     };
-                                }
+                                },
                             },
                             header: {
                                 searchBar: false,
