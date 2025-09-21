@@ -703,9 +703,9 @@ export const addCustomerType = async (payload: {
     }
 };
 
-export const getCustomerType = async (id:string) => {
+export const getCustomerType = async () => {
   try {
-    const res = await API.get(`/api/settings/customer-type/${id}`);
+    const res = await API.get(`/api/settings/customer-type/list`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

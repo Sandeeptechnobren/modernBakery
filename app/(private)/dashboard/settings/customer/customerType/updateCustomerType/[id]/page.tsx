@@ -55,7 +55,7 @@ export default function UpdateCustomerTypePage() {
   useEffect(() => {
     const fetchCustomerType = async () => {
       try {
-        const res = await getCustomerType((id));
+        const res = await getCustomerType();
         const customer = res?.data;
 
         if (customer) {

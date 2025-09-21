@@ -12,7 +12,7 @@ import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { customerTypeList, deleteCustomerType } from "@/app/services/allApi";
+import { deleteCustomerType, getCustomerType } from "@/app/services/allApi";
 
 interface CustomerType {
   id?: string | number;
@@ -62,7 +62,7 @@ export default function CustomerPage() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const res = await customerTypeList();
+        const res = await getCustomerType();
         setCustomers(res?.data || []);
       } catch (error) {
         console.error("Failed to fetch customers ❌", error);
