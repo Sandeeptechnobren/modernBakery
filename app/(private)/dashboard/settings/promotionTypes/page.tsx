@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Table, {
-    TableDataType,
-} from "@/app/components/customTable";
+import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Loading from "@/app/components/Loading";
-import { deleteItemCategory, itemCategoryList } from "@/app/services/allApi";
+import { deletePromotionType, promotionTypeList } from "@/app/services/allApi";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import Popup from "@/app/components/popUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -14,25 +12,25 @@ import CreateUpdate from "./createUpdate";
 import StatusBtn from "@/app/components/statusBtn2";
 
 const columns = [
-    { key: "id", label: "Category Id" },
-    { key: "category_name", label: "Category Name" },
+    { key: "id", label: "Promtion Id" },
+    { key: "code", label: "Code" },
+    { key: "name", label: "Name" },
     {
         key: "status",
         label: "Status",
-        render: (data: TableDataType) => (
-            <StatusBtn isActive={data.status ? true : false} />
-        ),
+        render: (data: TableDataType) => ( <StatusBtn isActive={data.status ? true : false} />)
     },
 ];
 
-export type categoryType = {
+export type promotionType = {
     id: number;
-    category_name: string;
-    status: string;
+    code?: string;
+    name: string;
+    status: 0 | 1;
 };
 
 export default function Category() {
-    const [categoryData, setCategoryData] = useState<TableDataType[]>(
+    const [promotionData, setPromotionData] = useState<TableDataType[]>(
         [] as TableDataType[]
     );
     const [loading, setLoading] = useState<boolean>(true);
@@ -40,37 +38,31 @@ export default function Category() {
     const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
     const [showCreatePopup, setShowCreatePopup] = useState<boolean>(false);
     const [showUpdatePopup, setShowUpdatePopup] = useState<boolean>(false);
-    const [deleteItemCategoryId, setDeleteItemCategoryId] = useState<
-        number | undefined
-    >();
-    const [updateItemCategoryData, setUpdateItemCategoryData] =
-        useState<categoryType>({} as categoryType);
+    const [deletePromotionId, setDeletePromotionId] = useState<number | undefined>();
+    const [updatePromotionData, setUpdatePromotionData] = useState<promotionType>({} as promotionType);
 
-    async function deleteCategory() {
-        if (!deleteItemCategoryId) return;
-        const listRes = await deleteItemCategory(deleteItemCategoryId);
+    async function deletePromotion() {
+        if (!deletePromotionId) return;
+        const listRes = await deletePromotionType(deletePromotionId);
         if (listRes.error) {
             showSnackbar(listRes.data.message, "error");
         } else {
-            showSnackbar(
-                listRes.message || "Category deleted successfully",
-                "success"
-            );
-            fetchItemCategory();
+            showSnackbar(listRes.message || "Category deleted successfully", "success");
+            fetchPromotionList();
         }
         setShowDeletePopup(false);
     }
 
-    async function fetchItemCategory() {
+    async function fetchPromotionList() {
         setLoading(true);
-        const listRes = await itemCategoryList();
+        const listRes = await promotionTypeList({ per_page: "10", page: "1" });
         if (listRes.error) showSnackbar(listRes.data.message, "error");
-        else setCategoryData(listRes.data);
+        else setPromotionData(listRes.data);
         setLoading(false);
-    }
+    };
 
     useEffect(() => {
-        fetchItemCategory();
+        fetchPromotionList();
     }, []);
 
     return loading ? (
@@ -79,15 +71,15 @@ export default function Category() {
         <>
             <div className="flex justify-between items-center mb-[20px]">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                    Item Category
+                    Promotion Type
                 </h1>
             </div>
 
             {showDeletePopup && (
                 <Popup isOpen={true} onClose={() => setShowDeletePopup(false)}>
                     <DeleteConfirmPopup
-                        title="Delete Item Category"
-                        onConfirm={() => deleteCategory()}
+                        title="Delete Promotion Type"
+                        onConfirm={() => deletePromotion()}
                         onClose={() => setShowDeletePopup(false)}
                     />
                 </Popup>
@@ -98,7 +90,7 @@ export default function Category() {
                     <CreateUpdate
                         type="create"
                         onClose={() => setShowCreatePopup(false)}
-                        onRefresh={fetchItemCategory}
+                        onRefresh={fetchPromotionList}
                     />
                 </Popup>
             )}
@@ -107,31 +99,27 @@ export default function Category() {
                 <Popup isOpen={true} onClose={() => setShowUpdatePopup(false)}>
                     <CreateUpdate
                         type="update"
-                        updateItemCategoryData={updateItemCategoryData}
+                        updateItemCategoryData={updatePromotionData}
                         onClose={() => setShowUpdatePopup(false)}
-                        onRefresh={fetchItemCategory}
+                        onRefresh={fetchPromotionList}
                     />
                 </Popup>
             )}
 
             <div className="h-[calc(100%-60px)]">
-                {categoryData && (
+                {promotionData && (
                     <Table
-                        data={categoryData}
+                        data={promotionData}
                         config={{
                             api: {
-                                list: async (pageNo: number, pageSize: number) => {
-                                    const result = await itemCategoryList({
-                                        page: pageNo.toString(),
-                                        per_page: pageSize.toString(),
-                                    });
+                                list: (pageNo: number) => {
                                     return {
-                                        data: result.data || [],
-                                        currentPage: result.pagination.page || 0,
-                                        pageSize: result.pagination.limit || 10,
-                                        total: result.pagination.totalPages || 0,
+                                        data: [] as TableDataType[],
+                                        currentPage: 1,
+                                        pageSize: 10,
+                                        total: 20,
                                     };
-                                },
+                                }
                             },
                             header: {
                                 searchBar: false,
@@ -143,7 +131,7 @@ export default function Category() {
                                         isActive={true}
                                         buttonTw="px-3 h-9"
                                         leadingIcon="lucide:plus"
-                                        label="Add Category"
+                                        label="Add Promotion Type"
                                         labelTw="hidden lg:block"
                                         onClick={() => setShowCreatePopup(true)}
                                     />,
@@ -156,12 +144,14 @@ export default function Category() {
                             rowActions: [
                                 {
                                     icon: "lucide:edit-2",
-                                    onClick: (data: Record<string, string>) => {
+                                    onClick: (data: TableDataType) => {
                                         setShowUpdatePopup(true);
-                                        setUpdateItemCategoryData({
+                                        console.log(data)
+                                        setUpdatePromotionData({
                                             id: parseInt(data.id),
-                                            category_name: data.category_name,
-                                            status: data.status,
+                                            code: data.code,
+                                            name: data.name,
+                                            status: parseInt(data.status) as 0 | 1
                                         });
                                     },
                                 },
@@ -169,7 +159,7 @@ export default function Category() {
                                     icon: "lucide:trash-2",
                                     onClick: (data: Record<string, string>) => {
                                         setShowDeletePopup(true);
-                                        setDeleteItemCategoryId(
+                                        setDeletePromotionId(
                                             parseInt(data.id)
                                         );
                                     },

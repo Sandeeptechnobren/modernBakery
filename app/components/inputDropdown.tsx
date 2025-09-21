@@ -8,13 +8,15 @@ export default function InputDropdown({
     defaultOption = 0,
     defaultText = "",
     options,
-    onOptionSelect
+    onOptionSelect,
+    dropdownTw = "w-full h-[200px]"
 }: {
     label: string;
     defaultOption?: number;
     defaultText?: string;
     options: { label: string; value: string }[];
     onOptionSelect: (option: { label: string; value: string }) => void;
+    dropdownTw?: string
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedOptionLabel, setSelectedOptionLabel] = useState(defaultText);
@@ -55,7 +57,7 @@ export default function InputDropdown({
                 </label>
             }
             dropdown={
-                <div className="absolute z-20 w-full">
+                <div className={`absolute z-20 ${dropdownTw}`}>
                     <CustomDropdown>
                         {options.map((option, index) => (
                             <div key={index} className="p-[10px] text-[#414651] hover:bg-gray-100" onClick={() => onSelect(option)}>

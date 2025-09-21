@@ -14,36 +14,43 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { subCategoryType } from "./page";
 import { useEffect, useState } from "react";
-import { categoryType } from "../category/page";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function CreateUpdate({
     type,
     updateItemCategoryData,
     onClose,
+    onRefresh
 }: {
     type: "create" | "update";
     updateItemCategoryData?: subCategoryType;
     onClose: () => void;
+    onRefresh: () => void
 }) {
     const { showSnackbar } = useSnackbar();
-    const [categoryData, setCategoryData] = useState([] as categoryType[]);
-    const [options, setOptions] = useState<{ value: string; label: string }[]>(
-        []
-    );
+    const { itemCategory } = useAllDropdownListData();
+    const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
+    const [defaultOption, setDefaultOption] = useState<number>(0);
 
     useEffect(() => {
-        const newOptions = categoryData.map((category) => {
+        const newOptions = itemCategory.map((category) => {
             return {
-                value: category.id.toString(),
-                label: category.category_name,
+                value: category.id?.toString() || "",
+                label: category.category_name || "",
             };
         });
         setOptions(newOptions);
-    }, [categoryData]);
+        if(updateItemCategoryData) {
+            const index = itemCategory.findIndex(
+                (category) => category.id === updateItemCategoryData?.category_id
+            );
+            setDefaultOption(index || 0);
+        }
+    }, [itemCategory]);
 
     const formik = useFormik({
         initialValues: {
-            category_id: "0",
+            category_id: updateItemCategoryData?.category_id.toString() || "0",
             sub_category_name: updateItemCategoryData?.sub_category_name || "",
             status: updateItemCategoryData?.status || 0,
         },
@@ -65,54 +72,25 @@ export default function CreateUpdate({
                 res = await createItemSubCategory(
                     parseInt(values.category_id),
                     values.sub_category_name,
-                    values.status as 0 | 1
+                    values.status === "1" ? 1 : 0
                 );
             }
             if (type === "update") {
-                const payload: { sub_category_name?: string; status?: 0 | 1 } =
-                    {};
-                if (
-                    values.sub_category_name !==
-                    updateItemCategoryData?.sub_category_name
-                ) {
-                    payload.sub_category_name = values.sub_category_name;
-                }
-
-                if (values.status !== updateItemCategoryData?.status) {
-                    payload.status = values.status as 0 | 1;
-                }
-                if (Object.keys(payload).length > 0) {
-                    res = await updateItemSubCategory(
-                        updateItemCategoryData?.id || 0,
-                        values.sub_category_name,
-                        values.status as 0 | 1
-                    );
-                    if (res?.code === 200) {
-                        showSnackbar(
-                            "Item Category Updated Successfully",
-                            "success"
-                        );
-                        onClose();
-                    }
-                }
+                res = await updateItemSubCategory(
+                    parseInt(values.category_id),
+                    updateItemCategoryData?.id || 0,
+                    values.sub_category_name,
+                    values.status === "1" ? 1 : 0
+                );
             }
-            if (res.error) return showSnackbar(res.message, "error") 
+            if (res.error) showSnackbar(res.data.message, "error") 
             else {
-                showSnackbar(type === "create" ? "Item Category Created Successfully" : "Item Category Updated Successfully", "success");
+                showSnackbar(res.message ? res.message : "Item Sub Category Created Successfully", "success");
                 onClose();
+                onRefresh();
             }
         },
     });
-
-    useEffect(() => {
-        const fetchItemCategory = async () => {
-            const listRes = await itemCategoryList();
-            if(listRes.error) return showSnackbar(listRes.message, "error");
-            setCategoryData(listRes);
-        };
-
-        fetchItemCategory();
-    }, []);
 
     return (
         <div>
@@ -126,23 +104,28 @@ export default function CreateUpdate({
                 className="mt-[20px] space-y-5"
             >
                 <InputDropdown
-                    label="Category"
+                    label="Category Name"
                     defaultText="Select Category"
-                    defaultOption={formik.values.status === 1 ? 0 : 1}
+                    defaultOption={defaultOption}
                     options={options}
                     onOptionSelect={(option) => {
                         formik.setFieldValue(
                             "category_id",
-                            parseInt(option.value)
+                            option.value
                         );
                     }}
                 />
+                {formik.touched.category_id && formik.errors.category_id ? (
+                    <span className="text-xs text-red-500">
+                        {formik.errors.category_id}
+                    </span>
+                ) : null}
 
                 <InputFields
                     id="sub_category_name"
                     name="sub_category_name"
                     value={formik.values.sub_category_name || ""}
-                    label="Category Name"
+                    label="Sub Category Name"
                     error={formik.errors.sub_category_name}
                     onChange={formik.handleChange}
                 />
@@ -156,7 +139,7 @@ export default function CreateUpdate({
                         { label: "Inactive", value: "0" },
                     ]}
                     onOptionSelect={(option) => {
-                        formik.setFieldValue("status", parseInt(option.value));
+                        formik.setFieldValue("status", option.value);
                     }}
                 />
                 {formik.touched.status && formik.errors.status ? (

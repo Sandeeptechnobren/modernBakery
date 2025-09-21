@@ -25,7 +25,7 @@ type RegionFormValues = {
   country: string;
 };
 
-export default function AddRegion() {
+export default function AddCompanyCustomers() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const { onlyCountryOptions } = useAllDropdownListData();
@@ -71,10 +71,10 @@ export default function AddRegion() {
   return (
     <div className="w-full h-full p-4">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard/settings/region">
+        <Link href="/dashboard/settings/company/companyCustomer">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold">Add New Region</h1>
+        <h1 className="text-xl font-semibold">Add New Company Customer</h1>
       </div>
 
       <Formik
@@ -85,17 +85,43 @@ export default function AddRegion() {
         {({ values, setFieldValue, isSubmitting }) => (
           <Form>
             <ContainerCard>
-              <h2 className="text-lg font-semibold mb-6">Region Details</h2>
+              <h2 className="text-lg font-semibold mb-6">Company Customer Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <InputFields
-                    label="Region Name"
-                    name="regionName"
+                    label="SAP Code"
+                    name="sapCode"
                     value={values.regionName}
-                    onChange={(e) => setFieldValue("regionName", e.target.value)}
+                    onChange={(e) => setFieldValue("sapCode", e.target.value)}
                   />
                   <ErrorMessage
-                    name="regionName"
+                    name="sapCode"
+                    component="span"
+                    className="text-xs text-red-500"
+                  />
+                </div>
+                   <div>
+                  <InputFields
+                    label="Customer Code"
+                    name="sapCode"
+                    value={values.regionName}
+                    onChange={(e) => setFieldValue("sapCode", e.target.value)}
+                  />
+                  <ErrorMessage
+                    name="sapCode"
+                    component="span"
+                    className="text-xs text-red-500"
+                  />
+                </div>
+                   <div>
+                  <InputFields
+                    label="Owner Name"
+                    name="sapCode"
+                    value={values.regionName}
+                    onChange={(e) => setFieldValue("sapCode", e.target.value)}
+                  />
+                  <ErrorMessage
+                    name="sapCode"
                     component="span"
                     className="text-xs text-red-500"
                   />
@@ -118,6 +144,7 @@ export default function AddRegion() {
                     className="text-xs text-red-500"
                   />
                 </div>
+                
 
                 <div>
                   <InputFields

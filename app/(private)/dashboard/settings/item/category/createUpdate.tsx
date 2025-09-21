@@ -45,7 +45,7 @@ export default function CreateUpdate({
                 );
                 if (res.error) return showSnackbar(res.data.message, "error")
                 else {
-                    showSnackbar("Item Category Created Successfully", "success");
+                    showSnackbar(res.message || "Item Category Created Successfully", "success");
                     onClose();
                     onRefresh();
                 }
@@ -70,7 +70,7 @@ export default function CreateUpdate({
                     );
                     if (res.error) return showSnackbar(res.data.message, "error");
                     else {
-                        showSnackbar("Item Category Updated Successfully", "success");
+                        showSnackbar(res.message || "Item Category Updated Successfully", "success");
                         onClose();
                         onRefresh();
                     }

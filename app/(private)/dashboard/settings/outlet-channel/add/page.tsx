@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Icon } from "@iconify-icon/react";
@@ -12,24 +11,23 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { addOutletChannel } from "@/app/services/allApi";
 
 // ✅ Yup Schema
-const CountrySchema = Yup.object().shape({
+const OutletChannelSchema = Yup.object().shape({
   outlet_channel: Yup.string().required("Outlet Channel Code is required."),
- 
+  status: Yup.string().required("Status is required."),
 });
 
 export default function AddOutletChannel() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-
   type OutletChannel = {
-   
     outlet_channel: string;
-
+    status: string; // "Active" | "Inactive"
   };
 
   const initialValues: OutletChannel = {
     outlet_channel: "",
+    status: "Active", // default
   };
 
   const handleSubmit = async (
@@ -37,20 +35,14 @@ export default function AddOutletChannel() {
     { setSubmitting }: FormikHelpers<OutletChannel>
   ) => {
     try {
+      // Map "Active"/"Inactive" to 1/0
       const payload = {
         ...values,
-        status: 1,
+        status: values.status === "Active" ? 1 : 0,
       };
-      console.log(values);
-      
 
       const res = await addOutletChannel(payload);
-      showSnackbar("Channel added successfully ", "success");
-
-      console.log(res);
-      
-
-      console.log("API response ✅:", res);
+      showSnackbar("Channel added successfully", "success");
       router.push("/dashboard/settings/outlet-channel");
     } catch (error) {
       console.error("Error submitting Channel❌:", error);
@@ -76,7 +68,7 @@ export default function AddOutletChannel() {
       {/* ✅ Formik + Yup */}
       <Formik
         initialValues={initialValues}
-        validationSchema={CountrySchema}
+        validationSchema={OutletChannelSchema}
         onSubmit={handleSubmit}
       >
         {({ handleSubmit, values, setFieldValue }) => (
@@ -88,10 +80,7 @@ export default function AddOutletChannel() {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Country Code */}
-                  
-
-                  {/* Country Name */}
+                  {/* Outlet Channel */}
                   <div>
                     <InputFields
                       label="Outlet Channel"
@@ -106,7 +95,25 @@ export default function AddOutletChannel() {
                       className="text-xs text-red-500"
                     />
                   </div>
-                  {/* Currency */}
+
+                  {/* Status Dropdown using InputFields */}
+                  <div>
+                    <InputFields
+                      label="Status"
+                      type="select"
+                      value={values.status}
+                      onChange={(e) => setFieldValue("status", e.target.value)}
+                      options={[
+                        { label: "Active", value: "Active" },
+                        { label: "Inactive", value: "Inactive" },
+                      ]}
+                    />
+                    <ErrorMessage
+                      name="status"
+                      component="span"
+                      className="text-xs text-red-500"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -123,8 +130,8 @@ export default function AddOutletChannel() {
                 label="Submit"
                 isActive={true}
                 leadingIcon="mdi:check"
-                type="submit" />
-
+                type="submit"
+              />
             </div>
           </Form>
         )}

@@ -22,7 +22,8 @@ const mockCategoryData = new Array(100).fill(null).map((_, i) => ({
 }));
 
 const columns = [
-    { key: "id", label: "Category Id" },
+    { key: "category_id", label: "Category Id" },
+    { key: "sub_category_code", label: "Sub Category Code" },
     { key: "sub_category_name", label: "Sub Category Name" },
     {
         key: "status",
@@ -52,45 +53,32 @@ export default function SubCategory() {
     const [deleteItemCategoryId, setDeleteItemCategoryId] = useState<
         number | undefined
     >();
-    const [updateItemCategoryData, setUpdateItemCategoryData] =
-        useState<subCategoryType>({} as subCategoryType);
+    const [updateItemCategoryData, setUpdateItemCategoryData] = useState<subCategoryType>({} as subCategoryType);
 
     async function deleteCategory() {
         if (!deleteItemCategoryId) return;
-        try {
-            const listRes = await deleteItemSubCategory(deleteItemCategoryId);
-            if (listRes.code === 204)
-                showSnackbar("Category deleted successfully", "success");
-            else showSnackbar("Failed to delete category", "error");
-        } catch (error: unknown) {
-            if (error instanceof Error) {
-                console.error("API Error:", error.message);
-            } else {
-                console.error("Unexpected error:", error);
-            }
-            setCategoryData(mockCategoryData);
-        }
+        const listRes = await deleteItemSubCategory(deleteItemCategoryId);
+        if(listRes.error) showSnackbar(listRes.data.message, "error");
+        else{
+            showSnackbar(listRes.message, "success");
+            fetchItemSubCategory();
+        } 
         setShowDeletePopup(false);
     }
 
-    useEffect(() => {
-        const fetchItemCategory = async () => {
-            try {
-                const listRes = await itemSubCategoryList();
-                setCategoryData(listRes);
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    console.error("API Error:", error.message);
-                } else {
-                    console.error("Unexpected error:", error);
-                }
-                setCategoryData(mockCategoryData); // fallback to mock
-            } finally {
-                setLoading(false);
-            }
-        };
+    async function fetchItemSubCategory() {
+        setLoading(true);
+        const listRes = await itemSubCategoryList();
+        if (listRes.error) {
+            showSnackbar(listRes.data.message, "error");
+            return;
+        }
+        setCategoryData(listRes.data);
+        setLoading(false);
+    }
 
-        fetchItemCategory();
+    useEffect(() => {
+        fetchItemSubCategory();
     }, []);
 
     return loading ? (
@@ -118,6 +106,7 @@ export default function SubCategory() {
                     <CreateUpdate
                         type="create"
                         onClose={() => setShowCreatePopup(false)}
+                        onRefresh={fetchItemSubCategory}
                     />
                 </Popup>
             )}
@@ -128,6 +117,7 @@ export default function SubCategory() {
                         type="update"
                         updateItemCategoryData={updateItemCategoryData}
                         onClose={() => setShowUpdatePopup(false)}
+                        onRefresh={fetchItemSubCategory}
                     />
                 </Popup>
             )}
@@ -162,7 +152,8 @@ export default function SubCategory() {
                                 onClick: (data) => {
                                     setShowUpdatePopup(true);
                                     setUpdateItemCategoryData({
-                                        category_id: parseInt(data.id),
+                                        id: parseInt(data.id),
+                                        category_id: parseInt(data.category_id),
                                         sub_category_name:
                                             data.sub_category_name,
                                         status: data.status,
