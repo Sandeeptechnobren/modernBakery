@@ -48,8 +48,6 @@ type FormValues = {
     is_branch: string;
     invoice_sync: string;
     is_efris: string;
-    created_user: string;
-    updated_user: string;
     stock_capital: string;
     deposite_amount: string;
 };
@@ -93,8 +91,6 @@ export default function AddWarehouse() {
         is_branch: '',
         invoice_sync: '',
         is_efris: '',
-        created_user: '',
-        updated_user: '',
         stock_capital: '',
         deposite_amount: '',
     };

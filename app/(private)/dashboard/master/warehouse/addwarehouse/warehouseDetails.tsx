@@ -16,7 +16,7 @@ type Props = {
 };
 
 export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue }: Props) {
-    const { companyCustomersTypeOptions } = useAllDropdownListData();
+    const { companyCustomersOptions } = useAllDropdownListData();
     const [isOpen, setIsOpen] = React.useState(false);
 
     return (
@@ -66,7 +66,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 label="Company Customer *"
                 name="company_customer_id"
                 value={values.company_customer_id}
-                options={companyCustomersTypeOptions}
+                options={companyCustomersOptions}
                 onChange={handleChange}
                 error={errors?.company_customer_id && touched?.company_customer_id ? errors.company_customer_id : false}
             />

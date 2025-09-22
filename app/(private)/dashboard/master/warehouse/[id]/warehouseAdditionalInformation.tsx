@@ -93,20 +93,6 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
             />
 
                       
-                        <InputFields
-                label="Created User *"
-                name="created_user"
-                value={values.created_user}
-                onChange={handleChange}
-                error={errors?.created_user && touched?.created_user ? errors.created_user : false}
-            />
-            <InputFields
-                label="Updated User *"
-                name="updated_user"
-                value={values.updated_user}
-                onChange={handleChange}
-                error={errors?.updated_user && touched?.updated_user ? errors.updated_user : false}
-            />
         </div>
     );
 }

@@ -51,8 +51,6 @@ type FormValues = {
     is_branch: string;
     invoice_sync: string;
     is_efris: string;
-    created_user: string;
-    updated_user: string;
     stock_capital: string;
     deposite_amount: string;
 };
@@ -94,8 +92,6 @@ export default function EditWarehouse() {
         is_branch: '',
         invoice_sync: '',
         is_efris: '',
-        created_user: '',
-        updated_user: '',
         stock_capital: '',
         deposite_amount: '',
     };
@@ -152,8 +148,6 @@ export default function EditWarehouse() {
                     is_branch: String(data?.is_branch || data?.isBranch || ''),
                     invoice_sync: String(data?.invoice_sync || data?.invoiceSync || ''),
                     is_efris: String(data?.is_efris || data?.isEfris || data?.efris || ''),
-                    created_user: data?.created_user || data?.createdUser || data?.created_by || '',
-                    updated_user: data?.updated_user || data?.updatedUser || data?.updated_by || '',
                     stock_capital: String(data?.stock_capital || data?.stockCapital || ''),
                     deposite_amount: String(data?.deposite_amount || data?.depositeAmount || data?.deposit_amount || ''),
                 };
@@ -215,8 +209,6 @@ export default function EditWarehouse() {
             }),
         status: Yup.string().required('Status is required'),
         is_efris: Yup.string().required('EFRIS Configuration is required'),
-        created_user: Yup.string().required('Created User is required'),
-        updated_user: Yup.string().required('Updated User is required'),
         
         // Optional fields validation (for better UX)
         owner_name: Yup.string(),
