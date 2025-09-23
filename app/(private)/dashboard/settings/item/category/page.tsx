@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Table, {
-    TableDataType,
-} from "@/app/components/customTable";
+import { useState, useEffect, useCallback } from "react";
+import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Loading from "@/app/components/Loading";
 import { deleteItemCategory, itemCategoryList } from "@/app/services/allApi";
@@ -12,6 +10,7 @@ import Popup from "@/app/components/popUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import CreateUpdate from "./createUpdate";
 import StatusBtn from "@/app/components/statusBtn2";
+import { useLoading } from "@/app/services/loadingContext";
 
 const columns = [
     { key: "id", label: "Category Id" },
@@ -35,7 +34,7 @@ export default function Category() {
     const [categoryData, setCategoryData] = useState<TableDataType[]>(
         [] as TableDataType[]
     );
-    const [loading, setLoading] = useState<boolean>(true);
+    const { setLoading} = useLoading();
     const { showSnackbar } = useSnackbar();
     const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
     const [showCreatePopup, setShowCreatePopup] = useState<boolean>(false);
@@ -61,21 +60,34 @@ export default function Category() {
         setShowDeletePopup(false);
     }
 
-    async function fetchItemCategory() {
-        setLoading(true);
-        const listRes = await itemCategoryList();
-        if (listRes.error) showSnackbar(listRes.data.message, "error");
-        else setCategoryData(listRes.data);
-        setLoading(false);
-    }
+    const fetchItemCategory = useCallback(
+        async (pageNo: number = 1, pageSize: number = 10) => {
+            setLoading(true);
+            const result = await itemCategoryList({
+                page: pageNo.toString(),
+                per_page: pageSize.toString(),
+            });
+            setLoading(false);
+            if (result.error) {
+                showSnackbar(result.data.message, "error");
+                throw new Error("Error fetching data");
+            } else {
+                return {
+                    data: result.data || [],
+                    currentPage: result.pagination.page || 0,
+                    pageSize: result.pagination.limit || 10,
+                    total: result.pagination.totalPages || 0,
+                };
+            }
+        },
+        []
+    );
 
     useEffect(() => {
-        fetchItemCategory();
-    }, []);
+        setLoading(true);
+    }, [])
 
-    return loading ? (
-        <Loading />
-    ) : (
+    return (
         <>
             <div className="flex justify-between items-center mb-[20px]">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
@@ -117,21 +129,10 @@ export default function Category() {
             <div className="h-[calc(100%-60px)]">
                 {categoryData && (
                     <Table
-                        data={categoryData}
+                        // data={categoryData}
                         config={{
                             api: {
-                                list: async (pageNo: number, pageSize: number) => {
-                                    const result = await itemCategoryList({
-                                        page: pageNo.toString(),
-                                        per_page: pageSize.toString(),
-                                    });
-                                    return {
-                                        data: result.data || [],
-                                        currentPage: result.pagination.page || 0,
-                                        pageSize: result.pagination.limit || 10,
-                                        total: result.pagination.totalPages || 0,
-                                    };
-                                },
+                                list: fetchItemCategory,
                             },
                             header: {
                                 searchBar: false,

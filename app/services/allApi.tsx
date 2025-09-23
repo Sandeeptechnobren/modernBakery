@@ -172,7 +172,7 @@ export const deleteCountry = async (id:string) => {
 // Item Category
 export const itemCategoryList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/settings/item_category/list", params);
+    const res = await API.get("/api/settings/item_category/list", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1273,7 +1273,7 @@ export const deleteDiscountType = async (id:string) => {
 };
 
 
-export const addVehicle = async (data: FormData | Record<string, string>) => {
+export const addVehicle = async (data: object) => {
   try {
     const res = await API.post("/api/master/vehicle/create", data);
     return res.data;
@@ -1292,9 +1292,18 @@ export const updateVehicle = async (id: string, data: FormData | Record<string, 
   }
 };
 
+export const deleteVehicle = async (id: string) => {
+  try {
+    const res = await API.delete(`/api/master/vehicle/${id}/delete`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const getVehicleById = async (id: string) => {
   try {
-    const res = await API.get(`/api/master/vehicle/${id}/update`);
+    const res = await API.get(`/api/master/vehicle/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

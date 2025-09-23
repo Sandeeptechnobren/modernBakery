@@ -8,6 +8,7 @@ export default function BorderIconButton({
   label,
   labelTw,
   onClick,
+  disabled = false,
 }: {
   icon?: string;
   iconWidth?: number;
@@ -16,10 +17,11 @@ export default function BorderIconButton({
   label?: string;
   labelTw?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div
-      className="bg-white h-[34px] border-[1px] border-[#D5D7DA] px-[10px] py-[8px] rounded-[8px] flex justify-center items-center gap-[8px] cursor-pointer"
+      className={`bg-white h-[34px] border-[1px] border-[#D5D7DA] px-[10px] py-[8px] rounded-[8px] flex justify-center items-center gap-[8px] cursor-pointer ${disabled ? "pointer-events-none opacity-50" : ""}`}
       onClick={onClick}
     >
       {icon && <Icon icon={icon} width={iconWidth} />}

@@ -4,7 +4,7 @@ import SearchBar from "./searchBar";
 import { Icon } from "@iconify-icon/react";
 import CustomDropdown from "./customDropdown";
 import BorderIconButton from "./borderIconButton";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import FilterDropdown from "./filterDropdown";
 import CustomCheckbox from "./customCheckbox";
 import DismissibleDropdown from "./dismissibleDropdown";
@@ -83,21 +83,18 @@ export type TableDataType = {
     [key: string]: string;
 };
 
-const TableData = createContext<{
-    tableData: TableDataType[];
-    setTableData: React.Dispatch<React.SetStateAction<TableDataType[]>>;
-}>({ tableData: [], setTableData: () => {} });
-
-type CurrentPageType = {
-    currentPage: number;
-    setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+type tableDetailsContextType = {
+    tableDetails: listReturnType;
+    setTableDetails: React.Dispatch<React.SetStateAction<listReturnType>>;
 };
-const CurrentPage = createContext<CurrentPageType>({} as CurrentPageType);
+const TableDetails = createContext<tableDetailsContextType>({} as tableDetailsContextType);
 
 interface TableProps {
-    data: TableDataType[];
+    data?: TableDataType[];
     config: configType;
 }
+
+const defaultPageSize = 10;
 
 export default function Table({ data, config }: TableProps) {
     return (
@@ -109,8 +106,7 @@ export default function Table({ data, config }: TableProps) {
 
 function ContextProvider({ children }: { children: React.ReactNode }) {
     const [selectedColumns, setSelectedColumns] = useState([] as number[]);
-    const [tableData, setTableData] = useState([] as TableDataType[]);
-    const [currentPage, setCurrentPage] = useState(0);
+    const [tableDetails, setTableDetails] = useState({} as listReturnType);
     const [config, setConfig] = useState({} as configType);
 
     return (
@@ -118,25 +114,49 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
             <ColumnFilterConfig.Provider
                 value={{ selectedColumns, setSelectedColumns }}
             >
-                <TableData.Provider value={{ tableData, setTableData }}>
-                    <CurrentPage.Provider
-                        value={{ currentPage, setCurrentPage }}
+                    <TableDetails.Provider
+                        value={{ tableDetails, setTableDetails }}
                     >
                         {children}
-                    </CurrentPage.Provider>
-                </TableData.Provider>
+                    </TableDetails.Provider>
             </ColumnFilterConfig.Provider>
         </Config.Provider>
     );
 }
 
 function TableContainer({ data, config }: TableProps) {
-    const { setTableData } = useContext(TableData);
     const { setSelectedColumns } = useContext(ColumnFilterConfig);
     const { setConfig } = useContext(Config);
+    const { setTableDetails } = useContext(TableDetails);
+
+    async function checkForData() {
+        // if data is passed, use default values
+        console.log(data);
+        if(data) {
+            setTableDetails({ 
+                data, 
+                total: Math.ceil(data.length / (config.pageSize || defaultPageSize)), 
+                currentPage: 0, 
+                pageSize: config.pageSize || defaultPageSize
+            });
+        }
+
+        // if api is passed, use default values
+        else if(config.api?.list) {
+            const result = await config.api.list(0, config.pageSize || defaultPageSize);
+            const resolvedResult = result instanceof Promise ? await result : result;
+            const { data, total, currentPage } = resolvedResult;
+            setTableDetails({ data, total, currentPage: currentPage -1, pageSize: config.pageSize || defaultPageSize });
+        } 
+
+        // nothing is passed
+        else {
+            throw new Error("Either pass data or list API function in Table config prop");
+        }
+    }
 
     useEffect(() => {
-        setTableData(data);
+        checkForData();
         setSelectedColumns(config.columns.map((_, index) => index)); // select all in the filter dropdown
         setConfig(config);
     }, [data]);
@@ -274,24 +294,23 @@ function TableBody() {
         columns,
         rowSelection,
         rowActions,
-        pageSize = 10,
+        pageSize = defaultPageSize,
     } = config;
-    const { currentPage } = useContext(CurrentPage);
-    const { tableData } = useContext(TableData);
+    const { tableDetails } = useContext(TableDetails);
+    const tableData = tableDetails.data || [];
+
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
     const [tableOrder, setTableOrder] = useState<{
         column: string;
         order: "asc" | "desc";
     }>({ column: "", order: "asc" });
 
-    const startIndex = currentPage * pageSize;
+    const startIndex = tableDetails.currentPage * pageSize;
     const endIndex = startIndex + pageSize;
 
-    const { selectedColumns } =
-        useContext<columnFilterConfigType>(ColumnFilterConfig);
+    const { selectedColumns } = useContext<columnFilterConfigType>(ColumnFilterConfig);
     const [selectedItems, setSelectedItems] = useState<Array<number>>([]);
-    if (!Array.isArray(tableData))
-        throw new Error("Data must me in Array format");
+    if (!Array.isArray(tableData)) throw new Error("Data must me in Array format");
     const allItemsCount: number = tableData.length || 0;
     const isAllSelected = selectedItems.length === allItemsCount;
     const isIndeterminate = selectedItems.length > 0 && !isAllSelected;
@@ -302,7 +321,7 @@ function TableBody() {
         } else {
             setDisplayedData(tableData);
         }
-    }, [currentPage, tableData, startIndex, endIndex]);
+    }, [tableDetails]);
 
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
@@ -516,33 +535,26 @@ function FilterTableHeader({ children }: { children: React.ReactNode }) {
 
 function TableFooter() {
     const {config} = useContext(Config);
-    const { api, footer, pageSize = 10 } = config;
-    const { tableData, setTableData } = useContext(TableData);
-    const { currentPage, setCurrentPage } = useContext(CurrentPage);
-    const [totalPages, setTotalPages] = useState(0);
+    const { api, footer, pageSize = defaultPageSize } = config;
+    const { tableDetails, setTableDetails } = useContext(TableDetails);
+    const cPage = tableDetails.currentPage || 0;
+    const totalPages = tableDetails.total || 1;
 
     // Determine the start and end page indices
     const firstThreePageIndices = [0, 1, 2];
 
     // Ensure we don't try to get a negative index if there are fewer than 6 pages
-    const lastThreePageIndices =
-        totalPages > 3 ? [totalPages - 3, totalPages - 2, totalPages - 1] : [];
-
-    useEffect(() => {
-        if (!api?.list)
-            setTotalPages(Math.ceil(tableData.length / pageSize));
-    }, []);
+    const lastThreePageIndices = totalPages > 3 ? [totalPages - 3, totalPages - 2, totalPages - 1] : [];
 
     async function handlePageChange(pageNo: number) {
+        if (pageNo < 0 || pageNo > totalPages -1) return;
         if (api?.list) {
-            const result = await api.list(pageNo, pageSize);
+            const result = await api.list(pageNo+1, pageSize);
             const resolvedResult = result instanceof Promise ? await result : result;
             const { data, total, currentPage } = resolvedResult;
-            setTableData(data);
-            setTotalPages(total);
-            setCurrentPage(currentPage);
-        } else if (pageNo >= 0 && pageNo < totalPages) {
-            setCurrentPage(pageNo);
+            setTableDetails({...tableDetails, data, currentPage: currentPage -1, total, pageSize});
+        } else {
+            setTableDetails({...tableDetails, currentPage: pageNo});
         }
     }
 
@@ -556,7 +568,8 @@ function TableFooter() {
                             iconWidth={20}
                             label="Previous"
                             labelTw="text-[14px] font-semibold hidden sm:block select-none"
-                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={cPage === 0}
+                            onClick={() => handlePageChange(cPage - 1)}
                         />
                     )}
                 </div>
@@ -574,7 +587,7 @@ function TableFooter() {
                                                         pageNo + 1
                                                     ).toString()}
                                                     isActive={
-                                                        pageNo === currentPage
+                                                        pageNo === cPage
                                                     }
                                                     onClick={() =>
                                                         handlePageChange(pageNo)
@@ -596,7 +609,7 @@ function TableFooter() {
                                                         pageNo + 1
                                                     ).toString()}
                                                     isActive={
-                                                        pageNo === currentPage
+                                                        pageNo === cPage
                                                     }
                                                     onClick={() =>
                                                         handlePageChange(pageNo)
@@ -612,7 +625,7 @@ function TableFooter() {
                                         <PaginationBtn
                                             key={index}
                                             label={(index + 1).toString()}
-                                            isActive={index === currentPage}
+                                            isActive={index === cPage}
                                             onClick={() =>
                                                 handlePageChange(index)
                                             }
@@ -630,7 +643,8 @@ function TableFooter() {
                             iconWidth={20}
                             label="Next"
                             labelTw="text-[14px] font-semibold hidden sm:block select-none"
-                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={cPage === totalPages - 1}
+                            onClick={() => handlePageChange(cPage + 1)}
                         />
                     )}
                 </div>
