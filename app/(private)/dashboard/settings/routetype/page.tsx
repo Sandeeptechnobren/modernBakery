@@ -175,7 +175,7 @@ export default function RouteType() {
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add Route Type"
-                  labelTw="hidden sm:block"
+                  labelTw="hidden xl:block"
                 />,
               ],
             },

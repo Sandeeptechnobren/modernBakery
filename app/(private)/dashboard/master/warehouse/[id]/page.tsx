@@ -114,7 +114,7 @@ export default function EditWarehouse() {
                 // map API fields to form keys used in this page
                 const mappedData = {
                     registation_no: data?.registration_no || data?.registation_no || data?.reg_no || '',
-                    password: '', // password should be empty for security - user needs to enter new one
+                    password: data?.password || '', // password should be empty for security - user needs to enter new one
                     warehouse_type: String(data?.warehouse_type || data?.type || ''),
                     warehouse_name: data?.warehouse_name || data?.name || '',
                     warehouse_code: data?.warehouse_code || data?.code || '',

@@ -265,7 +265,7 @@ export default function EditCompany() {
         {/* Company Details */}
         <ContainerCard>
           <h2 className="text-lg font-medium mb-4">Company Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-wrap gap-4">
             <InputFields
               name="companyName"
               label="Company Name"
@@ -315,7 +315,8 @@ export default function EditCompany() {
         {/* Contact */}
         <ContainerCard>
           <h2 className="text-lg font-medium mb-4">Contact</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-wrap gap-4">
+            <div className="w-[406px]">
             <FormInputField
               type="contact"
               label="Primary Contact"
@@ -328,7 +329,8 @@ export default function EditCompany() {
                 formik.setFieldValue("primaryCode", e.target.value)
               }
               options={currencies}
-            />
+            /></div>
+            <div className="w-[406px]">
             <FormInputField
               type="contact"
               label="Toll Free Number"
@@ -341,7 +343,7 @@ export default function EditCompany() {
               onCodeChange={(e) =>
                 formik.setFieldValue("tollFreeCode", e.target.value)
               }
-            />
+            /></div>
             <InputFields
               name="email"
               label="Email"
@@ -354,7 +356,7 @@ export default function EditCompany() {
         {/* Location */}
         <ContainerCard>
           <h2 className="text-lg font-medium mb-4">Location</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-wrap gap-4">
             <InputFields
               name="district"
               label="District"
@@ -412,7 +414,7 @@ export default function EditCompany() {
         {/* Financial */}
         <ContainerCard>
           <h2 className="text-lg font-medium mb-4">Financial</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-wrap gap-4">
             <InputFields
               name="sellingCurrency"
               label="Selling Currency"
@@ -437,7 +439,7 @@ export default function EditCompany() {
         {/* Additional */}
         <ContainerCard>
           <h2 className="text-lg font-medium mb-4">Additional</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-wrap gap-4">
             <InputFields
               name="modules"
               label="Modules"

@@ -3,59 +3,103 @@
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import ContainerCard from "@/app/components/containerCard";
-import InputFields from "@/app/components/inputFields";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import FormInputField from "@/app/components/formInputField";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import InputFields from "@/app/components/inputFields";
 import SearchableDropdown from "@/app/components/SearchableDropdown";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import {
+  countryList,
+  addCompany,
+  regionList,
+  subRegionList,
+} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { addCompany } from "@/app/services/allApi";
+import { useRouter } from "next/navigation";
 
-// Dummy options (replace with API data if you have endpoints)
-const countries = [
-  { value: "ug", label: "Uganda" },
-  { value: "ke", label: "Kenya" },
-  { value: "tz", label: "Tanzania" },
-];
-const regions = [
-  { value: "central", label: "Central" },
-  { value: "eastern", label: "Eastern" },
-];
-const subRegions = [
-  { value: "kampala", label: "Kampala" },
-  { value: "jinja", label: "Jinja" },
-];
-const currency = [
-  { value: "USD", label: "USD" },
-  { value: "UGX", label: "UGX" },
-];
+export default function AddCustomer() {
+  const [countries, setCountries] = useState<{ value: string; label: string }[]>(
+    []
+  );
+  const [currency, setCurrency] = useState<{ value: string; label: string }[]>(
+    []
+  );
+  const [regions, setRegions] = useState<{ value: string; label: string }[]>(
+    []
+  );
+  const [subRegions, setSubRegions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const router= useRouter()
 
-export default function AddCompany() {
+  type ApiCountry = {
+    id?: string;
+    code?: string;
+    name?: string;
+    country_name?: string;
+    currency?: string;
+  };
+
+  type ApiRegion = {
+    id?: string;
+    name?: string;
+    region_name?: string;
+  };
+
+  type ApiSubRegion = {
+    id?: string;
+    name?: string;
+    area_name?: string;
+  };
+
   const { showSnackbar } = useSnackbar();
-  const [isOpen, setIsOpen] = useState(false);
 
-  // Yup Validation
+  // ✅ Yup Validation
   const CompanySchema = Yup.object({
-    companyName: Yup.string().required("Company name is required"),
-    companyCode: Yup.string().required("Company code is required"),
-    email: Yup.string().email("Invalid email").required("Email is required"),
-    tinNumber: Yup.string().required("TIN Number is required"),
-    vatNo: Yup.number().typeError("VAT must be a number"),
-    primaryContact: Yup.string().required("Primary contact is required"),
-    country: Yup.string().required("Country is required"),
-    companyType: Yup.string().required("Company type is required"),
-    serviceType: Yup.string().required("Service type is required"),
-  });
+  companyName: Yup.string().required("Company name is required"),
+  companyCode: Yup.string().required("Company code is required"),
+  companyType: Yup.string().required("Company type is required"),
+  companyWebsite: Yup.string()
+    .url("Invalid URL")
+    .nullable()
+    .notRequired(),
+  companyLogo: Yup.mixed().nullable().notRequired(),
+  primaryContact: Yup.string().required("Primary contact is required"),
+  primaryCode: Yup.string().required("Primary code is required"),
+  tollFreeNumber: Yup.string().nullable().notRequired(),
+  tollFreeCode: Yup.string().nullable().notRequired(),
+  email: Yup.string().email("Invalid email").required("Email is required"),
+  region: Yup.string().required("Region is required"),
+  subRegion: Yup.string().required("Sub-region is required"),
+  district: Yup.string().nullable().notRequired(),
+  town: Yup.string().nullable().notRequired(),
+  street: Yup.string().nullable().notRequired(),
+  landmark: Yup.string().nullable().notRequired(),
+  country: Yup.string().required("Country is required"),
+  tinNumber: Yup.string().required("TIN Number is required"),
+  sellingCurrency: Yup.string().required("Selling currency is required"),
+  purchaseCurrency: Yup.string().required("Purchase currency is required"),
+  vatNo: Yup.number()
+    .typeError("VAT must be a number")
+    .nullable()
+    .notRequired(),
+  modules: Yup.string().nullable().notRequired(),
+  serviceType: Yup.string().required("Service type is required"),
+  status: Yup.string()
+    .oneOf(["0", "1"], "Status must be Active or Inactive")
+    .required("Status is required"),
+});
 
-  // Formik Setup
+
+  // ✅ Formik Setup
   const formik = useFormik({
     initialValues: {
       companyType: "",
       companyCode: "",
       companyName: "",
-      companyLogo: null,
+      companyLogo: "",
       companyWebsite: "",
       primaryCode: "uae",
       primaryContact: "",
@@ -75,69 +119,116 @@ export default function AddCompany() {
       vatNo: "",
       modules: "",
       serviceType: "",
-      status: "1",
+      status: "1", // string because form input returns string
     },
+
     validationSchema: CompanySchema,
     onSubmit: async (values) => {
-      try {
-        const modulesArray = values.modules
-          ? values.modules.split(",").map((m) => m.trim())
-          : [];
+      console.log("✅ Form submitted with values:", values);
 
-        const formData = new FormData();
-        formData.append("company_code", values.companyCode);
-        formData.append("company_name", values.companyName);
-        formData.append("email", values.email);
-        formData.append("tin_number", values.tinNumber);
-        formData.append("vat", values.vatNo);
-        formData.append("country_id", values.country);
-        formData.append("selling_currency", values.sellingCurrency);
-        formData.append("purchase_currency", values.purchaseCurrency);
-        formData.append(
-          "toll_free_no",
-          `${values.tollFreeCode}${values.tollFreeNumber}`
-        );
-        formData.append("website", values.companyWebsite);
-        formData.append("service_type", values.serviceType);
-        formData.append("company_type", values.companyType);
-        formData.append("status", values.status);
-        formData.append("district", values.district);
-        formData.append("town", values.town);
-        formData.append("street", values.street);
-        formData.append("landmark", values.landmark);
-        formData.append("region", values.region);
-        formData.append("sub_region", values.subRegion);
-        formData.append(
-          "primary_contact",
-          `${values.primaryCode}${values.primaryContact}`
-        );
+      // Convert modules string → array
+      const modulesArray = values.modules
+        ? values.modules.split(",").map((m) => m.trim())
+        : [];
 
-        const maybeFile = values.companyLogo as unknown;
-        if (
-          maybeFile &&
-          typeof maybeFile === "object" &&
-          "name" in (maybeFile as Record<string, unknown>)
-        ) {
-          formData.append("logo", maybeFile as Blob);
-        }
+      // Build FormData for file + array support
+      const formData = new FormData();
 
-        modulesArray.forEach((m, i) => {
-          formData.append(`module_access[${i}]`, m);
-        });
+      formData.append("company_code", values.companyCode);
+      formData.append("company_name", values.companyName);
+      formData.append("email", values.email);
+      formData.append("tin_number", values.tinNumber);
+      formData.append("vat", values.vatNo);
+      formData.append("country_id", values.country);
+      formData.append("company_logo", values.companyLogo);
+      formData.append("selling_currency", values.sellingCurrency);
+      formData.append("purchase_currency", values.purchaseCurrency);
+      formData.append(
+        "toll_free_no",
+        `${values.tollFreeCode}${values.tollFreeNumber}`
+      );
+      formData.append("website", values.companyWebsite);
+      formData.append("service_type", values.serviceType);
+      formData.append("status", values.status);
+      formData.append("company_type", values.companyType);
+      formData.append("district", values.district);
+      formData.append("town", values.town);
+      formData.append("street", values.street);
+      formData.append("landmark", values.landmark);
+      formData.append("region", values.region);
+      formData.append("sub_region", values.subRegion);
+      formData.append(
+        "primary_contact",
+        `${values.primaryCode}${values.primaryContact}`
+      );
 
-        const res = await addCompany(formData);
-        if (res.error) {
-          showSnackbar(res.data.message || "Failed to add company!", "error");
-        } else {
-          showSnackbar("Company added successfully ✅", "success");
-          formik.resetForm();
-        }
-      } catch (err) {
-        console.error("❌ Add Company failed", err);
-        showSnackbar("Failed to add company ❌", "error");
+      // ✅ Handle logo
+      const maybeFile = values.companyLogo as unknown;
+      if (
+        maybeFile &&
+        typeof maybeFile === "object" &&
+        "name" in (maybeFile as Record<string, unknown>)
+      ) {
+        formData.append("logo", maybeFile as Blob);
+      } else if (typeof values.companyLogo === "boolean") {
+        formData.append("logo", String(values.companyLogo));
+      }
+
+      // ✅ Append modules as array
+      modulesArray.forEach((m, i) => {
+        formData.append(`module_access[${i}]`, m);
+      });
+
+      console.log("📦 Prepared payload:", [...formData.entries()]);
+
+      const res = await addCompany(formData); // API should handle multipart/form-data
+      console.log("🛢️ API response:", res);
+      if (res.error) {
+        showSnackbar(res.data.message || "Failed to add company!", "error");
+      } else {
+        showSnackbar("COMPANY added successfully ", "success");
+        formik.resetForm();
+        router.push("/dashboard/company")
       }
     },
   });
+
+  // ✅ Fetch Dropdown Data
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      try {
+        const countryRes = await countryList({ page: "1", limit: "200" });
+        const countryOptions = countryRes.data.map((c: ApiCountry) => ({
+          value: c.id ?? "",
+          label: c.name ?? c.country_name ?? "",
+        }));
+        const countryCurrency = countryRes.data.map((c: ApiCountry) => ({
+          value: c.currency ?? "",
+          label: c.currency ?? "",
+        }));
+        setCurrency(countryCurrency);
+        setCountries(countryOptions);
+
+        const regionRes = await regionList();
+        const regionOptions = regionRes.data.map((r: ApiRegion) => ({
+          value: r.id ?? "",
+          label: r.name ?? r.region_name ?? "",
+        }));
+        setRegions(regionOptions);
+
+        const subRegionRes = await subRegionList();
+        const subRegionOptions = subRegionRes.data.map((sr: ApiSubRegion) => ({
+          value: sr.id ?? "",
+          label: sr.name ?? sr.area_name ?? "",
+        }));
+        setSubRegions(subRegionOptions);
+      } catch (error) {
+        console.error("Failed to fetch dropdown data ❌", error);
+      }
+    };
+
+    fetchDropdowns();
+  }, []);
 
   return (
     <>
@@ -147,7 +238,7 @@ export default function AddCompany() {
           <Link href="/dashboard/company">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
-          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
+          <h1 className="text-[20px] font-semibold text-[#181D27] leading-[30px] mb-[5px]">
             Add Company
           </h1>
         </div>
@@ -158,7 +249,7 @@ export default function AddCompany() {
         {/* Company Details */}
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Company Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="flex flex-wrap gap-5">
             <InputFields
               name="companyName"
               label="Company Name"
@@ -186,43 +277,58 @@ export default function AddCompany() {
               onBlur={formik.handleBlur}
               error={formik.touched.companyCode && formik.errors.companyCode}
             />
+            <InputFields
+              name="companyWebsite"
+              label="Company Website"
+              value={formik.values.companyWebsite}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.companyWebsite && formik.errors.companyWebsite}
+            />
+            <InputFields
+              name="companyLogo"
+              label="Company Logo"
+              type="file"
+              value={formik.values.companyLogo}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.companyLogo && formik.errors.companyLogo}
+            />
           </div>
         </ContainerCard>
 
         {/* Contact */}
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Contact</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <FormInputField
-              type="contact"
-              label="Primary Contact"
-              contact={formik.values.primaryContact}
-              code={formik.values.primaryCode}
-              onContactChange={(e) =>
-                formik.setFieldValue("primaryContact", e.target.value)
-              }
-              onCodeChange={(e) =>
-                formik.setFieldValue("primaryCode", e.target.value)
-              }
-              options={countries}
-              onBlur={formik.handleBlur}
-              error={
-                formik.touched.primaryContact && formik.errors.primaryContact
-              }
-            />
-            <FormInputField
-              type="contact"
-              label="Toll Free Number"
-              contact={formik.values.tollFreeNumber}
-              code={formik.values.tollFreeCode}
-              onContactChange={(e) =>
-                formik.setFieldValue("tollFreeNumber", e.target.value)
-              }
-              onCodeChange={(e) =>
-                formik.setFieldValue("tollFreeCode", e.target.value)
-              }
-              options={countries}
-            />
+          <div className="flex flex-wrap gap-5">
+            <div className="w-[406px]">
+              <FormInputField
+                type="contact"
+                label="Primary Contact"
+                contact={formik.values.primaryContact}
+                code={formik.values.primaryCode}
+                onContactChange={(e) =>
+                  formik.setFieldValue("primaryContact", e.target.value)
+                }
+                options={countries}
+                onBlur={formik.handleBlur}
+                error={
+                  formik.touched.primaryContact && formik.errors.primaryContact
+                }
+              />
+            </div>
+            <div className="w-[406px]">
+              <FormInputField
+                type="contact"
+                label="Toll Free Number"
+                contact={formik.values.tollFreeNumber}
+                code={formik.values.tollFreeCode}
+                onContactChange={(e) =>
+                  formik.setFieldValue("tollFreeNumber", e.target.value)
+                }
+                options={countries}
+              />
+            </div>
             <InputFields
               name="email"
               label="Email"
@@ -231,13 +337,14 @@ export default function AddCompany() {
               onBlur={formik.handleBlur}
               error={formik.touched.email && formik.errors.email}
             />
+            
           </div>
         </ContainerCard>
 
         {/* Location */}
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Location Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="flex flex-wrap gap-5">
             <SearchableDropdown
               label="Region"
               name="region"
@@ -298,7 +405,7 @@ export default function AddCompany() {
         {/* Financial */}
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Financial Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="flex flex-wrap gap-5">
             <InputFields
               name="sellingCurrency"
               label="Selling Currency"
@@ -327,7 +434,7 @@ export default function AddCompany() {
         {/* Additional */}
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Additional Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="flex flex-wrap gap-5">
             <InputFields
               name="modules"
               label="Modules"

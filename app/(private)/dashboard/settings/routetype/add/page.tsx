@@ -77,42 +77,6 @@ export default function AddRouteType() {
       <div className="bg-white rounded-xl shadow p-6">
         <form onSubmit={formik.handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Route Type Name */}
-            <InputFields
-              label="Route Type Name"
-              type="text"
-              name="routeTypeName"
-              value={formik.values.routeTypeName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={
-                formik.touched.routeTypeName && formik.errors.routeTypeName
-                  ? formik.errors.routeTypeName
-                  : ""
-              }
-            />
-
-            {/* Status */}
-            <InputFields
-              label="Status"
-              type="select"
-              name="status"
-              value={formik.values.status}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              options={[
-                { value: "1", label: "Active" },
-                { value: "0", label: "Inactive" },
-              ]}
-              error={
-                formik.touched.status && formik.errors.status
-                  ? formik.errors.status
-                  : ""
-              }
-            />
-          </div>
-        <form onSubmit={formik.handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Route Type Name Field */}
             <InputFields
               label="Route Type Name"
@@ -148,25 +112,6 @@ export default function AddRouteType() {
             />
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-4 mt-6">
-            <button
-              type="button"
-              className="px-4 py-2 border rounded-lg"
-              onClick={() => formik.resetForm()}
-            >
-              Cancel
-            </button>
-
-            <SidebarBtn
-              type="submit"
-              label="Submit"
-              isActive
-              leadingIcon="mdi:check"
-              disabled={formik.isSubmitting}
-            />
-          </div>
-        </form>
           {/* Buttons */}
           <div className="flex justify-end gap-4 mt-6">
             <button
