@@ -182,7 +182,6 @@ export default function SalesmanTypeList() {
             columns,
             rowSelection: true,
             rowActions: [
-              { icon: "lucide:eye" },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
@@ -193,7 +192,7 @@ export default function SalesmanTypeList() {
                 },
               },
               {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   setSelectedRow({

@@ -87,7 +87,7 @@ export default function CompanyPage() {
 
     useEffect(() => {
        fetchCompanies();
-    }, [showSnackbar]);
+    }, []);
 
 
   const handleConfirmDelete = async () => {
@@ -105,6 +105,7 @@ await fetchCompanies();
     } else {
       // show message from API if exists, else generic error
       showSnackbar("Company deleted successfully ✅", "success");
+      fetchCompanies();
     }
 };
      
