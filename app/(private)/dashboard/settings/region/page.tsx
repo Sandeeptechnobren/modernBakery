@@ -64,26 +64,26 @@ export default function Region() {
     fetchRegions();
   }, []);
 
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
+ const handleConfirmDelete = async () => {
+  if (!selectedRow?.id) return;
 
-    try {
-      await deleteRegion(String(selectedRow.id));
+  try {
+    await deleteRegion(String(selectedRow.id));
+    showSnackbar("Region deleted successfully ✅", "success");
 
-      // Remove deleted row from local state
-      setRegions((prev) =>
-        prev.filter((region) => region.id !== selectedRow.id)
-      );
+    // 🔄 Delete के बाद fresh list
+    const listRes = await regionList();
+    setRegions(listRes.data);
 
-      showSnackbar("Region deleted successfully ✅", "success");
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Failed to delete Region ❌", "error");
-    } finally {
-      setShowDeletePopup(false);
-      setSelectedRow(null);
-    }
-  };
+  } catch (error) {
+    console.error("Delete failed ❌", error);
+    showSnackbar("Failed to delete Region ❌", "error");
+  } finally {
+    setShowDeletePopup(false);
+    setSelectedRow(null);
+  }
+};
+
 
   if (loading) return <Loading />;
 
