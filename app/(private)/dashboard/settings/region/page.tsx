@@ -48,42 +48,33 @@ export default function Region() {
     status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive", // ✅ Correct mapping
   }));
 
-  useEffect(() => {
-    const fetchRegions = async () => {
-      try {
-        const listRes = await regionList();
-        setRegions(listRes.data);
-      } catch (error) {
-        console.error("API Error:", error);
+  async function fetchRegions() {
+      const listRes = await regionList();
+      if(listRes.error) {
         showSnackbar("Failed to fetch Regions ❌", "error");
-      } finally {
-        setLoading(false);
+      } else {
+        setRegions(listRes.data);
       }
+      setLoading(false);
     };
 
+  useEffect(() => {
     fetchRegions();
   }, []);
 
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
+ const handleConfirmDelete = async () => {
+  if (!selectedRow?.id) return;
 
-    try {
-      await deleteRegion(String(selectedRow.id));
+  const res = await deleteRegion(String(selectedRow.id));
+  if(res.error) {
+    showSnackbar(res.data.message || "Failed to delete Region","error");
+  } else {
+    showSnackbar(res.message || "Region deleted successfully", "success");
+    fetchRegions();
+  }
+  setShowDeletePopup(false);
+};
 
-      // Remove deleted row from local state
-      setRegions((prev) =>
-        prev.filter((region) => region.id !== selectedRow.id)
-      );
-
-      showSnackbar("Region deleted successfully ✅", "success");
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Failed to delete Region ❌", "error");
-    } finally {
-      setShowDeletePopup(false);
-      setSelectedRow(null);
-    }
-  };
 
   if (loading) return <Loading />;
 
