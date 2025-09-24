@@ -14,13 +14,6 @@ import CreateUpdate from "./createUpdate";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
 
-const mockCategoryData = new Array(100).fill(null).map((_, i) => ({
-    id: (i + 1).toString(),
-    category_id: "Beverages",
-    sub_category_name: "Beverages",
-    status: "0",
-}));
-
 const columns = [
     { key: "category_id", label: "Category Id" },
     { key: "sub_category_code", label: "Sub Category Code" },
@@ -28,6 +21,17 @@ const columns = [
     {
         key: "status",
         label: "Status",
+        filter: {
+            isFilterable: true,
+            render: (data: TableDataType[]) => <>
+            <div className="flex flex-col">
+                {
+                    data.map((item: TableDataType) => (
+                        <span key={item.id} className="text-[#1F1F1F] w-full">{item.status}</span>
+                    ))
+                }</div>
+            </>
+        },
         render: (data: TableDataType) => (
             <StatusBtn isActive={data.status ? true : false} />
         ),
@@ -71,9 +75,9 @@ export default function SubCategory() {
         const listRes = await itemSubCategoryList();
         if (listRes.error) {
             showSnackbar(listRes.data.message, "error");
-            return;
+        } else {
+            setCategoryData(listRes.data);
         }
-        setCategoryData(listRes.data);
         setLoading(false);
     }
 
@@ -127,7 +131,7 @@ export default function SubCategory() {
                     data={categoryData}
                     config={{
                         header: {
-                            searchBar: false,
+                            searchBar: true,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn
@@ -144,7 +148,7 @@ export default function SubCategory() {
                         },
                         pageSize: 5,
                         footer: { nextPrevBtn: true, pagination: true },
-                        columns,
+                        columns: columns,
                         rowSelection: true,
                         rowActions: [
                             {

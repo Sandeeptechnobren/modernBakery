@@ -6,7 +6,7 @@ export default function FilterDropdown({ children }: { children ?: React.ReactNo
     const [searchBarValue, setSearchBarValue] = useState("");
 
     return (
-        <div className="absolute w-[320px] min-h-[300px] h-full overflow-auto">
+        <div className="min-w-[200px] w-fit min-h-[300px] h-fit fixed -translate-x-[200px] translate-y-[10px] z-50 overflow-auto">
             <CustomDropdown>
                 <div className="p-[10px] pb-[6px]">
                     <SearchBar value={searchBarValue} onChange={(e) => setSearchBarValue(e.target.value)} placeholder="Search here..." />
