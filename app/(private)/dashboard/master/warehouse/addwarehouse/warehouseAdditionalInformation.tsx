@@ -15,14 +15,16 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <InputFields
-                label="Device No. *"
+            required
+                label="Device No."
                 name="device_no"
                 value={values.device_no}
                 onChange={handleChange}
                 error={errors?.device_no && touched?.device_no ? errors.device_no : false}
             />
             <InputFields
-                label="EFRIS Configuration *"
+            required
+                label="EFRIS Configuration"
                 name="is_efris"
                 value={values.is_efris}
                 onChange={handleChange}
@@ -30,7 +32,8 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
             />
 
             <InputFields
-                label="P12 File *"
+            required
+                label="P12 File"
                 name="p12_file"
                 type="file"
                 value={values.p12_file}

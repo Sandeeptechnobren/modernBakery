@@ -15,7 +15,7 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 
 
 export default function EditRoute() {
-  const { routeTypeOptions } = useAllDropdownListData();
+  const { routeTypeOptions,warehouseOptions } = useAllDropdownListData();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -26,8 +26,15 @@ export default function EditRoute() {
   const [routeCode, setRouteCode] = useState("");
   const [routeName, setRouteName] = useState("");
   const [routeType, setRouteType] = useState<string[]>([]);
-  const [description, setDescription] = useState("");
+  const [warehouse, setWarehouse] = useState("");
   const [status, setStatus] = useState("");
+  const routeSchema = yup.object().shape({
+    routeCode: yup.string().required("Route Code is required"),
+    routeName: yup.string().required("Route Name is required"),
+    routeType: yup.array().of(yup.string()).min(1, "Route Type is required"),
+    warehouse: yup.string().required("Warehouse is required"),
+    status: yup.string().required("Status is required"),
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -35,12 +42,19 @@ export default function EditRoute() {
   const [fetched, setFetched] = useState<null | {
     route_code?: string;
     route_name?: string;
-    description?: string;
+    warehouse?: string;
     route_type?: number[] | number | string;
     vehicle_id?: number | string;
     status?: number | string;
   }>(null);
-
+   type RouteTypeChangeEvent = { target: { value: string | string[] } };
+  const handleRouteTypeChange = (e: RouteTypeChangeEvent) => {
+    if (Array.isArray(e.target.value)) {
+      setRouteType(e.target.value);
+    } else {
+      setRouteType([e.target.value]);
+    }
+  };
   useEffect(() => {
     if (!queryId) return;
     let mounted = true;
@@ -63,7 +77,7 @@ export default function EditRoute() {
         setFetched({
           route_code: data?.route_code,
           route_name: data?.route_name,
-          description: data?.description,
+          warehouse: data?.warehouse,
           route_type: data?.route_type,
           vehicle_id: data?.vehicle_id,
           status: data?.status,
@@ -72,7 +86,7 @@ export default function EditRoute() {
         // Set individual state values
         setRouteCode(data?.route_code || "");
         setRouteName(data?.route_name || "");
-        setDescription(data?.description || "");
+        setWarehouse(data?.warehouse || "");
         setRouteType(routeTypeArray);
         setStatus(data?.status ? String(data?.status) : "");
         
@@ -89,13 +103,37 @@ export default function EditRoute() {
   const handleSubmit = async () => {
     if (!queryId) return;
     clearErrors();
-    
+
+    // Validate form fields using Yup
+    try {
+      await routeSchema.validate(
+        {
+          routeCode,
+          routeName,
+          routeType,
+          warehouse,
+          status,
+        },
+        { abortEarly: false }
+      );
+    } catch (err) {
+      if (err instanceof yup.ValidationError) {
+        const formErrors: Record<string, string> = {};
+        err.inner.forEach((e) => {
+          if (e.path) formErrors[e.path] = e.message;
+        });
+        setErrors(formErrors);
+        showSnackbar("Please fix validation errors before proceeding", "error");
+        return;
+      }
+    }
+
     type UpdateRoutePayload = {
       route_code?: string;
       route_name?: string;
       route_type?: number[] | undefined;
       status?: number | undefined;
-      description?: string;
+      warehouse?: string;
     };
 
     const payload: UpdateRoutePayload = {
@@ -103,7 +141,7 @@ export default function EditRoute() {
       route_name: routeName,
       route_type: routeType.length > 0 ? routeType.map(rt => Number(rt)) : undefined,
       status: status ? (status === "active" ? 1 : status === "inactive" ? 0 : Number(status)) : undefined,
-      description: description
+      warehouse: warehouse
     };
 
     try {
@@ -114,16 +152,8 @@ export default function EditRoute() {
       setSubmitting(false);
     } catch (err: unknown) {
       setSubmitting(false);
-      if (err instanceof yup.ValidationError && Array.isArray(err.inner)) {
-        const formErrors: Record<string, string> = {};
-        err.inner.forEach((e) => {
-          if (e.path) formErrors[e.path] = e.message;
-        });
-        setErrors(formErrors);
-      } else {
-        showSnackbar("Failed to update route", "error");
-        console.error(err);
-      }
+      showSnackbar("Failed to update route", "error");
+      console.error(err);
     }
   };
 
@@ -153,7 +183,8 @@ export default function EditRoute() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-end gap-2 max-w-[406px]">
-                <InputFields
+                <InputFields 
+required
                   label="Route Code"
                   value={routeCode}
                   onChange={(e) => setRouteCode(e.target.value)}
@@ -175,7 +206,8 @@ export default function EditRoute() {
               </div>
 
               <div>
-                <InputFields
+                <InputFields 
+required
                   label="Route Name"
                   value={routeName}
                   onChange={(e) => setRouteName(e.target.value)}
@@ -185,42 +217,15 @@ export default function EditRoute() {
                 )}
               </div>
               <div>
-                <InputFields
-                  label="Route Type"
-                  value={routeType.join(",")}
-                  onChange={(e) => {
-                    const selectedValue = e.target.value;
-                    if (selectedValue && !routeType.includes(selectedValue)) {
-                      setRouteType([...routeType, selectedValue]);
-                    }
-                  }}
-                  options={routeTypeOptions}
-                />
-                {/* Display selected route types */}
-                {routeType.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {routeType.map((type, index) => {
-                      const label = routeTypeOptions?.find(opt => opt.value === type)?.label || type;
-                      return (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-                        >
-                          {label}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRouteType(routeType.filter((_, i) => i !== index));
-                            }}
-                            className="ml-1 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
+                 <InputFields
+                required
+                                    label="Route Type"
+                                    name="route_type"
+                                    value={routeType}
+                                    onChange={handleRouteTypeChange}
+                                    options={routeTypeOptions}
+                                    isSingle={false}
+                                  />
                 {errors.route_type && (
                   <p className="text-red-500 text-sm mt-1">{errors.route_type}</p>
                 )}
@@ -239,21 +244,30 @@ export default function EditRoute() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                <div>
-                <InputFields
-                  label="Description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                <InputFields 
+                  required
+                  label="Warehouse"
+                  value={warehouse}
+                  options={warehouseOptions}
+                  onChange={(e) => {
+                    
+                      setWarehouse((e.target.value));
+                    }
+                  }
                 />
-               
+                {errors.warehouse && (
+                  <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
+                )}
               </div>
               <div>
-                <InputFields
+                <InputFields 
+required
                   label="Status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   options={[
-                    { value: "active", label: "Active" },
-                    { value: "inactive", label: "In Active" },
+                    { value: "1", label: "Active" },
+                    { value: "0", label: "In Active" },
                   ]}
                 />
                 {errors.status && (
@@ -287,78 +301,3 @@ export default function EditRoute() {
     </>
   );
 }
-  // );
-  // return (
-  //   <div className="w-full h-full overflow-x-hidden p-4">
-  //     <div className="flex justify-between items-center mb-6">
-  //       <div className="flex items-center gap-4">
-  //         <Link href="/dashboard/master/route">
-  //           <Icon icon="lucide:arrow-left" width={24} />
-  //         </Link>
-  //         <h1 className="text-xl font-semibold text-gray-900">Edit Route</h1>
-  //       </div>
-  //     </div>
-
-  //     <Formik
-  //       initialValues={initialValues}
-  //       validationSchema={RouteSchema}
-  //       enableReinitialize
-  //       onSubmit={handleSubmit}
-  //     >
-  //       {({ values, setFieldValue, handleSubmit }) => (
-  //         <Form onSubmit={handleSubmit}>
-  //           <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-  //             <div className="p-6">
-  //               <h2 className="text-lg font-medium text-gray-800 mb-4">Route Details</h2>
-  //               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-  //                 <div className="flex items-end gap-2 max-w-[406px]">
-  //                   <div className="w-full">
-  //                     <InputFields
-  //                       label="Route Code"
-  //                       value={values.route_code}
-  //                       onChange={(e) => setFieldValue("route_code", e.target.value)}
-  //                     />
-  //                     <ErrorMessage name="route_code" component="span" className="text-xs text-red-500" />
-  //                   </div>
-  //                   <IconButton
-  //                     bgClass="white"
-  //                     className="mb-2 cursor-pointer text-[#252B37]"
-  //                     icon="mi:settings"
-  //                     onClick={() => setIsOpen(true)}
-  //                   />
-  //                   <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Route Code" />
-  //                 </div>
-
-  //                 <div>
-  //                   <InputFields label="Route Name" value={values.route_name} onChange={(e) => setFieldValue("route_name", e.target.value)} />
-  //                   <ErrorMessage name="route_name" component="span" className="text-xs text-red-500" />
-  //                 </div>
-
-  //                 <div>
-  //                   <InputFields
-  //                     label="Route Type"
-  //                     value={values.route_type}
-  //                     onChange={(e) => setFieldValue("route_type", e.target.value)}
-  //                     options={[{ value: "1", label: "Route 1" }, { value: "2", label: "Route 2" }, { value: "3", label: "Route 3" }]}
-  //                   />
-  //                   <ErrorMessage name="route_type" component="span" className="text-xs text-red-500" />
-  //                 </div>
-  //               </div>
-  //             </div>
-  //           </div>
-
-           
-
-  //           <div className="bg-white rounded-2xl shadow divide-y divide-gray-200">
-  //             <div className="p-6">
-  //               <h2 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h2>
-  //               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-  //                 <div>
-  //                   <InputFields label="Status" value={values.status} onChange={(e) => setFieldValue("status", e.target.value)} options={[{ value: "active", label: "Active" }, { value: "inactive", label: "In Active" }]} />
-  //                   <ErrorMessage name="status" component="span" className="text-xs text-red-500" />
-  //                 </div>
-  //               </div>
-  //             </div>
-  //           </div>
-
-  

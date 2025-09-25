@@ -35,7 +35,6 @@ const VehicleSchema = Yup.object().shape({
   vehicleBrand: Yup.string().required("Vehicle Brand is required"),
   numberPlate: Yup.string().required("Number Plate is required"),
   chassisNumber: Yup.string().required("Chassis Number is required"),
-  description: Yup.string().required("Description is required"),
   vehicleType: Yup.string().required("Vehicle Type is required"),
   ownerType: Yup.string().required("Owner Type is required"),
   warehouseId: Yup.string().required("Warehouse is required"),

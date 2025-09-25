@@ -50,18 +50,21 @@ const dropdownDataList: DropdownItem[] = [
 
 // 🔹 Table columns
 const columns = [
-    { key: "vehicle_code", label: "Vehicle Code" },
-    { key: "brand", label: "Brand" },
-    { key: "numberPlate", label: "Number Plate" },
-    { key: "chassisNumber", label: "Chassis Number" },
-    { key: "odoMeter", label: "Odo Meter" },
-    { key: "vehicleType", label: "Vehicle Type" },
-    { key: "capacity", label: "Capacity" },
-    { key: "ownerType", label: "Owner Type" },
-    { key: "depotLocation", label: "Depot Location" },
-    { key: "ownerReference", label: "Owner Reference" },
-    { key: "vehicleRoute", label: "Vehicle Route" },
-    {
+  { key: "vehicle_code", label: "Vehicle Code" },
+  { key: "numberPlate", label: "Number Plate" },
+  { key: "chassisNumber", label: "Chassis Number" },
+  { key: "brand", label: "Brand" },
+  { key: "odoMeter", label: "Odo Meter" },
+  { key: "vehicleType", label: "Vehicle Type" },
+  { key: "capacity", label: "Capacity" },
+  { key: "ownerType", label: "Owner Type" },
+  { key: "depotLocation", label: "Depot Location" },
+  // { key: "ownerReference", label: "Owner Reference" },
+  // { key: "vehicleRoute", label: "Vehicle Route" },
+  { key: "description", label: "Description" },
+  { key: "valid_from", label: "Valid From" },
+  { key: "valid_to", label: "Valid To" },
+  {
         key: "status",
         label: "Status",
         render: (row: TableDataType) => (
@@ -80,22 +83,25 @@ export default function VehiclePage() {
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
 
-    // ✅ Map vehicles → TableDataType safely
-    const tableData: TableDataType[] = vehicles.map((v) => ({
-        id: String(v.id ?? ""),
-        vehicle_code: v.vehicle_code ?? "-",
-        brand: v.description ?? "-",
-        numberPlate: v.number_plat ?? "-",
-        chassisNumber: v.vehicle_chesis_no ?? "-",
-        odoMeter: v.opening_odometer ?? "-",
-        vehicleType: v.vehicle_type ?? "-",
-        capacity: v.capacity ?? "-",
-        ownerType: v.owner_type ?? "-",
-        depotLocation: v.warehouse?.warehouse_name ?? "-",
-        ownerReference: v.owner_reference ?? "-",
-        vehicleRoute: v.vehicle_route ?? "-",
-        status: v.status === 1 ? "Active" : "Inactive",
-    }));
+  // ✅ Map vehicles → TableDataType safely
+  const tableData: TableDataType[] = vehicles.map((v) => ({
+    id: String(v.id ?? ""),
+    vehicle_code: v.vehicle_code ?? "-",
+    brand: v.vehicle_brand !== undefined ? String(v.vehicle_brand) : "-",
+    numberPlate: v.number_plat ?? "-",
+    chassisNumber: v.vehicle_chesis_no ?? "-",
+    odoMeter: v.opening_odometer ?? "-",
+    vehicleType: v.vehicle_type ?? "-",
+    capacity: v.capacity ?? "-",
+    ownerType: v.owner_type ?? "-",
+    depotLocation: v.warehouse_id !== undefined ? String(v.warehouse_id) : "-",
+    ownerReference: v.owner_reference ?? "-",
+    vehicleRoute: v.vehicle_route ?? "-",
+    description: v.description ?? "-",
+    valid_from: v.valid_from !== undefined ? String(v.valid_from) : "-",
+    valid_to: v.valid_to !== undefined ? String(v.valid_to) : "-",
+    status: v.status === 1 ? "Active" : "Inactive",
+  }));
 
     const fetchVehicles = async () => {
         const res = await vehicleList();

@@ -45,49 +45,39 @@ export default function Region() {
   type TableRow = TableDataType & { id?: string };
 
   // Normalize API data for table
-const tableData: TableDataType[] = regions.map((s) => ({
-  id: s.id?.toString() ?? "",
-  region_code: s.region_code ?? "",
-  region_name: s.region_name ?? "",
-   country_code: s.country?.country_code ?? "—", // ✅ Add country code
-  country_name: s.country?.country_name ?? "—",
-  status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive",
-}));
-  useEffect(() => {
-    const fetchRegions = async () => {
-      try {
-        const listRes = await regionList();
-        setRegions(listRes.data);
-      } catch (error) {
-        console.error("API Error:", error);
+  const tableData: TableDataType[] = regions.map((s) => ({
+    id: s.id?.toString() ?? "",
+    region_code: s.region_code ?? "",
+    region_name: s.region_name ?? "",
+    status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive", // ✅ Correct mapping
+  }));
+
+  async function fetchRegions() {
+      const listRes = await regionList();
+      if(listRes.error) {
         showSnackbar("Failed to fetch Regions ❌", "error");
-      } finally {
-        setLoading(false);
+      } else {
+        setRegions(listRes.data);
       }
+      setLoading(false);
     };
 
+  useEffect(() => {
     fetchRegions();
   }, []);
 
  const handleConfirmDelete = async () => {
   if (!selectedRow?.id) return;
 
-  try {
-    await deleteRegion(String(selectedRow.id));
-    showSnackbar("Region deleted successfully ✅", "success");
-
-    const listRes = await regionList();
-    setRegions(listRes.data);
-
-  } catch (error) {
-    console.error("Delete failed ❌", error);
-    showSnackbar("Failed to delete Region ❌", "error");
-  } finally {
-    setShowDeletePopup(false);
-    setSelectedRow(null);
+  const res = await deleteRegion(String(selectedRow.id));
+  if(res.error) {
+    showSnackbar(res.data.message || "Failed to delete Region","error");
+  } else {
+    showSnackbar(res.message || "Region deleted successfully", "success");
+    fetchRegions();
   }
+  setShowDeletePopup(false);
 };
-
 
 
   if (loading) return <Loading />;

@@ -93,7 +93,8 @@ export default function AddCountry() {
                   {/* Country Code */}
                   <div className="flex items-end gap-2 max-w-[406px]">
                     <div className="w-full">
-                      <InputFields
+                      <InputFields 
+required
                         label="Country Code"
                         value={values.country_code}
                         onChange={(e) =>
@@ -121,7 +122,8 @@ export default function AddCountry() {
 
                   {/* Country Name */}
                   <div>
-                    <InputFields
+                    <InputFields 
+required
                       label="Country Name"
                       value={values.country_name}
                       onChange={(e) =>
@@ -137,7 +139,8 @@ export default function AddCountry() {
 
                   {/* Currency */}
                   <div>
-                    <InputFields
+                    <InputFields 
+required
                       label="Currency"
                       value={values.currency}
                       onChange={(e) =>

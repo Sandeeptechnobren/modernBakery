@@ -23,9 +23,6 @@ interface OutletChannel {
 }
 
 const dropdownDataList = [
-  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
@@ -53,127 +50,98 @@ const columns = [
 ];
 
 export default function ChannelList() {
-  const [channels, setChannels] = useState<OutletChannel[]>([]);
+  const [channels, setChannels] = useState<TableDataType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<OutletChannel | null>(null);
-  const [refresh, setRefresh] = useState<boolean>(false);
+  const [deleteId, setDeleteId] = useState(0);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
   // Map API data to table format
-  const tableData: TableDataType[] = channels.map((c) => ({
-    id: c.id?.toString() ?? "",
-    outlet_channel_code: c.outlet_channel_code ?? "",
-    outlet_channel: c.outlet_channel ?? "",
-    status: c.status !== undefined ? String(c.status) : "0",
-  }));
+  // const tableData: TableDataType[] = channels.map((c) => ({
+  //   id: c.id?.toString() ?? "",
+  //   outlet_channel_code: c.outlet_channel_code ?? "",
+  //   outlet_channel: c.outlet_channel ?? "",
+  //   status: c.status !== undefined ? String(c.status) : "0",
+  // }));
 
- useEffect(() => {
-  const fetchChannels = async () => {
-    try {
-      const listRes = await channelList();
-      console.log("API Response 👉", listRes);
-
-      // ✅ Correct array path
-      const data = Array.isArray(listRes?.original?.data)
-        ? listRes.original.data
-        : [];
-
-      setChannels(data);
-    } catch (error: unknown) {
-      console.error("API Error:", error);
-    } finally {
-      setLoading(false);
+  async function fetchChannels() {
+    const listRes = await channelList();
+    if(listRes.error) {
+      showSnackbar(listRes.data.message || "failed to fetch the outlet channels", "error");
+    } else {
+      setChannels(listRes.data);
     }
+    setLoading(false);
   };
 
-  fetchChannels();
-}, []);
+  useEffect(() => {
+    fetchChannels();
+  }, []);
 
   // Delete handler
   const handleConfirmDelete = async () => {
-    if (!selectedRow) return;
-
-  try {
-    await deleteOutletChannel(String(selectedRow.id)); // API call
-    await channelList();
-
-    // ✅ Remove deleted row from state
-    setChannels((prev) =>
-      prev.filter((c) => String(c.id) !== String(selectedRow.id))
-    );
-
-    showSnackbar("Channel deleted successfully ✅", "success");
-  } catch (error) {
-    console.error("Delete failed ❌:", error);
-    showSnackbar("Failed to delete channel ❌", "error");
-  } finally {
-    setShowDeletePopup(false);
-    setSelectedRow(null);
+    const res = await deleteOutletChannel(String(deleteId));
+    if(res.error) {
+      showSnackbar(res.data.message || "failed to fetch the outlet channels", "error");
+    } else {
+      showSnackbar(res.message || "Channel deleted successfully", "success");
+      setShowDeletePopup(false);
+      fetchChannels();
+    }
   }
-};
 
-  if (loading) return <Loading />;
-
-  return (
+  return loading ? <Loading /> :(
     <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-[20px]">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">
-          Outlet Channels
-        </h1>
-
-        <div className="flex gap-[12px] relative">
-          <BorderIconButton icon="gala:file-document" label="Export CSV" />
-          <BorderIconButton icon="mage:upload" />
-
-          <DismissibleDropdown
-            isOpen={showDropdown}
-            setIsOpen={setShowDropdown}
-            button={<BorderIconButton icon="ic:sharp-more-vert" />}
-            dropdown={
-              <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                <CustomDropdown>
-                  {dropdownDataList.map((link, idx) => (
-                    <div
-                      key={idx}
-                      className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                    >
-                      <Icon
-                        icon={link.icon}
-                        width={link.iconWidth}
-                        className="text-[#717680]"
-                      />
-                      <span className="text-[#181D27] font-[500] text-[16px]">
-                        {link.label}
-                      </span>
-                    </div>
-                  ))}
-                </CustomDropdown>
-              </div>
-            }
-          />
-        </div>
-      </div>
-
       {/* Table */}
-      <div className="h-[calc(100%-60px)]">
-        <Table
-          data={tableData}
+      <div className="max-h-[calc(100%-60px)]">
+        { channels && <Table
+          data={channels}
           config={{
             header: {
+              title: "Outlet Channels",
+              wholeTableActions: [
+                <div key={0} className="flex gap-[12px] relative">
+                  <DismissibleDropdown
+                    isOpen={showDropdown}
+                    setIsOpen={setShowDropdown}
+                    button={<BorderIconButton icon="ic:sharp-more-vert" />}
+                    dropdown={
+                      <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                        <CustomDropdown>
+                          {dropdownDataList.map((link, idx) => (
+                            <div
+                              key={idx}
+                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                            >
+                              <Icon
+                                icon={link.icon}
+                                width={link.iconWidth}
+                                className="text-[#717680]"
+                              />
+                              <span className="text-[#181D27] font-[500] text-[16px]">
+                                {link.label}
+                              </span>
+                            </div>
+                          ))}
+                        </CustomDropdown>
+                      </div>
+                    }
+                  />
+                </div>
+              ],
               searchBar: true,
               columnFilter: true,
               actions: [
                 <SidebarBtn
                   key="add-channel"
+                  buttonTw="px-3 py-2 h-[34px]"
                   href="/dashboard/settings/outlet-channel/add"
                   leadingIcon="lucide:plus"
                   label="Add Channel"
-                  labelTw="hidden sm:block"
+                  labelTw="hidden xl:block"
                   isActive
                 />,
               ],
@@ -184,28 +152,21 @@ export default function ChannelList() {
             rowActions: [
               {
                 icon: "lucide:edit-2",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  router.push(`/dashboard/settings/outlet-channel/update/${r.id}`);
+                onClick: (row: TableDataType) => {
+                  router.push(`/dashboard/settings/outlet-channel/update/${row.id}`);
                 },
               },
               {
                 icon: "lucide:trash",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  setSelectedRow({
-                    id: r.id,
-                    outlet_channel_code: r.outlet_channel_code,
-                    outlet_channel: r.outlet_channel,
-                    status: Number(r.status) === 1 ? 1 : 0,
-                  });
+                onClick: (row: TableDataType) => {
+                  setDeleteId(Number(row.id));
                   setShowDeletePopup(true);
                 },
               },
             ],
             pageSize: 10,
           }}
-        />
+        />}
       </div>
 
       {/* Delete Popup */}

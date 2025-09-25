@@ -7,10 +7,12 @@ export default function CustomPasswordInput({
   label,
   value,
   onChange,
+  required = false,
 }: {
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  required?: boolean;
 }) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -22,6 +24,7 @@ export default function CustomPasswordInput({
     <div className="w-full">
       <label htmlFor={label} className="text-sm text-gray-700">
         {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <div className="relative mt-[6px]">
         <input

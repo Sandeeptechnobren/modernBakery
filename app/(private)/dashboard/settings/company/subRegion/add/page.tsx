@@ -62,7 +62,7 @@ export default function AddSubRegion() {
       }
 
       const payload = {
-        area_code,
+        // area_code,
         area_name,
         region_id,
         status,

@@ -5,42 +5,23 @@ import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import SearchableDropdown from "@/app/components/SearchableDropdown";
 import FormInputField from "@/app/components/formInputField";
-import { addCompany, countryList, regionList, subRegionList } from "@/app/services/allApi";
+import { addCompany } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-interface ApiCountry {
-  id: string;
-  name?: string;
-  country_name?: string;
-  currency?: string;
-}
-
-interface ApiRegion {
-  id: string;
-  name?: string;
-  region_name?: string;
-}
-
-interface ApiSubRegion {
-  id: string;
-  name?: string;
-  area_name?: string;
-}
 
 interface CompanyFormValues {
   company_name: string;
   company_code: string;
   company_type: string;
-  company_website: string;
+  website: string;
   company_logo: string;
   primary_contact: string;
   primary_code: string;
-  toll_free_number: string;
+  toll_free_no: string;
   toll_free_code: string;
   email: string;
   country_id: string;
@@ -53,8 +34,8 @@ interface CompanyFormValues {
   tin_number: string;
   selling_currency: string;
   purchase_currency: string;
-  vat_no: string;
-  modules: string;
+  vat: string;
+  module_access: string;
   service_type: string;
   status: string;
 }
@@ -75,7 +56,7 @@ const CompanySchema = Yup.object().shape({
   street: Yup.string().required("Street is required"),
   sub_region: Yup.string().required("Sub Region is required"),
   primary_contact: Yup.string().required("Primary contact is required"),
-  toll_free_number: Yup.string().required("Toll free number is required"),
+  toll_free_no: Yup.string().required("Toll free number is required"),
 });
 
 // Per-step validation schemas
@@ -85,14 +66,14 @@ const stepSchemas = [
     company_name: Yup.string().required("Company name is required"),
     company_code: Yup.string().required("Company code is required"),
     company_type: Yup.string().required("Company type is required"),
-    company_website: Yup.string(),
+    website: Yup.string(),
     company_logo: Yup.string(),
   }),
   // Step 2: Contact
   Yup.object({
     primary_contact: Yup.string().required("Primary contact is required"),
     primary_code: Yup.string(),
-    toll_free_number: Yup.string().required("Toll free number is required"),
+    toll_free_no: Yup.string().required("Toll free number is required"),
     toll_free_code: Yup.string(),
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
@@ -111,7 +92,7 @@ const stepSchemas = [
   Yup.object({
     selling_currency: Yup.string().required("Selling currency is required"),
     purchase_currency: Yup.string().required("Purchase currency is required"),
-    vat_no: Yup.string(),
+    vat: Yup.string(),
   }),
   // Step 5: Additional
   Yup.object({
@@ -122,7 +103,7 @@ const stepSchemas = [
 ];
 
 export default function AddCompanyWithStepper() {
-  const { regionOptions,areaOptions,loading, countryOptions, onlyCountryOptions } = useAllDropdownListData();
+  const { regionOptions,areaOptions, onlyCountryOptions, countryCurrency } = useAllDropdownListData();
   const steps: StepperStep[] = [
     { id: 1, label: "Company" },
     { id: 2, label: "Contact" },
@@ -137,20 +118,17 @@ export default function AddCompanyWithStepper() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  const [currency, setCurrency] = useState<{ value: string; label: string }[]>([]);
-  const [regions, setRegions] = useState<{ value: string; label: string }[]>([]);
-  const [subRegions, setSubRegions] = useState<{ value: string; label: string }[]>([]);
 
   const initialValues: CompanyFormValues = {
     company_name: "",
     company_code: "",
     company_type: "",
-    company_website: "",
+    website: "",
     company_logo: "",
     email: "",
     primary_contact: "",
     primary_code: "",
-    toll_free_number: "",
+    toll_free_no: "",
     toll_free_code: "",
     country_id: "",
     region: "",
@@ -162,8 +140,8 @@ export default function AddCompanyWithStepper() {
     tin_number: "",
     selling_currency: "USD",
     purchase_currency: "USD",
-    vat_no: "",
-    modules: "",
+    vat: "",
+    module_access: "",
     service_type: "",
     status: "1",
   };
@@ -266,8 +244,8 @@ export default function AddCompanyWithStepper() {
               <InputFields
                 label="Website"
                 name="company_website"
-                value={values.company_website}
-                onChange={(e) => setFieldValue("company_website", e.target.value)}
+                value={values.website}
+                onChange={(e) => setFieldValue("website", e.target.value)}
               />
               <InputFields
                 label="Logo"
@@ -295,9 +273,9 @@ export default function AddCompanyWithStepper() {
               <FormInputField
                 type="contact"
                 label="Toll Free Number"
-                contact={values.toll_free_number}
+                contact={values.toll_free_no}
                 code={values.toll_free_code}
-                onContactChange={(e) => setFieldValue("toll_free_number", e.target.value)}
+                onContactChange={(e) => setFieldValue("toll_free_no", e.target.value)}
                 onCodeChange={(e) => setFieldValue("toll_free_code", e.target.value)}
                 options={onlyCountryOptions}
               />
@@ -326,7 +304,7 @@ export default function AddCompanyWithStepper() {
                 label="Region"
                 name="region"
                 value={values.region}
-                options={loading ? [{ value: '', label: 'Loading...' }] : (regionOptions && regionOptions.length > 0 ? regionOptions : [{ value: '', label: 'No options available' }])}
+                options={regionOptions}
                 onChange={(val) => setFieldValue("region", String(val))}
                 error={errors?.region && touched?.region ? errors.region : false}
               />
@@ -367,7 +345,7 @@ export default function AddCompanyWithStepper() {
                 label="Country"
                 name="country_id"
                 value={values.country_id}
-                options={countryOptions}
+                options={onlyCountryOptions}
                 onChange={(val) => setFieldValue("country_id", String(val))}
                 error={errors?.country_id && touched?.country_id ? errors.country_id : false}
               />
@@ -389,21 +367,21 @@ export default function AddCompanyWithStepper() {
                 label="Selling Currency"
                 name="selling_currency"
                 value={values.selling_currency}
-                options={onlyCountryOptions}
+                options={countryCurrency}
                 onChange={(val) => setFieldValue("selling_currency", String(val))}
               />
               <SearchableDropdown
                 label="Purchase Currency"
                 name="purchase_currency"
                 value={values.purchase_currency}
-                options={onlyCountryOptions}
+                options={countryCurrency}
                 onChange={(val) => setFieldValue("purchase_currency", String(val))}
               />
               <InputFields
                 label="VAT Number"
-                name="vat_no"
-                value={values.vat_no}
-                onChange={(e) => setFieldValue("vat_no", e.target.value)}
+                name="vat"
+                value={values.vat}
+                onChange={(e) => setFieldValue("vat", e.target.value)}
               />
             </div>
           </ContainerCard>
@@ -414,9 +392,9 @@ export default function AddCompanyWithStepper() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <InputFields
                 label="Module"
-                name="modules"
-                value={values.modules}
-                onChange={(e) => setFieldValue("modules", e.target.value)}
+                name="module_access"
+                value={values.module_access}
+                onChange={(e) => setFieldValue("module_access", e.target.value)}
               />
               <SearchableDropdown
                 label="Service Type"

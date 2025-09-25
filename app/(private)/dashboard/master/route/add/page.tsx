@@ -14,14 +14,14 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function Route() {
-  const { routeTypeOptions } = useAllDropdownListData();
+  const { routeTypeOptions, warehouseOptions } = useAllDropdownListData();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [isOpen, setIsOpen] = useState(false);
   const [routeCode, setRouteCode] = useState("");
   const [routeName, setRouteName] = useState("");
   const [routeType, setRouteType] = useState<string[]>([]);
-  const [description, setDescription] = useState("");
+  const [warehouse, setWarehouse] = useState("");
   const [status, setStatus] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -40,6 +40,7 @@ export default function Route() {
     route_code: yup.string().required("Route code is required").max(10),
     route_name: yup.string().required("Route name is required").max(100),
     route_type: yup.array().of(yup.string()).required("Route type is required").min(1, "At least one route type is required"),
+    warehouse: yup.string().required("Warehouse is required"),
     status: yup.string().required("Status is required").oneOf(["0", "1", "active", "inactive"], "Invalid status"),
   });
 
@@ -50,6 +51,7 @@ export default function Route() {
         route_code: routeCode,
         route_name: routeName,
         route_type: routeType,
+        warehouse: warehouse,
         status: status,
       }, { abortEarly: false });
 
@@ -58,7 +60,7 @@ export default function Route() {
         route_name?: string;
         route_type?: number[] | undefined;
         status?: number | undefined;
-        description: string;
+        warehouse: string;
       };
 
       const payload: AddRoutePayload = {
@@ -66,7 +68,7 @@ export default function Route() {
         route_name: routeName,
         route_type: routeType.length > 0 ? routeType.map(rt => Number(rt)) : undefined,
         status: status ? (status === "active" ? 1 : status === "inactive" ? 0 : Number(status)) : undefined,
-        description: description
+        warehouse: warehouse
       };
 
       setSubmitting(true);
@@ -117,11 +119,12 @@ export default function Route() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-end gap-2 max-w-[406px]">
                 <InputFields
+                  required
                   label="Route Code"
                   value={routeCode}
                   onChange={(e) => setRouteCode(e.target.value)}
                 />
-               
+
 
                 <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
                   icon="mi:settings"
@@ -133,13 +136,14 @@ export default function Route() {
                   onClose={() => setIsOpen(false)}
                   title="Route Code"
                 />
-                 {errors.route_code && (
+                {errors.route_code && (
                   <p className="text-red-500 text-sm mt-1">{errors.route_code}</p>
                 )}
               </div>
 
               <div>
                 <InputFields
+                  required
                   label="Route Name"
                   value={routeName}
                   onChange={(e) => setRouteName(e.target.value)}
@@ -150,14 +154,15 @@ export default function Route() {
               </div>
               <div>
                 <InputFields
-                    label="Route Type"
-                    name="route_type"
-                    value={routeType}
-                    onChange={handleRouteTypeChange}
-                    options={routeTypeOptions}
-                    isSingle={false}
-                  />
-                  {errors.route_type && (
+                  required
+                  label="Route Type"
+                  name="route_type"
+                  value={routeType}
+                  onChange={handleRouteTypeChange}
+                  options={routeTypeOptions}
+                  isSingle={false}
+                />
+                {errors.route_type && (
                   <p className="text-red-500 text-sm mt-1">{errors.route_type}</p>
                 )}
 
@@ -166,7 +171,7 @@ export default function Route() {
           </div>
         </div>
         {/* Location Information */}
-       
+
         {/* Additional Information */}
         <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 ">
           <div className="p-6">
@@ -174,16 +179,26 @@ export default function Route() {
               Additional Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               <div>
+              <div>
                 <InputFields
-                  label="Description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                  name="warehouse"
+                  label="Warehouse"
+                  value={warehouse || ""}
+                  options={warehouseOptions}
+                  onChange={(e) => {
+                    if (e && e.target && typeof e.target.value !== 'undefined') {
+                      setWarehouse(String(e.target.value));
+                    }
+                  }}
                 />
-               
+                {errors.warehouse && (
+                  <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
+                )}
               </div>
               <div>
                 <InputFields
+                  required
                   label="Status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
