@@ -562,7 +562,7 @@ function TableBody() {
                             <tr>
                                 <td colSpan={columns?.length + 2 || 1}>
                                     <div className="content-center text-center py-[12px] text-[24px] max-h-full min-h-[200px]">
-                                        No data to display
+                                        No data available
                                     </div>
                                 </td>
                             </tr>

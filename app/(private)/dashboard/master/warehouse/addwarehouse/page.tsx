@@ -6,14 +6,10 @@ import WarehouseAdditionalInformation from "./warehouseAdditionalInformation";
 import { useRouter } from "next/navigation";
 import ContainerCard from "@/app/components/containerCard";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { Formik, Form, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { addWarehouse } from '@/app/services/allApi';
 import StepperForm, { StepperStep, useStepperForm } from "@/app/components/stepperForm";
 import { useState } from "react";
-import InputFields from "@/app/components/inputFields";
 
 type FormValues = {
     registation_no: string;
