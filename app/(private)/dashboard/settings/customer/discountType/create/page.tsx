@@ -97,7 +97,8 @@ export default function CreateDiscountType() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
               <div>
-                <InputFields
+                <InputFields 
+required
                   label="Discount Name"
                   value={discountName}
                   onChange={(e) => setDiscountname(e.target.value)}
@@ -107,7 +108,8 @@ export default function CreateDiscountType() {
                 )}
               </div>
               <div>
-                <InputFields
+                <InputFields 
+required
                   label="Status"
                   value={discountStatus}
                   onChange={(e) => setDiscountStatus(e.target.value)}

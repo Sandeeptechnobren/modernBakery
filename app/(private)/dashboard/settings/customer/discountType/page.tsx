@@ -23,7 +23,16 @@ const columns = [
         ),
     },
     { key: "discount_name", label: "Discount Name" ,isSortable: true },
-    { key: "created_date", label: "Created Date" },
+    {
+    key: "created_date",
+    label: "Created Date",
+    render: (row: TableDataType) => {
+        const dateStr = row.created_date;
+        if (!dateStr) return "";
+        const [y, m, d] = dateStr.split("T")[0].split("-");
+        return `${d}-${m}-${y}`;
+    },
+},
     {
         key: "discount_status",
         label: "Status",

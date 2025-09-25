@@ -22,7 +22,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <InputFields
-                label="Registration Number *"
+            required
+                label="Registration Number"
                 name="registation_no"
                 value={values.registation_no}
                 onChange={handleChange}
@@ -31,7 +32,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
         
          <div className="flex items-end gap-2 max-w-[406px]">
                 <InputFields
-                    label="Warehouse Code *"
+                required
+                    label="Warehouse Code"
                     name="warehouse_code"
                     value={values.warehouse_code}
                     onChange={handleChange}
@@ -48,7 +50,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Warehouse Code" />
             </div>
          <InputFields
-                label="Warehouse Name *"
+         required
+                label="Warehouse Name"
                 name="warehouse_name"
                 value={values.warehouse_name}
                 onChange={handleChange}
@@ -63,7 +66,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Company Customer *"
+            required
+                label="Company Customer"
                 name="company_customer_id"
                 value={values.company_customer_id}
                 options={companyCustomersOptions}
@@ -72,7 +76,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Warehouse Manager *"
+            required
+                label="Warehouse Manager"
                 name="warehouse_manager"
                 value={values.warehouse_manager}
                 onChange={handleChange}
@@ -80,7 +85,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Warehouse Manager Contact *"
+            required
+                label="Warehouse Manager Contact"
                 name="warehouse_manager_contact"
                 value={values.warehouse_manager_contact}
                 onChange={handleChange}
@@ -88,7 +94,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Warehouse Type *"
+            required
+                label="Warehouse Type"
                 name="warehouse_type"
                 value={values.warehouse_type}
                 onChange={handleChange}
@@ -110,7 +117,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Business Type *"
+            required
+                label="Business Type"
                 name="business_type"
                 value={values.business_type}
                 onChange={handleChange}
@@ -119,7 +127,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Status *"
+            required
+                label="Status"
                 name="status"
                 value={values.status}
                 onChange={handleChange}
@@ -131,7 +140,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
             <div>
                              <CustomPasswordInput
-                                      label="Password *"
+                             required
+                                      label="Password"
                                       value={values.password}
                                       onChange={(e) => setFieldValue('password', e.target.value)}
                                     />

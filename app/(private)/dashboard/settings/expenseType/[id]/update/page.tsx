@@ -107,7 +107,8 @@ export default function UpdateExpensetype() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  
                   <div>
-                    <InputFields
+                    <InputFields 
+required
                       label="Expense Type Name"
                       value={values.expense_type_name}
                       onChange={(e) =>
@@ -123,7 +124,8 @@ export default function UpdateExpensetype() {
 
                   {/* Currency */}
                   <div>
-                     <InputFields
+                     <InputFields 
+required
                                     label="Expense Type Status"
                                     name="expense_type_status"
                                     value={String(values.expense_type_status)}

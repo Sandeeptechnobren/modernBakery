@@ -31,9 +31,19 @@ const dropdownDataList: DropdownItem[] = [
 const columns = [
   { key: "expense_type_code", label: "Expense Type Code" },
   { key: "expense_type_name", label: "Expense Type Name" },
-  { key: "created_user", label: "Created User" },
-  { key: "updated_user", label: "Updated User" },
-  { key: "created_date", label: "Created Date" },
+  // { key: "created_user", label: "Created User" },
+  // { key: "updated_user", label: "Updated User" },
+  // { key: "created_date", label: "Created Date" },
+  {
+    key: "created_date",
+    label: "Created Date",
+    render: (row: TableDataType) => {
+        const dateStr = row.created_date;
+        if (!dateStr) return "";
+        const [y, m, d] = dateStr.split("T")[0].split("-");
+        return `${d}-${m}-${y}`;
+    },
+},
 //   { key: "expense_type_status", label: "Status" },
   {
     key: "expense_type_status",
@@ -46,7 +56,7 @@ const columns = [
           </span>
         ) : (
           <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-            Inactive
+            In Active
           </span>
         )}
       </div>
@@ -59,8 +69,8 @@ export default function Expensetype() {
     id?: number | string;
     expense_type_code?: string;
     expense_type_name?: string;
-    created_user?: string;
-    updated_user?: string;
+    // created_user?: string;
+    // updated_user?: string;
     created_date?: string;
     expense_type_status?: string;
   }
@@ -79,8 +89,8 @@ const tableData: TableDataType[] = countries.map((c) => ({
   id: c.id?.toString() ?? "",
   expense_type_code: c.expense_type_code ?? "",
   expense_type_name: c.expense_type_name ?? "",
-  created_user: c.created_user ?? "",
-  updated_user: c.updated_user ?? "",
+  // created_user: c.created_user ?? "",
+  // updated_user: c.updated_user ?? "",
   created_date: c.created_date ?? "",
   expense_type_status:
     typeof c.expense_type_status === "number"

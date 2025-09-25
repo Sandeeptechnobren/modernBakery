@@ -34,6 +34,7 @@ interface DropdownDataContextType {
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
   onlyCountryOptions: { value: string; label: string }[];
+  countryCurrency: {value: string; label: string }[];
   regionOptions: { value: string; label: string }[];
   routeOptions: { value: string; label: string }[];
   warehouseOptions: { value: string; label: string }[];
@@ -60,6 +61,7 @@ interface CountryItem {
   id?: number | string;
   country_code?: string;
   country_name?: string;
+  currency?: string;
 }
 
 interface RegionItem {
@@ -166,6 +168,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const onlyCountryOptions = (Array.isArray(countryListData) ? countryListData : []).map((c: CountryItem) => ({
     value: String(c.id ?? ''),
     label: c.country_name ? `${c.country_name}` : (c.country_name ?? '')
+  }));
+
+   const countryCurrency = (Array.isArray(countryListData) ? countryListData : []).map((c: CountryItem) => ({
+    value: String(c.currency ?? ''),
+    label: c.currency ? `${c.currency}` : (c.currency ?? '')
   }));
 
   const regionOptions = (Array.isArray(regionListData) ? regionListData : []).map((c: RegionItem) => ({
@@ -313,6 +320,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         companyOptions,
         countryOptions,
         onlyCountryOptions,
+        countryCurrency,
         regionOptions,
         routeOptions,
         warehouseOptions,

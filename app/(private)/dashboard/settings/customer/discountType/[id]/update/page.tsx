@@ -120,7 +120,8 @@ export default function EditDiscounttype() {
               
 
               <div>
-                <InputFields
+                <InputFields 
+required
                   label="Discount Name"
                   value={discountName}
                   onChange={(e) => setDiscountName(e.target.value)}
@@ -130,7 +131,8 @@ export default function EditDiscounttype() {
                 )}
               </div>
               <div>
-                <InputFields
+                <InputFields 
+required
                   label="Status"
                   value={discountStatus}
                   onChange={(e) => setDiscountStatus(e.target.value)}

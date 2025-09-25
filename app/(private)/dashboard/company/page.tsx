@@ -21,8 +21,43 @@ interface Company {
   company_name?: string;
   company_type?: string;
   email?: string;
-  [key: string]: string | number | undefined;
+  tin_number?: string;
+  vat?: string;
+
+  country?: {
+    id?: number;
+    country_name?: string;
+    country_code?: string;
+    selling_currency?: string;
+    purchase_currency?: string;
+  };
+
+  region?: {
+    id?: number;
+    region_name?: string;
+    region_code?: string;
+  };
+
+  sub_region?: {
+    id?: number;
+    subregion_name?: string;
+    subregion_code?: string;
+  };
+
+  selling_currency?: string;
+  purchase_currency?: string;
+  toll_free_no?: string;
+  primary_contact?: string;
+  website?: string;
+  module_access?: string;
+  district?: string;
+  town?: string;
+  street?: string;
+  landmark?: string;
+  service_type?: string;
+  status?: string | number; // allow both since API may send 0/1
 }
+
 
 // 🔹 Dropdown menu data
 interface DropdownItem {
@@ -45,6 +80,23 @@ const columns = [
   { key: "company_name", label: "Company Name" },
   { key: "company_type", label: "Company Type" },
   { key: "email", label: "Email" },
+  { key: "website", label: "Website" },
+  { key: "toll_free_no", label: "Toll Free No" },
+  { key: "primary_contact", label: "Primary Contact" },
+  { key: "region_name", label: "Region" },
+  { key: "subregion_name", label: "Sub Region" },
+  { key: "street", label: "Street" },
+  { key: "landmark", label: "Landmark" },
+  { key: "town", label: "Town" },
+  { key: "district", label: "District" },
+  { key: "country_name", label: "Country" },
+  { key: "tin_number", label: "TIN Number" },
+  { key: "purchase_currency", label: "Purchase Currency" },
+  { key: "selling_currency", label: "Selling Currency" },
+  { key: "vat", label: "VAT" },
+  { key: "module_access", label: "Module Access" },
+  { key: "service_type", label: "Service Type" },
+  { key: "status", label: "Status" },
 ];
 
 export default function CompanyPage() {
@@ -59,12 +111,30 @@ export default function CompanyPage() {
 
   // ✅ Map companies → TableDataType safely
   const tableData: TableDataType[] = companies.map((c) => ({
-    id: String(c.id ?? ""),
-    company_code: c.company_code ?? "",
-    company_name: c.company_name ?? "",
-    company_type: c.company_type ?? "",
-    email: c.email ?? "",
-  }));
+  id: String(c.id ?? ""),
+  company_code: c.company_code ?? "",
+  company_name: c.company_name ?? "",
+  company_type: c.company_type ?? "",
+  email: c.email ?? "",
+  tin_number: c.tin_number ?? "",
+  vat: c.vat ?? "",
+  country_name: c.country?.country_name ?? "",
+  selling_currency: c.country?.selling_currency ?? "",
+  purchase_currency: c.country?.purchase_currency ?? "",
+  toll_free_no: c.toll_free_no ?? "",
+  primary_contact: c.primary_contact ?? "",
+  website: c.website ?? "",
+  region_name: c.region?.region_name ?? "",
+  subregion_name: c.sub_region?.subregion_name ?? "",
+  module_access: c.module_access ?? "",
+  district: c.district ?? "",
+  town: c.town ?? "",
+  street: c.street ?? "",
+  landmark: c.landmark ?? "",
+  service_type: c.service_type ?? "",
+  status: c.status === "1" || c.status === 1 ? "Active" : "Inactive",
+}));
+
 
   // ✅ Fetch companies from API
   

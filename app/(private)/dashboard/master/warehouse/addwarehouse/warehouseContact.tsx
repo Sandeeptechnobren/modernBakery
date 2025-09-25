@@ -57,7 +57,8 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
       <div className="flex flex-col gap-4 w-full">
         <div className="flex w-full">
           <InputFields
-        label="TIN Number *"
+          required
+        label="TIN Number"
         name="tin_no"
         value={values.tin_no}
         onChange={handleChange}

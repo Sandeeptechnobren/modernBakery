@@ -11,7 +11,7 @@ import { routeList,deleteRoute } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 const columns = [
     {
         key: "route_code",
@@ -23,7 +23,24 @@ const columns = [
         ),
     },
     { key: "route_name", label: "Route Name" ,isSortable: true },
-    { key: "warehouse", label: "Deopt Name" ,filter: {
+     { key: "route_type", label: "Route Type" ,filter: {
+            isFilterable: true,
+            render: (data: TableDataType[]) =>
+                data.map((row: TableDataType, index: number) => (
+                    <div
+                        key={index}
+                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                    >
+                        <span className="font-[500] text-[#181D27]">
+                            {row.routeTypeOptions}
+                        </span>
+                       
+                    </div>
+                )),
+        },
+         width:218,
+},
+    { key: "warehouse", label: "Warehouse" ,filter: {
             isFilterable: true,
             render: (data: TableDataType[]) =>
                 data.map((row: TableDataType, index: number) => (
@@ -40,23 +57,7 @@ const columns = [
                 width:218,
         },
 },
-    { key: "route_type", label: "Route Type" ,filter: {
-            isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.route_type}
-                        </span>
-                       
-                    </div>
-                )),
-        },
-         width:218,
-},
+   
    
     
 
@@ -88,6 +89,7 @@ const dropdownDataList = [
 ];
 
 export default function Route() {
+
     interface RouteItem {
     id?: number | string;
     route_code?: string;
@@ -96,6 +98,7 @@ export default function Route() {
     route_type?: string;
     status?: string;
   }
+  const {routeTypeOptions,warehouseOptions}=useAllDropdownListData();
     const[routes, setRoutes] = useState<RouteItem[]>([]);
     const [selectedRow, setSelectedRow] = useState<RouteItem | null>(null);
       const [showDeletePopup, setShowDeletePopup] = useState(false);

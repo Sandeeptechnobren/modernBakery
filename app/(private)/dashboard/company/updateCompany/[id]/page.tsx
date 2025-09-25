@@ -45,7 +45,7 @@ interface Company {
   company_code: string;
   company_name: string;
   company_type: string;
-  country_id: string;
+  country_name: string;
   district: string;
   email: string;
   landmark: string;
@@ -62,7 +62,8 @@ interface Company {
   town: string;
   vat: string;
   website: string;
-  module_access: string[];
+  module_access: string;
+  logo?: File | string;
 }
 
 interface Country {
@@ -103,7 +104,6 @@ export default function EditCompany() {
       companyType: "",
       companyCode: "",
       companyName: "",
-      companyLogo: null as File | null,
       companyWebsite: "",
       primaryCode: "uae",
       primaryContact: "",
@@ -121,7 +121,7 @@ export default function EditCompany() {
       sellingCurrency: "USD",
       purchaseCurrency: "USD",
       vatNo: "",
-      modules: "",
+      module_access: "",
       serviceType: "",
       status: "1",
     },
@@ -130,15 +130,12 @@ export default function EditCompany() {
     onSubmit: async (values) => {
       if (!queryId) return;
 
-      const modulesArray = values.modules
-        ? values.modules.split(",").map((m) => m.trim())
-        : [];
 
       const payload: Company = {
         company_code: values.companyCode,
         company_name: values.companyName,
         company_type: values.companyType,
-        country_id: values.country,
+        country_name: values.country,
         district: values.district,
         email: values.email,
         landmark: values.landmark,
@@ -155,7 +152,7 @@ export default function EditCompany() {
         town: values.town,
         vat: values.vatNo,
         website: values.companyWebsite,
-        module_access: modulesArray,
+        module_access: values.module_access,
       };
 
       const res = await updateCompany(queryId as string, payload);
@@ -205,12 +202,12 @@ export default function EditCompany() {
         if (queryId) {
           const res = await getCompanyById(queryId as string);
           const company: Company = res?.data?.data || res?.data || res;
+          console.log(company)
 
           formik.setValues({
             companyType: company.company_type,
             companyCode: company.company_code,
             companyName: company.company_name,
-            companyLogo: null,
             companyWebsite: company.website,
             primaryCode: "uae",
             primaryContact: company.primary_contact || "",
@@ -223,12 +220,12 @@ export default function EditCompany() {
             town: company.town,
             street: company.street,
             landmark: company.landmark,
-            country: company.country_id || "",
+            country: company.country_name || "",
             tinNumber: company.tin_number,
             sellingCurrency: company.selling_currency,
             purchaseCurrency: company.purchase_currency,
             vatNo: company.vat,
-            modules: company.module_access ? company.module_access.join(", ") : "",
+            module_access: company.module_access,
             serviceType: company.service_type,
             status: company.status,
           });
@@ -266,23 +263,6 @@ export default function EditCompany() {
         <ContainerCard>
           <h2 className="text-lg font-medium mb-4">Company Details</h2>
           <div className="flex flex-wrap gap-4">
-            <InputFields
-              name="companyName"
-              label="Company Name"
-              value={formik.values.companyName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            <InputFields
-              name="companyType"
-              label="Company Type"
-              value={formik.values.companyType}
-              onChange={formik.handleChange}
-              options={[
-                { value: "manufacturing", label: "Manufacturing" },
-                { value: "trading", label: "Trading" },
-              ]}
-            />
             <div className="flex items-end gap-2 max-w-[406px]">
               <InputFields
                 name="companyCode"
@@ -303,6 +283,24 @@ export default function EditCompany() {
                 title="Company Code"
               />
             </div>
+            <InputFields
+              name="companyName"
+              label="Company Name"
+              value={formik.values.companyName}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            />
+            <InputFields
+              name="companyType"
+              label="Company Type"
+              value={formik.values.companyType}
+              onChange={formik.handleChange}
+              options={[
+                { value: "manufacturing", label: "Manufacturing" },
+                { value: "trading", label: "Trading" },
+              ]}
+            />
+
             <InputFields
               name="companyWebsite"
               label="Website"
@@ -441,9 +439,9 @@ export default function EditCompany() {
           <h2 className="text-lg font-medium mb-4">Additional</h2>
           <div className="flex flex-wrap gap-4">
             <InputFields
-              name="modules"
+              name="module_access"
               label="Modules"
-              value={formik.values.modules}
+              value={formik.values.module_access}
               onChange={formik.handleChange}
             />
             <InputFields

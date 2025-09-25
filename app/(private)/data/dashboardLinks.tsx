@@ -62,13 +62,13 @@ export const initialLinkData: SidebarDataType[] = [
                 iconColor: "text-yellow-400",
                 children: [ 
                    
-                    // {
-                    //     isActive: false,
-                    //     href: "/dashboard/master/customer",
-                    //     label: "Customer",
-                    //     leadingIcon: "lucide:user",
-                    //     iconColor: "text-green-500"
-                    // },
+                    {
+                        isActive: false,
+                        href: "/dashboard/master/customer",
+                        label: "Customer",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500"
+                    },
             //         {
             //     isActive: false,
             //     href: "/dashboard/master/item",

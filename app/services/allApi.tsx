@@ -797,7 +797,7 @@ export const getArea = async () => {
 
 export const addArea = async (body:object) => {
   try {
-    const res = await API.post(`/api/master/area/add_area`);
+    const res = await API.post(`/api/master/area/add_area`,body);
 
     return res.data;
   } catch (error: unknown) {

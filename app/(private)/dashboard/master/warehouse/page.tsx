@@ -22,16 +22,21 @@ const dropdownDataList = [
 ];
 
 const columns = [
+  { key: "registation_no", label: "Registration No." },
   { key: "code", label: "Warehouse Code" },
-  { key: "sapId", label: "SAP ID" },
   { key: "warehouseName", label: "Warehouse Name" },
+  { key: "tin_no", label: "TIN No" },
   { key: "ownerName", label: "Owner Name" },
-  { key: "depotName", label: "Depot Name" },
-  { key: "depotLocation", label: "Depot Location" },
+  // { key: "depotName", label: "Depot Name" },
+  { key: "depotLocation", label: "Warehouse Location" },
+  { key: "company_customer_id", label: "Customer"},
+  { key: "warehouse_manager", label: "Warehouse Manager"},
+  { key: "warehouse_manager_contact", label: "Warehouse Manager Contact"},
+  { key: "region_id", label: "Region"},
+  { key: "sub_region_id", label: "Sub Region"},
   { key: "phoneNumber", label: "Phone Number" },
   { key: "address", label: "Address" },
   { key: "district", label: "District" },
-  { key: "route", label: "Route" },
    {
         key: "status",
         label: "Status",
@@ -61,15 +66,17 @@ export default function Warehouse() {
     type WarehouseRow = TableDataType & {
       id?:string;
       code?: string;
-      sapId?: string;
       warehouseName?: string;
+      tin_no?: string;
       ownerName?: string;
-      depotName?: string;
-      depotLocation?: string;
+      // depotName?: string;
+      warehouse_manager?: string;
+      warehouse_manager_contact?: string;
+      // depotLocation?: string;
+      // depotLocation?: string;
       phoneNumber?: string;
       address?: string;
       district?: string;
-      route?: string;
       status?: string | boolean | number;
     };
 
@@ -82,8 +89,15 @@ export default function Warehouse() {
         const res = await getWarehouse();
         interface ApiWarehouse {
           id?: number | string;
+          registation_no?: string;
           warehouse_code?: string;
+          tin_no?: string;
+          warehouse_manager?: string;
+      warehouse_manager_contact?: string;
+      sub_region_id?: string;
+      region_id?: string;
           warehouse_name?: string;
+          company_customer_id?: string;
           owner_name?: string;
           branch_id?: string | number;
           location?: string;
@@ -95,16 +109,21 @@ export default function Warehouse() {
 
         const mapped = (res.data || []).map((item: ApiWarehouse) => ({
           id: item.id,
+          registation_no: item.registation_no ?? "",
           code: item.warehouse_code ?? "",
-          sapId: "-",
           warehouseName: item.warehouse_name ?? "",
+          tin_no: item.tin_no ?? "",
           ownerName: item.owner_name ?? "",
-          depotName: item.branch_id?.toString() ?? "",
+          // depotName: item.branch_id?.toString() ?? "",
           depotLocation: item.location ?? "",
+          company_customer_id: item.company_customer_id ?? "",
+          region_id: item.region_id ?? "",
+          sub_region_id: item.sub_region_id ?? "",
+          warehouse_manager: item.warehouse_manager ?? "",
+          warehouse_manager_contact: item.warehouse_manager_contact ?? "",
           phoneNumber: item.owner_number ?? "",
           address: item.address ?? "",
           district: item.city ?? "",
-          route: "-",
           status: item.status === 1 ? "Active" : "Inactive",
         } as WarehouseRow));
         setWarehouses(mapped);
