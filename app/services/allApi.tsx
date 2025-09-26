@@ -1387,9 +1387,20 @@ export const deleteCustomerSubCategory = async (id:number) => {
     return handleError(error);
   }
 };
+
+
 export const addCustomerSubCategory = async (body:object) => {
   try {
     const res = await API.post(`/api/settings/customer-sub-category/create`,body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const countryGlobalSearch = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/master/country/global_search`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

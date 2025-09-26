@@ -8,7 +8,7 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { countryList, deleteCountry } from "@/app/services/allApi";
+import { countryList, deleteCountry,countryGlobalSearch } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -49,13 +49,14 @@ export default function Country() {
   const { showSnackbar } = useSnackbar();
   type TableRow = TableDataType & { id?: string };
 
-  // Server-side pagination fetch function (like itemCategory)
+  // Normal list fetch (no search)
   const fetchCountries = useCallback(
     async (pageNo: number = 1, pageSize: number = 5) => {
       setLoading(true);
+      const safePage = Math.max(1, pageNo);
       const result = await countryList({
-        page: pageNo.toString(),
-        per_page: pageSize.toString(),
+        page: safePage.toString(),
+        limit: pageSize.toString(),
       });
       setLoading(false);
       if (result.error) {
@@ -70,13 +71,47 @@ export default function Country() {
               country_name: c.country_name ?? "",
               currency: c.currency ?? "",
             })),
-          currentPage: result.pagination?.page || 1,
-          pageSize: result.pagination?.limit || 5,
-          total: result.pagination?.totalPages || 0,
+          currentPage: result.pagination?.page ,
+          pageSize: result.pagination?.limit ,
+          total: result.pagination?.totalPages,
         };
       }
     },
-  [showSnackbar, setLoading]
+    [showSnackbar, setLoading]
+  );
+
+  // Search fetch (uses countryGlobalSearch)
+  const searchCountries = useCallback(
+    async (pageNo: number = 1, pageSize: number = 5, query: string = "") => {
+      setLoading(true);
+      const safePage = Math.max(1, pageNo);
+      const result = await countryGlobalSearch({
+        query,
+        page: safePage.toString(),
+        per_page: pageSize.toString(),
+      });
+      setLoading(false);
+      if (result.error) {
+        showSnackbar(result.data.message, "error");
+        throw new Error("Error fetching data");
+      } else {
+        const pagination = result.pagination || result.data?.pagination || {};
+        const dataArr = result.data?.data || result.data || [];
+        return {
+          data:
+            (dataArr || []).map((c: { id?: string | number; country_code?: string; country_name?: string; currency?: string }) => ({
+              id: c.id?.toString() ?? "",
+              country_code: c.country_code ?? "",
+              country_name: c.country_name ?? "",
+              currency: c.currency ?? "",
+            })),
+          currentPage: pagination.page || pagination.currentPage || 1,
+          pageSize: pagination.limit || pagination.per_page || pageSize,
+          total: pagination.totalPages || pagination.total || 1,
+        };
+      }
+    },
+    [showSnackbar, setLoading]
   );
 
   const handleConfirmDelete = async () => {
@@ -139,6 +174,7 @@ export default function Country() {
           config={{
             api: {
               list: fetchCountries,
+              search: searchCountries,
             },
             header: {
               searchBar: true,
