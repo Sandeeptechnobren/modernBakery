@@ -5,77 +5,78 @@ import { Icon } from "@iconify-icon/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, {
+    listReturnType,
+    TableDataType,
+} from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { routeList,deleteRoute } from "@/app/services/allApi";
-import Loading from "@/app/components/Loading";
+import { routeList, deleteRoute } from "@/app/services/allApi";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import StatusBtn from "@/app/components/statusBtn2";
+import { useLoading } from "@/app/services/loadingContext";
 const columns = [
     {
         key: "route_code",
         label: "Route Code",
-        render: (row: TableDataType) => (
+        render: (data: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.route_code}
+                {data.route_code}
             </span>
         ),
     },
-    { key: "route_name", label: "Route Name" ,isSortable: true },
-     { key: "route_type", label: "Route Type" ,filter: {
+    { key: "route_name", label: "Route Name", isSortable: true },
+    {
+        key: "route_Type",
+        label: "Route Type",
+        render: (data: TableDataType) => JSON.parse(JSON.stringify(data.route_Type))?.route_type_name,
+        filter: {
             isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.routeTypeOptions}
-                        </span>
-                       
-                    </div>
-                )),
+            render: (data: TableDataType[]) => (
+                <>
+                    {data.map((row, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                        >
+                            <span className="font-[500] text-[#181D27]">
+                                {JSON.parse(JSON.stringify(row.route_Type))?.route_type_name}
+                            </span>
+                        </div>
+                    ))}
+                </>
+            ),
         },
-         width:218,
-},
-    { key: "warehouse", label: "Warehouse" ,filter: {
+        width: 218,
+    },
+    {
+        key: "warehouse",
+        label: "Warehouse",
+        width: 218,
+        render: (data: TableDataType) => JSON.parse(JSON.stringify(data.warehouse))?.warehouse_name,
+        filter: {
             isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.warehouse}
-                        </span>
-                       
-                    </div>
-                )),
-                width:218,
+            render: (data: TableDataType[]) => (
+                <>
+                    {data.map((row, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                        >
+                            <span className="font-[500] text-[#181D27]">
+                                {JSON.parse(JSON.stringify(row.warehouse))?.warehouse_name}
+                            </span>
+                        </div>
+                    ))}
+                </>
+            ),
         },
-},
-   
-   
-    
-
+    },
     {
         key: "status",
         label: "Status",
         render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {Number(row.status) === 1 ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
+            <StatusBtn isActive={row.status.toString() === "1" ? true : false} />
         ),
     },
 ];
@@ -89,122 +90,110 @@ const dropdownDataList = [
 ];
 
 export default function Route() {
-
-    interface RouteItem {
-    id?: number | string;
-    route_code?: string;
-    route_name?: string;
-    warehouse?: string;
-    route_type?: string;
-    status?: string;
-  }
-  const {routeTypeOptions,warehouseOptions}=useAllDropdownListData();
-    const[routes, setRoutes] = useState<RouteItem[]>([]);
-    const [selectedRow, setSelectedRow] = useState<RouteItem | null>(null);
-      const [showDeletePopup, setShowDeletePopup] = useState(false);
-        const [showDropdown, setShowDropdown] = useState(false);
-        const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { showSnackbar } = useSnackbar();
-  type TableRow = TableDataType & { id?: string };
-
-    const tableData: TableDataType[] = routes.map((c) => ({
-    id: c.id?.toString() ?? "",
-    route_code: c.route_code ?? "",
-    route_name: c.route_name ?? "",
-    warehouse: c.warehouse ?? "",
-    route_type: c.route_type ?? "",
-    status: c.status ?? "",
-  }));
+    const [selectedRowId, setSelectedRowId] = useState<number | undefined>(
+        undefined
+    );
+    const [showDeletePopup, setShowDeletePopup] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const { setLoading } = useLoading();
+    const router = useRouter();
+    const { showSnackbar } = useSnackbar();
 
     // Move fetchRoutes outside useEffect so it can be reused
-    const fetchRoutes = async () => {
+    const fetchRoutes = async (
+        pageNo: number = 1,
+        pageSize: number = 10
+    ): Promise<listReturnType> => {
         try {
-            setLoading(true);
-            const listRes = await routeList();
-            setRoutes(listRes?.data ?? []);
+            const listRes = await routeList({
+                page: pageNo.toString(),
+                per_page: pageSize.toString(),
+            });
+            return {
+                data: listRes.data || [],
+                currentPage: listRes.pagination.page || pageNo,
+                pageSize: listRes.pagination.limit || pageSize,
+                total: listRes?.pagination.totalPages ?? 0,
+            };
         } catch (error: unknown) {
             console.error("API Error:", error);
-            setRoutes([]);
+            throw error;
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchRoutes();
+        setLoading(true);
     }, []);
 
     const handleConfirmDelete = async () => {
-        if (!selectedRow) return;
+        if (!selectedRowId) return;
         try {
-            if (!selectedRow?.id) throw new Error('Missing id');
-            await deleteRoute(String(selectedRow.id)); // call API
+            await deleteRoute(String(selectedRowId)); // call API
             showSnackbar("Route deleted successfully ", "success");
             await fetchRoutes();
-             setRoutes((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
         } catch (error) {
             console.error("Delete failed ❌:", error);
             showSnackbar("Failed to delete Route ❌", "error");
         } finally {
             setShowDeletePopup(false);
-            setSelectedRow(null);
+            setSelectedRowId(undefined);
         }
     };
 
-    if (loading) return <Loading />;
-
     return (
         <>
-            {/* header */}
-            <div className="flex justify-between items-center mb-[20px]">
-                <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                    Route
-                </h1>
-
-                {/* top bar action buttons */}
-                <div className="flex gap-[12px] relative">
-                    <BorderIconButton
-                        icon="gala:file-document"
-                        label="Export CSV"
-                        labelTw="text-[12px] hidden sm:block"
-                    />
-                    <BorderIconButton icon="mage:upload" />
-                    <BorderIconButton
-                        icon="ic:sharp-more-vert"
-                        onClick={() => setShowDropdown(!showDropdown)}
-                    />
-
-                    {showDropdown && (
-                        <div className="w-[226px] absolute top-[40px] right-0 z-30">
-                            <CustomDropdown>
-                                {dropdownDataList.map((link, index: number) => (
-                                    <div
-                                        key={index}
-                                        className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                    >
-                                        <Icon
-                                            icon={link.icon}
-                                            width={link.iconWidth}
-                                            className="text-[#717680]"
-                                        />
-                                        <span className="text-[#181D27] font-[500] text-[16px]">
-                                            {link.label}
-                                        </span>
-                                    </div>
-                                ))}
-                            </CustomDropdown>
-                        </div>
-                    )}
-                </div>
-            </div>
-
             {/* Table */}
             <div className="h-[calc(100%-60px)]">
                 <Table
-                    data={tableData}
                     config={{
+                        api: {
+                            list: fetchRoutes,
+                        },
                         header: {
+                            title: "Routes",
+                            wholeTableActions: [
+                                    <div key={0} className="flex gap-[12px] relative">
+                                        <BorderIconButton
+                                            icon="ic:sharp-more-vert"
+                                            onClick={() =>
+                                                setShowDropdown(!showDropdown)
+                                            }
+                                        />
+
+                                        {showDropdown && (
+                                            <div className="w-[226px] absolute top-[40px] right-0 z-30">
+                                                <CustomDropdown>
+                                                    {dropdownDataList.map(
+                                                        (
+                                                            link,
+                                                            index: number
+                                                        ) => (
+                                                            <div
+                                                                key={index}
+                                                                className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                                            >
+                                                                <Icon
+                                                                    icon={
+                                                                        link.icon
+                                                                    }
+                                                                    width={
+                                                                        link.iconWidth
+                                                                    }
+                                                                    className="text-[#717680]"
+                                                                />
+                                                                <span className="text-[#181D27] font-[500] text-[16px]">
+                                                                    {link.label}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </CustomDropdown>
+                                            </div>
+                                        )}
+                                    </div>
+                                ],
                             searchBar: true,
                             columnFilter: true,
                             actions: [
@@ -215,7 +204,7 @@ export default function Route() {
                                     leadingIcon="lucide:plus"
                                     label="Add Route"
                                     labelTw="hidden sm:block"
-                                />
+                                />,
                             ],
                         },
                         footer: {
@@ -225,36 +214,35 @@ export default function Route() {
                         columns: columns,
                         rowSelection: true,
                         rowActions: [
-                            
                             {
-                icon: "lucide:edit-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  router.push(`/dashboard/master/route/routes/${row.id}`);
-                },
-              },
-                            {
-                            icon: "lucide:trash-2",
-                            onClick: (data: object) => {
-                            const row = data as TableRow;
-                            setSelectedRow({ id: row.id });
-                            setShowDeletePopup(true);
+                                icon: "lucide:edit-2",
+                                onClick: (data: TableDataType) => {
+                                    router.push(
+                                        `/dashboard/master/route/routes/${data.id}`
+                                    );
+                                },
                             },
-                        },
+                            {
+                                icon: "lucide:trash-2",
+                                onClick: (data: TableDataType) => {
+                                    setSelectedRowId(parseInt(data.id));
+                                    setShowDeletePopup(true);
+                                },
+                            },
                         ],
                         pageSize: 10,
                     }}
                 />
             </div>
             {showDeletePopup && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                      <DeleteConfirmPopup
+                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+                    <DeleteConfirmPopup
                         title="Route"
                         onClose={() => setShowDeletePopup(false)}
                         onConfirm={handleConfirmDelete}
-                      />
-                    </div>
-                  )}
+                    />
+                </div>
+            )}
         </>
     );
 }

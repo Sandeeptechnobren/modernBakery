@@ -39,6 +39,7 @@ export default function Category() {
     const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
     const [showCreatePopup, setShowCreatePopup] = useState<boolean>(false);
     const [showUpdatePopup, setShowUpdatePopup] = useState<boolean>(false);
+    const [refreshKey, setRefreshKey] = useState(0);
     const [deleteItemCategoryId, setDeleteItemCategoryId] = useState<
         number | undefined
     >();
@@ -55,7 +56,7 @@ export default function Category() {
                 listRes.message || "Category deleted successfully",
                 "success"
             );
-            fetchItemCategory();
+            setRefreshKey(refreshKey + 1);
         }
         setShowDeletePopup(false);
     }
@@ -129,7 +130,7 @@ export default function Category() {
             <div className="h-[calc(100%-60px)]">
                 {categoryData && (
                     <Table
-                        // data={categoryData}
+                        refreshKey={refreshKey}
                         config={{
                             api: {
                                 list: fetchItemCategory,

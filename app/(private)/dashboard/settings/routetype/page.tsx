@@ -13,6 +13,7 @@ import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import StatusBtn from "@/app/components/statusBtn2";
 
 interface DropdownItem {
   icon: string;
@@ -34,18 +35,8 @@ const columns = [
   {
         key: "status",
         label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {Number(row.status) === 1 ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
+        render: (data: TableDataType) => (
+            <StatusBtn isActive={data.status ? true : false} />
         ),
     },
 ];
@@ -81,16 +72,10 @@ const tableData: TableDataType[] = routeType.map((s) => ({
 
   // ✅ Reusable fetch function
   const fetchRouteTypes = async () => {
-    setLoading(true);
-    try {
-      const listRes = await routeTypeList({});
-      setRouteType(listRes.data || []);
-    } catch (error) {
-      console.error("API Error:", error);
-      showSnackbar("Failed to fetch Route Type ❌", "error");
-    } finally {
-      setLoading(false);
-    }
+    const listRes = await routeTypeList({});
+    if(listRes.error) showSnackbar(listRes.data.message || "Failed to fetch Route Type", "error");
+    else setRouteType(listRes.data);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -101,20 +86,15 @@ const tableData: TableDataType[] = routeType.map((s) => ({
   const handleConfirmDelete = async () => {
     if (!selectedRow?.id) return;
 
-    try {
-      await deleteRouteTypeById(String(selectedRow.id));
-      showSnackbar("Route Type deleted successfully ✅", "success");
-
-      // 🔄 Refresh list from server instead of just local filter
-      await fetchRouteTypes();
-    } catch (error) {
-      console.error("Delete failed ❌:", error);
-      showSnackbar("Failed to delete Route Type ❌", "error");
-    } finally {
+      const res = await deleteRouteTypeById(String(selectedRow.id));
+      if(res.error) showSnackbar(res.data.message || "Failed to delete Route Type ❌", "error");
+      else {
+        showSnackbar("Route Type deleted successfully ✅", "success");
+        fetchRouteTypes();
+      }
       setShowDeletePopup(false);
       setSelectedRow(null);
       setDeletingId(null);
-    }
   };
 
   if (loading) return <Loading />;

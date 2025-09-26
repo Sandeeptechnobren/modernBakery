@@ -1,12 +1,13 @@
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Image from "next/image";
-import { useState } from "react";
-import { miscLinks, SidebarDataType } from "../data/dashboardLinks";
+import { useEffect, useState } from "react";
+import { LinkDataType, miscLinks, SidebarDataType } from "../data/dashboardLinks";
 import Link from "next/link";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import { useRouter } from "next/navigation";
 import { logout } from "@/app/services/allApi";
+import SidebarBtn1 from "@/app/components/iconButton1";
 
 export default function Sidebar({
     data,
@@ -17,9 +18,15 @@ export default function Sidebar({
 }>) {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
-    const [currentPageForSecondSidebar, setCurrentPageForSecondSidebar] =
-        useState("");
+    const [currentPageForSecondSidebar, setCurrentPageForSecondSidebar] = useState("");
     const router = useRouter();
+    const [secondSidebarChildren, setSecondSidebarChildren] = useState([] as LinkDataType[]);
+    const [activeHref, setActiveHref] = useState<string>("");
+    console.log("activeHref", activeHref);
+    useEffect(() => {
+        setActiveHref(window.location.pathname);
+    }, []);
+
 
     return (
         <div className="flex">
@@ -64,6 +71,9 @@ export default function Sidebar({
                                             setCurrentPageForSecondSidebar(
                                                 link.href
                                             );
+                                            setSecondSidebarChildren(
+                                                link.children
+                                            )
                                         } else {
                                             setIsOpen(false);
                                             setCurrentPageForSecondSidebar("");
@@ -222,39 +232,23 @@ export default function Sidebar({
                 <div>
                     
                 </div>
-                {/* <SidebarBtn1
-                        isActive={true}
-                        label="Home"
-                        labelTw="text-[#C2CBDE]"
-                        className=""
-                        leadingIcon="hugeicons:home-04"
-                        leadingIconSize={20}
-                    >
-                        <SidebarBtn1
-                            isActive={false}
-                            btnTw="h-[25px] px-3 py-2"
-                            label="Sales"
-                            labelTw="text-white"
-                            className="py-[2px]"
-                            leadingIcon="mdi-light:chevron-down"
-                            leadingIconTw="rounded-[5px] bg-[#324368] p-[1px] text-[#C2CBDE] hover:text-white"
-                            leadingIconSize={15}
-                            trailingIcon={"mdi-light:plus"}
-                            trailingIconSize={20}
-                            trailingIconTw="text-[#C2CBDE] hover:text-white"
-                        >
+                <div className="w-full h-full flex flex-col p-[8px] gap-[10px]">
+                    { secondSidebarChildren && isOpen && secondSidebarChildren.map((link, index) =>{
+                        return <div key={index}>
                             <SidebarBtn1
-                                isActive={false}
-                                btnTw="h-[25px] px-3 py-2 pl-[30px]"
-                                label="Home"
-                                labelTw="text-[#C2CBDE]"
-                                className="pl-[40px]"
-                                leadingIcon="hugeicons:home-04"
+                                isActive={activeHref === link.href}
+                                href={link.href}
+                                label={link.label}
+                                labelTw={`text-[#C2CBDE]`}
+                                className=""
+                                onClick={() => { setIsOpen(false); setActiveHref(link.href) }}
+                                leadingIcon={link.leadingIcon}
                                 leadingIconSize={20}
-                            /> 
-                        </SidebarBtn1>
-                    </SidebarBtn1> */}
-                <div className="w-full h-full flex flex-col items-center p-[8px] gap-[10px]"></div>
+                            />
+                        </div>
+                    })
+                    }
+                </div>
             </div>
         </div>
     );

@@ -4,7 +4,7 @@ import SearchBar from "./searchBar";
 import { Icon } from "@iconify-icon/react";
 import CustomDropdown from "./customDropdown";
 import BorderIconButton from "./borderIconButton";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import FilterDropdown from "./filterDropdown";
 import CustomCheckbox from "./customCheckbox";
 import DismissibleDropdown from "./dismissibleDropdown";
@@ -16,15 +16,19 @@ export type listReturnType = {
     pageSize: number;
     total: number;
 };
+export type searchReturnType = {
+    data: TableDataType[];
+    currentPage: number;
+    pageSize: number;
+    total: number;
+};
 
 type configType = {
     api?: {
-        search?: () => {
-            data: TableDataType[];
-            currentPage: number;
-            pageSize: number;
-            total: number;
-        };
+        search?: (
+            search: string,
+            pageSize: number
+        ) => Promise<searchReturnType> | searchReturnType;
         filter?: () => TableDataType[];
         list: (
             pageNo: number,
@@ -112,16 +116,17 @@ const TableDetails = createContext<tableDetailsContextType>(
 );
 
 interface TableProps {
+    refreshKey?: number;
     data?: TableDataType[];
     config: configType;
 }
 
 const defaultPageSize = 10;
 
-export default function Table({ data, config }: TableProps) {
+export default function Table({ refreshKey = 0, data, config }: TableProps) {
     return (
         <ContextProvider>
-            <TableContainer data={data} config={config} />
+            <TableContainer refreshKey={refreshKey} data={data} config={config} />
         </ContextProvider>
     );
 }
@@ -149,7 +154,7 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-function TableContainer({ data, config }: TableProps) {
+function TableContainer({ refreshKey, data, config }: TableProps) {
     const { setSelectedColumns } = useContext(ColumnFilterConfig);
     const { setConfig } = useContext(Config);
     const { setTableDetails } = useContext(TableDetails);
@@ -171,7 +176,7 @@ function TableContainer({ data, config }: TableProps) {
         // if api is passed, use default values
         else if (config.api?.list) {
             const result = await config.api.list(
-                0,
+                1,
                 config.pageSize || defaultPageSize
             );
             const resolvedResult =
@@ -197,7 +202,7 @@ function TableContainer({ data, config }: TableProps) {
         checkForData();
         setSelectedColumns(config.columns.map((_, index) => index)); // select all in the filter dropdown
         setConfig(config);
-    }, [data]);
+    }, [data, refreshKey]);
 
     return (
         <>
@@ -221,7 +226,24 @@ function TableContainer({ data, config }: TableProps) {
 
 function TableHeader() {
     const { config } = useContext(Config);
+    const { setTableDetails } = useContext(TableDetails);
     const [searchBarValue, setSearchBarValue] = useState("");
+
+    async function handleSearch(){
+        if(!config.api?.search) return;
+        const result = await config.api.search(
+            searchBarValue,
+            config.pageSize || defaultPageSize
+        );
+        const resolvedResult = result instanceof Promise ? await result : result;
+        const { data, pageSize } = resolvedResult;
+        setTableDetails({
+            data,
+            total: 0,
+            currentPage: 0,
+            pageSize: pageSize || defaultPageSize,
+        });
+    }
 
     return (
         <>
@@ -235,6 +257,7 @@ function TableHeader() {
                                     onChange={(
                                         e: React.ChangeEvent<HTMLInputElement>
                                     ) => setSearchBarValue(e.target.value)}
+                                    onEnterPress={handleSearch}
                                 />
                             )}
                         </div>

@@ -118,9 +118,19 @@ export const deleteCompany = async (id:string) => {
 }
 
 
-export const countryList = async (data: Record<string, string>) => {
+export const countryList = async (params: Params) => {
   try {
-     const res = await API.get("/api/master/country/list_country", data);
+     const res = await API.get("/api/master/country/list_country", {params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
+};
+
+export const countryListGlobalSearch = async (params: Params) => {
+  try {
+     const res = await API.get("/api/master/country/global_search", {params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -301,9 +311,9 @@ export const deleteRegion = async (id:string) => {
 };
 
 
-export const routeList = async () => {
+export const routeList = async (params: Params) => {
   try {
-    const res = await API.get("/api/master/route/list_routes");
+    const res = await API.get("/api/master/route/list_routes", { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
