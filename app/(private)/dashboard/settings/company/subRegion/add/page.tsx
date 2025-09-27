@@ -55,8 +55,8 @@ export default function AddSubRegion() {
     { setSubmitting }: FormikHelpers<SubRegionFormValues>
   ) => {
     try {
-      const area_code = values.areacode.trim();
-      const area_name = values.companyName.trim();
+      const area_code = values.areacode;
+      const area_name = values.companyName;
       const region_id = Number(values.region);
       const status = Number(values.status);
 
@@ -67,7 +67,7 @@ export default function AddSubRegion() {
       }
 
       const payload = {
-        // area_code,
+        area_code,
         area_name,
         region_id,
         status,
@@ -146,7 +146,7 @@ export default function AddSubRegion() {
                   <SettingPopUp
                     isOpen={isOpen}
                     onClose={() => setIsOpen(false)}
-                    title="Country Code"
+                    title="SubRegion Code"
                   />
                 </div>
 
