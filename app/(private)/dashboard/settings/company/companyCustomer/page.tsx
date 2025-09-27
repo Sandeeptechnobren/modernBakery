@@ -16,20 +16,18 @@ import {
   deleteCompanyCustomer,
 } from "@/app/services/allApi";
 
+/* ---------- Types ---------- */
 interface CustomerItem {
   id: number;
   sap_code: string;
   customer_code: string;
   business_name: string;
-  customer_type: string;
   owner_name: string;
   owner_no: string;
- 
   whatsapp_no: string;
   email: string;
   language: string;
   contact_no2: string;
-
   road_street: string;
   town: string;
   landmark: string;
@@ -60,6 +58,7 @@ interface CustomerItem {
   updated_at: string;
 }
 
+/* ---------- Dropdown Menu ---------- */
 const dropdownDataList = [
   { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
   { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
@@ -68,6 +67,7 @@ const dropdownDataList = [
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
+/* ========================================================= */
 export default function CompanyCustomers() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [customers, setCustomers] = useState<CustomerItem[]>([]);
@@ -78,88 +78,95 @@ export default function CompanyCustomers() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  // Fetch customers
-useEffect(() => {
-  const fetchCompanyCustomers = async () => {
-    try {
-      const data = await getCompanyCustomers();
-      const customersData = Array.isArray(data) ? data : [data]; // Wrap single object
-      setCustomers(customersData);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchCompanyCustomers();
-}, []); // 🔴 Use empty dependency array, NOT showSnackbar
+  /* ---------- Fetch Customers ---------- */
+  useEffect(() => {
+    const fetchCompanyCustomers = async () => {
+      try {
+        const data = await getCompanyCustomers();
+        // API might return a single object or array
+        const customersData = Array.isArray(data) ? data : [data];
+        setCustomers(customersData);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCompanyCustomers();
+  }, []);
 
-  // Map all fields into TableDataType (convert numbers to strings)
+  /* ---------- Map to TableData ---------- */
   const tableData: TableDataType[] = customers.map((c) => ({
-    id: c.id.toString(),
     sap_code: c.sap_code,
     customer_code: c.customer_code,
     business_name: c.business_name,
-  
     owner_name: c.owner_name,
     owner_no: c.owner_no,
-   
     whatsapp_no: c.whatsapp_no,
     email: c.email,
     language: c.language,
-    contact_no2: c.contact_no2,
-    road_street: c.road_street,
-    town: c.town,
-    landmark: c.landmark,
     district: c.district,
     balance: c.balance.toString(),
     payment_type: c.payment_type,
-    bank_name: c.bank_name,
-    bank_account_number: c.bank_account_number,
-    creditday: c.creditday,
-    tin_no: c.tin_no,
-    accuracy: c.accuracy,
     creditlimit: c.creditlimit.toString(),
-    guarantee_name: c.guarantee_name,
-    guarantee_amount: c.guarantee_amount.toString(),
-    guarantee_from: c.guarantee_from,
-    guarantee_to: c.guarantee_to,
     totalcreditlimit: c.totalcreditlimit.toString(),
-    credit_limit_validity: c.credit_limit_validity,
-    vat_no: c.vat_no,
-    longitude: c.longitude,
-    latitude: c.latitude,
-    threshold_radius: c.threshold_radius.toString(),
-    dchannel_id: c.dchannel_id.toString(),
     status: c.status === 1 ? "Active" : "Inactive",
-    created_user: c.created_user.toString(),
-    updated_user: c.updated_user.toString(),
-    created_at: c.created_at,
-    updated_at: c.updated_at,
   }));
-  // Delete handler
-const handleConfirmDelete = async () => {
-  if (!selectedRow) return;
 
-  // Optimistically remove row first
-  setCustomers((prev) => prev.filter((c) => c.id !== selectedRow.id));
-  setShowDeletePopup(false);
+  /* ---------- Delete Handler ---------- */
+  const handleConfirmDelete = async () => {
+    if (!selectedRow) return;
 
-  try {
-    await deleteCompanyCustomer(selectedRow.id.toString());
-    showSnackbar("Customer deleted successfully ✅", "success");
-  } catch (error) {
-    // If API fails, re-add the row
-    setCustomers((prev) => [...prev, selectedRow]);
-    showSnackbar("Failed to delete Customer ❌", "error");
-  } finally {
-    setSelectedRow(null);
-  }
-};
+    // Optimistic removal
+    setCustomers((prev) => prev.filter((c) => c.id !== selectedRow.id));
+    setShowDeletePopup(false);
 
+    try {
+      await deleteCompanyCustomer(selectedRow.id.toString());
+      showSnackbar("Company Customer deleted successfully ✅", "success");
+    } catch (error) {
+      setCustomers((prev) => [...prev, selectedRow]);
+      showSnackbar("Failed to delete Customer ❌", "error");
+    } finally {
+      setSelectedRow(null);
+    }
+  };
 
   if (loading) return <Loading />;
 
+  /* ---------- Column Configuration ---------- */
+  const columns = [
+    { key: "sapcode", label: "SAP Code" },
+    { key: "customer_code", label: "Customer Code" },
+    { key: "business_name", label: "Business Name" },
+    { key: "owner_name", label: "Owner Name" },
+    { key: "owner_no", label: "Owner Number" },
+    { key: "whatsapp_no", label: "WhatsApp No" },
+    { key: "email", label: "Email" },
+    { key: "language", label: "Language" },
+    { key: "district", label: "District" },
+    { key: "balance", label: "Balance" },
+    { key: "payment_type", label: "Payment Type" },
+    { key: "creditlimit", label: "Credit Limit" },
+    { key: "totalcreditlimit", label: "Total Credit Limit" },
+    {
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => (
+        <span
+          className={`text-sm p-1 px-4 rounded-xl text-[12px] font-[500] ${
+            row.status === "Active"
+              ? "text-[#027A48] bg-[#ECFDF3]"
+              : "text-red-700 bg-red-200"
+          }`}
+        >
+          {row.status}
+        </span>
+      ),
+    },
+  ];
+
+  /* ---------- Render ---------- */
   return (
     <>
       {/* Header */}
@@ -221,24 +228,7 @@ const handleConfirmDelete = async () => {
               ],
             },
             footer: { nextPrevBtn: true, pagination: true },
-            columns: Object.keys(tableData[0]).map((key) => ({
-              key,
-              label: key.charAt(0).toUpperCase() + key.slice(1),
-              render:
-                key === "status"
-                  ? (row: TableDataType) => (
-                      <span
-                        className={`text-sm p-1 px-4 rounded-xl text-[12px] font-[500] ${
-                          row.status === "Active"
-                            ? "text-[#027A48] bg-[#ECFDF3]"
-                            : "text-red-700 bg-red-200"
-                        }`}
-                      >
-                        {row.status}
-                      </span>
-                    )
-                  : undefined,
-            })),
+            columns,
             rowSelection: true,
             rowActions: [
               {
@@ -251,7 +241,9 @@ const handleConfirmDelete = async () => {
               {
                 icon: "lucide:trash-2",
                 onClick: (row: TableDataType) => {
-                  const fullRow = customers.find((c) => c.id.toString() === row.id);
+                  const fullRow = customers.find(
+                    (c) => c.id.toString() === row.id
+                  );
                   if (fullRow) {
                     setSelectedRow(fullRow);
                     setShowDeletePopup(true);

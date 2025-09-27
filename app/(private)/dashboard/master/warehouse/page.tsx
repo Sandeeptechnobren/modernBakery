@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { TableDataType, searchReturnType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getWarehouse ,deleteWarehouse} from "@/app/services/allApi";
+import { getWarehouse, deleteWarehouse, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -29,31 +29,31 @@ const columns = [
   { key: "ownerName", label: "Owner Name" },
   // { key: "depotName", label: "Depot Name" },
   { key: "depotLocation", label: "Warehouse Location" },
-  { key: "company_customer_id", label: "Customer"},
-  { key: "warehouse_manager", label: "Warehouse Manager"},
-  { key: "warehouse_manager_contact", label: "Warehouse Manager Contact"},
-  { key: "region_id", label: "Region"},
-  { key: "sub_region_id", label: "Sub Region"},
+  { key: "company_customer_id", label: "Customer" },
+  { key: "warehouse_manager", label: "Warehouse Manager" },
+  { key: "warehouse_manager_contact", label: "Warehouse Manager Contact" },
+  { key: "region_id", label: "Region" },
+  { key: "sub_region_id", label: "Sub Region" },
   { key: "phoneNumber", label: "Phone Number" },
   { key: "address", label: "Address" },
   { key: "district", label: "District" },
-   {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {row.status ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
-        ),
-    },
+  {
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) => (
+      <div className="flex items-center">
+        {row.status ? (
+          <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+            Active
+          </span>
+        ) : (
+          <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+            Inactive
+          </span>
+        )}
+      </div>
+    ),
+  },
 ];
 
 export default function Warehouse() {
@@ -62,100 +62,156 @@ export default function Warehouse() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   type TableRow = TableDataType & { id?: string };
-    // typed row for warehouse table
-    type WarehouseRow = TableDataType & {
-      id?:string;
-      code?: string;
-      warehouseName?: string;
-      tin_no?: string;
-      ownerName?: string;
-      // depotName?: string;
-      warehouse_manager?: string;
-      warehouse_manager_contact?: string;
-      // depotLocation?: string;
-      // depotLocation?: string;
-      phoneNumber?: string;
-      address?: string;
-      district?: string;
-      status?: string | boolean | number;
-    };
+  // typed row for warehouse table
+  type WarehouseRow = TableDataType & {
+    id?: string;
+    code?: string;
+    warehouseName?: string;
+    tin_no?: string;
+    ownerName?: string;
+    // depotName?: string;
+    warehouse_manager?: string;
+    warehouse_manager_contact?: string;
+    // depotLocation?: string;
+    // depotLocation?: string;
+    phoneNumber?: string;
+    address?: string;
+    district?: string;
+    status?: string | boolean | number;
+  };
 
-    const [selectedRow, setSelectedRow] = useState<WarehouseRow | null>(null);
-    const router = useRouter();
-    const { showSnackbar } = useSnackbar();
- 
-    const fetchWarehouses = async () => {
-      try {
-        const res = await getWarehouse();
-        interface ApiWarehouse {
+  const [selectedRow, setSelectedRow] = useState<WarehouseRow | null>(null);
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
+
+  const fetchWarehouses = async () => {
+    try {
+      const res = await getWarehouse();
+      interface ApiWarehouse {
+        id?: number | string;
+        registation_no?: string;
+        warehouse_code?: string;
+        tin_no?: string;
+        warehouse_manager?: string;
+        warehouse_manager_contact?: string;
+        area: {
           id?: number | string;
-          registation_no?: string;
-          warehouse_code?: string;
-          tin_no?: string;
-          warehouse_manager?: string;
-      warehouse_manager_contact?: string;
-      sub_region_id?: string;
-      region_id?: string;
-          warehouse_name?: string;
-          company_customer_id?: string;
-          owner_name?: string;
-          branch_id?: string | number;
-          location?: string;
-          owner_number?: string;
-          address?: string;
-          city?: string;
-          status?: number;
+          area_name?: string;
         }
-
-        const mapped = (res.data || []).map((item: ApiWarehouse) => ({
-          id: item.id,
-          registation_no: item.registation_no ?? "",
-          code: item.warehouse_code ?? "",
-          warehouseName: item.warehouse_name ?? "",
-          tin_no: item.tin_no ?? "",
-          ownerName: item.owner_name ?? "",
-          // depotName: item.branch_id?.toString() ?? "",
-          depotLocation: item.location ?? "",
-          company_customer_id: item.company_customer_id ?? "",
-          region_id: item.region_id ?? "",
-          sub_region_id: item.sub_region_id ?? "",
-          warehouse_manager: item.warehouse_manager ?? "",
-          warehouse_manager_contact: item.warehouse_manager_contact ?? "",
-          phoneNumber: item.owner_number ?? "",
-          address: item.address ?? "",
-          district: item.city ?? "",
-          status: item.status === 1 ? "Active" : "Inactive",
-        } as WarehouseRow));
-        setWarehouses(mapped);
-      } catch (e) {
-        // ignore error details here but ensure warehouses cleared
-        setWarehouses([]);
-      } finally {
-        setLoading(false);
+        region: {
+          id?: number | string;
+          region_name?: string;
+        }
+        warehouse_name?: string;
+        company_customer_id?: string;
+        owner_name?: string;
+        branch_id?: string | number;
+        location?: string;
+        owner_number?: string;
+        address?: string;
+        city?: string;
+        status?: number;
       }
-    };
-    useEffect(() => {
-      fetchWarehouses();
-    }, []);
 
-    const handleConfirmDelete = async () => {
-      if (!selectedRow) return;
-  
+      const mapped = (res.data || []).map((item: ApiWarehouse) => ({
+        id: item.id,
+        registation_no: item.registation_no ?? "",
+        code: item.warehouse_code ?? "",
+        warehouseName: item.warehouse_name ?? "",
+        tin_no: item.tin_no ?? "",
+        ownerName: item.owner_name ?? "",
+        // depotName: item.branch_id?.toString() ?? "",
+        depotLocation: item.location ?? "",
+        company_customer_id: item.company_customer_id ?? "",
+        region_id: item.region.region_name ?? "",
+        sub_region_id: item.area.area_name ?? "",
+        warehouse_manager: item.warehouse_manager ?? "",
+        warehouse_manager_contact: item.warehouse_manager_contact ?? "",
+        phoneNumber: item.owner_number ?? "",
+        address: item.address ?? "",
+        district: item.city ?? "",
+        status: item.status === 1 ? "Active" : "Inactive",
+      } as WarehouseRow));
+      setWarehouses(mapped);
+    } catch (e) {
+      // ignore error details here but ensure warehouses cleared
+      setWarehouses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchWarehouses();
+  }, []);
+
+  const handleConfirmDelete = async () => {
+    if (!selectedRow) return;
+
+    try {
+      if (!selectedRow?.id) throw new Error('Missing id');
+      await deleteWarehouse(String(selectedRow.id)); // call API
+
+      showSnackbar("Warehouse deleted successfully ", "success");
+      await fetchWarehouses();
+      setWarehouses((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
+    } catch (error) {
+      console.error("Delete failed :", error);
+      showSnackbar("Failed to delete Warehouse", "error");
+    } finally {
+      setShowDeletePopup(false);
+      setSelectedRow(null);
+    }
+  };
+
+  const fetchWarehouse = useCallback(
+    async (
+      page: number = 1,
+      pageSize: number = 10
+    ): Promise<listReturnType> => {
       try {
-        if (!selectedRow?.id) throw new Error('Missing id');
-        await deleteWarehouse(String(selectedRow.id)); // call API
-        
-        showSnackbar("Warehouse deleted successfully ", "success"); 
-        await fetchWarehouses();
-         setWarehouses((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
-      } catch (error) {
-        console.error("Delete failed :", error);
-        showSnackbar("Failed to delete Warehouse", "error"); 
-      } finally {
-        setShowDeletePopup(false);
-        setSelectedRow(null);
+        const listRes = await warehouseList({
+          current_page: page.toString(),
+          per_page: pageSize.toString(),
+        });
+        setLoading(false);
+        return {
+          data: listRes.data || [],
+          total: listRes.pagination.pagination.last_page,
+          currentPage: listRes.pagination.pagination.current_page,
+          pageSize: listRes.pagination.pagination.per_page,
+        };
+      } catch (error: unknown) {
+        console.error("API Error:", error);
+        setLoading(false);
+        throw error;
       }
-    };
+    },
+    []
+  );
+
+  const searchCountries = useCallback(
+    async (
+      searchQuery: string,
+      pageSize: number
+    ): Promise<searchReturnType> => {
+      setLoading(true);
+      const result = await warehouseListGlobalSearch({
+        query: searchQuery,
+        per_page: pageSize.toString(),
+      });
+      setLoading(false);
+      if (result.error) throw new Error(result.data.message);
+      else {
+        return {
+          data: result.data || [],
+          total: result.pagination.pagination.totalPages || 0,
+          currentPage: result.pagination.pagination.current_page || 0,
+          pageSize: result.pagination.pagination.limit || pageSize,
+        };
+      }
+    },
+    []
+  );
 
   return loading ? <Loading /> : (
     <>
@@ -196,8 +252,12 @@ export default function Warehouse() {
       </div>
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={warehouses}
+          // data={warehouses}
           config={{
+            api: {
+              search: searchCountries,
+              list: fetchWarehouse,
+            },
             header: {
               searchBar: true,
               columnFilter: true,
@@ -216,7 +276,7 @@ export default function Warehouse() {
             columns,
             rowSelection: true,
             rowActions: [
-              
+
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
@@ -225,7 +285,7 @@ export default function Warehouse() {
                 },
               },
               // { icon: "lucide:edit-2", onClick: console.log },
-               {
+              {
                 icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
@@ -236,19 +296,19 @@ export default function Warehouse() {
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 2,
           }}
         />
       </div>
       {showDeletePopup && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                <DeleteConfirmPopup
-                  title="Warehouse"
-                  onClose={() => setShowDeletePopup(false)}
-                  onConfirm={handleConfirmDelete}
-                />
-              </div>
-            )}
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <DeleteConfirmPopup
+            title="Warehouse"
+            onClose={() => setShowDeletePopup(false)}
+            onConfirm={handleConfirmDelete}
+          />
+        </div>
+      )}
     </>
   );
 }

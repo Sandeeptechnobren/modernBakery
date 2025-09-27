@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { userList,userTypes, deleteUserType } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
@@ -110,6 +110,7 @@ useEffect(() => {
     setSelectedRow(null);
   }
 };
+
 
   return loading ? (
     <Loading />

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -42,12 +43,12 @@ const columns = [
 ];
 
 export default function RouteType() {
-  interface RouteTypeItem {
-    id?: number | string;
-    route_type_code?: string;
-    route_type_name?: string;
-    status?: number; // 1 = Active, 0 = Inactive
-  }
+ interface RouteTypeItem {
+  id?: number | string;
+  route_type_code?: string;
+  route_type_name?: string;
+  status?: number | "Active" | "Inactive";
+}
 
   const [routeType, setRouteType] = useState<RouteTypeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -63,12 +64,12 @@ export default function RouteType() {
   type TableRow = TableDataType & { id?: string };
 
   // ✅ Table data mapping
-  const tableData: TableDataType[] = routeType.map((c) => ({
-    id: c.id?.toString() ?? "",
-    route_type_code: c.route_type_code ?? "",
-    route_type_name: c.route_type_name ?? "",
-    status: c.status === 1 ? "Active" : "Inactive",
-  }));
+const tableData: TableDataType[] = routeType.map((s) => ({
+  id: s.id?.toString() ?? "",
+  route_type_code: s.route_type_code ?? "",
+  route_type_name: s.route_type_name ?? "",
+  status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive",
+}));
 
   // ✅ Reusable fetch function
   const fetchRouteTypes = async () => {
@@ -142,48 +143,64 @@ export default function RouteType() {
 
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
-        <Table
-          data={tableData}
-          config={{
-            header: {
-              searchBar: true,
-              columnFilter: true,
-              actions: [
-                <SidebarBtn
-                  key={0}
-                  href="/dashboard/settings/routetype/add"
-                  isActive
-                  leadingIcon="lucide:plus"
-                  label="Add Route Type"
-                  labelTw="hidden xl:block"
-                />,
-              ],
-            },
-            footer: { nextPrevBtn: true, pagination: true },
-            columns,
-            rowSelection: true,
-            rowActions: [
-              
-              {
-                icon: "lucide:edit-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  router.push(`/dashboard/settings/routetype/update/${row.id}`);
-                },
-              },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  if (deletingId === String(row.id)) return;
-                  setSelectedRow({ id: String(row.id) });
-                  setShowDeletePopup(true);
-                },
-              },
-            ],
-            pageSize: 10,
-          }}
-        />
+    <Table
+  data={tableData}
+  config={{
+    header: {
+      searchBar: true,
+      columnFilter: true,
+      actions: [
+        <SidebarBtn
+          key="add-route-type"
+          href="/dashboard/settings/routetype/add"
+          leadingIcon="lucide:plus"
+          label="Add Route Type"
+          labelTw="hidden sm:block"
+          isActive
+        />,
+      ],
+    },
+    footer: { nextPrevBtn: true, pagination: true },
+    columns: [
+      { key: "route_type_code", label: "Route Type Code" },
+      { key: "route_type_name", label: "Route Type Name" },
+      {
+        key: "status",
+        label: "Status",
+        render: (row: RouteTypeItem) => (
+          <span
+            className={
+              row.status === "Active"
+                ? "text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]"
+                : "text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]"
+            }
+          >
+            {row.status}
+          </span>
+        ),
+      },
+    ],
+    rowSelection: true,
+    rowActions: [
+      {
+        icon: "lucide:edit-2",
+        onClick: (data: object) => {
+          const row = data as RouteTypeItem;
+          router.push(`/dashboard/settings/route-type/update/${row.id}`);
+        },
+      },
+      {
+        icon: "lucide:trash-2",
+        onClick: (data: object) => {
+          const row = data as RouteTypeItem;
+          setSelectedRow({ id: row.id });
+          setShowDeletePopup(true);
+        },
+      },
+    ],
+    pageSize: 10,
+  }}
+/>
       </div>
 
       {/* Delete popup */}

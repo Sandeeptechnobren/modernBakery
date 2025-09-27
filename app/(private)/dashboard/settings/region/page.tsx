@@ -17,9 +17,13 @@ interface RegionItem {
   id?: number | string;
   region_code?: string;
   region_name?: string;
-  status?: number | "Active" | "Inactive"; // API may return number
+  status?: number | "Active" | "Inactive";
+  country?: {
+    id?: number;
+    country_name?: string;
+    country_code?: string;   // ✅ Add country_code
+  };
 }
-
 const dropdownDataList = [
   { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
   { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
@@ -41,12 +45,14 @@ export default function Region() {
   type TableRow = TableDataType & { id?: string };
 
   // Normalize API data for table
-  const tableData: TableDataType[] = regions.map((s) => ({
-    id: s.id?.toString() ?? "",
-    region_code: s.region_code ?? "",
-    region_name: s.region_name ?? "",
-    status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive", // ✅ Correct mapping
-  }));
+const tableData: TableDataType[] = regions.map((s) => ({
+  id: s.id?.toString() ?? "",
+  region_code: s.region_code ?? "",
+  region_name: s.region_name ?? "",
+  country_code: s.country?.country_code ?? "",   
+  country_name: s.country?.country_name ?? "", 
+  status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive",
+}));
 
   async function fetchRegions() {
       const listRes = await regionList();
@@ -118,66 +124,68 @@ export default function Region() {
 
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
-        <Table
-          data={tableData}
-          config={{
-            header: {
-                         searchBar: true,
-                         columnFilter: true,
-                         actions: [
-                           <SidebarBtn
-                             key="add-region"
-                             href="/dashboard/settings/region/add"
-                             leadingIcon="lucide:plus"
-                             label="Add Region"
-                             labelTw="hidden sm:block"
-                             isActive
-                           />,
-                         ],
-                       },
-            footer: { nextPrevBtn: true, pagination: true },
-            columns: [
-              { key: "region_code", label: "Region Code" },
-              { key: "region_name", label: "Region Name" },
-              {
-                key: "status",
-                label: "Status",
-                render: (row: RegionItem) => (
-                  <div className="flex items-center">
-                    {row.status === "Active" ? (
-                      <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-                ),
-              },
-            ],
-            rowSelection: true,
-            rowActions: [
-              {
-                icon: "lucide:edit-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  router.push(`/dashboard/settings/region/update/${row.id}`);
-                },
-              },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  setSelectedRow({ id: row.id });
-                  setShowDeletePopup(true);
-                },
-              },
-            ],
-            pageSize: 10,
-          }}
-        />
+<Table
+  data={tableData}
+  config={{
+    header: {
+      searchBar: true,
+      columnFilter: true,
+      actions: [
+        <SidebarBtn
+          key="add-region"
+          href="/dashboard/settings/region/add"
+          leadingIcon="lucide:plus"
+          label="Add Region"
+          labelTw="hidden sm:block"
+          isActive
+        />,
+      ],
+    },
+    footer: { nextPrevBtn: true, pagination: true },
+    columns: [
+      { key: "region_code", label: "Region Code" },
+      { key: "region_name", label: "Region Name" },
+      { key: "country_code", label: "Country Code" }, 
+      { key: "country_name", label: "Country Name" },
+      {
+        key: "status",
+        label: "Status",
+        render: (row: RegionItem) => (
+          <div className="flex items-center">
+            {row.status === "Active" ? (
+              <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+                Active
+              </span>
+            ) : (
+              <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+                Inactive
+              </span>
+            )}
+          </div>
+        ),
+      },
+    ],
+    rowSelection: true,
+    rowActions: [
+      {
+        icon: "lucide:edit-2",
+        onClick: (data: object) => {
+          const row = data as TableRow;
+          router.push(`/dashboard/settings/region/update/${row.id}`);
+        },
+      },
+      {
+        icon: "lucide:trash-2",
+        onClick: (data: object) => {
+          const row = data as TableRow;
+          setSelectedRow({ id: row.id });
+          setShowDeletePopup(true);
+        },
+      },
+    ],
+    pageSize: 10,
+  }}
+/>
       </div>
 
       {/* Delete Popup */}

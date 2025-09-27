@@ -44,7 +44,7 @@ export default function FormInputField({
   onBlur,
 }: Props) {
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex flex-col gap-2 w-[406px]">
       <label className="text-sm font-medium text-gray-700">{label}</label>
 
       {type === "amount" ? (
@@ -56,7 +56,7 @@ export default function FormInputField({
             onChange={onAmountChange}
             onBlur={onBlur}
             placeholder="0.00"
-            className="border border-gray-300 rounded-l-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px]"
+            className="border border-gray-300 rounded-l-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px] "
           />
           <select
             value={currency}

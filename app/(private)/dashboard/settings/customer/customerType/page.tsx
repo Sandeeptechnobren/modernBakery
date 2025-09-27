@@ -212,7 +212,7 @@ setRefresh(!refresh);
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 5,
           }}
         />
       </div>

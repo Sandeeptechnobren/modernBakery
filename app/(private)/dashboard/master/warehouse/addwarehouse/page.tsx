@@ -294,7 +294,7 @@ export default function AddWarehouse() {
             device_no: form.device_no,
             p12_file: form.p12_file,
             branch_id: form.branch_id,
-            is_branch: form.is_branch,
+            is_branch: form.is_branch === "yes" || form.is_branch === "1" ? "1" : "0",
             invoice_sync: form.invoice_sync,
             is_efris: form.is_efris,
             stock_capital: form.stock_capital,
@@ -344,73 +344,6 @@ export default function AddWarehouse() {
     };
 
     return (
-        // <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
-        //     {({ isSubmitting, values, handleChange, setFieldValue, errors, touched }) => (
-        //         <Form>
-        //             {/* header */}
-        //             <div className="flex justify-between items-center mb-[20px]">
-        //                 <div className="flex items-center gap-[16px]">
-        //                     <Link href="/dashboard/master/warehouse">
-        //                         <Icon icon="lucide:arrow-left" width={24} />
-        //                     </Link>
-        //                     <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
-        //                         Add New Warehouse
-        //                     </h1>
-        //                 </div>
-        //             </div>
-
-        //             {/* content */}
-        //             <div>
-        //                 <ContainerCard>
-        //                     <h2 className="mb-4 font-semibold text-[18px] leading-[100%] text-[#181D27] tracking-[0%]">
-        //                         Warehouse Details
-        //                     </h2>
-        //                     <WarehouseDetails values={values} errors={errors} touched={touched} handleChange={handleChange} setFieldValue={setFieldValue} />
-        //                 </ContainerCard>
-        //                 <ContainerCard>
-        //                     <h2 className="mb-4 font-semibold text-[18px] leading-[100%] text-[#181D27] tracking-[0%]">
-        //                         Warehouse Contact
-        //                     </h2>
-        //                     <WarehouseContact values={values} errors={errors} touched={touched} handleChange={handleChange} setFieldValue={setFieldValue} />
-        //                 </ContainerCard>
-        //                 <ContainerCard>
-        //                     <h2 className="mb-4 font-semibold text-[18px] leading-[100%] text-[#181D27] tracking-[0%]">
-        //                         {" "}
-        //                         Location Information
-        //                     </h2>
-        //                     <WarehouseLocationInformation values={values} errors={errors} touched={touched} handleChange={handleChange} setFieldValue={setFieldValue} />
-        //                 </ContainerCard>
-        //                 <ContainerCard>
-        //                     <h2 className="mb-4 font-semibold text-[18px] leading-[100%] text-[#181D27] tracking-[0%]">
-        //                         {" "}
-        //                         Additional Information
-        //                     </h2>
-        //                     <WarehouseAdditionalInformation values={values} errors={errors} touched={touched} handleChange={handleChange} setFieldValue={setFieldValue} />
-        //                 </ContainerCard>
-
-        //                 <div className="flex justify-end gap-3 mt-6">
-        //                     {/* Cancel button */}
-        //                     <button
-        //                         className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
-        //                         type="button"
-        //                     >
-        //                         Cancel
-        //                     </button>
-
-        //                     {/* Submit button with icon */}
-        //                     <button
-        //                         type="submit"
-        //                         disabled={isSubmitting}
-        //                         className="px-4 py-2 h-[40px] rounded-md font-semibold bg-red-500 text-white disabled:opacity-60 flex items-center gap-2"
-        //                     >
-        //                         <Icon icon="mdi:check" width={18} />
-        //                         {isSubmitting ? 'Submitting...' : 'Submit'}
-        //                     </button>
-        //                 </div>
-        //             </div>
-        //         </Form>
-        //     )}
-        // </Formik>
 
         <div>
             <h1 className="text-2xl font-bold mb-6">Add New Warehouse</h1>

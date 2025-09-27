@@ -58,6 +58,7 @@ export default function Category() {
         setShowDeletePopup(false);
     }
 
+
     const fetchItemCategory = useCallback(
         async (pageNo: number = 1, pageSize: number = 10) => {
             setLoading(true);
@@ -84,6 +85,8 @@ export default function Category() {
     useEffect(() => {
         setLoading(true);
     }, [])
+
+    if (loading) return <Loading />;
 
     return (
         <>

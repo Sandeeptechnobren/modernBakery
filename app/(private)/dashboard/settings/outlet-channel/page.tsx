@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
@@ -59,14 +59,6 @@ export default function ChannelList() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // Map API data to table format
-  // const tableData: TableDataType[] = channels.map((c) => ({
-  //   id: c.id?.toString() ?? "",
-  //   outlet_channel_code: c.outlet_channel_code ?? "",
-  //   outlet_channel: c.outlet_channel ?? "",
-  //   status: c.status !== undefined ? String(c.status) : "0",
-  // }));
-
   async function fetchChannels() {
     const listRes = await channelList();
     if(listRes.error) {
@@ -80,6 +72,31 @@ export default function ChannelList() {
   useEffect(() => {
     fetchChannels();
   }, []);
+
+  const fetchChannel = useCallback(
+  async (pageNo: number = 1, pageSize: number = 5): Promise<listReturnType> => {
+    setLoading(true);
+    const result = await channelList({
+      current_page: pageNo.toString(),
+      per_page: pageSize.toString(),
+    });
+    setLoading(false);
+
+    if (result.error) {
+      showSnackbar(result.data.message, "error");
+      throw new Error("Error fetching data");
+    } else {
+      return {
+        data: result.data as TableDataType[],
+        currentPage: result.pagination?.current_page || 1,
+        pageSize: result.pagination?.per_page || 5,
+        total: result.pagination?.total_pages || 0,
+      };
+    }
+  },
+  [showSnackbar]
+);
+
 
   // Delete handler
   const handleConfirmDelete = async () => {
@@ -98,8 +115,11 @@ export default function ChannelList() {
       {/* Table */}
       <div className="max-h-[calc(100%-60px)]">
         { channels && <Table
-          data={channels}
+          // data={channels}
           config={{
+            api: {
+              list: fetchChannel,
+            },
             header: {
               title: "Outlet Channels",
               wholeTableActions: [
@@ -164,7 +184,7 @@ export default function ChannelList() {
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 2,
           }}
         />}
       </div>

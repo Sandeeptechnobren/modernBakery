@@ -73,8 +73,8 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                 value={values.is_branch}
                 onChange={handleChange}
                 options={[
-                    { value: "yes", label: "Yes" },
-                    { value: "no", label: "No" },
+                    { value: "1", label: "Yes" },
+                    { value: "0", label: "No" },
                 ]}
                 error={errors?.is_branch && touched?.is_branch ? errors.is_branch : false}
             />
