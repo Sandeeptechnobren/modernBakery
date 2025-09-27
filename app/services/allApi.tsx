@@ -83,7 +83,7 @@ export const updateCompany = async (id: string, data: object) => {
 
 export const deleteCompany = async (id: string) => {
    try {
-    const res = await API.put(`/api/master/company/company/${id}`);
+    const res = await API.delete(`/api/master/company/company/${id}`);
 
     return res.data;
   } catch (error: unknown) {

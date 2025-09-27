@@ -110,6 +110,7 @@ export default function VehiclePage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Vehicle | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -193,8 +194,8 @@ export default function VehiclePage() {
       showSnackbar(res.data.message || "Failed to delete vehicle ❌", "error");
     } else {
       showSnackbar(res.message || "Vehicle deleted successfully ✅", "success");
-      // fetchVehicles();
-      setLoading(true);
+      setRefreshKey(prev => prev+1);
+      setLoading(false);
     }
     setShowDeletePopup(false);
     setSelectedRow(null);
@@ -246,7 +247,7 @@ export default function VehiclePage() {
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-
+          refreshKey={refreshKey}
           config={{
             api: {
               list: fetchVehicles,

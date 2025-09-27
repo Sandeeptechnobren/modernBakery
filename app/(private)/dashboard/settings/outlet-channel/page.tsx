@@ -13,6 +13,7 @@ import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { channelList, deleteOutletChannel} from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
 
 interface OutletChannel {
   id?: number | string;
@@ -51,7 +52,7 @@ const columns = [
 
 export default function ChannelList() {
   const [channels, setChannels] = useState<TableDataType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [deleteId, setDeleteId] = useState(0);
@@ -110,7 +111,7 @@ export default function ChannelList() {
     }
   }
 
-  return loading ? <Loading /> :(
+  return (
     <>
       {/* Table */}
       <div className="max-h-[calc(100%-60px)]">

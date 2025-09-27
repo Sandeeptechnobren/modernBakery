@@ -61,9 +61,6 @@ interface Company {
 
 // 🔹 Dropdown menu data
 const dropdownDataList = [
-    { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-    { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-    { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
@@ -77,16 +74,47 @@ const columns = [
     { key: "website", label: "Website" },
     { key: "toll_free_no", label: "Toll Free No" },
     { key: "primary_contact", label: "Primary Contact" },
-    { key: "region_name", label: "Region" },
-    { key: "subregion_name", label: "Sub Region" },
+    {
+        key: 'region_name',
+        label: 'Region',
+        render: (data: TableDataType) => {
+                const warehouseObj = typeof data.region === "string"
+                    ? JSON.parse(data.region)
+                    : data.region;
+                return warehouseObj?.region_name || "-";
+            },
+    },
+    {
+        key: 'subregion_name',
+        label: 'Sub Region',
+        render: (row: TableDataType) => {
+                const warehouseObj = typeof row.sub_region === "string"
+                    ? JSON.parse(row.sub_region)
+                    : row.sub_region;
+                return warehouseObj?.subregion_name || "-";
+            } ,
+    },
     { key: "street", label: "Street" },
     { key: "landmark", label: "Landmark" },
     { key: "town", label: "Town" },
     { key: "district", label: "District" },
     {
-        label: "Country",
-        key: "country_name",
-        render: (row: TableDataType) => row.country_name || "-",
+        key: 'country_name',
+        label: 'Country',
+        render: (row: TableDataType) => {
+        if (
+            row.country &&
+            typeof row.country === "object" &&
+            "country_name" in row.country &&
+            typeof (row.country as { country_name?: string }).country_name === "string"
+        ) {
+            return (row.country as { country_name?: string }).country_name || "-";
+        }
+        if (typeof row.country_name === "string") {
+            return row.country_name || "-";
+        }
+        return "-";
+        },
     },
     { key: "tin_number", label: "TIN Number" },
     { key: "purchase_currency", label: "Purchase Currency" },
