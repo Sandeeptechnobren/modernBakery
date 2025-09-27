@@ -44,7 +44,7 @@ export default function FormInputField({
   onBlur,
 }: Props) {
   return (
-    <div className="flex flex-col gap-2 w-[406px]">
+    <div className="flex flex-col gap-2 max-w-[406px]">
       <label className="text-sm font-medium text-gray-700">{label}</label>
 
       {type === "amount" ? (
