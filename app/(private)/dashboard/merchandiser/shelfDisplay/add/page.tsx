@@ -100,7 +100,7 @@ export default function AddShelfDisplay() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <InputFields
-                    label=" Name"
+                    label="Name"
                     name="name"
                     value={values.name}
                     onChange={(e) => setFieldValue("name", e.target.value)}
@@ -117,6 +117,7 @@ export default function AddShelfDisplay() {
                     name="customer"
                     value={values.customer}
                     onChange={(e) => setFieldValue("customer", e.target.value)}
+                    isSingle={false}
                     options={[
                       { value: "1", label: "Customer A" },
                       { value: "2", label: "Customer B" },

@@ -69,13 +69,20 @@ export const initialLinkData: SidebarDataType[] = [
                     //     leadingIcon: "lucide:user",
                     //     iconColor: "text-green-500"
                     // },
-            //         {
-            //     isActive: false,
-            //     href: "/dashboard/master/item",
-            //     label: "Items",
-            //     leadingIcon: "mdi:package-variant",
-            //     iconColor: "text-cyan-500"
-            // },
+                    {
+                isActive: false,
+                href: "/dashboard/master/agentCustomer",
+                label: "Agent Customer",
+                leadingIcon: "mdi:package-variant",
+                iconColor: "text-cyan-500"
+            },
+                    {
+                isActive: false,
+                href: "/dashboard/master/item",
+                label: "Items",
+                leadingIcon: "mdi:package-variant",
+                iconColor: "text-cyan-500"
+            },
                     {
                 isActive: false,
                 href: "/dashboard/master/route",
@@ -110,7 +117,7 @@ export const initialLinkData: SidebarDataType[] = [
                 isActive: false,
                 href: "#",
                 label: "Merchandisers",
-                leadingIcon: "hugeicons:workflow-square-06",
+                leadingIcon: "picon:business",
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [ 
@@ -146,6 +153,38 @@ export const initialLinkData: SidebarDataType[] = [
             
          
                 ],
+            },
+
+            {
+                isActive: false,
+                href: "#",
+                label: "Assets",
+                leadingIcon: "streamline-freehand:money-bag",
+                iconColor: "text-green-500",
+                trailingIcon: "mdi-light:chevron-right",
+                children: [ 
+                    {
+                        isActive: false,
+                        href: "/dashboard/assets/types",
+                        label: "Service Types",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/dashboard/assets/chiller",
+                        label: "Chiller",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/dashboard/assets/vendor",
+                        label: "Vendor",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    }
+                ]
             },
             // {
             //     isActive: false,

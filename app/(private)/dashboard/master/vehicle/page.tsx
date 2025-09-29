@@ -8,7 +8,7 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { vehicleList, deleteVehicle, vehicleGlobalSearch } from "@/app/services/allApi";
+import { vehicleListData, deleteVehicle, vehicleGlobalSearch } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -143,7 +143,7 @@ export default function VehiclePage() {
     ): Promise<listReturnType> => {
       try {
         setLoading(true);
-        const listRes = await vehicleList({
+        const listRes = await vehicleListData({
           limit: pageSize.toString(),
           page: page.toString(),
         });

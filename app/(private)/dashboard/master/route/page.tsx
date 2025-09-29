@@ -2,15 +2,16 @@
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import { Icon } from "@iconify-icon/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useCallback} from "react";
 import { useRouter } from "next/navigation";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
     listReturnType,
     TableDataType,
+    searchReturnType
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { routeList, deleteRoute } from "@/app/services/allApi";
+import { routeList, deleteRoute,routeGlobalSearch } from "@/app/services/allApi";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
@@ -26,24 +27,31 @@ const columns = [
         ),
     },
     { key: "route_name", label: "Route Name", isSortable: true, render: (data: TableDataType) => data.route_name ? data.route_name : "-" },
+   
     {
         key: "route_Type",
         label: "Route Type",
-        render: (data: TableDataType) => (typeof data.route_Type === "object" && data.route_Type !== null) ? (data.route_Type as { route_type_name?: string }).route_type_name : "-",
+        render: (data: TableDataType) => {
+            const typeObj = data.route_Type ? JSON.parse(JSON.stringify(data.route_Type)) : null;
+            return typeObj?.route_type_name ? typeObj.route_type_name : "-";
+        },
         filter: {
             isFilterable: true,
             render: (data: TableDataType[]) => (
                 <>
-                    {data.map((row, index) => (
-                        <div
-                            key={index}
-                            className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                        >
-                            <span className="font-[500] text-[#181D27]">
-                                { (typeof row.route_Type === "object" && row.route_Type !== null) ? (row.route_Type as { route_type_name?: string }).route_type_name : "-"}
-                            </span>
-                        </div>
-                    ))}
+                    {data.map((row, index) => {
+                        const typeObj = row.route_Type ? JSON.parse(JSON.stringify(row.route_Type)) : null;
+                        return (
+                            <div
+                                key={index}
+                                className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                            >
+                                <span className="font-[500] text-[#181D27]">
+                                    {typeObj?.route_type_name ? typeObj.route_type_name : "-"}
+                                </span>
+                            </div>
+                        );
+                    })}
                 </>
             ),
         },
@@ -70,6 +78,16 @@ const columns = [
                     ))}
                 </>
             ),
+        },
+    },
+     {
+        key: "vehicle_code",
+        label: "Vehicle",
+        render: (data: TableDataType) => {
+            const vehicleObj = typeof data.vehicle === "string"
+                ? JSON.parse(data.vehicle)
+                : data.vehicle;
+            return vehicleObj?.vehicle_code ? vehicleObj.vehicle_code : "-";
         },
     },
     {
@@ -122,7 +140,28 @@ export default function Route() {
             setLoading(false);
         }
     };
-
+      const searchRoute = useCallback(
+        async (
+          searchQuery: string,
+          pageSize: number=10,
+        ): Promise<searchReturnType> => {
+          setLoading(true);
+          const result = await routeGlobalSearch({
+            search: searchQuery,
+            per_page: pageSize.toString(),
+          });
+          setLoading(false);
+          if (result.error) throw new Error(result.data.message);
+          const pagination = result.pagination && result.pagination.pagination ? result.pagination.pagination : {};
+          return {
+            data: result.data || [],
+            total: pagination.totalPages || 10,
+            currentPage: pagination.page || 1,
+            pageSize: pagination.limit || 10,
+          };
+        },
+        []
+      );
     useEffect(() => {
         setLoading(true);
     }, []);
@@ -150,6 +189,7 @@ export default function Route() {
                     config={{
                         api: {
                             list: fetchRoutes,
+                            search: searchRoute,
                         },
                         header: {
                             title: "Routes",

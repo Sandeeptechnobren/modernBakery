@@ -8,14 +8,12 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
     listReturnType,
-    searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
-    countryList,
-    countryListGlobalSearch,
-    deleteCountry,
+    agentCustomerList,
+    deleteAgentCustomer,
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -37,20 +35,82 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "country_code", label: "Country Code" },
-    { key: "country_name", label: "Country Name" },
-    { key: "currency", label: "Currency" },
+    { key: "osa_code", label: "Agent Customer Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
+    { key: "tin_no", label: "TIN No." },
+    { key: "name", label: "Name" },
+    { key: "business_name", label: "Business Name" },
+    { 
+        key: "customer_type", 
+        label: "Customer Type",
+    },
+    { 
+        key: "category", 
+        label: "Customer Category",
+        render: (row: TableDataType) => 
+            typeof row.category === "object" && row.category !== null && "customer_category_name" in row.category
+                ? (row.category as { customer_category_name?: string }).customer_category_name || '-'
+                : '-'
+    },
+    { 
+        key: "subcategory", 
+        label: "Customer Sub Category",
+        render: (row: TableDataType) => 
+            typeof row.subcategory === "object" && row.subcategory !== null && "customer_sub_category_name" in row.subcategory
+                ? (row.subcategory as { customer_sub_category_name?: string }).customer_sub_category_name || '-'
+                : '-'
+    },
+    { 
+        key: "outlet_channel", 
+        label: "Outlet Channel",
+        render: (row: TableDataType) => 
+            typeof row.outlet_channel === "object" && row.outlet_channel !== null && "outlet_channel" in row.outlet_channel
+                ? (row.outlet_channel as { outlet_channel?: string }).outlet_channel || '-'
+                : '-'
+    },
+    { 
+        key: "region", 
+        label: "Region",
+        render: (row: TableDataType) => 
+            typeof row.region === "object" && row.region !== null && "region_name" in row.region
+                ? (row.region as { region_name?: string }).region_name || '-'
+                : '-'
+    },
+    { 
+        key: "area", 
+        label: "Area",
+        render: (row: TableDataType) => 
+            typeof row.area === "object" && row.area !== null && "area_name" in row.area
+                ? (row.area as { area_name?: string }).area_name || '-'
+                : '-'
+    },
+    { 
+        key: "route_id", 
+        label: "Route",
+    },
+    { key: "email", label: "Email" },
+    { key: "whatsapp_no", label: "Whatsapp No." },
+    { key: "buyertype", label: "Buyer Type" },
+    { key: "payment_type", label: "Payment Type" },
+    { key: "creditday", label: "Credit Day" },
+    { key: "longitude", label: "Longitude" },
+    { key: "latitude", label: "Latitude" },
+    { key: "accuracy", label: "Accuracy" },
+    { key: "threshold_radius", label: "Threshold Radius" },
+    { key: "language", label: "Language" },
     {
-            key: "status",
-            label: "Status",
-            render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status ? true : false} />
-            ),
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => {
+            // Treat status 1 or 'active' (case-insensitive) as active
+            const isActive = String(row.status) === "1" || (typeof row.status === "string" && row.status.toLowerCase() === "active");
+            return <StatusBtn isActive={isActive} />;
         },
+    },
 ];
 
-export default function Country() {
-    interface CountryItem {
+export default function AgentCustomer() {
+    interface AgentCustomer {
+        uuid?: number | string;
         id?: number | string;
         country_code?: string;
         country_name?: string;
@@ -60,22 +120,22 @@ export default function Country() {
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
+    const [selectedRow, setSelectedRow] = useState<AgentCustomer | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
     type TableRow = TableDataType & { id?: string };
 
-    const fetchCountries = useCallback(
+    const fetchAgentCustomers = useCallback(
         async (
             page: number = 1,
             pageSize: number = 5
         ): Promise<listReturnType> => {
             try {
               setLoading(true);
-                const listRes = await countryList({
-                    limit: pageSize.toString(),
-                    page: page.toString(),
+                const listRes = await agentCustomerList({
+                    // limit: pageSize.toString(),
+                    // page: page.toString(),
                 });
                 setLoading(false);
                 return {
@@ -93,42 +153,42 @@ export default function Country() {
         []
     );
 
-    const searchCountries = useCallback(
-        async (
-            searchQuery: string,
-            pageSize: number
-        ): Promise<searchReturnType> => {
-            setLoading(true);
-            const result = await countryListGlobalSearch({
-                query: searchQuery,
-                per_page: pageSize.toString(),
-            });
-            setLoading(false);
-            if (result.error) throw new Error(result.data.message);
-            else {
-                return {
-                    data: result.data || [],
-                    total: result.pagination.pagination.totalPages || 0,
-                    currentPage: result.pagination.pagination.current_page || 0,
-                    pageSize: result.pagination.pagination.limit || pageSize,
-                };
-            }
-        },
-        []
-    );
+    // const searchCountries = useCallback(
+    //     async (
+    //         searchQuery: string,
+    //         pageSize: number
+    //     ): Promise<searchReturnType> => {
+    //         setLoading(true);
+    //         const result = await countryListGlobalSearch({
+    //             query: searchQuery,
+    //             per_page: pageSize.toString(),
+    //         });
+    //         setLoading(false);
+    //         if (result.error) throw new Error(result.data.message);
+    //         else {
+    //             return {
+    //                 data: result.data || [],
+    //                 total: result.pagination.pagination.totalPages || 0,
+    //                 currentPage: result.pagination.pagination.current_page || 0,
+    //                 pageSize: result.pagination.pagination.limit || pageSize,
+    //             };
+    //         }
+    //     },
+    //     []
+    // );
 
     const handleConfirmDelete = async () => {
         if (!selectedRow) return;
 
-        if (!selectedRow?.id) throw new Error("Missing id");
-        const res = await deleteCountry(String(selectedRow.id));
+        if (!selectedRow?.uuid) throw new Error("Missing id");
+        const res = await deleteAgentCustomer(String(selectedRow.uuid));
         if (res.error)
             return showSnackbar(
-                res.data.message || "Failed to delete country",
+                res.data.message || "Failed to delete Agent Customer",
                 "error"
             );
         else {
-            showSnackbar("Country deleted successfully ", "success");
+            showSnackbar("Agent Customer deleted successfully ", "success");
             setRefreshKey(refreshKey + 1);
         }
         setLoading(false);
@@ -147,11 +207,10 @@ export default function Country() {
                     refreshKey={refreshKey}
                     config={{
                         api: {
-                            list: fetchCountries,
-                            search: searchCountries,
+                            list: fetchAgentCustomers,
                         },
                         header: {
-                            title: "Country",
+                            title: "Agent Customer",
                             wholeTableActions: [
                                 <div key={0} className="flex gap-[12px] relative">
                                     <DismissibleDropdown
@@ -197,10 +256,10 @@ export default function Country() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/dashboard/settings/country/add"
+                                    href="/dashboard/master/agentCustomer/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Country"
+                                    label="Add Agent Customer"
                                     labelTw="hidden sm:block"
                                 />,
                             ],
@@ -214,7 +273,7 @@ export default function Country() {
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
                                     router.push(
-                                        `/dashboard/settings/country/update_country/${row.id}`
+                                        `/dashboard/master/agentCustomer/update/${row.uuid}`
                                     );
                                 },
                             },
@@ -222,7 +281,7 @@ export default function Country() {
                                 icon: "lucide:trash-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    setSelectedRow({ id: row.id });
+                                    setSelectedRow({ uuid: row.uuid });
                                     setShowDeletePopup(true);
                                 },
                             },
@@ -235,7 +294,7 @@ export default function Country() {
             {showDeletePopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                     <DeleteConfirmPopup
-                        title="Country"
+                        title="Agent Customer"
                         onClose={() => setShowDeletePopup(false)}
                         onConfirm={handleConfirmDelete}
                     />

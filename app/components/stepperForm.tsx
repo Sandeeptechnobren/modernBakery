@@ -85,57 +85,57 @@ export default function StepperForm({
   };
 
   return (
+
     <div className={`w-full ${className}`}>
       {/* Stepper Header */}
-        <div className="flex items-center justify-center gap-30 w-full mb-4">
-          {steps.map((step, index) => {
-            const stepNumber = index + 1;
-            const status = getStepStatus(step, index);
-            const styles = getStepStyles(status, stepNumber);
-            const isClickable = onStepClick && (status === "completed" || status === "active");
-            const isLastStep = index === steps.length - 1;
-            // Green line if THIS step is completed, else gray
-            const lineColor = step.isCompleted ? "bg-[#22c55e]" : "bg-[#E4E9F2]";
+      <div className="flex items-start justify-center gap-8 sm:gap-16 w-full mb-4">
+        {steps.map((step, index) => {
+          const stepNumber = index + 1;
+          const status = getStepStatus(step, index);
+          const styles = getStepStyles(status, stepNumber);
+          const isClickable = onStepClick && (status === "completed" || status === "active");
+          const isLastStep = index === steps.length - 1;
+          // Green line if THIS step is completed, else gray
+          const lineColor = step.isCompleted ? "bg-[#22c55e]" : "bg-[#E4E9F2]";
 
-            return (
-              <div key={step.id} className="flex items-center">
-                {/* Step Circle */}
-                <div className="flex flex-col items-center">
-                  <div className="relative flex items-center justify-center">
-                    <div
-                      className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg transition-all duration-200 ${styles.circle} ${isClickable ? "hover:scale-105" : ""}`}
-                      style={{zIndex: 1, position: 'relative', fontWeight: status === 'active' ? 700 : 600}}
-                      onClick={() => isClickable && onStepClick(stepNumber)}
-                    >
-                      {styles.icon ? (
-                        <Icon icon={styles.icon} width={22} height={22} />
-                      ) : (
-                        stepNumber
-                      )}
-                    </div>
-                    {/* Connecting Line - only show if not the last step */}
-                    {!isLastStep && (
-                      <div className={`absolute top-1/2 left-full ml-4 -translate-y-1/2 h-1 ${lineColor} transition-colors duration-300`} style={{width: 90, borderRadius: 2}} />
+          return (
+            <div key={step.id} className="flex items-center relative">
+              <div className="flex flex-col items-center min-w-[80px]">
+                <div className="relative flex flex-col items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg transition-all duration-200 ${styles.circle} ${isClickable ? "hover:scale-105" : ""}`}
+                    style={{zIndex: 1, position: 'relative', fontWeight: status === 'active' ? 700 : 600}}
+                    onClick={() => isClickable && onStepClick(stepNumber)}
+                  >
+                    {styles.icon ? (
+                      <Icon icon={styles.icon} width={22} height={22} />
+                    ) : (
+                      stepNumber
                     )}
                   </div>
-                  <span className={`mt-2 text-xs text-center max-w-20 leading-tight ${styles.label}`}>{step.label}</span>
+                  {/* Connecting Line - only show if not the last step */}
+                  {!isLastStep && (
+                    <div className={`absolute top-1/2 left-full ml-4 -translate-y-1/2 h-1 ${lineColor} transition-colors duration-300`} style={{width: 90, borderRadius: 2}} />
+                  )}
                 </div>
+                <span className={`mt-2 text-xs text-center max-w-20 leading-tight ${styles.label}`}>{step.label}</span>
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
       </div>
 
       {/* Form Content */}
-      <div className="mb-6">
+      <div className="mb-6 w-full max-w-full px-2 sm:px-0">
         {children}
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 w-full px-2 sm:px-0">
         {showBackButton && currentStep > 1 && (
           <button
             onClick={onBack}
-            className="px-4 py-2 h-10 rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+            className="px-4 py-2 h-10 rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors w-full sm:w-auto"
             type="button"
           >
             {backButtonText}
@@ -143,21 +143,25 @@ export default function StepperForm({
         )}
 
         {showNextButton && !isLastStep && (
-          <SidebarBtn
-            label={nextButtonText}
-            isActive={true}
-            leadingIcon="mdi:arrow-right"
-            onClick={onNext}
-          />
+          <div className="w-full sm:w-auto">
+            <SidebarBtn
+              label={nextButtonText}
+              isActive={true}
+              leadingIcon="mdi:arrow-right"
+              onClick={onNext}
+            />
+          </div>
         )}
 
         {showSubmitButton && isLastStep && (
-          <SidebarBtn
-            label={submitButtonText}
-            isActive={true}
-            leadingIcon="mdi:check"
-            onClick={onSubmit}
-          />
+          <div className="w-full sm:w-auto">
+            <SidebarBtn
+              label={submitButtonText}
+              isActive={true}
+              leadingIcon="mdi:check"
+              onClick={onSubmit}
+            />
+          </div>
         )}
       </div>
     </div>

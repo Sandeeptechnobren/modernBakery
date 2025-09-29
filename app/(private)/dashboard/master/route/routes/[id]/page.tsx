@@ -15,7 +15,7 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 
 
 export default function EditRoute() {
-  const { routeTypeOptions,warehouseOptions } = useAllDropdownListData();
+  const { routeTypeOptions,warehouseOptions,vehicleListOptions } = useAllDropdownListData();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -25,13 +25,15 @@ export default function EditRoute() {
   const queryId = searchParams.get("id") || routeId || "";
   const [routeCode, setRouteCode] = useState("");
   const [routeName, setRouteName] = useState("");
-  const [routeType, setRouteType] = useState<string[]>([]);
+  const [routeType, setRouteType] = useState("");
+    const [vehicleType, setVehicleType] = useState("");
   const [warehouse, setWarehouse] = useState("");
   const [status, setStatus] = useState("");
   const routeSchema = yup.object().shape({
     routeCode: yup.string().required("Route Code is required"),
     routeName: yup.string().required("Route Name is required"),
-    routeType: yup.array().of(yup.string()).min(1, "Route Type is required"),
+    routeType: yup.string().required( "Route Type is required"),
+    vehicleType: yup.string().required("Vehicle is required"),
     warehouse: yup.string().required("Warehouse is required"),
     status: yup.string().required("Status is required"),
   });
@@ -43,18 +45,11 @@ export default function EditRoute() {
     route_code?: string;
     route_name?: string;
     warehouse?: string;
-    route_type?: number[] | number | string;
+    route_type?:  string;
     vehicle_id?: number | string;
     status?: number | string;
   }>(null);
-   type RouteTypeChangeEvent = { target: { value: string | string[] } };
-  const handleRouteTypeChange = (e: RouteTypeChangeEvent) => {
-    if (Array.isArray(e.target.value)) {
-      setRouteType(e.target.value);
-    } else {
-      setRouteType([e.target.value]);
-    }
-  };
+  
   useEffect(() => {
     if (!queryId) return;
     let mounted = true;
@@ -64,31 +59,25 @@ export default function EditRoute() {
         const data = res?.data ?? res;
         if (!mounted) return;
         
-        // Handle route_type - convert to array if it's a single value
-        let routeTypeArray: string[] = [];
-        if (data?.route_type) {
-          if (Array.isArray(data.route_type)) {
-            routeTypeArray = data.route_type.map((rt: string) => String(rt));
-          } else {
-            routeTypeArray = [String(data.route_type)];
-          }
-        }
+       
         
+
         setFetched({
           route_code: data?.route_code,
           route_name: data?.route_name,
-          warehouse: data?.warehouse.id,
-          route_type: data?.route_type,
+          warehouse: data?.warehouse?.id ?? "",
+          route_type: data?.route_Type?.id ?? "",
           vehicle_id: data?.vehicle_id,
           status: data?.status,
         });
-        
+
         // Set individual state values
         setRouteCode(data?.route_code || "");
         setRouteName(data?.route_name || "");
-        setWarehouse(data?.warehouse.id || "");
-        setRouteType(routeTypeArray);
-        setStatus(data?.status ? String(data?.status) : "");
+        setWarehouse(data?.warehouse?.id !== undefined && data?.warehouse?.id !== null ? String(data?.warehouse?.id) : "");
+        setVehicleType(data?.vehicle.id !== undefined && data?.vehicle.id !== null ? String(data?.vehicle.id) : "");
+        setRouteType(data?.route_Type?.id !== undefined && data?.route_Type?.id !== null ? String(data?.route_Type?.id) : "");
+        setStatus(data?.status !== undefined && data?.status !== null ? String(data?.status) : "");
         
       } catch (err: unknown) {
         console.error("Failed to fetch route by id", err);
@@ -112,6 +101,7 @@ export default function EditRoute() {
           routeName,
           routeType,
           warehouse,
+          vehicleType,
           status,
         },
         { abortEarly: false }
@@ -131,17 +121,19 @@ export default function EditRoute() {
     type UpdateRoutePayload = {
       route_code?: string;
       route_name?: string;
-      route_type?: number[] | undefined;
+      route_type?: string;
+      vehicle_id?: string;
       status?: number | undefined;
-      warehouse?: string;
+      warehouse_id?: string;
     };
 
     const payload: UpdateRoutePayload = {
       route_code: routeCode,
       route_name: routeName,
-      route_type: routeType.length > 0 ? routeType.map(rt => Number(rt)) : undefined,
+      route_type: routeType,
+      vehicle_id: vehicleType,
       status: status ? (status === "active" ? 1 : status === "inactive" ? 0 : Number(status)) : undefined,
-      warehouse: warehouse
+      warehouse_id: warehouse
     };
 
     try {
@@ -222,7 +214,7 @@ required
                                     label="Route Type"
                                     name="route_type"
                                     value={routeType}
-                                    onChange={(e)=>e.target.value}
+                                    onChange={(e)=>setRouteType(e.target.value)}
                                     options={routeTypeOptions}
                                     
                                   />
@@ -230,6 +222,19 @@ required
                   <p className="text-red-500 text-sm mt-1">{errors.route_type}</p>
                 )}
 
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Vehicle"
+                  name="vehicle_id"
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value)}
+                  options={vehicleListOptions}
+                />
+                {errors.vehicle_id && (
+                  <p className="text-red-500 text-sm mt-1">{errors.vehicle_id}</p>
+                )}
               </div>
             </div>
           </div>

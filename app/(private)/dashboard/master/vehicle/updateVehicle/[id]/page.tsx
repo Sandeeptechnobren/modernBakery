@@ -305,7 +305,7 @@ export default function UpdateVehicleWithStepper() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  
 
   return (
     <>

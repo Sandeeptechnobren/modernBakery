@@ -14,7 +14,10 @@ import {
   itemSubCategory,
   channelList,
   userTypes,
-  getCustomerType
+  getCustomerType,
+  vehicleListData,
+  customerCategoryList,
+  customerSubCategoryList
 } from '@/app/services/allApi';
 
 interface DropdownDataContextType {
@@ -32,6 +35,9 @@ interface DropdownDataContextType {
   channelList: ChannelItem[];
   customerType: CustomerType[];
   userTypes: UserTypeItem[];
+  vehicleList: VehicleListItem[];
+  customerCategory: CustomerCategory[];
+  customerSubCategory: CustomerSubCategory[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -49,6 +55,9 @@ interface DropdownDataContextType {
   channelOptions: { value: string; label: string }[];
   customerTypeOptions: { value: string; label: string }[];
   userTypeOptions: { value: string; label: string }[];
+  vehicleListOptions: { value: string; label: string }[];
+  customerCategoryOptions: { value: string; label: string }[];
+  customerSubCategoryOptions: { value: string; label: string }[];
   refreshDropdowns: () => Promise<void>;
   loading: boolean;
 }
@@ -112,11 +121,13 @@ interface CustomerTypeItem {
 interface ItemCategoryItem {
   id?: number | string;
   category_name?: string;
+  category_code?: string;
 }
 
 interface ItemSubCategoryItem {
   id?: number | string;
   sub_category_name?: string;
+  sub_category_code?: string;
 }
 
 interface ChannelItem {
@@ -134,6 +145,21 @@ interface UserTypeItem {
   id?: number | string;
   code?: string;
   name?: string;
+}
+
+interface VehicleListItem {
+  id?: number | string;
+  vehicle_code?: string;
+}
+interface CustomerCategory {
+  id?: number | string;
+  customer_category_code?: string;
+  customer_category_name?: string;
+}
+interface CustomerSubCategory {
+  id?: number | string;
+  customer_sub_category_code?: string;
+  customer_sub_category_name?: string;
 }
 
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
@@ -162,6 +188,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [channelListData, setChannelListData] = useState<ChannelItem[]>([]);
   const [customerTypeData, setCustomerTypeData] = useState<CustomerType[]>([]);
   const [userTypesData, setUserTypesData] = useState<UserTypeItem[]>([]);
+  const [VehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
+  const [customerCategory, setCustomerCategory] = useState<VehicleListItem[]>([]);
+  const [customerSubCategory, setCustomerSubCategory] = useState<VehicleListItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -221,12 +250,12 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const itemCategoryOptions = (Array.isArray(itemCategoryData) ? itemCategoryData : []).map((c: ItemCategoryItem) => ({
     value: String(c.id ?? ''),
-    label: c.category_name ?? ''
+    label: c.category_code && c.category_name ? `${c.category_code} - ${c.category_name}` : (c.category_name ?? '')
   }));
 
   const itemSubCategoryOptions = (Array.isArray(itemSubCategoryData) ? itemSubCategoryData : []).map((c: ItemSubCategoryItem) => ({
     value: String(c.id ?? ''),
-    label: c.sub_category_name ?? ''
+    label: c.sub_category_code && c.sub_category_name ? `${c.sub_category_code} - ${c.sub_category_name}` : (c.sub_category_name ?? '')
   }));
 
   const channelOptions = (Array.isArray(channelListData) ? channelListData : []).map((c: ChannelItem) => ({
@@ -242,8 +271,21 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     value: String(c.id ?? ''),
     label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
   }));
+  
+  const vehicleListOptions = (Array.isArray(VehicleList) ? VehicleList : []).map((c: VehicleListItem) => ({
+    value: String(c.id ?? ''),
+    label: c.vehicle_code ? c.vehicle_code : '-',
+  }));
 
+const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCategory : []).map((c: CustomerCategory) => ({
+    value: String(c.id ?? ''),
+    label: c.customer_category_code && c.customer_category_name ? `${c.customer_category_code} - ${c.customer_category_name}` : (c.customer_category_name ?? '')
+  }));
 
+  const customerSubCategoryOptions = (Array.isArray(customerSubCategory) ? customerSubCategory : []).map((c: CustomerSubCategory) => ({
+    value: String(c.id ?? ''),
+    label: c.customer_sub_category_code && c.customer_sub_category_name ? `${c.customer_sub_category_code} - ${c.customer_sub_category_name}` : (c.customer_sub_category_name ?? '')
+  }));
 
   const refreshDropdowns = async () => {
     setLoading(true);
@@ -263,6 +305,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         channelList(),
         getCustomerType(),
         userTypes(),
+        vehicleListData(),
+        customerCategoryList(),
+        customerSubCategoryList(),
       ]);
 
       // normalize: accept unknown response and extract array of items from `.data` when present
@@ -288,7 +333,10 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setItemSubCategoryData(normalize(res[10]) as ItemSubCategoryItem[]);
       setChannelListData(normalize(res[11]) as ChannelItem[]);
       setCustomerTypeData(normalize(res[12]) as CustomerType[]);
-      setUserTypesData(normalize(res[13]) as UserTypeItem[]);
+  setUserTypesData(normalize(res[13]) as UserTypeItem[]);
+  setVehicleList(normalize(res[14]) as VehicleListItem[]);
+  setCustomerCategory(normalize(res[15]) as CustomerCategory[]);
+  setCustomerSubCategory(normalize(res[16]) as CustomerSubCategory[]);
     } catch (error) {
       console.error('Error loading dropdown data:', error);
       // on error clear to empty arrays
@@ -306,6 +354,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setChannelListData([]);
       setCustomerTypeData([]);
       setUserTypesData([]);
+      setVehicleList([]);
+      setCustomerCategory([]);
+      setCustomerSubCategory([]);
     } finally {
       setLoading(false);
     }
@@ -334,6 +385,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         channelList: Array.isArray(channelListData) ? channelListData : [],
         customerType: customerTypeData,
         userTypes: userTypesData,
+        vehicleList: VehicleList,
+        customerCategory: customerCategory,
+        customerSubCategory: customerSubCategory,
         companyOptions,
         countryOptions,
         onlyCountryOptions,
@@ -350,6 +404,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         channelOptions,
         customerTypeOptions,
         userTypeOptions,
+        vehicleListOptions,
+        customerCategoryOptions,
+        customerSubCategoryOptions,
         refreshDropdowns,
         loading
       }}

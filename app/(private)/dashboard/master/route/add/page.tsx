@@ -14,32 +14,26 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function Route() {
-  const { routeTypeOptions, warehouseOptions } = useAllDropdownListData();
+  const { routeTypeOptions, warehouseOptions ,vehicleListOptions} = useAllDropdownListData();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [isOpen, setIsOpen] = useState(false);
   const [routeCode, setRouteCode] = useState("");
   const [routeName, setRouteName] = useState("");
-  const [routeType, setRouteType] = useState<string[]>([]);
+  const [routeType, setRouteType] = useState("");
+  const [vehicleType, setVehicleType] = useState("");
   const [warehouse, setWarehouse] = useState("");
   const [status, setStatus] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const clearErrors = () => setErrors({});
 
-  type RouteTypeChangeEvent = { target: { value: string | string[] } };
-  const handleRouteTypeChange = (e: RouteTypeChangeEvent) => {
-    if (Array.isArray(e.target.value)) {
-      setRouteType(e.target.value);
-    } else {
-      setRouteType([e.target.value]);
-    }
-  };
 
   const validationSchema = yup.object().shape({
     route_code: yup.string().required("Route code is required").max(10),
     route_name: yup.string().required("Route name is required").max(100),
-    route_type: yup.array().of(yup.string()).required("Route type is required").min(1, "At least one route type is required"),
+    route_type: yup.string().required("Route type is required"),
+    vehicle_type: yup.string().required("Vehicle is required"),
     warehouse: yup.string().required("Warehouse is required"),
     status: yup.string().required("Status is required").oneOf(["0", "1", "active", "inactive"], "Invalid status"),
   });
@@ -51,6 +45,7 @@ export default function Route() {
         route_code: routeCode,
         route_name: routeName,
         route_type: routeType,
+        vehicle_type: vehicleType,
         warehouse: warehouse,
         status: status,
       }, { abortEarly: false });
@@ -58,17 +53,19 @@ export default function Route() {
       type AddRoutePayload = {
         route_code?: string;
         route_name?: string;
-        route_type?: number[] | undefined;
+        route_type?: string;
+        vehicle_id?: string;
         status?: number | undefined;
-        warehouse: string;
+        warehouse_id: string;
       };
 
       const payload: AddRoutePayload = {
         route_code: routeCode,
         route_name: routeName,
-        route_type: routeType.length > 0 ? routeType.map(rt => Number(rt)) : undefined,
+        route_type: routeType,
+        vehicle_id: vehicleType,
         status: status ? (status === "active" ? 1 : status === "inactive" ? 0 : Number(status)) : undefined,
-        warehouse: warehouse
+        warehouse_id: warehouse
       };
 
       setSubmitting(true);
@@ -156,9 +153,8 @@ export default function Route() {
                 <InputFields
                   required
                   label="Route Type"
-                  name="route_type"
                   value={routeType}
-                  onChange={(e)=>e.target.value}
+                  onChange={(e)=>setRouteType(e.target.value)}
                   options={routeTypeOptions}
                   
                 />
@@ -167,6 +163,25 @@ export default function Route() {
                 )}
 
               </div>
+               <div>
+                 <InputFields
+                  required
+                  label="Vehicle"
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value)}
+                  options={vehicleListOptions} 
+                />
+                {errors.route_name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.route_name}</p>
+                )}
+                              {/* <InputFields required label="Vehicle Type" value={form.vehicleType} onChange={handleChange} name="vehicleType" error={touched.vehicleType && errors.vehicleType} options={[
+                                { value: "1", label: "Truck" },
+                                { value: "2", label: "Van" },
+                                { value: "3", label: "Bike" },
+                                { value: "4", label: "Tuktuk" },
+                              ]} />
+                              {touched.vehicleType && errors.vehicleType && <div className="text-red-500 text-xs mt-1">{errors.vehicleType}</div>} */}
+                            </div>
             </div>
           </div>
         </div>

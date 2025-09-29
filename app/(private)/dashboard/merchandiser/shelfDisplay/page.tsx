@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { shelvesList } from "@/app/services/merchandiserApi";
+import { useLoading } from "@/app/services/loadingContext";
 
 interface ShelfDisplayItem {
   id: string;
@@ -17,61 +19,17 @@ interface ShelfDisplayItem {
   name: string;
   customer_code: string;
   customer_name: string;
-    valid_from: string;
+  valid_from: string;
   valid_to: string;
 }
 
 const dropdownDataList = [
-  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
-// ✅ Static table data
-const tableData: TableDataType[] = [
-  {
-    id: "1",
-    date: "2025-09-01",
-    name: "North Shelf Display",
-    customer_code: "C001",
-    customer_name: "Data ",
-  valid_from: "2025-09-01",
-  valid_to: "2025-09-30",
-  },
-  {
-    id: "2",
-    date: "2025-09-05",
-    name: "South Shelf Display",
-    customer_code: "C002",
-    customer_name: "Custume Name",
-    status: "Inactive",
-     valid_from: "2025-09-01",
-  valid_to: "2025-09-30",
-  },
-  {
-    id: "3",
-    date: "2025-09-10",
-    name: "East Shift Display",
-    customer_code: "C003",
-    customer_name: "Ramesh",
-    status: "Active",
-     valid_from: "2025-09-01",
-  valid_to: "2025-09-30",
-  },
-  {
-    id: "4",
-    date: "2025-09-15",
-    name: "West Shift Display",
-    customer_code: "Cu004",
-    customer_name: "Ramesh",
-     valid_from: "2025-09-01",
-  valid_to: "2025-09-30",
-  },
-];
-
 export default function ShelfDisplay() {
+  const {setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<ShelfDisplayItem | null>(null);
@@ -86,46 +44,70 @@ export default function ShelfDisplay() {
     }
   };
 
-  type TableRow = TableDataType & { id?: string };
+  const fetchShelfDisplay = useCallback(
+    async ( pageNo: number = 1, pageSize: number = 10) : Promise<listReturnType> => {
+      setLoading(true);
+      const res = await shelvesList({
+        page: pageNo.toString(),
+        per_page: pageSize.toString(),
+      });
+      setLoading(false);
+      if(res.error) {
+        showSnackbar(res.data.message || "failed to fetch the shelf display", "error");
+        throw new Error("Unable to fetch the shelf display");
+      } else {
+        return {
+          data: res.data || [],
+          currentPage: res?.pagination?.page || 0,
+          pageSize: res?.pagination?.limit || 10,
+          total: res?.pagination?.totalPages || 0,
+        };
+      }
+    }, []
+  )
+
+  useEffect(() => {
+    setLoading(true);
+  }, [])
 
   return (
     <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Shelf Display</h1>
-        <div className="flex gap-[12px] relative">
-          <BorderIconButton icon="gala:file-document" label="Export CSV" />
-          <BorderIconButton icon="mage:upload" />
-          <DismissibleDropdown
-            isOpen={showDropdown}
-            setIsOpen={setShowDropdown}
-            button={<BorderIconButton icon="ic:sharp-more-vert" />}
-            dropdown={
-              <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                <CustomDropdown>
-                  {dropdownDataList.map((link, idx) => (
-                    <div
-                      key={idx}
-                      className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                    >
-                      <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
-                      <span className="text-[#181D27] font-[500] text-[16px]">{link.label}</span>
-                    </div>
-                  ))}
-                </CustomDropdown>
-              </div>
-            }
-          />
-        </div>
-      </div>
-
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={tableData}
           config={{
+            api: {
+              list: fetchShelfDisplay
+            },
             header: {
-              searchBar: true,
+              title: "Shelf Display",
+              wholeTableActions: [
+                <div key={0} className="flex gap-[12px] relative">
+                  <BorderIconButton icon="gala:file-document" label="Export CSV" />
+                  <BorderIconButton icon="mage:upload" />
+                  <DismissibleDropdown
+                    isOpen={showDropdown}
+                    setIsOpen={setShowDropdown}
+                    button={<BorderIconButton icon="ic:sharp-more-vert" />}
+                    dropdown={
+                      <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                        <CustomDropdown>
+                          {dropdownDataList.map((link, idx) => (
+                            <div
+                              key={idx}
+                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                            >
+                              <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
+                              <span className="text-[#181D27] font-[500] text-[16px]">{link.label}</span>
+                            </div>
+                          ))}
+                        </CustomDropdown>
+                      </div>
+                    }
+                  />
+                </div>
+              ],
+              searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn
@@ -133,19 +115,27 @@ export default function ShelfDisplay() {
                   href="/dashboard/merchandiser/shelfDisplay/add"
                   leadingIcon="lucide:plus"
                   label="Add Shelf Display"
-                  labelTw="hidden sm:block"
+                  labelTw="hidden lg:block"
                   isActive
                 />,
               ],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "date", label: "Date" },
-              { key: "name", label: "Name" },
-              { key: "customer_code", label: "Customer Code" },
-              { key: "customer_name", label: "Customer Name" },
+              { key: "shelf_name", label: "Name" },
+              { key: "height", label: "Name" },
+              { key: "width", label: "Customer Code" },
+              { key: "depth", label: "Customer Name" },
               { key: "valid_from", label: "Valid From" },
               { key: "valid_to", label: "Valid To" },
+              { key: "customer_details", label: "Customer Name", render: (data: TableDataType) => {
+                if (Array.isArray(data.customer_details) && data.customer_details.length > 0) {
+                  return data.customer_details
+                    .map((customer) => `${customer.customer_code} - ${customer.owner_name}`)
+                    .join(", ");
+                }
+                return "No customer details available";
+               }},
           
             ],
             rowSelection: true,
@@ -153,14 +143,14 @@ export default function ShelfDisplay() {
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
-                  const row = data as TableRow;
+                  const row = data as TableDataType;
                   router.push(`/dashboard/merchandiser/shelfDisplay/update/${row.id}`);
                 },
               },
               {
                 icon: "lucide:trash-2",
                 onClick: (data: object) => {
-                  const row = data as TableRow;
+                  const row = data as TableDataType;
                   setSelectedRow({ id: row.id, ...row } as ShelfDisplayItem);
                   setShowDeletePopup(true);
                 },
