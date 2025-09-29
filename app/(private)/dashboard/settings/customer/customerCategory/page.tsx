@@ -6,7 +6,7 @@ import Table, { listReturnType, searchReturnType, TableDataType } from "@/app/co
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { customerCategoryList, deleteCustomerCategory, customerCategoryListGlobalSearch, customerCategoryGlobalSearch } from "@/app/services/allApi";
+import { customerCategoryList, deleteCustomerCategory, customerCategoryListGlobalSearch } from "@/app/services/allApi";
 import BorderIconButton from "@/app/components/borderIconButton";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
@@ -94,7 +94,7 @@ export default function CustomerCategoryPage() {
               pageSize: number
           ): Promise<searchReturnType> => {
               setLoading(true);
-              const result = await customerCategoryGlobalSearch({
+              const result = await customerCategoryListGlobalSearch({
                   query: searchQuery,
                   per_page: pageSize.toString(),
               });

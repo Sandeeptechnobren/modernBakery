@@ -11,7 +11,7 @@ import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { addSalesmen } from "@/app/services/allApi";
+import { addSalesman } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 
@@ -156,7 +156,7 @@ export default function AddCustomerStepper() {
          formData.append(key, values[key] ?? "");
        });
  
-       const res = await addSalesmen(formData);
+       const res = await addSalesman(formData);
        if (res.error) {
          showSnackbar(res.data?.message || "Failed to add salesman ❌", "error");
        } else {
