@@ -31,7 +31,6 @@ export default function AddCountry() {
     country_name: string;
     currency: string;
   };
-
   const initialValues: CountryFormValues = {
     country_code: "",
     country_name: "",

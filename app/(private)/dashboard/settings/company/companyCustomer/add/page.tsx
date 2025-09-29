@@ -241,7 +241,6 @@ export default function AddCompanyCustomer() {
     merchendiser_ids: "",
     status: "1",
   };
-
   const handleNext = async (
     values: CompanyCustomerFormValues,
     actions: FormikHelpers<CompanyCustomerFormValues>

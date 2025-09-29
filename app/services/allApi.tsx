@@ -1433,133 +1433,133 @@ export const addCustomerSubCategory = async (body:object) => {
     return handleError(error);
   }
 };
-
-export const countryListGlobalSearch = async (params?:Params) => {
+export const planogramList = async () => {
   try {
-    const res = await API.get(`/api/master/country/global_search`, { params: params });
+              const res = await API.get("/api/merchendisher/planogram/list");
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const deletePlanogram = async (id:string) => {
+  try {
+              const res = await API.delete(`/api/merchendisher/planogram/delete/${id}`);
+    return res.data;
+  } catch (error: unknown) {  
+    return handleError(error);
+  }
+};
+
+type Payloadplanogram = {
+  name: string;
+  valid_from: string;
+  valid_to: string;
+  status: number;
+};
+export const addPlanogram = async (payload: Payloadplanogram) => {
+  try {
+    const res = await API.post("/api/merchendisher/planogram/create", payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const customerCategoryGlobalSearch = async (params?:Params) => {
+type updatePayload = {
+  name: string;
+  valid_from: string;
+  valid_to: string;
+  status: number;
+};
+
+export const updatePlanogram = async (id: string, payload: updatePayload) => {
   try {
-    const res = await API.get(`/api/settings/customer-category/global_search`, { params: params });
+    // ✅ Send payload directly
+    const res = await API.put(`/api/merchendisher/planogram/update/${id}`, payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
-
-export const regionGlobalSearch = async (params?:Params) => {
+export const getPlanogramById = async (id:string) => {
   try {
-    const res = await API.get(`/api/master/region/global_search`, { params: params });
+              const res = await API.get(`/api/merchendisher/planogram/show/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
-
-export const vehicleGlobalSearch = async (params?:Params) => {
+export const SurveyList = async () => {
   try {
-    const res = await API.get(`/api/master/vehicle/global_search`, { params: params });
+              const res = await API.get("/api/merchendisher/survey/list");
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
-
-export const salesmanList = async (params?:Params) => {
+export const deleteSurvey = async (id:string) => {
   try {
-    const res = await API.get(`/api/master/salesmen/list`, { params: params });
+              const res = await API.delete(`/api/merchendisher/survey/${id}`);  
     return res.data;
-  } catch (error: unknown) {
+  } catch (error: unknown) {  
     return handleError(error);
   }
 };
-
-export const addSalesmen = async (body:object) => {
-  try{
-    const res = await API.post(`/api/master/salesmen/add`,body)
+type PayloadSurvey= {
+  survey_code: string;
+  survey_name: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+};
+export const addSurvey = async (payload: PayloadSurvey) => {
+  try {
+    const res = await API.post("/api/merchendisher/survey/add", payload);
     return res.data;
-  }catch (error: unknown) {
-    return handleError(error)
+  } catch (error: unknown) {
+    return handleError(error);
   }
 }
+type updateSurvey = {
 
-export const deleteSalesman = async (uuid:string) => {
+  survey_name: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+};
+
+export const updateSurvey = async (id: string, payload: updateSurvey) => {
   try {
-    const res = await API.delete(`/api/master/salesmen/${uuid}`);
+    // ✅ Send payload directly
+    const res = await API.put(`/api/merchendisher/survey/${id}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const getSurveyById = async (id:string) => {
+  try {
+              const res = await API.get(`/api/merchendisher/survey/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const updateSalesman = async (uuid:string, body:object) => {
+export const SurveyQuestionList = async () => {
   try {
-    const res = await API.put(`/api/master/salesmen/update/${uuid}`, body);
+              const res = await API.get("/api/merchendisher/survey-questions/list");
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const getSalesmanById = async (uuid:string) => {
+export const deleteSurveyQuestion = async (id:string) => {
   try {
-    const res = await API.get(`/api/master/salesmen/${uuid}`);
-    console.log("Daya",res)
+              const res = await API.delete(`/api/merchendisher/survey-questions/${id}`);  
     return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-
-export const discountList = async (params?:Params) => {
-  try {
-    const res = await API.get(`/api/master/discount/list`, { params: params });
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-
-export const addDiscount = async (body:object) => {
-  try{
-    const res = await API.post(`/api/master/discount/create`,body)
-    return res.data;
-  }catch (error: unknown) {
-    return handleError(error)
-  }
-}
-
-export const deleteDiscount = async (uuid:string) => {
-  try {
-    const res = await API.delete(`/api/master/discount/delete/${uuid}`);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-export const updateDiscount = async (uuid:string, body:object) => {
-  try {
-    const res = await API.put(`/api/master/discount/update/${uuid}`, body);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-export const getDiscountById = async (uuid:string) => {
-  try {
-    const res = await API.get(`/api/master/discount/discount/${uuid}`);
-    console.log("Daya",res)
-    return res.data;
-  } catch (error: unknown) {
+  } catch (error: unknown) {  
     return handleError(error);
   }
 };
