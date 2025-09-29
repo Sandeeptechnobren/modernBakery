@@ -11,7 +11,7 @@ import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import Loading from "@/app/components/Loading";
-import { getCustomerType, updateCustomerType } from "@/app/services/allApi";
+import { getCustomerTypeById, updateCustomerType } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface CustomerTypeForm {
@@ -55,9 +55,9 @@ export default function UpdateCustomerTypePage() {
   useEffect(() => {
     const fetchCustomerType = async () => {
       try {
-        const res = await getCustomerType();
+        const res = await getCustomerTypeById(id);
+        console.log(res)
         const customer = res?.data;
-
         if (customer) {
           formik.setValues({
             name: customer.name || "",

@@ -10,6 +10,23 @@ import Popup from "@/app/components/popUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import CreateUpdate from "./createUpdate";
 import StatusBtn from "@/app/components/statusBtn2";
+import BorderIconButton from "@/app/components/borderIconButton";
+import { Icon } from "@iconify-icon/react";
+import CustomDropdown from "@/app/components/customDropdown";
+
+interface DropdownItem {
+  icon: string;
+  label: string;
+  iconWidth: number;
+}
+
+const dropdownDataList: DropdownItem[] = [
+  // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
+  // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
+  // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
+  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
+];
 
 const columns = [
     { key: "id", label: "Promtion Id" },
@@ -33,6 +50,7 @@ export default function Category() {
     const [promotionData, setPromotionData] = useState<TableDataType[]>(
         [] as TableDataType[]
     );
+    const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const { showSnackbar } = useSnackbar();
     const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
@@ -69,11 +87,7 @@ export default function Category() {
         <Loading />
     ) : (
         <>
-            <div className="flex justify-between items-center mb-[20px]">
-                <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                    Promotion Type
-                </h1>
-            </div>
+            
 
             {showDeletePopup && (
                 <Popup isOpen={true} onClose={() => setShowDeletePopup(false)}>
@@ -122,6 +136,48 @@ export default function Category() {
                                 }
                             },
                             header: {
+                                title: "Promotion Type",
+                                              wholeTableActions: [
+                                                <div key={0} className="flex gap-[12px] relative">
+                                                  <BorderIconButton
+                                                    icon="ic:sharp-more-vert"
+                                                    onClick={() =>
+                                                      setShowDropdown(!showDropdown)
+                                                    }
+                                                  />
+                                
+                                                  {showDropdown && (
+                                                    <div className="w-[226px] absolute top-[40px] right-0 z-30">
+                                                      <CustomDropdown>
+                                                        {dropdownDataList.map(
+                                                          (
+                                                            link,
+                                                            index: number
+                                                          ) => (
+                                                            <div
+                                                              key={index}
+                                                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                                            >
+                                                              <Icon
+                                                                icon={
+                                                                  link.icon
+                                                                }
+                                                                width={
+                                                                  link.iconWidth
+                                                                }
+                                                                className="text-[#717680]"
+                                                              />
+                                                              <span className="text-[#181D27] font-[500] text-[16px]">
+                                                                {link.label}
+                                                              </span>
+                                                            </div>
+                                                          )
+                                                        )}
+                                                      </CustomDropdown>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              ],
                                 searchBar: false,
                                 columnFilter: true,
                                 actions: [

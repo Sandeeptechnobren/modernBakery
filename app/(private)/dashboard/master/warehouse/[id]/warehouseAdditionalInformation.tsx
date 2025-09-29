@@ -74,8 +74,8 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                 value={values.is_branch}
                 onChange={handleChange}
                 options={[
-                    { value: "yes", label: "Yes" },
-                    { value: "no", label: "No" },
+                    { value: "1", label: "Yes" },
+                    { value: "0", label: "No" },
                 ]}
                 error={errors?.is_branch && touched?.is_branch ? errors.is_branch : false}
             />
@@ -86,8 +86,8 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                 value={values.invoice_sync}
                 onChange={handleChange}
                 options={[
-                    { value: "enabled", label: "Enabled" },
-                    { value: "disabled", label: "Disabled" },
+                    { value: "1", label: "Enabled" },
+                    { value: "0", label: "Disabled" },
                 ]}
                 error={errors?.invoice_sync && touched?.invoice_sync ? errors.invoice_sync : false}
             />

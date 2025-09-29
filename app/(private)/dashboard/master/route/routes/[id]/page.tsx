@@ -77,7 +77,7 @@ export default function EditRoute() {
         setFetched({
           route_code: data?.route_code,
           route_name: data?.route_name,
-          warehouse: data?.warehouse,
+          warehouse: data?.warehouse.id,
           route_type: data?.route_type,
           vehicle_id: data?.vehicle_id,
           status: data?.status,
@@ -86,7 +86,7 @@ export default function EditRoute() {
         // Set individual state values
         setRouteCode(data?.route_code || "");
         setRouteName(data?.route_name || "");
-        setWarehouse(data?.warehouse || "");
+        setWarehouse(data?.warehouse.id || "");
         setRouteType(routeTypeArray);
         setStatus(data?.status ? String(data?.status) : "");
         
@@ -222,9 +222,9 @@ required
                                     label="Route Type"
                                     name="route_type"
                                     value={routeType}
-                                    onChange={handleRouteTypeChange}
+                                    onChange={(e)=>e.target.value}
                                     options={routeTypeOptions}
-                                    isSingle={false}
+                                    
                                   />
                 {errors.route_type && (
                   <p className="text-red-500 text-sm mt-1">{errors.route_type}</p>

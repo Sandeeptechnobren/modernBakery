@@ -96,7 +96,7 @@ export default function AddCustomerSubCategory() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Customer Category Dropdown */}
-            <SearchableDropdown
+            <InputFields
               label="Customer Category"
               name="customer_category_id"
               value={formik.values.customer_category_id}

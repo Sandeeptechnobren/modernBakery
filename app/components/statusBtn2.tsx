@@ -7,7 +7,7 @@ export default function StatusBtn({ isActive }: { isActive: boolean }) {
         </span>
     ) : (
         <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-            Inactive
+            In Active
         </span>
     );
 }

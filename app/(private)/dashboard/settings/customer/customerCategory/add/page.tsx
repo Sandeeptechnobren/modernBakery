@@ -90,7 +90,7 @@ export default function AddCustomerCategory() {
             Customer Category Details
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <SearchableDropdown
+            <InputFields
               label="Outlet Channel"
               name="outlet_channel_id"
               value={formik.values.outlet_channel_id}

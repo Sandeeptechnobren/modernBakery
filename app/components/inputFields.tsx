@@ -42,6 +42,12 @@ export default function InputFields({
   loading = false
 }: Props) {
 
+  const [dropdownProperties, setDropdownProperties] = useState({
+    width: "0",
+    top: "0",
+    left: "0"
+  })
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -53,16 +59,23 @@ export default function InputFields({
     opt.label.toLowerCase().includes(search.toLowerCase())
   ) || [];
 
-  useEffect(() => {
-    if (!isMulti || !dropdownOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
+useEffect(() => {
+    const dropdown = dropdownRef.current;
+      if (dropdown) {
+        const { width, top, left, height } = dropdown.getBoundingClientRect();
+        setDropdownProperties({ width: `${width}px`, top: `${top+height}px`, left: `${left}px` });
+    }
+    function handleClick(event: MouseEvent) {
+            // Check if the ref exists and if the clicked target is a node
+            if (dropdownRef.current && event.target instanceof Node) {
+                if (!dropdownRef.current.contains(event.target)) {
+                    setDropdownOpen(false);
+                }
+            }
+        }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [dropdownOpen, isMulti]);
+  }, [dropdownOpen]);
 
 
   // Custom event types for select
@@ -142,7 +155,7 @@ export default function InputFields({
           </div>
           {dropdownOpen && !loading && (
             <>
-              <div className="absolute left-0 right-0 top-full z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+              <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                 <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
                   <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
                   <input
@@ -212,7 +225,7 @@ export default function InputFields({
             <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
           </div>
           {dropdownOpen && !loading && (
-            <div className="absolute left-0 right-0 top-full z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+            <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
               <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
                 <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
                 <input

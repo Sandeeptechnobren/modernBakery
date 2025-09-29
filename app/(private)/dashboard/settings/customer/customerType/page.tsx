@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect ,useCallback} from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { TableDataType,listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Loading from "@/app/components/Loading";
+import { useLoading } from "@/app/services/loadingContext";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -23,9 +23,9 @@ interface CustomerType {
 }
 
 const dropdownDataList = [
-  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+  // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
+  // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
+  // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
@@ -54,7 +54,7 @@ const columns = [
 
 export default function CustomerPage() {
   const [customers, setCustomers] = useState<CustomerType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<CustomerType | null>(null);
@@ -75,22 +75,50 @@ export default function CustomerPage() {
   }));
 
   // fetch list
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const res = await getCustomerType();
-        setCustomers(res?.data || []);
-      } catch (error) {
-        console.error("Failed to fetch customers ❌", error);
-        showSnackbar("Failed to fetch customers ❌", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCustomers();
-  }, [refresh]);
+  // useEffect(() => {
+  //   const fetchCustomers = async () => {
+  //     try {
+  //       const res = await getCustomerType();
+  //       setCustomers(res?.data || []);
+  //     } catch (error) {
+  //       console.error("Failed to fetch customers ❌", error);
+  //       showSnackbar("Failed to fetch customers ❌", "error");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchCustomers();
+  // }, [refresh]);
 
-  // delete handler
+          const fetchCustomerType = useCallback(
+              async (
+                  page: number = 1,
+                  pageSize: number = 1
+              ): Promise<listReturnType> => {
+                  try {
+                    setLoading(true);
+                      const listRes = await getCustomerType({
+                          per_page: pageSize.toString(),
+                          page: page.toString(),
+                      });
+                      setLoading(false);
+                      return {
+                          data: listRes.data || [],
+                          total: listRes.pagination.totalPages ,
+                          currentPage: listRes.pagination.page ,
+                          pageSize: listRes.pagination.limit ,
+                      };
+                  } catch (error: unknown) {
+                      console.error("API Error:", error);
+                      setLoading(false);
+                      throw error;
+                  }
+              },
+              []
+          );
+  //          useEffect(() => {
+  //   setLoading(true);
+  // });
  const handleConfirmDelete = async () => {
   if (!selectedRow?.id) return;
 
@@ -104,7 +132,6 @@ export default function CustomerPage() {
       );
 
       showSnackbar("Customer deleted successfully ✅", "success");
-setRefresh(!refresh);
       // optional: if list becomes empty after delete
       if (customers.length === 1) {
         // after deleting last item, customers will be []
@@ -123,55 +150,63 @@ setRefresh(!refresh);
 };
 
 
-  if (loading) return <Loading />;
+
 
   return (
     <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-[20px]">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">
-          Customer Type
-        </h1>
-
-        <div className="flex gap-[12px] relative">
-          <BorderIconButton icon="gala:file-document" label="Export CSV" />
-          <BorderIconButton icon="mage:upload" />
-
-          <DismissibleDropdown
-            isOpen={showDropdown}
-            setIsOpen={setShowDropdown}
-            button={<BorderIconButton icon="ic:sharp-more-vert" />}
-            dropdown={
-              <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                <CustomDropdown>
-                  {dropdownDataList.map((link, idx) => (
-                    <div
-                      key={idx}
-                      className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                    >
-                      <Icon
-                        icon={link.icon}
-                        width={link.iconWidth}
-                        className="text-[#717680]"
-                      />
-                      <span className="text-[#181D27] font-[500] text-[16px]">
-                        {link.label}
-                      </span>
-                    </div>
-                  ))}
-                </CustomDropdown>
-              </div>
-            }
-          />
-        </div>
-      </div>
+      
 
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={tableData}
+          
           config={{
+            api:{
+                            list: fetchCustomerType,
+            },
             header: {
+              title: "Customer Type",
+                            wholeTableActions: [
+                              <div key={0} className="flex gap-[12px] relative">
+                                <BorderIconButton
+                                  icon="ic:sharp-more-vert"
+                                  onClick={() =>
+                                    setShowDropdown(!showDropdown)
+                                  }
+                                />
+              
+                                {showDropdown && (
+                                  <div className="w-[226px] absolute top-[40px] right-0 z-30">
+                                    <CustomDropdown>
+                                      {dropdownDataList.map(
+                                        (
+                                          link,
+                                          index: number
+                                        ) => (
+                                          <div
+                                            key={index}
+                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                          >
+                                            <Icon
+                                              icon={
+                                                link.icon
+                                              }
+                                              width={
+                                                link.iconWidth
+                                              }
+                                              className="text-[#717680]"
+                                            />
+                                            <span className="text-[#181D27] font-[500] text-[16px]">
+                                              {link.label}
+                                            </span>
+                                          </div>
+                                        )
+                                      )}
+                                    </CustomDropdown>
+                                  </div>
+                                )}
+                              </div>
+                            ],
               searchBar: true,
               columnFilter: true,
               actions: [
@@ -212,7 +247,7 @@ setRefresh(!refresh);
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 5,
           }}
         />
       </div>

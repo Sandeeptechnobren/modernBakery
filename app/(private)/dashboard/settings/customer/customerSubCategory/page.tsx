@@ -99,9 +99,9 @@ export default function CustomerSubCategoryPage() {
   }));
 
   const columns = [
-    { key: "customer_category_name", label: "Category Name" },
     { key: "customer_sub_category_code", label: "Sub-Category Code" },
     { key: "customer_sub_category_name", label: "Sub-Category Name" },
+    { key: "customer_category_name", label: "Category Name" },
    {
         key: "status",
         label: "Status",

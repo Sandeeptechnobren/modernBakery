@@ -155,8 +155,8 @@ export default function AddVehicleWithStepper() {
     }
     try {
       const payload = {
-        number_plate: form.numberPlate,
-        vehicle_chassis_no: form.chassisNumber,
+        number_plat: form.numberPlate,
+        vehicle_chesis_no: form.chassisNumber,
         description: form.description,
         vehicle_brand: form.vehicleBrand,
         capacity: form.capacity,

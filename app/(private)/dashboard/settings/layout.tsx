@@ -185,7 +185,7 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                 {/* Content */}
                 <div
                     className={`${showMainScreen ? "block" : "hidden md:block "
-                        } flex-1 overflow-auto p-3 md:p-5`}
+                        } flex-1 overflow-auto p-3 md:p-5 scrollbar-none`}
                 >
                     {children}
                 </div>

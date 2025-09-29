@@ -100,6 +100,8 @@ interface CompanyFormValues {
   status: string;
 }
 
+
+
 /* ---------------- COMPONENT ---------------- */
 export default function EditCompany() {
   const { id: queryId } = useParams();
@@ -151,9 +153,34 @@ export default function EditCompany() {
     validationSchema: CompanySchema,
     enableReinitialize: true,
     onSubmit: async (values) => {
-      if (!queryId) return;
-      try {
-        const res = await updateCompany(queryId as string, values);
+  if (!queryId) return;
+  try {
+    const payload = {
+      company_code: values.companyCode,
+      company_name: values.companyName,
+      company_type: values.companyType,
+      email: values.email,
+      country_id: values.country,
+      tin_number: values.tinNumber,
+      selling_currency: values.sellingCurrency,
+      purchase_currency: values.purchaseCurrency,
+      service_type: values.serviceType,
+      status: values.status,
+      district: values.district,
+      town: values.town,
+      street: values.street,
+      region: values.region,
+      sub_region: values.subRegion,
+      primary_contact: values.primaryContact,
+      toll_free_no: values.tollFreeNumber,
+      vat: values.vatNo,
+      module_access: values.module_access, // assuming API expects array
+      website: values.companyWebsite,
+      logo: "logo.png", // optional if you want to send static
+      address: `${values.street}, ${values.town}`, // optional if API wants a single address string
+    };
+
+        const res = await updateCompany(queryId as string, payload);
         if (res?.error) {
           showSnackbar(res?.data?.message || "Failed to update company ❌", "error");
         } else {

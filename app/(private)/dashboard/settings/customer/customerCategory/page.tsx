@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Loading from "@/app/components/Loading";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { customerCategoryList, deleteCustomerCategory, channelList } from "@/app/services/allApi";
+import { customerCategoryList, deleteCustomerCategory, customerCategoryListGlobalSearch, customerCategoryGlobalSearch } from "@/app/services/allApi";
 import BorderIconButton from "@/app/components/borderIconButton";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
+import StatusBtn from "@/app/components/statusBtn2";
+import { useLoading } from "@/app/services/loadingContext";
 
 // ✅ API types
 interface OutletChannel {
@@ -36,8 +37,8 @@ interface CustomerCategory {
 
 export default function CustomerCategoryPage() {
   const [categories, setCategories] = useState<CustomerCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [outletChannels, setOutletChannels] = useState<Record<string, string>>({});
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { setLoading } = useLoading();
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CustomerCategory | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -45,142 +46,144 @@ export default function CustomerCategoryPage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // ✅ Fetch outlet channels to map id → code
-  useEffect(() => {
-    const fetchChannels = async () => {
-      try {
-        const res = await channelList();
-        const map: Record<string, string> = {};
-        (res.data || []).forEach((oc: OutletChannel) => {
-          map[oc.id] = oc.outlet_channel_code;
-        });
-        setOutletChannels(map);
-      } catch (error) {
-        console.error("Failed to fetch outlet channels ❌", error);
+  const fetchCategories = async (page: number = 1, pageSize: number = 10): Promise<listReturnType> => {
+      setLoading(true);
+      const res = await customerCategoryList({
+        per_page: pageSize.toString(),
+        page: page.toString()
+      });
+      setLoading(false);
+
+      if(res.error){
+        showSnackbar(res.data.message || "Failed to fetch customer categories ❌", "error");
+        throw new Error("Unable to fetch the customer categories");
+      } else {
+        return {
+          data: res.data || [],
+          currentPage: res.pagination.page || page,
+          pageSize: res.pagination.limit || pageSize,
+          total: res.pagination.totalPages || 1
+        }
       }
-    };
-    fetchChannels();
-  }, []);
+  };
 
-  // ✅ Fetch categories and map status & outlet code
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await customerCategoryList();
-        console.log("API Categories Raw ✅", res.data);
+  const searchCategories = async (query: string, pageSize: number = 10): Promise<searchReturnType> => {
+      setLoading(true);
+      const res = await customerCategoryListGlobalSearch({
+        query: query,
+        per_page: pageSize.toString()
+      });
+      setLoading(false);
 
-        const formatted: CustomerCategory[] = (res.data || []).map((c: CustomerCategoryAPI) => ({
-          id: c.id,
-          outlet_channel_code: outletChannels[c.outlet_channel_id] || c.outlet_channel_id,
-          customer_category_code: c.customer_category_code,
-          customer_category_name: c.customer_category_name,
-          status: c.status, // keep as number (1 or 0) instead of converting to string
-        }));
-
-        console.log("Fetched Categories ✅", formatted);
-        setCategories(formatted);
-      } catch (error) {
-        console.error("API Error ❌", error);
-        showSnackbar("Failed to load customer categories ❌", "error");
-      } finally {
-        setLoading(false);
+      if(res.error){
+        showSnackbar(res.data.message || "Failed to search customer categories", "error");
+        throw new Error("Unable to fetch the customer categories");
+      } else {
+        return {
+          data: res.data || [],
+          currentPage: res.pagination.page || 1,
+          pageSize: res.pagination.limit || pageSize,
+          total: res.pagination.totalPages || 1
+        }
       }
-    };
+  };
 
-    if (Object.keys(outletChannels).length > 0) fetchCategories(); // wait for channels
-  }, [outletChannels, showSnackbar]);
-
+     const searchCustomerCategory = useCallback(
+          async (
+              searchQuery: string,
+              pageSize: number
+          ): Promise<searchReturnType> => {
+              setLoading(true);
+              const result = await customerCategoryGlobalSearch({
+                  query: searchQuery,
+                  per_page: pageSize.toString(),
+              });
+              setLoading(false);
+              if (result.error) throw new Error(result.data.message);
+              else {
+                  return {
+                      data: result.data || [],
+                      total: result.pagination.pagination.totalPages || 0,
+                      currentPage: result.pagination.pagination.current_page || 0,
+                      pageSize: result.pagination.pagination.limit || pageSize,
+                  };
+              }
+          },
+          []
+      );
   // ✅ Delete handler
   const handleDelete = async () => {
     if (!selectedCategory?.id) return;
-    try {
-      await deleteCustomerCategory(selectedCategory.id);
-      showSnackbar("Customer Category deleted ✅", "success");
-      setCategories(prev => prev.filter(c => c.id !== selectedCategory.id));
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Failed to delete category ❌", "error");
-    } finally {
+      const res = await deleteCustomerCategory(selectedCategory.id);
+      if(res.error) showSnackbar(res.data.message || "Failed to delete category", "error");
+      else {
+        showSnackbar(res.message || "Customer Category deleted", "success");
+        setRefreshKey(prev => prev+1);
+      }
       setShowDeletePopup(false);
       setSelectedCategory(null);
-    }
   };
 
-  // ✅ Table data with status converted for display
-  const tableData: TableDataType[] = categories.map(c => ({
-    id: c.id,
-    outlet_channel_code: c.outlet_channel_code,
-    customer_category_code: c.customer_category_code,
-    customer_category_name: c.customer_category_name,
-    status: c.status === 1 ? "Active" : "Inactive", // convert to string but with correct comparison
-  }));
-
-  const columns = [
-    { key: "outlet_channel_code", label: "Outlet Channel Code" },
+  const columns = useMemo(() => [
+    { key: "outlet_channel", label: "Outlet Channel Code", render:(data: TableDataType) =>{
+      if (typeof data.outlet_channel === "object" && data.outlet_channel !== null) {
+        return (data.outlet_channel as { outlet_channel_code?: string }).outlet_channel_code || "-";
+      }
+      return "-";
+    } },
     { key: "customer_category_code", label: "Code" },
     { key: "customer_category_name", label: "Name" },
     {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {row.status === "Active" ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
- ),
-},
-  ];
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => <StatusBtn isActive={row.status ? true : false} />
+    },
+  ], []);
 
-  if (loading) return <Loading />;
+  useEffect(() => {
+    setLoading(true);
+  }, [])
 
   return (
     <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-[20px]">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Customer Category</h1>
-
-        <div className="flex gap-[12px] relative">
-          <BorderIconButton icon="gala:file-document" label="Export CSV" />
-          <BorderIconButton icon="mage:upload" />
-
-          <DismissibleDropdown
-            isOpen={showDropdown}
-            setIsOpen={setShowDropdown}
-            button={<BorderIconButton icon="ic:sharp-more-vert" />}
-            dropdown={
-              <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                <CustomDropdown>
-                  {["SAP", "Download QR Code", "Print QR Code", "Inactive", "Delete"].map(
-                    (label, idx) => (
-                      <div
-                        key={idx}
-                        className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                      >
-                        <span className="text-[#181D27] font-[500] text-[16px]">{label}</span>
-                      </div>
-                    )
-                  )}
-                </CustomDropdown>
-              </div>
-            }
-          />
-        </div>
-      </div>
-
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={tableData}
+          // data={tableData}
+          refreshKey={refreshKey}
           config={{
+            api: {
+              list: fetchCategories,
+              search: searchCategories
+            },
             header: {
-              searchBar: true,
+              title:  "Customer Category",
+              wholeTableActions:[
+                <div key={0} className="flex gap-[12px] relative">
+                  <DismissibleDropdown
+                    isOpen={showDropdown}
+                    setIsOpen={setShowDropdown}
+                    button={<BorderIconButton icon="ic:sharp-more-vert" />}
+                    dropdown={
+                      <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                        <CustomDropdown>
+                          {["SAP", "Download QR Code", "Print QR Code", "Inactive", "Delete"].map(
+                            (label, idx) => (
+                              <div
+                                key={idx}
+                                className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                              >
+                                <span className="text-[#181D27] font-[500] text-[16px]">{label}</span>
+                              </div>
+                            )
+                          )}
+                        </CustomDropdown>
+                      </div>
+                    }
+                  />
+                </div>
+              ],
+              searchBar: true,  
               columnFilter: true,
               actions: [
                 <SidebarBtn
@@ -189,11 +192,11 @@ export default function CustomerCategoryPage() {
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add Category"
-                  labelTw="hidden sm:block"
+                  labelTw="hidden xl:block"
                 />,
               ],
             },
-            pageSize: 5,
+            pageSize: 2,
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,

@@ -83,7 +83,7 @@ export default function Sidebar({
                   {group.name}
                 </div>
                 <ul className="w-full flex flex-col gap-[6px]">
-                  {group.data.map((link: LinkDataType) => {
+                  {group.data.map((link: LinkDataType, index) => {
                     const hasChildren = Boolean(link.children && link.children.length > 0);
                     const isChildrenOpen = openMenus[link.label] ?? false;
 
@@ -98,7 +98,7 @@ export default function Sidebar({
                     const isActive = link.href === activeHref || isParentActive(link.children);
 
                     return (
-                      <li key={link.href}>
+                      <li key={link.href+index}>
                         <SidebarBtn
                           isActive={isActive}
                           href={hasChildren ? "#" : link.href} // don't redirect if parent

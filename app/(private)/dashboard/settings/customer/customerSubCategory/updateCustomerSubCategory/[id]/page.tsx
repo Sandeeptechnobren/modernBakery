@@ -124,7 +124,7 @@ export default function UpdateCustomerSubCategory() {
           <h2 className="text-lg font-semibold mb-6">Sub-Category Details</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <SearchableDropdown
+            <InputFields
               label="Category"
               name="customer_category_id"
               value={formik.values.customer_category_id}

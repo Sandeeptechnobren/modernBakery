@@ -19,7 +19,7 @@ interface CompanyCustomerPayload {
   sap_code: string;
   customer_code: string;
   business_name: string;
-  customer_type: number;
+  customer_type: string;
   owner_name: string;
   owner_no: string;
   is_whatsapp: number;
@@ -35,13 +35,13 @@ interface CompanyCustomerPayload {
   region_id: number;
   area_id: number;
   balance: number;
-  payment_type: number;
+  payment_type: string;
   bank_name: string;
   bank_account_number: string;
   creditday: string;
   tin_no: string;
-  accuracy?: string;
-  credit_limit: number;
+  accuracy: string;
+  creditlimit: number;
   totalcreditlimit: number;
   credit_limit_validity?: string;
   guarantee_name: string;
@@ -53,6 +53,7 @@ interface CompanyCustomerPayload {
   latitude: string;
   threshold_radius: number;
   dchannel_id: number;
+  merchendiser_ids: number;
   status: number;
 }
 
@@ -91,7 +92,8 @@ const CompanyCustomerSchema = Yup.object().shape({
   longitude: Yup.string().required("Longitude is required."),
   latitude: Yup.string().required("Latitude is required."),
   thresholdRadius: Yup.number().required("Threshold Radius is required."),
-  dChannelId: Yup.string().required("DChannel is required."),
+  channelId: Yup.string().required("Channel is required."),
+  merchendiser_ids: Yup.string().required("Merchendiser is required."),
 });
 
 const stepSchemas = [
@@ -116,6 +118,10 @@ const stepSchemas = [
     district: Yup.string().required("District is required."),
     region: Yup.string().required("Region is required."),
     area: Yup.string().required("Area is required."),
+    tinNo: Yup.string().required("TIN No is required."),
+    longitude: Yup.string().required("Longitude is required."),
+    latitude: Yup.string().required("Latitude is required."),
+    thresholdRadius: Yup.number().required("Threshold Radius is required."),
   }),
   Yup.object({
     balance: Yup.number().typeError("Balance must be a number").required("Balance is required."),
@@ -130,11 +136,8 @@ const stepSchemas = [
     guaranteeFrom: Yup.date().required("Guarantee From is required."),
     guaranteeTo: Yup.date().required("Guarantee To is required."),
     vatNo: Yup.string().required("VAT No is required."),
-    tinNo: Yup.string().required("TIN No is required."),
-    longitude: Yup.string().required("Longitude is required."),
-    latitude: Yup.string().required("Latitude is required."),
-    thresholdRadius: Yup.number().required("Threshold Radius is required."),
-    dChannelId: Yup.string().required("DChannel is required."),
+    channelId: Yup.string().required("Channel is required."),
+    merchendiser_ids: Yup.string().required("Merchendiser is required."),
   }),
 ];
 
@@ -178,13 +181,14 @@ type CompanyCustomerFormValues = {
   thresholdRadius: string;
   dChannelId: string;
   status: string;
+  merchendiser_ids: string;
 };
 
 // ---------------------- Component ----------------------
 export default function AddCompanyCustomer() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { regionOptions, areaOptions } = useAllDropdownListData();
+  const { regionOptions, areaOptions, customerTypeOptions } = useAllDropdownListData();
 
   const steps: StepperStep[] = [
     { id: 1, label: "Company Customer" },
@@ -216,7 +220,7 @@ export default function AddCompanyCustomer() {
     region: "",
     area: "",
     balance: "",
-    paymentType: "1",
+    paymentType: "",
     bankName: "",
     bankAccountNumber: "",
     creditDay: "",
@@ -234,6 +238,7 @@ export default function AddCompanyCustomer() {
     latitude: "",
     thresholdRadius: "",
     dChannelId: "",
+    merchendiser_ids: "",
     status: "1",
   };
 
@@ -278,7 +283,7 @@ export default function AddCompanyCustomer() {
         sap_code: values.sapCode,
         customer_code: values.customerCode,
         business_name: values.businessName,
-        customer_type: Number(values.customerType),
+        customer_type: String(values.customerType),
         owner_name: values.ownerName,
         owner_no: values.ownerNumber,
         is_whatsapp: Number(values.isWhatsapp),
@@ -294,15 +299,15 @@ export default function AddCompanyCustomer() {
         region_id: Number(values.region),
         area_id: Number(values.area),
         balance: Number(values.balance),
-        payment_type: Number(values.paymentType),
+        payment_type: values.paymentType,
         bank_name: values.bankName,
         bank_account_number: values.bankAccountNumber,
         creditday: String(values.creditDay),
         tin_no: values.tinNo,
         accuracy: values.accuracy || "",
-        credit_limit: Number(values.creditLimit),
+        creditlimit: Number(values.creditLimit),
         totalcreditlimit: Number(values.totalCreditLimit),
-        credit_limit_validity: values.creditLimitValidity || "",
+        credit_limit_validity: values.creditLimitValidity,
         guarantee_name: values.guaranteeName,
         guarantee_amount: Number(values.guaranteeAmount),
         guarantee_from: values.guaranteeFrom,
@@ -312,6 +317,7 @@ export default function AddCompanyCustomer() {
         latitude: values.latitude,
         threshold_radius: Number(values.thresholdRadius),
         dchannel_id: Number(values.dChannelId),
+       merchendiser_ids: Number(values.merchendiser_ids),
         status: Number(values.status),
       };
 
@@ -352,118 +358,368 @@ export default function AddCompanyCustomer() {
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">Company Customer Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[
-                { label: "SAP Code", name: "sapCode" },
-                { label: "Customer Code", name: "customerCode" },
-                { label: "Business Name", name: "businessName" },
-                { label: "Customer Type", name: "customerType", options: [{ value: "1", label: "Type 1" }, { value: "2", label: "Type 2" }] },
-                { label: "Owner Name", name: "ownerName" },
-                { label: "Owner Number", name: "ownerNumber" },
-                { label: "Email", name: "email" },
-                { label: "Language", name: "language" },
-              ].map((field) => (
-                <div key={field.name}>
-                  <InputFields
-                    label={field.label}
-                    name={field.name}
-                    value={values[field.name as keyof CompanyCustomerFormValues]}
-                    onChange={(e) => setFieldValue(field.name as keyof CompanyCustomerFormValues, e.target.value)}
-                    options={field.options}
-                  />
-                  <ErrorMessage name={field.name} component="span" className="text-xs text-red-500 mt-1" />
-                </div>
-              ))}
+              <InputFields
+                label="SAP Code"
+                name="sapCode"
+                value={values.sapCode}
+                onChange={(e) => setFieldValue("sapCode", e.target.value)}
+              />
+              <ErrorMessage name="sapCode" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Customer Code"
+                name="customerCode"
+                value={values.customerCode}
+                onChange={(e) => setFieldValue("customerCode", e.target.value)}
+              />
+              <ErrorMessage name="customerCode" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Business Name"
+                name="businessName"
+                value={values.businessName}
+                onChange={(e) => setFieldValue("businessName", e.target.value)}
+              />
+              <ErrorMessage name="businessName" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Customer Type"
+                name="customerType"
+                value={values.customerType}
+                onChange={(e) => setFieldValue("customerType", e.target.value)}
+                options={customerTypeOptions}
+              />
+              <ErrorMessage name="customerType" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Owner Name"
+                name="ownerName"
+                value={values.ownerName}
+                onChange={(e) => setFieldValue("ownerName", e.target.value)}
+              />
+              <ErrorMessage name="ownerName" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Owner Number"
+                name="ownerNumber"
+                value={values.ownerNumber}
+                onChange={(e) => setFieldValue("ownerNumber", e.target.value)}
+              />
+              <ErrorMessage name="ownerNumber" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Email"
+                name="email"
+                value={values.email}
+                onChange={(e) => setFieldValue("email", e.target.value)}
+              />
+              <ErrorMessage name="email" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Language"
+                name="language"
+                value={values.language}
+                onChange={(e) => setFieldValue("language", e.target.value)}
+              />
+              <ErrorMessage name="language" component="span" className="text-xs text-red-500 mt-1" />
             </div>
           </ContainerCard>
+
         );
       case 2:
         return (
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">Contact Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[
-                { label: "Whatsapp Available?", name: "isWhatsapp", options: [{ value: "1", label: "Yes" }, { value: "0", label: "No" }] },
-                { label: "Whatsapp Number", name: "whatsappNo" },
-                { label: "Contact No 2", name: "contactNo2" },
-                { label: "Buyer Type", name: "buyerType", options: [{ value: "0", label: "Buyer" }, { value: "1", label: "Seller" }] },
-              ].map((field) => (
-                <div key={field.name}>
-                  <InputFields
-                    label={field.label}
-                    name={field.name}
-                    value={values[field.name as keyof CompanyCustomerFormValues]}
-                    onChange={(e) => setFieldValue(field.name as keyof CompanyCustomerFormValues, e.target.value)}
-                    options={field.options}
-                  />
-                  <ErrorMessage name={field.name} component="span" className="text-xs text-red-500 mt-1" />
-                </div>
-              ))}
+              <InputFields
+                label="Whatsapp Available?"
+                name="isWhatsapp"
+                value={values.isWhatsapp}
+                onChange={(e) => setFieldValue("isWhatsapp", e.target.value)}
+                options={[{ value: "1", label: "Yes" }, { value: "0", label: "No" }]}
+              />
+              <ErrorMessage name="isWhatsapp" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Whatsapp Number"
+                name="whatsappNo"
+                value={values.whatsappNo}
+                onChange={(e) => setFieldValue("whatsappNo", e.target.value)}
+              />
+              <ErrorMessage name="whatsappNo" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Contact No 2"
+                name="contactNo2"
+                value={values.contactNo2}
+                onChange={(e) => setFieldValue("contactNo2", e.target.value)}
+              />
+              <ErrorMessage name="contactNo2" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Buyer Type"
+                name="buyerType"
+                value={values.buyerType}
+                onChange={(e) => setFieldValue("buyerType", e.target.value)}
+                options={[{ value: "0", label: "Buyer" }, { value: "1", label: "Seller" }]}
+              />
+              <ErrorMessage name="buyerType" component="span" className="text-xs text-red-500 mt-1" />
             </div>
           </ContainerCard>
+
+
         );
       case 3:
         return (
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">Location Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[
-                { label: "Road Street", name: "roadStreet" },
-                { label: "Town", name: "town" },
-                { label: "Landmark", name: "landmark" },
-                { label: "District", name: "district" },
-                { label: "Region", name: "region", options: regionOptions },
-                { label: "Area", name: "area", options: areaOptions },
-              ].map((field) => (
-                <div key={field.name}>
-                  <InputFields
-                    label={field.label}
-                    name={field.name}
-                    value={values[field.name as keyof CompanyCustomerFormValues]}
-                    onChange={(e) => setFieldValue(field.name as keyof CompanyCustomerFormValues, e.target.value)}
-                    options={field.options}
-                  />
-                  <ErrorMessage name={field.name} component="span" className="text-xs text-red-500 mt-1" />
-                </div>
-              ))}
+
+              <InputFields
+                label="Town"
+                name="town"
+                value={values.town}
+                onChange={(e) => setFieldValue("town", e.target.value)}
+              />
+              <ErrorMessage name="town" component="span" className="text-xs text-red-500 mt-1" />
+
+
+              <InputFields
+                label="Road Street"
+                name="roadStreet"
+                value={values.roadStreet}
+                onChange={(e) => setFieldValue("roadStreet", e.target.value)}
+              />
+              <ErrorMessage name="roadStreet" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Landmark"
+                name="landmark"
+                value={values.landmark}
+                onChange={(e) => setFieldValue("landmark", e.target.value)}
+              />
+              <ErrorMessage name="landmark" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="District"
+                name="district"
+                value={values.district}
+                onChange={(e) => setFieldValue("district", e.target.value)}
+              />
+              <ErrorMessage name="district" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Region"
+                name="region"
+                value={values.region}
+                onChange={(e) => setFieldValue("region", e.target.value)}
+                options={regionOptions}
+              />
+              <ErrorMessage name="region" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Area"
+                name="area"
+                value={values.area}
+                onChange={(e) => setFieldValue("area", e.target.value)}
+                options={areaOptions}
+              />
+              <ErrorMessage name="area" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="TIN No"
+                name="tinNo"
+                value={values.tinNo}
+                onChange={(e) => setFieldValue("tinNo", e.target.value)}
+              />
+              <ErrorMessage name="tinNo" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Longitude"
+                name="longitude"
+                value={values.longitude}
+                onChange={(e) => setFieldValue("longitude", e.target.value)}
+              />
+              <ErrorMessage name="longitude" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Latitude"
+                name="latitude"
+                value={values.latitude}
+                onChange={(e) => setFieldValue("latitude", e.target.value)}
+              />
+              <ErrorMessage name="latitude" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Threshold Radius"
+                name="thresholdRadius"
+                value={values.thresholdRadius}
+                onChange={(e) => setFieldValue("thresholdRadius", e.target.value)}
+              />
+              <ErrorMessage name="thresholdRadius" component="span" className="text-xs text-red-500 mt-1" />
             </div>
           </ContainerCard>
+
         );
       case 4:
         return (
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">Financial & Bank Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[
-                { label: "Balance", name: "balance" },
-                { label: "Payment Type", name: "paymentType", options: [{ value: "1", label: "Cash" }, { value: "2", label: "Credit" }] },
-                { label: "Bank Name", name: "bankName" },
-                { label: "Bank Account Number", name: "bankAccountNumber" },
-                { label: "Credit Day", name: "creditDay" },
-                { label: "Credit Limit", name: "creditLimit" },
-                { label: "Total Credit Limit", name: "totalCreditLimit" },
-                { label: "Guarantee Name", name: "guaranteeName" },
-                { label: "Guarantee Amount", name: "guaranteeAmount" },
-                { label: "Guarantee From", name: "guaranteeFrom" },
-                { label: "Guarantee To", name: "guaranteeTo" },
-                { label: "VAT No", name: "vatNo" },
-                { label: "TIN No", name: "tinNo" },
-                { label: "Longitude", name: "longitude" },
-                { label: "Latitude", name: "latitude" },
-                { label: "Threshold Radius", name: "thresholdRadius" },
-                { label: "DChannel ID", name: "dChannelId" },
-                { label: "Status", name: "status", options: [{ value: "1", label: "Active" }, { value: "0", label: "Inactive" }] },
-              ].map((field) => (
-                <div key={field.name}>
-                  <InputFields
-                    label={field.label}
-                    name={field.name}
-                    value={values[field.name as keyof CompanyCustomerFormValues]}
-                    onChange={(e) => setFieldValue(field.name as keyof CompanyCustomerFormValues, e.target.value)}
-                    options={field.options}
-                  />
-                  <ErrorMessage name={field.name} component="span" className="text-xs text-red-500 mt-1" />
-                </div>
-              ))}
+
+              <InputFields
+                label="Balance"
+                name="balance"
+                value={values.balance}
+                onChange={(e) => setFieldValue("balance", e.target.value)}
+              />
+              <ErrorMessage name="balance" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Payment Type"
+                name="paymentType"
+                value={values.paymentType}
+                onChange={(e) => setFieldValue("paymentType", e.target.value)}
+                options={[
+                  { value: "1", label: "Cash" },
+                  { value: "2", label: "Credit" },
+                ]}
+              />
+              <ErrorMessage name="paymentType" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Bank Name"
+                name="bankName"
+                value={values.bankName}
+                onChange={(e) => setFieldValue("bankName", e.target.value)}
+              />
+              <ErrorMessage name="bankName" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Bank Account Number"
+                name="bankAccountNumber"
+                value={values.bankAccountNumber}
+                onChange={(e) => setFieldValue("bankAccountNumber", e.target.value)}
+              />
+              <ErrorMessage name="bankAccountNumber" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Credit Day"
+                name="creditDay"
+                value={values.creditDay}
+                onChange={(e) => setFieldValue("creditDay", e.target.value)}
+              />
+              <ErrorMessage name="creditDay" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Accuracy"
+                name="accuracy"
+                value={values.accuracy}
+                onChange={(e) => setFieldValue("accuracy", e.target.value)}
+              />
+              <ErrorMessage name="accuracy" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Credit Limit"
+                name="creditLimit"
+                value={values.creditLimit}
+                onChange={(e) => setFieldValue("creditLimit", e.target.value)}
+              />
+              <ErrorMessage name="creditLimit" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Total Credit Limit"
+                name="totalCreditLimit"
+                value={values.totalCreditLimit}
+                onChange={(e) => setFieldValue("totalCreditLimit", e.target.value)}
+              />
+              <ErrorMessage name="totalCreditLimit" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Credit Limit Validity"
+                name="creditLimitValidity"
+                value={values.creditLimitValidity}
+                onChange={(e) => setFieldValue("creditLimitValidity", e.target.value)}
+                type="date"
+              />
+              <ErrorMessage name="creditLimitValidity" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Guarantee Name"
+                name="guaranteeName"
+                value={values.guaranteeName}
+                onChange={(e) => setFieldValue("guaranteeName", e.target.value)}
+              />
+              <ErrorMessage name="guaranteeName" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Guarantee Amount"
+                name="guaranteeAmount"
+                value={values.guaranteeAmount}
+                onChange={(e) => setFieldValue("guaranteeAmount", e.target.value)}
+              />
+              <ErrorMessage name="guaranteeAmount" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Guarantee From"
+                name="guaranteeFrom"
+                value={values.guaranteeFrom}
+                onChange={(e) => setFieldValue("guaranteeFrom", e.target.value)}
+                type="date"
+              />
+              <ErrorMessage name="guaranteeFrom" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Guarantee To"
+                name="guaranteeTo"
+                value={values.guaranteeTo}
+                onChange={(e) => setFieldValue("guaranteeTo", e.target.value)}
+                type="date"
+              />
+              <ErrorMessage name="guaranteeTo" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="VAT No"
+                name="vatNo"
+                value={values.vatNo}
+                onChange={(e) => setFieldValue("vatNo", e.target.value)}
+              />
+              <ErrorMessage name="vatNo" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Channel ID"
+                name="dChannelId"
+                value={values.dChannelId}
+                onChange={(e) => setFieldValue("dChannelId", e.target.value)}
+              />
+              <ErrorMessage name="dChannelId" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Merchendiser"
+                name="merchendiser_ids"
+                value={values.merchendiser_ids}
+                onChange={(e) => setFieldValue("merchendiser_ids", e.target.value)}
+                isSingle={false}
+                options={[
+                  { value: "1", label: "Merchendiser 1" },
+                  { value: "2", label: "Merchendiser 2" },
+                  { value: "3", label: "Merchendiser 3" },
+                ]}
+              />
+              <ErrorMessage name="merchendiser_ids" component="span" className="text-xs text-red-500 mt-1" />
+
+              <InputFields
+                label="Status"
+                name="status"
+                value={values.status}
+                onChange={(e) => setFieldValue("status", e.target.value)}
+                options={[
+                  { value: "1", label: "Active" },
+                  { value: "0", label: "Inactive" },
+                ]}
+              />
+              <ErrorMessage name="status" component="span" className="text-xs text-red-500 mt-1" />
+
             </div>
           </ContainerCard>
         );
@@ -491,12 +747,12 @@ export default function AddCompanyCustomer() {
             <StepperForm
               steps={steps.map((step) => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
               currentStep={currentStep}
-              onStepClick={() => {}}
+              onStepClick={() => { }}
               onBack={prevStep}
               onNext={() =>
                 handleNext(values, {
-                  setErrors: () => {},
-                  setTouched: () => {},
+                  setErrors: () => { },
+                  setTouched: () => { },
                 } as unknown as FormikHelpers<CompanyCustomerFormValues>)
               }
               onSubmit={() => formikSubmit()}

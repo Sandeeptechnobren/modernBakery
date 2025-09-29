@@ -29,7 +29,7 @@ export default function CreateUpdate({
     const { showSnackbar } = useSnackbar();
     const { itemCategory } = useAllDropdownListData();
     const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
-    const [defaultOption, setDefaultOption] = useState<number>(0);
+    const [defaultOption, setDefaultOption] = useState<number | undefined>(undefined);
 
     useEffect(() => {
         const newOptions = itemCategory.map((category) => {
@@ -43,13 +43,13 @@ export default function CreateUpdate({
             const index = itemCategory.findIndex(
                 (category) => category.id === updateItemCategoryData?.category_id
             );
-            setDefaultOption(index || 0);
+            setDefaultOption(index);
         }
     }, [itemCategory]);
 
     const formik = useFormik({
         initialValues: {
-            category_id: updateItemCategoryData?.category_id.toString() || "0",
+            category_id: updateItemCategoryData?.category_id.toString() || "",
             sub_category_name: updateItemCategoryData?.sub_category_name || "",
             status: updateItemCategoryData?.status || 0,
         },
@@ -125,7 +125,7 @@ export default function CreateUpdate({
                     name="sub_category_name"
                     value={formik.values.sub_category_name || ""}
                     label="Sub Category Name"
-                    error={formik.errors.sub_category_name}
+                    error={formik.touched.sub_category_name && formik.errors.sub_category_name}
                     onChange={formik.handleChange}
                 />
 

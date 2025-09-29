@@ -9,7 +9,7 @@ export default function InputDropdown({
     defaultText = "",
     options,
     onOptionSelect,
-    dropdownTw = "w-full h-[200px]"
+    dropdownTw = ""
 }: {
     label: string;
     defaultOption?: number;
@@ -50,14 +50,14 @@ export default function InputDropdown({
                         </div>
                         <Icon
                             icon="material-symbols:expand-more-rounded"
-                            className="aboslute right-[14px] top-0 h-full"
+                            className={`aboslute right-[14px] top-0 h-full ${ isOpen && "rotate-180"}`}
                             width={24}
                         />
                     </div>
                 </label>
             }
             dropdown={
-                <div className={`absolute z-20 ${dropdownTw}`}>
+                <div className={`absolute z-20 w-full min-h-1/2 max-h-[200px] h-fit overflow-y-auto scrollbar-none ${dropdownTw}`}>
                     <CustomDropdown>
                         {options.map((option, index) => (
                             <div key={index} className="p-[10px] text-[#414651] hover:bg-gray-100" onClick={() => onSelect(option)}>

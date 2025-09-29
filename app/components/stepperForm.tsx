@@ -48,12 +48,13 @@ export default function StepperForm({
 
 
   // Returns 'completed', 'active', or 'pending'
+  // When going back, the previous step should be 'active' (red) just like the current step
   const getStepStatus = (step: StepperStep, index: number) => {
     const stepNumber = index + 1;
-    if (step.isCompleted || stepNumber < currentStep) {
-      return "completed";
-    } else if (stepNumber === currentStep) {
+    if (stepNumber === currentStep) {
       return "active";
+    } else if (step.isCompleted) {
+      return "completed";
     } else {
       return "pending";
     }
