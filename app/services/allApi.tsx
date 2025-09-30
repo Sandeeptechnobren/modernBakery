@@ -1490,7 +1490,7 @@ export const deleteSalesman = async (uuid:string) => {
 
 export const addSalesman = async (body:object) => {
   try {
-    const res = await API.post(`/api/master/salesmen/create/add`,body);
+    const res = await API.post(`/api/master/salesmen/add`,body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
