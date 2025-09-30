@@ -116,24 +116,27 @@ const columns = [
   { key: "deposite_amount", label: "Deposit Amount", render: (row: WarehouseRow) => row.deposite_amount || "-" },
   { key: "device_no", label: "Device No.", render: (row: WarehouseRow) => row.device_no || "-" },
   { key: "p12_file", label: "P12 File", render: (row: WarehouseRow) => row.p12_file || "-" },
-  { key: "branch_id", label: "Branch", render: (row: WarehouseRow) => row.branch_id || "-" },
+  { key: "branch_id", label: "Branch", render: (row: WarehouseRow) => (row.branch_id !== null && row.branch_id !== undefined && row.branch_id !== "" ? row.branch_id : "-") },
   { key: "is_efris", label: "EFRIS", render: (row: WarehouseRow) => row.is_efris || "-" },
   {
     key: "status",
     label: "Status",
-    render: (row: TableDataType) => (
-      <div className="flex items-center">
-        {row.status ? (
+    render: (row: WarehouseRow) => {
+      const value = row.status;
+      const strValue = value != null ? String(value) : "";
+      if (strValue === "1" || strValue === "Active" || strValue === "true" || strValue === "True" || value === 1 || value === true) {
+        return (
           <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
             Active
           </span>
-        ) : (
-          <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-            Inactive
-          </span>
-        )}
-      </div>
-    ),
+        );
+      }
+      return (
+        <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+          Inactive
+        </span>
+      );
+    },
   },
 ];
 
@@ -249,7 +252,7 @@ export default function Warehouse() {
         await deleteWarehouse(String(selectedRow.id)); // call API
         
         showSnackbar("Warehouse deleted successfully ", "success"); 
-        setLoading(true);
+        setLoading(false);
         // await fetchWarehouses();
         //  setWarehouses((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
       } catch (error) {

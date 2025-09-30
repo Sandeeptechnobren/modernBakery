@@ -260,7 +260,11 @@ export default function EditCompany() {
             status: company.status,
           };
           formik.setValues(Daya)
-          console.log("sjdkfrbg",Daya)
+          // Log each field individually for debugging
+          console.log("sjdkfrbg Daya fields:");
+          Object.entries(Daya).forEach(([key, value]) => {
+            console.log(`${key}:`, value);
+          });
        }
        console.log(fetchCompany)
           
@@ -337,8 +341,9 @@ export default function EditCompany() {
               <InputFields name="town" label="Town/Village" value={values.town} onChange={formik.handleChange} />
               <InputFields name="street" label="Street" value={values.street} onChange={formik.handleChange} />
               <InputFields name="landmark" label="Landmark" value={values.landmark} onChange={formik.handleChange} />
-              <InputFields name="region" label="Region" value={String(values.region)} onChange={formik.handleChange} options={regionOptions} />
-              <InputFields name="subRegion" label="Sub Region" value={values.subRegion} onChange={formik.handleChange} options={areaOptions} />
+              <InputFields label="Region" name="region" value={values.region} onChange={formik.handleChange}  options={regionOptions} />
+              {/* <InputFields name="region" label="Region" value={values.region} onChange={formik.handleChange} options={regionOptions} /> */}
+              <InputFields name="subRegion" label="Sub Region"  value={values.subRegion} onChange={formik.handleChange} options={areaOptions} />
               <InputFields name="country" label="Country" value={values.country} onChange={formik.handleChange} options={onlyCountryOptions} />
               <InputFields name="tinNumber" label="TIN Number" value={values.tinNumber} onChange={formik.handleChange} />
             </div>

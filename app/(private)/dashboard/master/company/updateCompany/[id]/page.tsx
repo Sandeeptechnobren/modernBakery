@@ -83,8 +83,8 @@ interface CompanyFormValues {
   tollFreeCode: string;
   tollFreeNumber: string;
   email: string;
-   region: string;
-  subRegion: string;
+  region: {id: string};  
+  subRegion: {id: string};
   district: string;
   town: string;
   street: string;
@@ -134,8 +134,8 @@ export default function EditCompany() {
       tollFreeCode: "uae",
       tollFreeNumber: "",
       email: "",
-      region: "",
-      subRegion: "",
+      region: {id: ""},
+      subRegion: {id: ""},
       district: "",
       town: "",
       street: "",
@@ -168,8 +168,8 @@ export default function EditCompany() {
       district: values.district,
       town: values.town,
       street: values.street,
-      region: values.region,
-      sub_region: values.subRegion,
+      region: String(values.region?.id) || "",
+      sub_region: String(values.subRegion?.id)|| "",
       primary_contact: values.primaryContact,
       toll_free_no: values.tollFreeNumber,
       vat: values.vatNo,
@@ -214,11 +214,19 @@ export default function EditCompany() {
         );
         actions.setErrors(
           err.inner.reduce(
-            (acc: Partial<Record<keyof CompanyFormValues, string>>, curr) => ({
-              ...acc,
-              [curr.path as keyof CompanyFormValues]: curr.message,
-            }),
-            {}
+            (acc: FormikErrors<CompanyFormValues>, curr) => {
+              if (curr.path === "region" || curr.path === "subRegion") {
+                return {
+                  ...acc,
+                  [curr.path]: { id: curr.message }
+                };
+              }
+              return {
+                ...acc,
+                [curr.path as keyof CompanyFormValues]: curr.message
+              };
+            },
+            {} as FormikErrors<CompanyFormValues>
           )
         );
       }
@@ -261,10 +269,8 @@ export default function EditCompany() {
           formik.setValues(Daya)
           console.log("sjdkfrbg",Daya)
        }
-       console.log(fetchCompany)
-          
     };
- fetchCompany()
+    fetchCompany()
   }, [queryId]);
 
 
@@ -337,9 +343,9 @@ export default function EditCompany() {
               <InputFields name="street" label="Street" value={values.street} onChange={formik.handleChange} />
               <InputFields name="landmark" label="Landmark" value={values.landmark} onChange={formik.handleChange} />
               <InputFields name="region" label="Region" value={String(values.region)} onChange={formik.handleChange} options={regionOptions} />
-              <InputFields name="subRegion" label="Sub Region" value={values.subRegion} onChange={formik.handleChange} options={areaOptions} />
-              <InputFields name="country" label="Country" value={values.country} onChange={formik.handleChange} options={onlyCountryOptions} />
-              <InputFields name="tinNumber" label="TIN Number" value={values.tinNumber} onChange={formik.handleChange} />
+              <InputFields name="subRegion" label="Sub Region" value={String(values.subRegion)} onChange={formik.handleChange} options={areaOptions} />
+              <InputFields name="country" label="Country" value={String(values.country)} onChange={formik.handleChange} options={onlyCountryOptions} />
+              <InputFields name="tinNumber" label="TIN Number" value={String(values.tinNumber)} onChange={formik.handleChange} />
             </div>
           </ContainerCard>
         );
@@ -385,7 +391,7 @@ export default function EditCompany() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/company">
+          <Link href="/dashboard/master/company">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">Update Company</h1>

@@ -196,7 +196,7 @@ export default function AddCompanyWithStepper() {
         showSnackbar(res.data?.message || "Failed to add company ❌", "error");
       } else {
         showSnackbar("Company added successfully ✅", "success");
-        router.push("/dashboard/company");
+        router.push("/dashboard/master/company");
       }
     } catch {
       showSnackbar("Add company failed ❌", "error");
@@ -219,18 +219,18 @@ export default function AddCompanyWithStepper() {
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <InputFields
-                label="Company Name"
-                name="company_name"
-                value={values.company_name}
-                onChange={(e) => setFieldValue("company_name", e.target.value)}
-                error={touched.company_name && errors.company_name}
-              />
-              <InputFields
                 label="Company Code"
                 name="company_code"
                 value={values.company_code}
                 onChange={(e) => setFieldValue("company_code", e.target.value)}
                 error={touched.company_code && errors.company_code}
+              />
+              <InputFields
+                label="Company Name"
+                name="company_name"
+                value={values.company_name}
+                onChange={(e) => setFieldValue("company_name", e.target.value)}
+                error={touched.company_name && errors.company_name}
               />
               <InputFields
               required
@@ -430,7 +430,7 @@ export default function AddCompanyWithStepper() {
     <div>
      <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/company">
+          <Link href="/dashboard/master/company">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">

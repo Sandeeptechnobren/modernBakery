@@ -19,6 +19,7 @@ const CountrySchema = Yup.object().shape({
   country_code: Yup.string().required("Country Code is required."),
   country_name: Yup.string().required("Country Name is required."),
   currency: Yup.string().required("Currency is required."),
+  status: Yup.string().required("Status is required."),
 });
 
 export default function AddCountry() {
@@ -26,41 +27,40 @@ export default function AddCountry() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
+
   type CountryFormValues = {
     country_code: string;
     country_name: string;
     currency: string;
+    status: string;
   };
 
   const initialValues: CountryFormValues = {
     country_code: "",
     country_name: "",
     currency: "",
+    status: "1", // default to Active
   };
 
   const handleSubmit = async (
     values: CountryFormValues,
     { setSubmitting }: FormikHelpers<CountryFormValues>
   ) => {
-    
-      const payload = {
-        ...values,
-        status: 1,
-      };
-
-      const res = await addCountry(payload);
-      if (res.error) return showSnackbar(res.data.message|| "Failed to submit form","error");
-      
-      else {
-        showSnackbar(
-          res.message || "Country Created Successfully",
-          "success"
-        );
-        router.push("/dashboard/settings/country");
-      }
-      setSubmitting(false);
-   
-  }; 
+    const payload = {
+      ...values,
+      status: Number(values.status),
+    };
+    const res = await addCountry(payload);
+    if (res.error) return showSnackbar(res.data.message|| "Failed to submit form","error");
+    else {
+      showSnackbar(
+        res.message || "Country Created Successfully",
+        "success"
+      );
+      router.push("/dashboard/settings/country");
+    }
+    setSubmitting(false);
+  };
 
   return (
     <div className="w-full h-full overflow-x-hidden p-4">
@@ -81,7 +81,7 @@ export default function AddCountry() {
         validationSchema={CountrySchema}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit, values, setFieldValue }) => (
+        {({ handleSubmit, values, setFieldValue, errors, touched }) => (
           <Form onSubmit={handleSubmit}>
             <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
               <div className="p-6">
@@ -138,6 +138,22 @@ required
                   </div>
 
                   {/* Currency */}
+                  {/* Status */}
+                  <div>
+                    <InputFields
+                      label="Status"
+                      name="status"
+                      value={values.status}
+                      options={[
+                        { value: "1", label: "Active" },
+                        { value: "0", label: "Inactive" },
+                      ]}
+                      onChange={e => setFieldValue("status", e.target.value)}
+                      type="radio"
+                      required
+                      error={errors?.status && touched?.status ? errors.status : false}
+                    />
+                  </div>
                   <div>
                     <InputFields 
 required

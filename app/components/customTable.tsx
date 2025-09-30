@@ -456,7 +456,7 @@ function TableBody() {
                                                 className={`w-[${col.width}px] px-[24px] py-[12px] font-[500] whitespace-nowrap`}
                                                 key={index}
                                             >
-                                                <div className="flex items-center gap-[4px]">
+                                                <div className="flex items-center gap-[4px] capitalize">
                                                     {col.label}{" "}
                                                     {col.filter
                                                         ?.isFilterable && (
@@ -504,7 +504,7 @@ function TableBody() {
                             // repeat row 10 times
                             displayedData.map((row, index) => (
                                 <tr
-                                    className="border-b-[1px] border-[#E9EAEB]"
+                                    className="border-b-[1px] border-[#E9EAEB] capitalize"
                                     key={index}
                                 >
                                     {rowSelection &&

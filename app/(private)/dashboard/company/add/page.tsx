@@ -26,7 +26,7 @@ interface CompanyFormValues {
   toll_free_code: string;
   email: string;
   country_id: string;
-  region: string;
+  region: number | string;
   sub_region: string;
   district: string;
   town: string;
@@ -188,7 +188,7 @@ export default function AddCompanyWithStepper() {
       // Convert to FormData for API
       const formData = new FormData();
       (Object.keys(values) as (keyof CompanyFormValues)[]).forEach((key) => {
-        formData.append(key, values[key] ?? "");
+        formData.append(key, values[key] != null ? String(values[key]) : "");
       });
 
       const res = await addCompany(formData);
@@ -305,9 +305,9 @@ export default function AddCompanyWithStepper() {
               <InputFields
                 label="Region"
                 name="region"
-                value={values.region}
+                value={values.region?.toString() ?? ""}
                 options={regionOptions}
-                onChange={(e) => setFieldValue("region",e.target.value)}
+                onChange={(e) => setFieldValue("region", e.target.value)}
                 error={errors?.region && touched?.region ? errors.region : false}
               />
               <InputFields

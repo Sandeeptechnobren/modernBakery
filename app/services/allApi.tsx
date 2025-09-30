@@ -319,7 +319,7 @@ export const getRegionById = async (id:string) => {
 
 export const regionGlobalSearch = async (params: Params) => {
   try {
-     const res = await API.get("/api/settings/region/global_search", {params});
+     const res = await API.get("/api/master/region/global_search", {params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

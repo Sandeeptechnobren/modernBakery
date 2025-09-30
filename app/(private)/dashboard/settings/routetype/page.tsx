@@ -1,17 +1,16 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect ,useCallback} from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { TableDataType,listReturnType ,searchReturnType} from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { routeTypeList, deleteRouteTypeById } from "@/app/services/allApi";
-import Loading from "@/app/components/Loading";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import { routeTypeList, deleteRouteTypeById ,routeGlobalSearch} from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
@@ -51,7 +50,7 @@ export default function RouteType() {
 }
 
   const [routeType, setRouteType] = useState<RouteTypeItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<RouteTypeItem | null>(null);
@@ -72,16 +71,40 @@ const tableData: TableDataType[] = routeType.map((s) => ({
 }));
 
   // ✅ Reusable fetch function
-  const fetchRouteTypes = async () => {
-    const listRes = await routeTypeList({});
-    if (listRes.error) showSnackbar(listRes.data.message || "Failed to fetch Route Type", "error");
-    else setRouteType(listRes.data);
-    setLoading(false);
-  };
+  // const fetchRouteTypes = async () => {
+  //   const listRes = await routeTypeList({});
+  //   if (listRes.error) showSnackbar(listRes.data.message || "Failed to fetch Route Type", "error");
+  //   else setRouteType(listRes.data);
+  //   setLoading(false);
+  // };
 
-  useEffect(() => {
-    fetchRouteTypes();
-  }, []);
+    const fetchRouteTypes = useCallback(
+      async (
+        page: number = 1,
+        pageSize: number = 5
+      ): Promise<listReturnType> => {
+        try {
+          setLoading(true);
+          const listRes = await routeTypeList({
+            limit: pageSize.toString(),
+            page: page.toString(),
+          });
+          setLoading(false);
+          return {
+            data: listRes.data || [],
+            total: listRes.pagination.totalPages,
+            currentPage: listRes.pagination.page,
+            pageSize: listRes.pagination.limit,
+          };
+        } catch (error: unknown) {
+          console.error("API Error:", error);
+          setLoading(false);
+          throw error;
+        }
+      },
+      []
+    );
+  
 
   // ✅ Delete handler with refresh
   const handleConfirmDelete = async () => {
@@ -98,7 +121,29 @@ const tableData: TableDataType[] = routeType.map((s) => ({
     setDeletingId(null);
   };
 
-  if (loading) return <Loading />;
+    // const searchRouteType = useCallback(
+    //   async (
+    //     searchQuery: string,
+    //     pageSize: number
+    //   ): Promise<searchReturnType> => {
+    //     setLoading(true);
+    //     const result = await routeGlobalSearch({
+    //       query: searchQuery,
+    //       per_page: pageSize.toString(),
+    //     });
+    //     setLoading(false);
+    //     if (result.error) throw new Error(result.data.message);
+    //     else {
+    //       return {
+    //         data: result.data || [],
+    //         total: result.pagination.totalPages,
+    //         currentPage: result.pagination.page ,
+    //         pageSize: result.pagination.limit ,
+    //       };
+    //     }
+    //   },
+    //   []
+    // );
 
   return (
     <>
@@ -107,9 +152,11 @@ const tableData: TableDataType[] = routeType.map((s) => ({
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={tableData}
+         
           config={{
+            api:{  list:fetchRouteTypes },
             header: {
+              
               title: "Route Type",
               wholeTableActions: [
                 <div key={0} className="flex gap-[12px] relative">

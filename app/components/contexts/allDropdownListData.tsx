@@ -353,9 +353,9 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setCustomerTypeData(normalize(res[12]) as CustomerType[]);
   setUserTypesData(normalize(res[13]) as UserTypeItem[]);
       setSalesmanTypesData(normalize(res[14]) as SalesmanType[]);
-  setVehicleList(normalize(res[14]) as VehicleListItem[]);
-  setCustomerCategory(normalize(res[15]) as CustomerCategory[]);
-  setCustomerSubCategory(normalize(res[16]) as CustomerSubCategory[]);
+  setVehicleList(normalize(res[15]) as VehicleListItem[]);
+  setCustomerCategory(normalize(res[16]) as CustomerCategory[]);
+  setCustomerSubCategory(normalize(res[17]) as CustomerSubCategory[]);
     } catch (error) {
       console.error('Error loading dropdown data:', error);
       // on error clear to empty arrays
