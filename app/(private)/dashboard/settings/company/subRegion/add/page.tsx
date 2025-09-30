@@ -7,14 +7,12 @@ import { useRouter } from "next/navigation";
 import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 
-// Components
 import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 
-// Contexts & Services
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { addArea } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -27,7 +25,6 @@ const SubRegionSchema = Yup.object().shape({
   region: Yup.string().required("Please select a region."),
 });
 
-// ✅ Types
 type SubRegionFormValues = {
   areacode: string;
   companyName: string;
@@ -41,7 +38,6 @@ export default function AddSubRegion() {
   const { regionOptions } = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
 
-  // ✅ Initial Form Values
   const initialValues: SubRegionFormValues = {
     areacode: "",
     companyName: "",
@@ -49,20 +45,18 @@ export default function AddSubRegion() {
     region: "",
   };
 
-  // ✅ Handle Submit
   const handleSubmit = async (
     values: SubRegionFormValues,
     { setSubmitting }: FormikHelpers<SubRegionFormValues>
   ) => {
     try {
-      const area_code = values.areacode;
-      const area_name = values.companyName;
+      const area_code = values.areacode.trim();
+      const area_name = values.companyName.trim();
       const region_id = Number(values.region);
       const status = Number(values.status);
 
       if (!area_code || !area_name || !region_id) {
         showSnackbar("Please fill all required fields.", "error");
-        setSubmitting(false);
         return;
       }
 
@@ -73,8 +67,6 @@ export default function AddSubRegion() {
         status,
       };
 
-      console.log("👉 Sending payload:", payload);
-
       const res = await addArea(payload);
 
       if (res?.errors) {
@@ -83,16 +75,14 @@ export default function AddSubRegion() {
           errs.push(...res.errors[key]);
         }
         showSnackbar(errs.join(" | "), "error");
-        console.error("API validation errors:", res.errors);
-        setSubmitting(false);
         return;
       }
 
       showSnackbar("SubRegion added successfully ✅", "success");
       router.push("/dashboard/settings/company/subRegion");
     } catch (error: unknown) {
-      console.error("Add SubRegion failed ❌", error);
       showSnackbar("Failed to add SubRegion", "error");
+      console.error("Add SubRegion failed ❌", error);
     } finally {
       setSubmitting(false);
     }
@@ -100,7 +90,7 @@ export default function AddSubRegion() {
 
   return (
     <div className="w-full h-full overflow-x-hidden p-4">
-      {/* ✅ Header */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/settings/company/subRegion">
@@ -112,7 +102,7 @@ export default function AddSubRegion() {
         </div>
       </div>
 
-      {/* ✅ Formik Wrapper */}
+      {/* Formik Wrapper */}
       <Formik
         initialValues={initialValues}
         validationSchema={SubRegionSchema}
@@ -123,20 +113,23 @@ export default function AddSubRegion() {
             <ContainerCard>
               <h2 className="text-lg font-semibold mb-6">Sub Region Details</h2>
 
-              <div className="flex items-end gap-2 max-w-4xl flex-wrap">
+              {/* ✅ 2 inputs per row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* SubRegion Code */}
-                <div className="w-full">
-                  <InputFields
-                    name="areacode"
-                    label="SubRegion Code"
-                    value={values.areacode}
-                    onChange={(e) => setFieldValue("areacode", e.target.value)}
-                  />
-                  <ErrorMessage
-                    name="areacode"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
+                <div className="flex items-end gap-2 max-w-[406px]">
+                  <div className="w-full">
+                    <InputFields
+                      name="areacode"
+                      label="SubRegion Code"
+                      value={values.areacode}
+                      onChange={(e) => setFieldValue("areacode", e.target.value)}
+                    />
+                    <ErrorMessage
+                      name="areacode"
+                      component="span"
+                      className="text-xs text-red-500"
+                    />
+                  </div>
                   <IconButton
                     bgClass="white"
                     className="mb-2 cursor-pointer text-[#252B37]"
@@ -156,9 +149,7 @@ export default function AddSubRegion() {
                     name="companyName"
                     label="SubRegion Name"
                     value={values.companyName}
-                    onChange={(e) =>
-                      setFieldValue("companyName", e.target.value)
-                    }
+                    onChange={(e) => setFieldValue("companyName", e.target.value)}
                   />
                   <ErrorMessage
                     name="companyName"
@@ -204,7 +195,7 @@ export default function AddSubRegion() {
               </div>
             </ContainerCard>
 
-            {/* ✅ Footer Actions */}
+            {/* Footer Actions */}
             <div className="flex justify-end gap-4 mt-6">
               <button
                 type="reset"
