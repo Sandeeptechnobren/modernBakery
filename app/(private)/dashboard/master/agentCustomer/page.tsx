@@ -35,77 +35,87 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "osa_code", label: "Agent Customer Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
-    { key: "tin_no", label: "TIN No." },
-    { key: "name", label: "Name" },
-    { key: "business_name", label: "Business Name" },
-    { 
-        key: "customer_type", 
-        label: "Customer Type",
-    },
-    { 
-        key: "category", 
-        label: "Customer Category",
-        render: (row: TableDataType) => 
-            typeof row.category === "object" && row.category !== null && "customer_category_name" in row.category
-                ? (row.category as { customer_category_name?: string }).customer_category_name || '-'
-                : '-'
-    },
-    { 
-        key: "subcategory", 
-        label: "Customer Sub Category",
-        render: (row: TableDataType) => 
-            typeof row.subcategory === "object" && row.subcategory !== null && "customer_sub_category_name" in row.subcategory
-                ? (row.subcategory as { customer_sub_category_name?: string }).customer_sub_category_name || '-'
-                : '-'
-    },
-    { 
-        key: "outlet_channel", 
-        label: "Outlet Channel",
-        render: (row: TableDataType) => 
-            typeof row.outlet_channel === "object" && row.outlet_channel !== null && "outlet_channel" in row.outlet_channel
-                ? (row.outlet_channel as { outlet_channel?: string }).outlet_channel || '-'
-                : '-'
-    },
-    { 
-        key: "region", 
-        label: "Region",
-        render: (row: TableDataType) => 
-            typeof row.region === "object" && row.region !== null && "region_name" in row.region
-                ? (row.region as { region_name?: string }).region_name || '-'
-                : '-'
-    },
-    { 
-        key: "area", 
-        label: "Area",
-        render: (row: TableDataType) => 
-            typeof row.area === "object" && row.area !== null && "area_name" in row.area
-                ? (row.area as { area_name?: string }).area_name || '-'
-                : '-'
-    },
-    { 
-        key: "route_id", 
-        label: "Route",
-    },
-    { key: "email", label: "Email" },
-    { key: "whatsapp_no", label: "Whatsapp No." },
-    { key: "buyertype", label: "Buyer Type" },
-    { key: "payment_type", label: "Payment Type" },
-    { key: "creditday", label: "Credit Day" },
-    { key: "longitude", label: "Longitude" },
-    { key: "latitude", label: "Latitude" },
-    { key: "accuracy", label: "Accuracy" },
-    { key: "threshold_radius", label: "Threshold Radius" },
-    { key: "language", label: "Language" },
-    {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => {
-            // Treat status 1 or 'active' (case-insensitive) as active
-            const isActive = String(row.status) === "1" || (typeof row.status === "string" && row.status.toLowerCase() === "active");
-            return <StatusBtn isActive={isActive} />;
+  { key: "osa_code", label: "Agent Customer Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
+  { key: "tin_no", label: "TIN No." },
+  { key: "name", label: "Name" },
+  { key: "business_name", label: "Business Name" },
+  { key: "business_name", label: "Business Name" },
+        { 
+                key: "customer_type", 
+                label: "Customer Type",
+                render: (row: TableDataType) => {
+                    if (typeof row.customer_type === "object" && row.customer_type !== null && 'name' in row.customer_type) {
+                        return (row.customer_type as { name?: string }).name || "-";
+                    }
+                    return row.customer_type || "-";
+                }
         },
+  { 
+    key: "category", 
+    label: "Customer Category",
+    render: (row: TableDataType) => 
+      typeof row.category === "object" && row.category !== null && "customer_category_name" in row.category
+        ? (row.category as { customer_category_name?: string }).customer_category_name || '-'
+        : '-'
+  },
+  { 
+    key: "subcategory", 
+    label: "Customer Sub Category",
+    render: (row: TableDataType) => 
+      typeof row.subcategory === "object" && row.subcategory !== null && "customer_sub_category_name" in row.subcategory
+        ? (row.subcategory as { customer_sub_category_name?: string }).customer_sub_category_name || '-'
+        : '-'
+  },
+  { 
+    key: "outlet_channel", 
+    label: "Outlet Channel",
+    render: (row: TableDataType) => 
+      typeof row.outlet_channel === "object" && row.outlet_channel !== null && "outlet_channel" in row.outlet_channel
+        ? (row.outlet_channel as { outlet_channel?: string }).outlet_channel || '-'
+        : '-'
+  },
+  { 
+    key: "route", 
+    label: "Route",
+        render: (row: TableDataType) => {
+            if (typeof row.route === "object" && row.route !== null && 'name' in row.route) {
+                return (row.route as { name?: string }).name || "-";
+            }
+            return row.route || "-";
+        }
     },
+  { 
+    key: "area", 
+    label: "Area",
+    render: (row: TableDataType) => 
+      typeof row.area === "object" && row.area !== null && "area_name" in row.area
+        ? (row.area as { area_name?: string }).area_name || '-'
+        : '-'
+  },
+  { 
+    key: "route", 
+    label: "Route",
+    render: (row: TableDataType) => 
+      typeof row.route === "object" && row.route !== null && "route_name" in row.route
+        ? (row.route as { name?: string }).name || '-'
+        : '-'
+  },
+  { key: "email", label: "Email" },
+  { key: "whatsapp_no", label: "Whatsapp No." },
+  { key: "buyertype", label: "Buyer Type" },
+  { key: "payment_type", label: "Payment Type" },
+  { key: "creditday", label: "Credit Day" },
+  { key: "threshold_radius", label: "Threshold Radius" },
+  { key: "language", label: "Language" },
+  {
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) => {
+      // Treat status 1 or 'active' (case-insensitive) as active
+      const isActive = String(row.status) === "1" || (typeof row.status === "string" && row.status.toLowerCase() === "active");
+      return <StatusBtn isActive={isActive} />;
+    },
+  },
 ];
 
 export default function AgentCustomer() {
@@ -251,7 +261,7 @@ export default function AgentCustomer() {
                                     />
                                 </div>
                             ],
-                            searchBar: true,
+                            searchBar: false,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn

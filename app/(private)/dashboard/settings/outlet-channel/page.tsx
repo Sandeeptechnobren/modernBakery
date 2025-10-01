@@ -155,7 +155,7 @@ export default function ChannelList() {
                   />
                 </div>
               ],
-              searchBar: true,
+              searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn

@@ -249,7 +249,7 @@ export default function Warehouse() {
         await deleteWarehouse(String(selectedRow.id)); // call API
         
         showSnackbar("Warehouse deleted successfully ", "success"); 
-        setLoading(true);
+        setLoading(false);
         // await fetchWarehouses();
         //  setWarehouses((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
       } catch (error) {

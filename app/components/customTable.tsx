@@ -456,7 +456,7 @@ function TableBody() {
                                                 className={`w-[${col.width}px] px-[24px] py-[12px] font-[500] whitespace-nowrap`}
                                                 key={index}
                                             >
-                                                <div className="flex items-center gap-[4px]">
+                                                <div className="flex items-center gap-[4px] capitalize">
                                                     {col.label}{" "}
                                                     {col.filter
                                                         ?.isFilterable && (
@@ -504,7 +504,7 @@ function TableBody() {
                             // repeat row 10 times
                             displayedData.map((row, index) => (
                                 <tr
-                                    className="border-b-[1px] border-[#E9EAEB]"
+                                    className="border-b-[1px] border-[#E9EAEB] capitalize"
                                     key={index}
                                 >
                                     {rowSelection &&
@@ -581,18 +581,14 @@ function TableBody() {
                                         )}
                                 </tr>
                             ))}
-                        {displayedData.length <= 0 && (
-                            <tr>
-                                <td colSpan={columns?.length + 2 || 1}>
-                                    <div className="content-center text-center py-[12px] text-[24px] max-h-full min-h-[200px]">
-                                        No data available
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
             </div>
+            {displayedData.length <= 0 && (
+                <div className="p-2 content-center text-center py-[12px] text-[24px] max-h-full min-h-[200px] text-primary">
+                    No data available
+                </div>
+            )}
         </>
     );
 }

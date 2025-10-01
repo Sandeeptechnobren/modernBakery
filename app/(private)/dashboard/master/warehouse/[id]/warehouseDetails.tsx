@@ -22,6 +22,13 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <InputFields
+                    label="Warehouse Code *"
+                    name="warehouse_code"
+                    value={values.warehouse_code}
+                    onChange={handleChange}
+                    error={errors?.warehouse_code && touched?.warehouse_code ? errors.warehouse_code : false}
+                />
+            <InputFields
                 label="Registration Number *"
                 name="registation_no"
                 value={values.registation_no}
@@ -30,14 +37,6 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
         
             <div className="flex items-end gap-2 max-w-[406px]">
-                <InputFields
-                    label="Warehouse Code *"
-                    name="warehouse_code"
-                    value={values.warehouse_code}
-                    onChange={handleChange}
-                    error={errors?.warehouse_code && touched?.warehouse_code ? errors.warehouse_code : false}
-                />
-
                 <IconButton
                     bgClass="white"
                     className="mb-2 cursor-pointer text-[#252B37]"

@@ -21,15 +21,6 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <InputFields
-            required
-                label="Registration Number"
-                name="registation_no"
-                value={values.registation_no}
-                onChange={handleChange}
-                error={errors?.registation_no && touched?.registation_no ? errors.registation_no : false}
-            />
-        
          <div className="flex items-end gap-2 max-w-[406px]">
                 <InputFields
                 required
@@ -49,6 +40,14 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
 
                 <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Warehouse Code" />
             </div>
+            <InputFields
+            required
+                label="Registration Number"
+                name="registation_no"
+                value={values.registation_no}
+                onChange={handleChange}
+                error={errors?.registation_no && touched?.registation_no ? errors.registation_no : false}
+            />
          <InputFields
          required
                 label="Warehouse Name"

@@ -171,7 +171,7 @@ export default function CustomerSubCategoryPage() {
           data={tableData}
           config={{
             header: {
-              searchBar: true,
+              searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn

@@ -117,7 +117,7 @@ export default function PlanogramImage() {
           data={tableData}
           config={{
             header: {
-              searchBar: true,
+              searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn

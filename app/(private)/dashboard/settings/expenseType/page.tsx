@@ -199,7 +199,7 @@ const tableData: TableDataType[] = countries.map((c) => ({
                                 )}
                               </div>
                             ],
-              searchBar: true,
+              searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn
@@ -208,7 +208,7 @@ const tableData: TableDataType[] = countries.map((c) => ({
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add Expense Type"
-                  labelTw="hidden sm:block"
+                  labelTw="hidden lg:block"
                 />,
               ],
             },

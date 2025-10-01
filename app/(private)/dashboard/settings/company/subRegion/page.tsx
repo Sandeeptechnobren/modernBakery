@@ -179,7 +179,7 @@ export default function SubRegion() {
                                 )}
                               </div>
                             ],
-              searchBar: true,
+              searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn

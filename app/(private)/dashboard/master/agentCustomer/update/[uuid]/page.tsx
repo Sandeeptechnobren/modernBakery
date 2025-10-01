@@ -41,7 +41,7 @@ interface AgentCustomerFormValues {
 
 export default function EditAgentCustomer() {
 
-	const { itemCategoryOptions, itemSubCategoryOptions, routeOptions, customerCategoryOptions, customerSubCategoryOptions, channelOptions, regionOptions, areaOptions } = useAllDropdownListData();
+	const { itemCategoryOptions, itemSubCategoryOptions, customerTypeOptions, routeOptions, customerCategoryOptions, customerSubCategoryOptions, channelOptions, regionOptions, areaOptions } = useAllDropdownListData();
 	const [isOpen, setIsOpen] = useState(false);
 	const { showSnackbar } = useSnackbar();
 	const router = useRouter();
@@ -285,7 +285,7 @@ export default function EditAgentCustomer() {
 				  )}
 				</div>
 				<div>
-				  <InputFields required label="Customer Type" name="customer_type" value={form.customer_type?.toString() ?? ""} onChange={handleChange} error={touched.customer_type && errors.customer_type} />
+				  <InputFields required label="Customer Type" name="customer_type" value={form.customer_type?.toString() ?? ""} options={customerTypeOptions} onChange={handleChange} error={touched.customer_type && errors.customer_type} />
 				  {touched.customer_type && errors.customer_type && (
 					<div className="text-red-500 text-xs mt-1">{errors.customer_type}</div>
 				  )}
@@ -322,7 +322,13 @@ export default function EditAgentCustomer() {
 				  )}
 				</div>
 				<div>
-				  <InputFields required label="Language" name="language" value={form.language} onChange={handleChange} error={touched.language && errors.language}/>
+				  <InputFields required label="Language" name="language" value={form.language} onChange={handleChange}  options={[
+                    { value: "1", label: "English" },
+                    { value: "2", label: "Hindi" },
+                    { value: "3", label: "Spanish" },
+                    { value: "4", label: "French" },
+                    { value: "5", label: "German" }
+                  ]} error={touched.language && errors.language}/>
 				  {touched.language && errors.language && (
 					<div className="text-red-500 text-xs mt-1">{errors.language}</div>
 				  )}

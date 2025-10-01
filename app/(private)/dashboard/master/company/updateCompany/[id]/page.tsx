@@ -19,6 +19,7 @@ import {
   updateCompany,
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { useLoading } from "@/app/services/loadingContext";
 
 /* ---------------- SCHEMAS ---------------- */
 const CompanySchema = Yup.object({
@@ -106,6 +107,7 @@ export default function EditCompany() {
   const { id: queryId } = useParams();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const {setLoading} = useLoading();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -178,8 +180,9 @@ export default function EditCompany() {
       logo: "logo.png", // optional if you want to send static
       address: `${values.street}, ${values.town}`, // optional if API wants a single address string
     };
-
+        setLoading(true);
         const res = await updateCompany(queryId as string, payload);
+        setLoading(false);
         if (res?.error) {
           showSnackbar(res?.data?.message || "Failed to update company ❌", "error");
         } else {

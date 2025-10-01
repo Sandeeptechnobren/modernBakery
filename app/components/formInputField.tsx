@@ -63,8 +63,8 @@ export default function FormInputField({
             onChange={onCurrencyChange}
             className="border border-gray-300 rounded-r-md px-3 text-gray-900 h-[44px] w-28 sm:w-32"
           >
-            {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
+            {options.map((opt, index) => (
+              <option key={opt.value+index} value={opt.value}>
                 {opt.label}
               </option>
             ))}
@@ -79,8 +79,8 @@ export default function FormInputField({
               onChange={onCodeChange}
               className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
             >
-              {options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+              {options.map((opt, index) => (
+                <option key={opt.value+index} value={opt.value}>
                   {opt.label}
                 </option>
               ))}

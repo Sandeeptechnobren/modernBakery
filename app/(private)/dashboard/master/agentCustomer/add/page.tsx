@@ -40,7 +40,7 @@ interface AgentCustomerFormValues {
 };
 
 const AddAgentCustomerPage = () => {
-  const { customerTypeOptions,routeOptions,customerCategoryOptions,customerSubCategoryOptions,channelOptions,regionOptions,areaOptions} = useAllDropdownListData();
+  const { customerTypeOptions,routeOptions, customerCategoryOptions,customerSubCategoryOptions,channelOptions,regionOptions,areaOptions} = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -254,7 +254,7 @@ const AddAgentCustomerPage = () => {
                   )}
                 </div>
                 <div>
-                  <InputFields required label="Customer Type" name="customer_type" value={form.customer_type?.toString() ?? ""} onChange={handleChange} error={touched.customer_type && errors.customer_type} />
+                  <InputFields required label="Customer Type" options={customerTypeOptions} name="customer_type" value={form.customer_type?.toString() ?? ""} onChange={handleChange} error={touched.customer_type && errors.customer_type} />
                   {touched.customer_type && errors.customer_type && (
                     <div className="text-red-500 text-xs mt-1">{errors.customer_type}</div>
                   )}
@@ -291,7 +291,13 @@ const AddAgentCustomerPage = () => {
                   )}
                 </div>
                 <div>
-                  <InputFields required label="Language" name="language" value={form.language} onChange={handleChange} error={touched.language && errors.language}/>
+                  <InputFields required label="Language" name="language" value={form.language} onChange={handleChange} options={[
+                    { value: "1", label: "English" },
+                    { value: "2", label: "Hindi" },
+                    { value: "3", label: "Spanish" },
+                    { value: "4", label: "French" },
+                    { value: "5", label: "German" },
+                  ]} error={touched.language && errors.language}/>
                   {touched.language && errors.language && (
                     <div className="text-red-500 text-xs mt-1">{errors.language}</div>
                   )}

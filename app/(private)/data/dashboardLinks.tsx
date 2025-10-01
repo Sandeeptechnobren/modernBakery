@@ -46,6 +46,13 @@ export const initialLinkData: SidebarDataType[] = [
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [ 
+                    {
+                        isActive: false,
+                        href: "/dashboard/master/company",
+                        label: "Company",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500"
+                    },
                    
                     // {
                     //     isActive: false,
@@ -56,39 +63,18 @@ export const initialLinkData: SidebarDataType[] = [
                     // },
                     {
                 isActive: false,
-                href: "/dashboard/master/agentCustomer",
-                label: "Agent Customer",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
-                    {
-                isActive: false,
-                href: "/dashboard/master/item",
-                label: "Items",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
-                    {
-                        isActive: false,
-                        href: "/dashboard/master/company",
-                        label: "Company",
-                        leadingIcon: "lucide:user",
-                        iconColor: "text-green-500"
-                    },
-                    {
-                isActive: false,
                 href: "/dashboard/master/salesman",
                 label: "Salesman",
                 leadingIcon: "mdi:package-variant",
                 iconColor: "text-cyan-500"
             },
-            {
-                isActive: false,
-                href: "/dashboard/master/discount",
-                label: "Discount",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/master/discount",
+            //     label: "Discount",
+            //     leadingIcon: "mdi:package-variant",
+            //     iconColor: "text-cyan-500"
+            // },
             // {
             //     isActive: false,
             //     href: "/dashboard/master/item",
@@ -123,6 +109,20 @@ export const initialLinkData: SidebarDataType[] = [
                         label: "Warehouse",
                         leadingIcon: "tabler:building-warehouse",
                         iconColor: "text-violet-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/dashboard/master/agentCustomer",
+                        label: "Agent Customer",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/dashboard/master/item",
+                        label: "Items",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
                     },
                 ],
             },

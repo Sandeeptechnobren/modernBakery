@@ -35,7 +35,6 @@ const VehicleSchema = Yup.object().shape({
   vehicleBrand: Yup.string().required("Vehicle Brand is required"),
   numberPlate: Yup.string().required("Number Plate is required"),
   chassisNumber: Yup.string().required("Chassis Number is required"),
-  description: Yup.string().required("Description is required"),
   vehicleType: Yup.string().required("Vehicle Type is required"),
   ownerType: Yup.string().required("Owner Type is required"),
   warehouseId: Yup.string().required("Warehouse is required"),
@@ -235,8 +234,7 @@ export default function UpdateVehicleWithStepper() {
                 {touched.chassisNumber && errors.chassisNumber && <div className="text-red-500 text-xs mt-1">{errors.chassisNumber}</div>}
               </div>
               <div>
-                <InputFields label="Description" value={form.description} onChange={handleChange} name="description" error={touched.description && errors.description} />
-                {touched.description && errors.description && <div className="text-red-500 text-xs mt-1">{errors.description}</div>}
+                <InputFields label="Description" value={form.description} onChange={handleChange} name="description" />
               </div>
               <div>
                 <InputFields label="Vehicle Type" value={form.vehicleType} onChange={handleChange} name="vehicleType" error={touched.vehicleType && errors.vehicleType} options={[

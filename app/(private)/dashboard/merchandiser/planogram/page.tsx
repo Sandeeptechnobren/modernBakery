@@ -122,7 +122,7 @@ const tableData: TableDataType[] = planograms.map((s) => ({
   data={tableData}
   config={{
     header: {
-      searchBar: true,
+      searchBar: false,
       columnFilter: true,
       actions: [
         <SidebarBtn

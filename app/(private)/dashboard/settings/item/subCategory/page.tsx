@@ -131,7 +131,7 @@ export default function SubCategory() {
                     data={categoryData}
                     config={{
                         header: {
-                            searchBar: true,
+                            searchBar: false,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn

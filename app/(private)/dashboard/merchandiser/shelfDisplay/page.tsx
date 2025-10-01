@@ -130,13 +130,23 @@ export default function ShelfDisplay() {
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "shelf_name", label: "Name" },
-              { key: "height", label: "Name" },
-              { key: "width", label: "Customer Code" },
-              { key: "depth", label: "Customer Name" },
-              { key: "valid_from", label: "Valid From" },
-              { key: "valid_to", label: "Valid To" },
-              { key: "customer_details", label: "Customer Name", render: (data: TableDataType) => {
+              { key: "shelf_name", label: "Shelf Name" },
+              { key: "height", label: "Height" },
+              { key: "width", label: "Width" },
+              { key: "depth", label: "Depth" },
+              { key: "valid_from", label: "Valid From", render: (row: TableDataType) => {
+                  const dateStr = row.valid_from;
+                  if (!dateStr) return "";
+                  const [y, m, d] = dateStr.split("T")[0].split("-");
+                  return `${d}-${m}-${y}`;
+              }},
+              { key: "valid_to", label: "Valid To", render: (row: TableDataType) => {
+                  const dateStr = row.valid_to;
+                  if (!dateStr) return "";
+                  const [y, m, d] = dateStr.split("T")[0].split("-");
+                  return `${d}-${m}-${y}`;
+              } },
+              { key: "customer_details", label: "Customers", render: (data: TableDataType) => {
                 if (Array.isArray(data.customer_details) && data.customer_details.length > 0) {
                   return data.customer_details
                     .map((customer) => `${customer.customer_code} - ${customer.owner_name}`)
