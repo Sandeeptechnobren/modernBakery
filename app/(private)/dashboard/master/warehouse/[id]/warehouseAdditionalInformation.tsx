@@ -15,23 +15,31 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <InputFields
-                label="Device No. *"
+            required
+                label="Device No."
                 name="device_no"
                 value={values.device_no}
                 onChange={handleChange}
                 error={errors?.device_no && touched?.device_no ? errors.device_no : false}
             />
             <InputFields
-                label="EFRIS Configuration *"
+            required
+            type='radio'
+                label="EFRIS Configuration"
                 name="is_efris"
                 value={values.is_efris}
                 onChange={handleChange}
+                options={[
+                    { value: "1", label: "Yes" },
+                    { value: "0", label: "No" },
+                ]}
                 error={errors?.is_efris && touched?.is_efris ? errors.is_efris : false}
             />
 
             <div>
                 <InputFields
-                    label="P12 File *"
+                required
+                    label="P12 File"
                     name="p12_file"
                     type="file"
                     onChange={(e) => {
@@ -71,6 +79,7 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
             <InputFields
                 label="Is Branch"
                 name="is_branch"
+                type='radio'
                 value={values.is_branch}
                 onChange={handleChange}
                 options={[
@@ -83,6 +92,7 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
             <InputFields
                 label="Invoice Sync"
                 name="invoice_sync"
+                type='radio'
                 value={values.invoice_sync}
                 onChange={handleChange}
                 options={[

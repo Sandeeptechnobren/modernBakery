@@ -60,8 +60,8 @@ type WarehouseRow = TableDataType & {
 };
 
 const columns = [
-  { key: "registation_no", label: "Registration No.", render: (row: WarehouseRow) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.registation_no || "-" }</span>)},
   { key: "warehouse_code", label: "Warehouse Code", render: (row: WarehouseRow) =>(<span className="font-semibold text-[#181D27] text-[14px]">{ row.warehouse_code || "-"}</span>) },
+  { key: "registation_no", label: "Registration No.", render: (row: WarehouseRow) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.registation_no || "-" }</span>)},
   { key: "warehouse_name", label: "Warehouse Name", render: (row: WarehouseRow) => row.warehouse_name || "-" },
   { key: "tin_no", label: "TIN No", render: (row: WarehouseRow) => row.tin_no || "-" },
   { key: "owner_name", label: "Owner Name", render: (row: WarehouseRow) => row.owner_name || "-" },
@@ -325,7 +325,7 @@ export default function Warehouse() {
               actions: [
                 <SidebarBtn
                   key={0}
-                  href="/dashboard/master/warehouse/addwarehouse"
+                  href="/dashboard/master/warehouse/add"
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add Warehouse"

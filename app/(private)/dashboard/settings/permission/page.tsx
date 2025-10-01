@@ -14,9 +14,9 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
-    roleList,
+    permissionList,
     
-    deleteRole,
+    deletePermissions,
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -59,7 +59,7 @@ const columns = [
         },
 ];
 
-export default function Roles() {
+export default function Permissions() {
     interface RoleItem {
         id?: number | string;
         uuid?: number | string;
@@ -80,69 +80,20 @@ export default function Roles() {
     const { showSnackbar } = useSnackbar(); 
     type TableRow = TableDataType & { id?: string };
 
-    const fetchCountries = useCallback(
-        async (
-            page: number = 1,
-            pageSize: number = 5
-        ): Promise<listReturnType> => {
-            try {
-              setLoading(true);
-                const listRes = await roleList({
-                    limit: pageSize.toString(),
-                    page: page.toString(),
-                });
-                setLoading(false);
-                return {
-                    data: listRes.data || [],
-                    total: listRes.pagination.totalPages ,
-                    currentPage: listRes.pagination.page ,
-                    pageSize: listRes.pagination.limit ,
-                };
-            } catch (error: unknown) {
-                console.error("API Error:", error);
-                setLoading(false);
-                throw error;
-            }
-        },
-        []
-    );
-
-    // const searchCountries = useCallback(
-    //     async (
-    //         searchQuery: string,
-    //         pageSize: number
-    //     ): Promise<searchReturnType> => {
-    //         setLoading(true);
-    //         const result = await countryListGlobalSearch({
-    //             query: searchQuery,
-    //             per_page: pageSize.toString(),
-    //         });
-    //         setLoading(false);
-    //         if (result.error) throw new Error(result.data.message);
-    //         else {
-    //             return {
-    //                 data: result.data || [],
-    //                 total: result.pagination.pagination.totalPages || 0,
-    //                 currentPage: result.pagination.pagination.current_page || 0,
-    //                 pageSize: result.pagination.pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     []
-    // );
+    const [tableData, setTableData] = useState<TableDataType[]>([]);
 
     const handleConfirmDelete = async () => {
         if (!selectedRow) return;
 
         if (!selectedRow?.uuid) throw new Error("Missing id");
-        const res = await deleteRole(String(selectedRow.uuid));
+        const res = await deletePermissions(String(selectedRow.uuid));
         if (res.error)
             return showSnackbar(
-                res.data.message || "Failed to delete Role",
+                res.data.message || "Failed to delete Permission",
                 "error"
             );
         else {
-            showSnackbar("Role deleted successfully ", "success");
+            showSnackbar("Permission deleted successfully ", "success");
             setRefreshKey(refreshKey + 1);
         }
         setLoading(false);
@@ -151,21 +102,30 @@ export default function Roles() {
     };
 
     useEffect(() => {
-        setLoading(true);
-    }, []);
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const res = await permissionList();
+                // Map API data to TableDataType if needed
+                setTableData(Array.isArray(res.data) ? res.data : []);
+            } catch (e) {
+                setTableData([]);
+            }
+            setLoading(false);
+        };
+        fetchData();
+    }, [refreshKey, setLoading]);
 
     return (
         <>
             <div className="h-[calc(100%-60px)] pb-[22px]">
-                <Table
-                    refreshKey={refreshKey}
-                    config={{
-                        api: {
-                            list: fetchCountries,
-                            // search: searchCountries,
-                        },
-                        header: {
-                            title: "Role",
+                 <Table
+                     refreshKey={refreshKey}
+                     data={tableData}
+                     config={{
+                         // api: { list: fetchCountries },
+                         header: {
+                            title: "Permissions",
                             wholeTableActions: [
                                 <div key={0} className="flex gap-[12px] relative">
                                     <DismissibleDropdown
@@ -211,10 +171,10 @@ export default function Roles() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/dashboard/settings/role/add"
+                                    href="/dashboard/settings/permission/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Role"
+                                    label="Add Permission"
                                     labelTw="hidden sm:block"
                                 />,
                             ],
@@ -227,7 +187,7 @@ export default function Roles() {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    router.push(`/dashboard/settings/role/detail/${row.uuid}`);
+                                    router.push(`/dashboard/settings/permission/detail/${row.uuid}`);
 
                                 },
                             },
@@ -248,7 +208,7 @@ export default function Roles() {
             {showDeletePopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                     <DeleteConfirmPopup
-                        title="Role"
+                        title="Permission"
                         onClose={() => setShowDeletePopup(false)}
                         onConfirm={handleConfirmDelete}
                     />

@@ -8,6 +8,7 @@ import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import Loading from "@/app/components/Loading";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { addRegion, getRegionById, updateRegion } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -27,6 +28,7 @@ type RegionFormValues = {
 export default function AddEditRegion() {
   const router = useRouter();
   const params = useParams();
+  const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const { showSnackbar } = useSnackbar();
   const { onlyCountryOptions } = useAllDropdownListData();
@@ -36,7 +38,6 @@ export default function AddEditRegion() {
   const isEditMode = routeId && routeId !== "add";
   const queryId = isEditMode ? routeId : "";
 
-  const [loading, setLoading] = useState(false);
   const [initialValues, setInitialValues] = useState<RegionFormValues>({
     region_name: "",
     status: "1",
@@ -95,7 +96,7 @@ export default function AddEditRegion() {
   if (isEditMode && loading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <span>Loading...</span>
+        <Loading />
       </div>
     );
   }

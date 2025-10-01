@@ -258,7 +258,7 @@ export default function Route() {
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {
                                     router.push(
-                                        `/dashboard/master/route/routes/${data.id}`
+                                        `/dashboard/master/route/${data.id}`
                                     );
                                 },
                             },

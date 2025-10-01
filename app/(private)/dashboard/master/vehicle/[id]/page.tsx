@@ -5,11 +5,12 @@ import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
-import { warehouseList, getVehicleById, updateVehicle } from "@/app/services/allApi";
+import { warehouseList, getVehicleById, addVehicle, updateVehicle } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
+import Loading from "@/app/components/Loading";
 
 interface Warehouse {
   id: number;
@@ -47,7 +48,7 @@ const VehicleSchema = Yup.object().shape({
     .required("Valid To date is required"),
 });
 
-export default function UpdateVehicleWithStepper() {
+export default function AddEditVehicleWithStepper() {
   const steps: StepperStep[] = [
     { id: 1, label: "Vehicle Details" },
     { id: 2, label: "Location Information" },
@@ -67,9 +68,10 @@ export default function UpdateVehicleWithStepper() {
   const router = useRouter();
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const isEditMode = id !== undefined && id !== "add";
 
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<VehicleFormValues>({
     vehicleBrand: "",
     numberPlate: "",
@@ -100,41 +102,38 @@ export default function UpdateVehicleWithStepper() {
   }, [showSnackbar]);
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      showSnackbar("Vehicle ID is missing ❌", "error");
-      return;
-    }
-    const fetchVehicle = async () => {
-      try {
-        const res = await getVehicleById(id);
-        if (res?.data) {
-          const vehicle = res.data;
-          setForm({
-            vehicleBrand: vehicle.vehicle_brand || "",
-            numberPlate: vehicle.number_plat || "",
-            chassisNumber: vehicle.vehicle_chesis_no || "",
-            description: vehicle.description || "",
-            vehicleType: vehicle.vehicle_type || "",
-            ownerType: vehicle.owner_type || "",
-            warehouseId: String(vehicle.warehouse_id) || "",
-            odoMeter: vehicle.opening_odometer || "",
-            capacity: vehicle.capacity || "",
-            status: vehicle.status === 1 ? "active" : "inactive",
-            validFrom: vehicle.valid_from || "",
-            validTo: vehicle.valid_to || "",
-          });
-        } else {
-          showSnackbar("Vehicle data not found ❌", "error");
+    if (isEditMode && id) {
+      setLoading(true);
+      (async () => {
+        try {
+          const res = await getVehicleById(id);
+          if (res?.data) {
+            const vehicle = res.data;
+            setForm({
+              vehicleBrand: vehicle.vehicle_brand || "",
+              numberPlate: vehicle.number_plat || "",
+              chassisNumber: vehicle.vehicle_chesis_no || "",
+              description: vehicle.description || "",
+              vehicleType: vehicle.vehicle_type || "",
+              ownerType: vehicle.owner_type || "",
+              warehouseId: String(vehicle.warehouse_id) || "",
+              odoMeter: vehicle.opening_odometer || "",
+              capacity: vehicle.capacity || "",
+              status: vehicle.status === 1 ? "active" : "inactive",
+              validFrom: vehicle.valid_from || "",
+              validTo: vehicle.valid_to || "",
+            });
+          } else {
+            showSnackbar("Vehicle data not found ❌", "error");
+          }
+        } catch (err) {
+          showSnackbar("Failed to fetch vehicle ❌", "error");
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        showSnackbar("Failed to fetch vehicle ❌", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchVehicle();
-  }, [id, showSnackbar]);
+      })();
+    }
+  }, [isEditMode, id, showSnackbar]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -187,10 +186,9 @@ export default function UpdateVehicleWithStepper() {
       return;
     }
     try {
-      if (!id) return;
       const payload = {
-        number_plate: form.numberPlate,
-        vehicle_chassis_no: form.chassisNumber,
+        number_plat: form.numberPlate,
+        vehicle_chesis_no: form.chassisNumber,
         description: form.description,
         vehicle_brand: form.vehicleBrand,
         capacity: form.capacity,
@@ -202,15 +200,20 @@ export default function UpdateVehicleWithStepper() {
         valid_from: form.validFrom,
         valid_to: form.validTo,
       };
-      const res = await updateVehicle(id, payload);
-      if (res?.error) {
-        showSnackbar(res.message || "Failed to update vehicle ❌", "error");
+      let res;
+      if (isEditMode && id) {
+        res = await updateVehicle(id, payload);
       } else {
-        showSnackbar("Vehicle updated successfully ✅", "success");
+        res = await addVehicle(payload);
+      }
+      if (res?.error) {
+        showSnackbar(res.data?.message || "Failed to submit form", "error");
+      } else {
+        showSnackbar(isEditMode ? "Vehicle updated successfully ✅" : "Vehicle added successfully ✅", "success");
         router.push("/dashboard/master/vehicle");
       }
     } catch (err) {
-      showSnackbar("Update vehicle failed ❌", "error");
+      showSnackbar(isEditMode ? "Update vehicle failed ❌" : "Add vehicle failed ❌", "error");
     }
   };
 
@@ -222,23 +225,20 @@ export default function UpdateVehicleWithStepper() {
             <h2 className="text-lg font-semibold mb-6">Vehicle Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <InputFields label="Vehicle Brand" value={form.vehicleBrand} onChange={handleChange} name="vehicleBrand" error={touched.vehicleBrand && errors.vehicleBrand} />
+                <InputFields required label="Vehicle Brand" value={form.vehicleBrand} onChange={handleChange} name="vehicleBrand" error={touched.vehicleBrand && errors.vehicleBrand} />
                 {touched.vehicleBrand && errors.vehicleBrand && <div className="text-red-500 text-xs mt-1">{errors.vehicleBrand}</div>}
               </div>
               <div>
-                <InputFields label="Number Plate" value={form.numberPlate} onChange={handleChange} name="numberPlate" error={touched.numberPlate && errors.numberPlate} />
+                <InputFields required label="Number Plate" value={form.numberPlate} onChange={handleChange} name="numberPlate" error={touched.numberPlate && errors.numberPlate} />
                 {touched.numberPlate && errors.numberPlate && <div className="text-red-500 text-xs mt-1">{errors.numberPlate}</div>}
               </div>
               <div>
-                <InputFields label="Chassis Number" value={form.chassisNumber} onChange={handleChange} name="chassisNumber" error={touched.chassisNumber && errors.chassisNumber} />
+                <InputFields required label="Chassis Number" value={form.chassisNumber} onChange={handleChange} name="chassisNumber" error={touched.chassisNumber && errors.chassisNumber} />
                 {touched.chassisNumber && errors.chassisNumber && <div className="text-red-500 text-xs mt-1">{errors.chassisNumber}</div>}
               </div>
+             
               <div>
-                <InputFields label="Description" value={form.description} onChange={handleChange} name="description"  />
-                
-              </div>
-              <div>
-                <InputFields label="Vehicle Type" value={form.vehicleType} onChange={handleChange} name="vehicleType" error={touched.vehicleType && errors.vehicleType} options={[
+                <InputFields required label="Vehicle Type" value={form.vehicleType} onChange={handleChange} name="vehicleType" error={touched.vehicleType && errors.vehicleType} options={[
                   { value: "1", label: "Truck" },
                   { value: "2", label: "Van" },
                   { value: "3", label: "Bike" },
@@ -255,14 +255,14 @@ export default function UpdateVehicleWithStepper() {
             <h2 className="text-lg font-semibold mb-6">Location Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <InputFields label="Owner Type" value={form.ownerType} onChange={handleChange} name="ownerType" error={touched.ownerType && errors.ownerType} options={[
+                <InputFields required label="Owner Type" value={form.ownerType} onChange={handleChange} name="ownerType" error={touched.ownerType && errors.ownerType} options={[
                   { value: "0", label: "Company Owned" },
                   { value: "1", label: "Contractor" },
                 ]} />
                 {touched.ownerType && errors.ownerType && <div className="text-red-500 text-xs mt-1">{errors.ownerType}</div>}
               </div>
               <div>
-                <InputFields label="Warehouse" value={form.warehouseId} onChange={handleChange} name="warehouseId" error={touched.warehouseId && errors.warehouseId} options={warehouses.map((w) => ({ value: String(w.id), label: w.warehouse_name }))} />
+                <InputFields required label="Warehouse" value={form.warehouseId} onChange={handleChange} name="warehouseId" error={touched.warehouseId && errors.warehouseId} options={warehouses.map((w) => ({ value: String(w.id), label: w.warehouse_name }))} />
                 {touched.warehouseId && errors.warehouseId && <div className="text-red-500 text-xs mt-1">{errors.warehouseId}</div>}
               </div>
             </div>
@@ -274,27 +274,31 @@ export default function UpdateVehicleWithStepper() {
             <h2 className="text-lg font-semibold mb-6">Additional Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <InputFields label="Odo Meter" value={form.odoMeter} onChange={handleChange} name="odoMeter" error={touched.odoMeter && errors.odoMeter} />
+                <InputFields required label="Odo Meter" value={form.odoMeter} onChange={handleChange} name="odoMeter" error={touched.odoMeter && errors.odoMeter} />
                 {touched.odoMeter && errors.odoMeter && <div className="text-red-500 text-xs mt-1">{errors.odoMeter}</div>}
               </div>
               <div>
-                <InputFields label="Capacity" value={form.capacity} onChange={handleChange} name="capacity" error={touched.capacity && errors.capacity} />
+                <InputFields required label="Capacity" value={form.capacity} onChange={handleChange} name="capacity" error={touched.capacity && errors.capacity} />
                 {touched.capacity && errors.capacity && <div className="text-red-500 text-xs mt-1">{errors.capacity}</div>}
               </div>
+               <div>
+                <InputFields label="Description" value={form.description} onChange={handleChange} name="description"  />
+              </div>
+              
               <div>
-                <InputFields label="Status" value={form.status} onChange={handleChange} name="status" error={touched.status && errors.status} options={[
+                <InputFields required label="Valid From" type="date" value={form.validFrom} onChange={handleChange} name="validFrom" error={touched.validFrom && errors.validFrom} />
+                {touched.validFrom && errors.validFrom && <div className="text-red-500 text-xs mt-1">{errors.validFrom}</div>}
+              </div>
+              <div>
+                <InputFields required label="Valid To" type="date" value={form.validTo} onChange={handleChange} name="validTo" error={touched.validTo && errors.validTo} />
+                {touched.validTo && errors.validTo && <div className="text-red-500 text-xs mt-1">{errors.validTo}</div>}
+              </div>
+              <div>
+                <InputFields required type="radio" label="Status" value={form.status} onChange={handleChange} name="status" error={touched.status && errors.status} options={[
                   { value: "active", label: "Active" },
                   { value: "inactive", label: "Inactive" },
                 ]} />
                 {touched.status && errors.status && <div className="text-red-500 text-xs mt-1">{errors.status}</div>}
-              </div>
-              <div>
-                <InputFields label="Valid From" type="date" value={form.validFrom} onChange={handleChange} name="validFrom" error={touched.validFrom && errors.validFrom} />
-                {touched.validFrom && errors.validFrom && <div className="text-red-500 text-xs mt-1">{errors.validFrom}</div>}
-              </div>
-              <div>
-                <InputFields label="Valid To" type="date" value={form.validTo} onChange={handleChange} name="validTo" error={touched.validTo && errors.validTo} />
-                {touched.validTo && errors.validTo && <div className="text-red-500 text-xs mt-1">{errors.validTo}</div>}
               </div>
             </div>
           </ContainerCard>
@@ -304,17 +308,23 @@ export default function UpdateVehicleWithStepper() {
     }
   };
 
-  
+  if (isEditMode && loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Loading/>
+      </div>
+    );
+  }
 
   return (
     <>
-   <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
           <Link href="/dashboard/master/vehicle">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            Update Vehicle
+            {isEditMode ? "Edit Vehicle" : "Add Vehicle"}
           </h1>
         </div>
       </div>
@@ -328,7 +338,7 @@ export default function UpdateVehicleWithStepper() {
         showSubmitButton={isLastStep}
         showNextButton={!isLastStep}
         nextButtonText="Save & Next"
-        submitButtonText="Update"
+        submitButtonText={isEditMode ? "Update" : "Submit"}
       >
         {renderStepContent()}
       </StepperForm>

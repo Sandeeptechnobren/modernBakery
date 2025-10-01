@@ -1,23 +1,27 @@
 "use client";
-
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import * as yup from "yup";
-import { addRoutes } from "@/app/services/allApi";
+import IconButton from "@/app/components/iconButton";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import SettingPopUp from "@/app/components/settingPopUp";
-import IconButton from "@/app/components/iconButton";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { getRouteById, addRoutes, updateRoute } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import Loading from "@/app/components/Loading";
 
-export default function Route() {
-  const { routeTypeOptions, warehouseOptions ,vehicleListOptions} = useAllDropdownListData();
+export default function AddEditRoute() {
+  const { routeTypeOptions, warehouseOptions, vehicleListOptions } = useAllDropdownListData();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const params = useParams();
+  const routeId = params?.id as string | undefined;
+  const isEditMode = routeId !== undefined && routeId !== "add";
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [routeCode, setRouteCode] = useState("");
   const [routeName, setRouteName] = useState("");
   const [routeType, setRouteType] = useState("");
@@ -26,40 +30,53 @@ export default function Route() {
   const [status, setStatus] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const clearErrors = () => setErrors({});
 
+  useEffect(() => {
+    if (isEditMode && routeId) {
+      setLoading(true);
+      (async () => {
+        try {
+          const res = await getRouteById(String(routeId));
+          const data = res?.data ?? res;
+          setRouteCode(data?.route_code || "");
+          setRouteName(data?.route_name || "");
+          setWarehouse(data?.warehouse?.id !== undefined && data?.warehouse?.id !== null ? String(data?.warehouse?.id) : "");
+          setVehicleType(data?.vehicle?.id !== undefined && data?.vehicle?.id !== null ? String(data?.vehicle.id) : "");
+          setRouteType(data?.route_Type?.id !== undefined && data?.route_Type?.id !== null ? String(data?.route_Type.id) : "");
+          setStatus(data?.status !== undefined && data?.status !== null ? String(data?.status) : "");
+        } catch (err) {
+          showSnackbar("Failed to fetch route details", "error");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [isEditMode, routeId]);
 
   const validationSchema = yup.object().shape({
-    route_code: yup.string().required("Route code is required").max(10),
-    route_name: yup.string().required("Route name is required").max(100),
-    route_type: yup.string().required("Route type is required"),
-    vehicle_type: yup.string().required("Vehicle is required"),
+    routeCode: yup.string().required("Route Code is required"),
+    routeName: yup.string().required("Route Name is required"),
+    routeType: yup.string().required("Route Type is required"),
+    vehicleType: yup.string().required("Vehicle is required"),
     warehouse: yup.string().required("Warehouse is required"),
-    status: yup.string().required("Status is required").oneOf(["0", "1", "active", "inactive"], "Invalid status"),
+    status: yup.string().required("Status is required"),
   });
+
+  const clearErrors = () => setErrors({});
 
   const handleSubmit = async () => {
     clearErrors();
     try {
       await validationSchema.validate({
-        route_code: routeCode,
-        route_name: routeName,
-        route_type: routeType,
-        vehicle_type: vehicleType,
-        warehouse: warehouse,
-        status: status,
+        routeCode,
+        routeName,
+        routeType,
+        vehicleType,
+        warehouse,
+        status,
       }, { abortEarly: false });
 
-      type AddRoutePayload = {
-        route_code?: string;
-        route_name?: string;
-        route_type?: string;
-        vehicle_id?: string;
-        status?: number | undefined;
-        warehouse_id: string;
-      };
-
-      const payload: AddRoutePayload = {
+      const payload = {
         route_code: routeCode,
         route_name: routeName,
         route_type: routeType,
@@ -69,11 +86,20 @@ export default function Route() {
       };
 
       setSubmitting(true);
-      await addRoutes(payload);
-      showSnackbar("Route added successfully ", "success");
-      router.push("/dashboard/master/route");
+      let res;
+      if (isEditMode && routeId) {
+        res = await updateRoute(String(routeId), payload);
+      } else {
+        res = await addRoutes(payload);
+      }
+      if (res?.error) {
+        showSnackbar(res.data?.message || "Failed to submit form", "error");
+      } else {
+        showSnackbar(isEditMode ? "Route updated successfully" : "Route added successfully", "success");
+        router.push("/dashboard/master/route");
+      }
       setSubmitting(false);
-    } catch (err: unknown) {
+    } catch (err) {
       setSubmitting(false);
       if (err instanceof yup.ValidationError && Array.isArray(err.inner)) {
         const formErrors: Record<string, string> = {};
@@ -81,17 +107,23 @@ export default function Route() {
           if (e.path) formErrors[e.path] = e.message;
         });
         setErrors(formErrors);
+        showSnackbar("Please fix validation errors before proceeding", "error");
       } else {
-        showSnackbar("Failed to submit form", "error");
-        console.error(err);
+        showSnackbar(isEditMode ? "Failed to update route" : "Failed to add route", "error");
       }
     }
   };
 
+  if (isEditMode && loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
 
   return (
     <>
-
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
@@ -99,15 +131,13 @@ export default function Route() {
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            Add New Route
+            {isEditMode ? "Edit Route" : "Add Route"}
           </h1>
         </div>
       </div>
-
       {/* Content */}
       <div>
         <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-
           {/* Route Details */}
           <div className="p-6">
             <h2 className="text-lg font-medium text-gray-800 mb-4">
@@ -121,23 +151,23 @@ export default function Route() {
                   value={routeCode}
                   onChange={(e) => setRouteCode(e.target.value)}
                 />
-
-
-                <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
-                  icon="mi:settings"
-                  onClick={() => setIsOpen(true)}
-                />
-
-                <SettingPopUp
-                  isOpen={isOpen}
-                  onClose={() => setIsOpen(false)}
-                  title="Route Code"
-                />
-                {errors.route_code && (
-                  <p className="text-red-500 text-sm mt-1">{errors.route_code}</p>
+                {!isEditMode && (
+                  <>
+                    <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
+                      icon="mi:settings"
+                      onClick={() => setIsOpen(true)}
+                    />
+                    <SettingPopUp
+                      isOpen={isOpen}
+                      onClose={() => setIsOpen(false)}
+                      title="Route Code"
+                    />
+                  </>
+                )}
+                {errors.routeCode && (
+                  <p className="text-red-500 text-sm mt-1">{errors.routeCode}</p>
                 )}
               </div>
-
               <div>
                 <InputFields
                   required
@@ -145,48 +175,39 @@ export default function Route() {
                   value={routeName}
                   onChange={(e) => setRouteName(e.target.value)}
                 />
-                {errors.route_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.route_name}</p>
+                {errors.routeName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.routeName}</p>
                 )}
               </div>
               <div>
                 <InputFields
                   required
                   label="Route Type"
+                  name="route_type"
                   value={routeType}
-                  onChange={(e)=>setRouteType(e.target.value)}
+                  onChange={(e) => setRouteType(e.target.value)}
                   options={routeTypeOptions}
-                  
                 />
-                {errors.route_type && (
-                  <p className="text-red-500 text-sm mt-1">{errors.route_type}</p>
+                {errors.routeType && (
+                  <p className="text-red-500 text-sm mt-1">{errors.routeType}</p>
                 )}
-
               </div>
-               <div>
-                 <InputFields
+              <div>
+                <InputFields
                   required
                   label="Vehicle"
+                  name="vehicle_id"
                   value={vehicleType}
                   onChange={(e) => setVehicleType(e.target.value)}
-                  options={vehicleListOptions} 
+                  options={vehicleListOptions}
                 />
-                {errors.route_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.route_name}</p>
+                {errors.vehicleType && (
+                  <p className="text-red-500 text-sm mt-1">{errors.vehicleType}</p>
                 )}
-                              {/* <InputFields required label="Vehicle Type" value={form.vehicleType} onChange={handleChange} name="vehicleType" error={touched.vehicleType && errors.vehicleType} options={[
-                                { value: "1", label: "Truck" },
-                                { value: "2", label: "Van" },
-                                { value: "3", label: "Bike" },
-                                { value: "4", label: "Tuktuk" },
-                              ]} />
-                              {touched.vehicleType && errors.vehicleType && <div className="text-red-500 text-xs mt-1">{errors.vehicleType}</div>} */}
-                            </div>
+              </div>
             </div>
           </div>
         </div>
-        {/* Location Information */}
-
         {/* Additional Information */}
         <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 ">
           <div className="p-6">
@@ -197,15 +218,10 @@ export default function Route() {
               <div>
                 <InputFields
                   required
-                  name="warehouse"
                   label="Warehouse"
-                  value={warehouse || ""}
+                  value={warehouse}
                   options={warehouseOptions}
-                  onChange={(e) => {
-                    if (e && e.target && typeof e.target.value !== 'undefined') {
-                      setWarehouse(String(e.target.value));
-                    }
-                  }}
+                  onChange={(e) => setWarehouse(e.target.value)}
                 />
                 {errors.warehouse && (
                   <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
@@ -216,32 +232,31 @@ export default function Route() {
                   required
                   label="Status"
                   value={status}
+                  type="radio"
                   onChange={(e) => setStatus(e.target.value)}
                   options={[
-                    { value: "active", label: "Active" },
-                    { value: "inactive", label: "In Active" },
+                    { value: "1", label: "Active" },
+                    { value: "0", label: "In Active" },
                   ]}
                 />
                 {errors.status && (
                   <p className="text-red-500 text-sm mt-1">{errors.status}</p>
                 )}
               </div>
-
             </div>
           </div>
         </div>
-
         {/* Buttons */}
         <div className="flex justify-end gap-4 mt-6  pr-0">
           <button
             type="button"
             className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+            onClick={() => router.push("/dashboard/master/route")}
           >
             Cancel
           </button>
-
           <SidebarBtn
-            label={submitting ? "Submitting..." : "Submit"}
+            label={submitting ? (isEditMode ? "Updating..." : "Submitting...") : (isEditMode ? "Update" : "Submit")}
             isActive={!submitting}
             leadingIcon="mdi:check"
             onClick={handleSubmit}
@@ -249,7 +264,6 @@ export default function Route() {
           />
         </div>
       </div>
-
     </>
   );
 }

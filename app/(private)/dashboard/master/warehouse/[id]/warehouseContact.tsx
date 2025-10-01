@@ -72,6 +72,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
           <input
             type="text"
             name="tin_no"
+            required
             value={values.tin_no ?? ""}
             onChange={handleChange}
             placeholder="TIN Number"
@@ -84,6 +85,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
       {/* Email */}
       <InputFields
         label="Email"
+        required
         name="owner_email"
         value={values.owner_email}
         onChange={handleChange}

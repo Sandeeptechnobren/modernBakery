@@ -151,9 +151,6 @@ const columns = [
   { key: "buyertype", label: "Buyer Type" },
   { key: "payment_type", label: "Payment Type" },
   { key: "creditday", label: "Credit Day" },
-  { key: "longitude", label: "Longitude" },
-  { key: "latitude", label: "Latitude" },
-  { key: "accuracy", label: "Accuracy" },
   { key: "threshold_radius", label: "Threshold Radius" },
   { key: "language", label: "Language" },
   {
@@ -315,12 +312,12 @@ export default function AgentCustomer() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/dashboard/master/agentCustomer/add"
+                                    href="/dashboard/master/agentCustomer/new"
                                     isActive
                                     leadingIcon="lucide:plus"
                                     label="Add Agent Customer"
                                     labelTw="hidden sm:block"
-                                />,
+                                />, 
                             ],
                         },
                         footer: { nextPrevBtn: true, pagination: true },

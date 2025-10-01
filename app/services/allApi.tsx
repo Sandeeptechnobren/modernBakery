@@ -1794,3 +1794,94 @@ export const deleteSurveyQuestion = async (id:string) => {
     return handleError(error);
   }
 };
+
+
+
+export const roleList = async (params?: Params) => {
+  try {
+     const res = await API.get("/api/settings/roles/list",{ params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
+};
+
+export const addRoles = async (payload:object) => {
+  try {
+         const res = await API.post("/api/settings/roles/create", payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getRoleById = async (uuid: string) => {
+  try {
+       const res = await API.get(`/api/settings/roles/get/${uuid}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editRoles = async (uuid:string,payload:object) => {
+  try {
+           const res = await API.put(`/api/settings/roles/update/${uuid}`,payload);
+
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const deleteRole = async (uuid:string) => {
+  try {
+           const res = await API.delete(`/api/settings/roles/delete/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getMenuList = async () => {
+  try {
+           const res = await API.get(`/api/settings/menus/list`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+export const permissionList = async () => {
+  try {
+     const res = await API.get("/web/setting/permissions/list");
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
+};
+
+export const addPermissions = async (payload:object) => {
+  try {
+         const res = await API.post("/api/web/setting/permissions/create", payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deletePermissions = async (uuid:string) => {
+  try {
+           const res = await API.delete(`/web/setting/permissions/delete/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

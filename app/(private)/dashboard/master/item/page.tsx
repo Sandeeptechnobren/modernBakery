@@ -293,7 +293,7 @@ export default function Item() {
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
                                     router.push(
-                                        `/dashboard/master/item/edit/${row.id}`
+                                        `/dashboard/master/item/${row.id}`
                                     );
                                 },
                             },

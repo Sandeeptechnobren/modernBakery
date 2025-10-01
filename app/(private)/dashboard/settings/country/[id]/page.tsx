@@ -151,17 +151,21 @@ export default function AddEditCountry() {
                         className="text-xs text-red-500"
                       />
                     </div>
-                    <IconButton
-                      bgClass="white"
-                      className="mb-2 cursor-pointer text-[#252B37]"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Country Code"
-                    />
+                    {!isEditMode && (
+                      <>
+                        <IconButton
+                          bgClass="white"
+                          className="mb-2 cursor-pointer text-[#252B37]"
+                          icon="mi:settings"
+                          onClick={() => setIsOpen(true)}
+                        />
+                        <SettingPopUp
+                          isOpen={isOpen}
+                          onClose={() => setIsOpen(false)}
+                          title="Country Code"
+                        />
+                      </>
+                    )}
                   </div>
 
                   {/* Country Name */}
@@ -182,23 +186,7 @@ export default function AddEditCountry() {
                   </div>
 
                   {/* Status */}
-                  <div>
-                    <InputFields
-                      label="Status"
-                      name="status"
-                      value={values.status}
-                      options={[
-                        { value: "1", label: "Active" },
-                        { value: "0", label: "Inactive" },
-                      ]}
-                      onChange={(e) => setFieldValue("status", e.target.value)}
-                      type="radio"
-                      required
-                      error={
-                        errors?.status && touched?.status ? errors.status : false
-                      }
-                    />
-                  </div>
+                  
 
                   {/* Currency */}
                   <div>
@@ -214,6 +202,23 @@ export default function AddEditCountry() {
                       name="currency"
                       component="span"
                       className="text-xs text-red-500"
+                    />
+                  </div>
+                  <div>
+                    <InputFields
+                      label="Status"
+                      name="status"
+                      value={values.status}
+                      options={[
+                        { value: "1", label: "Active" },
+                        { value: "0", label: "Inactive" },
+                      ]}
+                      onChange={(e) => setFieldValue("status", e.target.value)}
+                      type="radio"
+                      required
+                      error={
+                        errors?.status && touched?.status ? errors.status : false
+                      }
                     />
                   </div>
                 </div>

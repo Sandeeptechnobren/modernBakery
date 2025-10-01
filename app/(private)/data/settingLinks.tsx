@@ -35,6 +35,20 @@ export const initialLinkData: SidebarDataType[] = [
             //     leadingIcon: "mdi:account",
             //     iconColor: "text-green-500",
             // },
+             {
+                isActive: false,
+                href: "/dashboard/settings/role",
+                label: "Roles",
+                leadingIcon: "mdi:account-tie",
+                iconColor: "text-green-500",
+            },
+             {
+                isActive: false,
+                href: "/dashboard/settings/permission",
+                label: "Permissions",
+                leadingIcon: "mdi:lock-check",
+                iconColor: "text-green-500",
+            },
               {
                 isActive: false,
                 href: "/dashboard/settings/user-types",
@@ -42,6 +56,7 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "mdi:account-group",
                 iconColor: "text-green-500",
             },
+            
 
              {
                 isActive: false,
@@ -50,13 +65,7 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "mdi:storefront",
                 iconColor: "text-green-500",
             },
-            // {
-            //     isActive: false,
-            //     href: "/dashboard/settings/role",
-            //     label: "Roles",
-            //     leadingIcon: "mdi:account-tie",
-            //     iconColor: "text-green-500",
-            // },
+           
 
             // {
             //     isActive: false,

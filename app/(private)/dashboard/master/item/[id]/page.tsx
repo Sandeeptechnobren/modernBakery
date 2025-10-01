@@ -2,8 +2,18 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useState } from "react";
-// Define the form state type
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import InputFields from "@/app/components/inputFields";
+import SettingPopUp from "@/app/components/settingPopUp";
+import IconButton from "@/app/components/iconButton";
+import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { itemById, addItem, editItem } from "@/app/services/allApi";
+import * as Yup from "yup";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import Loading from "@/app/components/Loading";
+
 interface ItemFormValues {
   itemCode: string;
   itemName: string;
@@ -21,22 +31,15 @@ interface ItemFormValues {
   shelfLife: string;
   status: string;
 }
-import InputFields from "@/app/components/inputFields";
 
-import SettingPopUp from "@/app/components/settingPopUp";
-import IconButton from "@/app/components/iconButton";
-import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { addItem } from "@/app/services/allApi";
-import * as Yup from "yup";
-import { useRouter } from "next/navigation";
-import {useAllDropdownListData} from "@/app/components/contexts/allDropdownListData";
-
-export default function AddItemStepper() {
+export default function AddEditItem() {
   const { itemCategoryOptions, itemSubCategoryOptions } = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
+  const params = useParams();
+  const itemId = params?.id as string | undefined;
+  const isEditMode = itemId !== undefined && itemId !== "add";
   const steps: StepperStep[] = [
     { id: 1, label: "Item Details" },
     { id: 2, label: "Item Information" },
@@ -70,9 +73,39 @@ export default function AddItemStepper() {
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ItemFormValues, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof ItemFormValues, boolean>>>({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isEditMode && itemId) {
+      setLoading(true);
+      (async () => {
+        const res = await itemById(String(itemId));
+        const data = res?.data ?? res;
+        if (res && !res.error) {
+          setForm({
+            itemCode: data.code || "",
+            itemName: data.name || "",
+            sapId: data.sap_id || "",
+            itemDesc: data.description || "",
+            itemCategory: (data.category?.id ? String(data.category.id) : (data.category_id ? String(data.category_id) : "")),
+            itemSubCategory: (data.sub_category?.id ? String(data.sub_category.id) : (data.sub_category_id ? String(data.sub_category_id) : "")),
+            itemUpc: data.upc ? String(data.upc) : "",
+            itemUom: data.uom ? String(data.uom) : "",
+            vat: data.vat || "",
+            excise: data.excies || "",
+            itemBasePrice: data.item_base_price || "",
+            exciseCode: data.excise_code || "",
+            communityCode: data.community_code || "",
+            shelfLife: data.shelf_life || "",
+            status: data.status === 1 || data.status === "1" || (typeof data.status === "string" && data.status.toLowerCase() === "active") ? "active" : "inactive",
+          });
+        }
+        setLoading(false);
+      })();
+    }
+  }, [isEditMode, itemId]);
 
   const ItemSchema = Yup.object().shape({
-    // itemCode: Yup.string().required("Item Code is required"),
     itemName: Yup.string().required("Item Name is required"),
     exciseCode: Yup.string().required("Excise Code is required"),
     communityCode: Yup.string().required("Community Code is required"),
@@ -86,7 +119,6 @@ export default function AddItemStepper() {
     itemBasePrice: Yup.string().required("Item Base Price is required"),
     status: Yup.string().required("Status is required"),
   });
-
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -158,15 +190,20 @@ export default function AddItemStepper() {
         shelf_life: form.shelfLife,
         status: form.status === "active" ? 1 : form.status === "inactive" ? 0 : undefined,
       };
-      const res = await addItem(payload);
-      if (res?.error) {
-        showSnackbar(res.message || "Failed to add item", "error");
+      let res;
+      if (isEditMode && itemId) {
+        res = await editItem(itemId, payload);
       } else {
-        showSnackbar("Item added successfully", "success");
+        res = await addItem(payload);
+      }
+      if (res?.error) {
+        showSnackbar(res.message || (isEditMode ? res.data.message : "Failed to add item"), "error");
+      } else {
+        showSnackbar(isEditMode ? "Item updated successfully" : "Item added successfully", "success");
         router.push("/dashboard/master/item");
       }
     } catch (err) {
-      showSnackbar("Add item failed", "error");
+      showSnackbar(isEditMode ? "Update item failed" : "Add item failed", "error");
     }
   };
 
@@ -178,51 +215,24 @@ export default function AddItemStepper() {
             <div className="p-6">
               <h2 className="text-lg font-medium text-gray-800 mb-4">Item Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* <div className="flex flex-col items-end gap-2 max-w-[406px]">
-                  <div className="w-full">
-                    <InputFields required label="Item Code" name="itemCode" value={form.itemCode} onChange={handleChange} error={touched.itemCode && errors.itemCode} />
-                    {touched.itemCode && errors.itemCode && (
-                      <div className="text-red-500 text-xs mt-1">{errors.itemCode}</div>
-                    )}
-                  </div>
-                   
-                  <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]" icon="mi:settings" onClick={() => setIsOpen(true)} />
-                  <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Item Code" />
-                </div> */}
                 <div className="flex items-end gap-2 max-w-[406px]">
-                                  <InputFields
-                                      label="Item Code"
-                                      name="itemCode"
-                                      value={form.itemCode}
-                                      onChange={handleChange}
-                                  />
-                                 
-                                  <IconButton
-                                      bgClass="white"
-                                      className="mb-2 cursor-pointer text-[#252B37]"
-                                      icon="mi:settings"
-                                      onClick={() => setIsOpen(true)}
-                                  />
-                  
-                                  <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Item Code" />
-                                    
-                              </div>
-                {/* <div className="flex flex-col">
-                  <InputFields required label="SAP Id" name="sapId" value={form.sapId} onChange={handleChange} error={touched.sapId && errors.sapId} />
-                  {touched.sapId && errors.sapId && (
-                    <div className="text-red-500 text-xs mt-1">{errors.sapId}</div>
+                  <InputFields required label="Item Code" name="itemCode" value={form.itemCode} onChange={handleChange} />
+                  {!isEditMode && (
+                    <>
+                      <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]" icon="mi:settings" onClick={() => setIsOpen(true)} />
+                      <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Item Code" />
+                    </>
                   )}
-                </div> */}
-                
+                </div>
                 <div>
                   <InputFields required label="Excise Code" name="exciseCode" value={form.exciseCode} onChange={handleChange} error={touched.exciseCode && errors.exciseCode}/>
-                   {touched.exciseCode && errors.exciseCode && (
+                  {touched.exciseCode && errors.exciseCode && (
                     <div className="text-red-500 text-xs mt-1">{errors.exciseCode}</div>
                   )}
                 </div>
                 <div>
                   <InputFields required label="Community Code" name="communityCode" value={form.communityCode} onChange={handleChange} error={touched.communityCode && errors.communityCode}/>
-                   {touched.communityCode && errors.communityCode && (
+                  {touched.communityCode && errors.communityCode && (
                     <div className="text-red-500 text-xs mt-1">{errors.communityCode}</div>
                   )}
                 </div>
@@ -232,12 +242,6 @@ export default function AddItemStepper() {
                     <div className="text-red-500 text-xs mt-1">{errors.itemName}</div>
                   )}
                 </div>
-                {/* <div className="flex flex-col">
-                  <InputFields required label="Item Base Price" name="itemBasePrice" value={form.itemBasePrice} onChange={handleChange} error={touched.itemBasePrice && errors.itemBasePrice} />
-                  {touched.itemBasePrice && errors.itemBasePrice && (
-                    <div className="text-red-500 text-xs mt-1">{errors.itemBasePrice}</div>
-                  )}
-                </div> */}
               </div>
             </div>
           </div>
@@ -260,7 +264,6 @@ export default function AddItemStepper() {
                     <div className="text-red-500 text-xs mt-1">{errors.itemSubCategory}</div>
                   )}
                 </div>
-               
                 <div className="flex flex-col">
                   <InputFields required label="Item UOM" name="itemUom" value={form.itemUom} onChange={handleChange} error={touched.itemUom && errors.itemUom} options={[
                     { value: "1", label: "BAG" },
@@ -277,13 +280,13 @@ export default function AddItemStepper() {
                     <div className="text-red-500 text-xs mt-1">{errors.itemUom}</div>
                   )}
                 </div>
-                 <div className="flex flex-col">
+                <div className="flex flex-col">
                   <InputFields required label="Item UPC" name="itemUpc" value={form.itemUpc} onChange={handleChange} error={touched.itemUpc && errors.itemUpc} />
-                   {touched.itemUpc && errors.itemUpc && (
+                  {touched.itemUpc && errors.itemUpc && (
                     <div className="text-red-500 text-xs mt-1">{errors.itemUpc}</div>
                   )}
                 </div>
-                 <div className="flex flex-col">
+                <div className="flex flex-col">
                   <InputFields required label="Vat" name="vat" value={form.vat} onChange={handleChange} error={touched.vat && errors.vat}/>
                   {touched.vat && errors.vat && (
                     <div className="text-red-500 text-xs mt-1">{errors.vat}</div>
@@ -298,7 +301,6 @@ export default function AddItemStepper() {
                 <div className="flex flex-col">
                   <InputFields  label="Shelf Life" name="shelfLife" value={form.shelfLife} onChange={handleChange} />
                 </div>
-               
               </div>
             </div>
           </div>
@@ -312,9 +314,8 @@ export default function AddItemStepper() {
                 <div>
                   <InputFields label="Item Description" name="itemDesc" value={form.itemDesc} onChange={handleChange} />
                 </div>
-               
                 <div className="flex flex-col">
-                  <InputFields required label="Status" name="status" value={form.status} onChange={handleChange} error={touched.status && errors.status} options={[
+                  <InputFields required type="radio" label="Status" name="status" value={form.status} onChange={handleChange} error={touched.status && errors.status} options={[
                     { value: "active", label: "Active" },
                     { value: "inactive", label: "In Active" },
                   ]} />
@@ -331,6 +332,14 @@ export default function AddItemStepper() {
     }
   };
 
+  if (isEditMode && loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Header */}
@@ -339,7 +348,7 @@ export default function AddItemStepper() {
           <Link href="/dashboard/master/item">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
-          <h1 className="text-xl font-semibold text-gray-900">Add New Item</h1>
+          <h1 className="text-xl font-semibold text-gray-900">{isEditMode ? "Edit Item" : "Add New Item"}</h1>
         </div>
       </div>
       <StepperForm
@@ -352,7 +361,7 @@ export default function AddItemStepper() {
         showSubmitButton={isLastStep}
         showNextButton={!isLastStep}
         nextButtonText="Save & Next"
-        submitButtonText="Submit"
+        submitButtonText={isEditMode ? "Update" : "Submit"}
       >
         {renderStepContent()}
       </StepperForm>
