@@ -62,7 +62,7 @@ export default function Sidebar({
 
   return (
     <div className="group peer">
-      <div className={`${isOpen ? "w-[250px]" : "w-[80px]"} group-hover:w-[250px] h-[100vh] absolute ease-in-out duration-600 bg-white z-60 pb-[40px]`}>
+      <div className={`${isOpen ? "w-[250px]" : "w-[80px]"} group-hover:w-[250px] h-[100vh] absolute ease-in-out duration-600 bg-white z-50 pb-[40px]`}>
         {/* logo */}
         <div className="w-full h-[60px] px-[16px] py-[12px] border-r-[1px] border-b-[1px] border-[#E9EAEB]">
           <div className={`${isOpen ? "w-full" : "w-[24px]"}  group-hover:w-full h-full m-auto`}>

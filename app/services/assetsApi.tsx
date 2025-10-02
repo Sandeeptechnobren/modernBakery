@@ -212,7 +212,7 @@ export const chillerRequestList = async (params: Params) => {
     }
 };
 
-export const chillerRequestByUUID = async (uuid: string, params: Params) => {
+export const chillerRequestByUUID = async (uuid: string, params?: Params) => {
     try {
         const res = await API.get(`/api/assets/chiller-request/${uuid}`, { params: params });
         return res.data;

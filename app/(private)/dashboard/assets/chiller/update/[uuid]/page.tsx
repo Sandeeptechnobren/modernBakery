@@ -37,7 +37,6 @@ const validationSchema = Yup.object({
     .required("Acquisition date is required")
     .typeError("Invalid date format"),
   vender_details: Yup.string()
-    .trim()
     .required("Vendor Details are required")
     .max(100, "Vendor Details cannot exceed 100 characters"),
   manufacturer: Yup.string()
@@ -114,7 +113,6 @@ const stepSchemas = [
       .required("Acquisition date is required")
       .typeError("Invalid date format"),
     vender_details: Yup.string()
-      .trim()
       .required("Vendor Details are required")
       .max(100, "Vendor Details cannot exceed 100 characters"),
     manufacturer: Yup.string()
@@ -160,7 +158,7 @@ type chiller = {
   model_number: string,
   description: string,
   acquisition: string,
-  vender_details: string,
+  vender_details: string[],
   manufacturer: string,
   country_id: number,
   type_name: string,
@@ -180,7 +178,7 @@ export default function AddCompanyWithStepper() {
         uuid = uuid[0] || "";
     }
 
-  const { onlyCountryOptions } = useAllDropdownListData();
+  const { onlyCountryOptions, vendorOptions } = useAllDropdownListData();
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Information" },
     { id: 2, label: "Acquisition and Vendor" },
@@ -218,7 +216,7 @@ export default function AddCompanyWithStepper() {
     model_number: chiller?.model_number || "",
     description: chiller?.description || "",
     acquisition: chiller?.acquisition || "",
-    vender_details: chiller?.vender_details || "",
+    vender_details: chiller?.vender_details || [],
     manufacturer: chiller?.manufacturer || "",
     country_id: parseInt(onlyCountryOptions[0]?.value) || 0,
     type_name: chiller?.type_name || "",
@@ -275,7 +273,7 @@ export default function AddCompanyWithStepper() {
         model_number: values.model_number,
         description: values.description,
         acquisition: values.acquisition,
-        vender_details: [],
+        vender_details: values.vender_details ||[],
         manufacturer: values.manufacturer,
         country_id: Number(values.country_id),
         type_name: values.type_name,
@@ -382,13 +380,21 @@ export default function AddCompanyWithStepper() {
                 error={touched.acquisition && errors.acquisition}
               />
             <InputFields
-                required
-                label="Vender Details"
-                name="vender_details"
-                value={values.vender_details}
-                onChange={(e) => setFieldValue("vender_details", e.target.value)}
-                error={touched.vender_details && errors.vender_details}
-              />
+              required
+              label="Vender Details"
+              name="vender_details"
+              value={values.vender_details}
+              isSingle={false}
+              options={vendorOptions}
+              onChange={(e) => setFieldValue("vender_details", e.target.value)}
+              error={
+                touched.vender_details
+                  ? Array.isArray(errors.vender_details)
+                    ? errors.vender_details[0]
+                    : errors.vender_details
+                  : false
+              }
+            />
             <InputFields
                 required
                 label="Manufacturer"

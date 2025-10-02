@@ -19,9 +19,9 @@ import {
 } from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { addChillerRequest } from "@/app/services/assetsApi";
+import { addChillerRequest, chillerByUUID, chillerRequestByUUID, updateChillerRequest } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const validationSchema = Yup.object({
   outlet_name: Yup.string()
@@ -48,13 +48,11 @@ const validationSchema = Yup.object({
     .required("Asset Number is required")
     .max(50, "Asset Number cannot exceed 50 characters"),
   agent_id: Yup.number()
-    .required("Agent ID is required")
-    .typeError("Agent ID must be a number"),
-  salesman_id: Yup.number()
-    .required("Salesman ID is required")
+    .required("Agent is required")
+    .typeError("Agent must be a number"),
+  salesman_id: Yup.number().nullable() 
     .typeError("Salesman ID must be a number"),
-  route_id: Yup.number()
-    .required("Route ID is required")
+  route_id: Yup.number().nullable()
     .typeError("Route ID must be a number"),
   status: Yup.number()
     .oneOf([0, 1], "Invalid status selected")
@@ -96,10 +94,13 @@ type chillerRequest = {
   outlet_type: string;
   machine_number: string;
   asset_number: string;
-  agent_id: string;
-  salesman_id: string; 
-  route_id: string; 
+  agent_id?: string;
+  salesman_id?: string; 
+  route_id?: string; 
   status: string; 
+  agent?: { id: string | number };
+  salesman?: { id: string | number };
+  route?: { id: string | number };
 };
 
 export default function Page() {
@@ -108,10 +109,12 @@ export default function Page() {
     const params = useParams();
     const id = params?.id || "";
     const isEditMode = id !== "add" && id !== "";
-    const uuid = isEditMode ? id : null;
-
+    let uuid = isEditMode ? id : null;
+    if(uuid && Array.isArray(uuid)){
+        uuid = uuid[0] || "";
+    }
     
-    const { agentCustomerOptions, salesmanOptions, channelOptions, routeOptions } = useAllDropdownListData();
+    const { agentCustomerOptions, salesmanOptions, routeOptions } = useAllDropdownListData();
     const steps: StepperStep[] = [
         { id: 1, label: "Outlet and Owner Information" },
         { id: 2, label: "Machine Details" },
@@ -130,18 +133,35 @@ export default function Page() {
 
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
+    const [chiller, setChiller] = useState<null | chillerRequest>(null);
 
+    useEffect(() => {
+        if (isEditMode && uuid) {
+            const fetchData = async () => {
+                setLoading(true);
+                const res = await chillerRequestByUUID(uuid as string);
+                setLoading(false);
+                if (res.error) {
+                    showSnackbar(res.data.message || "Failed to fetch chiller", "error");
+                    throw new Error("Unable to fetch chiller");
+                } else {
+                    setChiller(res.data);
+                }
+            };
+            fetchData();
+        }
+    }, []);
     const initialValues: chillerRequest = {
-        outlet_name: "",
-        owner_name: "",
-        contact_number: "",
-        outlet_type: "",
-        machine_number: "",
-        asset_number: "",
-        agent_id:  agentCustomerOptions[0]?.value || "0",
-        salesman_id: salesmanOptions[0]?.value || "0",
-        route_id: routeOptions[0]?.value || "0",
-        status: "0"
+        outlet_name: chiller?.outlet_name || "",
+        owner_name: chiller?.owner_name || "",
+        contact_number: chiller?.contact_number || "",
+        outlet_type: chiller?.outlet_type || "",
+        machine_number: chiller?.machine_number || "",
+        asset_number: chiller?.asset_number || "",
+        agent_id: chiller?.agent_id?.toString() || chiller?.agent?.id.toString() || "",
+        salesman_id: chiller?.salesman_id?.toString() || chiller?.salesman?.id.toString() || "",
+        route_id: chiller?.route_id?.toString() || chiller?.route?.id.toString() || "",
+        status: chiller?.status?.toString() || "1",
     };
 
     const handleNext = async (
@@ -202,19 +222,23 @@ export default function Page() {
                 route_id: Number(values.route_id),
                 status: Number(values.status),
             };
-
-            const res = await addChillerRequest(payload);
+            let res;
+            if(isEditMode) {
+                res = await updateChillerRequest(uuid ?? "", payload);
+            }else {
+                res = await addChillerRequest(payload);
+            }
             if (res.error) {
                 showSnackbar(
                     res.data?.message || "Failed to add Chiller Request ",
                     "error"
                 );
             } else {
-                showSnackbar("Chiller Request added successfully", "success");
+                showSnackbar(isEditMode ? "Chiller Request updated successfully" : "Chiller Request added successfully", "success");
                 router.push("/dashboard/assets/chillerRequest");
             }
         } catch {
-            showSnackbar("Add Chiller Request failed", "error");
+            showSnackbar(isEditMode ? "Update Chiller Request failed" : "Add Chiller Request failed", "error");
         }
     };
 
@@ -263,7 +287,6 @@ export default function Page() {
                                     label="Outlet Type"
                                     name="outlet_type"
                                     value={values.outlet_type}
-                                    options={channelOptions}
                                     onChange={(e) =>
                                         setFieldValue(
                                             "outlet_type",
@@ -391,7 +414,7 @@ export default function Page() {
                                     required
                                     label="Agent"
                                     name="agent_id"
-                                    value={values.agent_id.toString()}
+                                    value={values.agent_id?.toString()}
                                     options={agentCustomerOptions}
                                     onChange={(e) =>
                                         setFieldValue(
@@ -409,11 +432,10 @@ export default function Page() {
                             </div>
                             <div>
                                 <InputFields
-                                    required
                                     label="Salesman"
                                     name="salesman_id"
                                     options={salesmanOptions}
-                                    value={values.salesman_id.toString()}
+                                    value={values.salesman_id?.toString()}
                                     onChange={(e) =>
                                         setFieldValue(
                                             "salesman_id",
@@ -430,10 +452,9 @@ export default function Page() {
                             </div>
                             <div>
                                 <InputFields
-                                    required
                                     label="Route"
                                     name="route_id"
-                                    value={values.route_id.toString()}
+                                    value={values.route_id?.toString()}
                                     options={routeOptions}
                                     onChange={(e) =>
                                         setFieldValue(
@@ -494,7 +515,7 @@ export default function Page() {
                         <Icon icon="lucide:arrow-left" width={24} />
                     </div>
                     <h1 className="text-xl font-semibold text-gray-900">
-                        Add New Chiller Request
+                        {isEditMode ? "Edit Chiller Request" : "Add New Chiller Request"}
                     </h1>
                 </div>
             </div>
