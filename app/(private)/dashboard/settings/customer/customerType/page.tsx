@@ -33,24 +33,25 @@ const dropdownDataList = [
 const columns = [
   { key: "code", label: "Code" },
   { key: "name", label: "Name" },
-   {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {row.status === "Active" ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        In Active
-                    </span>
-                )}
-            </div>
-        ),
-    },
+  {
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) => (
+      <div className="flex items-center">
+        {Number(row.status) === 1 ? (
+          <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+            Active
+          </span>
+        ) : (
+          <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+            Inactive
+          </span>
+        )}
+      </div>
+    ),
+  },
 ];
+
 
 export default function CustomerPage() {
   const [customers, setCustomers] = useState<CustomerType[]>([]);
@@ -68,10 +69,7 @@ export default function CustomerPage() {
     id: c.id?.toString() ?? "",
     code: c.code ?? "",
     name: c.name ?? "",
-    status:
-        c.status === 1
-        ? "Active"
-        : "Inactive",
+    status: String(c.status ?? 0),
   }));
 
   // fetch list
@@ -229,7 +227,7 @@ export default function CustomerPage() {
                 onClick: (row: object) => {
                   const r = row as TableDataType;
                   router.push(
-                    `/dashboard/settings/customer/customerType/updateCustomerType/${r.id}`
+                    `/dashboard/settings/customer/customerType/${r.id}`
                   );
                 },
               },

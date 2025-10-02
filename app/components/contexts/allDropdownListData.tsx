@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import SalesmanType from '../../(private)/dashboard/settings/salesman-type/add/page';
+import DiscountType from '../../(private)/dashboard/settings/customer/discountType/page';
 import {
   companyList,
   countryList,
@@ -20,6 +20,8 @@ import {
   vehicleListData,
   customerCategoryList,
   customerSubCategoryList,
+  itemList,
+  getDiscountTypeList,
   getMenuList,
   salesmanList,
   agentCustomerList
@@ -45,6 +47,8 @@ interface DropdownDataContextType {
   vehicleList: VehicleListItem[];
   customerCategory: CustomerCategory[];
   customerSubCategory: CustomerSubCategory[];
+  item: Item[];
+  discountType: DiscountType[];
   menuList: MenuList[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
@@ -67,6 +71,8 @@ interface DropdownDataContextType {
   vehicleListOptions: { value: string; label: string }[];
   customerCategoryOptions: { value: string; label: string }[];
   customerSubCategoryOptions: { value: string; label: string }[];
+  itemOptions: { value: string; label: string }[];
+  discountTypeOptions: { value: string; label: string }[];
   menuOptions: { value: string; label: string }[];
   vendorOptions: { value: string; label: string }[];
   salesmanOptions: { value: string; label: string }[];
@@ -180,6 +186,18 @@ interface CustomerSubCategory {
   customer_sub_category_code?: string;
   customer_sub_category_name?: string;
 }
+
+interface Item {
+  id?: number | string;
+  code?: string;
+  name?: string;
+}
+
+interface DiscountType {
+  id?: number | string;
+  discount_code?: string;
+  discount_name?: string;
+}
 interface MenuList {
   id?: number | string;
   osa_code?: string;
@@ -242,6 +260,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [VehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
   const [customerCategory, setCustomerCategory] = useState<VehicleListItem[]>([]);
   const [customerSubCategory, setCustomerSubCategory] = useState<VehicleListItem[]>([]);
+  const [discountType, setDiscountType] = useState<DiscountType[]>([]);
+  const [item, setItem] = useState<Item[]>([]);
   const [menuList, setMenuList] = useState<MenuList[]>([]);
   const [salesman, setSalesman] = useState<SalesmanList[]>([]);
   const [agentCustomer, setAgentCustomer] = useState<AgentCustomerList[]>([]);
@@ -347,6 +367,16 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
     label: c.customer_sub_category_code && c.customer_sub_category_name ? `${c.customer_sub_category_code} - ${c.customer_sub_category_name}` : (c.customer_sub_category_name ?? '')
   }));
 
+  const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
+    value: String(c.id ?? ''),
+    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+  }));
+
+  const discountTypeOptions = (Array.isArray(discountType) ? discountType : []).map((c: DiscountType) => ({
+    value: String(c.id ?? ''),
+    label: c.discount_code && c.discount_name ? `${c.discount_code} - ${c.discount_name}` : (c.discount_name ?? '')
+  }));
+
   const menuOptions = (Array.isArray(menuList) ? menuList : []).map((c: MenuList) => ({
     value: String(c.id ?? ''),
     label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
@@ -389,6 +419,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         vehicleListData(),
         customerCategoryList(),
         customerSubCategoryList(),
+        itemList(),
+        getDiscountTypeList(),
         getMenuList(),
         vendorList(),
         salesmanList(),
@@ -423,6 +455,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
   setVehicleList(normalize(res[15]) as VehicleListItem[]);
   setCustomerCategory(normalize(res[16]) as CustomerCategory[]);
   setCustomerSubCategory(normalize(res[17]) as CustomerSubCategory[]);
+  setItem(normalize(res[18]) as Item[]);
+  setDiscountType(normalize(res[19]) as DiscountType[]);
   setMenuList(normalize(res[18]) as MenuList[]);
   setVendor(normalize(res[18]) as VendorList[]);
   setSalesman(normalize(res[19]) as SalesmanList[]);
@@ -449,6 +483,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setVehicleList([]);
       setCustomerCategory([]);
       setCustomerSubCategory([]);
+      setItem([]);
+      setDiscountType([]);
       setMenuList([]);
       setVendor([]);
       setSalesman([]);
@@ -485,6 +521,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         vehicleList: VehicleList,
         customerCategory: customerCategory,
         customerSubCategory: customerSubCategory,
+        item: item,
+        discountType: discountType,
         menuList: menuList,
         companyOptions,
         countryOptions,
@@ -506,6 +544,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         vehicleListOptions,
         customerCategoryOptions,
         customerSubCategoryOptions,
+        itemOptions,
+        discountTypeOptions,
         menuOptions,
         vendorOptions,
         salesmanOptions,

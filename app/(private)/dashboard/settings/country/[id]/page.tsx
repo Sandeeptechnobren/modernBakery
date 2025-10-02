@@ -11,7 +11,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { addCountry, countryById, editCountry } from "@/app/services/allApi"; // 👈 make sure you have `getCountryById` & `updateCountry` APIs
+import { addCountry, countryById, editCountry } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 
 // ✅ Yup Schema
@@ -25,7 +25,7 @@ const CountrySchema = Yup.object().shape({
 export default function AddEditCountry() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const params = useParams(); // 👈 gets route param
+  const params = useParams();
   const [isOpen, setIsOpen] = useState(false);
   const [initialValues, setInitialValues] = useState({
     country_code: "",
@@ -50,7 +50,7 @@ export default function AddEditCountry() {
       setLoading(true);
       (async () => {
         try {
-          const res = await countryById(String(params.id)); // 👈 your API should return single country details
+          const res = await countryById(String(params.id)); 
           if (res?.data) {
             setInitialValues({
               country_code: res.data.country_code || "",

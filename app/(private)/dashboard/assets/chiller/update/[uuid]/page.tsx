@@ -275,7 +275,7 @@ export default function AddCompanyWithStepper() {
         model_number: values.model_number,
         description: values.description,
         acquisition: values.acquisition,
-        vender_details: values.vender_details,
+        vender_details: [],
         manufacturer: values.manufacturer,
         country_id: Number(values.country_id),
         type_name: values.type_name,

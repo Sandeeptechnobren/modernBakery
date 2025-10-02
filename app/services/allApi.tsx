@@ -1512,6 +1512,24 @@ export const deleteDiscount = async (uuid:string) => {
   }
 };
 
+export const getDiscountById = async (uuid?: string) => {
+  try {
+    const res = await API.get(`/api/master/discount/discount/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const updateDiscount = async (uuid: string, body: object ) => {
+  try {
+    const res = await API.put(`/api/master/discount/update/${uuid}`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
 
 export const addDiscount = async (body:object) => {
   try {
@@ -1817,7 +1835,53 @@ export const addSurveyQuestion = async (payload: PayloadSurveyQuestion) => {
   }
 }
 
+export const companyTypeList = async (params?: Params) => {
+  try {
+     const res = await API.get("/api/settings/company-types/list",{ params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
+};
 
+export const updateCompanyType = async (uuid:string,payload:object) => {
+  try {
+           const res = await API.put(`/api/settings/company-types/update/${uuid}`,payload);
+
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const deletecompanyType = async (uuid:string) => {
+  try {
+           const res = await API.delete(`/api/settings/company-types/delete/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addCompanyType = async (payload:object) => {
+  try {
+         const res = await API.post("/api/settings/company-types/", payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getComponyTypeById = async (id: string) => {
+  try {
+       const res = await API.get(`/api/settings/company-types/show/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }};
 
 export const roleList = async (params?: Params) => {
   try {
