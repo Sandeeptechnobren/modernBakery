@@ -318,7 +318,7 @@ export default function VehiclePage() {
                 onClick: (row: object) => {
                   const r = row as TableDataType;
                   router.push(
-                    `/dashboard/master/vehicle/updateVehicle/${r.id}`
+                    `/dashboard/master/vehicle/${r.id}`
                   );
                 },
               },

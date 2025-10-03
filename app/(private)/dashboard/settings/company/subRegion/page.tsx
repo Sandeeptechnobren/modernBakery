@@ -28,6 +28,18 @@ interface DropdownItem {
     iconWidth: number;
 }
 
+  interface SubRegionItem {
+        id?: number | string;
+        area_code?: string;
+        area_name?: string;
+         region?: {
+    region_name?: string;
+  };
+
+        // region_name?: string;
+        status?: number;
+    }
+
 const dropdownDataList: DropdownItem[] = [
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
@@ -36,7 +48,16 @@ const dropdownDataList: DropdownItem[] = [
 const columns = [
     { key: "area_code", label: "SubRegion Code" },
     { key: "area_name", label: "SubRegion Name" },
-    { key: "region_name", label: "Region" },
+    // { key: "region_name", label: "Region" },
+      {
+    key: "region_name",
+    label: "Region",
+    render: (data: TableDataType) => {
+            const typeObj = data.region ? JSON.parse(JSON.stringify(data.region)) : null;
+            return typeObj?.region_name ? typeObj.region_name : "-";
+        },
+    // render: (row: SubRegionItem) => row.region.region_name || "-",
+  },
     {
         key: "status",
         label: "Status",
@@ -47,13 +68,7 @@ const columns = [
 ];
 
 export default function SubRegion() {
-    interface SubRegionItem {
-        id?: number | string;
-        area_code?: string;
-        area_name?: string;
-        region_name?: string;
-        status?: number;
-    }
+  
 
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
@@ -100,17 +115,18 @@ export default function SubRegion() {
         ): Promise<searchReturnType> => {
             setLoading(true);
             const result = await subRegionListGlobalSearch({
-                query: searchQuery,
+                search: searchQuery,
                 per_page: pageSize.toString(),
             });
             setLoading(false);
             if (result.error) throw new Error(result.data.message);
             else {
+              const pagination = result.pagination && result.pagination.pagination ? result.pagination.pagination : {};
                 return {
-                    data: result.data || [],
-                    total: result.pagination.pagination.totalPages || 0,
-                    currentPage: result.pagination.pagination.current_page || 0,
-                    pageSize: result.pagination.pagination.limit || pageSize,
+                    data:result.data || [],
+                    total: pagination.totalPages || 10,
+                    currentPage: pagination.current_page || 1,
+                    pageSize: pagination.limit || pageSize,
                 };
             }
         },
@@ -208,7 +224,7 @@ export default function SubRegion() {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    router.push(`/dashboard/settings/company/subRegion/update/${row.id}`);
+                                    router.push(`/dashboard/settings/company/subRegion/${row.id}`);
                                 },
                             },
                             {

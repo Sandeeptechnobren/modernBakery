@@ -39,6 +39,7 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
 
     // Handle a link click to dispatch an action
     const handleLinkClick = (clickedHref: string) => {
+        setIsOpen(false);
         dispatch({ type: "activate", payload: clickedHref });
     };
 

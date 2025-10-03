@@ -13,42 +13,50 @@ type Props = {
     touched?: Record<string, boolean>;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     setFieldValue: (field: string, value: string) => void;
+    isEditMode?: boolean;
 };
 
-export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue }: Props) {
+export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue, isEditMode }: Props) {
     const { companyCustomersOptions } = useAllDropdownListData();
     const [isOpen, setIsOpen] = React.useState(false);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <InputFields
-                    label="Warehouse Code *"
+            <div className="flex items-end gap-2 max-w-[406px]">
+                <InputFields
+                    required
+                    label="Warehouse Code"
                     name="warehouse_code"
                     value={values.warehouse_code}
                     onChange={handleChange}
                     error={errors?.warehouse_code && touched?.warehouse_code ? errors.warehouse_code : false}
                 />
+                {!isEditMode && (
+                    <>
+                        <IconButton
+                            bgClass="white"
+                            className="mb-2 cursor-pointer text-[#252B37]"
+                            icon="mi:settings"
+                            onClick={() => setIsOpen(true)}
+                        />
+                        <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Warehouse Code" />
+                    </>
+                )}
+            </div>
             <InputFields
-                label="Registration Number *"
+            required
+                label="Registration Number"
                 name="registation_no"
                 value={values.registation_no}
                 onChange={handleChange}
                 error={errors?.registation_no && touched?.registation_no ? errors.registation_no : false}
             />
         
-            <div className="flex items-end gap-2 max-w-[406px]">
-                <IconButton
-                    bgClass="white"
-                    className="mb-2 cursor-pointer text-[#252B37]"
-                    icon="mi:settings"
-                    onClick={() => setIsOpen(true)}
-                />
-
-                <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Warehouse Code" />
-            </div>
+            
 
             <InputFields
-                label="Warehouse Name *"
+            required
+                label="Warehouse Name"
                 name="warehouse_name"
                 value={values.warehouse_name}
                 onChange={handleChange}
@@ -64,7 +72,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Company Customer ID *"
+            required
+                label="Company Customer"
                 name="company_customer_id"
                 value={values.company_customer_id}
                 options={companyCustomersOptions}
@@ -73,7 +82,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Warehouse Manager *"
+            required
+                label="Warehouse Manager"
                 name="warehouse_manager"
                 value={values.warehouse_manager}
                 onChange={handleChange}
@@ -81,7 +91,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Warehouse Manager Contact *"
+            required
+                label="Warehouse Manager Contact"
                 name="warehouse_manager_contact"
                 value={values.warehouse_manager_contact}
                 onChange={handleChange}
@@ -89,7 +100,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Warehouse Type *"
+            required
+                label="Warehouse Type"
                 name="warehouse_type"
                 value={values.warehouse_type}
                 onChange={handleChange}
@@ -111,17 +123,21 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Business Type *"
+                label="Business Type"
+                required
                 name="business_type"
+                type='radio'
                 value={values.business_type}
                 onChange={handleChange}
-                options={[{ value: "1", label: "B2B " }]}
+                options={[{ value: "1", label: "B2B" },{ value: "2", label: "B2C" }]}
                 error={errors?.business_type && touched?.business_type ? errors.business_type : false}
             />
 
             <InputFields
-                label="Status *"
+            required
+                label="Status"
                 name="status"
+                type='radio'
                 value={values.status}
                 onChange={handleChange}
                 options={[
@@ -133,7 +149,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             
             <div>
                 <CustomPasswordInput
-                    label="Password *"
+                required
+                    label="Password"
                     value={values.password}
                     onChange={(e) => setFieldValue('password', e.target.value)}
                 />

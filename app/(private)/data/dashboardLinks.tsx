@@ -68,13 +68,13 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "mdi:package-variant",
                 iconColor: "text-cyan-500"
             },
-            // {
-            //     isActive: false,
-            //     href: "/dashboard/master/discount",
-            //     label: "Discount",
-            //     leadingIcon: "mdi:package-variant",
-            //     iconColor: "text-cyan-500"
-            // },
+            {
+                isActive: false,
+                href: "/dashboard/master/discount",
+                label: "Discount",
+                leadingIcon: "mdi:package-variant",
+                iconColor: "text-cyan-500"
+            },
             // {
             //     isActive: false,
             //     href: "/dashboard/master/item",
@@ -194,6 +194,13 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/dashboard/assets/chiller",
                         label: "Chiller",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/dashboard/assets/chillerRequest",
+                        label: "Chiller Request",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500"
                     },

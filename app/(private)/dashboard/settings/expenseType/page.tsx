@@ -221,7 +221,7 @@ const tableData: TableDataType[] = countries.map((c) => ({
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/settings/expenseType/${row.id}/update`);
+                  router.push(`/dashboard/settings/expenseType/${row.id}`);
                 },
               },
               {

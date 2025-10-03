@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Snackbar from "@/app/components/Snackbar";
+import InputFields from "@/app/components/inputFields";
 
 export default function TestPage() {
   const [snackbar, setSnackbar] = useState<{
@@ -49,6 +50,19 @@ export default function TestPage() {
         type={snackbar.type}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       />
+
+    <InputFields
+      label="Owner Name"
+      name="owner_name"
+      type="radio"
+      value={"1"}
+      onChange={() => { console.log("radio"); }}
+      options={[
+        { value: "1", label: "Owner 1" },
+        { value: "2", label: "Owner 2" },
+        { value: "3", label: "Owner 3" },
+      ]}
+    />
     </div>
   );
 }

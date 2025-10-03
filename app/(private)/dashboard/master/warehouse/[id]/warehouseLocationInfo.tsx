@@ -21,7 +21,8 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Row 1 */}
         <InputFields
-          label="Region *"
+        required
+          label="Region"
           name="region_id"
           value={values.region_id}
           onChange={handleChange}
@@ -29,7 +30,8 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
           error={errors?.region_id && touched?.region_id ? errors.region_id : false}
         />
         <InputFields
-          label="Sub Region *"
+        required
+          label="Sub Region"
           name="area_id"
           value={values.area_id}
           onChange={handleChange}
@@ -37,7 +39,8 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
           error={errors?.area_id && touched?.area_id ? errors.area_id : false}
         />
   <InputFields 
-    label="City *" 
+  required
+    label="City" 
     name="city" 
     value={values.city} 
     onChange={handleChange} 
@@ -51,14 +54,16 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
     error={errors?.district && touched?.district ? errors.district : false}
   />
   <InputFields 
-    label="Location *" 
+  required
+    label="Location" 
     name="location" 
     value={values.location} 
     onChange={handleChange} 
     error={errors?.location && touched?.location ? errors.location : false}
   />
   <InputFields 
-    label="Address *" 
+  required
+    label="Address" 
     name="address" 
     value={values.address} 
     onChange={handleChange} 
@@ -90,20 +95,23 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
 
         {/* Row 3 */}
   <InputFields 
-    label="Latitude *" 
+  required
+    label="Latitude" 
     name="latitude" 
     value={values.latitude} 
     onChange={handleChange} 
     error={errors?.latitude && touched?.latitude ? errors.latitude : false} 
   />
   <InputFields 
-    label="Longitude *" 
+  required
+    label="Longitude" 
     name="longitude" 
     value={values.longitude} 
     onChange={handleChange} 
     error={errors?.longitude && touched?.longitude ? errors.longitude : false} 
   />
   <InputFields 
+  required
     label="Threshold Radius" 
     name="threshold_radius" 
     value={values.threshold_radius} 

@@ -35,6 +35,52 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
+    { key: "osa_code", label: "Agent Customer Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
+    { key: "tin_no", label: "TIN No." },
+    { key: "name", label: "Name" },
+    { key: "business_name", label: "Business Name" },
+        { 
+                key: "customer_type", 
+                label: "Customer Type",
+                render: (row: TableDataType) => {
+                    if (typeof row.customer_type === "object" && row.customer_type !== null && 'name' in row.customer_type) {
+                        return (row.customer_type as { name?: string }).name || "-";
+                    }
+                    return row.customer_type || "-";
+                }
+        },
+    { 
+        key: "category", 
+        label: "Customer Category",
+        render: (row: TableDataType) => 
+            typeof row.category === "object" && row.category !== null && "customer_category_name" in row.category
+                ? (row.category as { customer_category_name?: string }).customer_category_name || '-'
+                : '-'
+    },
+    { 
+        key: "subcategory", 
+        label: "Customer Sub Category",
+        render: (row: TableDataType) => 
+            typeof row.subcategory === "object" && row.subcategory !== null && "customer_sub_category_name" in row.subcategory
+                ? (row.subcategory as { customer_sub_category_name?: string }).customer_sub_category_name || '-'
+                : '-'
+    },
+    { 
+        key: "outlet_channel", 
+        label: "Outlet Channel",
+        render: (row: TableDataType) => 
+            typeof row.outlet_channel === "object" && row.outlet_channel !== null && "outlet_channel" in row.outlet_channel
+                ? (row.outlet_channel as { outlet_channel?: string }).outlet_channel || '-'
+                : '-'
+    },
+    { 
+        key: "region", 
+        label: "Region",
+        render: (row: TableDataType) => 
+            typeof row.region === "object" && row.region !== null && "region_name" in row.region
+                ? (row.region as { region_name?: string }).region_name || '-'
+                : '-'
+},
   { key: "osa_code", label: "Agent Customer Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
   { key: "tin_no", label: "TIN No." },
   { key: "name", label: "Name" },
@@ -266,12 +312,12 @@ export default function AgentCustomer() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/dashboard/master/agentCustomer/add"
+                                    href="/dashboard/master/agentCustomer/new"
                                     isActive
                                     leadingIcon="lucide:plus"
                                     label="Add Agent Customer"
                                     labelTw="hidden sm:block"
-                                />,
+                                />, 
                             ],
                         },
                         footer: { nextPrevBtn: true, pagination: true },
@@ -283,7 +329,7 @@ export default function AgentCustomer() {
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
                                     router.push(
-                                        `/dashboard/master/agentCustomer/update/${row.uuid}`
+                                        `/dashboard/master/agentCustomer/${row.uuid}`
                                     );
                                 },
                             },

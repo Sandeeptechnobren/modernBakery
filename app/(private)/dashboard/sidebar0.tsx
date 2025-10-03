@@ -62,7 +62,7 @@ export default function Sidebar({
 
   return (
     <div className="group peer">
-      <div className={`${isOpen ? "w-[250px]" : "w-[80px]"} group-hover:w-[250px] h-[100vh] fixed ease-in-out duration-600 bg-white`}>
+      <div className={`${isOpen ? "w-[250px]" : "w-[80px]"} group-hover:w-[250px] h-[100vh] absolute ease-in-out duration-600 bg-white z-50 pb-[40px]`}>
         {/* logo */}
         <div className="w-full h-[60px] px-[16px] py-[12px] border-r-[1px] border-b-[1px] border-[#E9EAEB]">
           <div className={`${isOpen ? "w-full" : "w-[24px]"}  group-hover:w-full h-full m-auto`}>
@@ -75,7 +75,7 @@ export default function Sidebar({
         </div>
 
         {/* menu */}
-        <div className="w-full h-[900px] py-5 px-4 border-[1px] border-[#E9EAEB] border-t-0 overflow-y-auto scrollbar-none">
+        <div className="w-full h-[calc(100vh-60px)] py-5 px-4 border-[1px] border-[#E9EAEB] border-t-0 overflow-y-auto scrollbar-none">
           <div className="mb-5 w-full h-full">
             {data.map((group: SidebarDataType) => (
               <div key={group.name} className={`${isOpen ? "mb-[20px]" : "m-0" } group-hover:mb-[20px]`}>
@@ -111,7 +111,7 @@ export default function Sidebar({
                         />
 
                         {hasChildren && isChildrenOpen && link.children && (
-                          <ul className="gap-[6px] mt-1 ml-[10px]">
+                          <ul className={`${isOpen ? "block" : "hidden"} group-hover:block mt-1 ml-[10px]`}>
                             {link.children.map((child: LinkDataType) => {
                               const isChildActive = child.href === activeHref;
 

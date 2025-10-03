@@ -12,6 +12,7 @@ import { planogramList, deletePlanogram } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { useLoading } from "@/app/services/loadingContext";
 interface PlanogramItem {
   id?: number | string;
   name?: string;
@@ -29,9 +30,10 @@ const dropdownDataList = [
 ];
 
 export default function Planogram() {
+    const {setLoading} = useLoading();
   const [planograms, setPlanograms] = useState<PlanogramItem[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [loading, setLoading] = useState<boolean>(true);  
+
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<PlanogramItem | null>(null);
 console.log("planograms", planograms);
@@ -50,6 +52,7 @@ const tableData: TableDataType[] = planograms.map((s) => ({
 }));
 
   async function fetchPlanograms() {
+      setLoading(true);
       const listRes = await planogramList();
       if(listRes.error) {
         showSnackbar("Failed to fetch Planograms ❌", "error");
@@ -77,7 +80,10 @@ const tableData: TableDataType[] = planograms.map((s) => ({
 };
 
 
-  if (loading) return <Loading />;
+ useEffect(() => {
+    setLoading(true);
+  }, [])
+
 
   return (
     <>

@@ -10,6 +10,7 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { SurveyList, deleteSurvey } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
+import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 interface SurveyItem {
@@ -30,9 +31,10 @@ const dropdownDataList = [
 ];
 
 export default function Survey() {
+   const {setLoading} = useLoading();
   const [surveys, setSurveys] = useState<SurveyItem[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [loading, setLoading] = useState<boolean>(true);  
+ 
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<SurveyItem | null>(null);
 
@@ -55,6 +57,7 @@ const tableData: TableDataType[] = surveys.map((s) => ({
 }));
 
   async function fetchPlanograms() {
+      setLoading(true);
       const listRes = await SurveyList();
       if(listRes.error) {
         showSnackbar("Failed to fetch Surveys ❌", "error");
@@ -82,7 +85,9 @@ const tableData: TableDataType[] = surveys.map((s) => ({
 };
 
 
-  if (loading) return <Loading />;
+useEffect(() => {
+    setLoading(true);
+  }, []);
 
   return (
     <>

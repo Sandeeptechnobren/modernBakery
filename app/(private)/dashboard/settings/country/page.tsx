@@ -19,7 +19,7 @@ import {
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import { useSnackbar } from "@/app/services/snackbarContext"; 
 import { useLoading } from "@/app/services/loadingContext";
 
 interface DropdownItem {
@@ -63,7 +63,7 @@ export default function Country() {
     const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
-    const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
+    const { showSnackbar } = useSnackbar(); 
     type TableRow = TableDataType & { id?: string };
 
     const fetchCountries = useCallback(
@@ -213,9 +213,8 @@ export default function Country() {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    router.push(
-                                        `/dashboard/settings/country/update_country/${row.id}`
-                                    );
+                                    router.push(`/dashboard/settings/country/${row.id}`);
+
                                 },
                             },
                             {

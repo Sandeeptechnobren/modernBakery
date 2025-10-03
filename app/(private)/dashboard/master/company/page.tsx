@@ -286,7 +286,7 @@ const CompanyPage = () => {
                                 onClick: (row: object) => {
                                     const r = row as TableDataType;
                                     router.push(
-                                        `/dashboard/master/company/updateCompany/${r.id}`
+                                        `/dashboard/master/company/${r.id}`
                                     );
                                 },
                             },

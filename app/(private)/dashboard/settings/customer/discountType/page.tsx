@@ -219,7 +219,7 @@ export default function DiscountType() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/dashboard/settings/customer/discountType/create"
+                                    href="/dashboard/settings/customer/discountType/add"
                                     isActive={true}
                                     leadingIcon="lucide:plus"
                                     label="Add Discount Type"
@@ -239,7 +239,7 @@ export default function DiscountType() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/settings/customer/discountType/${row.id}/update`);
+                  router.push(`/dashboard/settings/customer/discountType/${row.id}`);
                 },
               },
                             {

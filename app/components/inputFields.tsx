@@ -15,7 +15,7 @@ type Props = {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
   options?: Option[];
-  type?: "text" | "select" | "file" | "date";
+  type?: "text" | "select" | "file" | "date" | "radio";
   id?: string;
   width?: string;
   error?: string | false;
@@ -130,7 +130,7 @@ useEffect(() => {
 
 
   return (
-  <div className={`flex flex-col gap-2 w-full ${width}`}>
+    <div className={`flex flex-col gap-2 w-full ${width}`}>
       <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
@@ -139,7 +139,26 @@ useEffect(() => {
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
-      {isMulti ? (
+      {type === "radio" && options && options.length > 0 ? (
+        <div className="flex-wrap flex gap-4 mt-3">
+          {options.map((opt, idx) => (
+            <label key={opt.value + idx} className="inline-flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name={name}
+                value={opt.value}
+                checked={value === opt.value}
+                onChange={() => safeOnChange(createSingleSelectEvent(opt.value))}
+                disabled={disabled}
+                className={`w-4 h-4 accent-gray-600 border-2 border-gray-600 focus:ring-2 focus:ring-red-400 appearance-none rounded-full checked:bg-red-500 checked:w-3 checked:h-3 checked:border-red-600 ${error ? "border-red-500" : "border-gray-300"}`}
+                style={{ boxShadow: value === opt.value ? '0 0 0 2px #fff, 0 0 0 4px #252b37' : undefined }}
+              />
+              <span className="text-lg text-gray-600">{opt.label}</span>
+            </label>
+          ))}
+          {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
+        </div>
+      ) : isMulti ? (
         <div className="relative" ref={dropdownRef}>
           <div
             className={`border h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}

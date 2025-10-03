@@ -128,7 +128,13 @@ export default function ShelfDisplay() {
               { key: "model_number", label: "Model Number" },
               { key: "description", label: "Description" },
               { key: "acquisition", label: "Acquisition" },
-              { key: "vender_details", label: "Vender Details" },
+              { key: "vender_details", label: "Vender Details", render: (data: TableDataType) => {
+                  if(data.vender_details && Array.isArray(data.vender_details)) {
+                    return data.vender_details.map((item: {id: number, code: string, name: string}) => {
+                      return item.name || "";
+                    }).join(", ")                    
+                  } else return "-";
+              } },
               { key: "document_id", label: "Document Id" },
               { key: "document_type", label: "Document Type" },
               { key: "manufacturer", label: "Manufacturer" },

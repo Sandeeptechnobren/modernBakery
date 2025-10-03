@@ -40,7 +40,7 @@ interface AgentCustomerFormValues {
 };
 
 const AddAgentCustomerPage = () => {
-  const { customerTypeOptions,routeOptions, customerCategoryOptions,customerSubCategoryOptions,channelOptions,regionOptions,areaOptions} = useAllDropdownListData();
+  const { customerTypeOptions,routeOptions,customerCategoryOptions,customerSubCategoryOptions,channelOptions,regionOptions,areaOptions} = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
