@@ -126,6 +126,13 @@ export const initialLinkData: SidebarDataType[] = [
                     },
                     {
                         isActive: false,
+                        href: "/dashboard/settings/company/serviceType",
+                        label: "Service Types",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
                         href: "/dashboard/settings/company/companyType",
                         label: "Company Type",
                         leadingIcon: "lucide:user",

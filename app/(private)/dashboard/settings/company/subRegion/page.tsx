@@ -15,6 +15,7 @@ import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import Popup from "@/app/components/popUp";
 import { useLoading } from "@/app/services/loadingContext";
+import StatusBtn from "@/app/components/statusBtn2";
 
 interface DropdownItem {
   icon: string;
@@ -30,13 +31,11 @@ interface SubRegionItem {
   };
   region_name?: string;
   area_name?: string;
-  status?: "Active" | "Inactive" | string;
+  status?: number | string;
 }
 
 const dropdownDataList: DropdownItem[] = [
-  // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+  
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
@@ -50,22 +49,12 @@ const columns = [
     render: (row: SubRegionItem) => row.region_name || "-",
   },
   {
-    key: "status",
-    label: "Status",
-    render: (row: SubRegionItem) => (
-      <div className="flex items-center">
-        {row.status === "Active" ? (
-          <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-            Active
-          </span>
-        ) : (
-          <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-            Inactive
-          </span>
-        )}
-      </div>
-    ),
-  },
+          key: "status",
+          label: "Status",
+          render: (row: TableDataType) => (
+              <StatusBtn isActive={row.status === "1" ? true : false} />
+          ),
+      },
 ];
 
 export default function SubRegion() {
@@ -97,7 +86,7 @@ export default function SubRegion() {
             area_code: s.area_code ?? "",
             area_name: s.area_name ?? "",
             region_name: s.region?.region_name ?? "",
-            status: s.status ?? "Inactive",
+            status: s.status?.toString() ?? "0",
           })) || [];
 
         return {

@@ -112,7 +112,7 @@ export default function ShelfDisplay() {
               actions: [
                 <SidebarBtn
                   key="name"
-                  href="/dashboard/assets/types/add"
+                  href="/dashboard/settings/company/serviceType/add"
                   leadingIcon="lucide:plus"
                   label="Add Service Type"
                   labelTw="hidden lg:block"
@@ -134,7 +134,7 @@ export default function ShelfDisplay() {
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
-                  router.push(`/dashboard/assets/types/update/${data.uuid}`);
+                  router.push(`/dashboard/settings/company/serviceType/${data.uuid}`);
                 },
               },
               {

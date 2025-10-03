@@ -185,13 +185,6 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [ 
                     {
                         isActive: false,
-                        href: "/dashboard/assets/types",
-                        label: "Service Types",
-                        leadingIcon: "mdi:package-variant",
-                        iconColor: "text-cyan-500"
-                    },
-                    {
-                        isActive: false,
                         href: "/dashboard/assets/chiller",
                         label: "Chiller",
                         leadingIcon: "mdi:package-variant",

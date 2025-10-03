@@ -14,7 +14,6 @@ import Link from "next/link";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import { useEffect, useState } from "react";
 
-
 interface CompanyFormValues {
   company_name: string;
   company_code: string;
@@ -42,6 +41,7 @@ interface CompanyFormValues {
   status: string;
 }
 
+// 🔹 Full form schema (used on submit)
 const CompanySchema = Yup.object().shape({
   company_name: Yup.string().required("Company name is required"),
   company_code: Yup.string().required("Company code is required"),
@@ -61,9 +61,8 @@ const CompanySchema = Yup.object().shape({
   toll_free_no: Yup.string().required("Toll free number is required"),
 });
 
-// Per-step validation schemas
+// 🔹 Step-wise schemas
 const stepSchemas = [
-  // Step 1: Company
   Yup.object({
     company_name: Yup.string().required("Company name is required"),
     company_code: Yup.string().required("Company code is required"),
@@ -71,7 +70,6 @@ const stepSchemas = [
     website: Yup.string(),
     company_logo: Yup.string(),
   }),
-  // Step 2: Contact
   Yup.object({
     primary_contact: Yup.string().required("Primary contact is required"),
     primary_code: Yup.string(),
@@ -79,7 +77,6 @@ const stepSchemas = [
     toll_free_code: Yup.string(),
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
-  // Step 3: Location
   Yup.object({
     region: Yup.string().required("Region is required"),
     sub_region: Yup.string().required("Sub Region is required"),
@@ -90,25 +87,23 @@ const stepSchemas = [
     country_id: Yup.string().required("Country is required"),
     tin_number: Yup.string().required("TIN Number is required"),
   }),
-  // Step 4: Financial
   Yup.object({
     selling_currency: Yup.string().required("Selling currency is required"),
     purchase_currency: Yup.string().required("Purchase currency is required"),
     vat: Yup.string(),
   }),
-  // Step 5: Additional
   Yup.object({
-    modules: Yup.string(),
+    module_access: Yup.string(),
     service_type: Yup.string().required("Service type is required"),
     status: Yup.string().required("Status is required"),
   }),
 ];
 
-  export default function AddEditCompany() {
+export default function AddEditCompany() {
   const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency } = useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const params = useParams(); // ✅ get dynamic route param
+  const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
   const [initialValues, setInitialValues] = useState<CompanyFormValues>({
     company_name: "",
@@ -137,7 +132,7 @@ const stepSchemas = [
     status: "1",
   });
 
-  // ✅ Load company if edit mode
+  // Load company for edit mode
   useEffect(() => {
     if (params?.id && params.id !== "add") {
       setIsEditMode(true);
@@ -180,10 +175,7 @@ const stepSchemas = [
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
-        showSnackbar(
-          isEditMode ? "Company Updated Successfully" : "Company Created Successfully",
-          "success"
-        );
+        showSnackbar(isEditMode ? "Company Updated Successfully" : "Company Created Successfully", "success");
         router.push("/dashboard/master/company");
       }
     } catch (err) {
@@ -192,7 +184,6 @@ const stepSchemas = [
       setSubmitting(false);
     }
   };
-
 
   const renderStepContent = (
     values: CompanyFormValues,
@@ -210,6 +201,7 @@ const stepSchemas = [
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <InputFields
+              required
                 label="Company Code"
                 name="company_code"
                 value={values.company_code}
@@ -217,6 +209,7 @@ const stepSchemas = [
                 error={touched.company_code && errors.company_code}
               />
               <InputFields
+              required
                 label="Company Name"
                 name="company_name"
                 value={values.company_name}
@@ -224,7 +217,7 @@ const stepSchemas = [
                 error={touched.company_name && errors.company_name}
               />
               <InputFields
-              required
+                required
                 label="Company Type"
                 name="company_type"
                 value={values.company_type}
@@ -236,7 +229,7 @@ const stepSchemas = [
               />
               <InputFields
                 label="Website"
-                name="company_website"
+                name="website"
                 value={values.website}
                 onChange={(e) => setFieldValue("website", e.target.value)}
               />
@@ -255,6 +248,7 @@ const stepSchemas = [
           <ContainerCard>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               <FormInputField
+              required
                 type="contact"
                 label="Primary Contact"
                 contact={values.primary_contact}
@@ -264,6 +258,7 @@ const stepSchemas = [
                 options={onlyCountryOptions}
               />
               <FormInputField
+              required
                 type="contact"
                 label="Toll Free Number"
                 contact={values.toll_free_no}
@@ -273,6 +268,7 @@ const stepSchemas = [
                 options={onlyCountryOptions}
               />
               <InputFields
+              required
                 label="Email"
                 name="email"
                 value={values.email}
@@ -286,22 +282,17 @@ const stepSchemas = [
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* <InputFields
-                label="Region"
-                name="region"
-                value={values.region}
-                options={regionOptions}
-                onChange={(e) => e.target.value}
-              /> */}
               <InputFields
+              required
                 label="Region"
                 name="region"
                 value={values.region}
                 options={regionOptions}
-                onChange={(e) => setFieldValue("region",e.target.value)}
+                onChange={(e) => setFieldValue("region", e.target.value)}
                 error={errors?.region && touched?.region ? errors.region : false}
               />
               <InputFields
+              required
                 label="Sub Region"
                 name="sub_region"
                 value={values.sub_region}
@@ -309,8 +300,8 @@ const stepSchemas = [
                 onChange={(e) => setFieldValue("sub_region", e.target.value)}
                 error={errors?.sub_region && touched?.sub_region ? errors.sub_region : false}
               />
-              
               <InputFields
+              required
                 label="District"
                 name="district"
                 value={values.district}
@@ -335,9 +326,10 @@ const stepSchemas = [
                 onChange={(e) => setFieldValue("landmark", e.target.value)}
               />
               <InputFields
+              required
                 label="Country"
                 name="country_id"
-                value={values.country_id}
+                value={values.country_id ? values.country_id.toString() : ""}
                 options={onlyCountryOptions}
                 onChange={(e) => setFieldValue("country_id", e.target.value)}
                 error={errors?.country_id && touched?.country_id ? errors.country_id : false}
@@ -384,24 +376,28 @@ const stepSchemas = [
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <InputFields
+              required
                 label="Module"
                 name="module_access"
                 value={values.module_access}
                 onChange={(e) => setFieldValue("module_access", e.target.value)}
               />
               <InputFields
+              required
                 label="Service Type"
                 name="service_type"
                 value={values.service_type}
-                onChange={(e) => setFieldValue("service_type",e.target.value)}
+                onChange={(e) => setFieldValue("service_type", e.target.value)}
                 options={[
                   { value: "branch", label: "Branch" },
                   { value: "warehouse", label: "Warehouse" },
                 ]}
               />
               <InputFields
+              required
                 label="Status"
                 name="status"
+                type="radio"
                 value={values.status}
                 onChange={(e) => setFieldValue("status", e.target.value)}
                 options={[
@@ -419,42 +415,66 @@ const stepSchemas = [
 
   return (
     <div>
-     <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/master/company">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            Add New Company
+            {isEditMode ? "Edit Company" : "Add New Company"}
           </h1>
         </div>
       </div>
-    <Formik
-  enableReinitialize
-  initialValues={initialValues}
-  validationSchema={CompanySchema}
-  onSubmit={handleSubmit}
->
-  {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit }) => (
-    <Form>
-      <StepperForm
-        steps={steps.map((s) => ({ ...s, isCompleted: isStepCompleted(s.id) }))}
-        currentStep={currentStep}
-        onStepClick={() => {}}
-        onBack={prevStep}
-        onNext={nextStep}   // ✅ use this instead of handleNext
-        onSubmit={() => formikSubmit()}
-        showSubmitButton={isLastStep}
-        showNextButton={!isLastStep}
-        nextButtonText="Save & Next"
-        submitButtonText="Submit"
+      <Formik
+        enableReinitialize
+        initialValues={initialValues}
+        validationSchema={CompanySchema}
+        onSubmit={handleSubmit}
       >
-        {renderStepContent(values, setFieldValue, errors, touched)}
-      </StepperForm>
-    </Form>
-  )}
-</Formik>
+        {({ values, setFieldValue, errors, touched, setTouched, handleSubmit: formikSubmit }) => {
+          const handleNextStep = async () => {
+            try {
+              const schema = stepSchemas[currentStep - 1];
+              if (!schema) return;
 
+              await schema.validate(values, { abortEarly: false });
+
+              // ✅ Mark current step as completed
+              markStepCompleted(currentStep);
+              nextStep();
+            } catch (err: unknown) {
+              if (err instanceof Yup.ValidationError && err.inner) {
+                const formTouched: Record<string, boolean> = {};
+                err.inner.forEach((validationError: Yup.ValidationError) => {
+                  if (validationError.path) {
+                    formTouched[validationError.path] = true;
+                  }
+                });
+                setTouched({ ...touched, ...formTouched });
+              }
+            }
+          };
+
+          return (
+            <Form>
+              <StepperForm
+                steps={steps.map((s) => ({ ...s, isCompleted: isStepCompleted(s.id) }))}
+                currentStep={currentStep}
+                onStepClick={() => {}}
+                onBack={prevStep}
+                onNext={handleNextStep} // ✅ step-wise validation
+                onSubmit={() => formikSubmit()}
+                showSubmitButton={isLastStep}
+                showNextButton={!isLastStep}
+                nextButtonText="Save & Next"
+                submitButtonText="Submit"
+              >
+                {renderStepContent(values, setFieldValue, errors, touched)}
+              </StepperForm>
+            </Form>
+          );
+        }}
+      </Formik>
     </div>
   );
 }

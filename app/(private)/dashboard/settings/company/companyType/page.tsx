@@ -56,6 +56,7 @@ export default function CompanyPage() {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // ✅ Fetch companies from API
   const fetchCompanyType = useCallback(
@@ -103,6 +104,7 @@ export default function CompanyPage() {
         showSnackbar(res.data?.message || "Failed to delete company ❌", "error");
       } else {
         showSnackbar(res.message || "Company deleted successfully ✅", "success");
+        setRefreshKey((prev) => prev + 1);
       }
       setShowDeletePopup(false);
       setSelectedRow(null);
@@ -116,6 +118,7 @@ export default function CompanyPage() {
     <>
       <div className="h-[calc(100%-60px)]">
         <Table
+         key={refreshKey}
           config={{
             api: { list: fetchCompanyType },
             header: {

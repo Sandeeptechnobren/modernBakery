@@ -1866,7 +1866,7 @@ export const deletecompanyType = async (uuid:string) => {
 
 export const addCompanyType = async (payload:object) => {
   try {
-         const res = await API.post("/api/settings/company-types/", payload);
+         const res = await API.post("/api/settings/company-types/add", payload);
 
     return res.data;
   } catch (error: unknown) {

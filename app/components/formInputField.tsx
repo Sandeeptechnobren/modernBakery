@@ -11,6 +11,7 @@ type Props = {
   label: string;
   type: "amount" | "contact";
   error?: string | false | undefined;
+  required?: boolean;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   // Amount with currency
   amount?: string;
@@ -42,10 +43,14 @@ export default function FormInputField({
   options,
   error,
   onBlur,
+  required
 }: Props) {
   return (
     <div className="flex flex-col gap-2 max-w-[406px]">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <label className="text-sm font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
 
       {type === "amount" ? (
         // 💰 Amount with Currency
