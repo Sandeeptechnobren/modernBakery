@@ -62,7 +62,7 @@ export default function AddEditRole() {
               menu_id: res.data.menu_id ? String(res.data.menu_id) : "",
               agent_id: res.data.agent_id ? String(res.data.agent_id) : "",
               warehouse_id: res.data.warehouse_id ? String(res.data.warehouse_id) : "",
-              status: String(res.data.status ?? "1"),
+              status: String(res.data.status ?? ""),
             });
           }
         } catch (error) {

@@ -1859,7 +1859,7 @@ export const getMenuList = async () => {
 
 export const permissionList = async () => {
   try {
-     const res = await API.get("/web/setting/permissions/list");
+     const res = await API.get("/api/web/setting/permissions/list");
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1879,7 +1879,7 @@ export const addPermissions = async (payload:object) => {
 
 export const deletePermissions = async (uuid:string) => {
   try {
-           const res = await API.delete(`/web/setting/permissions/delete/${uuid}`);
+           const res = await API.delete(`/api/web/setting/permissions/delete/${uuid}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

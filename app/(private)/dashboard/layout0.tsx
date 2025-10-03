@@ -52,12 +52,12 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
                 toggleOpen={() => setIsOpen(!isOpen)}
             />
             <Main horizontalSidebar={horizontalSidebar} isOpen={isOpen}>
+                <LoadingProvider >
                         <AllDropdownListDataProvider>
-                <LoadingProvider>
 
                 {children}
-                       </LoadingProvider>
                        </AllDropdownListDataProvider>
+                       </LoadingProvider>
                 </Main>
         </div>
     );

@@ -227,7 +227,7 @@ export default function Roles() {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    router.push(`/dashboard/settings/role/detail/${row.uuid}`);
+                                    router.push(`/dashboard/settings/role/${row.uuid}`);
 
                                 },
                             },

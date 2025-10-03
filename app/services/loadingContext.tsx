@@ -14,7 +14,7 @@ export const LoadingProvider = ({ children }: { children: React.ReactNode }) => 
     const [loading, setLoading] = useState(false);
 
   return (
-    <LoadingContext.Provider value={{ loading, setLoading }}>
+    <LoadingContext.Provider value={{ loading, setLoading }} >
       {loading && <Loading />}
       {children}
     </LoadingContext.Provider>
