@@ -195,7 +195,7 @@ export default function SalesmanTypeList() {
                                 )}
                               </div>
                             ],
-              searchBar: true,
+              searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn
@@ -204,7 +204,7 @@ export default function SalesmanTypeList() {
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add New"
-                  labelTw="hidden sm:block"
+                  labelTw="hidden lg:block"
                 />,
               ],
             },

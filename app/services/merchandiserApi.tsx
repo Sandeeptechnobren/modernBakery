@@ -9,6 +9,19 @@ export const APIFormData = axios.create({
   },
 });
 
+APIFormData.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token")
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 export const planogramImageList = async (params: Params) => {
     try {
     const res = await API.get("/api/merchendisher/planogram-image/list", { params });
@@ -18,9 +31,36 @@ export const planogramImageList = async (params: Params) => {
   }
 };
 
-export const createPlanogramImage = async (body: object) => {
+export const planogramImageById = async (id: number, params?: Params) => {
     try {
-    const res = await API.post("/api/merchendisher/planogram-image/create", body);
+    const res = await API.get(`/api/merchendisher/planogram-image/show/${id}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const createPlanogramImage = async (body: FormData) => {
+    try {
+    const res = await APIFormData.post("/api/merchendisher/planogram-image/create", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updatePlanogramImage = async (id: number, body: FormData) => {
+    try {
+    const res = await APIFormData.put(`/api/merchendisher/planogram-image/update/${id}`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deletePlanogramImage = async (id: number) => {
+    try {
+    const res = await API.delete(`/api/merchendisher/planogram-image/delete/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -37,7 +77,7 @@ export const shelvesDropdown = async () => {
   }
 };
 
-export const shelvesList = async (params: Params) => {
+export const shelvesList = async (params?: Params) => {
   try {
     const res = await API.get("/api/merchendisher/shelves/list", {params});
     return res.data;

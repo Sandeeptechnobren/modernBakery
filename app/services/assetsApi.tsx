@@ -103,7 +103,7 @@ type chiller = {
   model_number: string,
   description: string,
   acquisition: string,
-  vender_details: string,
+  vender_details: string[],
   manufacturer: string,
   country_id: number,
   type_name: string,
@@ -201,3 +201,81 @@ export const deleteVendor = async (uuid: string) => {
         return handleError(error);
     }
 };
+
+// chiller Request
+export const chillerRequestList = async (params: Params) => {
+    try {
+        const res = await API.get(`/api/assets/chiller-request/list`, { params: params });
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+
+export const chillerRequestByUUID = async (uuid: string, params?: Params) => {
+    try {
+        const res = await API.get(`/api/assets/chiller-request/${uuid}`, { params: params });
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+
+export const chillerRequestGenerateCode = async (params: Params) => {
+    try {
+        const res = await API.get(`/api/assets/chiller-request/generate-code`, { params: params });
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+
+export const chillerRequestGlobalSearch = async (params: Params) => {
+    try {
+        const res = await API.get(`/api/assets/chiller-request/global-search`, { params: params });
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+
+type chillerRequestType = {
+  outlet_name: string,
+  owner_name: string,
+  contact_number: string,
+  outlet_type: string,
+  machine_number: string,
+  asset_number: string,
+  agent_id: number,
+  salesman_id: number,
+  route_id: number,
+  status: number
+}
+
+export const addChillerRequest = async (body: chillerRequestType) => {
+    try {
+        const res = await API.post(`/api/assets/chiller-request/add`, body);
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+
+export const updateChillerRequest = async (uuid: string, body: chillerRequestType) => {
+    try {
+        const res = await API.put(`/api/assets/chiller-request/${uuid}`, body);
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+
+export const deleteChillerRequest = async (uuid: string) => {
+    try {
+        const res = await API.delete(`/api/assets/chiller-request/${uuid}`);
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+

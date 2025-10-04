@@ -4,14 +4,15 @@ import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepp
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import FormInputField from "@/app/components/formInputField";
-import { addCompany } from "@/app/services/allApi";
+import { addCompany, getCompanyById, updateCompany } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import * as Yup from "yup";
 import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
+import { useEffect, useState } from "react";
 
 
 interface CompanyFormValues {
@@ -103,24 +104,13 @@ const stepSchemas = [
   }),
 ];
 
-export default function AddCompanyWithStepper() {
-  const { regionOptions,areaOptions, onlyCountryOptions, countryCurrency } = useAllDropdownListData();
-  const steps: StepperStep[] = [
-    { id: 1, label: "Company" },
-    { id: 2, label: "Contact" },
-    { id: 3, label: "Location" },
-    { id: 4, label: "Financial" },
-    { id: 5, label: "Additional" },
-  ];
-
-  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
-    useStepperForm(steps.length);
-
+  export default function AddEditCompany() {
+  const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency } = useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-
-
-  const initialValues: CompanyFormValues = {
+  const params = useParams(); // ✅ get dynamic route param
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [initialValues, setInitialValues] = useState<CompanyFormValues>({
     company_name: "",
     company_code: "",
     company_type: "",
@@ -145,63 +135,64 @@ export default function AddCompanyWithStepper() {
     module_access: "",
     service_type: "",
     status: "1",
-  };
+  });
 
-  const handleNext = async (
-    values: CompanyFormValues,
-    actions: FormikHelpers<CompanyFormValues>
-  ) => {
-    try {
-      // Validate only the current step's fields
-      const schema = stepSchemas[currentStep - 1];
-      await schema.validate(values, { abortEarly: false });
-      markStepCompleted(currentStep);
-      nextStep();
-    } catch (err: unknown) {
-      if (err instanceof Yup.ValidationError) {
-        // Only touch fields in the current step
-        const fields = err.inner.map((e) => e.path);
-        actions.setTouched(
-          fields.reduce(
-            (acc, key) => ({ ...acc, [key!]: true }),
-            {} as Record<string, boolean>
-          )
-        );
-        actions.setErrors(
-          err.inner.reduce(
-            (acc: Partial<Record<keyof CompanyFormValues, string>>, curr) => ({
-              ...acc,
-              [curr.path as keyof CompanyFormValues]: curr.message,
-            }),
-            {}
-          )
-        );
-      }
-      showSnackbar("Please fix validation errors before proceeding", "error");
+  // ✅ Load company if edit mode
+  useEffect(() => {
+    if (params?.id && params.id !== "add") {
+      setIsEditMode(true);
+      (async () => {
+        const res = await getCompanyById(params.id as string);
+        if (res && !res.error) {
+          setInitialValues(res.data);
+        }
+      })();
     }
-  };
+  }, [params?.id]);
 
-  const handleSubmit = async (values: CompanyFormValues) => {
+  const steps: StepperStep[] = [
+    { id: 1, label: "Company" },
+    { id: 2, label: "Contact" },
+    { id: 3, label: "Location" },
+    { id: 4, label: "Financial" },
+    { id: 5, label: "Additional" },
+  ];
+
+  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
+    useStepperForm(steps.length);
+
+  const handleSubmit = async (values: CompanyFormValues, { setSubmitting }: FormikHelpers<CompanyFormValues>) => {
     try {
       await CompanySchema.validate(values, { abortEarly: false });
 
-      // Convert to FormData for API
       const formData = new FormData();
       (Object.keys(values) as (keyof CompanyFormValues)[]).forEach((key) => {
         formData.append(key, values[key] ?? "");
       });
 
-      const res = await addCompany(formData);
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to add company ❌", "error");
+      let res;
+      if (isEditMode) {
+        res = await updateCompany(params.id as string, formData);
       } else {
-        showSnackbar("Company added successfully ✅", "success");
+        res = await addCompany(formData);
+      }
+
+      if (res.error) {
+        showSnackbar(res.data?.message || "Failed to submit form", "error");
+      } else {
+        showSnackbar(
+          isEditMode ? "Company Updated Successfully" : "Company Created Successfully",
+          "success"
+        );
         router.push("/dashboard/master/company");
       }
-    } catch {
-      showSnackbar("Add company failed ❌", "error");
+    } catch (err) {
+      showSnackbar("Validation failed, please check your inputs", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
+
 
   const renderStepContent = (
     values: CompanyFormValues,
@@ -438,31 +429,32 @@ export default function AddCompanyWithStepper() {
           </h1>
         </div>
       </div>
-      <Formik initialValues={initialValues} validationSchema={CompanySchema} onSubmit={handleSubmit}>
-        {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit }) => (
-          <Form>
-            <StepperForm
-              steps={steps.map((step) => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
-              currentStep={currentStep}
-              onStepClick={() => {}}
-              onBack={prevStep}
-              onNext={() =>
-                handleNext(values, {
-                  setErrors: () => {},
-                  setTouched: () => {},
-                } as unknown as FormikHelpers<CompanyFormValues>)
-              }
-              onSubmit={() => formikSubmit()}
-              showSubmitButton={isLastStep}
-              showNextButton={!isLastStep}
-              nextButtonText="Save & Next"
-              submitButtonText="Submit"
-            >
-              {renderStepContent(values, setFieldValue, errors, touched)}
-            </StepperForm>
-          </Form>
-        )}
-      </Formik>
+    <Formik
+  enableReinitialize
+  initialValues={initialValues}
+  validationSchema={CompanySchema}
+  onSubmit={handleSubmit}
+>
+  {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit }) => (
+    <Form>
+      <StepperForm
+        steps={steps.map((s) => ({ ...s, isCompleted: isStepCompleted(s.id) }))}
+        currentStep={currentStep}
+        onStepClick={() => {}}
+        onBack={prevStep}
+        onNext={nextStep}   // ✅ use this instead of handleNext
+        onSubmit={() => formikSubmit()}
+        showSubmitButton={isLastStep}
+        showNextButton={!isLastStep}
+        nextButtonText="Save & Next"
+        submitButtonText="Submit"
+      >
+        {renderStepContent(values, setFieldValue, errors, touched)}
+      </StepperForm>
+    </Form>
+  )}
+</Formik>
+
     </div>
   );
 }

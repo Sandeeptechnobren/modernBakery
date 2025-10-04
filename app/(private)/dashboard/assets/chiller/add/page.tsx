@@ -6,7 +6,7 @@ import InputFields from "@/app/components/inputFields";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
-import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
+import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched, ErrorMessage } from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import { addChiller } from "@/app/services/assetsApi";
@@ -34,10 +34,9 @@ const validationSchema = Yup.object({
   acquisition: Yup.date()
     .required("Acquisition date is required")
     .typeError("Invalid date format"),
-  vender_details: Yup.string()
-    .trim()
+  vender_details: Yup.array()
     .required("Vendor Details are required")
-    .max(100, "Vendor Details cannot exceed 100 characters"),
+    .of(Yup.string().max(100, "Vendor Details cannot exceed 100 characters")),
   manufacturer: Yup.string()
     .trim()
     .required("Manufacturer is required")
@@ -77,78 +76,34 @@ const validationSchema = Yup.object({
 const stepSchemas = [
   // Step 1: Chiller Basic Information
   Yup.object().shape({
-    serial_number: Yup.string()
-      .trim()
-      .required("Serial Number is required")
-      .min(3, "Serial Number must be at least 3 characters")
-      .max(50, "Serial Number cannot exceed 50 characters"),
-    asset_number: Yup.string()
-      .trim()
-      .required("Asset Number is required")
-      .min(3, "Asset Number must be at least 3 characters")
-      .max(50, "Asset Number cannot exceed 50 characters"),
-    model_number: Yup.string()
-      .trim()
-      .required("Model Number is required")
-      .min(3, "Model Number must be at least 3 characters")
-      .max(50, "Model Number cannot exceed 50 characters"),
-    description: Yup.string()
-      .trim()
-      .required("Description is required")
-      .max(255, "Description cannot exceed 255 characters"),
-    type_name: Yup.string()
-      .trim()
-      .required("Type Name is required")
-      .max(50, "Type Name cannot exceed 50 characters"),
-    sap_code: Yup.string()
-      .trim()
-      .required("SAP Code is required")
-      .max(50, "SAP Code cannot exceed 50 characters"),
+    serial_number: validationSchema.fields.serial_number,
+    asset_number: validationSchema.fields.asset_number,
+    model_number: validationSchema.fields.model_number,
+    description: validationSchema.fields.description,
+    type_name: validationSchema.fields.type_name,
+    sap_code: validationSchema.fields.sap_code,
   }),
 
   // Step 2: Acquisition and Vendor Information
   Yup.object().shape({
-    acquisition: Yup.date()
-      .required("Acquisition date is required")
-      .typeError("Invalid date format"),
-    vender_details: Yup.string()
-      .trim()
-      .required("Vendor Details are required")
-      .max(100, "Vendor Details cannot exceed 100 characters"),
-    manufacturer: Yup.string()
-      .trim()
-      .required("Manufacturer is required")
-      .max(100, "Manufacturer cannot exceed 100 characters"),
-    country_id: Yup.number()
-      .required("Country ID is required")
-      .typeError("Country ID must be a number"),
+    acquisition: validationSchema.fields.acquisition,
+    vender_details: validationSchema.fields.vender_details,
+    manufacturer: validationSchema.fields.manufacturer,
+    country_id: validationSchema.fields.country_id,
   }),
 
   // Step 3: Status and Assignment/Location
   Yup.object().shape({
-    status: Yup.number()
-      .oneOf([0, 1], "Invalid status selected")
-      .required("Status is required"),
-    is_assign: Yup.number()
-      .oneOf([0, 1], "Invalid assignment status")
-      .required("Assignment status is required"),
+    status: validationSchema.fields.status,
+    is_assign: validationSchema.fields.is_assign,
     }),
     
     // Step 4: Documentation and Records
     Yup.object().shape({
-    customer_id: Yup.number()
-    .required("Customer ID is required")
-    .typeError("Customer ID must be a number"),
-    agreement_id: Yup.number()
-    .required("Agreement ID is required")
-    .typeError("Agreement ID must be a number"),
-    document_type: Yup.string()
-      .trim()
-      .required("Document Type is required")
-      .max(10, "Document Type cannot exceed 10 characters"),
-    document_id: Yup.number()
-      .required("Document ID is required")
-      .typeError("Document ID must be a number"),
+    customer_id: validationSchema.fields.customer_id,
+    agreement_id: validationSchema.fields.agreement_id,
+    document_type: validationSchema.fields.document_type,
+    document_id: validationSchema.fields.document_id,
   }),
 ];
 
@@ -158,7 +113,7 @@ type chiller = {
   model_number: string,
   description: string,
   acquisition: string,
-  vender_details: string,
+  vender_details: string[],
   manufacturer: string,
   country_id: number,
   type_name: string,
@@ -172,7 +127,7 @@ type chiller = {
 }
 
 export default function AddCompanyWithStepper() {
-  const { onlyCountryOptions } = useAllDropdownListData();
+  const { onlyCountryOptions, vendorOptions } = useAllDropdownListData();
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Information" },
     { id: 2, label: "Acquisition and Vendor" },
@@ -192,7 +147,7 @@ export default function AddCompanyWithStepper() {
     model_number: "",
     description: "",
     acquisition: "",
-    vender_details: "",
+    vender_details: [],
     manufacturer: "",
     country_id: parseInt(onlyCountryOptions[0]?.value) || 0,
     type_name: "",
@@ -201,7 +156,7 @@ export default function AddCompanyWithStepper() {
     is_assign: 1,
     customer_id: 1,
     agreement_id: 1,
-    document_type: "",
+    document_type: "1",
     document_id: 1,
   };
 
@@ -258,7 +213,7 @@ export default function AddCompanyWithStepper() {
         is_assign: values.is_assign,
         customer_id: Number(values.customer_id),
         agreement_id: Number(values.agreement_id),
-        document_type: values.document_type,
+        document_type: "ACF",
         document_id: values.document_id,
       };
 
@@ -289,14 +244,19 @@ export default function AddCompanyWithStepper() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <InputFields
-                required
-                label="Serial Number"
-                name="serial_number"
-                value={values.serial_number}
-                onChange={(e) => setFieldValue("serial_number", e.target.value)}
-                error={touched.serial_number && errors.serial_number}
-              />
+              <div>
+                <InputFields
+                  required
+                  label="Serial Number"
+                  name="serial_number"
+                  value={values.serial_number}
+                  onChange={(e) => setFieldValue("serial_number", e.target.value)}
+                  error={touched.serial_number && errors.serial_number}
+                  />
+              <ErrorMessage name="serial_number" component="div" className="text-sm text-red-600 mb-1" />
+              </div>
+
+              <div>
               <InputFields
                 required
                 label="Asset Number"
@@ -305,6 +265,9 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("asset_number", e.target.value)}
                 error={touched.asset_number && errors.asset_number}
               />
+              <ErrorMessage name="asset_number" component="div" className="text-sm text-red-600 mb-1" />
+              </div>
+              <div>
               <InputFields
                 required
                 label="Model Number"
@@ -313,6 +276,9 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("model_number", e.target.value)}
                 error={touched.model_number && errors.model_number}
               />
+              <ErrorMessage name="model_number" component="div" className="text-sm text-red-600 mb-1" />
+              </div>
+              <div>
               <InputFields
                 required
                 label="description"
@@ -321,6 +287,9 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("description", e.target.value)}
                 error={touched.description && errors.description}
               />
+              <ErrorMessage name="description" component="div" className="text-sm text-red-600 mb-1" />
+              </div>
+              <div>
               <InputFields
                 required
                 label="Type Name"
@@ -329,6 +298,9 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("type_name", e.target.value)}
                 error={touched.type_name && errors.type_name}
               />
+              <ErrorMessage name="type_name" component="div" className="text-sm text-red-600 mb-1" />
+              </div>
+              <div>
               <InputFields
                 required
                 label="SAP Code"
@@ -337,6 +309,8 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("sap_code", e.target.value)}
                 error={touched.sap_code && errors.sap_code}
               />
+              <ErrorMessage name="sap_code" component="div" className="text-sm text-red-600 mb-1" />
+            </div>
             </div>
           </ContainerCard>
         );
@@ -344,6 +318,7 @@ export default function AddCompanyWithStepper() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div>
             <InputFields
                 required
                 type="date"
@@ -353,14 +328,26 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("acquisition", e.target.value)}
                 error={touched.acquisition && errors.acquisition}
               />
+              <ErrorMessage name="acquisition" component="div" className="text-sm text-red-600 mb-1" />
+              </div><div>
             <InputFields
                 required
                 label="Vender Details"
                 name="vender_details"
                 value={values.vender_details}
+                isSingle={false}
+                options={vendorOptions}
                 onChange={(e) => setFieldValue("vender_details", e.target.value)}
-                error={touched.vender_details && errors.vender_details}
+                error={
+                  touched.vender_details
+                    ? Array.isArray(errors.vender_details)
+                      ? errors.vender_details[0]
+                      : errors.vender_details
+                    : false
+                }
               />
+              <ErrorMessage name="vender_details" component="div" className="text-sm text-red-600 mb-1" />
+              </div><div>
             <InputFields
                 required
                 label="Manufacturer"
@@ -369,6 +356,8 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("manufacturer", e.target.value)}
                 error={touched.manufacturer && errors.manufacturer}
               />
+              <ErrorMessage name="manufacturer" component="div" className="text-sm text-red-600 mb-1" />
+              </div><div>
               <InputFields
                 required
                 label="Country"
@@ -378,13 +367,15 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("country_id",e.target.value)}
                 error={errors?.country_id && touched?.country_id ? errors.country_id : false}
               />
-            </div>
+              <ErrorMessage name="country_id" component="div" className="text-sm text-red-600 mb-1" />
+            </div></div>
           </ContainerCard>
         );
       case 3:
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div>
             <InputFields
                 required
                 label="Status"
@@ -395,7 +386,10 @@ export default function AddCompanyWithStepper() {
                     { value: "1", label: "Active" },
                     { value: "0", label: "Inactive" },
                 ]}
+                error={touched.status && errors.status}
             />
+            <ErrorMessage name="status" component="div" className="text-sm text-red-600 mb-1" />
+            </div><div>
             <InputFields
                 required
                 label="Is Assign"
@@ -406,15 +400,17 @@ export default function AddCompanyWithStepper() {
                     { value: "1", label: "Yes" },
                     { value: "0", label: "No" }
                 ]}
+                error={touched.is_assign && errors.is_assign}
             />
-            </div>
+            <ErrorMessage name="is_assign" component="div" className="text-sm text-red-600 mb-1" />
+            </div></div>
           </ContainerCard>
         );
-        
       case 4:
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div>
             <InputFields
                 required
                 label="Customer Name"
@@ -428,7 +424,10 @@ export default function AddCompanyWithStepper() {
                     { value: "4", label: "Customer 4" },
                     { value: "5", label: "Customer 5" }
                 ]}
+                error={touched.customer_id && errors.customer_id}
             />
+            <ErrorMessage name="customer_id" component="div" className="text-sm text-red-600 mb-1" />
+            </div><div>
             <InputFields
                 required
                 label="Agreement"
@@ -442,7 +441,10 @@ export default function AddCompanyWithStepper() {
                     { value: "4", label: "Agreement 4" },
                     { value: "5", label: "Agreement 5" }
                 ]}
+                error={touched.agreement_id && errors.agreement_id}
             />
+            <ErrorMessage name="agreement_id" component="div" className="text-sm text-red-600 mb-1" />
+            </div><div>
             <InputFields
                 required
                 label="Document Type"
@@ -450,13 +452,12 @@ export default function AddCompanyWithStepper() {
                 value={values.document_type.toString()}
                 onChange={(e) => setFieldValue("document_type", e.target.value)}
                 options={[
-                    { value: "1", label: "Document Type 1" },
-                    { value: "2", label: "Document Type 2" },
-                    { value: "3", label: "Document Type 3" },
-                    { value: "4", label: "Document Type 4" },
-                    { value: "5", label: "Document Type 5" }
+                    { value: "1", label: "ACF" }
                 ]}
+                error={touched.document_type && errors.document_type}
             />
+            <ErrorMessage name="document_type" component="div" className="text-sm text-red-600 mb-1" />
+            </div><div>
             <InputFields
                 required
                 label="Document"
@@ -470,8 +471,10 @@ export default function AddCompanyWithStepper() {
                     { value: "4", label: "Document 4" },
                     { value: "5", label: "Document 5" }
                 ]}
+                error={touched.document_id && errors.document_id}
             />
-            </div>
+            <ErrorMessage name="document_id" component="div" className="text-sm text-red-600 mb-1" />
+            </div></div>
           </ContainerCard>
         );
 
@@ -493,7 +496,7 @@ export default function AddCompanyWithStepper() {
         </div>
       </div>
       <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
-        {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit }) => (
+        {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit, setErrors, setTouched, isSubmitting: issubmitting }) => (
           <Form>
             <StepperForm
               steps={steps.map((step) => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
@@ -501,16 +504,13 @@ export default function AddCompanyWithStepper() {
               onStepClick={() => {}}
               onBack={prevStep}
               onNext={() =>
-                handleNext(values, {
-                  setErrors: () => {},
-                  setTouched: () => {},
-                } as unknown as FormikHelpers<chiller>)
+                handleNext(values, { setErrors, setTouched } as unknown as FormikHelpers<chiller>)
               }
               onSubmit={() => formikSubmit()}
               showSubmitButton={isLastStep}
               showNextButton={!isLastStep}
               nextButtonText="Save & Next"
-              submitButtonText="Submit"
+              submitButtonText={issubmitting ? "Submitting..." : "Submit"}
             >
               {renderStepContent(values, setFieldValue, errors, touched)}
             </StepperForm>

@@ -271,7 +271,7 @@ export default function Item() {
                                     />
                                 </div>
                             ],
-                            searchBar: true,
+                            searchBar: false,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn

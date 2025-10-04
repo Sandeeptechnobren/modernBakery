@@ -124,13 +124,13 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
                     },
-                    // {
-                    //     isActive: false,
-                    //     href: "/dashboard/settings/customer/companyType",
-                    //     label: "Company Type",
-                    //     leadingIcon: "lucide:user",
-                    //     iconColor: "text-green-500",
-                    // },
+                    {
+                        isActive: false,
+                        href: "/dashboard/settings/company/companyType",
+                        label: "Company Type",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500",
+                    },
                     // {
                     //     isActive: false,
                     //     href: "/dashboard/master/item",

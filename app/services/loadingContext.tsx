@@ -16,7 +16,9 @@ export const LoadingProvider = ({ children }: { children: React.ReactNode }) => 
   return (
     <LoadingContext.Provider value={{ loading, setLoading }} >
       {loading && <Loading />}
-      {children}
+      <div className={`${loading ? "hidden" : ""}`}>
+        {children}
+      </div>
     </LoadingContext.Provider>
   );
 };

@@ -1,14 +1,14 @@
 "use client";
 
 import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
-import Link from "next/link";
-import { Icon } from "@iconify-icon/react";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { warehouseList, getVehicleById, addVehicle, updateVehicle } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useRouter, useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Icon } from "@iconify-icon/react";
 import * as Yup from "yup";
 import Loading from "@/app/components/Loading";
 
@@ -141,6 +141,11 @@ export default function AddEditVehicleWithStepper() {
     setTouched(prev => ({ ...prev, [name]: true }));
   };
 
+  const setFieldValue = (field: string, value: string) => {
+      setForm(prev => ({ ...prev, [field]: value }));
+      setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
   const validateCurrentStep = async (step: number) => {
     let fields: (keyof VehicleFormValues)[] = [];
     if (step === 1) fields = ["vehicleBrand", "numberPlate", "chassisNumber", "description", "vehicleType"];
@@ -151,6 +156,7 @@ export default function AddEditVehicleWithStepper() {
       setErrors({});
       return true;
     } catch (err) {
+      // Yup.ValidationError type
       if (err instanceof Yup.ValidationError) {
         const stepErrors: Partial<Record<keyof VehicleFormValues, string>> = {};
         if (Array.isArray(err.inner)) {
@@ -165,6 +171,7 @@ export default function AddEditVehicleWithStepper() {
         setTouched(prev => ({ ...prev, ...Object.fromEntries(fields.map(f => [f, true])) }));
         return Object.keys(stepErrors).length === 0;
       }
+      // Unexpected error
       return false;
     }
   };
@@ -226,13 +233,16 @@ export default function AddEditVehicleWithStepper() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <InputFields required label="Vehicle Brand" value={form.vehicleBrand} onChange={handleChange} name="vehicleBrand" error={touched.vehicleBrand && errors.vehicleBrand} />
+                <InputFields required label="Vehicle Brand" value={form.vehicleBrand} onChange={handleChange} name="vehicleBrand" error={touched.vehicleBrand && errors.vehicleBrand} />
                 {touched.vehicleBrand && errors.vehicleBrand && <div className="text-red-500 text-xs mt-1">{errors.vehicleBrand}</div>}
               </div>
               <div>
                 <InputFields required label="Number Plate" value={form.numberPlate} onChange={handleChange} name="numberPlate" error={touched.numberPlate && errors.numberPlate} />
+                <InputFields required label="Number Plate" value={form.numberPlate} onChange={handleChange} name="numberPlate" error={touched.numberPlate && errors.numberPlate} />
                 {touched.numberPlate && errors.numberPlate && <div className="text-red-500 text-xs mt-1">{errors.numberPlate}</div>}
               </div>
               <div>
+                <InputFields required label="Chassis Number" value={form.chassisNumber} onChange={handleChange} name="chassisNumber" error={touched.chassisNumber && errors.chassisNumber} />
                 <InputFields required label="Chassis Number" value={form.chassisNumber} onChange={handleChange} name="chassisNumber" error={touched.chassisNumber && errors.chassisNumber} />
                 {touched.chassisNumber && errors.chassisNumber && <div className="text-red-500 text-xs mt-1">{errors.chassisNumber}</div>}
               </div>
@@ -246,6 +256,7 @@ export default function AddEditVehicleWithStepper() {
                 ]} />
                 {touched.vehicleType && errors.vehicleType && <div className="text-red-500 text-xs mt-1">{errors.vehicleType}</div>}
               </div>
+             
             </div>
           </ContainerCard>
         );
@@ -263,6 +274,7 @@ export default function AddEditVehicleWithStepper() {
               </div>
               <div>
                 <InputFields required label="Warehouse" value={form.warehouseId} onChange={handleChange} name="warehouseId" error={touched.warehouseId && errors.warehouseId} options={warehouses.map((w) => ({ value: String(w.id), label: w.warehouse_name }))} />
+                <InputFields required label="Warehouse" value={form.warehouseId} onChange={handleChange} name="warehouseId" error={touched.warehouseId && errors.warehouseId} options={warehouses.map((w) => ({ value: String(w.id), label: w.warehouse_name }))} />
                 {touched.warehouseId && errors.warehouseId && <div className="text-red-500 text-xs mt-1">{errors.warehouseId}</div>}
               </div>
             </div>
@@ -275,9 +287,11 @@ export default function AddEditVehicleWithStepper() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <InputFields required label="Odo Meter" value={form.odoMeter} onChange={handleChange} name="odoMeter" error={touched.odoMeter && errors.odoMeter} />
+                <InputFields required label="Odo Meter" value={form.odoMeter} onChange={handleChange} name="odoMeter" error={touched.odoMeter && errors.odoMeter} />
                 {touched.odoMeter && errors.odoMeter && <div className="text-red-500 text-xs mt-1">{errors.odoMeter}</div>}
               </div>
               <div>
+                <InputFields required label="Capacity" value={form.capacity} onChange={handleChange} name="capacity" error={touched.capacity && errors.capacity} />
                 <InputFields required label="Capacity" value={form.capacity} onChange={handleChange} name="capacity" error={touched.capacity && errors.capacity} />
                 {touched.capacity && errors.capacity && <div className="text-red-500 text-xs mt-1">{errors.capacity}</div>}
               </div>
@@ -287,9 +301,11 @@ export default function AddEditVehicleWithStepper() {
               
               <div>
                 <InputFields required label="Valid From" type="date" value={form.validFrom} onChange={handleChange} name="validFrom" error={touched.validFrom && errors.validFrom} />
+                <InputFields required label="Valid From" type="date" value={form.validFrom} onChange={handleChange} name="validFrom" error={touched.validFrom && errors.validFrom} />
                 {touched.validFrom && errors.validFrom && <div className="text-red-500 text-xs mt-1">{errors.validFrom}</div>}
               </div>
               <div>
+                <InputFields required label="Valid To" type="date" value={form.validTo} onChange={handleChange} name="validTo" error={touched.validTo && errors.validTo} />
                 <InputFields required label="Valid To" type="date" value={form.validTo} onChange={handleChange} name="validTo" error={touched.validTo && errors.validTo} />
                 {touched.validTo && errors.validTo && <div className="text-red-500 text-xs mt-1">{errors.validTo}</div>}
               </div>
@@ -327,7 +343,6 @@ export default function AddEditVehicleWithStepper() {
             {isEditMode ? "Edit Vehicle" : "Add Vehicle"}
           </h1>
         </div>
-      </div>
       <StepperForm
         steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
         currentStep={currentStep}
@@ -342,6 +357,8 @@ export default function AddEditVehicleWithStepper() {
       >
         {renderStepContent()}
       </StepperForm>
+    </div>
     </>
   );
 }
+
