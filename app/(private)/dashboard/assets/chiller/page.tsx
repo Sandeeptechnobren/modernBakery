@@ -158,7 +158,7 @@ export default function ShelfDisplay() {
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
-                  router.push(`/dashboard/assets/chiller/update/${data.uuid}`);
+                  router.push(`/dashboard/assets/chiller/${data.uuid}`);
                 },
               },
               {

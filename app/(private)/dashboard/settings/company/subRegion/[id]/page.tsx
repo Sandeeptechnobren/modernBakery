@@ -11,7 +11,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { addArea, getAreaById, updateAreaById } from "@/app/services/allApi"; 
+import { addArea, getAreaById, updateAreaById } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
@@ -94,7 +94,9 @@ export default function AddEditSubRegion() {
     } else {
       showSnackbar(
         res.message ||
-          (isEditMode ? "SubRegion Updated Successfully" : "SubRegion Created Successfully"),
+          (isEditMode
+            ? "SubRegion Updated Successfully"
+            : "SubRegion Created Successfully"),
         "success"
       );
       router.push("/dashboard/settings/company/subRegion");
@@ -204,7 +206,9 @@ export default function AddEditSubRegion() {
                       type="radio"
                       required
                       error={
-                        errors?.status && touched?.status ? errors.status : false
+                        errors?.status && touched?.status
+                          ? errors.status
+                          : false
                       }
                     />
                   </div>
@@ -217,7 +221,9 @@ export default function AddEditSubRegion() {
                       name="region_id"
                       value={values.region_id}
                       options={regionOptions}
-                      onChange={(e) => setFieldValue("region_id", e.target.value)}
+                      onChange={(e) =>
+                        setFieldValue("region_id", e.target.value)
+                      }
                     />
                     <ErrorMessage
                       name="region_id"
