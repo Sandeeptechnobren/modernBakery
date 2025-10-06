@@ -218,6 +218,14 @@ export default function SubRegion() {
             columns,
             rowSelection: true,
             rowActions: [
+               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(
+                    `/dashboard/settings/company/subRegion/details/${data.id}`
+                  );
+                },
+              },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {

@@ -173,6 +173,14 @@ export default function ChannelList() {
             columns,
             rowSelection: true,
             rowActions: [
+               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(
+                    `/dashboard/settings/outlet-channel/details/${data.id}`
+                  );
+                },
+              },
               {
                 icon: "lucide:edit-2",
                 onClick: (row: TableDataType) => {

@@ -216,6 +216,14 @@ const tableData: TableDataType[] = regions.map((s) => ({
             rowSelection: true,
             rowActions: [
               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(
+                    `/dashboard/settings/region/details/${data.id}`
+                  );
+                },
+              },
+              {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;

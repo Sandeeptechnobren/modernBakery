@@ -20,7 +20,7 @@ interface DropdownItem {
   label: string;
   iconWidth: number;
 }
-interface CountryItem {
+interface UserType {
   id?: number | string;
   code?: string;
   name?: string;
@@ -49,11 +49,11 @@ const columns = [
 ];
 
 export default function UserType() {
-  const [countries, setCountries] = useState<CountryItem[]>([]);
+  const [countries, setCountries] = useState<UserType[]>([]);
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
+  const [selectedRow, setSelectedRow] = useState<UserType | null>(null);
   const router = useRouter();
   const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
   type TableRow = TableDataType & { id?: string };
@@ -170,6 +170,14 @@ export default function UserType() {
             columns,
             rowSelection: true,
             rowActions: [
+              {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(
+                    `/dashboard/settings/user-types/details/${data.id}`
+                  );
+                },
+              },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {

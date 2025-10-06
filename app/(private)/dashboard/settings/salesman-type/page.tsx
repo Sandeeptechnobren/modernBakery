@@ -215,6 +215,14 @@ export default function SalesmanTypeList() {
             rowSelection: true,
             rowActions: [
               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(
+                    `/dashboard/settings/salesman-type/details/${data.id}`
+                  );
+                },
+              },
+              {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;

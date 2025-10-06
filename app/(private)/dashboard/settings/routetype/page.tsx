@@ -216,7 +216,14 @@ const tableData: TableDataType[] = routeType.map((s) => ({
             columns,
             rowSelection: true,
             rowActions: [
-
+              {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(
+                    `/dashboard/settings/routetype/details/${data.id}`
+                  );
+                },
+              },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
