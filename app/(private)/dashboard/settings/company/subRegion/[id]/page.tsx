@@ -54,7 +54,7 @@ export default function AddEditSubRegion() {
       (async () => {
         try {
           const res = await getAreaById(String(params.id)); // 👈 your API should return single subregion details
-          if (res?.data) {
+          if (res?.data) { 
             setInitialValues({
               area_code: res.data.area_code || "",
               area_name: res.data.area_name || "",

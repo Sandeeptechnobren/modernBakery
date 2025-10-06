@@ -224,6 +224,12 @@ export default function SubRegion() {
                         rowSelection: true,
                         rowActions: [
                             {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/settings/company/subRegion/view/${data.id}`);
+                },
+              },
+                            {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;

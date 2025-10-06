@@ -891,6 +891,16 @@ export const deleteArea = async (id:string) => {
   }
 };
 
+
+export const subRegionByID = async (id: string, params?: Params) => {
+    try {
+        const res = await API.get(`/api/master/area/area/${id}`, { params: params });
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+
 export const getCustomerCategory = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/customer-category/list`, { params: params });

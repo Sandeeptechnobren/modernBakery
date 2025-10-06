@@ -124,6 +124,7 @@ export default function ShelfDisplay() {
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
+              { key: "code", label: "Code" },
               { key: "name", label: "Name" },
               { key: "address", label: "Address" },
               { key: "contact", label: "Contact" },
@@ -144,7 +145,7 @@ export default function ShelfDisplay() {
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
-                  router.push(`/dashboard/assets/vendor/update/${data.uuid}`);
+                  router.push(`/dashboard/assets/vendor/${data.uuid}`);
                 },
               },
               {
