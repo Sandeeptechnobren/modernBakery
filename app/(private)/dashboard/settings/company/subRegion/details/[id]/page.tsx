@@ -79,7 +79,7 @@ export default function ViewPage() {
                 key: "Region",
               },
               {
-                value: subRegion?.status ? (subRegion.status === 1 ? "Active" : "Inactive") : "-",
+                value: subRegion?.status === 1 ? "Active" : "Inactive",
                 key: "Status",
               },
             ]}
