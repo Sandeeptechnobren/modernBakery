@@ -26,7 +26,8 @@ import {
   salesmanList,
   agentCustomerList,
   submenuList,
-  permissionList
+  permissionList,
+  SurveyList
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -35,6 +36,7 @@ interface DropdownDataContextType {
   companyList: CompanyItem[];
   countryList: CountryItem[];
   regionList: RegionItem[];
+  SurveyList:SurveyItem[];
   routeList: RouteItem[];
   warehouseList: WarehouseItem[];
   routeType: RouteTypeItem[];
@@ -59,6 +61,7 @@ interface DropdownDataContextType {
   onlyCountryOptions: { value: string; label: string }[];
   countryCurrency: {value: string; label: string }[];
   regionOptions: { value: string; label: string }[];
+  surveyOptions: { value: string; label: string }[];
   routeOptions: { value: string; label: string }[];
   warehouseOptions: { value: string; label: string }[];
   routeTypeOptions: { value: string; label: string }[];
@@ -112,6 +115,12 @@ interface RouteItem {
   route_code?: string;
   route_name?: string;
 }
+interface SurveyItem {
+  id?: number | string;
+  survey_code?: string;
+  survey_name?: string;
+}
+
 
 interface WarehouseItem {
   id?: number | string;
@@ -265,6 +274,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [companyListData, setCompanyListData] = useState<CompanyItem[]>([]);
   const [countryListData, setCountryListData] = useState<CountryItem[]>([]);
   const [regionListData, setRegionListData] = useState<RegionItem[]>([]);
+    const [surveyListData, setSurveyListData] = useState<SurveyItem[]>([]);
   const [routeListData, setRouteListData] = useState<RouteItem[]>([]);
   const [warehouseListData, setWarehouseListData] = useState<WarehouseItem[]>([]);
   const [routeTypeData, setRouteTypeData] = useState<RouteTypeItem[]>([]);
@@ -314,6 +324,10 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const regionOptions = (Array.isArray(regionListData) ? regionListData : []).map((c: RegionItem) => ({
     value: String(c.id ?? ''),
     label: c.region_code && c.region_name ? `${c.region_code} - ${c.region_name}` : (c.region_name ?? '')
+  }));
+    const surveyOptions = (Array.isArray(surveyListData) ? surveyListData : []).map((c: SurveyItem) => ({
+    value: String(c.id ?? ''),
+    label: c.survey_code && c.survey_name ? `${c.survey_code} - ${c.survey_name}` : (c.survey_name ?? '')
   }));
 
   const routeOptions = (Array.isArray(routeListData) ? routeListData : []).map((c: RouteItem) => ({
@@ -442,6 +456,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         companyList(),
         countryList(),
         regionList(),
+         SurveyList(),
         routeList({}),
         warehouseType(1),
         routeType(),
@@ -481,6 +496,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setCompanyListData(normalize(res[0]) as CompanyItem[]);
       setCountryListData(normalize(res[1]) as CountryItem[]);
       setRegionListData(normalize(res[2]) as RegionItem[]);
+        setSurveyListData(normalize(res[3]) as SurveyItem[]);
       setRouteListData(normalize(res[3]) as RouteItem[]);
       setWarehouseListData(normalize(res[4]) as WarehouseItem[]);
       setRouteTypeData(normalize(res[5]) as RouteTypeItem[]);
@@ -512,6 +528,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setCompanyListData([]);
       setCountryListData([]);
       setRegionListData([]);
+      setSurveyListData([]);
       setRouteListData([]);
       setWarehouseListData([]);
       setRouteTypeData([]);
@@ -553,6 +570,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         companyList: companyListData,
         countryList: countryListData,
         regionList: regionListData,
+        SurveyList: surveyListData,
         routeList: routeListData,
         warehouseList: warehouseListData,
         routeType: routeTypeData,
@@ -576,6 +594,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         onlyCountryOptions,
         countryCurrency,
         regionOptions,
+        surveyOptions,
         routeOptions,
         warehouseOptions,
         routeTypeOptions,

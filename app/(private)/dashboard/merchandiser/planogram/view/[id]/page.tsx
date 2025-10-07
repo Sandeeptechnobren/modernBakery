@@ -3,7 +3,7 @@
 import KeyValueData from "@/app/(private)/dashboard/master/customer/[customerId]/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import StatusBtn from "@/app/components/statusBtn2";
-import { getSurveyById } from "@/app/services/allApi";
+import { getPlanogramById } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -11,17 +11,16 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type SurveyFormValues = {
+type PlanogramFormValues = {
     
-  survey_code: string;
-  survey_name: string;
-  start_date: string;
-  end_date: string;
+  name: string;
+  valid_from: string;
+  valid_to: string;
   status: number | "Active" | "Inactive";
 };
 
-const title = "Survey Details";
-const backBtnUrl = "/dashboard/merchandiser/survey";
+const title = "Planogram Details";
+const backBtnUrl = "/dashboard/merchandiser/planogram";
 
 export default function ViewPage() {
 const params = useParams();
@@ -30,37 +29,36 @@ const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
-  const [survey, setSurvey] = useState<SurveyFormValues | null>(null);
+  const [planogram, setPlanogram] = useState<PlanogramFormValues | null>(null);
 
   useEffect(() => {
-    const fetchSurveyDetails = async () => {
+    const fetchPlanogramDetails = async () => {
       if (!id) return;
       setLoading(true);
       try {
-        const res = await getSurveyById(id);
+        const res = await getPlanogramById(id);
         setLoading(false);
 
         if (res.error) {
-          showSnackbar(res.data?.message || "Unable to fetch Survey Details", "error");
+          showSnackbar(res.data?.message || "Unable to fetch Planogram Details", "error");
           return;
         }
 
         // Map API response to form values
-        setSurvey({
-          survey_code: res.data.survey_code || "-",
-          survey_name: res.data.survey_name || "-",
-          start_date: res.data.start_date || "-",
-          end_date: res.data.end_date || "-",
+        setPlanogram({
+          name: res.data.name || "-",
+          valid_from: res.data.valid_from || "-",
+          valid_to: res.data.valid_to || "-",
           status: res.data.status,
         });
       } catch (error) {
         setLoading(false);
         console.error(error);
-        showSnackbar("Something went wrong while fetching Survey details", "error");
+        showSnackbar("Something went wrong while fetching Planogram details", "error");
       }
     };
 
-    fetchSurveyDetails();
+    fetchPlanogramDetails();
   }, [id, setLoading, showSnackbar]);
 
   return (
@@ -73,21 +71,20 @@ const id = Array.isArray(rawId) ? rawId[0] : rawId;
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
 
-      {/* Survey Details */}
+      {/* Planogram Details */}
       <div className="flex flex-wrap gap-x-[20px]">
-        <ContainerCard className="w-full lg:w-[350px]">
+        <ContainerCard className="w-full ]">
           <KeyValueData
             data={[
-              { value: survey?.survey_code, key: "Survey Code" },
-                   { value: survey?.survey_name, key: "Survey Name" },
-                   { value: survey?.start_date, key: "start_date" },
-                   { value: survey?.end_date, key: "End Date" },
+              { value: planogram?.name, key: "Name" },
+                   { value: planogram?.valid_from, key: "Valid From" },
+                   { value: planogram?.valid_to, key: "valid_to" },
               {
                 value: "",
                 key: "Status",
                 component: (
                   <StatusBtn
-                    isActive={survey?.status === 1 || survey?.status === "Active"}
+                    isActive={planogram?.status === 1 || planogram?.status === "Active"}
                   />
                 ),
               },

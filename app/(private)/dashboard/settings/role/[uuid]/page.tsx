@@ -117,7 +117,7 @@ export default function AddEditRole() {
                 <h2 className="text-lg font-medium text-gray-800 mb-4">
                   Role Details
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <InputFields
                       required

@@ -135,23 +135,24 @@ const handleSubmit = async (
                   />    
                 </div> 
                 
-                                <div>
-                                  <InputFields
-                                    label="Status"
-                                    name="status"
-                                    value={values.status}
-                                    onChange={(e) => setFieldValue("status", e.target.value)}
-                                    options={[
-                                      { value: "1", label: "Active" },
-                                      { value: "0", label: "Inactive" },
-                                    ]}
-                                  />
-                                  <ErrorMessage
-                                    name="status"
-                                    component="span"
-                                    className="text-xs text-red-500"
-                                  />
-                                </div>                 
+                              <div>
+                                           <InputFields
+                                             label="Status"
+                                             name="status"
+                                             type="radio"
+                                             value={values.status}
+                                             onChange={(e) => setFieldValue("status", e.target.value)}
+                                             options={[
+                                               { value: "1", label: "Active" },
+                                               { value: "0", label: "Inactive" },
+                                             ]}
+                                           />
+                                           <ErrorMessage
+                                             name="status"
+                                             component="span"
+                                             className="text-xs text-red-500"
+                                           />
+                                         </div>               
               </div>
             </ContainerCard>
             <div className="flex justify-end gap-4 mt-6">

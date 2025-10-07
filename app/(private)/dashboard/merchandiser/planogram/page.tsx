@@ -166,6 +166,12 @@ const tableData: TableDataType[] = planograms.map((s) => ({
     ],
     rowSelection: true,
     rowActions: [
+        {
+    icon: "lucide:eye",
+    onClick: (data: TableDataType) => {
+      router.push(`/dashboard/merchandiser/planogram/view/${data.id}`);
+    },
+  },
       {
         icon: "lucide:edit-2",
         onClick: (data: object) => {

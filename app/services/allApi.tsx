@@ -1808,13 +1808,11 @@ export const addSurvey = async (payload: PayloadSurvey) => {
   }
 }
 type updateSurvey = {
-
   survey_name: string;
   start_date: string;
   end_date: string;
   status: string;
 };
-
 export const updateSurvey = async (id: string, payload: updateSurvey) => {
   try {
     // ✅ Send payload directly
@@ -1849,6 +1847,18 @@ export const SurveyQuestionList = async () => {
     return handleError(error);
   }
 };
+// Get survey by ID
+
+
+export const getSurveyQuestions = async (surveyId: string) => {
+  try {
+    // removed `/questions` from the endpoint
+    const res = await API.get(`/api/merchendisher/survey-questions/get/${surveyId}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 export const deleteSurveyQuestion = async (id:string) => {
   try {
@@ -1858,7 +1868,25 @@ export const deleteSurveyQuestion = async (id:string) => {
     return handleError(error);
   }
 };
+export const getSurveyQuestionBySurveyId = async (surveyId: string | number) => {
+  try {
+    const res = await API.get(`/api/merchendisher/survey-questions/get/${surveyId}`);
 
+    // normalize response
+    const data = res.data?.data;
+    if (Array.isArray(data)) {
+      return data; // ✅ direct array
+    } else if (Array.isArray(data?.questions)) {
+      return data.questions; // ✅ nested case
+    } else {
+      console.error("Unexpected response:", res.data);
+      return []; // fallback
+    }
+  } catch (error: unknown) {
+    console.error("Error fetching survey questions:", error);
+    return [];
+  }
+};
 
  type PayloadSurveyQuestion = {
   survey_id: number;                    // ID of the survey this question belongs to
@@ -1875,6 +1903,27 @@ export const addSurveyQuestion = async (payload: PayloadSurveyQuestion) => {
   }
 }
 
+ type UpdateSurveyQuestion = {
+  survey_id: number;                    // ID of the survey this question belongs to
+  question: string;                     // The question text
+  question_type: "checkbox" | "radio" | "textbox" | "selectbox" | "commentbox"; // Type of question
+  question_based_selected?: string;     // Comma-separated options for types that require multiple choices
+};
+
+export const UpdateSurveyQuestion = async (id: string, payload:  {
+          survey_id: string,
+          question: string,
+          question_type: string,
+          question_based_selected?: string,
+        }) => {
+  try {
+    // ✅ Send payload directly
+    const res = await API.put(`/api/merchendisher/survey-questions/${id}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 export const companyTypeList = async (params?: Params) => {
   try {
      const res = await API.get("/api/settings/company-types/list",{ params: params });

@@ -4,35 +4,19 @@ import React from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Formik,
-  Form,
-  FieldArray,
-  ErrorMessage,
-  type FormikHelpers,
-} from "formik";
+import { Formik, Form, FieldArray, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import StepperForm, {
-  useStepperForm,
-  StepperStep,
-} from "@/app/components/stepperForm";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
-
 import { addSurvey, addSurveyQuestion } from "@/app/services/allApi";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-// Question types that require options
-const typesWithOptions = ["checkbox", "radio", "selectbox"];
-const questionTypes = [
-  "commentbox",
-  "checkbox",
-  "radio",
-  "textbox",
-  "selectbox",
-];
+// Question types
+const typesWithOptions = ["check box", "radio", "selectbox"];
+const questionTypes = ["comment box", "check box", "radio", "textbox", "selectbox"];
 
 // Step-wise validation
 const stepSchemas = [
@@ -70,30 +54,22 @@ type SurveyFormValues = {
   status: string;
   question: string;
   questionType: string;
+  survey_id: string;
   options: string[];
 };
 
-export default function AddSurveyStepper() {
+export default function AddSurveyTabs() {
+  const { surveyOptions } = useAllDropdownListData();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [isOpen, setIsOpen] = React.useState(false);
-  const [createdSurveyId, setCreatedSurveyId] = React.useState<string | null>(
-    null
-  );
+  const [createdSurveyId, setCreatedSurveyId] = React.useState<string | null>(null);
+  const [activeTab, setActiveTab] = React.useState<number>(1);
 
-  const steps: StepperStep[] = [
+  const tabs = [
     { id: 1, label: "Create Survey" },
     { id: 2, label: "Add Question" },
   ];
-
-  const {
-    currentStep,
-    nextStep,
-    prevStep,
-    markStepCompleted,
-    isStepCompleted,
-    isLastStep,
-  } = useStepperForm(steps.length);
 
   const initialValues: SurveyFormValues = {
     surveyCode: "",
@@ -103,10 +79,10 @@ export default function AddSurveyStepper() {
     status: "",
     question: "",
     questionType: "",
+    survey_id: "",
     options: [],
   };
 
-  // Step 1: Create Survey
   const handleCreateSurvey = async (
     values: SurveyFormValues,
     actions: FormikHelpers<SurveyFormValues>
@@ -123,16 +99,16 @@ export default function AddSurveyStepper() {
       };
 
       const res = await addSurvey(payload);
+
       if (res?.error) {
         showSnackbar(Object.values(res.error).flat().join(" | "), "error");
         return;
       }
 
-      setCreatedSurveyId(res.data.id);
+      setCreatedSurveyId(res.data.id.toString());
       showSnackbar("Survey created successfully ✅", "success");
-      markStepCompleted(currentStep);
-      nextStep();
-    } catch (err: unknown) {
+      setActiveTab(2);
+    } catch (err) {
       if (err instanceof Yup.ValidationError) {
         const touched = err.inner.reduce(
           (acc, curr) => ({ ...acc, [curr.path!]: true }),
@@ -151,76 +127,67 @@ export default function AddSurveyStepper() {
     }
   };
 
-  // Step 2: Add Question
-  const handleAddQuestion = async (
-    values: SurveyFormValues,
-    actions: FormikHelpers<SurveyFormValues>
-  ) => {
-    try {
-      if (!createdSurveyId) {
-        showSnackbar(
-          "Survey ID not found. Please create the survey first.",
-          "error"
-        );
-        return;
-      }
-
-      await stepSchemas[1].validate(values, { abortEarly: false });
-
-      const payload = {
-        survey_id: Number(createdSurveyId),
-        question: values.question,
-        question_type: values.questionType as
-          | "checkbox"
-          | "radio"
-          | "textbox"
-          | "selectbox"
-          | "commentbox",
-        question_based_selected: typesWithOptions.includes(values.questionType)
-          ? values.options.join(",")
-          : undefined,
-      };
-
-      const res = await addSurveyQuestion(payload);
-      if (res?.errors) {
-        showSnackbar(Object.values(res.errors).flat().join(" | "), "error");
-        return;
-      }
-
-      showSnackbar("Question added successfully ✅", "success");
-      router.push("/dashboard/merchandiser/survey");
-    } catch (err: unknown) {
-      if (err instanceof Yup.ValidationError) {
-        const touched = err.inner.reduce(
-          (acc, curr) => ({ ...acc, [curr.path!]: true }),
-          {} as Record<string, boolean>
-        );
-        const errors = err.inner.reduce(
-          (acc, curr) => ({ ...acc, [curr.path!]: curr.message }),
-          {} as Record<string, string>
-        );
-        actions.setTouched(touched);
-        actions.setErrors(errors);
-      }
-      showSnackbar("Please fix validation errors before submitting.", "error");
-    } finally {
-      actions.setSubmitting(false);
+ const handleAddQuestion = async (
+  values: SurveyFormValues,
+  actions: FormikHelpers<SurveyFormValues>
+) => {
+  try {
+    if (!values.survey_id) {
+      showSnackbar("Please select a survey first.", "error");
+      return;
     }
-  };
 
-  const handleNextStep = (
-    values: SurveyFormValues,
-    actions: FormikHelpers<SurveyFormValues>
-  ) => {
-    if (currentStep === 1) handleCreateSurvey(values, actions);
-    else if (currentStep === 2) handleAddQuestion(values, actions);
-  };
+    await stepSchemas[1].validate(values, { abortEarly: false });
 
-  const renderStepContent = (
+    const payload = {
+      survey_id: Number(values.survey_id),
+      question: values.question,
+      question_type: values.questionType as
+        | "checkbox"
+        | "radio"
+        | "textbox"
+        | "selectbox"
+        | "commentbox",
+      question_based_selected: typesWithOptions.includes(values.questionType)
+        ? values.options.join(",")
+        : undefined,
+    };
+
+    const res = await addSurveyQuestion(payload);
+
+    if (res?.errors) {
+      showSnackbar(Object.values(res.errors).flat().join(" | "), "error");
+      return;
+    }
+
+    showSnackbar("Question added successfully ✅", "success");
+    router.push("/dashboard/merchandiser/survey");
+  } catch (err) {
+    if (err instanceof Yup.ValidationError) {
+      const touched = err.inner.reduce(
+        (acc, curr) => ({ ...acc, [curr.path!]: true }),
+        {} as Record<string, boolean>
+      );
+      const errors = err.inner.reduce(
+        (acc, curr) => ({ ...acc, [curr.path!]: curr.message }),
+        {} as Record<string, string>
+      );
+      actions.setTouched(touched);
+      actions.setErrors(errors);
+    }
+    showSnackbar("Please fix validation errors before submitting.", "error");
+  } finally {
+    actions.setSubmitting(false);
+  }
+};
+
+
+  const renderTabContent = (
     values: SurveyFormValues,
-    setFieldValue: FormikHelpers<SurveyFormValues>["setFieldValue"]
+    setFieldValue: FormikHelpers<SurveyFormValues>["setFieldValue"],
+    formikHelpers: FormikHelpers<SurveyFormValues>
   ) => {
-    switch (currentStep) {
+    switch (activeTab) {
       case 1:
         return (
           <ContainerCard>
@@ -232,9 +199,7 @@ export default function AddSurveyStepper() {
                     label="Survey Code"
                     name="surveyCode"
                     value={values.surveyCode}
-                    onChange={(e) =>
-                      setFieldValue("surveyCode", e.target.value)
-                    }
+                    onChange={(e) => setFieldValue("surveyCode", e.target.value)}
                   />
                   <IconButton
                     bgClass="white"
@@ -248,11 +213,7 @@ export default function AddSurveyStepper() {
                     title="Survey Code"
                   />
                 </div>
-                <ErrorMessage
-                  name="surveyCode"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+                <ErrorMessage name="surveyCode" component="span" className="text-xs text-red-500" />
               </div>
 
               <div>
@@ -260,15 +221,9 @@ export default function AddSurveyStepper() {
                   label="Survey Name"
                   name="surveyName"
                   value={values.surveyName}
-                  onChange={(e) =>
-                    setFieldValue("surveyName", e.target.value)
-                  }
+                  onChange={(e) => setFieldValue("surveyName", e.target.value)}
                 />
-                <ErrorMessage
-                  name="surveyName"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+                <ErrorMessage name="surveyName" component="span" className="text-xs text-red-500" />
               </div>
 
               <div>
@@ -277,15 +232,9 @@ export default function AddSurveyStepper() {
                   type="date"
                   name="startDate"
                   value={values.startDate}
-                  onChange={(e) =>
-                    setFieldValue("startDate", e.target.value)
-                  }
+                  onChange={(e) => setFieldValue("startDate", e.target.value)}
                 />
-                <ErrorMessage
-                  name="startDate"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+                <ErrorMessage name="startDate" component="span" className="text-xs text-red-500" />
               </div>
 
               <div>
@@ -294,15 +243,9 @@ export default function AddSurveyStepper() {
                   type="date"
                   name="endDate"
                   value={values.endDate}
-                  onChange={(e) =>
-                    setFieldValue("endDate", e.target.value)
-                  }
+                  onChange={(e) => setFieldValue("endDate", e.target.value)}
                 />
-                <ErrorMessage
-                  name="endDate"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+                <ErrorMessage name="endDate" component="span" className="text-xs text-red-500" />
               </div>
 
               <div>
@@ -311,18 +254,23 @@ export default function AddSurveyStepper() {
                   name="status"
                   value={values.status}
                   onChange={(e) => setFieldValue("status", e.target.value)}
+                  type="select"
                   options={[
                     { value: "active", label: "Active" },
                     { value: "inactive", label: "Inactive" },
                   ]}
                 />
-                <ErrorMessage
-                  name="status"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+                <ErrorMessage name="status" component="span" className="text-xs text-red-500" />
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => handleCreateSurvey(values, formikHelpers)}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
+            >
+              Create Survey & Go to Questions
+            </button>
           </ContainerCard>
         );
 
@@ -338,11 +286,19 @@ export default function AddSurveyStepper() {
                   value={values.question}
                   onChange={(e) => setFieldValue("question", e.target.value)}
                 />
-                <ErrorMessage
-                  name="question"
-                  component="span"
-                  className="text-xs text-red-500"
+                <ErrorMessage name="question" component="span" className="text-xs text-red-500" />
+              </div>
+
+              <div>
+                <InputFields
+                  label="Survey Id"
+                  name="survey_id"
+                  value={values.survey_id}
+                  onChange={(e) => setFieldValue("survey_id", e.target.value)}
+                  type="select"
+                  options={surveyOptions}
                 />
+                <ErrorMessage name="survey_id" component="span" className="text-xs text-red-500" />
               </div>
 
               <div>
@@ -350,44 +306,26 @@ export default function AddSurveyStepper() {
                   label="Question Type"
                   name="questionType"
                   value={values.questionType}
-                  onChange={(e) =>
-                    setFieldValue("questionType", e.target.value)
-                  }
-                  options={questionTypes.map((type) => ({
-                    value: type,
-                    label: type,
-                  }))}
+                  onChange={(e) => setFieldValue("questionType", e.target.value)}
+                  type="select"
+                  options={questionTypes.map((type) => ({ value: type, label: type }))}
                 />
-                <ErrorMessage
-                  name="questionType"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+                <ErrorMessage name="questionType" component="span" className="text-xs text-red-500" />
               </div>
 
               {typesWithOptions.includes(values.questionType) && (
                 <div className="col-span-3">
-                  <h3 className="text-sm font-semibold mb-2">
-                    Question Select Type Based
-                  </h3>
+                  <h3 className="text-sm font-semibold mb-2">Options</h3>
                   <FieldArray
                     name="options"
                     render={(arrayHelpers) => (
                       <div className="flex flex-col gap-2">
                         {values.options.map((opt, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2"
-                          >
+                          <div key={index} className="flex items-center gap-2">
                             <input
                               type="text"
                               value={opt}
-                              onChange={(e) =>
-                                setFieldValue(
-                                  `options.${index}`,
-                                  e.target.value
-                                )
-                              }
+                              onChange={(e) => setFieldValue(`options.${index}`, e.target.value)}
                               className="border border-gray-300 rounded px-2 py-1 w-[400px] h-[44px]"
                             />
                             <button
@@ -411,14 +349,19 @@ export default function AddSurveyStepper() {
                       </div>
                     )}
                   />
-                  <ErrorMessage
-                    name="options"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
+                  <ErrorMessage name="options" component="span" className="text-xs text-red-500" />
                 </div>
               )}
             </div>
+
+              <button
+                type="button"
+                onClick={() => handleAddQuestion(values, formikHelpers)}
+                className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
+              >
+                Submit Question
+              </button>
+              
           </ContainerCard>
         );
 
@@ -442,24 +385,22 @@ export default function AddSurveyStepper() {
 
           return (
             <Form>
-              <StepperForm
-                steps={steps.map((s) => ({
-                  ...s,
-                  isCompleted: isStepCompleted(s.id),
-                }))}
-                currentStep={currentStep}
-                onBack={prevStep}
-                onNext={() => handleNextStep(values, formikHelpers)}
-                onSubmit={() => handleNextStep(values, formikHelpers)}
-                showNextButton={!isLastStep}
-                showSubmitButton={isLastStep}
-                nextButtonText="Create Survey"
-                submitButtonText={
-                  formikHelpers.isSubmitting ? "Submitting..." : "Submit"
-                }
-              >
-                {renderStepContent(values, setFieldValue)}
-              </StepperForm>
+              <div className="flex gap-4 mb-4 border-b">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-2 ${
+                      activeTab === tab.id ? "border-b-2 border-red-600 font-semibold" : "text-gray-500"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {renderTabContent(values, setFieldValue, formikHelpers)}
             </Form>
           );
         }}
