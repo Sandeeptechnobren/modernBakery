@@ -324,13 +324,13 @@ export default function AgentCustomer() {
                         columns,
                         rowSelection: true,
                         rowActions: [
-                            //  {
-                            //     icon: "lucide:eye",
-                            //     onClick: (data: object) => {
-                            //         const row = data as TableRow;
-                            //         router.push(`/dashboard/master/agentCustomer/details/${row.uuid}`);
-                            //     },
-                            // },
+                             {
+                                icon: "lucide:eye",
+                                onClick: (data: object) => {
+                                    const row = data as TableRow;
+                                    router.push(`/dashboard/master/agentCustomer/details/${row.uuid}`);
+                                },
+                            },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {

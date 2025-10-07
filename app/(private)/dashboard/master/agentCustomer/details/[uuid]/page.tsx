@@ -13,11 +13,12 @@ import StatusBtn from "@/app/components/statusBtn2";
 
 interface Item {
     id: string;
+    uuid: string;
     sap_id: string;
     warehouse_name: string;
-    owner_name: string;
+    name: string;
     owner_number: string;
-    owner_email: string;
+    email: string;
     warehouse_manager_contact: string;
     warehouse_manager: string;
     tin_no: string;
@@ -43,7 +44,7 @@ interface Item {
     password: string;
     invoice_sync: string;
     branch_id: string;
-    warehouse_code: string;
+    osa_code: string;
     region: { region_code: string, region_name: string };
     area: { area_code: string, area_name: string };
     created_by: { firstname: string, lastname: string };
@@ -55,12 +56,12 @@ const backBtnUrl = "/dashboard/master/agentCustomer";
 
 export default function ViewPage() {
     const params = useParams();
-    let id: string = "";
-    if (params.id) {
-        if (Array.isArray(params.id)) {
-            id = params.id[0] || "";
+    let uuid: string = "";
+    if (params.uuid) {
+        if (Array.isArray(params.uuid)) {
+            uuid = params.uuid[0] || "";
         } else {
-            id = params.id as string;
+            uuid = params.uuid as string;
         }
     }
 
@@ -71,7 +72,7 @@ export default function ViewPage() {
     useEffect(() => {
         const fetchPlanogramImageDetails = async () => {
             setLoading(true);
-            const res = await agentCustomerById(id);
+            const res = await agentCustomerById(uuid);
             setLoading(false);
             if (res.error) {
                 showSnackbar(
@@ -107,13 +108,13 @@ export default function ViewPage() {
                             </div>
                             <div className="text-center sm:text-left">
                                 <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                                    {item?.warehouse_name}
+                                    {item?.name}
                                 </h2>
                                 <span className="flex items-center">
                                     <span className="text-[#414651] text-[16px]">
                                         <span className="font-[600]">Agent Customer Code:</span>{" "}
                                         <span className="font-[400]">
-                                            {item?.warehouse_code || "-"}
+                                            {item?.osa_code || "-"}
                                         </span>
 
                                     </span>
@@ -136,7 +137,7 @@ export default function ViewPage() {
                                         { key: <span className="font-bold">Device No.</span>, value: item?.device_no || '-'},
                                         {
                                             key: "Owner Name",
-                                            value: item?.owner_name || "Customer Type",
+                                            value: item?.name || "Customer Type",
                                         },
                                         { key: "Warehouse Manager Name", value:item?.warehouse_manager || '-' },
                                         { key: "Warehouse Type", value: item?.warehouse_type || '-' },
@@ -163,7 +164,7 @@ export default function ViewPage() {
                                                 width={16}
                                                 className="text-[#EA0A2A]"
                                             />
-                                            <span>{item?.owner_email}</span>
+                                            <span>{item?.email}</span>
                                         </div>
                                         <div className="flex items-center gap-[8px] text-[16px]">
                                             <Icon

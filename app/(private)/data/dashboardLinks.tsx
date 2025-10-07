@@ -26,13 +26,13 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "hugeicons:home-01",
                 iconColor: "text-blue-500"
             },
-            // {
-            //     isActive: false,
-            //     href: "/dashboard/promotion",
-            //     label: "Promotion",
-            //     leadingIcon: "hugeicons:promotion",
-            //     iconColor: "text-red-500"
-            // },
+            {
+                isActive: false,
+                href: "/dashboard/promotion",
+                label: "Promotion",
+                leadingIcon: "hugeicons:promotion",
+                iconColor: "text-red-500"
+            },
         ],
     },
     {

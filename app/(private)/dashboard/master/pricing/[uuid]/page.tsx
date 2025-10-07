@@ -1,50 +1,601 @@
+
+// "use client";
+
+
+// import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
+// import ContainerCard from "@/app/components/containerCard";
+// import { useSnackbar } from "@/app/services/snackbarContext";
+// import { useParams, useRouter } from "next/navigation";
+// import { useEffect, useState, useRef ,useContext} from "react";
+
+// import Link from "next/link";
+// import { Icon } from "@iconify-icon/react";
+// import Loading from "@/app/components/Loading";
+// import CustomCheckbox from "@/app/components/customCheckbox";
+// import InputDropdown from "@/app/components/inputDropdown";
+// import InputFields from "@/app/components/inputFields";
+
+
+// export default function AddPricing() {
+//   const steps: StepperStep[] = [
+//     { id: 1, label: "Key Combination" },
+//     { id: 2, label: "Key Value" },
+//     { id: 3, label: "Pricing" },
+//   ];
+
+//   const {
+//     currentStep,
+//     nextStep,
+//     prevStep,
+//     markStepCompleted,
+//     isStepCompleted,
+//     isLastStep
+//   } = useStepperForm(steps.length);
+//   const { showSnackbar } = useSnackbar();
+//   const params = useParams();
+//   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+//   const isEditMode = id !== undefined && id !== "add";
+
+//   const [loading, setLoading] = useState(false);
+
+
+//   // --- Stepper Navigation and Submission Logic ---
+//   const [stepCompleted, setStepCompleted] = useState([false, false, false]);
+//   const [currentStepState, setCurrentStepState] = useState(1); // 1-based
+
+//   // Functions must be inside the component to access state
+//   const validateStep = (step: number) => {
+//     if (step === 1) {
+//       // Require at least one key selected in each section
+//       return (
+//         keyCombo.Location.length > 0 &&
+//         keyCombo.Customer.length > 0 &&
+//         keyCombo.Item.length > 0
+//       );
+//     }
+//     if (step === 2) {
+//       // If a key is selected, its value must be selected
+//       if (keyCombo.Location.includes("Route") && !keyValue.Route) return false;
+//       if (keyCombo.Customer.includes("Sales Organisation") && !keyValue.SalesOrganisation) return false;
+//       if (keyCombo.Customer.includes("Sub Channel") && !keyValue.SubChannel) return false;
+//       if (keyCombo.Item.includes("Item Group") && !keyValue.ItemGroup) return false;
+//       return true;
+//     }
+//     if (step === 3) {
+//       // Minimal: require itemName, startDate, endDate
+//       return promotion.itemName && promotion.startDate && promotion.endDate;
+//     }
+//     return true;
+//   };
+
+//   const handleNext = () => {
+//     if (!validateStep(currentStepState)) {
+//       showSnackbar("Please fill in all required fields before proceeding.", "warning");
+//       return;
+//     }
+//     setStepCompleted((prev) => {
+//       const arr = [...prev];
+//       arr[currentStepState - 1] = true;
+//       return arr;
+//     });
+//     if (currentStepState < 3) {
+//       setCurrentStepState(currentStepState + 1);
+//     }
+//   };
+
+//   const handleSubmit = () => {
+//     if (!validateStep(3)) {
+//       showSnackbar("Please fill in all required fields before submitting.", "error");
+//       return;
+//     }
+//     showSnackbar("Promotion submitted! (implement API call)", "success");
+//   };
+
+
+
+
+
+//   // --- Promotion Stepper: Custom Steps as per Figma ---
+//   // Step 1: Key Combination
+//   type KeyComboType = {
+//     Location: string[];
+//     Customer: string[];
+//     Item: string[];
+//   };
+//   const [keyCombo, setKeyCombo] = useState<KeyComboType>({
+//     Location: [],
+//     Customer: [],
+//     Item: [],
+//   });
+//   // Step 2: Key Value
+//   const [keyValue, setKeyValue] = useState({
+//     Route: "",
+//     SalesOrganisation: "",
+//     SubChannel: "",
+//     ItemGroup: "",
+//   });
+//   // Step 3: Promotion
+//   const [promotion, setPromotion] = useState({
+//     itemName: "",
+//     startDate: "",
+//     endDate: "",
+//     orderType: "All",
+//     offerType: "All",
+//     type: "Slab",
+//     discountType: "Fixed",
+//     discountApplyOn: "Quantity",
+//     bundle: false,
+//     orderItems: [
+//       { itemName: "", quantity: "", toQuantity: "", uom: "CTN", price: "" },
+//     ],
+//     offerItems: [
+//       { itemName: "", uom: "BAG", quantity: "" },
+//     ],
+//   });
+
+//   const keyOptions = {
+//     Location: ["Country", "Region", "Area", "Route"],
+//     Customer: ["Sales Organisation", "Channel", "Sub Channel", "Parent Customer", "Customer Category", "Customer"],
+//     Item: ["Major Category", "Item Group", "Item"],
+//   };
+
+// // --- Step 1: Key Combination types and initialKeys (must be above all usage) ---
+// type KeyOption = { label: string; isSelected: boolean };
+// type KeyGroup = { type: string; options: KeyOption[] };
+// const initialKeys: KeyGroup[] = [
+//   {
+//     type: "Location",
+//     options: [
+//       { label: "Company", isSelected: false },
+//       { label: "Region", isSelected: false },
+//       { label: "Warehouse", isSelected: false },
+//       { label: "Area", isSelected: false },
+//       { label: "Route", isSelected: false },
+//     ],
+//   },
+//   {
+//     type: "Customer",
+//     options: [
+//       { label: "Customer Type", isSelected: false },
+//       { label: "Channel", isSelected: false },
+//       { label: "Customer Category", isSelected: false },
+//       { label: "Customer", isSelected: false },
+//     ],
+//   },
+//   {
+//     type: "Item",
+//     options: [
+//       { label: "Item Category", isSelected: false },
+//       { label: "Item", isSelected: false },
+//     ],
+//   },
+// ];
+
+//   const renderStepContent = () => {
+//     switch (currentStep) {
+//       case 1:
+//         // Step 1: Key Combination (custom component)
+//         return <SelectKeyCombination setKeyCombo={setKeyCombo} />;
+
+
+// // --- Step 1: Key Combination component (fixed, self-contained, no external context needed) ---
+
+// function SelectKeyCombination({ setKeyCombo }: { setKeyCombo: React.Dispatch<React.SetStateAction<KeyComboType>> }) {
+//   const [keysArray, setKeyArray] = useState<KeyGroup[]>(initialKeys);
+//   const [keyCombination, setKeyCombination] = useState("");
+//   const [selectedKey, setSelectedKey] = useState<string>("");
+
+//   // Dropdown options for Select Key
+//   const dropdownOptions = [
+//     { label: "Country / Channel / Majority", value: "0" },
+//     { label: "Country / Channel / Item Group", value: "1" },
+//     { label: "Country / Region / Channel / Major Category", value: "2" },
+//   ];
+
+//   // Sync selected keys to parent state (keyCombo)
+//   useEffect(() => {
+//     const selected: { Location: string[]; Customer: string[]; Item: string[] } = { Location: [], Customer: [], Item: [] };
+//     keysArray.forEach((group) => {
+//       if (group.type === "Location" || group.type === "Customer" || group.type === "Item") {
+//         selected[group.type] = group.options.filter((o) => o.isSelected).map((o) => o.label);
+//       }
+//     });
+//     setKeyCombo(selected);
+//     setKeyCombination(
+//       [selected.Location, selected.Customer, selected.Item].flat().filter(Boolean).join(" / ")
+//     );
+//   }, [keysArray, setKeyCombo]);
+
+//   function onKeySelect(index: number, optionIndex: number) {
+//     setKeyArray((prev) => {
+//       const newKeys = prev.map((group, i) => {
+//         if (i !== index) return group;
+//         return {
+//           ...group,
+//           options: group.options.map((opt, j) =>
+//             j === optionIndex ? { ...opt, isSelected: !opt.isSelected } : opt
+//           ),
+//         };
+//       });
+//       return newKeys;
+//     });
+//   }
+
+//   return (
+//     <ContainerCard className="h-fit mt-[20px] flex flex-col gap-2 p-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none text-[#181D27]">
+//       <div className="font-semibold text-[20px] mb-4">Key Combination</div>
+//       <div className="mb-4">
+//         <InputFields
+//           label="Select Key"
+//           type="select"
+//           options={dropdownOptions}
+//           value={selectedKey}
+//           onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setSelectedKey(e.target.value)}
+//           width="w-full"
+//         />
+//       </div>
+//       <div className="grid grid-cols-3 gap-6">
+//         {keysArray.map((group, index) => (
+//           <div
+//             key={index}
+//             className="bg-white border border-[#E5E7EB] rounded-[12px] p-6 flex flex-col shadow-sm"
+//           >
+//             <div className="font-semibold text-[18px] mb-4 text-[#181D27]">{group.type}</div>
+//             <div className="flex flex-col gap-4">
+//               {group.options.map((option, optionIndex) => (
+//                 <CustomCheckbox
+//                   key={optionIndex}
+//                   id={option.label + index}
+//                   label={option.label}
+//                   checked={option.isSelected}
+//                   onChange={() => onKeySelect(index, optionIndex)}
+//                 />
+//               ))}
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+//       <ContainerCard className="mt-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none p-4 flex items-center gap-2">
+//         <span className="font-semibold text-[#181D27] text-[16px]">Key</span>
+//         <div className="flex flex-wrap items-center gap-2">
+//           {/* Location */}
+//           {(() => {
+//             const loc = keysArray.find(g => g.type === "Location")?.options.filter(o => o.isSelected).map(o => o.label) || [];
+//             return loc.length > 0 ? loc.map((k, i) => (
+//               <span key={"loc-"+i} className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{k}</span>
+//             )) : null;
+//           })()}
+//           {/* Customer */}
+//           {(() => {
+//             const cust = keysArray.find(g => g.type === "Customer")?.options.filter(o => o.isSelected).map(o => o.label) || [];
+//             return cust.length > 0 ? [
+//               <span key="slash-cust" className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>,
+//               ...cust.map((k, i) => (
+//                 <span key={"cust-"+i} className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{k}</span>
+//               ))
+//             ] : null;
+//           })()}
+//           {/* Item */}
+//           {(() => {
+//             const item = keysArray.find(g => g.type === "Item")?.options.filter(o => o.isSelected).map(o => o.label) || [];
+//             return item.length > 0 ? [
+//               <span key="slash-item" className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>,
+//               ...item.map((k, i) => (
+//                 <span key={"item-"+i} className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{k}</span>
+//               ))
+//             ] : null;
+//           })()}
+//         </div>
+//       </ContainerCard>
+//     </ContainerCard>
+//   );
+// }
+//       case 2:
+//         // Step 2: Key Value (customCheckboxes in card containers)
+//         return (
+//           <ContainerCard>
+//             <h2 className="text-lg font-semibold mb-6">Key Value</h2>
+//             <div className="flex gap-8">
+//               {/* Location */}
+//               <div className="flex-1">
+//                 {keyCombo.Location.includes("Route") && (
+//                   <ContainerCard className="mb-4 p-4">
+//                     <div className="font-medium mb-2">Route</div>
+//                     <div className="flex flex-col gap-2">
+//                       {["Route 1", "Route 2"].map((route) => (
+//                         <CustomCheckbox
+//                           key={route}
+//                           id={`route-checkbox-${route.replace(/\s+/g, "-").toLowerCase()}`}
+//                           label={route}
+//                           checked={keyValue.Route === route}
+//                           onChange={() => setKeyValue(s => ({ ...s, Route: s.Route === route ? "" : route }))}
+//                         />
+//                       ))}
+//                     </div>
+//                   </ContainerCard>
+//                 )}
+//               </div>
+//               {/* Customer */}
+//               <div className="flex-1">
+//                 {keyCombo.Customer.includes("Sales Organisation") && (
+//                   <ContainerCard className="mb-4 p-4">
+//                     <div className="font-medium mb-2">Sales Organisation</div>
+//                     <div className="flex flex-col gap-2">
+//                       {["Org 1", "Org 2"].map((org) => (
+//                         <CustomCheckbox
+//                           key={org}
+//                           id={`sales-org-checkbox-${org.replace(/\s+/g, "-").toLowerCase()}`}
+//                           label={org}
+//                           checked={keyValue.SalesOrganisation === org}
+//                           onChange={() => setKeyValue(s => ({ ...s, SalesOrganisation: s.SalesOrganisation === org ? "" : org }))}
+//                         />
+//                       ))}
+//                     </div>
+//                   </ContainerCard>
+//                 )}
+//                 {keyCombo.Customer.includes("Sub Channel") && (
+//                   <ContainerCard className="mb-4 p-4">
+//                     <div className="font-medium mb-2">Sub Channel</div>
+//                     <div className="flex flex-col gap-2">
+//                       {["Sub 1", "Sub 2"].map((sub) => (
+//                         <CustomCheckbox
+//                           key={sub}
+//                           id={`sub-channel-checkbox-${sub.replace(/\s+/g, "-").toLowerCase()}`}
+//                           label={sub}
+//                           checked={keyValue.SubChannel === sub}
+//                           onChange={() => setKeyValue(s => ({ ...s, SubChannel: s.SubChannel === sub ? "" : sub }))}
+//                         />
+//                       ))}
+//                     </div>
+//                   </ContainerCard>
+//                 )}
+//               </div>
+//               {/* Item */}
+//               <div className="flex-1">
+//                 {keyCombo.Item.includes("Item Group") && (
+//                   <ContainerCard className="mb-4 p-4">
+//                     <div className="font-medium mb-2">Item Group</div>
+//                     <div className="flex flex-col gap-2">
+//                       {["Group 1", "Group 2"].map((group) => (
+//                         <CustomCheckbox
+//                           key={group}
+//                           id={`item-group-checkbox-${group.replace(/\s+/g, "-").toLowerCase()}`}
+//                           label={group}
+//                           checked={keyValue.ItemGroup === group}
+//                           onChange={() => setKeyValue(s => ({ ...s, ItemGroup: s.ItemGroup === group ? "" : group }))}
+//                         />
+//                       ))}
+//                     </div>
+//                   </ContainerCard>
+//                 )}
+//               </div>
+//             </div>
+//           </ContainerCard>
+//         );
+//       case 3:
+//         // Step 3: Promotion
+//         return (
+//           <ContainerCard>
+//             <h2 className="text-lg font-semibold mb-6">Promotion</h2>
+//             <div className="flex gap-6 mb-6">
+//               <div className="flex-1">
+//                 <label>Item Name</label>
+//                 <input type="text" placeholder="Enter Code" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.itemName} onChange={e => setPromotion(s => ({ ...s, itemName: e.target.value }))} />
+//               </div>
+//               <div className="flex-1">
+//                 <label>Start Date</label>
+//                 <input type="date" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.startDate} onChange={e => setPromotion(s => ({ ...s, startDate: e.target.value }))} />
+//               </div>
+//               <div className="flex-1">
+//                 <label>End Date</label>
+//                 <input type="date" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.endDate} onChange={e => setPromotion(s => ({ ...s, endDate: e.target.value }))} />
+//               </div>
+//             </div>
+//             <div className="flex gap-6 mb-6">
+//               <div className="flex-1">
+//                 <label>Order Type</label>
+//                 <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.orderType} onChange={e => setPromotion(s => ({ ...s, orderType: e.target.value }))}>
+//                   <option value="All">All</option>
+//                   <option value="Type 1">Type 1</option>
+//                 </select>
+//               </div>
+//               <div className="flex-1">
+//                 <label>Offer Type</label>
+//                 <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.offerType} onChange={e => setPromotion(s => ({ ...s, offerType: e.target.value }))}>
+//                   <option value="All">All</option>
+//                   <option value="Offer 1">Offer 1</option>
+//                 </select>
+//               </div>
+//               <div className="flex-1">
+//                 <label>Type</label>
+//                 <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.type} onChange={e => setPromotion(s => ({ ...s, type: e.target.value }))}>
+//                   <option value="Slab">Slab</option>
+//                   <option value="Type 2">Type 2</option>
+//                 </select>
+//               </div>
+//             </div>
+//             <div className="flex gap-6 mb-6">
+//               <div className="flex-1">
+//                 <label>Discount Type</label>
+//                 <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.discountType} onChange={e => setPromotion(s => ({ ...s, discountType: e.target.value }))}>
+//                   <option value="Fixed">Fixed</option>
+//                   <option value="Percent">Percent</option>
+//                 </select>
+//               </div>
+//               <div className="flex-1">
+//                 <label>Discount Apply on</label>
+//                 <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.discountApplyOn} onChange={e => setPromotion(s => ({ ...s, discountApplyOn: e.target.value }))}>
+//                   <option value="Quantity">Quantity</option>
+//                   <option value="Value">Value</option>
+//                 </select>
+//               </div>
+//             </div>
+//             <div className="mb-4">
+//               <label className="flex items-center gap-2">
+//                 <input type="checkbox" checked={promotion.bundle} onChange={e => setPromotion(s => ({ ...s, bundle: e.target.checked }))} />
+//                 Do you want bundle combination?
+//               </label>
+//             </div>
+//             {/* Order Items Table */}
+//             <div className="mb-6 border border-gray-200 rounded">
+//               <div className="bg-gray-100 px-4 py-2 font-semibold">Order Item</div>
+//               <div className="flex gap-2 px-4 py-2 font-medium">
+//                 <div className="flex-2">Item Name</div>
+//                 <div className="flex-1">Quantity</div>
+//                 <div className="flex-1">To Quantity</div>
+//                 <div className="flex-1">UOM</div>
+//                 <div className="flex-1">Price</div>
+//                 <div className="w-10">Action</div>
+//               </div>
+//               {promotion.orderItems.map((item, idx) => (
+//                 <div key={idx} className="flex gap-2 px-4 py-2 items-center border-t border-gray-100">
+//                   <div className="flex-2">
+//                     <select className="w-full px-2 py-1 rounded border border-gray-200" value={item.itemName} onChange={e => setPromotion(s => {
+//                       const arr = [...s.orderItems]; arr[idx].itemName = e.target.value; return { ...s, orderItems: arr };
+//                     })}>
+//                       <option value="">Select Item</option>
+//                       <option value="Masafi White Facial Tissue">Masafi White Facial Tissue</option>
+//                     </select>
+//                   </div>
+//                   <div className="flex-1">
+//                     <input type="number" className="w-full px-2 py-1 rounded border border-gray-200" value={item.quantity} onChange={e => setPromotion(s => {
+//                       const arr = [...s.orderItems]; arr[idx].quantity = e.target.value; return { ...s, orderItems: arr };
+//                     })} placeholder="e.g. 10" />
+//                   </div>
+//                   <div className="flex-1">
+//                     <input type="number" className="w-full px-2 py-1 rounded border border-gray-200" value={item.toQuantity} onChange={e => setPromotion(s => {
+//                       const arr = [...s.orderItems]; arr[idx].toQuantity = e.target.value; return { ...s, orderItems: arr };
+//                     })} placeholder="e.g. 10" />
+//                   </div>
+//                   <div className="flex-1">
+//                     <select className="w-full px-2 py-1 rounded border border-gray-200" value={item.uom} onChange={e => setPromotion(s => {
+//                       const arr = [...s.orderItems]; arr[idx].uom = e.target.value; return { ...s, orderItems: arr };
+//                     })}>
+//                       <option value="CTN">CTN</option>
+//                       <option value="BAG">BAG</option>
+//                     </select>
+//                   </div>
+//                   <div className="flex-1">
+//                     <input type="number" className="w-full px-2 py-1 rounded border border-gray-200" value={item.price} onChange={e => setPromotion(s => {
+//                       const arr = [...s.orderItems]; arr[idx].price = e.target.value; return { ...s, orderItems: arr };
+//                     })} placeholder="e.g. 500.00" />
+//                   </div>
+//                   <div className="w-10">
+//                     <button type="button" className="text-red-500 text-xl" onClick={() => setPromotion(s => ({ ...s, orderItems: s.orderItems.filter((_, i) => i !== idx) }))}>×</button>
+//                   </div>
+//                 </div>
+//               ))}
+//               <div className="px-4 py-2">
+//                 <button type="button" className="bg-red-600 text-white rounded px-4 py-1" onClick={() => setPromotion(s => ({ ...s, orderItems: [...s.orderItems, { itemName: "", quantity: "", toQuantity: "", uom: "CTN", price: "" }] }))}>+</button>
+//               </div>
+//             </div>
+//             {/* Offer Items Table */}
+//             <div className="mb-6 border border-gray-200 rounded">
+//               <div className="bg-gray-100 px-4 py-2 font-semibold">Offer Item</div>
+//               <div className="flex gap-2 px-4 py-2 font-medium">
+//                 <div className="flex-2">Item Name</div>
+//                 <div className="flex-1">UOM</div>
+//                 <div className="flex-1">Quantity</div>
+//                 <div className="w-10">Action</div>
+//               </div>
+//               {promotion.offerItems.map((item, idx) => (
+//                 <div key={idx} className="flex gap-2 px-4 py-2 items-center border-t border-gray-100">
+//                   <div className="flex-2">
+//                     <select className="w-full px-2 py-1 rounded border border-gray-200" value={item.itemName} onChange={e => setPromotion(s => {
+//                       const arr = [...s.offerItems]; arr[idx].itemName = e.target.value; return { ...s, offerItems: arr };
+//                     })}>
+//                       <option value="">Select Item</option>
+//                       <option value="NMFT128 - Masafi White Facial Tissue 130 Pl">NMFT128 - Masafi White Facial Tissue 130 Pl</option>
+//                     </select>
+//                   </div>
+//                   <div className="flex-1">
+//                     <select className="w-full px-2 py-1 rounded border border-gray-200" value={item.uom} onChange={e => setPromotion(s => {
+//                       const arr = [...s.offerItems]; arr[idx].uom = e.target.value; return { ...s, offerItems: arr };
+//                     })}>
+//                       <option value="BAG">BAG</option>
+//                       <option value="CTN">CTN</option>
+//                     </select>
+//                   </div>
+//                   <div className="flex-1">
+//                     <input type="number" className="w-full px-2 py-1 rounded border border-gray-200" value={item.quantity} onChange={e => setPromotion(s => {
+//                       const arr = [...s.offerItems]; arr[idx].quantity = e.target.value; return { ...s, offerItems: arr };
+//                     })} placeholder="e.g. 10" />
+//                   </div>
+//                   <div className="w-10">
+//                     <button type="button" className="text-red-500 text-xl" onClick={() => setPromotion(s => ({ ...s, offerItems: s.offerItems.filter((_, i) => i !== idx) }))}>×</button>
+//                   </div>
+//                 </div>
+//               ))}
+//               <div className="px-4 py-2">
+//                 <button type="button" className="bg-red-600 text-white rounded px-4 py-1" onClick={() => setPromotion(s => ({ ...s, offerItems: [...s.offerItems, { itemName: "", uom: "BAG", quantity: "" }] }))}>+</button>
+//               </div>
+//             </div>
+//           </ContainerCard>
+//         );
+//       default:
+//         return null;
+//     }
+//   };
+
+//   if (isEditMode && loading) {
+//     return (
+//       <div className="w-full h-full flex items-center justify-center">
+//         <Loading/>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <>
+//         <div className="flex items-center gap-2">
+//           <Link href="/dashboard/master/pricing">
+//             <Icon icon="lucide:arrow-left" width={24} />
+//           </Link>
+//           <h1 className="text-xl font-semibold text-gray-900">
+//             {isEditMode ? "Edit Pricing" : "Add Pricing"}
+//           </h1>
+//         </div>
+//       <div className="flex justify-between items-center mb-6">
+//       <StepperForm
+//         steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
+//         currentStep={currentStep}
+//         onStepClick={() => {}}
+//         onBack={prevStep}
+//         onNext={handleNext}
+//         onSubmit={handleSubmit}
+//         showSubmitButton={isLastStep}
+//         showNextButton={!isLastStep}
+//         nextButtonText="Save & Next"
+//         submitButtonText={isEditMode ? "Update" : "Submit"}
+//       >
+//         {renderStepContent()}
+//       </StepperForm>
+//     </div>
+//     </>
+//   );
+// }
+
 "use client";
+import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
+import ContainerCard from "@/app/components/containerCard";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { addPricingHeader, addPricingDetail,editPricingDetail,editPricingHeader,pricingHeaderById,pricingDetailById } from "@/app/services/allApi";
-import InputFields from "@/app/components/inputFields";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Loading from "@/app/components/Loading";
-import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
-import * as Yup from "yup";
-import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
-import { useRouter } from "next/navigation";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
+import Loading from "@/app/components/Loading";
+import CustomCheckbox from "@/app/components/customCheckbox";
+import InputDropdown from "@/app/components/inputDropdown";
+import InputFields from "@/app/components/inputFields";
+import SelectKeyCombination from "./selectKeyCombination";
 
-// Step 1: Pricing Header fields and validation
-const PricingHeaderSchema = Yup.object().shape({
-  name: Yup.string().required("Name is required"),
-  description: Yup.string().required("Description is required"),
-  start_date: Yup.string().required("Start date is required"),
-  end_date: Yup.string().required("End date is required"),
-  apply_on: Yup.number().required("Apply On is required"),
-  warehouse_id: Yup.number().required("Warehouse is required"),
-  item_type: Yup.number().required("Item Type is required"),
-  status: Yup.number().required("Status is required"),
-});
-
-// Step 2: Pricing Detail fields and validation
-const PricingDetailSchema = Yup.object().shape({
-  name: Yup.string().required("Name is required"),
-  item_id: Yup.number().required("Item is required"),
-  buom_ctn_price: Yup.number().required("BUOM CTN Price is required"),
-  auom_pc_price: Yup.number().required("AUOM PC Price is required"),
-  status: Yup.number().required("Status is required"),
-});
-
-export default function PricingDetailPage() {
-  const { itemOptions, warehouseOptions } = useAllDropdownListData();
-  const { showSnackbar } = useSnackbar();
-  const router = useRouter();
-  // Get pricingDetail uuid from URL
-  const detailUuid = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : undefined;
-  const isEditMode = detailUuid && detailUuid !== "new";
+export default function AddPricing() {
   const steps: StepperStep[] = [
-    { id: 1, label: "Pricing Header" },
-    { id: 2, label: "Pricing Detail" },
+    { id: 1, label: "Key Combination" },
+    { id: 2, label: "Key Value" },
+    { id: 3, label: "Pricing" },
   ];
+
   const {
     currentStep,
     nextStep,
@@ -53,282 +604,292 @@ export default function PricingDetailPage() {
     isStepCompleted,
     isLastStep
   } = useStepperForm(steps.length);
-  const [headerId, setHeaderId] = useState<number | null>(null);
-  const [headerUuid, setHeaderUuid] = useState<string | null>(null);
+  const { showSnackbar } = useSnackbar();
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const isEditMode = id !== undefined && id !== "add";
+
   const [loading, setLoading] = useState(false);
-  const [headerInitialValues, setHeaderInitialValues] = useState({
-    name: "",
-    description: "",
-    start_date: "",
-    end_date: "",
-    apply_on: "",
-    warehouse_id: "",
-    item_type: "",
-    status: 1,
-  });
-  const [detailInitialValues, setDetailInitialValues] = useState({
-    name: "",
-    item_id: "",
-    buom_ctn_price: "",
-    auom_pc_price: "",
-    status: 1,
-  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (isEditMode && detailUuid) {
-        setLoading(true);
-        try {
-          // 1. Fetch detail by uuid
-          const detailRes = await pricingDetailById(detailUuid);
-          if (detailRes && detailRes.data) {
-            setDetailInitialValues({
-              name: detailRes.data.name || "",
-              item_id: detailRes.data.item_id?.toString() ?? "",
-              buom_ctn_price: detailRes.data.buom_ctn_price?.toString() ?? "",
-              auom_pc_price: detailRes.data.auom_pc_price?.toString() ?? "",
-              status: detailRes.data.status ?? 1,
-            });
-            // 2. Use header_id from detail to fetch header and its uuid
-            if (detailUuid) {
-              // setHeaderId(detailUuid);
-              const headerRes = await pricingHeaderById(detailUuid);
-              if (headerRes && headerRes.data) {
-                setHeaderInitialValues({
-                  name: headerRes.data.name || "",
-                  description: headerRes.data.description || "",
-                  start_date: headerRes.data.start_date || "",
-                  end_date: headerRes.data.end_date || "",
-                  apply_on: headerRes.data.apply_on?.toString() ?? "",
-                  warehouse_id: headerRes.data.warehouse_id?.toString() ?? "",
-                  item_type: headerRes.data.item_type?.toString() ?? "",
-                  status: headerRes.data.status ?? 1,
-                });
-                if (headerRes.data.uuid) {
-                  setHeaderUuid(headerRes.data.uuid);
-                }
-              }
-            }
-          }
-        } catch (err) {
-          showSnackbar("Failed to fetch pricing data", "error");
-        }
-        setLoading(false);
-      }
-    };
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, detailUuid]);
+  // Stepper Navigation and Submission Logic
+  const [stepCompleted, setStepCompleted] = useState([false, false, false]);
+  const [currentStepState, setCurrentStepState] = useState(1); // 1-based
 
-  const applyOnOptions = [
-    { value: "1", label: "Customer" },
-    { value: "2", label: "Channel" },
-    { value: "3", label: "Category" },
-  ];
-
-
-  const handleHeaderSubmit = async (values: typeof headerInitialValues, { setSubmitting }: FormikHelpers<typeof headerInitialValues>) => {
-    setLoading(true);
-    try {
-      const payload = {
-        ...values,
-        apply_on: Number(values.apply_on),
-        warehouse_id: Number(values.warehouse_id),
-        item_type: Number(values.item_type),
-        status: Number(values.status),
-      };
-      let res;
-      if (isEditMode && headerUuid) {
-        res = await editPricingHeader(headerUuid, payload);
-      } else {
-        res = await addPricingHeader(payload);
-      }
-      if (res?.error) {
-        showSnackbar(res?.data?.message || (isEditMode ? "Failed to update pricing header" : "Failed to add pricing header"), "error");
-      } else {
-        showSnackbar(isEditMode ? "Pricing header updated successfully" : "Pricing header added successfully", "success");
-        setHeaderId(res?.data?.id || headerId);
-        if (res?.data?.uuid) setHeaderUuid(res.data.uuid);
-        markStepCompleted(1);
-        nextStep();
-      }
-    } catch (err) {
-      showSnackbar(isEditMode ? "Update Pricing Header failed" : "Add Pricing Header failed", "error");
+  // Functions must be inside the component to access state
+  const validateStep = (step: number) => {
+    if (step === 1) {
+      // Require at least one key selected in each section
+      return (
+        keyCombo.Location.length > 0 &&
+        keyCombo.Customer.length > 0 &&
+        keyCombo.Item.length > 0
+      );
     }
-    setLoading(false);
-    setSubmitting(false);
+    if (step === 2) {
+      // If a key is selected, its value must be selected
+      if (keyCombo.Location.includes("Route") && !keyValue.Route) return false;
+      if (keyCombo.Customer.includes("Sales Organisation") && !keyValue.SalesOrganisation) return false;
+      if (keyCombo.Customer.includes("Sub Channel") && !keyValue.SubChannel) return false;
+      if (keyCombo.Item.includes("Item Group") && !keyValue.ItemGroup) return false;
+      return true;
+    }
+    if (step === 3) {
+      // Minimal: require itemName, startDate, endDate
+      return promotion.itemName && promotion.startDate && promotion.endDate;
+    }
+    return true;
   };
 
-  const handleDetailSubmit = async (values: typeof detailInitialValues, { setSubmitting }: FormikHelpers<typeof detailInitialValues>) => {
-    if (!headerId) {
-      showSnackbar("Header ID missing. Please complete step 1 first.", "error");
-      setSubmitting(false);
+  const handleNext = () => {
+    if (!validateStep(currentStepState)) {
+      showSnackbar("Please fill in all required fields before proceeding.", "warning");
       return;
     }
-    setLoading(true);
-    try {
-      const payload = {
-        ...values,
-        header_id: headerId,
-        item_id: Number(values.item_id),
-        buom_ctn_price: Number(values.buom_ctn_price),
-        auom_pc_price: Number(values.auom_pc_price),
-        status: Number(values.status),
-      };
-      let res;
-      if (isEditMode && headerId) {
-        res = await editPricingDetail(headerId.toString(), payload);
-      } else {
-        res = await addPricingDetail(payload);
-      }
-      if (res?.error) {
-        showSnackbar(res?.data?.message || (isEditMode ? "Failed to update pricing detail" : "Failed to add pricing detail"), "error");
-      } else {
-        showSnackbar(isEditMode ? "Pricing detail updated successfully" : "Pricing detail added successfully", "success");
-        router.push("/dashboard/master/pricing");
-      }
-    } catch (err) {
-      showSnackbar(isEditMode ? "Update Pricing Detail failed" : "Add Pricing Detail failed", "error");
+    setStepCompleted((prev) => {
+      const arr = [...prev];
+      arr[currentStepState - 1] = true;
+      return arr;
+    });
+    if (currentStepState < 3) {
+      setCurrentStepState(currentStepState + 1);
     }
-    setLoading(false);
-    setSubmitting(false);
   };
 
-  if (loading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <Loading />
-      </div>
-    );
-  }
+  const handleSubmit = () => {
+    if (!validateStep(3)) {
+      showSnackbar("Please fill in all required fields before submitting.", "error");
+      return;
+    }
+    showSnackbar("Promotion submitted! (implement API call)", "success");
+  };
+
+  // Step 1: Key Combination
+  type KeyComboType = {
+    Location: string[];
+    Customer: string[];
+    Item: string[];
+  };
+
+  const [keyCombo, setKeyCombo] = useState<KeyComboType>({
+    Location: [],
+    Customer: [],
+    Item: [],
+  });
+  
+  const [keyValue, setKeyValue] = useState({
+    Route: "",
+    SalesOrganisation: "",
+    SubChannel: "",
+    ItemGroup: "",
+  });
+
+  // Step 3: Promotion
+  const [promotion, setPromotion] = useState({
+    itemName: "",
+    startDate: "",
+    endDate: "",
+    orderType: "All",
+    offerType: "All",
+    type: "Slab",
+    discountType: "Fixed",
+    discountApplyOn: "Quantity",
+    bundle: false,
+    orderItems: [
+      { itemName: "", quantity: "", toQuantity: "", uom: "CTN", price: "" },
+    ],
+    offerItems: [
+      { itemName: "", uom: "BAG", quantity: "" },
+    ],
+  });
+
+  const keyOptions = {
+    Location: ["Country", "Region", "Area", "Route"],
+    Customer: ["Sales Organisation", "Channel", "Sub Channel", "Parent Customer", "Customer Category", "Customer"],
+    Item: ["Major Category", "Item Group", "Item"],
+  };
+
+    const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        // Step 1: Key Combination (custom component)
+        return <SelectKeyCombination setKeyCombo={setKeyCombo} />;
+ 
+      case 2:
+        return (
+          <ContainerCard>
+            <h2 className="text-lg font-semibold mb-6">Key Value</h2>
+            <div className="flex gap-8">
+              {/* Location */}
+              <div className="flex-1">
+                {keyCombo.Location.includes("Route") && (
+                  <ContainerCard className="mb-4 p-4">
+                    <div className="font-medium mb-2">Route</div>
+                    <div className="flex flex-col gap-2">
+                      {["Route 1", "Route 2"].map((route) => (
+                        <CustomCheckbox
+                          key={route}
+                          id={`route-checkbox-${route.replace(/\s+/g, "-").toLowerCase()}`}
+                          label={route}
+                          checked={keyValue.Route === route}
+                          onChange={() => setKeyValue(s => ({ ...s, Route: s.Route === route ? "" : route }))}
+                        />
+                      ))}
+                    </div>
+                  </ContainerCard>
+                )}
+              </div>
+              {/* Customer */}
+              <div className="flex-1">
+                {keyCombo.Customer.includes("Sales Organisation") && (
+                  <ContainerCard className="mb-4 p-4">
+                    <div className="font-medium mb-2">Sales Organisation</div>
+                    <div className="flex flex-col gap-2">
+                      {["Org 1", "Org 2"].map((org) => (
+                        <CustomCheckbox
+                          key={org}
+                          id={`sales-org-checkbox-${org.replace(/\s+/g, "-").toLowerCase()}`}
+                          label={org}
+                          checked={keyValue.SalesOrganisation === org}
+                          onChange={() => setKeyValue(s => ({ ...s, SalesOrganisation: s.SalesOrganisation === org ? "" : org }))}
+                        />
+                      ))}
+                    </div>
+                  </ContainerCard>
+                )}
+                {keyCombo.Customer.includes("Sub Channel") && (
+                  <ContainerCard className="mb-4 p-4">
+                    <div className="font-medium mb-2">Sub Channel</div>
+                    <div className="flex flex-col gap-2">
+                      {["Sub 1", "Sub 2"].map((sub) => (
+                        <CustomCheckbox
+                          key={sub}
+                          id={`sub-channel-checkbox-${sub.replace(/\s+/g, "-").toLowerCase()}`}
+                          label={sub}
+                          checked={keyValue.SubChannel === sub}
+                          onChange={() => setKeyValue(s => ({ ...s, SubChannel: s.SubChannel === sub ? "" : sub }))}
+                        />
+                      ))}
+                    </div>
+                  </ContainerCard>
+                )}
+              </div>
+              {/* Item */}
+              <div className="flex-1">
+                {keyCombo.Item.includes("Item Group") && (
+                  <ContainerCard className="mb-4 p-4">
+                    <div className="font-medium mb-2">Item Group</div>
+                    <div className="flex flex-col gap-2">
+                      {["Group 1", "Group 2"].map((group) => (
+                        <CustomCheckbox
+                          key={group}
+                          id={`item-group-checkbox-${group.replace(/\s+/g, "-").toLowerCase()}`}
+                          label={group}
+                          checked={keyValue.ItemGroup === group}
+                          onChange={() => setKeyValue(s => ({ ...s, ItemGroup: s.ItemGroup === group ? "" : group }))}
+                        />
+                      ))}
+                    </div>
+                  </ContainerCard>
+                )}
+              </div>
+            </div>
+          </ContainerCard>
+        );
+      case 3:
+        return (
+          <ContainerCard>
+            <h2 className="text-lg font-semibold mb-6">Promotion</h2>
+            <div className="flex gap-6 mb-6">
+              <div className="flex-1">
+                <label>Item Name</label>
+                <input type="text" placeholder="Enter Code" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.itemName} onChange={e => setPromotion(s => ({ ...s, itemName: e.target.value }))} />
+              </div>
+              <div className="flex-1">
+                <label>Start Date</label>
+                <input type="date" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.startDate} onChange={e => setPromotion(s => ({ ...s, startDate: e.target.value }))} />
+              </div>
+              <div className="flex-1">
+                <label>End Date</label>
+                <input type="date" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.endDate} onChange={e => setPromotion(s => ({ ...s, endDate: e.target.value }))} />
+              </div>
+            </div>
+            <div className="flex gap-6 mb-6">
+              <div className="flex-1">
+                <label>Order Type</label>
+                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.orderType} onChange={e => setPromotion(s => ({ ...s, orderType: e.target.value }))}>
+                  <option value="All">All</option>
+                  <option value="Type 1">Type 1</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label>Offer Type</label>
+                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.offerType} onChange={e => setPromotion(s => ({ ...s, offerType: e.target.value }))}>
+                  <option value="All">All</option>
+                  <option value="Offer 1">Offer 1</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label>Type</label>
+                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.type} onChange={e => setPromotion(s => ({ ...s, type: e.target.value }))}>
+                  <option value="Slab">Slab</option>
+                  <option value="Type 2">Type 2</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-6 mb-6">
+              <div className="flex-1">
+                <label>Discount Type</label>
+                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.discountType} onChange={e => setPromotion(s => ({ ...s, discountType: e.target.value }))}>
+                  <option value="Fixed">Fixed</option>
+                  <option value="Percent">Percent</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label>Discount Apply on</label>
+                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.discountApplyOn} onChange={e => setPromotion(s => ({ ...s, discountApplyOn: e.target.value }))}>
+                  <option value="Quantity">Quantity</option>
+                  <option value="Value">Value</option>
+                </select>
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={promotion.bundle} onChange={e => setPromotion(s => ({ ...s, bundle: e.target.checked }))} />
+                Do you want bundle combination?
+              </label>
+            </div>
+          </ContainerCard>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/master/pricing">
-            <Icon icon="lucide:arrow-left" width={24} />
-          </Link>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {currentStep === 1 ? (isEditMode ? "Edit Pricing Header" : "Add Pricing Header") : (isEditMode ? "Edit Pricing Detail" : "Add Pricing Detail")}
-          </h1>
-        </div>
+    <div>
+      <div className="flex items-center gap-2">
+        <Link href="/dashboard/master/pricing">
+          <Icon icon="lucide:arrow-left" width={24} />
+        </Link>
+        <h1 className="text-xl font-semibold text-gray-900">
+          {isEditMode ? "Edit Pricing" : "Add Pricing"}
+        </h1>
       </div>
-      <StepperForm
-        steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
-        currentStep={currentStep}
-        onStepClick={() => {}}
-        onBack={prevStep}
-        onNext={() => {}}
-        onSubmit={() => {}}
-        showSubmitButton={false}
-        showNextButton={false}
-        nextButtonText="Save & Next"
-        submitButtonText={isEditMode ? "Update" : "Submit"}
-      >
-        {currentStep === 1 && (
-          <Formik
-            enableReinitialize
-            initialValues={headerInitialValues}
-            validationSchema={PricingHeaderSchema}
-            onSubmit={handleHeaderSubmit}
-          >
-            {({ handleSubmit, values, setFieldValue, errors, touched }) => (
-              <Form onSubmit={handleSubmit}>
-                <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-                  <div className="p-6">
-                    <h2 className="text-lg font-medium text-gray-800 mb-4">Pricing Header Details</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <InputFields required label="Name" name="name" value={values.name} onChange={e => setFieldValue("name", e.target.value)} />
-                        <ErrorMessage name="name" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="Description" name="description" value={values.description} onChange={e => setFieldValue("description", e.target.value)} />
-                        <ErrorMessage name="description" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="Start Date" name="start_date" type="date" value={values.start_date} onChange={e => setFieldValue("start_date", e.target.value)} />
-                        <ErrorMessage name="start_date" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="End Date" name="end_date" type="date" value={values.end_date} onChange={e => setFieldValue("end_date", e.target.value)} />
-                        <ErrorMessage name="end_date" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="Apply On" name="apply_on" value={values.apply_on?.toString() ?? ""} options={applyOnOptions} onChange={e => setFieldValue("apply_on", e.target.value)} />
-                        <ErrorMessage name="apply_on" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="Warehouse" name="warehouse_id" value={values.warehouse_id?.toString() ?? ""} options={warehouseOptions} onChange={e => setFieldValue("warehouse_id", e.target.value)} />
-                        <ErrorMessage name="warehouse_id" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="Item Type" name="item_type" value={values.item_type?.toString() ?? ""} options={itemOptions} onChange={e => setFieldValue("item_type", e.target.value)} />
-                        <ErrorMessage name="item_type" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="Status" name="status" value={values.status?.toString() ?? ""} options={[{ value: "1", label: "Active" }, { value: "0", label: "Inactive" }]} onChange={e => setFieldValue("status", e.target.value)} type="radio" />
-                        <ErrorMessage name="status" component="span" className="text-xs text-red-500" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-4 mt-6 pr-0">
-                  <button type="reset" className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">Cancel</button>
-                  <SidebarBtn label="Save & Next" isActive={true} leadingIcon="mdi:check" type="submit" />
-                </div>
-              </Form>
-            )}
-          </Formik>
-        )}
-        {currentStep === 2 && (
-          <Formik
-            enableReinitialize
-            initialValues={detailInitialValues}
-            validationSchema={PricingDetailSchema}
-            onSubmit={handleDetailSubmit}
-          >
-            {({ handleSubmit, values, setFieldValue, errors, touched }) => (
-              <Form onSubmit={handleSubmit}>
-                <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-                  <div className="p-6">
-                    <h2 className="text-lg font-medium text-gray-800 mb-4">Pricing Detail</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <InputFields required label="Name" name="name" value={values.name} onChange={e => setFieldValue("name", e.target.value)} />
-                        <ErrorMessage name="name" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="Item" name="item_id" value={values.item_id?.toString() ?? ""} options={itemOptions} onChange={e => setFieldValue("item_id", e.target.value)} />
-                        <ErrorMessage name="item_id" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="BUOM CTN Price" name="buom_ctn_price" value={values.buom_ctn_price} onChange={e => setFieldValue("buom_ctn_price", e.target.value)} />
-                        <ErrorMessage name="buom_ctn_price" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="AUOM PC Price" name="auom_pc_price" value={values.auom_pc_price} onChange={e => setFieldValue("auom_pc_price", e.target.value)} />
-                        <ErrorMessage name="auom_pc_price" component="span" className="text-xs text-red-500" />
-                      </div>
-                      <div>
-                        <InputFields required label="Status" name="status" value={values.status?.toString() ?? ""} options={[{ value: "1", label: "Active" }, { value: "0", label: "Inactive" }]} onChange={e => setFieldValue("status", e.target.value)} type="radio" />
-                        <ErrorMessage name="status" component="span" className="text-xs text-red-500" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-4 mt-6 pr-0">
-                  <button type="button" className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100" onClick={prevStep}>Back</button>
-                  <SidebarBtn label={isEditMode ? "Update" : "Submit"} isActive={true} leadingIcon="mdi:check" type="submit" />
-                </div>
-              </Form>
-            )}
-          </Formik>
-        )}
-      </StepperForm>
-    </>
+      <div className="flex justify-between items-center mb-6">
+        <StepperForm
+          steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
+          currentStep={currentStep}
+          onBack={prevStep}
+          onNext={handleNext}
+          onSubmit={handleSubmit}
+          showSubmitButton={isLastStep}
+          showNextButton={!isLastStep}
+          nextButtonText="Save & Next"
+          submitButtonText={isEditMode ? "Update" : "Submit"}
+        >
+          {renderStepContent()}
+        </StepperForm>
+      </div>
+    </div>
   );
-
 }
