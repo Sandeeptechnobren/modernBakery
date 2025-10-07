@@ -7,10 +7,13 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
-import CustomCheckbox from "@/app/components/customCheckbox";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import SelectKeyCombination from "./selectKeyCombination";
+import InputFields from "@/app/components/inputFields";
+import Table from "@/app/components/customTable";
 
 export default function AddPricing() {
+  const { itemOptions,companyOptions,regionOptions,warehouseOptions,areaOptions,routeOptions,customerTypeOptions,channelOptions,customerCategoryOptions,companyCustomersOptions,itemCategoryOptions } = useAllDropdownListData();
   const steps: StepperStep[] = [
     { id: 1, label: "Key Combination" },
     { id: 2, label: "Key Value" },
@@ -107,12 +110,8 @@ export default function AddPricing() {
     Item: [],
   });
   
-  const [keyValue, setKeyValue] = useState({
-    Route: "",
-    SalesOrganisation: "",
-    SubChannel: "",
-    ItemGroup: "",
-  });
+  // Use Record<string, string> so we can dynamically store values for any selected key
+  const [keyValue, setKeyValue] = useState<Record<string, string>>({});
 
   // Step 3: Promotion
   const [promotion, setPromotion] = useState({
@@ -126,7 +125,7 @@ export default function AddPricing() {
     discountApplyOn: "Quantity",
     bundle: false,
     orderItems: [
-      { itemName: "", quantity: "", toQuantity: "", uom: "CTN", price: "" },
+      { itemName: "", itemCode: "", quantity: "", toQuantity: "", uom: "CTN", price: "" },
     ],
     offerItems: [
       { itemName: "", uom: "BAG", quantity: "" },
@@ -134,9 +133,9 @@ export default function AddPricing() {
   });
 
   const keyOptions = {
-    Location: ["Country", "Region", "Area", "Route"],
-    Customer: ["Sales Organisation", "Channel", "Sub Channel", "Parent Customer", "Customer Category", "Customer"],
-    Item: ["Major Category", "Item Group", "Item"],
+    Location: ["Company", "Region","Warehouse", "Area", "Route"],
+    Customer: ["Customer Type", "Channel", "Customer Categor", "Customer"],
+    Item: [ "Item Category", "Item"],
   };
 
     const renderStepContent = () => {
@@ -144,151 +143,187 @@ export default function AddPricing() {
       case 1:
         // Step 1: Key Combination (custom component)
         return <SelectKeyCombination setKeyCombo={setKeyCombo} />;
- 
       case 2:
+        // ...existing dropdown mapping code...
+        const locationDropdownMap: Record<string, any[]> = {
+          Company: companyOptions,
+          Region: regionOptions,
+          Warehouse: warehouseOptions,
+          Area: areaOptions,
+          Route: routeOptions,
+        };
+        const customerDropdownMap: Record<string, any[]> = {
+          "Customer Type": customerTypeOptions,
+          Channel: channelOptions,
+          "Customer Category": customerCategoryOptions,
+          Customer: companyCustomersOptions,
+        };
+        const itemDropdownMap: Record<string, any[]> = {
+          "Item Category": itemCategoryOptions,
+          Item: itemOptions,
+        };
         return (
-          <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">Key Value</h2>
-            <div className="flex gap-8">
-              {/* Location */}
+          <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
+            <h2 className="text-xl font-semibold mb-6">Key Value</h2>
+            <div className="flex gap-6">
+              {/* ...existing card code... */}
               <div className="flex-1">
-                {keyCombo.Location.includes("Route") && (
-                  <ContainerCard className="mb-4 p-4">
-                    <div className="font-medium mb-2">Route</div>
-                    <div className="flex flex-col gap-2">
-                      {["Route 1", "Route 2"].map((route) => (
-                        <CustomCheckbox
-                          key={route}
-                          id={`route-checkbox-${route.replace(/\s+/g, "-").toLowerCase()}`}
-                          label={route}
-                          checked={keyValue.Route === route}
-                          onChange={() => setKeyValue(s => ({ ...s, Route: s.Route === route ? "" : route }))}
-                        />
-                      ))}
+                <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                  <div className="font-semibold text-lg mb-4">Location</div>
+                  {keyCombo.Location.map((locKey) => (
+                    <div key={locKey} className="mb-4">
+                      <div className="mb-2 text-base font-medium">{locKey}</div>
+                      <InputFields
+                        label=""
+                        type="select"
+                        options={locationDropdownMap[locKey] ? [{ label: `Select ${locKey}`, value: "" }, ...locationDropdownMap[locKey]] : [{ label: `Select ${locKey}`, value: "" }]}
+                        value={keyValue[locKey] || ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setKeyValue(s => ({ ...s, [locKey]: e.target.value }))}
+                        width="w-full"
+                      />
                     </div>
-                  </ContainerCard>
-                )}
+                  ))}
+                </ContainerCard>
               </div>
-              {/* Customer */}
               <div className="flex-1">
-                {keyCombo.Customer.includes("Sales Organisation") && (
-                  <ContainerCard className="mb-4 p-4">
-                    <div className="font-medium mb-2">Sales Organisation</div>
-                    <div className="flex flex-col gap-2">
-                      {["Org 1", "Org 2"].map((org) => (
-                        <CustomCheckbox
-                          key={org}
-                          id={`sales-org-checkbox-${org.replace(/\s+/g, "-").toLowerCase()}`}
-                          label={org}
-                          checked={keyValue.SalesOrganisation === org}
-                          onChange={() => setKeyValue(s => ({ ...s, SalesOrganisation: s.SalesOrganisation === org ? "" : org }))}
-                        />
-                      ))}
+                <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                  <div className="font-semibold text-lg mb-4">Customer</div>
+                  {keyCombo.Customer.map((custKey) => (
+                    <div key={custKey} className="mb-4">
+                      <div className="mb-2 text-base font-medium">{custKey}</div>
+                      <InputFields
+                        label=""
+                        type="select"
+                        options={customerDropdownMap[custKey] ? [{ label: `Select ${custKey}`, value: "" }, ...customerDropdownMap[custKey]] : [{ label: `Select ${custKey}`, value: "" }]}
+                        value={keyValue[custKey] || ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setKeyValue(s => ({ ...s, [custKey]: e.target.value }))}
+                        width="w-full"
+                      />
                     </div>
-                  </ContainerCard>
-                )}
-                {keyCombo.Customer.includes("Sub Channel") && (
-                  <ContainerCard className="mb-4 p-4">
-                    <div className="font-medium mb-2">Sub Channel</div>
-                    <div className="flex flex-col gap-2">
-                      {["Sub 1", "Sub 2"].map((sub) => (
-                        <CustomCheckbox
-                          key={sub}
-                          id={`sub-channel-checkbox-${sub.replace(/\s+/g, "-").toLowerCase()}`}
-                          label={sub}
-                          checked={keyValue.SubChannel === sub}
-                          onChange={() => setKeyValue(s => ({ ...s, SubChannel: s.SubChannel === sub ? "" : sub }))}
-                        />
-                      ))}
-                    </div>
-                  </ContainerCard>
-                )}
+                  ))}
+                </ContainerCard>
               </div>
-              {/* Item */}
               <div className="flex-1">
-                {keyCombo.Item.includes("Item Group") && (
-                  <ContainerCard className="mb-4 p-4">
-                    <div className="font-medium mb-2">Item Group</div>
-                    <div className="flex flex-col gap-2">
-                      {["Group 1", "Group 2"].map((group) => (
-                        <CustomCheckbox
-                          key={group}
-                          id={`item-group-checkbox-${group.replace(/\s+/g, "-").toLowerCase()}`}
-                          label={group}
-                          checked={keyValue.ItemGroup === group}
-                          onChange={() => setKeyValue(s => ({ ...s, ItemGroup: s.ItemGroup === group ? "" : group }))}
-                        />
-                      ))}
+                <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                  <div className="font-semibold text-lg mb-4">Item</div>
+                  {keyCombo.Item.map((itemKey) => (
+                    <div key={itemKey} className="mb-4">
+                      <div className="mb-2 text-base font-medium">{itemKey}</div>
+                      <InputFields
+                        label=""
+                        type="select"
+                        options={itemDropdownMap[itemKey] ? [{ label: `Select ${itemKey}`, value: "" }, ...itemDropdownMap[itemKey]] : [{ label: `Select ${itemKey}`, value: "" }]}
+                        value={keyValue[itemKey] || ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setKeyValue(s => ({ ...s, [itemKey]: e.target.value }))}
+                        width="w-full"
+                      />
                     </div>
-                  </ContainerCard>
-                )}
+                  ))}
+                </ContainerCard>
               </div>
             </div>
+            {/* Action Buttons Row */}
+            
           </ContainerCard>
         );
       case 3:
         return (
-          <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">Promotion</h2>
-            <div className="flex gap-6 mb-6">
-              <div className="flex-1">
-                <label>Item Name</label>
-                <input type="text" placeholder="Enter Code" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.itemName} onChange={e => setPromotion(s => ({ ...s, itemName: e.target.value }))} />
+          <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
+            <h2 className="text-xl font-semibold mb-6">Promotion</h2>
+            {/* ...existing promotion fields and tables... */}
+            {/* Action Buttons Row */}
+                        {/* Promotion Fields */}
+            <div className="grid grid-cols-3 gap-6 mb-6">
+              <div>
+                <label className="block mb-2 font-medium">Name</label>
+                <InputFields
+                  label=""
+                  type="text"
+                  value={promotion.itemName}
+                  onChange={e => setPromotion(s => ({ ...s, itemName: e.target.value }))}
+                  width="w-full"
+                />
               </div>
-              <div className="flex-1">
-                <label>Start Date</label>
-                <input type="date" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.startDate} onChange={e => setPromotion(s => ({ ...s, startDate: e.target.value }))} />
+              <div>
+                <label className="block mb-2 font-medium">Start Date</label>
+                <InputFields
+                  label=""
+                  type="date"
+                  value={promotion.startDate}
+                  onChange={e => setPromotion(s => ({ ...s, startDate: e.target.value }))}
+                  width="w-full"
+                />
               </div>
-              <div className="flex-1">
-                <label>End Date</label>
-                <input type="date" className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.endDate} onChange={e => setPromotion(s => ({ ...s, endDate: e.target.value }))} />
-              </div>
-            </div>
-            <div className="flex gap-6 mb-6">
-              <div className="flex-1">
-                <label>Order Type</label>
-                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.orderType} onChange={e => setPromotion(s => ({ ...s, orderType: e.target.value }))}>
-                  <option value="All">All</option>
-                  <option value="Type 1">Type 1</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label>Offer Type</label>
-                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.offerType} onChange={e => setPromotion(s => ({ ...s, offerType: e.target.value }))}>
-                  <option value="All">All</option>
-                  <option value="Offer 1">Offer 1</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label>Type</label>
-                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.type} onChange={e => setPromotion(s => ({ ...s, type: e.target.value }))}>
-                  <option value="Slab">Slab</option>
-                  <option value="Type 2">Type 2</option>
-                </select>
+              <div>
+                <label className="block mb-2 font-medium">End Date</label>
+                <InputFields
+                  label=""
+                  type="date"
+                  value={promotion.endDate}
+                  onChange={e => setPromotion(s => ({ ...s, endDate: e.target.value }))}
+                  width="w-full"
+                />
               </div>
             </div>
-            <div className="flex gap-6 mb-6">
-              <div className="flex-1">
-                <label>Discount Type</label>
-                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.discountType} onChange={e => setPromotion(s => ({ ...s, discountType: e.target.value }))}>
-                  <option value="Fixed">Fixed</option>
-                  <option value="Percent">Percent</option>
-                </select>
+            
+            {/* Items Section */}
+            <div className="mt-8">
+              <div className="font-semibold text-lg mb-4">Items</div>
+              {/* Order Item Table using Table component */}
+              <div className="mb-6">
+                <Table
+                  data={keyCombo.Item.map((itemKey, idx) => ({
+                    itemName: itemKey,
+                    itemCode: keyValue[itemKey] || "",
+                    price: promotion.orderItems[idx]?.price || "",
+                    idx: idx.toString(),
+                  }))}
+                  config={{
+                    columns: [
+                      {
+                        key: "itemName",
+                        label: "Item Name",
+                        render: (row: any) => (
+                          <span className="font-semibold text-[#181D27] text-[14px]">{row.itemName || "-"}</span>
+                        ),
+                      },
+                      {
+                        key: "itemCode",
+                        label: "Item Code",
+                        render: (row: any) => (
+                          <span className="text-[14px]">{row.itemCode || "-"}</span>
+                        ),
+                      },
+                      {
+                        key: "price",
+                        label: "Price",
+                        render: (row: any) => (
+                          <InputFields
+                            label=""
+                            type="text"
+                            value={row.price}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setPromotion(s => {
+                                const arr = [...s.orderItems];
+                                // Ensure array length matches selected items
+                                while (arr.length < keyCombo.Item.length) arr.push({ itemName: row.itemName, itemCode: row.itemCode, quantity: "", toQuantity: "", uom: "CTN", price: "" });
+                                arr[parseInt(row.idx)].price = val;
+                                return { ...s, orderItems: arr };
+                              });
+                            }}
+                            width="w-full"
+                          />
+                        ),
+                      },
+                    ],
+                    pageSize: 5,
+                  }}
+                />
               </div>
-              <div className="flex-1">
-                <label>Discount Apply on</label>
-                <select className="w-full px-2 py-2 rounded border border-gray-200" value={promotion.discountApplyOn} onChange={e => setPromotion(s => ({ ...s, discountApplyOn: e.target.value }))}>
-                  <option value="Quantity">Quantity</option>
-                  <option value="Value">Value</option>
-                </select>
-              </div>
+              
             </div>
-            <div className="mb-4">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={promotion.bundle} onChange={e => setPromotion(s => ({ ...s, bundle: e.target.checked }))} />
-                Do you want bundle combination?
-              </label>
-            </div>
+
           </ContainerCard>
         );
       default:
@@ -297,7 +332,7 @@ export default function AddPricing() {
   };
 
   return (
-    <div>
+    <>
       <div className="flex items-center gap-2">
         <Link href="/dashboard/master/pricing">
           <Icon icon="lucide:arrow-left" width={24} />
@@ -309,18 +344,19 @@ export default function AddPricing() {
       <div className="flex justify-between items-center mb-6">
         <StepperForm
           steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
-          currentStep={currentStep}
-          onBack={prevStep}
+          currentStep={currentStepState}
+          onStepClick={() => {}}
+          onBack={() => setCurrentStepState(currentStepState - 1)}
           onNext={handleNext}
           onSubmit={handleSubmit}
-          showSubmitButton={isLastStep}
-          showNextButton={!isLastStep}
+          showSubmitButton={currentStepState === steps.length}
+          showNextButton={currentStepState < steps.length}
           nextButtonText="Save & Next"
           submitButtonText={isEditMode ? "Update" : "Submit"}
         >
           {renderStepContent()}
         </StepperForm>
       </div>
-    </div>
+    </>
   );
 }

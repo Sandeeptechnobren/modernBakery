@@ -164,8 +164,9 @@ const initialKeys: KeyGroup[] = [
   {
     type: "Location",
     options: [
-      { label: "Country", isSelected: false },
+      { label: "Company", isSelected: false },
       { label: "Region", isSelected: false },
+      { label: "Warehouse", isSelected: false },
       { label: "Area", isSelected: false },
       { label: "Route", isSelected: false },
     ],
@@ -173,10 +174,8 @@ const initialKeys: KeyGroup[] = [
   {
     type: "Customer",
     options: [
-      { label: "Sales Organisation", isSelected: false },
+      { label: "Customer Type", isSelected: false },
       { label: "Channel", isSelected: false },
-      { label: "Sub Channel", isSelected: false },
-      { label: "Parent Customer", isSelected: false },
       { label: "Customer Category", isSelected: false },
       { label: "Customer", isSelected: false },
     ],
@@ -184,8 +183,7 @@ const initialKeys: KeyGroup[] = [
   {
     type: "Item",
     options: [
-      { label: "Major Category", isSelected: false },
-      { label: "Item Group", isSelected: false },
+      { label: "Item Category", isSelected: false },
       { label: "Item", isSelected: false },
     ],
   },
