@@ -83,7 +83,7 @@ export default function CompanyCustomers() {
     const fetchCompanyCustomers = async () => {
       try {
         const data = await getCompanyCustomers();
-        const customersData = Array.isArray(data) ? data : [data]; // Wrap single object
+        const customersData = data.data;
         setCustomers(customersData);
       } catch (error) {
         console.error(error);
@@ -96,6 +96,7 @@ export default function CompanyCustomers() {
 
   /* ---------- Map to TableData ---------- */
   const tableData: TableDataType[] = customers.map((c) => ({
+    id: c.id.toString(),
     sap_code: c.sap_code,
     customer_code: c.customer_code,
     business_name: c.business_name,
@@ -107,10 +108,10 @@ export default function CompanyCustomers() {
     email: c.email,
     language: c.language,
     district: c.district,
-    // balance: c.balance.toString(),
+    balance: c.balance.toString(),
     payment_type: c.payment_type,
-    // creditlimit: c.creditlimit.toString(),
-    // totalcreditlimit: c.totalcreditlimit.toString(),
+    creditlimit: c.creditlimit.toString(),
+    totalcreditlimit: c.totalcreditlimit.toString(),
     status: c.status === 1 ? "Active" : "Inactive",
   }));
   // Delete handler
@@ -236,6 +237,12 @@ export default function CompanyCustomers() {
             columns,
             rowSelection: true,
             rowActions: [
+              {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/settings/company/companyCustomer/details/${data.id}`);
+                },
+              },
               {
                 icon: "lucide:edit-2",
                 onClick: (row: TableDataType) =>
