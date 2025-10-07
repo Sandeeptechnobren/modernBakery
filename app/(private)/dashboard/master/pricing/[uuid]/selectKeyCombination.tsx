@@ -207,6 +207,7 @@ export default function SelectKeyCombination({ setKeyCombo }: { setKeyCombo: Rea
   }, [keysArray, setKeyCombo]);
 
   function onKeySelect(index: number, optionIndex: number) {
+    console.log("Toggled:", index, optionIndex);
     setKeysArray((prev) => {
       const newKeys = prev.map((group, i) => {
         if (i !== index) return group;
@@ -217,6 +218,7 @@ export default function SelectKeyCombination({ setKeyCombo }: { setKeyCombo: Rea
           ),
         };
       });
+      console.log("Updated keysArray:", newKeys);
       return newKeys;
     });
   }
