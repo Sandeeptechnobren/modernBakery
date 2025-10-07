@@ -145,11 +145,6 @@ export default function AddEditItem() {
     setTouched((prev) => ({ ...prev, [name as keyof ItemFormValues]: true }));
   };
 
-  const setFieldValue = (field: keyof ItemFormValues, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    setTouched((prev) => ({ ...prev, [field]: true }));
-  };
-
   const validateCurrentStep = async (step: number) => {
     let fields: (keyof ItemFormValues)[] = [];
     if (step === 1) fields = [ "itemName", "exciseCode","communityCode"];

@@ -27,6 +27,9 @@ import {
   updateChiller,
 } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
+import { genearateCode } from "@/app/services/allApi";
 
 const validationSchema = Yup.object({
   serial_number: Yup.string()
@@ -146,7 +149,10 @@ type chiller = {
 };
 
 export default function AddOrEditCompanyWithStepper() {
-  const { onlyCountryOptions, vendorOptions } = useAllDropdownListData();
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
+  const [prefix, setPrefix] = useState('CHL');
+  const { onlyCountryOptions, vendorOptions, companyCustomersOptions } = useAllDropdownListData();
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Information" },
     { id: 2, label: "Acquisition and Vendor" },
@@ -168,6 +174,9 @@ export default function AddOrEditCompanyWithStepper() {
 
   const { setLoading } = useLoading();
   const params = useParams();
+  const codeGeneratedRef = useState<{ current: boolean }>({ current: false });
+  const isEditMode = params?.id && params.id !== "add";
+  const chillerId = isEditMode ? (params?.id as string) : null;
   const [chiller, setChiller] = useState<chiller>({
     serial_number: "",
     asset_number: "",
@@ -187,26 +196,34 @@ export default function AddOrEditCompanyWithStepper() {
     document_id: 1,
   });
 
-  console.log("chiller", chiller);
-
   useEffect(() => {
-    const id = params?.id;
-    if (!id || id === "add") return;
     async function fetchData() {
-      if (!id) return;
-      setLoading(true);
-      const res = await chillerByUUID(id as string);
-      console.log("res", res.data);
-      setLoading(false);
-      if (res.error) {
-        showSnackbar(res.data.message || "Failed to fetch chiller", "error");
-        throw new Error("Unable to fetch chiller");
-      } else {
-        setChiller(res.data);
+      if (isEditMode && chillerId) {
+        setLoading(true);
+        const res = await chillerByUUID(chillerId);
+        setLoading(false);
+        if (res.error) {
+          showSnackbar(res.data.message || "Failed to fetch chiller", "error");
+          throw new Error("Unable to fetch chiller");
+        } else {
+          setChiller(res.data);
+        } 
+      } else if(!isEditMode && !codeGeneratedRef[0].current){
+        codeGeneratedRef[0].current = true;
+        const res = await genearateCode({ model_name: "chiller" });
+        if (res?.code) {
+          setChiller((prev) => ({ ...prev, serial_number: res.code }));
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          const match = res.prefix;
+          if (match) setPrefix(match);
+        }
       }
     }
     fetchData();
-  }, []);
+  }, [isEditMode, chillerId]);
 
   const handleNext = async (
     values: chiller,
@@ -314,21 +331,36 @@ export default function AddOrEditCompanyWithStepper() {
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <InputFields
-                  required
-                  label="Serial Number"
-                  name="serial_number"
-                  value={values.serial_number}
-                  onChange={(e) =>
-                    setFieldValue("serial_number", e.target.value)
-                  }
-                  error={touched.serial_number && errors.serial_number}
-                />
-                <ErrorMessage
-                  name="serial_number"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
+                <div className="flex items-end gap-2 max-w-[406px]">
+                  <InputFields
+                    required
+                    label="Serial Number"
+                    name="serial_number"
+                    value={values.serial_number}
+                    onChange={(e) => setFieldValue("serial_number", e.target.value)}
+                    disabled={codeMode === 'auto'}
+                  />
+                  {!isEditMode && (
+                    <>
+                      <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]" icon="mi:settings" onClick={() => setIsOpen(true)} />
+                      <SettingPopUp
+                        isOpen={isOpen}
+                        onClose={() => setIsOpen(false)}
+                        title="Serial Number"
+                        prefix={prefix}
+                        setPrefix={setPrefix}
+                        onSave={(mode, code) => {
+                          setCodeMode(mode);
+                          if (mode === 'auto' && code) {
+                            setFieldValue("serial_number", code);
+                          } else if (mode === 'manual') {
+                            setFieldValue("serial_number", '');
+                          }
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -555,13 +587,7 @@ export default function AddOrEditCompanyWithStepper() {
                   name="customer_id"
                   value={values.customer_id.toString()}
                   onChange={(e) => setFieldValue("customer_id", e.target.value)}
-                  options={[
-                    { value: "1", label: "Customer 1" },
-                    { value: "2", label: "Customer 2" },
-                    { value: "3", label: "Customer 3" },
-                    { value: "4", label: "Customer 4" },
-                    { value: "5", label: "Customer 5" },
-                  ]}
+                  options={companyCustomersOptions}
                   error={touched.customer_id && errors.customer_id}
                 />
                 <ErrorMessage
