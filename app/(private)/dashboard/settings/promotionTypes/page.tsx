@@ -29,7 +29,7 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "id", label: "Promtion Id" },
+    // { key: "id", label: "Promtion Id" },
     { key: "code", label: "Code" },
     { key: "name", label: "Name" },
     {

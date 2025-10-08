@@ -172,24 +172,29 @@ export default function CreateUpdate({
                     onChange={formik.handleChange}
                 />
 
-                <InputDropdown
-                    label="Status"
-                    defaultText="Select Status"
-                    defaultOption={formik.values.status}
-                    dropdownTw="w-full h-fit"
-                    options={[
-                        { label: "Inactive", value: "0" },
-                        { label: "Active", value: "1" }
-                    ]}
-                    onOptionSelect={(option) => {
-                        formik.setFieldValue("status", parseInt(option.value));
-                    }}
-                />
-                {formik.touched.status && formik.errors.status ? (
-                    <span className="text-xs text-red-500">
-                        {formik.errors.status}
-                    </span>
-                ) : null}
+                <div>
+  <InputFields
+    required
+    label="Status"
+    name="status"
+    value={String(formik.values.status)}
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    onChange={(e) => formik.setFieldValue("status", e.target.value)}
+    type="radio"
+    error={
+      formik.touched.status && formik.errors.status
+        ? formik.errors.status
+        : false
+    }
+  />
+  {formik.touched.status && formik.errors.status ? (
+    <span className="text-xs text-red-500">{formik.errors.status}</span>
+  ) : null}
+</div>
+ {/* : null} */}
 
                 <div className="flex justify-between gap-[8px] mt-[50px]">
                     <div></div>

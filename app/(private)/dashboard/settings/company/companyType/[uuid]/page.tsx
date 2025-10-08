@@ -49,7 +49,7 @@ const router = useRouter();
         const res = await getComponyTypeById(params.uuid as string);
         if (res && !res.error) {
           setInitialValues({
-            company_type_code: res.data.company_type_code ?? "",
+            company_type_code: res.data.code ?? "",
             name: res.data.name ?? "",
             status: res.data.status ?? 1,
           });
@@ -133,14 +133,14 @@ const router = useRouter();
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Company Type Code (pattern-matched UI) */}
                   <div className="flex items-end gap-2 max-w-[406px]">
-                    <InputFields
-                      label="Company Type Code"
-                      name="company_type_code"
-                      value={values.company_type_code}
-                      onChange={(e) => setFieldValue("company_type_code", e.target.value)}
-                      disabled={codeMode === 'auto'}
-                      error={touched.company_type_code && errors.company_type_code}
-                    />
+                  <InputFields
+  label="Company Type Code"
+  name="company_type_code"
+  value={values.company_type_code}
+  onChange={(e) => setFieldValue("company_type_code", e.target.value)}
+  disabled={isEditMode || codeMode === 'auto'}
+  error={touched.company_type_code && errors.company_type_code}
+/>
                     {!isEditMode && (
                       <>
                         <IconButton

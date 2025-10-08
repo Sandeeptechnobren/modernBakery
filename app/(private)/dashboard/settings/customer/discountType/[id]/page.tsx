@@ -57,7 +57,7 @@ export default function AddEditDiscountType() {
           const res = await getDiscountTypeById(String(params.id));
           if (res?.data) {
             setInitialValues({
-              discount_type_code: res.data.discount_type_code || "",
+              discount_type_code: res.data.discount_code || "",
               discount_name: res.data.discount_name || "",
               discount_status: String(res.data.discount_status ?? "1"),
             });

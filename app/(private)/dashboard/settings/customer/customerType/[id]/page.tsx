@@ -98,7 +98,7 @@ export default function AddCustomerTypePage() {
           const res = await getCustomerTypeById(String(params.id));
           if (res?.data) {
             formik.setValues({
-              customer_type_code: res.data.customer_type_code || "",
+              customer_type_code: res.data.code || "",
               name: res.data.name || "",
               status: res.data.status === 1 ? "active" : "inactive",
             });

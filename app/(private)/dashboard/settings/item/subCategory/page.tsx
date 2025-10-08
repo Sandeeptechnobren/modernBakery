@@ -15,7 +15,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
 
 const columns = [
-    { key: "category_id", label: "Category Id" },
+    // { key: "category_id", label: "Category Id" },
     { key: "sub_category_code", label: "Sub Category Code" },
     { key: "sub_category_name", label: "Sub Category Name" },
     {

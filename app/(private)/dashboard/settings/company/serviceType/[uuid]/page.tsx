@@ -49,12 +49,12 @@ export default function AddEditServiceType() {
         try {
           const res = await getServiceTypesByUUID(params.uuid as string);
           if (res && !res.error) {
-            setInitialValues({
-              service_type_code: res.data.service_type_code ?? "",
-              name: res.data.name ?? "",
-              status: res.data.status ?? 1,
-            });
-          }
+  setInitialValues({
+    service_type_code: res.data.code ?? "", // <-- fix here
+    name: res.data.name ?? "",
+    status: res.data.status ?? 1,
+  });
+}
         } catch (err) {
           console.error(err);
           showSnackbar("Failed to load Service Type", "error");

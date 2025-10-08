@@ -147,7 +147,7 @@ export default function AddEditVendor() {
           const res = await vendorByUUID(uuid);
           if (res?.data) {
             formik.setValues({
-              vendor_code: res.data.vendor_code || "",
+              vendor_code: res.data.code || "",
               name: res.data.name || "",
               address: res.data.address || "",
               contact: res.data.contact || "",

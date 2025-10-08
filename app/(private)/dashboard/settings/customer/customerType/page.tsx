@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect ,useCallback} from "react";
+import { useState, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType,listReturnType } from "@/app/components/customTable";
+import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { deleteCustomerType, getCustomerType } from "@/app/services/allApi";
@@ -18,14 +16,11 @@ interface CustomerType {
   id?: string | number;
   code?: string;
   name?: string;
-  status?:  number;
+  status?: number;
   [key: string]: string | number | undefined;
 }
 
 const dropdownDataList = [
-  // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
@@ -52,159 +47,101 @@ const columns = [
   },
 ];
 
-
 export default function CustomerPage() {
-  const [customers, setCustomers] = useState<CustomerType[]>([]);
-  const {setLoading} = useLoading();
+  const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<CustomerType | null>(null);
-  const [refresh, setRefresh] = useState<boolean>(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // normalize table data
-  const tableData: TableDataType[] = customers.map((c) => ({
-    id: c.id?.toString() ?? "",
-    code: c.code ?? "",
-    name: c.name ?? "",
-    status: String(c.status ?? 0),
-  }));
-
-  // fetch list
-  // useEffect(() => {
-  //   const fetchCustomers = async () => {
-  //     try {
-  //       const res = await getCustomerType();
-  //       setCustomers(res?.data || []);
-  //     } catch (error) {
-  //       console.error("Failed to fetch customers ❌", error);
-  //       showSnackbar("Failed to fetch customers ❌", "error");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchCustomers();
-  // }, [refresh]);
-
-          const fetchCustomerType = useCallback(
-              async (
-                  page: number = 1,
-                  pageSize: number = 1
-              ): Promise<listReturnType> => {
-                  try {
-                    setLoading(true);
-                      const listRes = await getCustomerType({
-                          per_page: pageSize.toString(),
-                          page: page.toString(),
-                      });
-                      setLoading(false);
-                      return {
-                          data: listRes.data || [],
-                          total: listRes.pagination.totalPages ,
-                          currentPage: listRes.pagination.page ,
-                          pageSize: listRes.pagination.limit ,
-                      };
-                  } catch (error: unknown) {
-                      console.error("API Error:", error);
-                      setLoading(false);
-                      throw error;
-                  }
-              },
-              []
-          );
-  //          useEffect(() => {
-  //   setLoading(true);
-  // });
- const handleConfirmDelete = async () => {
-  if (!selectedRow?.id) return;
-
-  try {
-    const res = await deleteCustomerType(String(selectedRow.id));
-
-    // success check
-    if (res?.success || res?.message || res) {
-      setCustomers((prev) =>
-        prev.filter((c) => String(c.id) !== String(selectedRow.id))
-      );
-
-      showSnackbar("Customer deleted successfully ✅", "success");
-      // optional: if list becomes empty after delete
-      if (customers.length === 1) {
-        // after deleting last item, customers will be []
-        setCustomers([]);
+  // Fetch list for Table
+  const fetchCustomerType = useCallback(
+    async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {
+      try {
+        setLoading(true);
+        const listRes = await getCustomerType({
+          per_page: pageSize.toString(),
+          page: page.toString(),
+        });
+        setLoading(false);
+        return {
+          data: listRes.data || [],
+          total: listRes.pagination.totalPages,
+          currentPage: listRes.pagination.page,
+          pageSize: listRes.pagination.limit,
+        };
+      } catch (error: unknown) {
+        console.error("API Error:", error);
+        setLoading(false);
+        throw error;
       }
+    },
+    []
+  );
 
-      setShowDeletePopup(false);
-      setSelectedRow(null);
-    } else {
-      showSnackbar("Failed to delete customer ❌", "error");
+  // Delete handler with refresh
+  const handleConfirmDelete = async () => {
+    if (!selectedRow?.id) return;
+    try {
+      const res = await deleteCustomerType(String(selectedRow.id));
+      if (res?.success || res?.message || res) {
+        showSnackbar("Customer deleted successfully ✅", "success");
+        setShowDeletePopup(false);
+        setSelectedRow(null);
+        setRefreshKey((prev) => prev + 1); // <-- trigger table refresh
+      } else {
+        showSnackbar("Failed to delete customer ❌", "error");
+      }
+    } catch (error) {
+      console.error("Delete failed ❌", error);
+      showSnackbar("Delete failed ❌", "error");
     }
-  } catch (error) {
-    console.error("Delete failed ❌", error);
-    showSnackbar("Delete failed ❌", "error");
-  }
-};
-
-
-
+  };
 
   return (
     <>
-      
-
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          
+          refreshKey={refreshKey}
           config={{
-            api:{
-                            list: fetchCustomerType,
+            api: {
+              list: fetchCustomerType,
             },
             header: {
               title: "Customer Type",
-                            wholeTableActions: [
-                              <div key={0} className="flex gap-[12px] relative">
-                                <BorderIconButton
-                                  icon="ic:sharp-more-vert"
-                                  onClick={() =>
-                                    setShowDropdown(!showDropdown)
-                                  }
-                                />
-              
-                                {showDropdown && (
-                                  <div className="w-[226px] absolute top-[40px] right-0 z-30">
-                                    <CustomDropdown>
-                                      {dropdownDataList.map(
-                                        (
-                                          link,
-                                          index: number
-                                        ) => (
-                                          <div
-                                            key={index}
-                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                          >
-                                            <Icon
-                                              icon={
-                                                link.icon
-                                              }
-                                              width={
-                                                link.iconWidth
-                                              }
-                                              className="text-[#717680]"
-                                            />
-                                            <span className="text-[#181D27] font-[500] text-[16px]">
-                                              {link.label}
-                                            </span>
-                                          </div>
-                                        )
-                                      )}
-                                    </CustomDropdown>
-                                  </div>
-                                )}
-                              </div>
-                            ],
+              wholeTableActions: [
+                <div key={0} className="flex gap-[12px] relative">
+                  <BorderIconButton
+                    icon="ic:sharp-more-vert"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                  />
+                  {showDropdown && (
+                    <div className="w-[226px] absolute top-[40px] right-0 z-30">
+                      <CustomDropdown>
+                        {dropdownDataList.map((link, index: number) => (
+                          <div
+                            key={index}
+                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                          >
+                            <Icon
+                              icon={link.icon}
+                              width={link.iconWidth}
+                              className="text-[#717680]"
+                            />
+                            <span className="text-[#181D27] font-[500] text-[16px]">
+                              {link.label}
+                            </span>
+                          </div>
+                        ))}
+                      </CustomDropdown>
+                    </div>
+                  )}
+                </div>,
+              ],
               searchBar: false,
               columnFilter: true,
               actions: [

@@ -160,13 +160,13 @@ export default function AddEditCountry() {
                   {/* Country Code */}
                   <div className="flex items-end gap-2 max-w-[406px]">
                     <div className="w-full">
-                      <InputFields
-                        required
-                        label="Country Code"
-                        value={values.country_code}
-                        onChange={(e) => setFieldValue("country_code", e.target.value)}
-                        disabled={codeMode === 'auto' && !isEditMode}
-                      />
+             <InputFields
+  required
+  label="Country Code"
+  value={values.country_code}
+  onChange={(e) => setFieldValue("country_code", e.target.value)}
+  disabled={isEditMode || (codeMode === 'auto' && !isEditMode)}
+/>
                       <ErrorMessage
                         name="country_code"
                         component="span"

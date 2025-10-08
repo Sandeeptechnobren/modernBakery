@@ -108,7 +108,7 @@ export default function DiscountType() {
           const fetchCustomerType = useCallback(
               async (
                   page: number = 1,
-                  pageSize: number = 1
+                  pageSize: number = 10
               ): Promise<listReturnType> => {
                   try {
                     setLoading(true);
@@ -251,7 +251,7 @@ export default function DiscountType() {
                             },
                         },
                         ],
-                        pageSize: 2,
+                        pageSize: 10,
                     }}
                 />
             </div>
