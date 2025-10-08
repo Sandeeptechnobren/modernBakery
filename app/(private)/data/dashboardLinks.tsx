@@ -45,7 +45,7 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "hugeicons:workflow-square-06",
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
-                children: [ 
+                children: [
                     {
                         isActive: false,
                         href: "/dashboard/master/company",
@@ -53,7 +53,7 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500"
                     },
-                   
+
                     // {
                     //     isActive: false,
                     //     href: "/dashboard/master/customer",
@@ -62,26 +62,26 @@ export const initialLinkData: SidebarDataType[] = [
                     //     iconColor: "text-green-500"
                     // },
                     {
-                isActive: false,
-                href: "/dashboard/master/salesman",
-                label: "Salesman",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
-            {
-                isActive: false,
-                href: "/dashboard/master/discount",
-                label: "Discount",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
-            // {
-            //     isActive: false,
-            //     href: "/dashboard/master/item",
-            //     label: "Items",
-            //     leadingIcon: "mdi:package-variant",
-            //     iconColor: "text-cyan-500"
-            // },
+                        isActive: false,
+                        href: "/dashboard/master/salesman",
+                        label: "Salesman",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/dashboard/master/discount",
+                        label: "Discount",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    // {
+                    //     isActive: false,
+                    //     href: "/dashboard/master/item",
+                    //     label: "Items",
+                    //     leadingIcon: "mdi:package-variant",
+                    //     iconColor: "text-cyan-500"
+                    // },
                     {
                         isActive: false,
                         href: "/dashboard/master/route",
@@ -89,7 +89,7 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400"
                     },
-                            {
+                    {
                         isActive: false,
                         href: "/dashboard/master/pricing",
                         label: "Pricing",
@@ -129,6 +129,38 @@ export const initialLinkData: SidebarDataType[] = [
             {
                 isActive: false,
                 href: "#",
+                label: "Agent Transaction",
+                leadingIcon: "hugeicons:workflow-square-06",
+                trailingIcon: "mdi-light:chevron-right",
+                iconColor: "text-yellow-400",
+                children: [
+                    {
+                        isActive: false,
+                        href: "/dashboard/agentTransaction/agentCustomerOrder",
+                        label: "Agent Customer Order",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/dashboard/agentTransaction/agentCustomerInvoice",
+                        label: "Agent Customer Invoice",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500"
+                    },
+                ]
+            },
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/order",
+            //     label: "Order",
+            //     leadingIcon: "picon:business",
+            //     trailingIcon: "mdi-light:chevron-right",
+            //     iconColor: "text-yellow-400",
+            // },
+            {
+                isActive: false,
+                href: "#",
                 label: "Merchandisers",
                 leadingIcon: "picon:business",
                 trailingIcon: "mdi-light:chevron-right",
@@ -142,13 +174,13 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500"
                     },
-            //          {
-            //     isActive: false,
-            //     href: "/dashboard/merchandiser/planogramImage",
-            //     label: "Planogram Image",
-            //     leadingIcon: "mdi:map",
-            //     iconColor: "text-yellow-400"
-            // },
+                    //          {
+                    //     isActive: false,
+                    //     href: "/dashboard/merchandiser/planogramImage",
+                    //     label: "Planogram Image",
+                    //     leadingIcon: "mdi:map",
+                    //     iconColor: "text-yellow-400"
+                    // },
                     {
                         isActive: false,
                         href: "/dashboard/merchandiser/planogramImage",
@@ -182,7 +214,7 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "streamline-freehand:money-bag",
                 iconColor: "text-green-500",
                 trailingIcon: "mdi-light:chevron-right",
-                children: [ 
+                children: [
                     {
                         isActive: false,
                         href: "/dashboard/assets/chiller",
