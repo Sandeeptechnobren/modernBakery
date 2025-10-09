@@ -17,139 +17,208 @@ import Loading from "@/app/components/Loading";
 interface ItemFormValues {
   itemCode: string;
   itemName: string;
-  sapId: string;
+  ErpCode: string;
   itemDesc: string;
+  itemImage: string;
+  brand: string;
+  itemWeight: string;
   itemCategory: string;
   itemSubCategory: string;
-  itemUpc: string;
-  itemUom: string;
-  vat: string;
-  excise: string;
-  itemBasePrice: string;
-  exciseCode: string;
-  communityCode: string;
   shelfLife: string;
+  volume: string;
+  is_Promotional: string;
+  is_tax_applicable: string;
+  excise: string;
+  uom: string;
+  uomType: string;
+  upc: string;
+  price: string;
+  is_stock_keeping_unit: string;
+  enable_for: string;
   status: string;
 }
 
+const ItemSchema = Yup.object().shape({
+  // Step 1
+  // itemCode: Yup.string().required("Item Code is required"),
+  itemName: Yup.string().required("Item Name is required"),
+  // ErpCode: Yup.string().required("ERP Code is required"),
+  // itemDesc: Yup.string(),
+  // // itemImage: Yup.mixed().nullable(),
+  // brand: Yup.string(),
+  // itemCategory: Yup.string().required("Category is required"),
+  // itemSubCategory: Yup.string().required("Sub Category is required"),
+
+  // // Step 2
+  // itemWeight: Yup.string(),
+  // shelfLife: Yup.string(),
+  // volume: Yup.string(),
+  // is_Promotional: Yup.string().required("Please select promotional option"),
+  // is_tax_applicable: Yup.string().required("Please select tax applicability"),
+  // excise: Yup.string(),
+  // status: Yup.string().required("Status is required"),
+
+  // // Step 3
+  // uom: Yup.string().required("UOM is required"),
+  // uomType: Yup.string().required("UOM Type is required"),
+  // upc: Yup.string().nullable(),
+  // price: Yup.string().nullable(),
+  // is_stock_keeping_unit: Yup.string().required("Please select stock keeping option"),
+  // enable_for: Yup.string().required("Please select enable for option"),
+});
+
+// --- Yup Step-based Validation ---
+// const stepSchemas = [
+//   // Step 1: Basic Details
+//   Yup.object({
+//     // itemCode: Yup.string().required("Item Code is required"),
+//     itemName: Yup.string().required("Item Name is required"),
+//     // ErpCode: Yup.string().required("ERP Code is required"),
+//     itemCategory: Yup.string().required("Item Category is required"),
+//     itemSubCategory: Yup.string().required("Item Sub Category is required"),
+//     itemDesc: Yup.string(),
+//     // itemImage: Yup.mixed().nullable(), // optional file
+//     brand: Yup.string(),
+//   }),
+
+//   // Step 2: Additional Info
+//   Yup.object({
+//     itemWeight: Yup.string()
+//       .matches(/^[0-9]*\.?[0-9]*$/, "Weight must be a valid number")
+//       .nullable(),
+//     shelfLife: Yup.string(),
+//     volume: Yup.string(),
+//     is_Promotional: Yup.string().required("Promotional field is required"),
+//     is_tax_applicable: Yup.string().required("Tax applicability is required"),
+//     excise: Yup.string(),
+//     status: Yup.string().required("Status is required"),
+//   }),
+
+//   // Step 3: UOM (Unit of Measurement & others)
+//   Yup.object({
+//     uom: Yup.string().required("UOM is required"),
+//     uomType: Yup.string().required("UOM Type is required"),
+//     upc: Yup.string(),
+//     price: Yup.string()
+//       .matches(/^[0-9]*\.?[0-9]*$/, "Price must be a valid number")
+//       .required("Price is required"),
+//     is_stock_keeping_unit: Yup.string().required("Stock Keeping Unit field is required"),
+//     enable_for: Yup.string().required("Enable For field is required"),
+//   }),
+// ];
+
+
+
 export default function AddEditItem() {
-  // Prevent double call of genearateCode in add mode
-  const codeGeneratedRef = useRef(false);
   const { itemCategoryOptions, itemSubCategoryOptions } = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
-  const [prefix, setPrefix] = useState('');
+  const [prefix, setPrefix] = useState("");
+  const [loading, setLoading] = useState(false);
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const itemId = params?.id as string | undefined;
-  const isEditMode = itemId !== undefined && itemId !== "add";
+  const isEditMode = !!(itemId && itemId !== "add");
+  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
+
   const steps: StepperStep[] = [
-    { id: 1, label: "Item Details" },
-    { id: 2, label: "Item Information" },
-    { id: 3, label: "Additional Information" },
+    { id: 1, label: "Basic Details" },
+    { id: 2, label: "Additional Info" },
+    { id: 3, label: "UOM"}
   ];
+
   const {
     currentStep,
     nextStep,
     prevStep,
     markStepCompleted,
     isStepCompleted,
-    isLastStep
+    isLastStep,
   } = useStepperForm(steps.length);
 
   const [form, setForm] = useState<ItemFormValues>({
     itemCode: "",
     itemName: "",
-    sapId: "",
+    ErpCode: "",
     itemDesc: "",
+    itemImage: "",
+    brand: "",
+    itemWeight: "",
     itemCategory: "",
     itemSubCategory: "",
-    itemUpc: "",
-    itemUom: "",
-    vat: "",
-    excise: "",
-    itemBasePrice: "",
-    exciseCode: "",
-    communityCode: "",
     shelfLife: "",
+    volume: "",
+    is_Promotional: "",
+    is_tax_applicable: "",
+    excise: "",
+    uom: "",
+    uomType: "",
+    upc: "",
+    price: "",
+    is_stock_keeping_unit: "",
+    enable_for: "",
     status: "",
   });
+
   const [errors, setErrors] = useState<Partial<Record<keyof ItemFormValues, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof ItemFormValues, boolean>>>({});
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isEditMode && itemId) {
       setLoading(true);
       (async () => {
-        const res = await itemById(String(itemId));
+        const res = await itemById(itemId);
         const data = res?.data ?? res;
-        if (res && !res.error) {
+        if (!res?.error && data) {
           setForm({
             itemCode: data.code || "",
             itemName: data.name || "",
-            sapId: data.sap_id || "",
+            ErpCode: data.erp_code || "",
             itemDesc: data.description || "",
-            itemCategory: (data.category?.id ? String(data.category.id) : (data.category_id ? String(data.category_id) : "")),
-            itemSubCategory: (data.sub_category?.id ? String(data.sub_category.id) : (data.sub_category_id ? String(data.sub_category_id) : "")),
-            itemUpc: data.upc ? String(data.upc) : "",
-            itemUom: data.uom ? String(data.uom) : "",
-            vat: data.vat || "",
-            excise: data.excies || "",
-            itemBasePrice: data.item_base_price || "",
-            exciseCode: data.excise_code || "",
-            communityCode: data.community_code || "",
+            itemImage: data.image || "",
+            brand: data.brand || "",
+            itemWeight: data.item_weight || "",
+            itemCategory: data.category_id || "",
+            itemSubCategory: data.sub_category_id || "",
             shelfLife: data.shelf_life || "",
-            status: data.status === 1 || data.status === "1" || (typeof data.status === "string" && data.status.toLowerCase() === "active") ? "active" : "inactive",
+            volume: data.volume || "",
+            is_Promotional: data.is_promotional ? "yes" : "no",
+            is_tax_applicable: data.is_tax_applicable ? "yes" : "no",
+            excise: data.excise || "",
+            uom: data.uom || "",
+            uomType: data.uomType || "",
+            upc: data.upc || "",
+            price: data.price || "",
+            is_stock_keeping_unit: data.is_stock_keeping_unit ? "yes" : "no",
+            enable_for: data.enable_for ? "sales" : "return",
+            status: data.status ? "active" : "inactive",
           });
         }
         setLoading(false);
       })();
-    } else if (!isEditMode && !codeGeneratedRef.current) {
-      codeGeneratedRef.current = true;
+    } else {
       (async () => {
         const res = await genearateCode({ model_name: "items" });
-        if (res?.code) {
-          setForm(prev => ({ ...prev, itemCode: res.code }));
-        }
-        if (res?.prefix) {
-          setPrefix(res.prefix);
-        } else if (res?.code) {
-          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
-          const match = res.prefix;
-          if (match) setPrefix(prefix);
-        }
+        if (res?.code) setForm((prev) => ({ ...prev, itemCode: res.code }));
+        if (res?.prefix) setPrefix(res.prefix);
       })();
     }
   }, [isEditMode, itemId]);
 
-  const ItemSchema = Yup.object().shape({
-    itemName: Yup.string().required("Item Name is required"),
-    exciseCode: Yup.string().required("Excise Code is required"),
-    communityCode: Yup.string().required("Community Code is required"),
-    sapId: Yup.string().required("SAP Id is required"),
-    itemCategory: Yup.string().required("Item Category is required"),
-    itemSubCategory: Yup.string().required("Item Sub Category is required"),
-    itemUpc: Yup.string().required("Item UPC is required"),
-    itemUom: Yup.string().required("Item UOM is required"),
-    vat: Yup.string().required("Vat is required"),
-    excise: Yup.string().required("Excise is required"),
-    itemBasePrice: Yup.string().required("Item Base Price is required"),
-    status: Yup.string().required("Status is required"),
-  });
+  
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name as keyof ItemFormValues]: value }));
-    setTouched((prev) => ({ ...prev, [name as keyof ItemFormValues]: true }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
   };
 
   const validateCurrentStep = async (step: number) => {
-    let fields: (keyof ItemFormValues)[] = [];
-    if (step === 1) fields = [ "itemName", "exciseCode","communityCode"];
-    if (step === 2) fields = ["itemCategory", "itemSubCategory", "itemUom","itemUpc","vat","excise"];
-    if (step === 3) fields = ["status"];
+    const fields: Record<number, (keyof ItemFormValues)[]> = {
+      1: ["itemCode", "itemName", "ErpCode", "itemCategory", "itemSubCategory"],
+      2: ["status"],
+    };
+
     try {
       await ItemSchema.validate(form, { abortEarly: false });
       setErrors({});
@@ -157,17 +226,12 @@ export default function AddEditItem() {
     } catch (err) {
       if (err instanceof Yup.ValidationError) {
         const stepErrors: Partial<Record<keyof ItemFormValues, string>> = {};
-        if (Array.isArray(err.inner)) {
-          err.inner.forEach((validationErr) => {
-            const path = validationErr.path as keyof ItemFormValues;
-            if (fields.includes(path)) {
-              stepErrors[path] = validationErr.message;
-            }
-          });
-        }
-        setErrors((prev) => ({ ...prev, ...stepErrors }));
-        setTouched((prev) => ({ ...prev, ...Object.fromEntries(fields.map(f => [f, true])) }));
-        return Object.keys(stepErrors).length === 0;
+        err.inner.forEach((e) => {
+          const path = e.path as keyof ItemFormValues;
+          if (fields[step].includes(path)) stepErrors[path] = e.message;
+        });
+        setErrors(stepErrors);
+        return false;
       }
       return false;
     }
@@ -179,52 +243,20 @@ export default function AddEditItem() {
       markStepCompleted(currentStep);
       nextStep();
     } else {
-      showSnackbar("Please fill in all required fields before proceeding.", "error");
+      showSnackbar("Please fill all required fields.", "error");
     }
   };
 
   const handleSubmit = async () => {
     const valid = await validateCurrentStep(currentStep);
-    if (!valid) {
-      showSnackbar("Please fill in all required fields before submitting.", "error");
-      return;
-    }
-    try {
-      const payload = {
-        name: form.itemName,
-        description: form.itemDesc,
-        category_id: form.itemCategory,
-        sub_category_id: form.itemSubCategory,
-        upc: form.itemUpc,
-        uom: form.itemUom,
-        vat: form.vat,
-        excies: form.excise,
-        excise_code: form.exciseCode,
-        community_code: form.communityCode,
-        shelf_life: form.shelfLife,
-        status: form.status === "active" ? 1 : form.status === "inactive" ? 0 : undefined,
-      };
-      let res;
-      if (isEditMode && itemId) {
-        res = await editItem(itemId, payload);
-      } else {
-        res = await addItem(payload);
-        if (!res?.error) {
-          try {
-            await saveFinalCode({ reserved_code: form.itemCode, model_name: "items" });
-          } catch (e) {
-            // Optionally handle error, but don't block success
-          }
-        }
-      }
-      if (res?.error) {
-        showSnackbar(res.message || (isEditMode ? res.data.message : "Failed to add item"), "error");
-      } else {
-        showSnackbar(isEditMode ? "Item updated successfully" : "Item added successfully", "success");
-        router.push("/dashboard/master/item");
-      }
-    } catch (err) {
-      showSnackbar(isEditMode ? "Update item failed" : "Add item failed", "error");
+    if (!valid) return showSnackbar("Please fill required fields before submit.", "error");
+
+    const payload = { ...form };
+    const res = isEditMode ? await editItem(itemId, payload) : await addItem(payload);
+    if (res?.error) showSnackbar(res.message || "Action failed", "error");
+    else {
+      showSnackbar(isEditMode ? "Item updated" : "Item added", "success");
+      router.push("/dashboard/master/item");
     }
   };
 
@@ -232,177 +264,123 @@ export default function AddEditItem() {
     switch (currentStep) {
       case 1:
         return (
-          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-            <div className="p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">Item Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-end gap-2 max-w-[406px]">
-                  <InputFields
-                    required
-                    label="Item Code"
-                    name="itemCode"
-                    value={form.itemCode}
-                    onChange={handleChange}
-                    disabled={codeMode === 'auto'}
-                  />
-                  {!isEditMode && (
-                    <>
-                      <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]" icon="mi:settings" onClick={() => setIsOpen(true)} />
-                      <SettingPopUp
-                        isOpen={isOpen}
-                        onClose={() => setIsOpen(false)}
-                        title="Item Code"
-                        prefix={prefix}
-                        setPrefix={setPrefix}
-                        onSave={(mode, code) => {
-                          setCodeMode(mode);
-                          if (mode === 'auto' && code) {
-                            setForm((prev) => ({ ...prev, itemCode: code }));
-                          } else if (mode === 'manual') {
-                            setForm((prev) => ({ ...prev, itemCode: '' }));
-                          }
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-                <div>
-                  <InputFields required label="Excise Code" name="exciseCode" value={form.exciseCode} onChange={handleChange} error={touched.exciseCode && errors.exciseCode}/>
-                  {touched.exciseCode && errors.exciseCode && (
-                    <div className="text-red-500 text-xs mt-1">{errors.exciseCode}</div>
-                  )}
-                </div>
-                <div>
-                  <InputFields required label="Community Code" name="communityCode" value={form.communityCode} onChange={handleChange} error={touched.communityCode && errors.communityCode}/>
-                  {touched.communityCode && errors.communityCode && (
-                    <div className="text-red-500 text-xs mt-1">{errors.communityCode}</div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <InputFields required label="Item Name" name="itemName" value={form.itemName} onChange={handleChange} error={touched.itemName && errors.itemName} />
-                  {touched.itemName && errors.itemName && (
-                    <div className="text-red-500 text-xs mt-1">{errors.itemName}</div>
-                  )}
-                </div>
+          <div className="bg-white rounded-2xl shadow p-6 mb-6">
+            <h2 className="text-lg font-medium mb-4">Basic Details</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="flex items-end gap-2 max-w-[406px]">
+                <InputFields
+                  required
+                  label="Item Code"
+                  name="itemCode"
+                  value={form.itemCode}
+                  onChange={handleChange}
+                  disabled={codeMode === 'auto'}
+                />
+                {!isEditMode && (
+                  <>
+                    <IconButton
+                      bgClass="white"
+                      className="mb-2 cursor-pointer text-[#252B37]"
+                      icon="mi:settings"
+                      onClick={() => setIsOpen(true)}
+                    />
+                    <SettingPopUp
+                      isOpen={isOpen}
+                      onClose={() => setIsOpen(false)}
+                      title="Item Code"
+                      prefix={prefix}
+                      setPrefix={setPrefix}
+                      onSave={(mode, code) => {
+                        setCodeMode(mode);
+                        if (mode === 'auto' && code) {
+                          setForm((prev) => ({ ...prev, itemCode: code }));
+                        } else if (mode === 'manual') {
+                          setForm((prev) => ({ ...prev, itemCode: '' }));
+                        }
+                      }}
+                    />
+                  </>
+                )}
               </div>
+
+              <InputFields required label="ERP Code" name="ErpCode" value={form.ErpCode} onChange={handleChange} />
+              <InputFields required label="Item Name" name="itemName" value={form.itemName} onChange={handleChange} />
+              <InputFields label="Item Description" name="itemDesc" value={form.itemDesc} onChange={handleChange} />
+              <InputFields label="Brand" name="brand" value={form.brand} onChange={handleChange} />
+              <InputFields label="Item Image" type="file" name="itemImage" value={form.itemImage} onChange={handleChange} />
+              <InputFields required label="Category" name="itemCategory" value={form.itemCategory} onChange={handleChange} options={itemCategoryOptions} />
+              <InputFields required label="Sub Category" name="itemSubCategory" value={form.itemSubCategory} onChange={handleChange} options={itemSubCategoryOptions} />
             </div>
           </div>
         );
+
       case 2:
         return (
-          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-            <div className="p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">Location Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex flex-col">
-                  <InputFields required label="Item Category" name="itemCategory" value={form.itemCategory} onChange={handleChange} error={touched.itemCategory && errors.itemCategory} options={itemCategoryOptions} />
-                  {touched.itemCategory && errors.itemCategory && (
-                    <div className="text-red-500 text-xs mt-1">{errors.itemCategory}</div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <InputFields required label="Item Sub Category" name="itemSubCategory" value={form.itemSubCategory} onChange={handleChange} error={touched.itemSubCategory && errors.itemSubCategory} options={itemSubCategoryOptions} />
-                  {touched.itemSubCategory && errors.itemSubCategory && (
-                    <div className="text-red-500 text-xs mt-1">{errors.itemSubCategory}</div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <InputFields required label="Item UOM" name="itemUom" value={form.itemUom} onChange={handleChange} error={touched.itemUom && errors.itemUom} options={[
-                    { value: "1", label: "BAG" },
-                    { value: "2", label: "PKT" },
-                    { value: "3", label: "BOX" },
-                    { value: "4", label: "POUCH" },
-                    { value: "5", label: "PCH" },
-                    { value: "6", label: "TIN" },
-                    { value: "7", label: "NUM" },
-                    { value: "8", label: "CTN" },
-                    { value: "9", label: "BOT" },
-                  ]} />
-                  {touched.itemUom && errors.itemUom && (
-                    <div className="text-red-500 text-xs mt-1">{errors.itemUom}</div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <InputFields required label="Item UPC" name="itemUpc" value={form.itemUpc} onChange={handleChange} error={touched.itemUpc && errors.itemUpc} />
-                  {touched.itemUpc && errors.itemUpc && (
-                    <div className="text-red-500 text-xs mt-1">{errors.itemUpc}</div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <InputFields required label="Vat" name="vat" value={form.vat} onChange={handleChange} error={touched.vat && errors.vat}/>
-                  {touched.vat && errors.vat && (
-                    <div className="text-red-500 text-xs mt-1">{errors.vat}</div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <InputFields required label="Excise" name="excise" value={form.excise} onChange={handleChange} error={touched.excise && errors.excise}/>
-                  {touched.excise && errors.excise && (
-                    <div className="text-red-500 text-xs mt-1">{errors.excise}</div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <InputFields  label="Shelf Life" name="shelfLife" value={form.shelfLife} onChange={handleChange} />
-                </div>
-              </div>
+          <div className="bg-white rounded-2xl shadow p-6">
+            <h2 className="text-lg font-medium mb-4">Additional Information</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              <InputFields label="Item Weight" name="itemWeight" value={form.itemWeight} onChange={handleChange} />
+              <InputFields label="Shelf Life" name="shelfLife" value={form.shelfLife} onChange={handleChange} />
+              <InputFields label="Volume" name="volume" value={form.volume} onChange={handleChange} />
+              <InputFields type="radio" label="Is Promotional" name="is_Promotional" value={form.is_Promotional} onChange={handleChange}
+                options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} />
+              <InputFields type="radio" label="Tax Applicable" name="is_tax_applicable" value={form.is_tax_applicable} onChange={handleChange}
+                options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} />
+              <InputFields label="Excise" name="excise" value={form.excise} onChange={handleChange} />
+              <InputFields required type="radio" label="Status" name="status" value={form.status} onChange={handleChange}
+                options={[{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }]} />
             </div>
           </div>
         );
-      case 3:
-        return (
-          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 ">
-            <div className="p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <InputFields label="Item Description" name="itemDesc" value={form.itemDesc} onChange={handleChange} />
-                </div>
-                <div className="flex flex-col">
-                  <InputFields required type="radio" label="Status" name="status" value={form.status} onChange={handleChange} error={touched.status && errors.status} options={[
-                    { value: "active", label: "Active" },
-                    { value: "inactive", label: "In Active" },
-                  ]} />
-                  {touched.status && errors.status && (
-                    <div className="text-red-500 text-xs mt-1">{errors.status}</div>
-                  )}
-                </div>
-              </div>
+        case 3: 
+        return(
+          <div className="bg-white rounded-2xl shadow p-6">
+            <h2 className="text-lg font-medium mb-4">UOM & Pricing</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              <InputFields required label="UOM" name="uom" value={form.uom} onChange={handleChange} />
+              <InputFields required label="UOM Type" name="uomType" value={form.uomType} onChange={handleChange} />
+              <InputFields label="UPC" name="upc" value={form.upc} onChange={handleChange} />
+              <InputFields label="Price" name="price" value={form.price} onChange={handleChange} />
+              <InputFields required type="radio" label="Is Stock Keeping Unit" name="is_stock_keeping_unit" value={form.is_stock_keeping_unit} onChange={handleChange}
+                options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} />
+              <InputFields required type="radio" label="Enable For" name="enable_for" value={form.enable_for} onChange={handleChange}
+                options={[{ value: "sales", label: "Sales" }, { value: "return", label: "Return" }]} />
             </div>
           </div>
         );
+
       default:
         return null;
     }
   };
 
-  if (isEditMode && loading) {
+  if (isEditMode && loading)
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="flex justify-center items-center h-full">
         <Loading />
       </div>
     );
-  }
 
   return (
     <>
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/master/item">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
-          <h1 className="text-xl font-semibold text-gray-900">{isEditMode ? "Edit Item" : "Add New Item"}</h1>
+          <h1 className="text-xl font-semibold text-gray-900">{isEditMode ? "Edit Item" : "Add Item"}</h1>
         </div>
       </div>
+
       <StepperForm
-        steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
+        steps={steps.map((s) => ({ ...s, isCompleted: isStepCompleted(s.id) }))}
         currentStep={currentStep}
-        onStepClick={() => {}}
         onBack={prevStep}
         onNext={handleNext}
         onSubmit={handleSubmit}
-        showSubmitButton={isLastStep}
         showNextButton={!isLastStep}
-        nextButtonText="Save & Next"
+        showSubmitButton={isLastStep}
+        nextButtonText="Next"
         submitButtonText={isEditMode ? "Update" : "Submit"}
       >
         {renderStepContent()}

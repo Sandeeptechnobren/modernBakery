@@ -69,7 +69,7 @@ export default function FilterDropdown({
   return (
     <div
       ref={wrapperRef}
-      className={`min-w-[200px] w-fit max-h-[300px] h-fit z-50 overflow-auto -translate-x-[100px]`}
+      className={`min-w-[200px] w-fit max-h-[300px] h-fit z-50 overflow-auto -translate-x-[100px] scrollbar-none`}
       style={{
         ...style,
         width: dimensions?.width,

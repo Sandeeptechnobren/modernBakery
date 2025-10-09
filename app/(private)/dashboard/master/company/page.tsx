@@ -213,12 +213,7 @@ const columns = [
         label: "Status",
         render: (row: TableDataType) => (
             <StatusBtn isActive={row.status === "1" ? true : false} />
-        ), filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.status}</div>);
-        }
-    } },
+        )},
 ];
 
 const CompanyPage = () => {
@@ -320,7 +315,7 @@ const CompanyPage = () => {
                         },
                         localStorageKey: "company-table",
                         table: {
-                            height: 200,
+                            height: 500,
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
