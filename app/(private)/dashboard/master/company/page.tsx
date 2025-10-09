@@ -4,8 +4,6 @@ import { useState, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 
-import BorderIconButton from "@/app/components/borderIconButton";
-import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
     listReturnType,
     TableDataType,
@@ -15,10 +13,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
     companyList,
     companyListGlobalSearch,
-    deleteCompany,
 } from "@/app/services/allApi";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import StatusBtn from "@/app/components/statusBtn2";
@@ -67,18 +62,48 @@ const dropdownDataList = [
 
 // 🔹 Table columns
 const columns = [
-    { key: "company_code", label: "Company Code" },
-    { key: "company_name", label: "Company Name" },
+    { key: "company_code", label: "Company Code", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.company_code}</div>);
+        }
+    } },
+    { key: "company_name", label: "Company Name", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.company_name}</div>);
+        }
+    } },
     { key: "company_type", label: "Company Type", filter: {
         isFilterable: true,
         render: (data: TableDataType[]) => {
             return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.company_type}</div>);
         }
     } },
-    { key: "email", label: "Email" },
-    { key: "website", label: "Website" },
-    { key: "toll_free_no", label: "Toll Free No" },
-    { key: "primary_contact", label: "Primary Contact" },
+    { key: "email", label: "Email", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.email}</div>);
+        }
+    } },
+    { key: "website", label: "Website", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.website}</div>);
+        }
+    } },
+    { key: "toll_free_no", label: "Toll Free No", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.toll_free_no}</div>);
+        }
+    } },
+    { key: "primary_contact", label: "Primary Contact", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.primary_contact}</div>);
+        }
+    } },
     {
         key: 'region_name',
         label: 'Region',
@@ -87,8 +112,12 @@ const columns = [
                     ? JSON.parse(data.region)
                     : data.region;
                 return warehouseObj?.region_name || "-";
-            },
-    },
+            }, filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.region_name}</div>);
+        }
+    } },
     {
         key: 'subregion_name',
         label: 'Sub Region',
@@ -97,12 +126,36 @@ const columns = [
                     ? JSON.parse(row.sub_region)
                     : row.sub_region;
                 return warehouseObj?.subregion_name || "-";
-            } ,
-    },
-    { key: "street", label: "Street" },
-    { key: "landmark", label: "Landmark" },
-    { key: "town", label: "Town" },
-    { key: "district", label: "District" },
+            }, filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.subregion_name}</div>);
+        }
+    } },
+    { key: "street", label: "Street", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.street}</div>);
+        }
+    } },
+    { key: "landmark", label: "Landmark", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.landmark}</div>);
+        }
+    } },
+    { key: "town", label: "Town", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.town}</div>);
+        }
+    } },
+    { key: "district", label: "District", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.district}</div>);
+        }
+    } },
     {
         key: 'country_name',
         label: 'Country',
@@ -119,28 +172,57 @@ const columns = [
             return row.country_name || "-";
         }
         return "-";
-        },
-    },
-    { key: "tin_number", label: "TIN Number" },
-    { key: "purchase_currency", label: "Purchase Currency" },
-    { key: "selling_currency", label: "Selling Currency" },
-    { key: "vat", label: "VAT" },
-    { key: "module_access", label: "Module Access" },
-    { key: "service_type", label: "Service Type" },
+        }, filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.country_name}</div>);
+        }
+    } },
+    { key: "purchase_currency", label: "Purchase Currency", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.purchase_currency}</div>);
+        }
+    } },
+    { key: "selling_currency", label: "Selling Currency", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.selling_currency}</div>);
+        }
+    } },
+    { key: "vat", label: "VAT", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.vat}</div>);
+        }
+    } },
+    { key: "module_access", label: "Module Access", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.module_access}</div>);
+        }
+    } },
+    { key: "service_type", label: "Service Type", filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.service_type}</div>);
+        }
+    } },
     {
         key: "status",
         label: "Status",
         render: (row: TableDataType) => (
             <StatusBtn isActive={row.status === "1" ? true : false} />
-        ),
-    },
+        ), filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.status}</div>);
+        }
+    } },
 ];
 
 const CompanyPage = () => {
     const { setLoading } = useLoading();
-    const [showDropdown, setShowDropdown] = useState(false);
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<Company | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
     const { showSnackbar } = useSnackbar();
@@ -208,21 +290,6 @@ const CompanyPage = () => {
             [setLoading]
         );
 
-    // ✅ Handle Delete
-    const handleConfirmDelete = async () => {
-        if (!selectedRow?.id) return;
-
-        const res = await deleteCompany(String(selectedRow.id));
-        if (res.error) {
-            showSnackbar(res.message || "Failed to delete company ❌", "error");
-        } else {
-            showSnackbar("Company deleted successfully ✅", "success");
-            setRefreshKey((prev) => prev + 1);
-            // fetchCompanies();
-        }
-        setShowDeletePopup(false);
-        setSelectedRow(null);
-    };
 
     return (
         <>
@@ -246,7 +313,7 @@ const CompanyPage = () => {
                                     href="/dashboard/master/company/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Company"
+                                    label="Add"
                                     labelTw="hidden sm:block"
                                 />,
                             ],
@@ -271,30 +338,12 @@ const CompanyPage = () => {
                                     );
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (row: object) => {
-                                    const r = row as TableDataType;
-                                    setSelectedRow({ id: r.id });
-                                    setShowDeletePopup(true);
-                                },
-                            },
+                            
                         ],
-                        pageSize: 5,
+                        pageSize: 50,
                     }}
                 />
             </div>
-
-            {/* Delete Popup */}
-            {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Delete Company"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )}
         </>
     );
 };
