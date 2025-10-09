@@ -316,7 +316,6 @@ const CompanyPage = () => {
                         localStorageKey: "company-table",
                         table: {
                             height: 500,
-                            height: 500,
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
@@ -341,7 +340,7 @@ const CompanyPage = () => {
                             
                         ],
                         pageSize: 50,
-                        pageSize: 50,
+                        
                     }}
                 />
             </div>
