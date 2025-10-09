@@ -340,8 +340,9 @@ export default function Warehouse() {
             rowActions: [
                 {
                 icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(`/dashboard/master/warehouse/details/${data.id}`);
+                onClick: (data: object) => {
+                  const row = data as TableRow;
+                  router.push(`/dashboard/master/warehouse/details/${row.id}`);
                 },
               },
 
@@ -353,18 +354,18 @@ export default function Warehouse() {
                 },
               },
               // { icon: "lucide:edit-2", onClick: console.log },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  if (row.id) {
-                    setSelectedRow({ id: String(row.id) });
-                  }
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: object) => {
+              //     const row = data as TableRow;
+              //     if (row.id) {
+              //       setSelectedRow({ id: String(row.id) });
+              //     }
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
-            pageSize: 5,
+            pageSize: 10,
           }}
         />
       </div>

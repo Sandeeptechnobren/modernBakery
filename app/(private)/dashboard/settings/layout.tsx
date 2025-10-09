@@ -1,24 +1,13 @@
 "use client";
 
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { SettingsContext, SettingsContextValue } from "../contexts";
-import { useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { initialLinkData } from "../../data/settingLinks";
 import { LinkDataType, SidebarDataType } from "../../data/settingLinks";
 import { Icon } from "@iconify-icon/react";
 
 export default function Settings({ children }: { children: React.ReactNode }) {
-    const context = useContext<SettingsContextValue | undefined>(
-        SettingsContext
-    );
-
-    if (!context) {
-        throw new Error(
-            "Settings must be used within a SettingsContext.Provider"
-        );
-    }
-
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
     const [activeHref, setActiveHref] = useState<string>("");
     const [showMainScreen, setShowMainScreen] = useState<boolean>(false);

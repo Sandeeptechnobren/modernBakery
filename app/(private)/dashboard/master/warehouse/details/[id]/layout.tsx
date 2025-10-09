@@ -54,7 +54,11 @@ interface Item {
 const title = "Warehouse Details";
 const backBtnUrl = "/dashboard/master/warehouse";
 
-export default function ViewPage() {
+export default function ViewPage({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     const params = useParams();
     let id: string = "";
     if (params.id) {
@@ -126,9 +130,9 @@ export default function ViewPage() {
                             <StatusBtn isActive={item?.status === 1 || item?.status === '1'} />
                         </span>
                     </ContainerCard>
-                     <div className="mb-4">
-                {/* <WarehouseTabs /> */}
-            </div>
+                     {/* <div className="mb-4">
+                <WarehouseTabs />
+            </div> */}
                     <div className="flex flex-col gap-6 w-full md:flex-row md:gap-6">
                         <div className="flex-1 w-full">
                             <ContainerCard className="w-full h-full">
@@ -234,8 +238,7 @@ export default function ViewPage() {
                     </div>
                 </div>
             </div>
+            {/* {children} */}
         </>
     );
 }
-
-

@@ -27,7 +27,11 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "salesman_type_code", label: "Salesman Code" },
+    { key: "salesman_type_code", label: "Salesman Code",render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.salesman_type_code}
+            </span>
+        ), },
     { key: "salesman_type_name", label: "Salesman Name" },
     // { key: "salesman_type_status", label: "Status" },
 {
@@ -232,19 +236,19 @@ export default function SalesmanTypeList() {
                   );
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  setSelectedRow({
-                    id: String(row.id),
-                    salesman_type_code: row.salesman_type_code ?? "",
-                    salesman_type_name: row.salesman_type_name ?? "",
-                    salesman_type_status: row.salesman_type_status ?? "",
-                  });
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: object) => {
+              //     const row = data as TableRow;
+              //     setSelectedRow({
+              //       id: String(row.id),
+              //       salesman_type_code: row.salesman_type_code ?? "",
+              //       salesman_type_name: row.salesman_type_name ?? "",
+              //       salesman_type_status: row.salesman_type_status ?? "",
+              //     });
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
             pageSize: 10,
           }}

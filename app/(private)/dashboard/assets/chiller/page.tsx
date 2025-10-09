@@ -149,8 +149,20 @@ export default function ShelfDisplay() {
             localStorageKey: "chiller",
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "serial_number", label: "Serial Number" },
-              { key: "sap_code", label: "SAP Code" },
+              { key: "serial_number", label: "Serial Number",
+                render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.serial_number}
+            </span>
+        ),
+               },
+              { key: "sap_code", label: "SAP Code" ,
+                render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.sap_code}
+            </span>
+        ),
+              },
               { key: "asset_number", label: "Asset Number" },
               { key: "model_number", label: "Model Number" },
               { key: "description", label: "Description" },

@@ -48,7 +48,13 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "area_code", label: "SubRegion Code" },
+  { key: "area_code", label: "Sub Region Code" ,
+    render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.area_code}
+            </span>
+        ),
+  },
   { key: "area_name", label: "SubRegion Name" },
   // { key: "region_name", label: "Region" },
   {

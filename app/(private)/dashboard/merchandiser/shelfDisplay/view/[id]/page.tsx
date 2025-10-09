@@ -1,7 +1,6 @@
 "use client";
 
 import KeyValueData from "@/app/(private)/dashboard/master/customer/[customerId]/keyValueData";
-import KeyValue from "@/app/(private)/dashboard/promotion/add/keyValue";
 import { formatDate } from "@/app/(private)/utils/date";
 import ContainerCard from "@/app/components/containerCard";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";

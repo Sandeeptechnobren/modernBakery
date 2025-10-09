@@ -6,33 +6,15 @@ import Sidebar from "./sidebar0";
 import TopBar from "./topBar";
 import { initialLinkData } from "../data/dashboardLinks";
 import LinkDataReducer from "../utils/linkDataReducer";
-import { SettingsContext } from "./contexts";
 import { AllDropdownListDataProvider } from "@/app/components/contexts/allDropdownListData";
 import { LoadingProvider } from "@/app/services/loadingContext";
 const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
-    const context = useContext(SettingsContext);
 
-    if (!context) {
-        throw new Error("useThemeToggle must be used within SettingsContext.Provider");
-    }
-
-    const { settings, dispatchSettings } = context;
-    const horizontalSidebar = settings.layout.dashboard.horizontalSidebar;
-    const [isOpen, setIsOpen] = useState(false);
-
+    const [horizontalSidebar, setHorizontalSidebar] = useState(false);
     const toggleSidebar = () => {
-        localStorage?.setItem(
-            "horizontalSidebar",
-            (!horizontalSidebar).toString()
-        );
-        dispatchSettings({ type: "toggleHorizontalSidebar", payload: { } });
+        setHorizontalSidebar(!horizontalSidebar);
     };
-
-    useEffect(() => {
-        if(localStorage?.getItem("horizontalSidebar") === "true" && !horizontalSidebar){
-            dispatchSettings({ type: "toggleHorizontalSidebar", payload: { } });
-        }
-    }, []);
+    const [isOpen, setIsOpen] = useState(false);
 
     // Use useReducer to manage the sidebar data
     const [sidebarData, dispatch] = useReducer(LinkDataReducer, initialLinkData);

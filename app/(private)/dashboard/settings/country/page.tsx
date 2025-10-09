@@ -37,7 +37,13 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "country_code", label: "Country Code" },
+    { key: "country_code", label: "Country Code" ,
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.country_code}
+            </span>
+        ),
+    },
     { key: "country_name", label: "Country Name" },
     { key: "currency", label: "Currency" },
     {
@@ -226,14 +232,14 @@ export default function Country() {
 
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    setSelectedRow({ id: row.id });
-                                    setShowDeletePopup(true);
-                                },
-                            },
+                            // {
+                            //     icon: "lucide:trash-2",
+                            //     onClick: (data: object) => {
+                            //         const row = data as TableRow;
+                            //         setSelectedRow({ id: row.id });
+                            //         setShowDeletePopup(true);
+                            //     },
+                            // },
                         ],
                         pageSize: 10,
                     }}

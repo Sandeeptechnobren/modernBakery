@@ -28,7 +28,13 @@ const dropdownDataList = [
 ];
 
 const columns = [
-  { key: "outlet_channel_code", label: "Channel Code" },
+  { key: "outlet_channel_code", label: "Channel Code",
+    render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.outlet_channel_code}
+            </span>
+        ),
+   },
   { key: "outlet_channel", label: "Outlet Channel Name" },
   {
         key: "status",

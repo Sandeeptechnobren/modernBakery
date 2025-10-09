@@ -29,10 +29,9 @@ export default function DashboardLayout1({
 
             <div className="w-full p-[20px] pb-[22px] h-screen bg-gray-200 text-black overflow-auto">
                 <AllDropdownListDataProvider>
-                                <LoadingProvider >
-                
-                {children}
-                                </LoadingProvider >
+                    <LoadingProvider >
+                        {children}
+                    </LoadingProvider >
                 </AllDropdownListDataProvider>
                 
             </div>

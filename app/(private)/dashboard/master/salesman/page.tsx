@@ -43,7 +43,13 @@ const dropdownDataList = [
 
 // 🔹 Table columns
 const columns = [
-  { key: "osa_code", label: "Salesman Code" },
+  { key: "osa_code", label: "Salesman Code",
+    render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.osa_code}
+            </span>
+        ),
+   },
   { key: "sap_id", label: "SAP Code" },
   { key: "name", label: "Salesman Name" },
  {

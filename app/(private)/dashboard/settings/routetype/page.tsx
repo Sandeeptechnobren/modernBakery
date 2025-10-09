@@ -30,7 +30,13 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "route_type_code", label: "Route Type Code" },
+  { key: "route_type_code", label: "Route Type Code" ,
+    render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.route_type_code}
+            </span>
+        ),
+  },
   { key: "route_type_name", label: "Route Type Name" },
   {
     key: "status",
@@ -232,15 +238,15 @@ const tableData: TableDataType[] = routeType.map((s) => ({
                   router.push(`/dashboard/settings/routetype/${row.id}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  if (deletingId === String(row.id)) return;
-                  setSelectedRow({ id: String(row.id) });
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: object) => {
+              //     const row = data as TableRow;
+              //     if (deletingId === String(row.id)) return;
+              //     setSelectedRow({ id: String(row.id) });
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
             pageSize: 10,
           }}

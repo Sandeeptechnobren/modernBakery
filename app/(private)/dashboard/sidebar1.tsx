@@ -6,6 +6,7 @@ import Link from "next/link";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { logout } from "@/app/services/allApi";
 import SidebarBtn1 from "@/app/components/iconButton1";
 
@@ -20,12 +21,18 @@ export default function Sidebar({
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [currentPageForSecondSidebar, setCurrentPageForSecondSidebar] = useState("");
     const router = useRouter();
+    const pathname = usePathname();
     const [secondSidebarChildren, setSecondSidebarChildren] = useState([] as LinkDataType[]);
     const [activeHref, setActiveHref] = useState<string>("");
-    console.log("activeHref", activeHref);
     useEffect(() => {
-        setActiveHref(window.location.pathname);
-    }, []);
+        // keep local activeHref in sync with router pathname
+        setActiveHref(pathname ?? window.location.pathname);
+    }, [pathname]);
+
+    const isParentActive = (children: LinkDataType[] | undefined): boolean => {
+    if (!children) return false;
+    return Boolean(children.some((child) => child.href === activeHref));
+    };
 
 
     return (
@@ -55,25 +62,21 @@ export default function Sidebar({
                     {/* icons */}
 
                     <div className="flex flex-col items-center gap-[8px] w-full">
-                        {data.map((group) =>
-                            group.data.map((link, index) => (
+                    {data.map((group, groupIndex) =>
+                        group.data.map((link, index) => {
+                            const isActive = isParentActive(link.children);
+                            return (
                                 <Link
                                     className="w-full relative cursor-pointer group"
-                                    key={index}
+                                    key={`${groupIndex}-${index}`}
                                     href={link.href}
                                     onClick={() => {
                                         onClickHandler(link.href);
-                                        if (
-                                            link.children &&
-                                            link.children.length > 0
-                                        ) {
+                                        setActiveHref(link.href);
+                                        if (link.children && link.children.length > 0) {
                                             setIsOpen(true);
-                                            setCurrentPageForSecondSidebar(
-                                                link.href
-                                            );
-                                            setSecondSidebarChildren(
-                                                link.children
-                                            )
+                                            setCurrentPageForSecondSidebar(link.href);
+                                            setSecondSidebarChildren(link.children);
                                         } else {
                                             setIsOpen(false);
                                             setCurrentPageForSecondSidebar("");
@@ -82,23 +85,15 @@ export default function Sidebar({
                                 >
                                     <div
                                         className={`w-full h-[40px] p-[6px] flex justify-center items-center relative rounded-l-[8px] ${
-                                            link.isActive ? "bg-[#223458]" : ""
+                                            isActive ? "bg-[#223458]" : ""
                                         }`}
                                     >
                                         <Icon
                                             icon={link.leadingIcon}
                                             width={20}
-                                            className={`z-10 ${
-                                                link.iconColor || "text-white"
-                                            }`}
+                                            className={`z-10 ${link.iconColor || "text-white"}`}
                                         />
-                                        <div
-                                            className={`z-10 ${
-                                                link.isActive
-                                                    ? "block"
-                                                    : "hidden"
-                                            }`}
-                                        >
+                                        <div className={`z-10 ${isActive ? "block" : "hidden"}`}>
                                             <div className="absolute -top-[8px] right-0 w-[8px] h-[8px] bg-[#223458]">
                                                 <div className="w-full h-full bg-[#121D33] rounded-br-[8px]"></div>
                                             </div>
@@ -107,17 +102,15 @@ export default function Sidebar({
                                             </div>
                                         </div>
                                         <div
-                                            className={`${
-                                                !link.isActive &&
-                                                "group-hover:flex"
-                                            } hidden absolute z-20 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                                            className={`${!isActive ? "group-hover:flex" : ""} hidden absolute z-20 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
                                         >
                                             {link.label}
                                         </div>
                                     </div>
                                 </Link>
-                            ))
-                        )}
+                            );
+                        })
+                    )}
                     </div>
                 </div>
 

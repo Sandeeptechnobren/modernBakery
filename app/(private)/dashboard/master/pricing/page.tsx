@@ -95,7 +95,7 @@ export default function Pricing() {
               setLoading(true);
                 const listRes = await pricingHeaderList({
                     // limit: pageSize.toString(),
-                    // page: page.toString(),
+                    page: page.toString(),
                 });
                 setLoading(false);
                 return {
@@ -238,14 +238,7 @@ export default function Pricing() {
 
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    setSelectedRow({ uuid: row.uuid });
-                                    setShowDeletePopup(true);
-                                },
-                            },
+                            
                         ],
                         pageSize: 10,
                     }}

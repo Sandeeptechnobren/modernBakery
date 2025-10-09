@@ -496,7 +496,7 @@ function TableBody() {
 
     return (
         <>
-            <div className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent" style={{ height: config.table?.height, maxHeight: config.table?.maxHeight, width: config.table?.width, maxWidth: config.table?.maxWidth }}>
+            <div className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent" style={displayedData.length > 0 ? { height: config.table?.height, maxHeight: config.table?.maxHeight, width: config.table?.width, maxWidth: config.table?.maxWidth } : undefined}>
                 <table className="table-auto min-w-max w-full">
                     <thead className="text-[12px] bg-[#FAFAFA] text-[#535862] sticky top-0 z-20">
                         <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">

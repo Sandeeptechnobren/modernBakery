@@ -1,10 +1,10 @@
 "use client";
 
-import { useThemeToggle } from "@/app/(private)/utils/useThemeToggle";
 import Toggle from "@/app/components/toggle";
+import { useTheme } from "../../contexts";
 
 export default function UserRole() {
-    const { theme, toggle } = useThemeToggle();
+    const { theme, setTheme, toggleTheme } = useTheme();
 
     return (
         <>
@@ -13,7 +13,7 @@ export default function UserRole() {
                 <div className="mt-3">
                     <Toggle
                         isChecked={theme === "layoutTheme2"}
-                        onChange={toggle}
+                        onChange={toggleTheme}
                         label="Dark Mode"
                     />
                 </div>
