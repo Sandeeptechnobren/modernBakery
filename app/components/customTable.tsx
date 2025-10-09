@@ -263,7 +263,7 @@ function TableHeader() {
                         </div>
 
                         {/* actions */}
-                        <div className="flex justify-right w-fit gap-[8px]">
+                        <div className="flex justify-right  w-fit gap-[8px]">
                             {config.header?.actions?.map((action) => action)}
 
                             {config.header?.columnFilter && <ColumnFilter />}
@@ -491,7 +491,20 @@ function TableBody() {
 
                             {/* actions */}
                             {rowActions && selectedColumns.length > 0 && (
-                                <th className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]">
+                                <th  className="
+      sm:sticky right-0 z-[10]
+      px-[24px] py-[12px] font-[500] text-left
+    border-[#E9EAEB]
+      bg-[#FAFAFA] whitespace-nowrap
+      before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]
+    "
+    style={{
+      position: "sticky",
+      right: 0,
+      zIndex: 50,
+    }}
+                                //  className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]"
+                                 >
                                     <div className="flex items-center gap-[4px] whitespace-nowrap">
                                         Actions
                                     </div>
@@ -552,33 +565,43 @@ function TableBody() {
                                         }
                                     )}
 
-                                    {rowActions &&
-                                        selectedColumns.length > 0 && (
-                                            <td className="sm:sticky right-0 z-10 px-[24px] py-[12px] border-l-[1px] border-[#E9EAEB] bg-white whitespace-nowrap">
-                                                <div className="flex items-center gap-[4px]">
-                                                    {rowActions.map(
-                                                        (action, index) => {
-                                                            return (
-                                                                <Icon
-                                                                    key={index}
-                                                                    icon={
-                                                                        action.icon
-                                                                    }
-                                                                    width={20}
-                                                                    className="p-[10px] cursor-pointer"
-                                                                    onClick={() =>
-                                                                        action.onClick &&
-                                                                        action.onClick(
-                                                                            row
-                                                                        )
-                                                                    }
-                                                                />
-                                                            );
-                                                        }
-                                                    )}
-                                                </div>
-                                            </td>
-                                        )}
+                                    
+{rowActions && selectedColumns.length > 0 && (
+  <td
+    className="
+      sm:sticky right-0 z-[50]
+      px-[2px] py-[12px]
+    border-[#E9EAEB]
+      bg-white whitespace-nowrap
+      before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]
+    "
+    style={{
+      position: "sticky",
+      right: 0,
+      background: "white",
+      zIndex: 50,
+    }}
+  >
+    <div className="flex items-center gap-[4px]">
+      {rowActions.map((action, index) => (
+        <Icon
+          key={index}
+          icon={action.icon}
+          width={20}
+          className="
+            p-[10px] cursor-pointer
+            text-[#5E5E5E]
+            transition-all duration-200 ease-in-out
+            hover:text-[#EA0A2A]
+            hover:scale-110
+          "
+          onClick={() => action.onClick && action.onClick(row)}
+        />
+      ))}
+    </div>
+  </td>
+)}
+
                                 </tr>
                             ))}
                     </tbody>

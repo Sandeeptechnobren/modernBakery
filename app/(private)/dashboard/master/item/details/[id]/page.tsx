@@ -89,7 +89,7 @@ export default function ViewPage() {
                     height={400}
                     className="w-full h-[180px] object-cover rounded-md border border-[#E4E4E4] bg-[#E9EAEB]"
                 />
-                <span className="text-[#181D27] text-[20px] font-semibold">{item?.name}</span>
+                <span className="text-[#181D27] text-[20px] font-semibold">{item?.code} - {item?.name}</span>
                  <div className="flex justify-center">
                             <StatusBtn isActive={!!item?.status} />
                           </div>
@@ -122,7 +122,6 @@ export default function ViewPage() {
                                                     <KeyValueData
                                                         title="Product Information"
                                                         data={[
-                                                            { key: "Product ID", value: item?.code || "-" },
                                                             { key: "SAP Code", value: item?.sap_id || "-" },
                                                             { key: "Product Category", value: item?.category?.name || "-" },
                                                             {

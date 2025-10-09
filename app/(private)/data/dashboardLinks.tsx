@@ -1,7 +1,7 @@
 import { IconifyIcon } from "@iconify-icon/react/dist/iconify.mjs";
 
 export type SidebarDataType = {
-    name: string;
+    name?: string;
     data: LinkDataType[];
 };
 
@@ -16,27 +16,26 @@ export type LinkDataType = {
 };
 
 export const initialLinkData: SidebarDataType[] = [
+    // {
+    //     name: "Main Menu",
+    //     data: [
+    //         {
+    //             isActive: true,
+    //             href: "/dashboard",
+    //             label: "Dashboard",
+    //             leadingIcon: "hugeicons:home-01",
+    //             iconColor: "text-blue-500"
+    //         },
+    //         {
+    //             isActive: false,
+    //             href: "/dashboard/promotion",
+    //             label: "Promotion",
+    //             leadingIcon: "hugeicons:promotion",
+    //             iconColor: "text-red-500"
+    //         },
+    //     ],
+    // },
     {
-        name: "Main Menu",
-        data: [
-            {
-                isActive: true,
-                href: "/dashboard",
-                label: "Dashboard",
-                leadingIcon: "hugeicons:home-01",
-                iconColor: "text-blue-500"
-            },
-            {
-                isActive: false,
-                href: "/dashboard/promotion",
-                label: "Promotion",
-                leadingIcon: "hugeicons:promotion",
-                iconColor: "text-red-500"
-            },
-        ],
-    },
-    {
-        name: "CRM",
         data: [
             {
                 isActive: false,
@@ -46,71 +45,28 @@ export const initialLinkData: SidebarDataType[] = [
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [ 
-                    {
-                        isActive: false,
-                        href: "/dashboard/master/company",
-                        label: "Company",
-                        leadingIcon: "lucide:user",
-                        iconColor: "text-green-500"
-                    },
-                   
-                    // {
-                    //     isActive: false,
-                    //     href: "/dashboard/master/customer",
-                    //     label: "Customer",
-                    //     leadingIcon: "lucide:user",
-                    //     iconColor: "text-green-500"
-                    // },
-                    {
-                isActive: false,
-                href: "/dashboard/master/salesman",
-                label: "Salesman",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
-            {
-                isActive: false,
-                href: "/dashboard/master/discount",
-                label: "Discount",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
-            // {
-            //     isActive: false,
-            //     href: "/dashboard/master/item",
-            //     label: "Items",
-            //     leadingIcon: "mdi:package-variant",
-            //     iconColor: "text-cyan-500"
-            // },
-                    {
-                        isActive: false,
-                        href: "/dashboard/master/route",
-                        label: "Route",
-                        leadingIcon: "mdi:map",
-                        iconColor: "text-yellow-400"
-                    },
-                            {
-                        isActive: false,
-                        href: "/dashboard/master/pricing",
-                        label: "Pricing",
-                        leadingIcon: "mdi:currency-usd",
-                        iconColor: "text-yellow-400"
-                    },
-                    {
-                        isActive: false,
-                        href: "/dashboard/master/vehicle",
-                        label: "Vehicle",
-                        leadingIcon: "mdi:car",
-                        iconColor: "text-yellow-400"
-                    },
-                    {
+                      {
                         isActive: false,
                         href: "/dashboard/master/warehouse",
                         label: "Warehouse",
                         leadingIcon: "tabler:building-warehouse",
                         iconColor: "text-violet-500"
                     },
-                    {
+                     {
+                        isActive: false,
+                        href: "/dashboard/master/vehicle",
+                        label: "Vehicle",
+                        leadingIcon: "mdi:car",
+                        iconColor: "text-yellow-400"
+                    },
+                     {
+                        isActive: false,
+                        href: "/dashboard/master/route",
+                        label: "Route",
+                        leadingIcon: "mdi:map",
+                        iconColor: "text-yellow-400"
+                    },
+                   {
                         isActive: false,
                         href: "/dashboard/master/agentCustomer",
                         label: "Agent Customer",
@@ -119,11 +75,104 @@ export const initialLinkData: SidebarDataType[] = [
                     },
                     {
                         isActive: false,
+                        href: "/dashboard/master/companyCustomer",
+                        label: "Company Customer",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500",
+                    },
+                //    {
+                //         isActive: false,
+                //         href: "/dashboard/master/companyCustomer",
+                //         label: "Hariss Customer",
+                //         leadingIcon: "mdi:package-variant",
+                //         iconColor: "text-cyan-500"
+                //     },
+                     {
+                isActive: false,
+                href: "/dashboard/master/salesman",
+                label: "Salesman",
+                leadingIcon: "mdi:package-variant",
+                iconColor: "text-cyan-500"
+            },
+             {
+                        isActive: false,
                         href: "/dashboard/master/item",
-                        label: "Items",
+                        label: "Products",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500"
                     },
+                    {
+                        isActive: false,
+                        href: "/dashboard/master/company",
+                        label: "Company",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500"
+                    },
+                   
+                    {
+                        isActive: false,
+                        href: "/dashboard/master/customer",
+                        label: "Customer",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500"
+                    },
+                   
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/master/discount",
+            //     label: "Discount",
+            //     leadingIcon: "mdi:package-variant",
+            //     iconColor: "text-cyan-500"
+            // },
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/master/item",
+            //     label: "Items",
+            //     leadingIcon: "mdi:package-variant",
+            //     iconColor: "text-cyan-500"
+            // },
+                   
+                    //         {
+                    //     isActive: false,
+                    //     href: "/dashboard/master/pricing",
+                    //     label: "Pricing",
+                    //     leadingIcon: "mdi:currency-usd",
+                    //     iconColor: "text-yellow-400"
+                    // },
+                   
+                   
+                   
+                ],
+            },
+            {
+                isActive: false,
+                href: "#",
+                label: "Pricing & Promotion",
+                leadingIcon: "mdi:currency-usd",
+                trailingIcon: "mdi-light:chevron-right",
+                iconColor: "text-yellow-400",
+                children: [ 
+                       {
+                        isActive: false,
+                        href: "/dashboard/master/pricing",
+                        label: "Pricing",
+                        leadingIcon: "mdi:currency-usd",
+                        iconColor: "text-yellow-400"
+                    },
+                   
+            {
+                isActive: false,
+                href: "/dashboard/master/discount",
+                label: "Discount",
+                leadingIcon: "mdi:package-variant",
+                iconColor: "text-cyan-500"
+            },
+            
+                   
+                          
+                   
+                   
+                   
                 ],
             },
             {

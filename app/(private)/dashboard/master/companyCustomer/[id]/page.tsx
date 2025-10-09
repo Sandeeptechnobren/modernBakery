@@ -516,7 +516,7 @@ export default function AddCompanyCustomer() {
           }
         }
 
-        router.push("/dashboard/settings/company/companyCustomer");
+        router.push("/dashboard/master/companyCustomer");
       }
     } catch (error) {
       console.error("❌ Form submission error:", error);
@@ -1225,7 +1225,7 @@ export default function AddCompanyCustomer() {
     <>
       <div className="flex align-middle items-center gap-3 text-gray-600 mb-6">
         <Link
-          href="/dashboard/settings/company/companyCustomer"
+          href="/dashboard/master/companyCustomer"
           className="hover:underline"
         >
           <Icon icon="mdi:arrow-left" className="text-xl" />

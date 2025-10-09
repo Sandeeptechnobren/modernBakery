@@ -254,12 +254,12 @@ export default function Route() {
                         columns: columns,
                         rowSelection: true,
                         rowActions: [
-                            {
-                                icon: "lucide:eye",
-                                onClick: (data: TableDataType) => {
-                                    router.push(`/dashboard/master/route/details/${data.id}`);
-                                },
-                            },
+                            // {
+                            //     icon: "lucide:eye",
+                            //     onClick: (data: TableDataType) => {
+                            //         router.push(`/dashboard/master/route/details/${data.id}`);
+                            //     },
+                            // },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {

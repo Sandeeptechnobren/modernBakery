@@ -199,7 +199,6 @@ export default function ViewPage() {
                                         { key: "Street", value: item?.street || "-" },
                                         { key: "Landmark", value: item?.landmark || "-" },
                                        
-                                        { key: "Created By", value: item?.created_by?.firstname + " " + item?.created_by?.lastname || "-" },
                                     ]}
                                 />
                             </ContainerCard>
@@ -219,11 +218,12 @@ export default function ViewPage() {
                                             key: "P12 File",
                                             value: item?.p12_file || "-",
                                         },
-                                        { key: "Password", value: item?.password || "-" },
                                         { key: "Invoice Sync", value: item?.invoice_sync || "-" },
                                         { key: "Is Ifris", value: item?.is_efris || "-" },
                                         { key: "Is Branch", value: item?.is_branch || "-" },
                                         { key: "Branch Id", value: item?.branch_id || "-" },
+                                        { key: "Created By", value: item?.created_by?.firstname + " " + item?.created_by?.lastname || "-" },
+
                                     ]}
                                 />
                             </ContainerCard>

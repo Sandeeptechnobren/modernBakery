@@ -80,11 +80,11 @@ export default function Sidebar({
         {/* menu */}
         <div className="w-full h-[calc(100vh-60px)] py-5 px-4 border-[1px] border-[#E9EAEB] border-t-0 overflow-y-auto scrollbar-none">
           <div className="mb-5 w-full h-full">
-            {data.map((group: SidebarDataType) => (
-              <div key={group.name} className={`${isOpen ? "mb-[20px]" : "m-0" } group-hover:mb-[20px]`}>
-                <div className={`text-[#717680] text-[14px] mb-3 ${isOpen ? "block" : "hidden"} group-hover:block`}>
+            {data.map((group: SidebarDataType,index) => (
+              <div key={index} className={`${isOpen ? "mb-[20px]" : "m-0" } group-hover:mb-[20px]`}>
+                {/* <div className={`text-[#717680] text-[14px] mb-3 ${isOpen ? "block" : "hidden"} group-hover:block`}>
                   {group.name}
-                </div>
+                </div> */}
                 <ul className="w-full flex flex-col gap-[6px]">
                   {group.data.map((link: LinkDataType, index) => {
                     const hasChildren = Boolean(link.children && link.children.length > 0);

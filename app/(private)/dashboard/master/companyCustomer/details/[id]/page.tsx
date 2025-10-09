@@ -51,7 +51,7 @@ interface CustomerItem {
 }
 
 const title = "Company Customer Details";
-const backBtnUrl = "/dashboard/settings/company/companyCustomer";
+const backBtnUrl = "/dashboard/master/companyCustomer";
 
 export default function ViewPage() {
   const params = useParams();

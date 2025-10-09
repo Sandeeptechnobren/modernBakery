@@ -160,7 +160,7 @@ export default function Item() {
               setLoading(true);
                 const listRes = await itemList({
                     // limit: pageSize.toString(),
-                    // page: page.toString(),
+                    page: page.toString(),
                 });
                 setLoading(false);
                 return {
@@ -317,7 +317,7 @@ export default function Item() {
                                 },
                             },
                         ],
-                        pageSize: 5,
+                        pageSize: 10,
                     }}
                 />
             </div>

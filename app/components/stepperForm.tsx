@@ -114,7 +114,7 @@ export default function StepperForm({
               </div>
               {/* Render line except after last circle */}
               {!isLastStep && (
-                <div className={`w-1 h-[40px] sm:w-[80px] sm:h-1 md:w-[120px] ${lineColor} rounded mx-auto`} />
+                <div className={`w-1 h-[40px] mb-6 sm:w-[80px] sm:h-1 md:w-[120px] ${lineColor} rounded mx-auto`} />
               )}
             </div>
           );

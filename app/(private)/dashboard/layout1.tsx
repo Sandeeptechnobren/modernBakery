@@ -3,6 +3,8 @@
 import { initialLinkData } from "@/app/(private)/data/dashboardLinks";
 import LinkDataReducer from "@/app/(private)/utils/linkDataReducer";
 import { useReducer } from "react";
+import { AllDropdownListDataProvider } from "@/app/components/contexts/allDropdownListData";
+import { LoadingProvider } from "@/app/services/loadingContext";
 import Sidebar from "./sidebar1";
 
 export default function DashboardLayout1({
@@ -26,7 +28,13 @@ export default function DashboardLayout1({
             <Sidebar data={sidebarData} onClickHandler={handleLinkClick} />
 
             <div className="w-full p-[20px] pb-[22px] h-screen bg-gray-200 text-black overflow-auto">
+                <AllDropdownListDataProvider>
+                                <LoadingProvider >
+                
                 {children}
+                                </LoadingProvider >
+                </AllDropdownListDataProvider>
+                
             </div>
         </div>
     );
