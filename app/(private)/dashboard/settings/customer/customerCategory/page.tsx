@@ -131,7 +131,13 @@ export default function CustomerCategoryPage() {
       }
       return "-";
     } },
-    { key: "customer_category_code", label: "Code" },
+    { key: "customer_category_code", label: "Code",
+      render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.customer_category_code}
+            </span>
+        ),
+     },
     { key: "customer_category_name", label: "Name" },
     {
       key: "status",

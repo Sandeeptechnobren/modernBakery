@@ -13,7 +13,13 @@ import StatusBtn from "@/app/components/statusBtn2";
 import { useLoading } from "@/app/services/loadingContext";
 
 const columns = [
-    { key: "id", label: "Category Id" },
+    { key: "category_code", label: "Category Code" ,
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.category_code}
+            </span>
+        ),
+    },
     { key: "category_name", label: "Category Name" },
     {
         key: "status",

@@ -124,7 +124,13 @@ export default function ShelfDisplay() {
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "code", label: "Code" },
+              { key: "code", label: "Code",
+                render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.code}
+            </span>
+        ),
+               },
               { key: "name", label: "Name" },
               { key: "address", label: "Address" },
               { key: "contact", label: "Contact" },

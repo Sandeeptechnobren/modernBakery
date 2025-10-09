@@ -67,7 +67,13 @@ const dropdownDataList = [
 
 // 🔹 Table columns
 const columns = [
-    { key: "company_code", label: "Company Code" },
+    { key: "company_code", label: "Company Code",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.company_code}
+            </span>
+        ),
+     },
     { key: "company_name", label: "Company Name" },
     { key: "company_type", label: "Company Type", filter: {
         isFilterable: true,

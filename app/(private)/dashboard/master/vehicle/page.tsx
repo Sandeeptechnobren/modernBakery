@@ -329,16 +329,16 @@ export default function VehiclePage() {
                   );
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  setSelectedRow({ id: r.id });
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (row: object) => {
+              //     const r = row as TableDataType;
+              //     setSelectedRow({ id: r.id });
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
-            pageSize: 5,
+            pageSize: 10,
           }}
         />
       </div>

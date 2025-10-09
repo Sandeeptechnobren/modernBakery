@@ -148,7 +148,13 @@ useEffect(() => {
     localStorageKey: "merchandiser-survey-table",
     footer: { nextPrevBtn: true, pagination: true },
     columns: [
-      { key: "survey_code", label: "Survey code" },
+      { key: "survey_code", label: "Survey code" ,
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.survey_code}
+            </span>
+        ),
+      },
       { key: "survey_name", label: "Survey name" },
       { key: "start_date", label: "Start To" },
       { key: "end_date", label: "End To" },

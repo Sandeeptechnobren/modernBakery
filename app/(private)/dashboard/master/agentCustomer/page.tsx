@@ -352,14 +352,14 @@ export default function AgentCustomer() {
                                     );
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    setSelectedRow({ uuid: row.uuid });
-                                    setShowDeletePopup(true);
-                                },
-                            },
+                            // {
+                            //     icon: "lucide:trash-2",
+                            //     onClick: (data: object) => {
+                            //         const row = data as TableRow;
+                            //         setSelectedRow({ uuid: row.uuid });
+                            //         setShowDeletePopup(true);
+                            //     },
+                            // },
                         ],
                         pageSize: 10,
                     }}

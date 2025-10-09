@@ -99,7 +99,13 @@ export default function CustomerSubCategoryPage() {
   }));
 
   const columns = [
-    { key: "customer_sub_category_code", label: "Sub-Category Code" },
+    { key: "customer_sub_category_code", label: "Sub-Category Code",
+      render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.customer_sub_category_code}
+            </span>
+        ),
+     },
     { key: "customer_sub_category_name", label: "Sub-Category Name" },
     { key: "customer_category_name", label: "Category Name" },
    {

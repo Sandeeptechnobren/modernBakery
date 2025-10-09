@@ -55,7 +55,13 @@ const dropdownDataList = [
 
 // 🔹 Table columns
 const columns = [
-    { key: "osa_code", label: "Discount Code" },
+    { key: "osa_code", label: "Discount Code",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.osa_code}
+            </span>
+        ),
+     },
     {
         key: "item",
         label: "Item",

@@ -141,7 +141,11 @@ export default function CompanyCustomers() {
   /* ---------- Column Configuration ---------- */
   const columns = [
     { key: "sapcode", label: "SAP Code" },
-    { key: "customer_code", label: "Customer Code" },
+    { key: "customer_code", label: "Customer Code",render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.customer_code}
+            </span>
+        ), },
     { key: "business_name", label: "Business Name" },
     { key: "owner_name", label: "Owner Name" },
     { key: "owner_no", label: "Owner Number" },

@@ -123,7 +123,13 @@ export default function ShelfDisplay() {
             localStorageKey: "serviceType",
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "code", label: "Code" },
+              { key: "code", label: "Code",
+                render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.code}
+            </span>
+        ),
+               },
               { key: "name", label: "Name" },
               { key: "status", label: "Status", render: (data: TableDataType) => (
                   <StatusBtn isActive={data.status && data.status.toString() === "1" ? true : false} />
@@ -138,13 +144,13 @@ export default function ShelfDisplay() {
                   router.push(`/dashboard/settings/company/serviceType/${data.uuid}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: TableDataType) => {
-                  setDeleteSelectedRow(data?.uuid ? String(data.uuid) : data.uuid);
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: TableDataType) => {
+              //     setDeleteSelectedRow(data?.uuid ? String(data.uuid) : data.uuid);
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
             pageSize: 10,
           }}

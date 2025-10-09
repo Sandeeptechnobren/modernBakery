@@ -23,6 +23,7 @@ type Props = {
   isSingle?: boolean; 
   required?: boolean;
   loading?: boolean; 
+  searchable?: boolean | string;
 };
 
 export default function InputFields({
@@ -40,6 +41,7 @@ export default function InputFields({
   isSingle = true,
   required = false,
   loading = false
+  , searchable = false
 }: Props) {
 
   const [dropdownProperties, setDropdownProperties] = useState({
@@ -54,6 +56,7 @@ export default function InputFields({
   const isMulti = (options && options.length > 0 && typeof isSingle !== 'undefined' && isSingle === false) || (loading && isSingle === false);
   const isSingleSelect = (options && options.length > 0 && isSingle !== false) || (loading && isSingle !== false);
   const selectedValues: string[] = Array.isArray(value) ? value : [];
+  const isSearchable = searchable === true || searchable === 'true' || searchable === '1';
 
   const filteredOptions = (options?.filter(opt => {
     const label = opt.label.toLowerCase();
@@ -165,24 +168,60 @@ useEffect(() => {
         <div className="relative" ref={dropdownRef}>
           <div
             className={`border h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
-            onClick={() => !loading && setDropdownOpen(v => !v)}
+            onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
           >
-            <span className={`truncate flex-1 ${selectedValues.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
-              {loading
-                ? <span className="flex items-center gap-2 text-gray-400"><svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>Loading...</span>
-                : (() => {
-                    const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
-                    if (selectedValues.length === 0) {
-                      return `Select ${label}`;
-                    }
-                    if (selectedLabels.length <= 2) {
-                      return selectedLabels.join(", ");
-                    } else {
-                      return selectedLabels.slice(0, 2).join(", ");
-                    }
-                  })()
-              }
-            </span>
+            {isSearchable ? (
+              (() => {
+                const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(o => o.label) || [];
+                const displayValue = search || (selectedLabels.length > 0 ? selectedLabels.slice(0,2).join(', ') : '');
+                const hasSelection = !search && selectedLabels.length > 0;
+                return (
+                  <input
+                    type="text"
+                    placeholder={selectedValues.length === 0 ? `Search ${label}` : undefined}
+                    value={displayValue}
+                    onChange={e => {
+                      const v = (e.target as HTMLInputElement).value;
+                      setSearch(v);
+                      if (!dropdownOpen) setDropdownOpen(true);
+                      if (v === '') {
+                        // user cleared the input -> clear selected values for multi-select
+                        safeOnChange(createMultiSelectEvent([]));
+                      }
+                    }}
+                    onFocus={() => setDropdownOpen(true)}
+                    className={`flex-1 truncate text-sm outline-none border-none ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                    style={hasSelection ? { color: '#111827' } : undefined}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!loading && filteredOptions.length > 0) {
+                          // select first match for searchable Enter
+                          handleCheckbox(filteredOptions[0].value);
+                        }
+                      }
+                    }}
+                  />
+                );
+              })()
+            ) : (
+              <span className={`truncate flex-1 ${selectedValues.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
+                {loading
+                  ? <span className="flex items-center gap-2 text-gray-400"><svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>Loading...</span>
+                  : (() => {
+                      const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
+                      if (selectedValues.length === 0) {
+                        return `Select ${label}`;
+                      }
+                      if (selectedLabels.length <= 2) {
+                        return selectedLabels.join(", ");
+                      } else {
+                        return selectedLabels.slice(0, 2).join(", ");
+                      }
+                    })()
+                }
+              </span>
+            )}
             {/* Show +N before the arrow if more than 2 selected */}
             {(() => {
               const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
@@ -191,21 +230,25 @@ useEffect(() => {
               }
               return null;
             })()}
-            <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            {!isSearchable && (
+              <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            )}
           </div>
           {dropdownOpen && !loading && (
             <>
               <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
-                  <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="w-full border-none outline-none text-sm"
-                  />
-                </div>
+                {!isSearchable && (
+                  <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
+                    <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+                    <input
+                      type="text"
+                      placeholder="Search"
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      className="w-full border-none outline-none text-sm"
+                    />
+                  </div>
+                )}
                 <div
                   className="flex items-center px-3 py-2 border-b cursor-pointer"
                   style={{ borderBottomColor: '#9ca3af' }}
@@ -223,7 +266,7 @@ useEffect(() => {
                   />
                   <span className="text-sm select-none">Select All</span>
                 </div>
-                <div className="max-h-40 overflow-auto">
+                <div className="max-h-80 overflow-auto">
                   {filteredOptions.length === 0 ? (
                     <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
                   ) : filteredOptions.map((opt, idx) => (
@@ -246,8 +289,7 @@ useEffect(() => {
                         style={selectedValues.includes(opt.value) ? { accentColor: '#EA0A2A' } : {}}
                       />
                       <label
-                        className="text-sm select-none cursor-pointer"
-                        // Remove onClick from label, handled by parent div
+                        className="text-sm select-none cursor-pointer text-gray-800"
                       >
                         {opt.label}
                       </label>
@@ -262,43 +304,84 @@ useEffect(() => {
         <div className="relative" ref={dropdownRef}>
           <div
             className={`border h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
-            onClick={() => !loading && setDropdownOpen(v => !v)}
+            onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
           >
-            <span className={`truncate flex-1 ${!value ? "text-gray-400" : "text-gray-900"}`}>
-              {loading
-                ? <span className="flex items-center gap-2 text-gray-400"><svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>Loading...</span>
-                : (!value ? `Select ${label}` : options?.find(opt => opt.value === value)?.label)
-              }
-            </span>
-            <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            {isSearchable ? (
+              (() => {
+                const selectedLabel = options?.find(opt => opt.value === value as string)?.label || '';
+                const displayValue = search || selectedLabel;
+                const hasSelection = !search && !!selectedLabel;
+                return (
+                  <input
+                    type="text"
+                    placeholder={!value ? `Search ${label}` : undefined}
+                    value={displayValue}
+                    onChange={e => {
+                      const v = (e.target as HTMLInputElement).value;
+                      setSearch(v);
+                      if (!dropdownOpen) setDropdownOpen(true);
+                      if (v === '') {
+                        // user cleared the input -> clear selected value for single-select
+                        safeOnChange(createSingleSelectEvent(''));
+                      }
+                    }}
+                    onFocus={() => setDropdownOpen(true)}
+                    className={`flex-1 truncate text-sm outline-none border-none ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                    style={hasSelection ? { color: '#111827' } : undefined}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!loading && filteredOptions.length > 0) {
+                          safeOnChange(createSingleSelectEvent(filteredOptions[0].value));
+                          setDropdownOpen(false);
+                          setSearch("");
+                        }
+                      }
+                    }}
+                  />
+                );
+              })()
+            ) : (
+              <span className={`truncate flex-1 ${!value ? "text-gray-400" : "text-gray-900"}`}>
+                {loading
+                  ? <span className="flex items-center gap-2 text-gray-400"><svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>Loading...</span>
+                  : (!value ? `Select ${label}` : options?.find(opt => opt.value === value)?.label)
+                }
+              </span>
+            )}
+            {!isSearchable && (
+              <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            )}
           </div>
           {dropdownOpen && !loading && (
-            <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-              <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
-                <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="w-full border-none outline-none text-sm"
-                  autoFocus
-                />
-              </div>
-              <div className="max-h-40 overflow-auto">
+            <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-80 overflow-auto">
+              {!isSearchable && (
+                <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
+                  <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full border-none outline-none text-sm"
+                    autoFocus
+                  />
+                </div>
+              )}
+              <div className="max-h-80 overflow-auto">
                 {filteredOptions.length === 0 ? (
                   <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
                 ) : filteredOptions.map((opt, idx) => (
                   <div
                     key={opt.value + idx}
-                    className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${value === opt.value ? "bg-gray-100" : ""}`}
+                    className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${value === opt.value ? "bg-gray-50" : ""}`}
                     onClick={() => {
                       safeOnChange(createSingleSelectEvent(opt.value));
                       setDropdownOpen(false);
                       setSearch("");
                     }}
                   >
-                    {opt.label}
+                    <div className="text-sm text-gray-800">{opt.label}</div>
                   </div>
                 ))}
               </div>

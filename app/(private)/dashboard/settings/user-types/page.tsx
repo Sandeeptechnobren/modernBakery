@@ -35,7 +35,13 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "code", label: "User Code" },
+  { key: "code", label: "User Type Code" ,
+    render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.code}
+            </span>
+        ),
+  },
   { key: "name", label: "User Name" },
   {
     key: "status",
@@ -186,20 +192,20 @@ export default function UserType() {
                   router.push(`/dashboard/settings/user-types/${row.id}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  setSelectedRow({
-                    id: row.id,
-                    code: row.code,
-                    name: row.name,
-                  });
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: object) => {
+              //     const row = data as TableRow;
+              //     setSelectedRow({
+              //       id: row.id,
+              //       code: row.code,
+              //       name: row.name,
+              //     });
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
-            pageSize: 5,
+            pageSize: 10,
           }}
         />
       </div>

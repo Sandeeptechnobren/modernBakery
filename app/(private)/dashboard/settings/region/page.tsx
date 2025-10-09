@@ -206,7 +206,11 @@ const tableData: TableDataType[] = regions.map((s) => ({
             localStorageKey: "region-table",
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "region_code", label: "Region Code" },
+              { key: "region_code", label: "Region Code",render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.region_code}
+            </span>
+        ), },
               { key: "region_name", label: "Region Name" },
               {
                 key: "status",
@@ -224,16 +228,16 @@ const tableData: TableDataType[] = regions.map((s) => ({
                   router.push(`/dashboard/settings/region/${row.id}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  setSelectedRow({ id: row.id });
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: object) => {
+              //     const row = data as TableRow;
+              //     setSelectedRow({ id: row.id });
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
-            pageSize: 5,
+            pageSize: 10,
           }}
         />
       </div>

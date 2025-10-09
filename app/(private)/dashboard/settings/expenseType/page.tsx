@@ -28,7 +28,11 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "expense_type_code", label: "Expense Type Code" },
+  { key: "expense_type_code", label: "Expense Type Code",render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.expense_type_code}
+            </span>
+        ), },
   { key: "expense_type_name", label: "Expense Type Name" },
   // { key: "created_user", label: "Created User" },
   // { key: "updated_user", label: "Updated User" },
@@ -225,16 +229,16 @@ const tableData: TableDataType[] = countries.map((c) => ({
                   router.push(`/dashboard/settings/expenseType/${row.id}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  setSelectedRow({ id: row.id });
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: object) => {
+              //     const row = data as TableRow;
+              //     setSelectedRow({ id: row.id });
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
-            pageSize: 2,
+            pageSize: 10,
           }}
         />
       </div>
