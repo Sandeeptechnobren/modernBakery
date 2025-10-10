@@ -266,12 +266,36 @@ export const initialLinkData: SidebarDataType[] = [
             // },
             // {
             //     isActive: false,
-            //     href: "/dashboard/agentTransaction",
+            //     href: "#",
             //     label: "Agent Transaction",
             //     leadingIcon: "mdi:account-cash-outline",
             //     iconColor: "text-violet-500"
             // },
-
+ {
+                isActive: false,
+                href: "#",
+                label: "Agent Transaction",
+                leadingIcon: "mdi:account-cash-outline",
+                iconColor: "text-green-500",
+                trailingIcon: "mdi-light:chevron-right",
+                children: [
+                    {
+                        isActive: false,
+                        href: "/dashboard/agentTransaction/agentCustomerOrder",
+                        label: "Agent Order",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/dashboard/agentTransaction/agentCustomerInvoice",
+                        label: "Agent Invoice",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                   
+                ]
+            },
             // {
             //     isActive: false,
             //     href: "/dashboard/harissTransaction",

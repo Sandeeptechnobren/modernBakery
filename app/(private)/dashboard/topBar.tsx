@@ -10,6 +10,7 @@ import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import { logout } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { initialLinkData } from "../data/dashboardLinks";
 
 export default function TopBar({
     horizontalSidebar,
@@ -125,7 +126,12 @@ export default function TopBar({
                 </div>
             </div>
 
-            {horizontalSidebar && <HorizontalSidebar />}
+            {horizontalSidebar && (
+              <HorizontalSidebar 
+                data={initialLinkData} 
+                onClickHandler={(href) => router.push(href)} 
+              />
+            )}
         </div>
     );
 }
