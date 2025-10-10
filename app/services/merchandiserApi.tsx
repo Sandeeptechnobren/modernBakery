@@ -94,6 +94,14 @@ export const shelvesListById = async (id: string, params?: Params) => {
     return handleError(error);
   }
 };
+export const getPlanogramById = async (id:string, params?:Params) => {
+  try {
+     const res = await API.get(`/api/merchendisher/planogram/show/${id}`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 export type shelvesType = {
   shelf_name: string;
@@ -112,7 +120,6 @@ export const addShelves = async (body: shelvesType) => {
     return handleError(error);
   }
 };
-
 export const updateShelves = async (id: string, body: shelvesType) => {
   try {
     const res = await API.put(`/api/merchendisher/shelves/${id}`, body);
@@ -121,6 +128,32 @@ export const updateShelves = async (id: string, body: shelvesType) => {
     return handleError(error);
   }
 };
+export type planogramType = {
+  name: string;
+  valid_from: string;
+  valid_to: string;
+  status: number;
+};
+export const addPlanogram = async (body: planogramType) => {
+  try {
+    const res = await API.post("/api/merchendisher/planogram/create", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const updatePlanogram = async (id: string,body: planogramType) => {
+  try {
+    // ✅ Send payload directly
+    const res = await API.put(`/api/merchendisher/planogram/update/${id}`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
 
 export const deleteShelves = async (id: string) => {
   try {

@@ -746,8 +746,7 @@ export const customerTypeList = async (params?: Record<string, string>) => {
 export const getCustomerType = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/customer-type/list`, { params :params});
-    console.log(res)
-    return res.data.data;
+    return res.data;
   } catch (error) {
     console.error("Get Customer Type by ID failed ❌", error);
     throw error;

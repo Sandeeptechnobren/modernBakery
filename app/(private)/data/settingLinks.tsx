@@ -28,42 +28,42 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [
                     // {
             //     isActive: false,
-            //     href: "/dashboard/settings/user",
+            //     href: "/settings/user",
             //     label: "Users",
             //     leadingIcon: "mdi:account",
             //     iconColor: "text-green-500",
             // },
                     {
                 isActive: false,
-                href: "/dashboard/settings/user-types",
+                href: "/settings/user-types",
                 label: "Users Types",
                 leadingIcon: "mdi:account-group",
                 iconColor: "text-green-500",
             },
                     {
                 isActive: false,
-                href: "/dashboard/settings/role",
+                href: "/settings/role",
                 label: "Roles",
                 leadingIcon: "mdi:account-tie",
                 iconColor: "text-green-500",
             },
              {
                 isActive: false,
-                href: "/dashboard/settings/permission",
+                href: "/settings/permission",
                 label: "Permissions",
                 leadingIcon: "mdi:lock-check",
                 iconColor: "text-green-500",
             },
              {
                 isActive: false,
-                href: "/dashboard/settings/menu",
+                href: "/settings/menu",
                 label: "Menus",
                 leadingIcon: "duo-icons:menu",
                 iconColor: "text-green-500",
             },
              {
                 isActive: false,
-                href: "/dashboard/settings/submenu",
+                href: "/settings/submenu",
                 label: "Sub Menus",
                 leadingIcon: "ci:arrow-sub-down-right",
                 iconColor: "text-green-500",
@@ -76,7 +76,7 @@ export const initialLinkData: SidebarDataType[] = [
                 isActive: false,
 
                
-                href: "/dashboard/settings/theme",
+                href: "/settings/theme",
                 label: "Theme",
                 leadingIcon: "mdi:theme-light-dark",
 
@@ -93,28 +93,28 @@ export const initialLinkData: SidebarDataType[] = [
                    
                     {
                         isActive: false,
-                        href: "/dashboard/settings/company/serviceType",
+                        href: "/settings/company/serviceType",
                         label: "Service Types",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500"
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/settings/company/companyType",
+                        href: "/settings/company/companyType",
                         label: "Company Type",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
                     },
                     // {
                     //     isActive: false,
-                    //     href: "/dashboard/master/item",
+                    //     href: "/(dashboard)/(master)/item",
                     //     label: "Commission Range",
                     //     leadingIcon: "mdi:package-variant",
                     //     iconColor: "text-cyan-500",
                     // },
                     // {
                     //     isActive: false,
-                    //     href: "/dashboard/master/route",
+                    //     href: "/(dashboard)/(master)/route",
                     //     label: "Currency",
                     //     leadingIcon: "mdi:map",
                     //     iconColor: "text-yellow-400",
@@ -122,7 +122,7 @@ export const initialLinkData: SidebarDataType[] = [
                    
                     // {
                     //     isActive: false,
-                    //     href: "/dashboard/master/vehicle",
+                    //     href: "/(dashboard)/(master)/vehicle",
                     //     label: "Region",
                     //     leadingIcon: "mdi:car",
                     //     iconColor: "text-yellow-400",
@@ -130,21 +130,21 @@ export const initialLinkData: SidebarDataType[] = [
                     
                     // {
                     //     isActive: false,
-                    //     href: "/dashboard/master/warehouse",
+                    //     href: "/(dashboard)/(master)/warehouse",
                     //     label: "Expense Category",
                     //     leadingIcon: "tabler:building-warehouse",
                     //     iconColor: "text-violet-500",
                     // },
                     // {
                     //     isActive: false,
-                    //     href: "/dashboard/master/warehouse",
+                    //     href: "/(dashboard)/(master)/warehouse",
                     //     label: "Reason",
                     //     leadingIcon: "tabler:building-warehouse",
                     //     iconColor: "text-violet-500",
                     // },
                     // {
                     //     isActive: false,
-                    //     href: "/dashboard/master/warehouse",
+                    //     href: "/(dashboard)/(master)/warehouse",
                     //     label: "Language",
                     //     leadingIcon: "tabler:building-warehouse",
                     //     iconColor: "text-violet-500",
@@ -161,28 +161,28 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [
                     {
                         isActive: false,
-                        href: "/dashboard/settings/customer/customerType",
+                        href: "/settings/customer/customerType",
                         label: "Customer Type",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/settings/customer/customerCategory",
+                        href: "/settings/customer/customerCategory",
                         label: "Customer Category",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500",
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/settings/customer/customerSubCategory",
+                        href: "/settings/customer/customerSubCategory",
                         label: "Customer Sub Category",
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/settings/customer/discountType",
+                        href: "/settings/customer/discountType",
                         label: "Discount Types",
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",
@@ -200,28 +200,28 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [
                      {
                             isActive: false,
-                            href: "/dashboard/settings/country",
+                            href: "/settings/country",
                             label: "Country",
                             leadingIcon: "mdi:earth",
                             iconColor: "text-green-500",
                         },
                          {
                 isActive: false,
-                href: "/dashboard/settings/region",
+                href: "/settings/region",
                 label: "Region",
                 leadingIcon: "mdi:map-outline",
                 iconColor: "text-green-500",
             },
             {
                         isActive: false,
-                        href: "/dashboard/settings/company/subRegion",
+                        href: "/settings/company/subRegion",
                         label: "Sub Region",
                         leadingIcon: "tabler:building-warehouse",
                         iconColor: "text-violet-500",
                     },
                {
                 isActive: false,
-                href: "/dashboard/settings/routetype",
+                href: "/settings/routetype",
                 label: "Route Type",
                 leadingIcon: "mdi:map-marker-path",
                 iconColor: "text-green-500",
@@ -229,7 +229,7 @@ export const initialLinkData: SidebarDataType[] = [
 
              {
                 isActive: false,
-                href: "/dashboard/settings/outlet-channel",
+                href: "/settings/outlet-channel",
                 label: "Outlet Channel",
                 leadingIcon: "mdi:storefront",
                 iconColor: "text-green-500",
@@ -279,14 +279,14 @@ export const initialLinkData: SidebarDataType[] = [
             //     children: [
             //         {
             //             isActive: false,
-            //             href: "/dashboard/master/customer",
+            //             href: "/(dashboard)/(master)/customer",
             //             label: "Vehicle Type",
             //             leadingIcon: "lucide:user",
             //             iconColor: "text-green-500",
             //         },
             //         {
             //             isActive: false,
-            //             href: "/dashboard/master/item",
+            //             href: "/(dashboard)/(master)/item",
             //             label: "Vehicle Brand",
             //             leadingIcon: "mdi:package-variant",
             //             iconColor: "text-cyan-500",
@@ -303,14 +303,14 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [
                     {
                         isActive: false,
-                        href: "/dashboard/settings/item/category",
+                        href: "/settings/item/category",
                         label: "Item Category",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/settings/item/subCategory",
+                        href: "/settings/item/subCategory",
                         label: "Item Sub Category",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500",
@@ -334,42 +334,42 @@ export const initialLinkData: SidebarDataType[] = [
     //             children: [
     //                 {
     //                     isActive: false,
-    //                     href: "/dashboard/master/customer",
+    //                     href: "/(dashboard)/(master)/customer",
     //                     label: "Material Group",
     //                     leadingIcon: "lucide:user",
     //                     iconColor: "text-green-500",
     //                 },
     //                 {
     //                     isActive: false,
-    //                     href: "/dashboard/master/item",
+    //                     href: "/(dashboard)/(master)/item",
     //                     label: "Material Brand",
     //                     leadingIcon: "mdi:package-variant",
     //                     iconColor: "text-cyan-500",
     //                 },
     //                 {
     //                     isActive: false,
-    //                     href: "/dashboard/master/item",
+    //                     href: "/(dashboard)/(master)/item",
     //                     label: "Unit of Measurement",
     //                     leadingIcon: "mdi:package-variant",
     //                     iconColor: "text-cyan-500",
     //                 },
     //                 {
     //                     isActive: false,
-    //                     href: "/dashboard/master/item",
+    //                     href: "/(dashboard)/(master)/item",
     //                     label: "Material Category",
     //                     leadingIcon: "mdi:package-variant",
     //                     iconColor: "text-cyan-500",
     //                 },
     //                 {
     //                     isActive: false,
-    //                     href: "/dashboard/master/item",
+    //                     href: "/(dashboard)/(master)/item",
     //                     label: "Material Type",
     //                     leadingIcon: "mdi:package-variant",
     //                     iconColor: "text-cyan-500",
     //                 },
     //                 {
     //                     isActive: false,
-    //                     href: "/dashboard/master/item",
+    //                     href: "/(dashboard)/(master)/item",
     //                     label: "City",
     //                     leadingIcon: "mdi:package-variant",
     //                     iconColor: "text-cyan-500",
@@ -385,14 +385,14 @@ export const initialLinkData: SidebarDataType[] = [
     //         },
             {
                 isActive: false,
-                href: "/dashboard/settings/salesman-type",
+                href: "/settings/salesman-type",
                 label: "Salesman Type",
                 leadingIcon: "mdi:account-tie",
                 iconColor: "text-green-500",
             },
             // {
             //     isActive: false,
-            //     href: "/dashboard/salesman",
+            //     href: "/salesman",
             //     label: "Salesman Organization",
             //     leadingIcon: "mdi:account-multiple-outline",
             //     iconColor: "text-green-500",
@@ -400,7 +400,7 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Complaint Type",
     //             leadingIcon: "mdi:alert-circle-outline",
     //             iconColor: "text-green-500",
@@ -408,21 +408,21 @@ export const initialLinkData: SidebarDataType[] = [
 
             {
                 isActive: false,
-                href: "/dashboard/settings/expenseType",
+                href: "/settings/expenseType",
                 label: "Expense Type",
                 leadingIcon: "mdi:currency-usd",
                 iconColor: "text-green-500",
             },
             //   {
             //     isActive: false,
-            //     href: "/dashboard/settings/salesman-type",
+            //     href: "/settings/salesman-type",
             //     label: "Salesman Type",
             //     leadingIcon: "mdi:currency-usd",
             //     iconColor: "text-green-500",
             // },
               {
                 isActive: false,
-                href: "/dashboard/settings/promotionTypes",
+                href: "/settings/promotionTypes",
                 label: "Promotion Type",
                 leadingIcon: "hugeicons:promotion",
                 iconColor: "text-green-500",
@@ -430,7 +430,7 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Discount Type",
     //             leadingIcon: "mdi:tag-outline",
     //             iconColor: "text-green-500",
@@ -438,7 +438,7 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "BT & Route Configuration",
     //             leadingIcon: "mdi:map-marker-path",
     //             iconColor: "text-green-500",
@@ -446,7 +446,7 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Sales Target Type",
     //             leadingIcon: "mdi:bullseye-arrow",
     //             iconColor: "text-green-500",
@@ -454,7 +454,7 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Storage Location",
     //             leadingIcon: "mdi:warehouse",
     //             iconColor: "text-green-500",
@@ -462,7 +462,7 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Supplier Type",
     //             leadingIcon: "mdi:truck-delivery",
     //             iconColor: "text-green-500",
@@ -470,7 +470,7 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Unit Conversion",
     //             leadingIcon: "mdi:swap-horizontal",
     //             iconColor: "text-green-500",
@@ -478,7 +478,7 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Manage Code",
     //             leadingIcon: "mdi:code-tags",
     //             iconColor: "text-green-500",
@@ -486,14 +486,14 @@ export const initialLinkData: SidebarDataType[] = [
 
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Distribution Org Structure",
     //             leadingIcon: "mdi:source-branch",
     //             iconColor: "text-green-500",
     //         },
     //         {
     //             isActive: false,
-    //             href: "/dashboard/salesman",
+    //             href: "/salesman",
     //             label: "Exit Reason",
     //             leadingIcon: "mdi:exit-to-app",
     //             iconColor: "text-green-500",
@@ -517,7 +517,7 @@ export const miscLinks = [
     },
     {
         type: "icon",
-        href: "/dashboard/settings",
+        href: "/settings",
         label: "Settings",
         icon: "mi:settings",
     },

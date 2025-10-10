@@ -15,7 +15,7 @@ type Props = {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
   options?: Option[];
-  type?: "text" | "select" | "file" | "date" | "radio" | "number";
+  type?: "text" | "select" | "file" | "date" | "radio" | "number" | "textarea";
   id?: string;
   width?: string;
   error?: string | false;
@@ -24,6 +24,12 @@ type Props = {
   required?: boolean;
   loading?: boolean; 
   searchable?: boolean | string;
+  placeholder?: string;
+  textareaCols?: number;
+  textareaRows?: number;
+  textareaResize?: boolean;
+  leadingElement?: React.ReactNode;
+  trailingElement?: React.ReactNode;
 };
 
 export default function InputFields({
@@ -40,8 +46,14 @@ export default function InputFields({
   onBlur,
   isSingle = true,
   required = false,
-  loading = false
-  , searchable = false
+  loading = false,
+  searchable = false,
+  placeholder,
+  textareaCols = 3,
+  textareaRows = 3,
+  textareaResize = true,
+  leadingElement,
+  trailingElement
 }: Props) {
 
   const [dropdownProperties, setDropdownProperties] = useState({
@@ -368,7 +380,7 @@ useEffect(() => {
                   />
                 </div>
               )}
-              <div className="max-h-80 overflow-auto">
+              <div>
                 {filteredOptions.length === 0 ? (
                   <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
                 ) : filteredOptions.map((opt, idx) => (
@@ -400,18 +412,34 @@ useEffect(() => {
             }`}
         />
       ) : type === "text" ? (
-        <input
-          id={id ?? name}
-          name={name}
-          type="text"
-          value={value ?? ""}
-          onChange={safeOnChange}
-          disabled={disabled}
-          onBlur={onBlur}
-          autoComplete="off"
-          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
-          placeholder={`Enter ${label}`}
-        />
+        <div className="w-full relative">
+          <input
+            id={id ?? name}
+            name={name}
+            type="text"
+            value={value ?? ""}
+            onChange={safeOnChange}
+            disabled={disabled}
+            onBlur={onBlur}
+            autoComplete="off"
+            className={`box-border border h-[44px] w-full rounded-md ${leadingElement ? "pl-10" : "pl-3"} ${trailingElement ? "pr-10" : "pr-3"} mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+            placeholder={ placeholder || `Enter ${label}` }
+          />
+          {(leadingElement || trailingElement) && (
+            <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 pointer-events-none">
+              {leadingElement ? (
+                <div className="flex items-center pointer-events-auto h-full mt-[6px] p-2">
+                  {leadingElement}
+                </div>
+              ) : <div />} 
+              {trailingElement ? (
+                <div className="flex items-center pointer-events-auto h-full mt-[6px] p-2">
+                  {trailingElement}
+                </div>
+              ) : <div />}
+            </div>
+          )}
+        </div>
       ) : type === "date" ? (
         <input
           id={id ?? name}
@@ -435,6 +463,19 @@ useEffect(() => {
           onBlur={onBlur}
           className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
           placeholder={`Enter ${label}`}
+        />
+      ): type === "textarea" ? (
+        <textarea
+          id={id ?? name}
+          name={name}
+          value={value ?? ""}
+          onChange={safeOnChange}
+          disabled={disabled}
+          className={`border w-full rounded-md px-[14px] py-[10px] mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+          placeholder={placeholder || `Enter ${label}`}
+          cols={textareaCols}
+          rows={textareaRows}
+          style={textareaResize === false ? { resize: 'none' } : {}}
         />
       ): null}
     </div>
