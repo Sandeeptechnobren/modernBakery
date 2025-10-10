@@ -43,7 +43,7 @@ const LoginPage = () => {
                             if(res.error) return setErrors({ userId: res.data.message });
                             else {
                                 localStorage.setItem("token", res.data.access_token);
-                                router.push("/dashboard");
+                                router.push("/warehouse");
                             }
                         }}
                     >
