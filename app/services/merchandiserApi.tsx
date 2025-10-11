@@ -128,29 +128,7 @@ export const updateShelves = async (id: string, body: shelvesType) => {
     return handleError(error);
   }
 };
-export type planogramType = {
-  name: string;
-  valid_from: string;
-  valid_to: string;
-  status: number;
-};
-export const addPlanogram = async (body: planogramType) => {
-  try {
-    const res = await API.post("/api/merchendisher/planogram/create", body);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-export const updatePlanogram = async (id: string,body: planogramType) => {
-  try {
-    // ✅ Send payload directly
-    const res = await API.put(`/api/merchendisher/planogram/update/${id}`, body);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
+
 
 
 
@@ -158,6 +136,56 @@ export const updatePlanogram = async (id: string,body: planogramType) => {
 export const deleteShelves = async (id: string) => {
   try {
     const res = await API.delete(`/api/merchendisher/shelves/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+type chiller = {
+  serial_number: string,
+  asset_number: string,
+  model_number: string,
+  description: string,
+  acquisition: string,
+  vender_details: string[],
+  manufacturer: string,
+  country_id: number,
+  type_name: string,
+  sap_code: string,
+  status: number,
+  is_assign: number,
+  customer_id: number,
+  agreement_id: number,
+  document_type: string,
+  document_id: number
+}
+
+
+export type PlanogramType = {
+  name: string;
+  valid_from: string;
+  valid_to: string;
+  merchendisher_id: number;
+  customer_id: number;
+};
+
+// ✅ Add Planogram
+export const addPlanogram = async (body: PlanogramType) => {
+  try {
+    const res = await API.post("/api/merchendisher/planogram/create", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+// ✅ Update Planogram
+export const updatePlanogram = async (id: string, body: PlanogramType) => {
+  try {
+    const res = await API.put(`/api/merchendisher/planogram/update/${id}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

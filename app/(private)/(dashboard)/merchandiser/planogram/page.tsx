@@ -18,7 +18,6 @@ interface PlanogramItem {
   name: string;
   valid_from: string;
   valid_to: string;
-  status: number | string;
 }
 
 interface DropdownItem {
@@ -57,7 +56,7 @@ export default function Planogram() {
           name: item.name,
           valid_from: item.valid_from,
           valid_to: item.valid_to,
-          status: item.status === 1 || String(item.status).toLowerCase() === "active" ? "Active" : "Inactive",
+
         }));
 
         return {
@@ -96,10 +95,7 @@ const searchPlanogram = useCallback(
         name: item.name,
         valid_from: item.valid_from,
         valid_to: item.valid_to,
-        status:
-          item.status === 1 || String(item.status).toLowerCase() === "active"
-            ? "Active"
-            : "Inactive",
+      
       }));
       return {
         data,
@@ -122,11 +118,7 @@ const searchPlanogram = useCallback(
     { key: "name", label: "Name" },
     { key: "valid_from", label: "Valid From" },
     { key: "valid_to", label: "Valid To" },
-    {
-      key: "status",
-      label: "Status",
-      render: (row: TableDataType) => <StatusBtn isActive={row.status === "Active"} />,
-    },
+ 
   ];
 
   return (
@@ -189,7 +181,8 @@ const searchPlanogram = useCallback(
             {
               icon: "lucide:edit-2",
               onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/planogram/update/${data.id}`),
+           
+                router.push(`/merchandiser/planogram/${data.id}`),
             },
           ],
           pageSize: 10,
