@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function WarehouseLocationInfo({ values, errors, touched, handleChange, setFieldValue }: Props) {
-  const { regionOptions, loading, areaOptions } = useAllDropdownListData();
+  const { regionOptions, loading, lists } = useAllDropdownListData();
 
   return (
     <>
@@ -66,7 +66,15 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             name="area_id"
             value={values.area_id}
             onChange={handleChange}
-            options={loading ? [{ value: '', label: 'Loading...' }] : (areaOptions && areaOptions.length > 0 ? areaOptions : [{ value: '', label: 'No options available' }])}
+            options={
+              loading
+                ? [{ value: '', label: 'Loading...' }]
+                : (lists.areaList && lists.areaList.length > 0
+                    ? lists.areaList
+                        .filter((opt) => opt.region_id === values.region_id)
+                        .map((opt) => ({ value: String(opt.value), label: String(opt.label) }))
+                    : [{ value: '', label: 'No options available' }])
+            }
             error={errors?.area_id && touched?.area_id ? errors.area_id : false}
           />
           {errors?.area_id && touched?.area_id && (

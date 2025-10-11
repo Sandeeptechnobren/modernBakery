@@ -1,6 +1,5 @@
 "use client";
 import React from 'react';
-import CustomSecurityCode from "@/app/components/customSecurityCode";
 import InputFields from "@/app/components/inputFields";
 
 type Props = {

@@ -41,9 +41,6 @@ const columns = [
             </span>
         ),
     },
-    { key: "tin_no", label: "TIN No." },
-    { key: "name", label: "Name" },
-    { key: "business_name", label: "Business Name" },
     {
         key: "customer_type",
         label: "Customer Type",
@@ -155,9 +152,9 @@ const columns = [
             if (
                 typeof row.route === "object" &&
                 row.route !== null &&
-                "name" in row.route
+                "route_name" in row.route
             ) {
-                return (row.route as { name?: string }).name || "-";
+                return (row.route as { route_name?: string }).route_name || "-";
             }
             return row.route || "-";
         },
