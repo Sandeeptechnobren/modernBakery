@@ -31,7 +31,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
         <div className="flex w-full">
           <select
             name="ownerContactCountry"
-            value={values.ownerContactCountry ?? onlyCountryOptions ?? ""}
+            value={values.ownerContactCountry ?? (countries[0]?.value ?? "")}
             onChange={handleChange}
             className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
           >
@@ -60,7 +60,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
         <div className="flex w-full">
           <select
             name="managerContactCountry"
-            value={values.managerContactCountry ?? onlyCountryOptions ?? ""}
+            value={values.managerContactCountry ?? (countries[0]?.value ?? "")}
             onChange={handleChange}
             className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
           >

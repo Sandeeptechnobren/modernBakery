@@ -1,6 +1,5 @@
 "use client";
 import React from 'react';
-import CustomSecurityCode from "@/app/components/customSecurityCode";
 import InputFields from "@/app/components/inputFields";
 
 type Props = {
@@ -12,6 +11,15 @@ type Props = {
 };
 
 export default function WarehouseAdditionalInformation({ values, errors, touched, handleChange, setFieldValue }: Props) {
+    // interpret backend value: explicit false-like values => '0' (No), everything else => '1' (Yes)
+    const normalizeIsBranch = (val: string | number | boolean | null | undefined): string => {
+        if (val === false || val === 0) return '0';
+        if (val === null || typeof val === 'undefined') return '1';
+        const s = String(val).toLowerCase().trim();
+        if (s === 'false' || s === '0' || s === '' || s === 'null' || s === 'undefined') return '0';
+        return '1';
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
@@ -84,7 +92,7 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                     label="Is Branch"
                     name="is_branch"
                     type='radio'
-                    value={values.is_branch}
+                    value={normalizeIsBranch(values.is_branch)}
                     onChange={handleChange}
                     options={[
                         { value: "1", label: "Yes" },
