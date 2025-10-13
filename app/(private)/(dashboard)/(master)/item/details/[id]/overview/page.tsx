@@ -24,7 +24,7 @@ interface ItemType {
   shelf_life?: string;
   commodity_goods_code?: string;
   excise_duty_code?: string;
-  status?: number;
+  status?: string;
   is_taxable?: boolean;
   has_excies?: boolean;
   item_weight?: string;
@@ -73,39 +73,15 @@ export default function ViewPage() {
     fetchItemDetails();
   }, [id, setLoading, showSnackbar]);
 
+
   return (
     <>
       <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
-        {/* Left Section */}
-        <div className="w-full md:w-[350px]">
-          <ContainerCard>
-            <div className="text-[18px] font-semibold mb-[25px]">
-              Item Image
-            </div>
-
-            <div className="flex justify-center">
-              <>{console.log(item)}</>
-              <Image
-                src={ "/logo.png"}
-                alt={item?.name || "Item Image"}
-                width={200}
-                height={200}
-                className="object-contain border rounded-lg"
-              />
-            </div>
-          </ContainerCard>
-        </div>
+       
 
         {/* Right Section */}
         <div className="w-full flex flex-col gap-y-[15px]">
-            {item?.description && (
-            <ContainerCard className="w-full h-fit">
-              <h3 className="text-lg font-semibold mb-3">Description</h3>
-              <p className="text-gray-700 text-sm leading-relaxed">
-                {item.description}
-              </p>
-            </ContainerCard>
-          )}
+          
           <ContainerCard className="w-full h-fit">
             <KeyValueData
               title="Item Information"
