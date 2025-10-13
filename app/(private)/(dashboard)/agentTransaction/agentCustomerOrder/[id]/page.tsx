@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -30,17 +31,29 @@ const data = new Array(2).fill(null).map((_, index) => ({
     Total: "73.50",
 }));
 
-const columns = [
-    { key: "id", label: "#", width: 60 },
-    { key: "itemName", label: "Item", width: 250 },
-    { key: "UOM", label: "UOM" },
-    { key: "Quantity", label: "Quantity" },
-    { key: "Discount", label: "Discount" },
-    { key: "Vat", label: "VAT" },
-    { key: "Net", label: "Net Amount" },
-    { key: "Total", label: "Total" }
-];
+// Duplicate untyped columns removed; using the strongly-typed "columns" defined below.
+// Strongly-typed table row and column definitions (no `any`)
+type OrderItemRow = {
+    idx: number;
+    itemName: string;
+    UOM: string;
+    Quantity: string;
+    Price: string;
+    Excise: string;
+    Discount: string;
+    Net: string;
+    Vat: string;
+    Total: string;
+};
 
+type TableColumn<T> = {
+    key: string;
+    label: string;
+    width?: number;
+    render?: (row: T) => React.ReactNode;
+};
+
+// ...existing code...
 const keyValueData = [
     { key: "Gross Total", value: "AED 84.00" },
     { key: "Discount", value: "AED 0.00" },
@@ -50,8 +63,8 @@ const keyValueData = [
     { key: "Delivery Charges", value: "AED 0.00" },
 ];
 
-export default function InvoiceddEditPage() {
-    const { warehouseOptions, agentCustomerOptions } = useAllDropdownListData();
+export default function OrderAddEditPage() {
+    const { warehouseOptions, agentCustomerOptions ,itemOptions} = useAllDropdownListData();
     const router = useRouter();
     const [showDropdown, setShowDropdown] = useState(false);
     const orderId = "#W1O20933";
@@ -65,23 +78,47 @@ export default function InvoiceddEditPage() {
         paymentTermsUnit: "1",
     });
 
-    const [itemData, setItemData] = useState([{
-        itemCode: "",
-        itemName: "",
-        UOM: "",
-        Quantity: "",
-        Price: "",
-        Excise: "",
-        Discount: "",
-        Net: "",
-        Vat: "",
-        Total: "",
-    }]);
+    const [itemData, setItemData] = useState([
+        {
+            itemName: "",
+            UOM: "",
+            Quantity: "",
+            Price: "",
+            Excise: "",
+            Discount: "",
+            Net: "",
+            Vat: "",
+            Total: "",
+        },
+    ]);
 
-const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setForm({ ...form, [name]: value });
-    }
+    };
+
+    // Add new item row
+    const handleAddNewItem = () => {
+        setItemData([
+            ...itemData,
+            {
+                itemName: "",
+                UOM: "",
+                Quantity: "",
+                Price: "",
+                Excise: "",
+                Discount: "",
+                Net: "",
+                Vat: "",
+                Total: "",
+            },
+        ]);
+    };
+
+    // Remove item row
+    const handleRemoveItem = (index: number) => {
+        setItemData(itemData.filter((_, i) => i !== index));
+    };
 
     return (
         <div className="flex flex-col h-full">
@@ -108,14 +145,14 @@ const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTML
 
                     <div className="flex flex-col">
                         <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-                            Order
+                            O r d e r
                         </span>
                         <span className="text-primary text-[14px] tracking-[10px]">
                             {orderId}
                         </span>
                     </div>
                 </div>
-                <hr className="text-[#D5D7DA]" />
+                <hr className="w-full text-[#D5D7DA]" />
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                     <InputFields
@@ -136,13 +173,111 @@ const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTML
                     />
                 </div>
 
+
                 <Table
-                    data={itemData}
+                    data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
                     config={{
-                        columns: columns,
+                        columns: [
+                            {
+                                key: "itemName",
+                                label: "Item Name",
+                                width: 200,
+                                render: (row) => (
+                                    <InputFields
+                                        label=""
+                                        type="text"
+                                        name="itemName"
+                                        options={itemOptions}
+                                        value={row.itemName}
+                                        onChange={(e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+                                            const newData = [...itemData];
+                                            const rowIndex = Number(row.idx);
+                                            newData[rowIndex].itemName = e.target.value;
+                                            setItemData(newData);
+                                        }}
+                                        placeholder="Select Item"
+                                    />
+                                ),
+                            },
+                            {
+                                key: "UOM",
+                                label: "UOM",
+                                width: 150,
+                                render: (row) => (
+                                    <InputFields
+                                        label=""
+                                        type="text"
+                                        name="UOM"
+                                        value={row.UOM}
+                                        onChange={(e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+                                            const newData = [...itemData];
+                                            const rowIndex = Number(row.idx);
+                                            newData[rowIndex].UOM = e.target.value;
+                                            setItemData(newData);
+                                        }}
+                                        placeholder="Select UOM"
+                                    />
+                                ),
+                            },
+                            {
+                                key: "Quantity",
+                                label: "Quantity",
+                                width: 80,
+                                render: (row) => (
+                                    <InputFields
+                                        label=""
+                                        type="number"
+                                        name="Quantity"
+                                        value={row.Quantity}
+                                        onChange={(e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+                                            const newData = [...itemData];
+                                            const rowIndex = Number(row.idx);
+                                            newData[rowIndex].Quantity = e.target.value;
+                                            setItemData(newData);
+                                        }}
+                                       
+                                    />
+                                ),
+                            },
+                            { key: "Price", label: "Price", width: 80 },
+                            { key: "Excise", label: "Excise", width: 80 },
+                            { key: "Discount", label: "Discount", width: 80 },
+                            { key: "Net", label: "Net", width: 80 },
+                            { key: "Vat", label: "Vat", width: 80 },
+                            { key: "Total", label: "Total", width: 80 },
+                            {
+                                key: "action",
+                                label: "Action",
+                                width: 60,
+                                render: (row) => (
+                                    <button
+                                        type="button"
+                                        className="text-red-500 flex items-center"
+                                        onClick={() => handleRemoveItem(Number(row.idx))}
+                                        aria-label="Delete Item"
+                                    >
+                                        <Icon icon="hugeicons:delete-02" width={20} />
+                                    </button>
+                                ),
+                            },
+                        ],
                     }}
+                        
+                    
                 />
 
+               <div className="mt-2">
+
+              
+                    <button
+                        type="button"
+                        className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
+                        onClick={handleAddNewItem}
+                    >
+                        <Icon icon="material-symbols:add-circle-outline" width={20} />
+                        Add New Item
+                    </button>
+ </div>
                 <div className="flex justify-between text-primary">
                     <div></div>
                     <div className="flex justify-between flex-wrap w-full">
@@ -190,12 +325,18 @@ const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTML
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-[20px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
-                            <KeyValueData data={keyValueData} />
+                        <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
+                            {keyValueData.map((item) => (
+                                <React.Fragment key={item.key}>
+                                    <KeyValueData data={[item]} />
+                                    <hr className="text-[#D5D7DA]" />
+                                </React.Fragment>
+                            ))}
                             <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                                 <span>Total</span>
                                 <span>AED 7.00</span>
                             </div>
+                            
                         </div>
 
                         <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px]">
@@ -219,21 +360,22 @@ const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTML
                         </div>
                     </div>
                 </div>
-
                 <hr className="text-[#D5D7DA]" />
 
-                <div className="flex flex-wrap justify-end gap-[20px]">
-                    <SidebarBtn
-                        isActive
-                        label="Create"
-                    />
-                    <SidebarBtn
-                        isActive
-                        leadingIcon={"lucide:printer"}
-                        leadingIconSize={20}
-                        label="Print Now"
-                    />
-                </div>
+ <div className="flex justify-end gap-4 mt-6  pr-0">
+          <button
+            type="button"
+            className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+            onClick={() => router.push("/agentCustomerOrder") }
+          >
+            Cancel
+          </button>
+          <SidebarBtn
+          isActive={true}
+            label={ "Create Order" }
+          />
+        </div>
+               
             </ContainerCard>
         </div>
     );

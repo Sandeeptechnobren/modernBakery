@@ -2,7 +2,7 @@
 
 import InputFields from "@/app/components/inputFields";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-
+import React, { useEffect, useState } from "react";
 type Props = {
   values: Record<string, string>;
   errors?: Record<string, string>;
@@ -10,10 +10,33 @@ type Props = {
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   setFieldValue: (field: string, value: string) => void;
 };
-
 export default function WarehouseLocationInfo({ values, errors, touched, handleChange, setFieldValue }: Props) {
-  const { regionOptions, loading, areaOptions } = useAllDropdownListData();
 
+
+  const { regionOptions, loading, areaOptions, fetchAreaOptions } = useAllDropdownListData();
+  const [localAreaOptions, setLocalAreaOptions] = useState<{ value: string; label: string }[]>(areaOptions || []);
+  const [areaLoading, setAreaLoading] = useState(false);
+
+  useEffect(() => {
+    // When region changes, clear area dropdown and reset value instantly
+    setLocalAreaOptions([]);
+    setFieldValue("area_id", "");
+    if (values.region_id) {
+      setAreaLoading(true);
+      fetchAreaOptions(values.region_id)
+        .then(() => {
+          setAreaLoading(false);
+        })
+        .catch(() => {
+          setAreaLoading(false);
+        });
+    }
+  }, [values.region_id]);
+
+  // Keep localAreaOptions in sync with context areaOptions
+  useEffect(() => {
+    setLocalAreaOptions(areaOptions || []);
+  }, [areaOptions]);
   return (
     <>
       {/* Grid Layout */}
@@ -66,8 +89,9 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             name="area_id"
             value={values.area_id}
             onChange={handleChange}
-            options={loading ? [{ value: '', label: 'Loading...' }] : (areaOptions && areaOptions.length > 0 ? areaOptions : [{ value: '', label: 'No options available' }])}
+            options={areaLoading ? [{ value: '', label: 'Loading...' }] : (localAreaOptions.length > 0 ? localAreaOptions : [{ value: '', label: 'No options available' }])}
             error={errors?.area_id && touched?.area_id ? errors.area_id : false}
+            disabled={areaLoading || !values.region_id}
           />
           {errors?.area_id && touched?.area_id && (
             <span className="text-xs text-red-500 mt-1">{errors.area_id}</span>

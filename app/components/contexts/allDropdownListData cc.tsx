@@ -64,7 +64,7 @@ interface DropdownDataContextType {
   routeOptions: { value: string; label: string }[];
   warehouseOptions: { value: string; label: string }[];
   routeTypeOptions: { value: string; label: string }[];
-  areaOptions: { value: string; label: string }[];
+  areaOptions: { value: string; label: string,region_id: number; }[];
   companyCustomersOptions: { value: string; label: string }[];
   companyCustomersTypeOptions: { value: string; label: string }[];
   itemCategoryOptions: { value: string; label: string }[];
@@ -137,6 +137,7 @@ interface AreaItem {
   id?: number | string;
   area_code?: string;
   area_name?: string;
+  region_id?: number;
 }
 
 interface CustomerItem {
@@ -347,7 +348,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const areaOptions = (Array.isArray(areaListData) ? areaListData : []).map((c: AreaItem) => ({
     value: String(c.id ?? ''),
-    label: c.area_code && c.area_name ? `${c.area_code} - ${c.area_name}` : (c.area_name ?? '')
+    label: c.area_code && c.area_name ? `${c.area_code} - ${c.area_name}` : (c.area_name ?? ''),
+    region_id: Number(c.region_id ?? '')
   }));
 
   const companyCustomersOptions = (Array.isArray(companyCustomersData) ? companyCustomersData : []).map((c: CustomerItem) => ({

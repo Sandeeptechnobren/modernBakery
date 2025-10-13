@@ -505,9 +505,9 @@ export const routeType = async (params?: Params) => {
 
 
 
-export const getSubRegion = async () => {
+export const getSubRegion = async (params?:Params) => {
   try {
-    const res = await API.get("/api/master/area/areadropdown");
+    const res = await API.get("/api/master/area/areadropdown",{params:params});
 
     return res.data;
   } catch (error: unknown) {

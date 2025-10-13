@@ -51,7 +51,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
             className={`border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px] w-full ${errors?.owner_number && touched?.owner_number ? 'border-red-500' : ''}`}
           />
         </div>
-        {errors?.owner_number && touched?.owner_number && (
+         {errors?.owner_number && touched?.owner_number && (
           <span className="text-xs text-red-500 mt-1">{errors.owner_number}</span>
         )}
       </div>

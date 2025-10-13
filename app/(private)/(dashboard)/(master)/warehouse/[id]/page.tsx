@@ -83,9 +83,10 @@ export default function AddEditWarehouse() {
         agent_type: Yup.string().required('Agent Type is required'),
         warehouse_manager: Yup.string().required('Warehouse Manager is required'),
         owner_number: Yup.string()
+        .required('Warehouse Manager Contact is required')
             .matches(/^[\d]+$/, 'Contact must be numeric')
             .min(7, 'Contact must be at least 7 digits'),
-        owner_email: Yup.string().email('Invalid email format'),
+        owner_email: Yup.string().required("Email is required").email('Invalid email format'),
         warehouse_manager_contact: Yup.string()
             .required('Warehouse Manager Contact is required')
             .matches(/^[\d]+$/, 'Contact must be numeric')

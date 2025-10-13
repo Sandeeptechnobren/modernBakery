@@ -7,7 +7,7 @@ type Option = {
 };
 
 type Props = {
-  label: string;
+  label?: string;
   name?: string;
   value?: string | string[];
   onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void;
@@ -30,6 +30,7 @@ type Props = {
   textareaResize?: boolean;
   leadingElement?: React.ReactNode;
   trailingElement?: React.ReactNode;
+  showBorder?: boolean;
 };
 
 export default function InputFields({
@@ -53,7 +54,8 @@ export default function InputFields({
   textareaRows = 3,
   textareaResize = true,
   leadingElement,
-  trailingElement
+  trailingElement,
+  showBorder = true
 }: Props) {
 
   const [dropdownProperties, setDropdownProperties] = useState({
@@ -149,13 +151,13 @@ useEffect(() => {
 
   return (
     <div className={`flex flex-col gap-2 w-full ${width}`}>
-      <label
+      {label && <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
       >
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+      </label>}
 
       {type === "radio" && options && options.length > 0 ? (
         <div className="flex-wrap flex gap-4 mt-3">
@@ -179,7 +181,7 @@ useEffect(() => {
       ) : isMulti ? (
         <div className="relative" ref={dropdownRef}>
           <div
-            className={`border h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
+            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
             onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
           >
             {isSearchable ? (
