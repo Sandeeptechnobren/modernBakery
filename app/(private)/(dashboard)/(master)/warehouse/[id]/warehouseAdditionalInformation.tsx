@@ -50,7 +50,6 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
             </div>
             <div>
                 <InputFields
-                    required
                     label="P12 File"
                     name="p12_file"
                     type="file"
