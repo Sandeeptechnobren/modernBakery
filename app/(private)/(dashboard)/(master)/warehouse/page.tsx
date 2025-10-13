@@ -67,7 +67,7 @@ const columns = [
   { key: "owner_number", label: "Owner Contact No.", render: (row: WarehouseRow) => row.owner_number || "-" },
   { key: "owner_email", label: "Owner Email", render: (row: WarehouseRow) => row.owner_email || "-" },
   { key: "location", label: "Warehouse Location", render: (row: WarehouseRow) => row.location || "-" },
-  { key: "company_customer_id", label: "Customer", render: (row: WarehouseRow) => row.get_company_customer?.owner_name || "-" },
+  { key: "get_company_customer", label: "Customer", render: (row: WarehouseRow) => row.get_company_customer?.owner_name || "-" },
   { key: "warehouse_manager", label: "Warehouse Manager", render: (row: WarehouseRow) => row.warehouse_manager || "-" },
   { key: "warehouse_manager_contact", label: "Warehouse Manager Contact", render: (row: WarehouseRow) => row.warehouse_manager_contact || "-" },
   {
@@ -90,12 +90,12 @@ const columns = [
   // { key: "region_id", label: "Region"},
   {
     label: 'Region',
-    key: 'region_id',
+    key: 'region',
     render: (row: WarehouseRow) => row.region?.region_name || '-',
   },
   {
     label: 'Sub Region',
-    key: 'area_name',
+    key: 'area',
     render: (row: WarehouseRow) => row.area?.area_name || '-',
   },
   // { key: "sub_region_id", label: "Sub Region"},
@@ -194,8 +194,8 @@ export default function Warehouse() {
                  try {
                    setLoading(true);
                      const listRes = await getWarehouse({
-                         limit: pageSize.toString(),
-                         page: page.toString(),
+                        //  limit: pageSize.toString(),
+                        //  page: page.toString(),
                      });
                      setLoading(false);
                      return {

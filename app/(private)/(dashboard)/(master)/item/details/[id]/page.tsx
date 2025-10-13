@@ -6,22 +6,40 @@ import { useEffect, useState } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import Image from "next/image";
-
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import StatusBtn from "@/app/components/statusBtn2";
 import { itemById } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
 import Overview from "./overview/page";
 import Uom from "./uom/page";
+import Sales from "./sales/page";
+import Return from "./retuen/page";
 
 interface Item {
-  id?: string | number;
+  id?: number;
+  erp_code?: string;
   item_code?: string;
-  image?: string | null;
   name?: string;
-  status?: string | number;
+  description?: string;
+  brand?: string;
+  image?: string;
+  shelf_life?: string;
+  commodity_goods_code?: string;
+  excise_duty_code?: string;
+  status?: number;
+  is_taxable?: boolean;
+  has_excies?: boolean;
+  item_weight?: string;
+  volume?: number;
+  category?: {
+    id?: number;
+    name?: string;
+    code?: string;
+  };
+  itemSubCategory?: {
+    id?: number;
+    name?: string;
+    code?: string;
+  };
 }
 
 export const tabs = [
@@ -34,6 +52,16 @@ export const tabs = [
     name: "UOM",
     url: "uom",
     component: <Uom />,
+  },
+  {
+    name: "Sales",
+    url: "sales",
+    component: <Sales />,
+  },
+  {
+    name: "Return",
+    url: "return",
+    component: <Return />,
   },
 ];
 
@@ -51,7 +79,7 @@ export default function Page() {
   };
 
   const title = "Products Details";
-  const backBtnUrl = "/dashboard/master/item";
+  const backBtnUrl = "/item";
 
   useEffect(() => {
     if (!id) return;
@@ -97,39 +125,14 @@ export default function Page() {
         </Link>
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
-      {/* Image */}
-      <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
-        {/* profile details */}
-        <div className="flex flex-col sm:flex-row items-center gap-[20px]">
-          <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
-            <Image
-              src={ "/logo.png"}
-              alt="Product Image"
-              width={150}
-              height={150}
-              className="h-[50px] w-[50px] object-cover rounded-full border border-[#E4E4E4] bg-[#E9EAEB]"
-            />
-          </div>
-          <div className="text-center sm:text-left">
-            <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-              {item?.item_code || "-"} - {item?.name || "-"}
-            </h2>
-            <span className="flex items-center">
-              <span className="text-[#414651] text-[16px]">
-                <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
-                  <StatusBtn
-                    isActive={
-                      item?.status == 1 || item?.status === "1" ? true : false
-                    }
-                  />
-                </span>
-              </span>
-            </span>
-          </div>
-        </div>
-      </ContainerCard>
+     <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
+       
+        
 
-      {/* Tabs */}
+        {/* Right Section */}
+        <div className="w-full flex flex-col gap-y-[15px]">
+
+          {/* Tabs */}
       <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
         {tabs.map((tab, index) => (
           <div key={index}>
@@ -141,6 +144,10 @@ export default function Page() {
           </div>
         ))}
       </ContainerCard>
+        </div>
+      </div>
+
+      
 
       {/* Tab Content */}
       <div>

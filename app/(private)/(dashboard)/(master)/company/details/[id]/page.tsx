@@ -46,12 +46,10 @@ export default function Page() {
   const { showSnackbar } = useSnackbar()
   const onTabClick = (index: number) => {
     setActiveTab(index);
-    // Optionally, if you want route update:
-    // router.replace(`/dashboard/master/company/details/${id}/${tabs[index].url}`);
   };
 
   const title = "Company Details";
-  const backBtnUrl = "/dashboard/master/company";
+  const backBtnUrl = "/company";
 
   useEffect(() => {
     if (!id) return;
