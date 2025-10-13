@@ -167,7 +167,7 @@ export default function RouteType() {
                   href="/settings/routetype/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Route Type"
+                  label="Add"
                   labelTw="hidden xl:block"
                 />,
               ],
@@ -181,7 +181,7 @@ export default function RouteType() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/settings/routetype/${row.id}`);
+                  router.push(`/settings/routetype/${row.id}`);
                 },
               },
             ],

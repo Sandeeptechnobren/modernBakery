@@ -178,7 +178,7 @@ export default function UserType() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/settings/user-types/${row.id}`);
+                  router.push(`/settings/user-types/${row.id}`);
                 },
               },
             ],
