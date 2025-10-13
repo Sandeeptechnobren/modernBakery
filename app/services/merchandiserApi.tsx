@@ -132,13 +132,34 @@ export const deleteShelves = async (id: string) => {
 };
 
 
+// export const complaintFeedbackList = async (params?: Params) => {
+//   try {
+//     const res = await API.get("/api/merchendisher/complaint-feedback/list", { params });
+//     return res.data;
+//     console.log(res)
+//   } catch (error: unknown) {
+//     return handleError(error);
+
+//   }
+// };
 export const complaintFeedbackList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/merchendisher_web/complaint-feedback/list", { params });
-    return res.data;
-    console.log(res)
+    const res = await API.get("/api/merchendisher/complaint-feedback/list", { params });
+    // console.log("Complaint Feedback API Response:", res.data); // <-- log here
+    return res.data; // res.data should have: { data: [...], pagination: {...} }
   } catch (error: unknown) {
     return handleError(error);
+  }
+};
 
+
+
+export const complaintFeedbackByUUID = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/merchendisher/complaint-feedback/show/${uuid}`, { params });
+    return { data: res.data, error: false };
+  } catch (error: unknown) {
+    const handledError = handleError(error);
+    return { data: handledError, error: true };
   }
 };

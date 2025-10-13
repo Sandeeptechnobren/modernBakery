@@ -7,7 +7,7 @@ type Option = {
 };
 
 type Props = {
-  label: string;
+  label?: string;
   name?: string;
   value?: string | string[];
   onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void;
@@ -15,7 +15,7 @@ type Props = {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
   options?: Option[];
-  type?: "text" | "select" | "file" | "date" | "radio" | "number";
+  type?: "text" | "select" | "file" | "date" | "radio" | "number" | "textarea";
   id?: string;
   width?: string;
   error?: string | false;
@@ -24,6 +24,13 @@ type Props = {
   required?: boolean;
   loading?: boolean; 
   searchable?: boolean | string;
+  placeholder?: string;
+  textareaCols?: number;
+  textareaRows?: number;
+  textareaResize?: boolean;
+  leadingElement?: React.ReactNode;
+  trailingElement?: React.ReactNode;
+  showBorder?: boolean;
 };
 
 export default function InputFields({
@@ -40,8 +47,15 @@ export default function InputFields({
   onBlur,
   isSingle = true,
   required = false,
-  loading = false
-  , searchable = false
+  loading = false,
+  searchable = false,
+  placeholder,
+  textareaCols = 3,
+  textareaRows = 3,
+  textareaResize = true,
+  leadingElement,
+  trailingElement,
+  showBorder = true
 }: Props) {
 
   const [dropdownProperties, setDropdownProperties] = useState({
@@ -137,13 +151,13 @@ useEffect(() => {
 
   return (
     <div className={`flex flex-col gap-2 w-full ${width}`}>
-      <label
+      {label && <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
       >
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+      </label>}
 
       {type === "radio" && options && options.length > 0 ? (
         <div className="flex-wrap flex gap-4 mt-3">
@@ -167,7 +181,7 @@ useEffect(() => {
       ) : isMulti ? (
         <div className="relative" ref={dropdownRef}>
           <div
-            className={`border h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
+            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
             onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
           >
             {isSearchable ? (
@@ -368,7 +382,7 @@ useEffect(() => {
                   />
                 </div>
               )}
-              <div className="max-h-80 overflow-auto">
+              <div>
                 {filteredOptions.length === 0 ? (
                   <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
                 ) : filteredOptions.map((opt, idx) => (
@@ -400,18 +414,34 @@ useEffect(() => {
             }`}
         />
       ) : type === "text" ? (
-        <input
-          id={id ?? name}
-          name={name}
-          type="text"
-          value={value ?? ""}
-          onChange={safeOnChange}
-          disabled={disabled}
-          onBlur={onBlur}
-          autoComplete="off"
-          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
-          placeholder={`Enter ${label}`}
-        />
+        <div className="w-full relative">
+          <input
+            id={id ?? name}
+            name={name}
+            type="text"
+            value={value ?? ""}
+            onChange={safeOnChange}
+            disabled={disabled}
+            onBlur={onBlur}
+            autoComplete="off"
+            className={`box-border border h-[44px] w-full rounded-md ${leadingElement ? "pl-10" : "pl-3"} ${trailingElement ? "pr-10" : "pr-3"} mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+            placeholder={ placeholder || `Enter ${label}` }
+          />
+          {(leadingElement || trailingElement) && (
+            <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 pointer-events-none">
+              {leadingElement ? (
+                <div className="flex items-center pointer-events-auto h-full mt-[6px] p-2">
+                  {leadingElement}
+                </div>
+              ) : <div />} 
+              {trailingElement ? (
+                <div className="flex items-center pointer-events-auto h-full mt-[6px] p-2">
+                  {trailingElement}
+                </div>
+              ) : <div />}
+            </div>
+          )}
+        </div>
       ) : type === "date" ? (
         <input
           id={id ?? name}
@@ -435,6 +465,19 @@ useEffect(() => {
           onBlur={onBlur}
           className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
           placeholder={`Enter ${label}`}
+        />
+      ): type === "textarea" ? (
+        <textarea
+          id={id ?? name}
+          name={name}
+          value={value ?? ""}
+          onChange={safeOnChange}
+          disabled={disabled}
+          className={`border w-full rounded-md px-[14px] py-[10px] mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+          placeholder={placeholder || `Enter ${label}`}
+          cols={textareaCols}
+          rows={textareaRows}
+          style={textareaResize === false ? { resize: 'none' } : {}}
         />
       ): null}
     </div>

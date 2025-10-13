@@ -1,6 +1,6 @@
 export default function CustomSecurityCode({label, value, onChange,placeholder}: {label: string; value: string; placeholder:string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}) {
     return (
-        <div>
+        <div className="max-w-[406px]">
             <label htmlFor="Code" className=" text-gray-700  font-medium ">
                 {label}
             </label>

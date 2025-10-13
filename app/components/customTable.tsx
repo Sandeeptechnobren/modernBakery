@@ -81,7 +81,7 @@ type configType = {
             maxHeight?: number | string;
             maxWidth?: number | string;
             render: (
-                data: TableDataType[], 
+                data: TableDataType[],
                 search?: (
                     search: string,
                     pageSize: number,
@@ -145,7 +145,11 @@ const defaultPageSize = 50;
 export default function Table({ refreshKey = 0, data, config }: TableProps) {
     return (
         <ContextProvider>
-            <TableContainer refreshKey={refreshKey} data={data} config={config} />
+            <TableContainer
+                refreshKey={refreshKey}
+                data={data}
+                config={config}
+            />
         </ContextProvider>
     );
 }
@@ -237,15 +241,20 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
 
     return (
         <>
-            {(config.header?.title || config.header?.wholeTableActions) && <div className="flex justify-between items-center mb-[20px] h-[34px]">
-                {config.header?.title && (
-                    <h1 className="text-[18px] font-semibold text-[#181D27]">
-                        {config.header.title}
-                    </h1>
-                )}
+            {(config.header?.title || config.header?.wholeTableActions) && (
+                <div className="flex justify-between items-center mb-[20px] h-[34px]">
+                    {config.header?.title && (
+                        <h1 className="text-[18px] font-semibold text-[#181D27]">
+                            {config.header.title}
+                        </h1>
+                    )}
 
-                {selectedRow.length > 0 && config.header?.wholeTableActions?.map((action) => action)}
-            </div>}
+                    {selectedRow.length > 0 &&
+                        config.header?.wholeTableActions?.map(
+                            (action) => action
+                        )}
+                </div>
+            )}
             <div className="flex flex-col bg-white w-full border-[1px] border-[#E9EAEB] rounded-[8px] overflow-hidden">
                 <TableHeader />
                 <TableBody />
@@ -260,13 +269,14 @@ function TableHeader() {
     const { setTableDetails } = useContext(TableDetails);
     const [searchBarValue, setSearchBarValue] = useState("");
 
-    async function handleSearch(){
-        if(!config.api?.search) return;
+    async function handleSearch() {
+        if (!config.api?.search) return;
         const result = await config.api.search(
             searchBarValue,
             config.pageSize || defaultPageSize
         );
-        const resolvedResult = result instanceof Promise ? await result : result;
+        const resolvedResult =
+            result instanceof Promise ? await result : result;
         const { data, pageSize } = resolvedResult;
         setTableDetails({
             data,
@@ -278,8 +288,8 @@ function TableHeader() {
 
     return (
         <>
-            <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-[8px]">
-                {config.header && (
+            {config.header && (
+                <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-[8px]">
                     <>
                         <div className="w-[320px] invisible sm:visible">
                             {config.header?.searchBar && (
@@ -300,8 +310,8 @@ function TableHeader() {
                             {config.header?.columnFilter && <ColumnFilter />}
                         </div>
                     </>
-                )}
-            </div>
+                </div>
+            )}
         </>
     );
 }
@@ -335,7 +345,10 @@ function ColumnFilter() {
             }
         } catch (err) {
             // ignore parse errors
-            console.warn("Failed to read selected columns from localStorage", err);
+            console.warn(
+                "Failed to read selected columns from localStorage",
+                err
+            );
         }
     }, [config?.localStorageKey, columns, setSelectedColumns]);
 
@@ -349,7 +362,10 @@ function ColumnFilter() {
             );
         } catch (err) {
             // ignore write errors
-            console.warn("Failed to save selected columns to localStorage", err);
+            console.warn(
+                "Failed to save selected columns to localStorage",
+                err
+            );
         }
     }, [selectedColumns, config?.localStorageKey]);
 
@@ -496,7 +512,19 @@ function TableBody() {
 
     return (
         <>
-            <div className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent" style={displayedData.length > 0 ? { height: config.table?.height, maxHeight: config.table?.maxHeight, width: config.table?.width, maxWidth: config.table?.maxWidth } : undefined}>
+            <div
+                className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent"
+                style={
+                    displayedData.length > 0
+                        ? {
+                              height: config.table?.height,
+                              maxHeight: config.table?.maxHeight,
+                              width: config.table?.width,
+                              maxWidth: config.table?.maxWidth,
+                          }
+                        : undefined
+                }
+            >
                 <table className="table-auto min-w-max w-full">
                     <thead className="text-[12px] bg-[#FAFAFA] text-[#535862] sticky top-0 z-20">
                         <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
@@ -521,14 +549,34 @@ function TableBody() {
                                     return (
                                         selectedColumns.includes(index) && (
                                             <th
-                                                className={`w-[${col.width}px] ${col.sticky === "left" ? 'sticky left-0' : ''} ${col.sticky === "right" ? 'sticky right-0' : ''} ${col.sticky === "center" ? 'sticky' : ''} px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap`}
+                                                className={`w-[${
+                                                    col.width
+                                                }px] ${
+                                                    col.sticky === "left"
+                                                        ? "sticky left-0"
+                                                        : ""
+                                                } ${
+                                                    col.sticky === "right"
+                                                        ? "sticky right-0"
+                                                        : ""
+                                                } ${
+                                                    col.sticky === "center"
+                                                        ? "sticky"
+                                                        : ""
+                                                } px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap`}
                                                 key={index}
                                             >
                                                 <div className="flex items-center gap-[4px] capitalize">
                                                     {col.label}{" "}
-                                                    <FilterTableHeader column={col.key} dimensions={col.filter!}>
-                                                        {col.filter?.render(tableData, api?.search)}
-                                                    </FilterTableHeader>
+                                                    { col.filter && <FilterTableHeader
+                                                        column={col.key}
+                                                        dimensions={col.filter}
+                                                    >
+                                                        {col.filter?.render(
+                                                            tableData,
+                                                            api?.search
+                                                        )}
+                                                    </FilterTableHeader>}
                                                     {col.isSortable && (
                                                         <Icon
                                                             className="cursor-pointer"
@@ -556,15 +604,16 @@ function TableBody() {
 
                             {/* actions */}
                             {rowActions && selectedColumns.length > 0 && (
-                                <th  className="
+                                <th
+                                    className="
                                 sm:sticky right-0 z-[10]
                                 px-[24px] py-[12px] font-[500] text-left
                                 border-[#E9EAEB]
                                 bg-[#FAFAFA] whitespace-nowrap
                                 before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]
                                 "
-                                //  className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]"
-                                 >
+                                    //  className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]"
+                                >
                                     <div className="flex items-center gap-[4px] whitespace-nowrap">
                                         Actions
                                     </div>
@@ -606,11 +655,23 @@ function TableBody() {
                                             index
                                         ) => {
                                             return (
-                                                selectedColumns.includes(index) && (
+                                                selectedColumns.includes(
+                                                    index
+                                                ) && (
                                                     <td
                                                         key={index}
                                                         width={col.width}
-                                                        className={`px-[24px] py-[12px] ${col.sticky === "left" ? 'sticky left-0 bg-white' : ''} ${col.sticky === "right" ? 'sticky right-0 bg-white' : ''}`}
+                                                        className={`px-[24px] py-[12px] ${
+                                                            col.sticky ===
+                                                            "left"
+                                                                ? "sticky left-0 bg-white"
+                                                                : ""
+                                                        } ${
+                                                            col.sticky ===
+                                                            "right"
+                                                                ? "sticky right-0 bg-white"
+                                                                : ""
+                                                        }`}
                                                     >
                                                         {col.render ? (
                                                             col.render(row)
@@ -625,34 +686,44 @@ function TableBody() {
                                         }
                                     )}
 
-                                        {rowActions && selectedColumns.length > 0 && (
-                                        <td
-                                            className="
+                                    {rowActions &&
+                                        selectedColumns.length > 0 && (
+                                            <td
+                                                className="
                                             sm:sticky right-0 z-[10]
                                             px-[2px] py-[12px]
                                             border-[#E9EAEB]
                                             bg-white whitespace-nowrap
                                             before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]
                                             "
-                                        >
-                                            <div className="flex items-center gap-[4px]">
-                                            {rowActions.map((action, index) => (
-                                                <Icon
-                                                key={index}
-                                                icon={action.icon}
-                                                width={20}
-                                                className="
+                                            >
+                                                <div className="flex items-center gap-[4px]">
+                                                    {rowActions.map(
+                                                        (action, index) => (
+                                                            <Icon
+                                                                key={index}
+                                                                icon={
+                                                                    action.icon
+                                                                }
+                                                                width={20}
+                                                                className="
                                                     p-[10px] cursor-pointer
                                                     text-[#5E5E5E]
                                                     transition-all duration-200 ease-in-out
                                                     hover:text-[#EA0A2A]
                                                     hover:scale-110
                                                 "
-                                                onClick={() => action.onClick && action.onClick(row)}
-                                                />
-                                            ))}
-                                            </div>
-                                        </td>
+                                                                onClick={() =>
+                                                                    action.onClick &&
+                                                                    action.onClick(
+                                                                        row
+                                                                    )
+                                                                }
+                                                            />
+                                                        )
+                                                    )}
+                                                </div>
+                                            </td>
                                         )}
                                 </tr>
                             ))}
@@ -668,20 +739,34 @@ function TableBody() {
     );
 }
 
-function FilterTableHeader({ column, dimensions, children }: { column: string; dimensions: { width?: number|string; height?: number|string; maxWidth?: number|string; maxHeight?: number|string;}; children: React.ReactNode }) {
+function FilterTableHeader({
+    column,
+    dimensions,
+    children,
+}: {
+    column: string;
+    dimensions: {
+        width?: number | string;
+        height?: number | string;
+        maxWidth?: number | string;
+        maxHeight?: number | string;
+    };
+    children: React.ReactNode;
+}) {
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
     const { config } = useContext(Config);
     const { setTableDetails } = useContext(TableDetails);
     const [searchBarValue, setSearchBarValue] = useState("");
 
-    async function handleSearch(){
-        if(!config.api?.search) return;
+    async function handleSearch() {
+        if (!config.api?.search) return;
         const result = await config.api.search(
             searchBarValue,
             config.pageSize || defaultPageSize,
             column
         );
-        const resolvedResult = result instanceof Promise ? await result : result;
+        const resolvedResult =
+            result instanceof Promise ? await result : result;
         const { data, pageSize } = resolvedResult;
         setTableDetails({
             data,
@@ -701,7 +786,16 @@ function FilterTableHeader({ column, dimensions, children }: { column: string; d
                     onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                 />
             }
-            dropdown={<FilterDropdown dimensions={dimensions} searchBarValue={searchBarValue} setSearchBarValue={setSearchBarValue} onEnterPress={handleSearch}>{children}</FilterDropdown>}
+            dropdown={
+                <FilterDropdown
+                    dimensions={dimensions}
+                    searchBarValue={searchBarValue}
+                    setSearchBarValue={setSearchBarValue}
+                    onEnterPress={handleSearch}
+                >
+                    {children}
+                </FilterDropdown>
+            }
         />
     );
 }

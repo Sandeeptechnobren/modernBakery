@@ -505,9 +505,9 @@ export const routeType = async (params?: Params) => {
 
 
 
-export const getSubRegion = async () => {
+export const getSubRegion = async (params?:Params) => {
   try {
-    const res = await API.get("/api/master/area/areadropdown");
+    const res = await API.get("/api/master/area/areadropdown",{params:params});
 
     return res.data;
   } catch (error: unknown) {
@@ -746,7 +746,6 @@ export const customerTypeList = async (params?: Record<string, string>) => {
 export const getCustomerType = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/customer-type/list`, { params :params});
-    console.log(res)
     return res.data;
   } catch (error) {
     console.error("Get Customer Type by ID failed ❌", error);

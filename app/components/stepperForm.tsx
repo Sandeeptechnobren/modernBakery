@@ -23,6 +23,7 @@ interface StepperFormProps {
   onNext?: () => void;
   onSubmit?: () => void;
   backButtonText?: string;
+  cancelButtonText?: string;
   nextButtonText?: string;
   submitButtonText?: string;
   className?: string;
@@ -40,6 +41,7 @@ export default function StepperForm({
   onNext,
   onSubmit,
   backButtonText = "Go Back",
+  cancelButtonText = "Cancel",
   nextButtonText = "Save & Next",
   submitButtonText = "Submit",
   className = "",
@@ -128,15 +130,13 @@ export default function StepperForm({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row justify-end gap-3 w-full px-2 sm:px-0">
-        {showBackButton && currentStep > 1 && (
-          <button
-            onClick={onBack}
-            className="px-4 py-2 h-10 rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors w-full sm:w-auto"
-            type="button"
-          >
-            {backButtonText}
-          </button>
-        )}
+        <button
+          onClick={onBack}
+          className="px-4 py-2 h-10 rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors w-full sm:w-auto"
+          type="button"
+        >
+          { currentStep === 1 ? cancelButtonText : backButtonText}
+        </button>
 
         {showNextButton && !isLastStep && (
           <div className="w-full sm:w-auto">
