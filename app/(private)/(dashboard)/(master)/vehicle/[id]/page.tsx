@@ -413,10 +413,10 @@ export default function AddEditVehicleWithStepper() {
                   name="vehicleType"
                   error={touched.vehicleType && errors.vehicleType}
                   options={[
-                    { value: "1", label: "Truck" },
-                    { value: "2", label: "Van" },
-                    { value: "3", label: "Bike" },
-                    { value: "4", label: "Tuktuk" },
+                    { value: "truck", label: "Truck" },
+                    { value: "van", label: "Van" },
+                    { value: "bike", label: "Bike" },
+                    { value: "tuktuk", label: "Tuktuk" },
                   ]}
                 />
                 {touched.vehicleType && errors.vehicleType && (

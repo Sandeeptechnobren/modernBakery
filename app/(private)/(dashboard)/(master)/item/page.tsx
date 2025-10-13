@@ -1,24 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Icon } from "@iconify-icon/react";
-import { useRouter } from "next/navigation";
-import StatusBtn from "@/app/components/statusBtn2";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, {
-    listReturnType,
-    TableDataType as ImportedTableDataType,
-} from "@/app/components/customTable";
+import Table, { listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import {
-    itemList,
-    deleteItem,
-} from "@/app/services/allApi";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import StatusBtn from "@/app/components/statusBtn2";
+import { deleteItem, itemList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { Icon } from "@iconify-icon/react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 interface DropdownItem {
     icon: string;
@@ -27,196 +21,128 @@ interface DropdownItem {
 }
 
 interface LocalTableDataType {
-    [key: string]: string | number | object | null | undefined;
-    category?: { name?: string } | string | null;
-    itemSubCategory?: { name?: string } | string | null;
+    id?: number | string;
+    erp_code?: string;
+    name?: string;
+    category?: { name?: string };
+    uom?: Array<{ name?: string; uom_type?: string; price?: string }>;
+    status?: number | string;
 }
 
 const dropdownDataList: DropdownItem[] = [
-    // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-    // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-    // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 const columns = [
-    { 
-        key: "code", 
-        label: "Item Code",
-        render: (row: LocalTableDataType) => {
-            const value = row.code;
-            let displayValue: string | number = "-";
-            if (typeof value === "string" || typeof value === "number") {
-                displayValue = value;
-            }
-            return (
-                <span className="font-semibold text-[#181D27] text-[14px]">
-                    {displayValue}
-                </span>
-            );
-        }
-    },
-    { 
-        key: "sap_id", 
-        label: "SAP Id", 
-        render: (row: LocalTableDataType) => {
-            const value = row.sap_id;
-            let displayValue: string | number = "-";
-            if (typeof value === "string" || typeof value === "number") {
-                displayValue = value;
-            }
-            return (
-                <span className="font-semibold text-[#181D27] text-[14px]">
-                    {displayValue}
-                </span>
-            );
-        } 
-    },
-    { key: "name", label: "Item Name" },
-    { key: "description", label: "Description" },
-    { key: "community_code", label: "Community Code" },
-    { key: "excise_code", label: "Excise Code" },
     {
-  key: "category",
-  label: "Item Category",
-  render: (data: LocalTableDataType) => {
-    if (data.category && typeof data.category === "object") {
-      return (data.category as { name?: string })?.name || "-";
-    }
-    return typeof data.category === "string" ? data.category : "-";
-  },
-},
-{
-  key: "itemSubCategory",
-  label: "Item Sub Category",
-  render: (data: LocalTableDataType) => {
-    if (data.itemSubCategory && typeof data.itemSubCategory === "object") {
-      return (data.itemSubCategory as { name?: string })?.name || "-";
-    }
-    return typeof data.itemSubCategory === "string"
-      ? data.itemSubCategory
-      : "-";
-  },
-},
-
-        { 
-            key: "uom", 
-            label: "UOM",
-            render: (data: LocalTableDataType) => {
-                const uomMap: Record<string, string> = {
-                    "1": "BAG",
-                    "2": "PKT",
-                    "3": "BOX",
-                    "4": "POUCH",
-                    "5": "PCH",
-                    "6": "TIN",
-                    "7": "NUM",
-                    "8": "CTN",
-                    "9": "BOT"
-                };
-                const value = data.uom !== undefined && data.uom !== null ? data.uom.toString() : "";
-                return value && uomMap[value] ? uomMap[value] : value || "-";
-            }
+        key: "erp_code",
+        label: "ERP COde",
+        render: (row: LocalTableDataType) => row.erp_code || "-",
+    },
+    { key: "name", label: "Name" },
+    {
+        key: "category",
+        label: "Category",
+        render: (row: LocalTableDataType) =>
+            row.category?.name || "-",
+    },
+    {
+        key: "uom",
+        label: "Base UOM",
+        render: (row: LocalTableDataType) => {
+            if (!row.uom || row.uom.length === 0) return "-";
+            // Show only the UOM names
+            return row.uom[0]?.name ?? "-"
         },
-    { key: "upc", label: "UPC" },
-    { key: "vat", label: "Vat" },
-    { key: "excies", label: "Excise" },
-    { key: "shelf_life", label: "Shelf Life" },
+    },
+    {
+        key: "uom",
+        label: "Base UOM Price",
+        render: (row: LocalTableDataType) => {
+            if (!row.uom || row.uom.length === 0) return "-";
+            // Show only the UOM names
+            return row.uom[1]?.price ?? "-"
+        },
+    },
+    {
+        key: "uom",
+        label: "Secondary UOM",
+        render: (row: LocalTableDataType) => {
+            if (!row.uom || row.uom.length === 0) return "-";
+            console.log(row.uom)
+            // Show only the UOM names
+            return row.uom[2]?.name ?? "-"
+        },
+    },
+    {
+        key: "uom",
+        label: "Secondary Price UOM",
+        render: (row: LocalTableDataType) => {
+            if (!row.uom || row.uom.length === 0) return "-";
+            console.log(row.uom)
+            // Show only the UOM names
+            return row.uom[3]?.price ?? "-"
+        },
+    },
+
     {
         key: "status",
         label: "Status",
         render: (row: LocalTableDataType) => {
-            // Treat status 1 or 'active' (case-insensitive) as active
-            const isActive = String(row.status) === "1" || (typeof row.status === "string" && row.status.toLowerCase() === "active");
+            const isActive =
+                String(row.status) === "1" ||
+                (typeof row.status === "string" &&
+                    row.status.toLowerCase() === "active");
             return <StatusBtn isActive={isActive} />;
         },
     },
 ];
 
 export default function Item() {
-    interface Item {
-        id?: number | string;
-        country_code?: string;
-        country_name?: string;
-        currency?: string;
-    }
-
     const { setLoading } = useLoading();
-    const [showDropdown, setShowDropdown] = useState<boolean>(false);
+    const [showDropdown, setShowDropdown] = useState(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<Item | null>(null);
+    const [selectedRow, setSelectedRow] = useState<LocalTableDataType | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
-    const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
-    type TableRow = LocalTableDataType & { id?: string };
+    const { showSnackbar } = useSnackbar();
 
     const fetchItems = useCallback(
-        async (
-            page: number = 1,
-            pageSize: number = 5
-        ): Promise<listReturnType> => {
+        async (page: number = 1, pageSize: number = 50): Promise<listReturnType> => {
             try {
-              setLoading(true);
-                const listRes = await itemList({
-                    // limit: pageSize.toString(),
-                    page: page.toString(),
-                });
+                setLoading(true);
+                const res = await itemList({ page: page.toString() });
                 setLoading(false);
+                const data = res.data.map((item: LocalTableDataType) => ({
+                    ...item,
+                }));
                 return {
-                    data: listRes.data || [],
-                    total: listRes.pagination.totalPages ,
-                    currentPage: listRes.pagination.page ,
-                    pageSize: listRes.pagination.limit ,
+                    data,
+                    total: res.pagination.totalPages,
+                    currentPage: res.pagination.page,
+                    pageSize: res.pagination.limit,
                 };
-            } catch (error: unknown) {
-                console.error("API Error:", error);
+            } catch (error) {
                 setLoading(false);
+                console.error(error);
                 throw error;
             }
         },
         []
     );
 
-    // const searchCountries = useCallback(
-    //     async (
-    //         searchQuery: string,
-    //         pageSize: number
-    //     ): Promise<searchReturnType> => {
-    //         setLoading(true);
-    //         const result = await countryListGlobalSearch({
-    //             query: searchQuery,
-    //             per_page: pageSize.toString(),
-    //         });
-    //         setLoading(false);
-    //         if (result.error) throw new Error(result.data.message);
-    //         else {
-    //             return {
-    //                 data: result.data || [],
-    //                 total: result.pagination.pagination.totalPages || 0,
-    //                 currentPage: result.pagination.pagination.current_page || 0,
-    //                 pageSize: result.pagination.pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     []
-    // );
-
     const handleConfirmDelete = async () => {
-        if (!selectedRow) return;
-
-        if (!selectedRow?.id) throw new Error("Missing id");
+        if (!selectedRow?.id) return;
+        setLoading(true);
         const res = await deleteItem(String(selectedRow.id));
-        if (res.error)
-            return showSnackbar(
-                res.data.message || "Failed to delete Item",
-                "error"
-            );
-        else {
-            showSnackbar("Item deleted successfully ", "success");
+        setLoading(false);
+        if (res.error) {
+            showSnackbar(res.data.message || "Failed to delete Item", "error");
+        } else {
+            showSnackbar("Item deleted successfully", "success");
             setRefreshKey(refreshKey + 1);
         }
-        setLoading(false);
         setShowDeletePopup(false);
         setSelectedRow(null);
     };
@@ -227,13 +153,11 @@ export default function Item() {
 
     return (
         <>
-            <div className="h-[calc(100%-60px)] pb-[22px]">
+            <div className="flex flex-col h-full">
                 <Table
                     refreshKey={refreshKey}
                     config={{
-                        api: {
-                            list: fetchItems,
-                        },
+                        api: { list: fetchItems },
                         header: {
                             title: "Item",
                             wholeTableActions: [
@@ -241,40 +165,30 @@ export default function Item() {
                                     <DismissibleDropdown
                                         isOpen={showDropdown}
                                         setIsOpen={setShowDropdown}
-                                        button={
-                                            <BorderIconButton icon="ic:sharp-more-vert" />
-                                        }
+                                        button={<BorderIconButton icon="ic:sharp-more-vert" />}
                                         dropdown={
                                             <div className="absolute top-[40px] right-0 z-30 w-[226px]">
                                                 <CustomDropdown>
-                                                    {dropdownDataList.map(
-                                                        (link, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                            >
-                                                                <Icon
-                                                                    icon={
-                                                                        link.icon
-                                                                    }
-                                                                    width={
-                                                                        link.iconWidth
-                                                                    }
-                                                                    className="text-[#717680]"
-                                                                />
-                                                                <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                    {
-                                                                        link.label
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    )}
+                                                    {dropdownDataList.map((link, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                                        >
+                                                            <Icon
+                                                                icon={link.icon}
+                                                                width={link.iconWidth}
+                                                                className="text-[#717680]"
+                                                            />
+                                                            <span className="text-[#181D27] font-[500] text-[16px]">
+                                                                {link.label}
+                                                            </span>
+                                                        </div>
+                                                    ))}
                                                 </CustomDropdown>
                                             </div>
                                         }
                                     />
-                                </div>
+                                </div>,
                             ],
                             searchBar: false,
                             columnFilter: true,
@@ -290,35 +204,25 @@ export default function Item() {
                             ],
                         },
                         localStorageKey: "item-table",
+                        table: {
+                            height: 500,
+                        },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
                         rowActions: [
                             {
-                icon: "lucide:eye",
-                onClick: (data: TableRow) => {
-                  router.push(`/item/details/${data.id}`);
-                },
-              },
+                                icon: "lucide:eye",
+                                onClick: (row: LocalTableDataType) =>
+                                    router.push(`/item/details/${row.id}`),
+                            },
                             {
                                 icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(
-                                        `/item/${row.id}`
-                                    );
-                                },
+                                onClick: (row: LocalTableDataType) =>
+                                    router.push(`/item/${row.id}`),
                             },
-                            // {
-                            //     icon: "lucide:trash-2",
-                            //     onClick: (data: object) => {
-                            //         const row = data as TableRow;
-                            //         setSelectedRow({ id: row.id });
-                            //         setShowDeletePopup(true);
-                            //     },
-                            // },
                         ],
-                        pageSize: 10,
+                        pageSize: 50,
                     }}
                 />
             </div>

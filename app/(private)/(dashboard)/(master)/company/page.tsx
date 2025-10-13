@@ -62,48 +62,13 @@ const dropdownDataList = [
 
 // 🔹 Table columns
 const columns = [
-    { key: "company_code", label: "Company Code", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.company_code}</div>);
-        }
-    } },
-    { key: "company_name", label: "Company Name", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.company_name}</div>);
-        }
-    } },
-    { key: "company_type", label: "Company Type", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={index} className="w-full text-left p-2">{item.company_type}</div>);
-        }
-    } },
-    { key: "email", label: "Email", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.email}</div>);
-        }
-    } },
-    { key: "website", label: "Website", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.website}</div>);
-        }
-    } },
-    { key: "toll_free_no", label: "Toll Free No", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.toll_free_no}</div>);
-        }
-    } },
-    { key: "primary_contact", label: "Primary Contact", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.primary_contact}</div>);
-        }
-    } },
+    { key: "company_code", label: "Company Code"},
+    { key: "company_name", label: "Company Name"},
+    { key: "company_type", label: "Company Type"},
+    { key: "email", label: "Email"},
+    { key: "website", label: "Website"},
+    { key: "toll_free_no", label: "Toll Free No"},
+    { key: "primary_contact", label: "Primary Contact"},
     {
         key: 'region_name',
         label: 'Region',
@@ -132,30 +97,10 @@ const columns = [
             return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.subregion_name}</div>);
         }
     } },
-    { key: "street", label: "Street", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.street}</div>);
-        }
-    } },
-    { key: "landmark", label: "Landmark", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.landmark}</div>);
-        }
-    } },
-    { key: "town", label: "Town", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.town}</div>);
-        }
-    } },
-    { key: "district", label: "District", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.district}</div>);
-        }
-    } },
+    { key: "street", label: "Street"},
+    { key: "landmark", label: "Landmark"},
+    { key: "town", label: "Town"},
+    { key: "district", label: "District"},
     {
         key: 'country_name',
         label: 'Country',
@@ -178,36 +123,11 @@ const columns = [
             return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.country_name}</div>);
         }
     } },
-    { key: "purchase_currency", label: "Purchase Currency", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.purchase_currency}</div>);
-        }
-    } },
-    { key: "selling_currency", label: "Selling Currency", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.selling_currency}</div>);
-        }
-    } },
-    { key: "vat", label: "VAT", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.vat}</div>);
-        }
-    } },
-    { key: "module_access", label: "Module Access", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.module_access}</div>);
-        }
-    } },
-    { key: "service_type", label: "Service Type", filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.service_type}</div>);
-        }
-    } },
+    { key: "purchase_currency", label: "Purchase Currency"},
+    { key: "selling_currency", label: "Selling Currency"},
+    { key: "vat", label: "VAT"},
+    { key: "module_access", label: "Module Access"},
+    { key: "service_type", label: "Service Type"},
     {
         key: "status",
         label: "Status",

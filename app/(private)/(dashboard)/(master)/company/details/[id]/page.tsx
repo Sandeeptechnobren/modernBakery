@@ -11,14 +11,17 @@ import Image from "next/image";
 import { getCompanyById } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
-import Address from "./address";
+import Address from "./address/page";
 import Overview from "./overview/page";
+import StatusBtn from "@/app/components/statusBtn2";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 
 interface Company {
   id?: string | number;
   company_code?: string;
   company_name?: string;
   logo?: string | null;
+  status?: string | number;
 }
 
 export const tabs = [
@@ -43,8 +46,6 @@ export default function Page() {
   const { showSnackbar } = useSnackbar()
   const onTabClick = (index: number) => {
     setActiveTab(index);
-    // Optionally, if you want route update:
-    // router.replace(`/company/details/${id}/${tabs[index].url}`);
   };
 
   const title = "Company Details";
@@ -94,40 +95,46 @@ export default function Page() {
         </Link>
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
-      <div className="flex items-center justify-between p-5 border border-gray-400 my-5 rounded-lg bg-white ">
-        {/* Left Section */}
-        <div className="flex items-center gap-4">
           {/* Image */}
-          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-sm text-gray-500">
-            <Image
-              src={company?.logo || "/logo.png"}
-              alt="Company Logo"
-              width={150}
-              height={150}
-              className="h-[150px] w-[150px] object-cover rounded-full border border-[#E4E4E4] bg-[#E9EAEB]"
-            />
-          </div>
-
-          {/* Owner Info */}
-          <div className="flex flex-col justify-center">
-            <h1 className="font-semibold text-lg text-gray-900">Dummy Data</h1>
-
-            <div className="flex items-center gap-2 mt-1">
-              <h1 className="text-sm text-gray-700 font-medium">Owner: Ayush</h1>
-              <button className="flex items-center gap-1 text-xs text-green-700 border border-green-400 px-2 py-0.5 rounded-full bg-green-50">
-                <span className="text-green-600">•</span> Active
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Section (Email Icon) */}
-        <button className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-lg transition-all duration-200 shadow-sm">
-          <Icon icon="lucide:mail" width={20} />
-          <span className="text-sm font-medium">Send Email</span>
-        </button>
-
-      </div>
+          <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
+                          {/* profile details */}
+                          <div className="flex flex-col sm:flex-row items-center gap-[20px]">
+                              <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
+                                  <Image
+                                        src={company?.logo || "/logo.png"}
+                                        alt="Company Logo"
+                                        width={150}
+                                        height={150}
+                                        className="h-[50px] w-[50px] object-cover rounded-full border border-[#E4E4E4] bg-[#E9EAEB]"
+                                      />
+                              </div>
+                              <div className="text-center sm:text-left">
+                                  <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
+                                      {company?.company_code || "-"} - {company?.company_name || "-"}
+                                  </h2>
+                                  <span className="flex items-center">
+                                      <span className="text-[#414651] text-[16px]">
+                                          <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
+                                             <StatusBtn
+                                                   isActive={
+                                                     company?.status == 1 || company?.status === "1" ? true : false
+                                                   }
+                                                 />
+                                          </span>
+                                      </span>
+                                  </span>
+                              </div>
+                          </div>
+          
+                          {/* contact button */}
+                          <SidebarBtn
+                              isActive={true}
+                              label="Send Email"
+                              labelTw="text-[16px] font-semibold mb-[4px] sm:hidden md:flex"
+                              leadingIcon="ic:outline-email"
+                              leadingIconSize={20}
+                          />
+                      </ContainerCard>
 
       {/* Tabs */}
       <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
@@ -143,9 +150,9 @@ export default function Page() {
       </ContainerCard>
 
       {/* Tab Content */}
-      <ContainerCard>
+      <div>
         {tabs[activeTab]?.component}
-      </ContainerCard>
+      </div>
     </>
   );
 }

@@ -1,18 +1,7 @@
 "use client";
 import ContainerCard from "@/app/components/containerCard";
 import React from "react";
-import { Pie, Bar } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-} from "chart.js";
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 interface CardProps {
   title: string;
@@ -88,7 +77,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card title="1. Do you like the taste of Riham Cola?">
           <div style={{ width: "200px", height: "200px" }}>
-            <Pie data={pieData1} options={pieOptions} />
+      
           </div>
         </Card>
 
@@ -103,13 +92,13 @@ export default function Dashboard() {
 
         <Card title="3. Getting promotions regularly?">
           <div style={{ width: "200px", height: "200px" }}>
-            <Pie data={pieData1} options={pieOptions} />
+           
           </div>
         </Card>
 
         <Card title="4. What products do you like the most?">
           <div style={{ width: "300px", height: "200px" }}>
-            <Bar data={barData} options={barOptions} />
+         
           </div>
         </Card>
 
@@ -125,7 +114,7 @@ export default function Dashboard() {
 
         <Card title="6. Which brand do you like?">
           <div style={{ width: "200px", height: "200px" }}>
-            <Pie data={pieData2} options={pieOptions} />
+            
           </div>
         </Card>
       </div>

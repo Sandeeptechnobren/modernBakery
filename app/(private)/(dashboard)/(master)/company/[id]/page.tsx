@@ -50,7 +50,6 @@ const CompanySchema = Yup.object().shape({
  website: Yup.string()
   .url("Invalid website URL")
   .required("Company website is required"),
-    company_logo: Yup.string().required("Company Logo is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
       region: Yup.string().required("Region is required"),
   country_id: Yup.string().required("Country is required"),
@@ -85,7 +84,6 @@ Yup.object({
   website: Yup.string()
     .url("Invalid website URL")
     .required("Company website is required"),
-  company_logo: Yup.string().required("Company Logo is required"),
 }),
 
   Yup.object({
@@ -360,12 +358,8 @@ export default function AddEditCompany() {
                 type="file"
                 value={values.company_logo}
                 onChange={(e) => setFieldValue("company_logo", e.target.value)}
-                error={touched.company_logo && errors.company_logo}
               />
-                 {errors.company_logo && (
-                <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
-              )}
-               </div>
+              </div>
               
           </div>
         </ContainerCard>

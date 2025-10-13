@@ -84,6 +84,13 @@ export const initialLinkData: SidebarDataType[] = [
             },
              {
                 isActive: false,
+                href: "/settings/warehouseStock",
+                label: "Warehouse Stock",
+                leadingIcon: "tabler:building-warehouse",
+                iconColor: "text-green-500",
+            },
+             {
+                isActive: false,
                 href: "#",
                 label: "Company",
                 leadingIcon: "fa-regular:building",

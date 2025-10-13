@@ -195,6 +195,8 @@ export default function Warehouse() {
                      const listRes = await getWarehouse({
                         //  limit: pageSize.toString(),
                         //  page: page.toString(),
+                        //  limit: pageSize.toString(),
+                        //  page: page.toString(),
                      });
                      setLoading(false);
                      return {
