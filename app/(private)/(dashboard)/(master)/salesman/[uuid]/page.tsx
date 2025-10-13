@@ -50,6 +50,8 @@ interface SalesmanFormValues {
   token_no: string;
   sap_id: string;
   is_login: string;
+  forceful_login: string;
+  is_block: string;
   status: string;
   email: string;
 }
@@ -122,6 +124,8 @@ export default function AddEditSalesman() {
     device_no: "",
     route_id: "",
     // salesman_role: "",
+    forceful_login: "0",
+    is_block: "0",
     username: "",
     password: "",
     contact_no: "",
@@ -173,6 +177,8 @@ export default function AddEditSalesman() {
               token_no: d.token_no || "",
               sap_id: d.sap_id || "",
               is_login: d.is_login?.toString() || "0",
+              is_block: d.is_block?.toString() || "0",
+              forceful_login: d.forceful_login?.toString() || "0",
               status: d.status?.toString() || "1",
               email: d.email || "",
             });
@@ -510,6 +516,40 @@ export default function AddEditSalesman() {
                                       className="text-xs text-red-500"
                                     />
        </div> */}
+       <div>
+                <InputFields
+                  label=" forceful login"
+                  name="forceful_login"
+                  value={values.forceful_login}
+                  onChange={(e) => setFieldValue("forceful_login", e.target.value)}
+                  options={[
+                    { value: "1", label: "Yes" },
+                    { value: "0", label: "No" },
+                  ]}
+                />
+                <ErrorMessage
+                  name="forceful_login"
+                  component="span"
+                  className="text-xs text-red-500"
+                />
+              </div>
+              <div>
+                <InputFields
+                  label="Is block"
+                  name="is_block"
+                  value={values.is_block}
+                  onChange={(e) => setFieldValue("is_block", e.target.value)}
+                  options={[
+                    { value: "1", label: "Yes" },
+                    { value: "0", label: "No" },
+                  ]}
+                />
+                <ErrorMessage
+                  name="is_block"
+                  component="span"
+                  className="text-xs text-red-500"
+                />
+              </div>
               <div>
                 <InputFields
                   label="Status"

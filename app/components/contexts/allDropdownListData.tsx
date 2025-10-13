@@ -861,7 +861,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         regionList(),
         SurveyList(),
         routeList({}),
-        warehouseType(1),
+        warehouseList(),
         routeType(),
         subRegionList(),
         getCompanyCustomers(),
