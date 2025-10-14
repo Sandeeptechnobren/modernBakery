@@ -22,6 +22,7 @@ import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Loading from "@/app/components/Loading";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import CustomCheckbox from "@/app/components/customCheckbox";
 
 
 interface ItemFormValues {
@@ -51,37 +52,37 @@ interface ItemFormValues {
 }
 
 const ItemSchema = Yup.object().shape({
-   ErpCode: Yup.string().required("ERP Code is required"),
-    itemName: Yup.string().required("Item Name is required"),
-    itemCategory: Yup.string().required("Category is required"),
-    itemSubCategory: Yup.string().required("Sub Category is required"),
-    itemWeight: Yup.number()
-      .typeError("Item Weight must be a number")
-      .nullable(),
-    shelfLife: Yup.number()
-      .typeError("Shelf Life must be a number")
-      .nullable(),
-    volume: Yup.number()
-      .typeError("Volume must be a number")
-      .nullable(),
-    is_Promotional: Yup.string().required("Select if Promotional"),
-    is_tax_applicable: Yup.string().required("Select if Tax Applicable"),
-    excise: Yup.string().required("Excise is required"),
-    status: Yup.string().required("Status is required"),
-    uoms: Yup.array()
-      .of(
-        Yup.object().shape({
-          uom: Yup.string().required("UOM is required"),
-          uomType: Yup.string().required("UOM Type is required"),
-          price: Yup.number().typeError("Price must be a number").required("Price is required"),
-          upc: Yup.string().required("UPC is required"),
-          isStockKeepingUnit: Yup.string().oneOf(["yes", "no"], "Select Yes or No"),
-          enableFor: Yup.string().required("Enable For is required"),
-        })
-      )
-      .min(1, "At least one UOM must be added"),
-       commodity_goods_code: Yup.string(),
-    excise_duty_code: Yup.string(),
+  ErpCode: Yup.string().required("ERP Code is required"),
+  itemName: Yup.string().required("Item Name is required"),
+  itemCategory: Yup.string().required("Category is required"),
+  itemSubCategory: Yup.string().required("Sub Category is required"),
+  itemWeight: Yup.number()
+    .typeError("Item Weight must be a number")
+    .nullable(),
+  shelfLife: Yup.number()
+    .typeError("Shelf Life must be a number")
+    .nullable(),
+  volume: Yup.number()
+    .typeError("Volume must be a number")
+    .nullable(),
+  is_Promotional: Yup.string().required("Select if Promotional"),
+  is_tax_applicable: Yup.string().required("Select if Tax Applicable"),
+  excise: Yup.string().required("Excise is required"),
+  status: Yup.string().required("Status is required"),
+  uoms: Yup.array()
+    .of(
+      Yup.object().shape({
+        uom: Yup.string().required("UOM is required"),
+        uomType: Yup.string().required("UOM Type is required"),
+        price: Yup.number().typeError("Price must be a number").required("Price is required"),
+        upc: Yup.string().required("UPC is required"),
+        isStockKeepingUnit: Yup.string().oneOf(["yes", "no"], "Select Yes or No"),
+        enableFor: Yup.string().required("Enable For is required"),
+      })
+    )
+    .min(1, "At least one UOM must be added"),
+  commodity_goods_code: Yup.string(),
+  excise_duty_code: Yup.string(),
 });
 
 const StepSchemas = [
@@ -249,8 +250,8 @@ export default function AddEditItem() {
               typeof data.uom?.[0]?.enable_for === "string"
                 ? data.uom[0].enable_for
                 : Array.isArray(data.uom?.[0]?.enable_for)
-                ? data.uom[0].enable_for.join(", ")
-                : "",
+                  ? data.uom[0].enable_for.join(", ")
+                  : "",
             commodity_goods_code: data.commodity_goods_code || "",
             excise_duty_code: data.excise_duty_code || "",
             status: data.status === 1 ? "active" : "inactive", // ✅ 0/1 mapped correctly
@@ -384,29 +385,45 @@ export default function AddEditItem() {
   // };
 
   const validateCurrentStep = async (step: number) => {
-  try {
-    await StepSchemas[step - 1].validate(form, { abortEarly: false }); // ✅ step-1 index fix
-    setErrors({});
-    return true;
-  } catch (err) {
-    if (err instanceof Yup.ValidationError) {
-      const stepErrors: Partial<Record<keyof ItemFormValues, string>> = {};
+    try {
+      await StepSchemas[step - 1].validate(form, { abortEarly: false }); // ✅ step-1 index fix
+      setErrors({});
+      return true;
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const stepErrors: Partial<Record<keyof ItemFormValues, string>> = {};
 
-      // Mark all paths as touched
-      const newTouched: Partial<Record<keyof ItemFormValues, boolean>> = {};
-      err.inner.forEach((e) => {
-        if (e.path) {
-          stepErrors[e.path as keyof ItemFormValues] = e.message;
-          newTouched[e.path as keyof ItemFormValues] = true;
-        }
-      });
-      setErrors(stepErrors);
-      setTouched((prev) => ({ ...prev, ...newTouched }));
+        // Mark all paths as touched
+        const newTouched: Partial<Record<keyof ItemFormValues, boolean>> = {};
+        err.inner.forEach((e) => {
+          if (e.path) {
+            stepErrors[e.path as keyof ItemFormValues] = e.message;
+            newTouched[e.path as keyof ItemFormValues] = true;
+          }
+        });
+        setErrors(stepErrors);
+        setTouched((prev) => ({ ...prev, ...newTouched }));
+        return false;
+      }
       return false;
     }
-    return false;
-  }
-};
+  };
+
+  const handleCheckboxChange = (value: string, isChecked: boolean) => {
+    const selected = (uomData.enableFor || "")
+      .split(",")
+      .filter(Boolean);
+
+    const updated = isChecked
+      ? [...new Set([...selected, value])]
+      : selected.filter((v) => v !== value);
+
+    setUomData({
+      ...uomData,
+      enableFor: updated.join(","),
+    });
+  };
+
 
 
 
@@ -528,95 +545,100 @@ export default function AddEditItem() {
 
               <div>
                 <InputFields
-                required
-                label="ERP Code"
-                name="ErpCode"
-                value={form.ErpCode}
-                onChange={handleChange}
-              error={touched.ErpCode && errors.ErpCode}
-              />
-               {errors.ErpCode && (
+                  required
+                  label="ERP Code"
+                  name="ErpCode"
+                  value={form.ErpCode}
+                  onChange={handleChange}
+                  error={touched.ErpCode && errors.ErpCode}
+                />
+                {errors.ErpCode && (
                   <p className="text-red-500 text-sm mt-1">{errors.ErpCode}</p>
                 )}
               </div>
-             <div>
-               <InputFields
-                required
-                label="Item Name"
-                name="itemName"
-                value={form.itemName}
-                onChange={handleChange}
-              error={touched.itemName && errors.itemName}
-              />
-               {errors.itemName && (
-                  <p className="text-red-500 text-sm mt-1">{errors.itemName}</p>
-                )}
-             </div>
-             <div>
-               <InputFields
-                label="Item Description"
-                name="itemDesc"
-                value={form.itemDesc}
-                onChange={handleChange}
-              error={touched.itemDesc && errors.itemDesc}
-              />
-               {errors.itemDesc && (
-                  <p className="text-red-500 text-sm mt-1">{errors.itemDesc}</p>
-                )}
-             </div>
               <div>
                 <InputFields
-                label="Brand"
-                name="brand"
-                value={form.brand}
-                onChange={handleChange}
-              error={touched.brand && errors.brand}
-              />
-               {errors.brand && (
+                  required
+                  label="Item Name"
+                  name="itemName"
+                  value={form.itemName}
+                  onChange={handleChange}
+                  error={touched.itemName && errors.itemName}
+                />
+                {errors.itemName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.itemName}</p>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  label="Item Description"
+                  name="itemDesc"
+                  value={form.itemDesc}
+                  onChange={handleChange}
+                  error={touched.itemDesc && errors.itemDesc}
+                />
+                {errors.itemDesc && (
+                  <p className="text-red-500 text-sm mt-1">{errors.itemDesc}</p>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  label="Brand"
+                  type="select"
+                  name="brand"
+                  value={form.brand}
+                  onChange={handleChange}
+                  options={[
+                    { value: "drink", label: "Drink" },
+                    { value: "chocolate", label: "Chocolate" },
+                  ]}
+                  error={touched.brand && errors.brand}
+                />
+                {errors.brand && (
                   <p className="text-red-500 text-sm mt-1">{errors.brand}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                label="Item Image"
-                value={form.itemImage}
-                type="file"
-                name="itemImage"
-                onChange={handleChange}
-              />
+                  label="Item Image"
+                  value={form.itemImage}
+                  type="file"
+                  name="itemImage"
+                  onChange={handleChange}
+                />
               </div>
               <div>
                 <InputFields
-                required
-                label="Category"
-                name="itemCategory"
-                value={form.itemCategory}
-                onChange={handleChange}
-                options={itemCategoryOptions}
-              error={touched.itemCategory && errors.itemCategory}
-              />
-               {errors.itemCategory && (
+                  required
+                  label="Category"
+                  name="itemCategory"
+                  value={form.itemCategory}
+                  onChange={handleChange}
+                  options={itemCategoryOptions}
+                  error={touched.itemCategory && errors.itemCategory}
+                />
+                {errors.itemCategory && (
                   <p className="text-red-500 text-sm mt-1">{errors.itemCategory}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                required
-                label="Sub Category"
-                name="itemSubCategory"
-                value={form.itemSubCategory}
-                onChange={handleChange}
-                options={
-                  loading
-                    ? [{ value: "", label: "Loading..." }]
-                    : itemSubCategoryOptions &&
-                      itemSubCategoryOptions.length > 0
-                    ? itemSubCategoryOptions
-                    : [{ value: "", label: "No options available" }]
-                }
-              error={touched.itemSubCategory && errors.itemSubCategory}
-              />
-               {errors.itemSubCategory && (
+                  required
+                  label="Sub Category"
+                  name="itemSubCategory"
+                  value={form.itemSubCategory}
+                  onChange={handleChange}
+                  options={
+                    loading
+                      ? [{ value: "", label: "Loading..." }]
+                      : itemSubCategoryOptions &&
+                        itemSubCategoryOptions.length > 0
+                        ? itemSubCategoryOptions
+                        : [{ value: "", label: "No options available" }]
+                  }
+                  error={touched.itemSubCategory && errors.itemSubCategory}
+                />
+                {errors.itemSubCategory && (
                   <p className="text-red-500 text-sm mt-1">{errors.itemSubCategory}</p>
                 )}
               </div>
@@ -629,101 +651,106 @@ export default function AddEditItem() {
           <div className="bg-white rounded-2xl shadow p-6">
             <h2 className="text-lg font-medium mb-4">Additional Information</h2>
             <div className="grid md:grid-cols-3 gap-4">
-             <div>
-               <InputFields
-                label="Item Weight"
-                name="itemWeight"
-                value={form.itemWeight}
-                onChange={handleChange}
-              error={touched.itemWeight && errors.itemWeight}
-              />
-               {errors.itemWeight && (
-                  <p className="text-red-500 text-sm mt-1">{errors.itemWeight}</p>
-                )}
-             </div>
               <div>
                 <InputFields
-                label="Shelf Life"
-                name="shelfLife"
-                value={form.shelfLife}
-                onChange={handleChange}
-              error={touched.shelfLife && errors.shelfLife}
-              />
-               {errors.shelfLife && (
+                  label="Item Weight"
+                  name="itemWeight"
+                  value={form.itemWeight}
+                  onChange={handleChange}
+                  error={touched.itemWeight && errors.itemWeight}
+                />
+                {errors.itemWeight && (
+                  <p className="text-red-500 text-sm mt-1">{errors.itemWeight}</p>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  label="Shelf Life"
+                  name="shelfLife"
+                  value={form.shelfLife}
+                  onChange={handleChange}
+                  error={touched.shelfLife && errors.shelfLife}
+                />
+                {errors.shelfLife && (
                   <p className="text-red-500 text-sm mt-1">{errors.shelfLife}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                label="Volume"
-                name="volume"
-                value={form.volume}
-                onChange={handleChange}
-               error={touched.volume && errors.volume}
-              />
-               {errors.volume && (
+                  label="Volume"
+                  name="volume"
+                  value={form.volume}
+                  onChange={handleChange}
+                  error={touched.volume && errors.volume}
+                />
+                {errors.volume && (
                   <p className="text-red-500 text-sm mt-1">{errors.volume}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                type="radio"
-                label="Is Promotional"
-                name="is_Promotional"
-                value={form.is_Promotional}
-                onChange={handleChange}
-                options={[
-                  { value: "yes", label: "Yes" },
-                  { value: "no", label: "No" },
-                ]}
-              error={touched.is_Promotional && errors.is_Promotional}
-              />
-               {errors.is_Promotional && (
+                  type="radio"
+                  label="Is Promotional"
+                  name="is_Promotional"
+                  value={form.is_Promotional}
+                  onChange={handleChange}
+                  options={[
+                    { value: "yes", label: "Yes" },
+                    { value: "no", label: "No" },
+                  ]}
+                  error={touched.is_Promotional && errors.is_Promotional}
+                />
+                {errors.is_Promotional && (
                   <p className="text-red-500 text-sm mt-1">{errors.is_Promotional}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                type="radio"
-                label="Tax Applicable"
-                name="is_tax_applicable"
-                value={form.is_tax_applicable}
-                onChange={handleChange}
-                options={[
-                  { value: "yes", label: "Yes" },
-                  { value: "no", label: "No" },
-                ]}
-              error={touched.is_tax_applicable && errors.is_tax_applicable}
-              />
-               {errors.is_tax_applicable && (
+                  type="radio"
+                  label="Tax Applicable"
+                  name="is_tax_applicable"
+                  value={form.is_tax_applicable}
+                  onChange={handleChange}
+                  options={[
+                    { value: "yes", label: "Yes" },
+                    { value: "no", label: "No" },
+                  ]}
+                  error={touched.is_tax_applicable && errors.is_tax_applicable}
+                />
+                {errors.is_tax_applicable && (
                   <p className="text-red-500 text-sm mt-1">{errors.is_tax_applicable}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                label="Excise"
-                name="excise"
-                value={form.excise}
-                onChange={handleChange}
-              error={touched.excise && errors.excise}
-              />
-               {errors.excise && (
+                  label="Excise"
+                  type="radio"
+                  name="excise"
+                  value={form.excise}
+                  onChange={handleChange}
+                  options={[
+                    { value: "yes", label: "Yes" },
+                    { value: "no", label: "No" },
+                  ]}
+                  error={touched.excise && errors.excise}
+                />
+                {errors.excise && (
                   <p className="text-red-500 text-sm mt-1">{errors.excise}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                required
-                type="radio"
-                label="Status"
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                options={[
-                  { value: "active", label: "Active" },
-                  { value: "inactive", label: "Inactive" },
-                ]}
-              />
+                  required
+                  type="radio"
+                  label="Status"
+                  name="status"
+                  value={form.status}
+                  onChange={handleChange}
+                  options={[
+                    { value: "active", label: "Active" },
+                    { value: "inactive", label: "Inactive" },
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -737,101 +764,104 @@ export default function AddEditItem() {
             <div className="grid md:grid-cols-3 gap-4">
               <div>
                 <InputFields
-                required
-                label="UOM"
-                name="uom"
-                value={uomData.uom}
-                options={[
-                  { label: "Pieces", value: "pieces" },
-                  { label: "Cartoon", value: "cartoon" },
-                ]}
-                onChange={handleUomChange}
-              error={touched.uom && errors.uom}
-              />
-               {errors.uom && (
+                  required
+                  label="UOM"
+                  name="uom"
+                  value={uomData.uom}
+                  options={[
+                    { label: "Pieces", value: "pieces" },
+                    { label: "Cartoon", value: "cartoon" },
+                  ]}
+                  onChange={handleUomChange}
+                  error={touched.uom && errors.uom}
+                />
+                {errors.uom && (
                   <p className="text-red-500 text-sm mt-1">{errors.uom}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                label="UOM Type"
-                name="uomType"
-                options={[
-                  { label: "Primary", value: "primary" },
-                  { label: "Secondary", value: "secondary" },
-                  { label: "Third", value: "third" },
-                  { label: "Forth", value: "forth" },
-                ]}
-                value={uomData.uomType}
-                onChange={handleUomChange}
-              error={touched.uomType && errors.uomType}
-              />
-               {errors.uomType && (
+                  label="UOM Type"
+                  name="uomType"
+                  options={[
+                    { label: "Primary", value: "primary" },
+                    { label: "Secondary", value: "secondary" },
+                    { label: "Third", value: "third" },
+                    { label: "Forth", value: "forth" },
+                  ]}
+                  value={uomData.uomType}
+                  onChange={handleUomChange}
+                  error={touched.uomType && errors.uomType}
+                />
+                {errors.uomType && (
                   <p className="text-red-500 text-sm mt-1">{errors.uomType}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                required
-                label="UPC"
-                name="upc"
-                value={uomData.upc}
-                onChange={handleUomChange}
-              error={touched.upc && errors.upc}
-              />
-               {errors.upc && (
+                  required
+                  label="UPC"
+                  name="upc"
+                  value={uomData.upc}
+                  onChange={handleUomChange}
+                  error={touched.upc && errors.upc}
+                />
+                {errors.upc && (
                   <p className="text-red-500 text-sm mt-1">{errors.upc}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                required
-                label="Price"
-                name="price"
-                value={uomData.price}
-                onChange={handleUomChange}
-              error={touched.price && errors.price}
-              />
-               {errors.price && (
+                  required
+                  label="Price"
+                  name="price"
+                  value={uomData.price}
+                  onChange={handleUomChange}
+                  error={touched.price && errors.price}
+                />
+                {errors.price && (
                   <p className="text-red-500 text-sm mt-1">{errors.price}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                type="radio"
-                label="Is Stock Keeping Unit"
-                name="isStockKeepingUnit"
-                value={uomData.isStockKeepingUnit}
-                onChange={handleUomChange}
-                options={[
-                  { label: "Yes", value: "yes" },
-                  { label: "No", value: "no" },
-                ]}
-              />
+                  type="radio"
+                  label="Is Stock Keeping Unit"
+                  name="isStockKeepingUnit"
+                  value={uomData.isStockKeepingUnit}
+                  onChange={handleUomChange}
+                  options={[
+                    { label: "Yes", value: "yes" },
+                    { label: "No", value: "no" },
+                  ]}
+                />
               </div>
               {uomData.isStockKeepingUnit === "yes" && (
                 <div>
                   <InputFields
-                  label="Quantity"
-                  name="quantity"
-                  value={uomData.quantity || ""}
-                  onChange={handleUomChange}
-                />
+                    label="Quantity"
+                    name="quantity"
+                    value={uomData.quantity || ""}
+                    onChange={handleUomChange}
+                  />
                 </div>
               )}
-              <div>
-                <InputFields
-                type="radio"
-                label="Enable For"
-                name="enableFor"
-                onChange={handleUomChange}
-                options={[
-                  { label: "Sales", value: "sales" },
-                  { label: "Return", value: "return" },
-                ]}
-              />
-              
+              <div className="flex gap-4">
+                <CustomCheckbox
+                  id="enable_for_sales"
+                  label="Sales"
+                  checked={uomData.enableFor?.split(",").includes("sales")}
+                  onChange={(e) => handleCheckboxChange("sales", e.target.checked)}
+                />
+                <CustomCheckbox
+                  id="enable_for_return"
+                  label="Return"
+                  checked={uomData.enableFor?.split(",").includes("return")}
+                  onChange={(e) => handleCheckboxChange("return", e.target.checked)}
+                />
               </div>
+
+
             </div>
 
             <div className="mt-4 flex justify-end">
@@ -863,9 +893,8 @@ export default function AddEditItem() {
                     {uomList.map((item, idx) => (
                       <tr
                         key={idx}
-                        className={`border-t ${
-                          editingIndex === idx ? "bg-red-100" : ""
-                        }`} // Highlight in red
+                        className={`border-t ${editingIndex === idx ? "bg-red-100" : ""
+                          }`} // Highlight in red
                       >
                         <td className="p-2">{item.uom}</td>
                         <td className="p-2">{item.uomType}</td>
@@ -904,25 +933,25 @@ export default function AddEditItem() {
             <div className="grid md:grid-cols-3 gap-4">
               <div>
                 <InputFields
-                label="Commodity Goods Code"
-                name="commodity_goods_code"
-                value={form.commodity_goods_code}
-                onChange={handleChange}
-                 error={touched.commodity_goods_code && errors.commodity_goods_code}
-              />
-              {errors.commodity_goods_code && (
+                  label="Commodity Goods Code"
+                  name="commodity_goods_code"
+                  value={form.commodity_goods_code}
+                  onChange={handleChange}
+                  error={touched.commodity_goods_code && errors.commodity_goods_code}
+                />
+                {errors.commodity_goods_code && (
                   <p className="text-red-500 text-sm mt-1">{errors.commodity_goods_code}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                label="Excise Duty Code"
-                name="excise_duty_code"
-                value={form.excise_duty_code}
-                onChange={handleChange}
-                 error={touched.excise_duty_code && errors.excise_duty_code}
-              />
-               {errors.excise_duty_code && (
+                  label="Excise Duty Code"
+                  name="excise_duty_code"
+                  value={form.excise_duty_code}
+                  onChange={handleChange}
+                  error={touched.excise_duty_code && errors.excise_duty_code}
+                />
+                {errors.excise_duty_code && (
                   <p className="text-red-500 text-sm mt-1">{errors.excise_duty_code}</p>
                 )}
               </div>

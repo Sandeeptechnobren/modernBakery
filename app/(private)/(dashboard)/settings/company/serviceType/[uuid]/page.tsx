@@ -20,7 +20,6 @@ interface ServiceTypeFormValues {
 }
 
 const ServiceTypeSchema = Yup.object().shape({
-  service_type_code: Yup.string().required("Service Type Code is required"),
   name: Yup.string().required("Name is required"),
   status: Yup.number().oneOf([0, 1], "Invalid status").required("Status is required"),
 });
@@ -142,7 +141,6 @@ export default function AddEditServiceType() {
                       value={values.service_type_code}
                       onChange={(e) => setFieldValue("service_type_code", e.target.value)}
                       disabled={codeMode === 'auto'}
-                      error={touched.service_type_code && errors.service_type_code}
                     />
                     {!isEditMode && (
                       <>

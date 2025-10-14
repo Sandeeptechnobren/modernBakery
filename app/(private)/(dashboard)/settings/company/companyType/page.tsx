@@ -3,13 +3,21 @@
 import { useState, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
 import { companyTypeList } from "@/app/services/allApi";
+
+interface CompanyType {
+  id?: string | number;
+  uuid?: string;
+  code?: string;
+  name?: string;
+  status?: number;
+}
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -82,6 +90,8 @@ export default function CompanyPage() {
     [setLoading]
   );
 
+  
+
   return (
     <>
       <div className="h-[calc(100%-60px)]">
@@ -140,7 +150,7 @@ export default function CompanyPage() {
                 },
               },
             ],
-            pageSize: 50,
+            pageSize: 5,
           }}
         />
       </div>

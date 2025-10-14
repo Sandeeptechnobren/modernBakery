@@ -77,6 +77,7 @@ export default function CustomerPage() {
     []
   );
 
+
   return (
     <>
       {/* Table */}
@@ -124,7 +125,7 @@ export default function CustomerPage() {
                   key="add-customer-type"
                   href="/settings/customer/customerType/add"
                   leadingIcon="lucide:plus"
-                  label="Add Customer Type"
+                  label="Add"
                   labelTw="hidden sm:block"
                   isActive
                 />,

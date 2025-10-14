@@ -96,11 +96,12 @@ const columns = [
   { key: "valid_from", label: "Valid From", render: (row: TableDataType) => row.valid_from || "-" },
   { key: "valid_to", label: "Valid To", render: (row: TableDataType) => row.valid_to || "-" },
   {
-          key: "status",
-          label: "Status",
-          render: (row: TableDataType) => (
-              <StatusBtn isActive={row.status === "1" ? true : false} />
-          )},
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) => (
+      <StatusBtn isActive={String(row.status) === "1"} />
+    ),
+  },
 ];
 
 export default function VehiclePage() {

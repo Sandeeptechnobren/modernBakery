@@ -41,6 +41,7 @@ interface VehicleFormValues {
   warehouseId: string;
   odoMeter: string;
   capacity: string;
+  fuel_reading: string;
   status: "active" | "inactive";
   validFrom: string;
   validTo: string;
@@ -53,8 +54,9 @@ const VehicleSchema = Yup.object().shape({
   vehicleType: Yup.string().required("Vehicle Type is required"),
   ownerType: Yup.string().required("Owner Type is required"),
   warehouseId: Yup.string().required("Warehouse is required"),
-  odoMeter: Yup.string().required("Odometer is required"),
+  odoMeter: Yup.number().required("Odometer is required"),
   capacity: Yup.string().required("Capacity is required"),
+  fuel_reading: Yup.number().required("Fuel Reading is required"),
    description: Yup.string().required("Description is required"),
   status: Yup.string()
     .oneOf(["active", "inactive"])
@@ -103,6 +105,7 @@ export default function AddEditVehicleWithStepper() {
     odoMeter: "",
     capacity: "",
     status: "active",
+    fuel_reading: "",
     validFrom: "",
     validTo: "",
   });
@@ -166,6 +169,7 @@ export default function AddEditVehicleWithStepper() {
               warehouseId: String(vehicle.warehouse_id) || "",
               odoMeter: vehicle.opening_odometer || "",
               capacity: vehicle.capacity || "",
+              fuel_reading: vehicle.fuel_reading || "",
               status: vehicle.status === 1 ? "active" : "inactive",
               validFrom: vehicle.valid_from || "",
               validTo: vehicle.valid_to || "",
@@ -278,6 +282,7 @@ export default function AddEditVehicleWithStepper() {
         description: form.description,
         vehicle_brand: form.vehicleBrand,
         capacity: form.capacity,
+        fuel_reading: form.fuel_reading,
         vehicle_type: form.vehicleType,
         owner_type: form.ownerType,
         warehouse_id: form.warehouseId,
@@ -493,6 +498,22 @@ export default function AddEditVehicleWithStepper() {
                 {touched.capacity && errors.capacity && (
                   <div className="text-red-500 text-xs mt-1">
                     {errors.capacity}
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <InputFields
+                  required
+                  label="fuel_reading"
+                  value={form.fuel_reading}
+                  onChange={handleChange}
+                  name="fuel_reading"
+                  error={touched.fuel_reading && errors.fuel_reading}
+                />
+                {touched.fuel_reading && errors.fuel_reading && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {errors.fuel_reading}
                   </div>
                 )}
               </div>

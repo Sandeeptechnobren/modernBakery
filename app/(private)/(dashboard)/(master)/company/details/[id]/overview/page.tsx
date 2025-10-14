@@ -99,39 +99,7 @@ export default function ViewPage() {
 
       <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
         {/* Left Section */}
-        <div>
-
-          <ContainerCard>
-            <div className="text-[18px] font-semibold mb-[25px]">Barcode</div>
-
-            <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
-              <SummaryCard
-                icon="prime:barcode"
-                iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
-                iconWidth={30}
-                title={company?.company_code || "ABC-abc-1234"}
-                description="Company Barcode"
-              />
-            </ContainerCard>
-
-            <KeyValueData
-              data={[
-                {
-                  key: "Promotional Access",
-                  value: "",
-                  component: (
-                    <Toggle
-                      isChecked={isChecked}
-                      onChange={() => setIsChecked(!isChecked)}
-                    />
-                  ),
-                },
-                { key: "Tax", value: "VAT" },
-              ]}
-            />
-          </ContainerCard>
-        </div>
-
+       
         {/* Right Section */}
         <div className="w-full flex flex-col gap-y-[20px]">
           {/* Company Information */}
@@ -153,10 +121,7 @@ export default function ViewPage() {
               ]}
             />
           </ContainerCard>
-
-          
-
-              {/* Barcode & Extras */}
+             
             </div>
           </div>
     </>

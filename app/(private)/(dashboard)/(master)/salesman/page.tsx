@@ -27,7 +27,6 @@ const columns = [
             </span>
         ),
    },
-  { key: "sap_id", label: "SAP Code" },
   { key: "name", label: "Salesman Name" },
  {
     key: "salesman_type",
@@ -38,53 +37,9 @@ const columns = [
       return obj?.salesman_type_name || "-";
     },
   },
- {
-  key: "sub_type",
-  label: "Sub Type",
-  render: (row: TableDataType) => typeof row.sub_type === "object" &&
-            row.sub_type !== null &&
-            "name" in row.sub_type
-                ? (row.sub_type as { name?: string })
-                      .name || "-"
-                : "-",
-    
-  //   {
-  //   const value = row.sub_type;
-
-  //   // Agar JSON string hai ("{id:1,name:'Merchandiser'}"), to parse karo
-  //   if (typeof value === "string" && value.startsWith("{")) {
-  //     try {
-  //       const obj = JSON.parse(value);
-  //       return obj.name || subTypeMapping[obj.id] || "-";
-  //     } catch {
-  //       return subTypeMapping[value] || "-";
-  //     }
-  //   }
-
-  //   // Agar number ya string hai, to mapping se text lao
-  //   if (typeof value === "number" || typeof value === "string") {
-  //     return subTypeMapping[value] || "-";
-  //   }
-
-  //   return "-";
-  // },
-},
 
   { key: "designation", label: "Designation" },
-  { key: "device_no", label: "Device No" },
-  {
-    key: "route",
-    label: "Route",
-    render: (row: TableDataType) => {
-      const obj =
-        typeof row.route === "string" ? JSON.parse(row.route) : row.route;
-      return obj?.route_name || "-";
-    },
-  },
-
-  { key: "username", label: "Username" },
-  { key: "contact_no", label: "Contact No" },
-  {
+   {
     key: "warehouse",
     label: "Warehouse",
     render: (row: TableDataType) => {
@@ -101,6 +56,19 @@ const columns = [
       return "-";
     },
   },
+  {
+    key: "route",
+    label: "Route",
+    render: (row: TableDataType) => {
+      const obj =
+        typeof row.route === "string" ? JSON.parse(row.route) : row.route;
+      return obj?.route_name || "-";
+    },
+  },
+
+  { key: "username", label: "Username" },
+  { key: "contact_no", label: "Contact No" },
+ 
  {
   key: "status",
   label: "Status",
