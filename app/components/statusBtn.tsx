@@ -9,7 +9,7 @@ export default function StatusBtn({ status }: { status: string }) {
                     width={12}
                     className="text-[#12B76A]"
                 />
-                <span className="text-[14px] mb-[3px]">Active</span>
+                <span className="text-[14px]">Active</span>
             </span>
         </>
     ) : (
@@ -20,7 +20,7 @@ export default function StatusBtn({ status }: { status: string }) {
                     width={8}
                     className="text-[#b77212]"
                 />
-                <span className="text-[14px] mb-[3px]">Inactive</span>
+                <span className="text-[14px]">Inactive</span>
             </span>
         </>
     );

@@ -40,7 +40,7 @@ const columns = [
             </span>
         ),
     },
-    { key: "outlet_name", label: "OutletName" },
+    { key: "outlet_name", label: "Outlet Name" },
     { key: "owner_name", label: "Owner Name" },
     {
         key: "customer_type",
@@ -121,7 +121,7 @@ const columns = [
     { key: "contact_no", label: "Contact No." },
     { key: "whatsapp_no", label: "Whatsapp No." },
     { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
-    { key: "payment_type", label: "Payment Type", render: (row: TableDataType) => (row.payment_type === "1" ? "Cash" : row.payment_type === "2" ? "Credit" : "B2B") },
+    { key: "payment_type", label: "Payment Type" },
     {
         key: "status",
         label: "Status",
