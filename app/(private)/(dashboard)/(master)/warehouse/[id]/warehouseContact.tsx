@@ -18,9 +18,8 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
   const countries = onlyCountryOptions && onlyCountryOptions.length > 0 ? onlyCountryOptions : [];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full overflow-x-hidden">
-      {/* Contact */}
-      <div className="flex flex-col gap-2 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="flex flex-col gap-2">
           <InputFields
             required
             type="contact"
@@ -37,14 +36,12 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
                   setFieldValue('ownerContactCountry', code);
                   setFieldValue('owner_number', localNumber);
                 } else {
-                  // react-phone-input-2 returns a phone string (e.g. '919876543210' or '+919876543210')
                   const digits = combined.replace(/\D/g, '');
                   const currentCountry = (values.ownerContactCountry || '+91').replace(/\D/g, '');
                   if (currentCountry && digits.startsWith(currentCountry)) {
                     setFieldValue('ownerContactCountry', `+${currentCountry}`);
                     setFieldValue('owner_number', digits.slice(currentCountry.length));
                   } else {
-                    // fallback: store full digits
                     setFieldValue('owner_number', digits);
                   }
                 }
@@ -55,8 +52,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
           <span className="text-xs text-red-500 mt-1">{errors.owner_number}</span>
         )}
       </div>
-      <div className="flex flex-col gap-2 w-full">
-        <div className="flex w-full">
+      <div className="flex flex-col gap-2 ">
           <InputFields
             required
             type="contact"
@@ -85,12 +81,11 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
             }}
             error={errors?.warehouse_manager_contact && touched?.warehouse_manager_contact ? errors.warehouse_manager_contact : false}
           />
-        </div>
-        {errors?.warehouse_manager_contact && touched?.warehouse_manager_contact && (
+           {errors?.warehouse_manager_contact && touched?.warehouse_manager_contact && (
           <span className="text-xs text-red-500 mt-1">{errors.warehouse_manager_contact}</span>
         )}
-      </div>
-      {/* Email */}
+        </div>
+       
       <div>
         <InputFields
           label="Owner Email"

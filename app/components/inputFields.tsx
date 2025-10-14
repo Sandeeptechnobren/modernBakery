@@ -3,6 +3,18 @@ import React, { useState, useRef, useEffect } from "react";
 import PhoneInput from "react-phone-input-2";
 import 'react-phone-input-2/lib/style.css';
 
+// Ensure phone dropdown is positioned within the input container and scrolls internally
+const phoneDropdownStyles = `
+.react-tel-input .country-list {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  left: 0 !important;
+  z-index: 9999 !important;
+  max-height: 320px !important;
+  overflow: auto !important;
+}
+`;
+
 type Option = {
   value: string;
   label: string;
@@ -158,6 +170,7 @@ useEffect(() => {
 
   return (
     <div className={`flex flex-col gap-2 w-full ${width}`}>
+      <style dangerouslySetInnerHTML={{ __html: phoneDropdownStyles }} />
       <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
@@ -455,10 +468,8 @@ useEffect(() => {
       country={"in"}
       value={value as string}
       onChange={(phone, country: PhoneCountry) => {
-        // include the selected country's dial code so callers can reliably parse country vs local number
         const dial = country?.dialCode ? `+${country.dialCode}` : (typeof value === 'string' && value.includes('|') ? (value as string).split('|')[0] : '+91');
         const event = { target: { value: `${dial}|${phone}`, name } };
-        // pass through our safeOnChange helper with a typed assertion (avoid `any`)
         safeOnChange(event as unknown as React.ChangeEvent<HTMLInputElement | HTMLSelectElement>);
       }}
       disabled={disabled}
@@ -468,22 +479,21 @@ useEffect(() => {
         required,
         onBlur,
       }}
-      containerClass="!w-full !rounded-md"
-      inputClass={`!w-full !h-[44px] !text-gray-900 !rounded-md !pl-[60px] !border ${
+      containerClass="!w-full !rounded-md relative"
+      inputClass={`!w-full !h-[44px] !text-gray-900 !rounded-md !border ${
         error ? "!border-red-500" : "!border-gray-300"
       } !focus:ring-0 !focus:outline-none !shadow-none ${
         disabled ? "!bg-gray-100 !cursor-not-allowed" : ""
-      }`}
-      buttonClass="!border-gray-300 !bg-white !rounded-l-md !h-[44px] !px-3 !flex !items-center !justify-center !min-w-[60px]"
-      // --- Dropdown ---
-      dropdownClass="!z-50 !rounded-md !shadow-lg !border !border-gray-200 "
+      } sm:!pl-[56px] md:!pl-[72px] lg:!pl-[96px]`}
+  buttonClass="!border-gray-300 !bg-white !rounded-l-md !h-[44px] !px-2 !flex !items-center !justify-center sm:!min-w-[44px] md:!min-w-[64px] lg:!min-w-[96px]"
+  buttonStyle={{ boxSizing: 'border-box', borderRight: '1px solid #e5e7eb' }}
+      dropdownClass="!z-50 !rounded-md !shadow-lg !border !border-gray-200 !p-2 !absolute !overflow-auto !max-h-[280px]"
       dropdownStyle={{
-        width: "100%",
-        minWidth: "100%",
-        borderRadius: "0.5rem",
-        boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-        overflowY: "auto",
-        maxHeight: "240px",
+        minWidth: '160px',
+        maxWidth: 'min(90vw, 240px)',
+        borderRadius: '0.5rem',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+        padding: '6px'
       }}
       searchPlaceholder="Search country"
       placeholder={placeholder || `Enter ${label}`}
