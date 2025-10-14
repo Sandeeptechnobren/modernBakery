@@ -676,7 +676,6 @@ export default function AddEditItem() {
                   { value: "yes", label: "Yes" },
                   { value: "no", label: "No" },
                 ]}
-              error={touched.is_Promotional && errors.is_Promotional}
               />
                {errors.is_Promotional && (
                   <p className="text-red-500 text-sm mt-1">{errors.is_Promotional}</p>
@@ -693,7 +692,6 @@ export default function AddEditItem() {
                   { value: "yes", label: "Yes" },
                   { value: "no", label: "No" },
                 ]}
-              error={touched.is_tax_applicable && errors.is_tax_applicable}
               />
                {errors.is_tax_applicable && (
                   <p className="text-red-500 text-sm mt-1">{errors.is_tax_applicable}</p>
@@ -705,7 +703,6 @@ export default function AddEditItem() {
                 name="excise"
                 value={form.excise}
                 onChange={handleChange}
-              error={touched.excise && errors.excise}
               />
                {errors.excise && (
                   <p className="text-red-500 text-sm mt-1">{errors.excise}</p>

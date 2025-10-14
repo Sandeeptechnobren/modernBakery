@@ -174,14 +174,14 @@ export default function ShelfDisplay() {
                   router.push(`/merchandiser/shelfDisplay/${row.uuid}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableDataType;
-                  setSelectedRow({ uuid: row.uuid, ...row } as ShelfDisplayItem);
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: object) => {
+              //     const row = data as TableDataType;
+              //     setSelectedRow({ uuid: row.uuid, ...row } as ShelfDisplayItem);
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
             pageSize: 10,
           }}

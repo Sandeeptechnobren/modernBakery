@@ -246,14 +246,14 @@ const DiscountPage = () => {
                                     );
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (row: object) => {
-                                    const r = row as TableDataType;
-                                    setSelectedRow({ uuid: r.uuid });
-                                    setShowDeletePopup(true);
-                                },
-                            },
+                            // {
+                            //     icon: "lucide:trash-2",
+                            //     onClick: (row: object) => {
+                            //         const r = row as TableDataType;
+                            //         setSelectedRow({ uuid: r.uuid });
+                            //         setShowDeletePopup(true);
+                            //     },
+                            // },
                         ],
                         pageSize: 5,
                     }}

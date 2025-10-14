@@ -78,6 +78,9 @@ interface CompanyCustomerPayload {
   customer_type: string;
   owner_name: string;
   owner_no: string;
+  owner_contact_country?: string;
+  whatsapp_contact_country?: string;
+  contact2_country?: string;
   is_whatsapp: number;
   whatsapp_no?: string;
   email: string;
@@ -121,8 +124,8 @@ const validationSchema = Yup.object({
   businessName: Yup.string().required("Business Name is required."),
   customerType: Yup.string().required("Customer Type is required."),
   ownerName: Yup.string().required("Owner Name is required."),
-  ownerNumber: Yup.string().required("Owner Number is required."),
-  isWhatsapp: Yup.string().required("Whatsapp selection is required."),
+  ownerNumber: Yup.string()
+    .required("Owner Contact is required."),
   whatsappNo: Yup.string().required("Whatsapp Number is required."),
   email: Yup.string().email("Invalid email").required("Email is required."),
   language: Yup.string().required("Language is required."),
@@ -168,11 +171,10 @@ const stepSchemas = [
 
   }),
   Yup.object({
-     ownerNumber: validationSchema.fields.ownerNumber,
-    email: validationSchema.fields.email,
-    isWhatsapp: validationSchema.fields.isWhatsapp,
+    ownerNumber: validationSchema.fields.ownerNumber,
     whatsappNo: validationSchema.fields.whatsappNo,
     contactNo2: validationSchema.fields.contactNo2,
+    email: validationSchema.fields.email,
   }),
   Yup.object({
     town: validationSchema.fields.town,
@@ -400,19 +402,19 @@ export default function AddCompanyCustomer() {
 
     try {
       await validationSchema.validate(values, { abortEarly: false });
-
+      const stripCountryCode = (num: string) => num.replace(/^\+\d{1,3}\s*/, "");
       const payload: CompanyCustomerPayload = {
-        sap_code: values.sapCode,
-        customer_code: values.customerCode,
-        business_name: values.businessName,
-        customer_type: values.customerType,
-        owner_name: values.ownerName,
-        owner_no: values.ownerNumber,
+  sap_code: values.sapCode,
+  customer_code: values.customerCode,
+  business_name: values.businessName,
+  customer_type: values.customerType,
+  owner_name: values.ownerName,
+  owner_no: values.ownerNumber,
         is_whatsapp: Number(values.isWhatsapp),
-        whatsapp_no: values.whatsappNo,
+        whatsapp_no: stripCountryCode(values.whatsappNo),
         email: values.email,
         language: values.language,
-        contact_no2: values.contactNo2,
+        contact_no2: stripCountryCode(values.contactNo2),
         buyer_type: Number(values.buyerType),
         road_street: values.roadStreet,
         town: values.town,
@@ -444,10 +446,7 @@ export default function AddCompanyCustomer() {
         updated_user: 2,
       };
 
-      console.log(
-        "📦 Final Payload for Backend:",
-        JSON.stringify(payload, null, 2)
-      );
+     
 
       let res;
       if (isEditMode) {
@@ -678,19 +677,51 @@ export default function AddCompanyCustomer() {
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">Contact Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div>
-
+              <div className="flex flex-col gap-2">
                 <InputFields
                   required
-                  label="Owner Number"
-                  name="ownerNumber"
                   type="contact"
-                  value={values.ownerNumber}
-                  onChange={(e) => setFieldValue("ownerNumber", e.target.value)}
-                  error={touched.ownerNumber && errors.ownerNumber}
+                  label="Owner Contact Number"
+                  name="ownerNumber"
+                  value={`${values.ownerNumber ?? ''}`}
+                  onChange={(e) => {
+                    const combined = (e.target as HTMLInputElement).value || '';
+                    if (combined.includes('|')) {
+                      const [code = '+91', num = ''] = combined.split('|');
+                      const numDigits = num.replace(/\D/g, '');
+                      const codeDigits = String(code).replace(/\D/g, '');
+                      const localNumber = codeDigits && numDigits.startsWith(codeDigits) ? numDigits.slice(codeDigits.length) : numDigits;
+                      setFieldValue('ownerNumber', localNumber);
+                    } 
+                  }}
+                  error={errors?.ownerNumber && touched?.ownerNumber ? errors.ownerNumber : false}
                 />
                 {errors?.ownerNumber && touched?.ownerNumber && (
                   <span className="text-xs text-red-500 mt-1">{errors.ownerNumber}</span>
+                )}
+              </div>
+             
+              <div className="flex flex-col gap-2">
+                <InputFields
+                  required
+                  type="contact"
+                  label="Contact No 2"
+                  name="contactNo2"
+                  value={`${values.contactNo2 ?? ''}`}
+                  onChange={(e) => {
+                    const combined = (e.target as HTMLInputElement).value || '';
+                    if (combined.includes('|')) {
+                      const [code = '+91', num = ''] = combined.split('|');
+                      const numDigits = num.replace(/\D/g, '');
+                      const codeDigits = String(code).replace(/\D/g, '');
+                      const localNumber = codeDigits && numDigits.startsWith(codeDigits) ? numDigits.slice(codeDigits.length) : numDigits;
+                      setFieldValue('contactNo2', localNumber);
+                    } 
+                  }}
+                  error={errors?.contactNo2 && touched?.contactNo2 ? errors.contactNo2 : false}
+                />
+                {errors?.contactNo2 && touched?.contactNo2 && (
+                  <span className="text-xs text-red-500 mt-1">{errors.contactNo2}</span>
                 )}
               </div>
               <div>
@@ -723,33 +754,30 @@ export default function AddCompanyCustomer() {
                   <span className="text-xs text-red-500 mt-1">{errors.isWhatsapp}</span>
                 )}
               </div>
-              <div>
+              <div className="flex flex-col gap-2">
                 <InputFields
                   required
-                  label="Whatsapp Number"
                   type="contact"
+                  label="Whatsapp Number"
                   name="whatsappNo"
-                  value={values.whatsappNo}
-                  onChange={(e) => setFieldValue("whatsappNo", e.target.value)}
+                  value={`${values.whatsappNo ?? ''}`}
+                  onChange={(e) => {
+                    const combined = (e.target as HTMLInputElement).value || '';
+                    if (combined.includes('|')) {
+                      const [code = '+91', num = ''] = combined.split('|');
+                      const numDigits = num.replace(/\D/g, '');
+                      const codeDigits = String(code).replace(/\D/g, '');
+                      const localNumber = codeDigits && numDigits.startsWith(codeDigits) ? numDigits.slice(codeDigits.length) : numDigits;
+                      setFieldValue('whatsappNo', localNumber);
+                    } 
+                  }}
+                  error={errors?.whatsappNo && touched?.whatsappNo ? errors.whatsappNo : false}
                 />
                 {errors?.whatsappNo && touched?.whatsappNo && (
                   <span className="text-xs text-red-500 mt-1">{errors.whatsappNo}</span>
                 )}
               </div>
-              <div>
-                <InputFields
-                  required
-                  label="Contact No 2"
-                  name="contactNo2"
-                  type="contact"
-                  value={values.contactNo2}
-                  onChange={(e) => setFieldValue("contactNo2", e.target.value)}
-                  error={touched.contactNo2 && errors.contactNo2}
-                />
-                {errors?.contactNo2 && touched?.contactNo2 && (
-                  <span className="text-xs text-red-500 mt-1">{errors.contactNo2}</span>
-                )}
-              </div>
+             
               <div>
                 <InputFields
                   label="Buyer Type"
@@ -1095,7 +1123,7 @@ export default function AddCompanyCustomer() {
                       onChange={(e) =>
                         setFieldValue("merchendiser_ids", e.target.value)
                       }
-                      isSingle={false}
+                      
                       options={[
                         { value: "1", label: "Merchendiser 1" },
                         { value: "2", label: "Merchendiser 2" },
