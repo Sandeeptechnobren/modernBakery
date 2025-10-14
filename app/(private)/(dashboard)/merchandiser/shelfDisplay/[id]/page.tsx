@@ -294,7 +294,7 @@ export default function ShelfDisplay() {
   // --- Render step content ---
   const renderStepContent = (
     values: ShelfFormValues,
-    setFieldValue: (field: keyof ShelfFormValues, value: any) => void,
+    setFieldValue: (field: keyof ShelfFormValues, value: ShelfFormValues[keyof ShelfFormValues]) => void,
     errors: FormikErrors<ShelfFormValues>,
     touched: FormikTouched<ShelfFormValues>
   ) => {
