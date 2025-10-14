@@ -466,23 +466,10 @@ useEffect(() => {
     <div ref={dropdownRef} className="relative mt-[6px] w-full">
     <PhoneInput
       country={"in"}
-      value={typeof value === 'string' && value.includes('|')
-        ? (() => {
-            const [code, num] = value.split('|');
-            return `${code.replace('+', '')}${num}`;
-          })()
-        : value as string}
+      value={value as string}
       onChange={(phone, country: PhoneCountry) => {
-        // phone is always digits only, country.dialCode is string
-        const dial = country?.dialCode ? `+${country.dialCode}` : '+91';
-        // If empty, send empty string
-        if (!phone) {
-          const event = { target: { value: '', name } };
-          safeOnChange(event as unknown as React.ChangeEvent<HTMLInputElement | HTMLSelectElement>);
-          return;
-        }
-        // Send '+countrycode number' for Formik
-        const event = { target: { value: `${dial} ${phone}`, name } };
+        const dial = country?.dialCode ? `+${country.dialCode}` : (typeof value === 'string' && value.includes('|') ? (value as string).split('|')[0] : '+91');
+        const event = { target: { value: `${dial}|${phone}`, name } };
         safeOnChange(event as unknown as React.ChangeEvent<HTMLInputElement | HTMLSelectElement>);
       }}
       disabled={disabled}
