@@ -19,6 +19,7 @@ import {
     saveFinalCode,
     routeList,
     customerSubCategoryList,
+    customerCategoryList,
 } from "@/app/services/allApi";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -83,6 +84,7 @@ export default function AddEditAgentCustomer() {
     const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
     const [prefix, setPrefix] = useState("");
     const [filteredRouteOptions, setFilteredRouteOptions] = useState(routeOptions);
+    const [filteredCustomerCategoryOptions, setFilteredCustomerCategoryOptions] = useState(customerCategoryOptions);
     const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState(customerSubCategoryOptions);
 
     const { showSnackbar } = useSnackbar();
@@ -161,6 +163,22 @@ export default function AddEditAgentCustomer() {
             label: route.route_name,
         })));
     };
+
+    const fetchCategories = async (value: string) => {
+        const filteredOptions = await customerCategoryList({
+            customer_category_id: value,
+            per_page: "10",
+        });
+        if(filteredOptions.error) {
+            showSnackbar(filteredOptions.data?.message || "Failed to fetch Customer Categories", "error");
+            return;
+        }
+        const options = filteredOptions?.data || [];
+        setFilteredCustomerCategoryOptions(options.map((category: { id: number; customer_category_code: string; customer_category_name: string }) => ({
+            value: String(category.id),
+            label: category.customer_category_name + " - " + category.customer_category_code,
+        })));
+    }
 
     const fetchSubCategories = async (value: string) => {
         const filteredOptions = await customerSubCategoryList({
@@ -1100,12 +1118,12 @@ export default function AddEditAgentCustomer() {
                                             values.outlet_channel_id?.toString() ??
                                             ""
                                         }
-                                        onChange={(e) =>
-                                            setFieldValue(
-                                                "outlet_channel_id",
-                                                e.target.value
-                                            )
-                                        }
+                                        onChange={(e) => {
+                                            setFieldValue("outlet_channel_id", e.target.value);
+                                            if (values.outlet_channel_id !== e.target.value) {
+                                                fetchCategories(e.target.value);
+                                            }
+                                        }}
                                         error={
                                             touched.outlet_channel_id &&
                                             errors.outlet_channel_id
@@ -1139,7 +1157,7 @@ export default function AddEditAgentCustomer() {
                                             touched.category_id &&
                                             errors.category_id
                                         }
-                                        options={customerCategoryOptions}
+                                        options={filteredCustomerCategoryOptions}
                                         disabled={customerCategoryOptions.length === 0}
                                     />
                                     {touched.category_id &&
