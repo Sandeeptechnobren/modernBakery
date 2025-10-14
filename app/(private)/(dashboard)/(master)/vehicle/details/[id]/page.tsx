@@ -19,6 +19,7 @@ type Vehicle = {
   vehicle_chesis_no: string;
   description: string;
   capacity: string;
+  fuel_reading: string;
   vehicle_type: string;
   owner_type: string;
   warehouse_id: number;
@@ -26,11 +27,6 @@ type Vehicle = {
   valid_to: string;
   opening_odometer: string;
   status: number;
-  created_user: number;
-  updated_user: number;
-  created_date: string;
-  updated_at: string;
-  created_at: string;
   vehicle_brand: string;
   warehouse?: {
     id: number;
@@ -142,6 +138,7 @@ export default function ViewPage() {
               { key: "Chassis Number", value: vehicle?.vehicle_chesis_no || "-" },
               { key: "Vehicle Type", value: vehicleTypeLabel(vehicle?.vehicle_type) },
               { key: "Capacity", value: vehicle?.capacity || "-" },
+              { key: "Fuel Reading", value: vehicle?.fuel_reading || "-" },
               { key: "Owner Type", value: ownerTypeLabel(vehicle?.owner_type) },
               { key: "Warehouse", value: vehicle?.warehouse?.warehouse_name || "-" },
               { key: "Valid From", value: vehicle?.valid_from || "-" },
