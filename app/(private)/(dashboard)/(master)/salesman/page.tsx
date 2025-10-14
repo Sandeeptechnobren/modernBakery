@@ -203,6 +203,12 @@ const SalesmanPage = () => {
             rowSelection: true,
             rowActions: [
               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/salesman/details/${data.uuid}`);
+                },
+              },
+              {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;

@@ -76,7 +76,7 @@ export default function ComplaintFeedbackPage() {
         data: res?.data || [],
         currentPage: res?.pagination?.current_page || 1,
         pageSize: res?.pagination?.per_page || pageSize,
-        total: res?.pagination?.total || 1,
+        total: res?.pagination?.last_page || 1,
       };
     },
     [setLoading, showSnackbar]
