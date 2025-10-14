@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React ,{ Fragment } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -73,6 +73,7 @@ export default function OrderAddEditPage() {
         warehouse: "",
         customer: "",
         note: "",
+        delivery_date: new Date().toISOString().slice(0, 10),
         transactionType: "1",
         paymentTerms: "1",
         paymentTermsUnit: "1",
@@ -82,7 +83,7 @@ export default function OrderAddEditPage() {
         {
             itemName: "",
             UOM: "",
-            Quantity: "",
+            Quantity: "1",
             Price: "",
             Excise: "",
             Discount: "",
@@ -104,7 +105,7 @@ export default function OrderAddEditPage() {
             {
                 itemName: "",
                 UOM: "",
-                Quantity: "",
+                Quantity: "1",
                 Price: "",
                 Excise: "",
                 Discount: "",
@@ -117,6 +118,24 @@ export default function OrderAddEditPage() {
 
     // Remove item row
     const handleRemoveItem = (index: number) => {
+        // keep at least one empty row
+        if (itemData.length <= 1) {
+            // reset the only row to empty values instead of removing it
+            setItemData([
+                {
+                    itemName: "",
+                    UOM: "",
+                    Quantity: "1",
+                    Price: "",
+                    Excise: "",
+                    Discount: "",
+                    Net: "",
+                    Vat: "",
+                    Total: "",
+                },
+            ]);
+            return;
+        }
         setItemData(itemData.filter((_, i) => i !== index));
     };
 
@@ -134,8 +153,8 @@ export default function OrderAddEditPage() {
                     </h1>
                 </div>
             </div>
-            <ContainerCard className="rounded-[10px] space-y-[40px] scrollbar-none">
-                <div className="flex justify-between flex-wrap gap-[20px]">
+            <ContainerCard className="rounded-[10px]  scrollbar-none">
+                <div className="flex justify-between mb-10 flex-wrap gap-[20px]">
                     <div className="flex flex-col gap-[10px]">
                         <Logo type="full" />
                         <span className="text-primary font-normal text-[16px]">
@@ -154,7 +173,7 @@ export default function OrderAddEditPage() {
                 </div>
                 <hr className="w-full text-[#D5D7DA]" />
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto items-center mt-10 mb-10">
                     <InputFields
                         label="Warehouse"
                         type="text"
@@ -167,10 +186,20 @@ export default function OrderAddEditPage() {
                         label="Customer"
                         type="text"
                         name="customer"
-                        value={form.warehouse}
+                        value={form.customer}
                         options={agentCustomerOptions}
                         onChange={handleChange}
                     />
+                    <div className="ml-auto">
+                        <InputFields
+                            label="Delivery Date"
+                            type="date"
+                            name="delivery_date"
+                            value={form.delivery_date}
+                            onChange={handleChange}
+                        />
+                    </div>
+
                 </div>
 
 
@@ -181,7 +210,7 @@ export default function OrderAddEditPage() {
                             {
                                 key: "itemName",
                                 label: "Item Name",
-                                width: 200,
+                                width: 180,
                                 render: (row) => (
                                     <InputFields
                                         label=""
@@ -232,7 +261,14 @@ export default function OrderAddEditPage() {
                                         onChange={(e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
                                             const newData = [...itemData];
                                             const rowIndex = Number(row.idx);
-                                            newData[rowIndex].Quantity = e.target.value;
+                                            const raw = e.target.value;
+                                            // allow user to clear the field while typing, otherwise enforce minimum 1
+                                            if (raw === '') {
+                                                newData[rowIndex].Quantity = '';
+                                            } else {
+                                                const n = Number(raw);
+                                                newData[rowIndex].Quantity = String(isNaN(n) ? 1 : Math.max(1, Math.floor(n)));
+                                            }
                                             setItemData(newData);
                                         }}
                                        
@@ -252,9 +288,11 @@ export default function OrderAddEditPage() {
                                 render: (row) => (
                                     <button
                                         type="button"
-                                        className="text-red-500 flex items-center"
-                                        onClick={() => handleRemoveItem(Number(row.idx))}
+                                        className={`${itemData.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''} text-red-500 flex items-center`}
+                                        onClick={() => itemData.length > 1 && handleRemoveItem(Number(row.idx))}
                                         aria-label="Delete Item"
+                                        disabled={itemData.length <= 1}
+                                        title={itemData.length <= 1 ? 'At least one item is required' : 'Delete Item'}
                                     >
                                         <Icon icon="hugeicons:delete-02" width={20} />
                                     </button>
@@ -266,7 +304,7 @@ export default function OrderAddEditPage() {
                     
                 />
 
-               <div className="mt-2">
+               <div className="mt-4">
 
               
                     <button
@@ -278,10 +316,10 @@ export default function OrderAddEditPage() {
                         Add New Item
                     </button>
  </div>
-                <div className="flex justify-between text-primary">
+                <div className="flex justify-between text-primary gap-0 mb-10">
                     <div></div>
                     <div className="flex justify-between flex-wrap w-full">
-                        <div className="hidden flex-col justify-end gap-[20px] w-full lg:flex lg:w-[400px]">
+                        <div className="flex flex-col justify-end gap-[20px] w-full lg:flex lg:w-[400px]">
                             <div className="flex flex-col space-y-[10px]">
                                 <InputFields 
                                     label="Note"
@@ -325,12 +363,12 @@ export default function OrderAddEditPage() {
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
+                        <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0  lg:pb-0  lg:mb-0 mt-0">
                             {keyValueData.map((item) => (
-                                <React.Fragment key={item.key}>
+                                <Fragment key={item.key}>
                                     <KeyValueData data={[item]} />
                                     <hr className="text-[#D5D7DA]" />
-                                </React.Fragment>
+                                </Fragment>
                             ))}
                             <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                                 <span>Total</span>
@@ -339,25 +377,7 @@ export default function OrderAddEditPage() {
                             
                         </div>
 
-                        <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px]">
-                            <div className="flex flex-col space-y-[10px]">
-                                <div className="font-semibold text-[#181D27]">
-                                    Note
-                                </div>
-                                <div>
-                                    Lorem ipsum, dolor sit amet consectetur
-                                    adipisicing elit. Sed dolor enim voluptatem
-                                    harum delectus perferendis atque fugiat
-                                    commodi maxime beatae.
-                                </div>
-                            </div>
-                            <div className="flex flex-col space-y-[10px]">
-                                <div className="font-semibold text-[#181D27]">
-                                    Transaction Type
-                                </div>
-                                <div>Payment On Delivery.</div>
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
                 <hr className="text-[#D5D7DA]" />

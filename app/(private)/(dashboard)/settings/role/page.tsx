@@ -10,15 +10,10 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import {
-    roleList,
-    
-    deleteRole,
-} from "@/app/services/allApi";
+import { roleGlobalSearch, roleList } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext"; 
 import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface DropdownItem {
     icon: string;
@@ -37,24 +32,15 @@ const columns = [
 ];
 
 export default function Roles() {
-    interface RoleItem {
-        id: number | string;
-        name: string;
-        permissions: string;
-    }
-
+    const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<RoleItem | null>(null);
-    const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
-    const { showSnackbar } = useSnackbar(); 
 
     const fetchCountries = useCallback(
         async (
             page: number = 1,
-            pageSize: number = 5
+            pageSize: number = 50
         ): Promise<listReturnType> => {
             try {
               setLoading(true);
@@ -78,24 +64,28 @@ export default function Roles() {
         []
     );
 
-    const handleConfirmDelete = async () => {
-        if (!selectedRow) return;
-
-        if (!selectedRow?.id) throw new Error("Missing id");
-        const res = await deleteRole(String(selectedRow.id));
-        if (res.error)
-            return showSnackbar(
-                res.data.message || "Failed to delete Role",
-                "error"
-            );
-        else {
-            showSnackbar("Role deleted successfully ", "success");
-            setRefreshKey(refreshKey + 1);
-        }
-        setLoading(false);
-        setShowDeletePopup(false);
-        setSelectedRow(null);
-    };
+    const searchList = useCallback(
+        async (search: string, pageSize: number = 5): Promise<listReturnType> => {
+            setLoading(true);
+            const listRes = await roleGlobalSearch({
+            search,
+            per_page: pageSize.toString(),
+            });
+            setLoading(false);
+            if (listRes.error) {
+            showSnackbar(listRes.data.message || "Failed to Search", "error");
+            throw new Error("Failed to Search");
+            } else {
+            return {
+                data: listRes.data || [],
+                total: listRes.pagination.totalPages || 1,
+                currentPage: listRes.pagination.page || 1,
+                pageSize: listRes.pagination.limit || pageSize,
+            };
+            }
+        },
+        []
+    );
 
     useEffect(() => {
         setLoading(true);
@@ -105,14 +95,13 @@ export default function Roles() {
         <>
             <div className="h-[calc(100%-60px)] pb-[22px]">
                 <Table
-                    refreshKey={refreshKey}
                     config={{
                         api: {
                             list: fetchCountries,
-                            // search: searchCountries,
+                            search: searchList,
                         },
                         header: {
-                            title: "Role",
+                            title: "Roles",
                             wholeTableActions: [
                                 <div key={0} className="flex gap-[12px] relative">
                                     <DismissibleDropdown
@@ -153,7 +142,7 @@ export default function Roles() {
                                     />
                                 </div>
                             ],
-                            searchBar: false,
+                            searchBar: true,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn
@@ -161,7 +150,7 @@ export default function Roles() {
                                     href="/settings/role/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Role"
+                                    label="Add"
                                     labelTw="hidden lg:block"
                                 />,
                             ],
@@ -178,28 +167,11 @@ export default function Roles() {
 
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data: TableDataType) => {
-                                    setSelectedRow({ id: data.id, name: data.name, permissions: data.permissions } as RoleItem);
-                                    setShowDeletePopup(true);
-                                },
-                            },
                         ],
-                        pageSize: 5,
+                        pageSize: 50,
                     }}
                 />
             </div>
-
-            {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Role"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )}
         </>
     );
 }

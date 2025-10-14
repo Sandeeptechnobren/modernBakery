@@ -15,11 +15,12 @@ import { useLoading } from "@/app/services/loadingContext";
 
 interface PlanogramItem {
   id: number | string;
+  uuid: string; // <--- add this
   name: string;
   valid_from: string;
   valid_to: string;
-  status: number | string;
 }
+
 
 interface DropdownItem {
   icon: string;
@@ -52,13 +53,13 @@ export default function Planogram() {
         if (res.error) throw new Error(res.message || "Failed to fetch planograms");
 
         // Normalize status
-        const data: TableDataType[] = res.data.map((item: PlanogramItem) => ({
-          id: item.id.toString(),
-          name: item.name,
-          valid_from: item.valid_from,
-          valid_to: item.valid_to,
-          status: item.status === 1 || String(item.status).toLowerCase() === "active" ? "Active" : "Inactive",
-        }));
+      const data: TableDataType[] = res.data.map((item: PlanogramItem) => ({
+  id: item.id.toString(),
+  uuid: item.uuid, // <--- add this
+  name: item.name,
+  valid_from: item.valid_from,
+  valid_to: item.valid_to,
+}));
 
         return {
           data,
@@ -96,10 +97,7 @@ const searchPlanogram = useCallback(
         name: item.name,
         valid_from: item.valid_from,
         valid_to: item.valid_to,
-        status:
-          item.status === 1 || String(item.status).toLowerCase() === "active"
-            ? "Active"
-            : "Inactive",
+      
       }));
       return {
         data,
@@ -122,11 +120,7 @@ const searchPlanogram = useCallback(
     { key: "name", label: "Name" },
     { key: "valid_from", label: "Valid From" },
     { key: "valid_to", label: "Valid To" },
-    {
-      key: "status",
-      label: "Status",
-      render: (row: TableDataType) => <StatusBtn isActive={row.status === "Active"} />,
-    },
+ 
   ];
 
   return (
@@ -181,15 +175,16 @@ const searchPlanogram = useCallback(
           columns,
           rowSelection: true,
           rowActions: [
-            {
-              icon: "lucide:eye",
-              onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/planogram/view/${data.id}`),
-            },
+         {
+  icon: "lucide:eye",
+  onClick: (data: TableDataType) =>
+    router.push(`/merchandiser/planogram/view/${data.uuid}`)
+},
             {
               icon: "lucide:edit-2",
               onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/planogram/update/${data.id}`),
+           
+                router.push(`/merchandiser/planogram/${data.id}`),
             },
           ],
           pageSize: 10,

@@ -479,9 +479,9 @@ export default function AddOrEditCompanyWithStepper() {
                   value={values.vender_details}
                   isSingle={false}
                   options={vendorOptions}
-                  onChange={(e) =>
-                    setFieldValue("vender_details", e.target.value)
-                  }
+                  onChange={(e) => {
+                    setFieldValue("vender_details", e.target.value);
+                  }}
                   error={
                     touched.vender_details
                       ? Array.isArray(errors.vender_details)

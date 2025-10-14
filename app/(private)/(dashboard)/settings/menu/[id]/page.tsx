@@ -224,6 +224,7 @@ export default function AddShelfDisplay() {
                 {/* status */}
                 <div>
                   <InputFields
+                    type="radio"
                     required
                     label="Status"
                     name="status"

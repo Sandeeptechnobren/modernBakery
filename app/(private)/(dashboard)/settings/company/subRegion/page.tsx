@@ -48,12 +48,14 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "area_code", label: "Sub Region Code" ,
+  {
+    key: "area_code",
+    label: "Sub Region Code",
     render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.area_code}
-            </span>
-        ),
+      <span className="font-semibold text-[#181D27] text-[14px]">
+        {row.area_code}
+      </span>
+    ),
   },
   { key: "area_name", label: "SubRegion Name" },
   // { key: "region_name", label: "Region" },
@@ -89,7 +91,10 @@ export default function SubRegion() {
 
   // ✅ Fetch SubRegions
   const fetchSubRegions = useCallback(
-    async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {
+    async (
+      page: number = 1,
+      pageSize: number = 50
+    ): Promise<listReturnType> => {
       try {
         setLoading(true);
         const listRes = await getArea({
@@ -140,26 +145,6 @@ export default function SubRegion() {
     },
     []
   );
-
-  // ✅ Delete SubRegion
-  const handleConfirmDelete = async () => {
-    if (!selectedRow) return;
-
-    if (!selectedRow?.id) throw new Error("Missing id");
-    const res = await deleteArea(String(selectedRow.id));
-    if (res.error)
-      return showSnackbar(
-        res.data.message || "Failed to delete SubRegion",
-        "error"
-      );
-    else {
-      showSnackbar("SubRegion deleted successfully ✅", "success");
-      setRefreshKey(refreshKey + 1);
-    }
-    setLoading(false);
-    setShowDeletePopup(false);
-    setSelectedRow(null);
-  };
 
   useEffect(() => {
     setLoading(true);
@@ -215,7 +200,7 @@ export default function SubRegion() {
                   href="/settings/company/subRegion/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add SubRegion"
+                  label="Add"
                   labelTw="hidden sm:block"
                 />,
               ],
@@ -225,46 +210,18 @@ export default function SubRegion() {
             columns,
             rowSelection: true,
             rowActions: [
-               {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(
-                    `/settings/company/subRegion/details/${data.id}`
-                  );
-                },
-              },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(
-                    `/settings/company/subRegion/${row.id}`
-                  );
+                  router.push(`/settings/company/subRegion/${row.id}`);
                 },
               },
-              // {
-              //   icon: "lucide:trash-2",
-              //   onClick: (data: object) => {
-              //     const row = data as TableRow;
-              //     setSelectedRow({ id: row.id });
-              //     setShowDeletePopup(true);
-              //   },
-              // },
             ],
-            pageSize: 5,
+            pageSize: 50,
           }}
         />
       </div>
-
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="SubRegion"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

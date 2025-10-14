@@ -10,9 +10,8 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { permissionList, deletePermissions } from "@/app/services/allApi";
+import { permissionGlobalSearch, permissionList } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 
@@ -33,36 +32,16 @@ const columns = [
 ];
 
 export default function Permissions() {
-
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
-    const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
 
-    const handleConfirmDelete = async () => {
-        if (!selectedRowId) throw new Error("Missing id");
-        const res = await deletePermissions(String(selectedRowId));
-        if (res.error)
-            return showSnackbar(
-                res.data.message || "Failed to delete Permission",
-                "error"
-            );
-        else {
-            showSnackbar("Permission deleted successfully ", "success");
-            setRefreshKey(refreshKey + 1);
-        }
-        setLoading(false);
-        setShowDeletePopup(false);
-        setSelectedRowId(null);
-    };
 
     const fetchData = useCallback(
         async (
             page: number = 1,
-            pageSize: number = 5
+            pageSize: number = 50
         ): Promise<listReturnType> => {
             setLoading(true);
             const listRes = await permissionList({
@@ -91,13 +70,35 @@ export default function Permissions() {
         setLoading(true);
     }, []);
 
+    const searchList = useCallback(
+        async (search: string, pageSize: number = 5): Promise<listReturnType> => {
+            setLoading(true);
+            const listRes = await permissionGlobalSearch({
+                search,
+                per_page: pageSize.toString(),
+            });
+            setLoading(false);
+            if (listRes.error) {
+                showSnackbar(listRes.data.message || "Failed to Search", "error");
+                throw new Error("Failed to Search");
+            } else {
+                return {
+                    data: listRes.data || [],
+                    total: listRes.pagination.totalPages || 1,
+                    currentPage: listRes.pagination.page || 1,
+                    pageSize: listRes.pagination.limit || pageSize,
+                };
+            }
+        },
+        []
+    );
+
     return (
         <>
             <div className="h-[calc(100%-60px)] pb-[22px]">
                 <Table
-                    refreshKey={refreshKey}
                     config={{
-                        api: { list: fetchData },
+                        api: { list: fetchData, search: searchList },
                         header: {
                             title: "Permissions",
                             wholeTableActions: [
@@ -141,7 +142,7 @@ export default function Permissions() {
                                     />
                                 </div>,
                             ],
-                            searchBar: false,
+                            searchBar: true,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn
@@ -149,7 +150,7 @@ export default function Permissions() {
                                     href="/settings/permission/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Permission"
+                                    label="Add"
                                     labelTw="hidden lg:block"
                                 />,
                             ],
@@ -167,28 +168,11 @@ export default function Permissions() {
                                     );
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data: TableDataType) => {
-                                    setSelectedRowId(Number(data.id));
-                                    setShowDeletePopup(true);
-                                },
-                            },
                         ],
-                        pageSize: 5,
+                        pageSize: 50,
                     }}
                 />
             </div>
-
-            {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Permission"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )}
         </>
     );
 }

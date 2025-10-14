@@ -232,8 +232,12 @@ export default function AddEditAgentCustomer() {
                         vat_no: data.vat_no ?? data.tin_no ?? null,
                         payment_type:
                             data.payment_type != null
-                                ? paymentTypeOptions.find((p) => p.value === String(data.payment_type))?.value || "1"
+                                ? paymentTypeOptions.find((p) => p.label === String(data.payment_type))?.value || "1"
                                 : "",
+                        is_cash:
+                            (data.payment_type != null
+                                ? paymentTypeOptions.find((p) => p.label === String(data.payment_type))?.value || "1"
+                                : "") === "1" ? "1" : "0",
                         creditday:
                             data.creditday != null
                                 ? String(data.creditday)
@@ -242,8 +246,6 @@ export default function AddEditAgentCustomer() {
                             data.credit_limit != null
                                 ? String(data.credit_limit)
                                 : "",
-                        is_cash:
-                            data.is_cash != null ? String(data.is_cash) : "1",
                         // categories
                         category_id:
                             data.category_id != null
@@ -478,6 +480,7 @@ export default function AddEditAgentCustomer() {
                 customer_type: Number(values.customer_type),
                 route_id: Number(values.route_id),
                 buyertype: Number(values.buyertype),
+                creditday: Number(values.creditday),
                 payment_type:
                     paymentTypeOptions.find(
                         (option) => option.value === String(values.payment_type)
@@ -681,10 +684,8 @@ export default function AddEditAgentCustomer() {
                                         label="Customer Type"
                                         options={customerTypeOptions}
                                         name="customer_type"
-                                        value={
-                                            values.customer_type?.toString() ??
-                                            ""
-                                        }
+                                        value={values.customer_type?.toString() ??""}
+                                        disabled={customerTypeOptions.length === 0}
                                         onChange={(e) =>
                                             setFieldValue(
                                                 "customer_type",
@@ -711,6 +712,7 @@ export default function AddEditAgentCustomer() {
                                         name="warehouse"
                                         value={values.warehouse}
                                         options={warehouseOptions}
+                                        disabled={warehouseOptions.length === 0}
                                         onChange={(e) => {
                                             setFieldValue("warehouse", e.target.value);
                                             if (values.warehouse !== e.target.value) {
@@ -1019,10 +1021,7 @@ export default function AddEditAgentCustomer() {
                                     required
                                     label="Payment Type"
                                     name="payment_type"
-                                    value={
-                                        values.payment_type?.toString() ??
-                                        ""
-                                    }
+                                    value={values.payment_type?.toString() ??""}
                                     onChange={(e) =>{
                                         setFieldValue("payment_type",e.target.value)
                                         setFieldValue("is_cash", (e.target.value === "1") ? "1" : "0")
@@ -1112,6 +1111,7 @@ export default function AddEditAgentCustomer() {
                                             errors.outlet_channel_id
                                         }
                                         options={channelOptions}
+                                        disabled={channelOptions.length === 0}
                                     />
                                     {touched.outlet_channel_id &&
                                         errors.outlet_channel_id && (
@@ -1140,6 +1140,7 @@ export default function AddEditAgentCustomer() {
                                             errors.category_id
                                         }
                                         options={customerCategoryOptions}
+                                        disabled={customerCategoryOptions.length === 0}
                                     />
                                     {touched.category_id &&
                                         errors.category_id && (

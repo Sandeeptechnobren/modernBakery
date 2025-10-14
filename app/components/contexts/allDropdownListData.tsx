@@ -27,10 +27,10 @@ import {
   agentCustomerList,
   submenuList,
   permissionList,
-  SurveyList
+  SurveyList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
-import { shelvesList } from '@/app/services/merchandiserApi';
+import { shelvesList,merchandiserList} from '@/app/services/merchandiserApi';
 
 interface DropdownDataContextType {
   companyList: CompanyItem[];
@@ -70,7 +70,7 @@ interface DropdownDataContextType {
   warehouseOptions: { value: string; label: string }[];
   routeTypeOptions: { value: string; label: string }[];
   areaOptions: { value: string; label: string,region_id: number; }[];
-  companyCustomersOptions: { value: string; label: string }[];
+  companyCustomersOptions: { value: string; label: string; region_id?: number; area_id?: number }[];
   companyCustomersTypeOptions: { value: string; label: string }[];
   itemCategoryOptions: { value: string; label: string }[];
   itemSubCategoryOptions: { value: string; label: string }[];
@@ -150,6 +150,9 @@ interface CustomerItem {
   id?: number | string;
   customer_code?: string;
   owner_name?: string;
+  // optional location fields on customer entries
+  region_id?: number | string;
+  area_id?: number | string;
 }
 
 interface CustomerTypeItem {
@@ -360,7 +363,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const companyCustomersOptions = (Array.isArray(companyCustomersData) ? companyCustomersData : []).map((c: CustomerItem) => ({
     value: String(c.id ?? ''),
-    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? '')
+    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? ''),
+    region_id: c.region_id ? Number(c.region_id) : undefined,
+    area_id: c.area_id ? Number(c.area_id) : undefined,
   }));
 
   const companyCustomersTypeOptions = (Array.isArray(companyCustomersTypeData) ? companyCustomersTypeData : []).map((c: CustomerTypeItem) => ({

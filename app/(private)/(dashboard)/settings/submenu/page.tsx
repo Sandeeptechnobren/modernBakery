@@ -10,9 +10,8 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { submenuGlobalSearch, submenuList, deleteSubmenu } from "@/app/services/allApi";
+import { submenuGlobalSearch, submenuList } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 
@@ -64,33 +63,14 @@ const columns = [
 export default function Page() {
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
 
-    const handleConfirmDelete = async () => {
-        if (!selectedRowId) throw new Error("Missing id");
-        const res = await deleteSubmenu(String(selectedRowId));
-        if (res.error)
-            return showSnackbar(
-                res.data.message || "Failed to delete Submenu",
-                "error"
-            );
-        else {
-            showSnackbar("Submenu deleted successfully ", "success");
-            setRefreshKey(refreshKey + 1);
-        }
-        setLoading(false);
-        setShowDeletePopup(false);
-        setSelectedRowId(null);
-    };
-
     const fetchData = useCallback(
         async (
             page: number = 1,
-            pageSize: number = 5
+            pageSize: number = 50
         ): Promise<listReturnType> => {
             setLoading(true);
             const listRes = await submenuList({
@@ -209,7 +189,7 @@ export default function Page() {
                                     href="/settings/submenu/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Submenu"
+                                    label="Add"
                                     labelTw="hidden lg:block"
                                 />,
                             ],
@@ -227,28 +207,11 @@ export default function Page() {
                                     );
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data: TableDataType) => {
-                                    setSelectedRowId(data.uuid);
-                                    setShowDeletePopup(true);
-                                },
-                            },
                         ],
-                        pageSize: 5
+                        pageSize: 50
                     }}
                 />
             </div>
-
-            {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Sub Menu"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )}
         </>
     );
 }

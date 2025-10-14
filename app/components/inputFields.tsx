@@ -15,7 +15,7 @@ type Props = {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
   options?: Option[];
-  type?: "text" | "select" | "file" | "date" | "radio" | "number" | "textarea";
+  type?: "text" | "select" | "file" | "date" | "radio" | "number" | "textarea" | "contact";
   id?: string;
   width?: string;
   error?: string | false;
@@ -67,6 +67,7 @@ export default function InputFields({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pointerDownRef = useRef(false);
   const isMulti = (options && options.length > 0 && typeof isSingle !== 'undefined' && isSingle === false) || (loading && isSingle === false);
   const isSingleSelect = (options && options.length > 0 && isSingle !== false) || (loading && isSingle !== false);
   const selectedValues: string[] = Array.isArray(value) ? value : [];
@@ -179,8 +180,12 @@ useEffect(() => {
           {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
         </div>
       ) : isMulti ? (
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative select-none" ref={dropdownRef}>
           <div
+            tabIndex={0}
+            onMouseDown={() => { pointerDownRef.current = true; }}
+            onMouseUp={() => { pointerDownRef.current = false; }}
+            onFocus={() => { if (!pointerDownRef.current) setDropdownOpen(true); }}
             className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
             onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
           >
@@ -250,7 +255,7 @@ useEffect(() => {
           </div>
           {dropdownOpen && !loading && (
             <>
-              <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+              <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                 {!isSearchable && (
                   <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
                     <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
@@ -315,9 +320,13 @@ useEffect(() => {
           )}
         </div>
       ) : isSingleSelect ? (
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative select-none" ref={dropdownRef}>
           <div
-            className={`border h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
+            tabIndex={0}
+            onMouseDown={() => { pointerDownRef.current = true; }}
+            onMouseUp={() => { pointerDownRef.current = false; }}
+            onFocus={() => { if (!pointerDownRef.current) setDropdownOpen(true); }}
+            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer bg-white ${error ? "border-red-500" : "border-gray-300"}`}
             onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
           >
             {isSearchable ? (
@@ -442,7 +451,122 @@ useEffect(() => {
             </div>
           )}
         </div>
-      ) : type === "date" ? (
+        ) : type === "contact" ? (
+          (() => {
+            const countryCodes = [
+              { value: "+91", label: "+91" },
+              { value: "+1", label: "+1" },
+              { value: "+44", label: "+44" },
+              { value: "+61", label: "+61" },
+              { value: "+62", label: "+62" },
+            ];
+            const raw = typeof value === 'string' ? value : '';
+            const parts = raw.split('|');
+            // if parts[0] is empty string (''), fallback to '+91'
+            const code = parts[0] && parts[0].trim() !== '' ? parts[0] : '+91';
+            const phone = parts[1] ?? '';
+            const handleCodeChange = (c: string) => {
+              safeOnChange(createSingleSelectEvent(`${c}|${phone}`));
+            };
+            const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+              const v = (e.target as HTMLInputElement).value;
+              safeOnChange(createSingleSelectEvent(`${code}|${v}`));
+            };
+            return (
+              <div className={`flex items-center gap-2 mt-[6px] ${width}`}>
+                <div className="relative" ref={dropdownRef}>
+                  <div
+                    className={`flex items-center gap-2 border h-[44px] rounded-md px-3 text-sm ${error ? 'border-red-500' : 'border-gray-300'} bg-white cursor-pointer`}
+                    onClick={() => { if (!loading) setDropdownOpen(v => !v); }}
+                  >
+                    <span className="text-xl">{(function getFlag(cc){
+                      switch(cc){
+                        case '+91': return '🇮🇳';
+                        case '+1': return '🇺🇸';
+                        case '+44': return '🇬🇧';
+                        case '+61': return '🇦🇺';
+                        case '+62': return '🇮🇩';
+                        case '+234': return '🇳🇬';
+                        case '+254': return '🇰🇪';
+                        case '+27': return '🇿🇦';
+                        case '+49': return '🇩🇪';
+                        case '+995': return '🇬🇪';
+                        default: return '🌐';
+                      }
+                    })(code)}</span>
+                    <span className="font-medium">{code}</span>
+                    <svg className="w-4 h-4 ml-auto text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                  {dropdownOpen && !loading && (
+                    <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      <div className="px-3 py-2 border-b" style={{ borderBottomColor: '#e5e7eb' }}>
+                        <input
+                          type="text"
+                          placeholder="Search for countries"
+                          value={search}
+                          onChange={e => setSearch(e.target.value)}
+                          className="w-full border-none outline-none text-sm"
+                          autoFocus
+                        />
+                      </div>
+                      <div>
+                        {(() => {
+                          const list = countryCodes.filter(c => c.label.toLowerCase().includes(search.toLowerCase()) || c.value.includes(search));
+                          if (list.length === 0) return <div className="px-3 py-2 text-gray-400 text-sm">No countries</div>;
+                          return list.map((c, idx) => (
+                            <div
+                              key={c.value + idx}
+                              className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                              onClick={() => {
+                                // emit combined value and close
+                                safeOnChange(createSingleSelectEvent(`${c.value}|${phone}`));
+                                setDropdownOpen(false);
+                                setSearch("");
+                              }}
+                            >
+                              <span className="mr-3 text-xl">{(function getFlag(cc){
+                                switch(cc){
+                                  case '+91': return '🇮🇳';
+                                  case '+1': return '🇺🇸';
+                                  case '+44': return '🇬🇧';
+                                  case '+61': return '🇦🇺';
+                                  case '+62': return '🇮🇩';
+                                  case '+234': return '🇳🇬';
+                                  case '+254': return '🇰🇪';
+                                  case '+27': return '🇿🇦';
+                                  case '+49': return '🇩🇪';
+                                  case '+995': return '🇬🇪';
+                                  default: return '🌐';
+                                }
+                              })(c.value)}</span>
+                              <div className="flex-1">
+                                <div className="text-sm text-gray-800">{c.label}</div>
+                                <div className="text-xs text-gray-500">{c.value}</div>
+                              </div>
+                              {c.value === code && <svg className="w-4 h-4 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 00-1.414-1.414L8 11.172 4.707 7.879a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8z" clipRule="evenodd"/></svg>}
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <input
+                  id={id ?? name}
+                  name={name}
+                  type="tel"
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  disabled={disabled}
+                  onBlur={onBlur}
+                  autoComplete="off"
+                  className={`flex-1 border h-[44px] rounded-md px-3 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+                  placeholder={ placeholder || `Enter ${label}` }
+                />
+              </div>
+            );
+          })()
+        ) : type === "date" ? (
         <input
           id={id ?? name}
           name={name}

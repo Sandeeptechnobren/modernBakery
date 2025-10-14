@@ -58,7 +58,7 @@ const keyValueData = [
 export default function OrderDetailPage() {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
-  const orderId = "#ORD-120933";
+  const orderId = "#W120933";
 
   return (
     <>
@@ -72,7 +72,7 @@ export default function OrderDetailPage() {
             className="cursor-pointer"
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[4px]">
-            Order Details {orderId}
+            Order {orderId}
           </h1>
         </div>
 
@@ -112,22 +112,24 @@ export default function OrderDetailPage() {
             </span>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col items-end">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-              Order
+              O R D E R
             </span>
-            <span className="text-primary text-[14px] tracking-[10px]">
-              {orderId}
+            <span className="text-primary text-[14px] tracking-[10px] mb-3">
+            {orderId}
             </span>
+           
           </div>
         </div>
 
         <hr className="text-[#D5D7DA]" />
 
-        {/* ---------- Order Details Section ---------- */}
-        <div className="flex flex-col md:flex-row justify-between">
-          <div className="flex flex-wrap gap-y-[20px] xl:flex-nowrap justify-between w-full">
-            <div className="flex flex-col space-y-[20px] text-primary-bold text-[14px] w-full xl:w-[312px] border-b-[1px] border-b-[#D5D7DA] pb-[20px] xl:pb-0 xl:border-0">
+        {/* ---------- Order Details Section (three equal columns) ---------- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8 items-start">
+          {/* From (Seller) */}
+          <div>
+            <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
               <span>From (Seller)</span>
               <div className="flex flex-col space-y-[10px]">
                 <span className="font-semibold">Hariss Store</span>
@@ -137,8 +139,11 @@ export default function OrderDetailPage() {
                 </span>
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-col space-y-[20px] text-primary-bold text-[14px] w-full xl:w-[312px]">
+          {/* To (Customer) */}
+          <div>
+            <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
               <span>To (Customer)</span>
               <div className="flex flex-col space-y-[10px]">
                 <span className="font-semibold">John Doe</span>
@@ -150,18 +155,19 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
-          <div className="flex md:justify-end space-y-[20px] text-primary-bold text-[14px] w-full xl:w-[312px] mr-[24px] border-t-[1px] border-[#D5D7DA] md:border-0 mt-[20px] md:mt-0 pt-[20px] md:pt-0">
-            <span className="flex flex-col space-y-[14px] w-fit">
-              <span>
+          {/* Dates / meta - right column */}
+          <div className="flex md:justify-end">
+            <div className="text-primary-bold text-[14px] md:text-right">
+              <div>
                 Order Date: <span className="font-bold">04 Oct 2025</span>
-              </span>
-              <span>
+              </div>
+              <div className="mt-2">
                 Delivery Date: <span className="font-bold">06 Oct 2025</span>
-              </span>
-              <span>
+              </div>
+              <div className="mt-2">
                 Order Source: <span className="font-bold">Online</span>
-              </span>
-            </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -193,11 +199,20 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Totals */}
-            <div className="flex flex-col gap-[20px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
-              {/* <KeyValueData data={keyValueData} /> */}
-              <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
-                <span>Total Amount</span>
-                <span>AED 73.50</span>
+            <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
+              {keyValueData.map((kv) => (
+                <div key={kv.key} className="w-full">
+                  <div className="flex justify-between py-2">
+                    <span className="text-sm text-[#6B6F76]">{kv.key}</span>
+                    <span className="text-sm font-medium">{kv.value}</span>
+                  </div>
+                  <hr className="text-[#D5D7DA]" />
+                </div>
+              ))}
+              {/* <hr className="text-[#D5D7DA]" /> */}
+              <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
+                <span>Total</span>
+                <span>AED73.50</span>
               </div>
             </div>
 
@@ -226,13 +241,13 @@ export default function OrderDetailPage() {
           <SidebarBtn
             leadingIcon={"lucide:download"}
             leadingIconSize={20}
-            label="Download Order"
+            label="Download"
           />
           <SidebarBtn
             isActive
             leadingIcon={"lucide:printer"}
             leadingIconSize={20}
-            label="Print Order"
+            label="Print Now"
           />
         </div>
       </ContainerCard>

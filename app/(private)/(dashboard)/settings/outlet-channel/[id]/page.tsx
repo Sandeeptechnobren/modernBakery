@@ -199,7 +199,7 @@ const { showSnackbar } = useSnackbar();
               />
               {/* Status */}
               <InputFields
-                type="select"
+                type="radio"
                 name="status"
                 label="Status"
                 value={formik.values.status}

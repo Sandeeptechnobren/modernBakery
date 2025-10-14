@@ -54,8 +54,6 @@ interface Company {
   logo?: string | null;
 }
 
-
-
 export default function ViewPage() {
   const params = useParams();
   const id = Array.isArray(params.id)
@@ -98,15 +96,12 @@ export default function ViewPage() {
   return (
     <>
       {/* Header */}
-      
 
       <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
         {/* Left Section */}
        
         {/* Right Section */}
         <div className="w-full flex flex-col gap-y-[20px]">
-         
-
           {/* Company Information */}
           <ContainerCard className="w-full h-fit">
             <KeyValueData
@@ -115,7 +110,10 @@ export default function ViewPage() {
                 { key: "Company Type", value: company?.company_type || "-" },
                 { key: "Website", value: company?.website || "-" },
                 { key: "Email", value: company?.email || "-" },
-                { key: "Primary Contact", value: company?.primary_contact || "-" },
+                {
+                  key: "Primary Contact",
+                  value: company?.primary_contact || "-",
+                },
                 { key: "Toll Free No", value: company?.toll_free_no || "-" },
                 { key: "Module Access", value: company?.module_access || "-" },
                 { key: "Service Type", value: company?.service_type || "-" },

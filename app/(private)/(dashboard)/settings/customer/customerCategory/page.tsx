@@ -36,11 +36,7 @@ interface CustomerCategory {
 }
 
 export default function CustomerCategoryPage() {
-  const [categories, setCategories] = useState<CustomerCategory[]>([]);
-  const [refreshKey, setRefreshKey] = useState(0);
   const { setLoading } = useLoading();
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<CustomerCategory | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const { showSnackbar } = useSnackbar();
@@ -111,18 +107,6 @@ export default function CustomerCategoryPage() {
           },
           []
       );
-  // ✅ Delete handler
-  const handleDelete = async () => {
-    if (!selectedCategory?.id) return;
-      const res = await deleteCustomerCategory(selectedCategory.id);
-      if(res.error) showSnackbar(res.data.message || "Failed to delete category", "error");
-      else {
-        showSnackbar(res.message || "Customer Category deleted", "success");
-        setRefreshKey(prev => prev+1);
-      }
-      setShowDeletePopup(false);
-      setSelectedCategory(null);
-  };
 
   const columns = useMemo(() => [
     { key: "outlet_channel", label: "Outlet Channel Code", render:(data: TableDataType) =>{
@@ -155,8 +139,6 @@ export default function CustomerCategoryPage() {
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          // data={tableData}
-          refreshKey={refreshKey}
           config={{
             api: {
               list: fetchCategories,
@@ -203,7 +185,7 @@ export default function CustomerCategoryPage() {
               ],
             },
             localStorageKey: "customer-category-table",
-            pageSize: 2,
+            pageSize: 50,
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
@@ -217,30 +199,10 @@ export default function CustomerCategoryPage() {
                   );
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  const category = categories.find(c => c.id === r.id) || null;
-                  setSelectedCategory(category);
-                  setShowDeletePopup(true);
-                },
-              },
             ],
           }}
         />
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && selectedCategory && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title={`Delete Category "${selectedCategory.customer_category_name}"?`}
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

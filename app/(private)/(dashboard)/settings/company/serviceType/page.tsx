@@ -8,10 +8,9 @@ import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
 import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { deleteServiceTypes, serviceTypesList } from "@/app/services/assetsApi";
+import { serviceTypesList } from "@/app/services/assetsApi";
 import StatusBtn from "@/app/components/statusBtn2";
 
 const dropdownDataList = [
@@ -22,30 +21,12 @@ const dropdownDataList = [
 export default function ShelfDisplay() {
   const {setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [deleteSelectedRow, setDeleteSelectedRow] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const handleConfirmDelete = async () => {
-    if (deleteSelectedRow) {
-      // Call the API to delete the row
-      const res = await deleteServiceTypes(deleteSelectedRow.toString());
-      if(res.error) {
-        showSnackbar(res.data.message || "failed to delete the Service Type", "error");
-        throw new Error("Unable to delete the Service Type");
-      } else {
-          showSnackbar( res.message || `Deleted Service Type with ID: ${deleteSelectedRow}`, "success");
-          setShowDeletePopup(false);
-          setRefreshKey(prev => prev +1);
-      }
-    }
-  };
-
   const fetchServiceTypes = useCallback(
-    async ( pageNo: number = 1, pageSize: number = 10) : Promise<listReturnType> => {
+    async ( pageNo: number = 1, pageSize: number = 50) : Promise<listReturnType> => {
       setLoading(true);
       const res = await serviceTypesList({
         page: pageNo.toString(),
@@ -59,7 +40,7 @@ export default function ShelfDisplay() {
         return {
           data: res.data || [],
           currentPage: res?.pagination?.page || 0,
-          pageSize: res?.pagination?.limit || 10,
+          pageSize: res?.pagination?.limit || 50,
           total: res?.pagination?.totalPages || 0,
         };
       }
@@ -75,7 +56,6 @@ export default function ShelfDisplay() {
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-        refreshKey={refreshKey}
           config={{
             api: {
               list: fetchServiceTypes
@@ -141,32 +121,14 @@ export default function ShelfDisplay() {
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
-                  router.push(`/settings/company/serviceType/${data.uuid}`);
+                  router.push(`/dashboard/settings/company/serviceType/${data.uuid}`);
                 },
               },
-              // {
-              //   icon: "lucide:trash-2",
-              //   onClick: (data: TableDataType) => {
-              //     setDeleteSelectedRow(data?.uuid ? String(data.uuid) : data.uuid);
-              //     setShowDeletePopup(true);
-              //   },
-              // },
             ],
-            pageSize: 10,
+            pageSize: 50,
           }}
         />
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Service Type"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

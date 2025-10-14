@@ -9,18 +9,9 @@ import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { channelList, deleteOutletChannel} from "@/app/services/allApi";
+import { channelList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
-
-interface OutletChannel {
-  id?: number | string;
-  outlet_channel_code?: string;
-  outlet_channel?: string;
-  status?: number; // 1 or 0
-  [key: string]: string | number | undefined;
-}
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -59,9 +50,6 @@ export default function ChannelList() {
   const [channels, setChannels] = useState<TableDataType[]>([]);
   const { setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [deleteId, setDeleteId] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -105,26 +93,12 @@ export default function ChannelList() {
 );
 
 
-  // Delete handler
-  const handleConfirmDelete = async () => {
-    const res = await deleteOutletChannel(String(deleteId));
-    if(res.error) {
-      showSnackbar(res.data.message || "failed to fetch the outlet channels", "error");
-    } else {
-      showSnackbar(res.message || "Channel deleted successfully", "success");
-      setShowDeletePopup(false);
-      fetchChannels();
-      setRefreshKey(prev => prev+1);
-    }
-  }
-
   return (
     <>
       {/* Table */}
       <div className="max-h-[calc(100%-60px)]">
         { channels && <Table
           // data={channels}
-          refreshKey={refreshKey}
           config={{
             api: {
               list: fetchChannel,
@@ -180,43 +154,17 @@ export default function ChannelList() {
             columns,
             rowSelection: true,
             rowActions: [
-               {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(
-                    `/settings/outlet-channel/details/${data.id}`
-                  );
-                },
-              },
               {
                 icon: "lucide:edit-2",
                 onClick: (row: TableDataType) => {
                   router.push(`/settings/outlet-channel/${row.id}`);
                 },
               },
-              {
-                icon: "lucide:trash",
-                onClick: (row: TableDataType) => {
-                  setDeleteId(Number(row.id));
-                  setShowDeletePopup(true);
-                },
-              },
             ],
-            pageSize: 2,
+            pageSize: 50,
           }}
         />}
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Delete Outlet Channel"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

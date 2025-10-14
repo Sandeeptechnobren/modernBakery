@@ -132,7 +132,7 @@ export default function ViewPage() {
                         </span>
 
                     </ContainerCard>
-                    <div className="flex flex-col gap-6 w-full md:flex-row md:gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-[20px] w-full">
                         <div className="flex-1 w-full">
                             <ContainerCard className="w-full h-full">
                                 <KeyValueData

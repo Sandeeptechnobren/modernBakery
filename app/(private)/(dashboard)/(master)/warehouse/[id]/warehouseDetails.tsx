@@ -6,6 +6,7 @@ import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import CustomSecurityCode from "@/app/components/customSecurityCode";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { agentCustomerList } from '@/app/services/allApi';
 
 type Props = {
     values: Record<string, string>;
@@ -17,7 +18,7 @@ type Props = {
 };
 
 export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue, isEditMode }: Props) {
-    const { companyOptions } = useAllDropdownListData();
+    const { companyOptions, agentCustomerOptions, companyCustomersOptions, fetchAreaOptions } = useAllDropdownListData();
     const [isOpen, setIsOpen] = React.useState(false);
     const [codeMode, setCodeMode] = React.useState<'auto'|'manual'>('auto');
     const [prefix, setPrefix] = React.useState('');
@@ -73,8 +74,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     value={values.warehouse_type}
                     onChange={handleChange}
                     options={[
-                        { value: "0", label: "Agent" },
-                        { value: "1", label: "Outlet" },
+                        { value: "agent_customer", label: "Agent Warehouse" },
+                        { value: "company_outlet", label: "Company Outlet" },
                     ]}
                 />
                 {errors?.warehouse_type && touched?.warehouse_type && (
@@ -111,39 +112,54 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 <InputFields
                     required
                     label="Company"
-                    name="company_id"
-                    value={values.company_id}
+                    name="company"
+                    value={values.company}
                     options={companyOptions}
                     onChange={handleChange}
-                    error={errors?.company_id && touched?.company_id ? errors.company_id : false}
+                    error={errors?.company && touched?.company ? errors.company : false}
                 />
-                {errors?.company_id && touched?.company_id && (
-                    <div className="text-xs text-red-500 mt-1">{errors.company_id}</div>
+                {errors?.company && touched?.company && (
+                    <div className="text-xs text-red-500 mt-1">{errors.company}</div>
                 )}
-            </div>
-            <div className="flex flex-col gap-2">
-                <CustomSecurityCode
-                    label="Stock Capital"
-                    value={values.stock_capital}
-                    onChange={(e) => setFieldValue('stock_capital', e.target.value)}
-                    placeholder="Enter Stock Capital"
-                />
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
-                    type='radio'
-                    label="Agent Type"
-                    name="agent_type"
-                    value={values.agent_type}
-                    onChange={handleChange}
-                    options={[
-                        { value: "0", label: "Hariss" },
-                        { value: "1", label: "Customer" },
-                    ]}
+                    name="owner_number"
+                    label="VAT NO."
+                    value={values.vat_no}
+                    onChange={(e) => setFieldValue('vat_no', e.target.value)}
+                    placeholder="Enter Vat No."
+                    error={errors?.vat_no && touched?.vat_no ? errors.vat_no : false}
                 />
-                {errors?.agent_type && touched?.agent_type && (
-                    <div className="text-xs text-red-500 mt-1">{errors.agent_type}</div>
+                {errors?.vat_no && touched?.vat_no && (
+                    <div className="text-xs text-red-500 mt-1">{errors.vat_no}</div>
+                )}
+            </div>
+            
+            <div className="flex flex-col gap-2">
+                <InputFields
+                    required
+                    label="Select Agent"
+                    name="agent_customer"
+                    value={values.agent_customer}
+                    options={companyCustomersOptions}
+                    onChange={(e) => {
+                        const val = (e.target as HTMLSelectElement).value;
+                        setFieldValue('agent_customer', val);
+                        const selected = companyCustomersOptions?.find((c) => c.value === String(val));
+                        if (selected && selected.region_id) {
+                            const regionId = String(selected.region_id);
+                            setFieldValue('region_id', regionId);
+                            try { fetchAreaOptions(regionId); } catch (err) {}
+                            if (selected.area_id) {
+                                setFieldValue('area_id', String(selected.area_id));
+                            }
+                        }
+                    }}
+                />
+                {errors?.agent_customer && touched?.agent_customer && (
+                    <div className="text-xs text-red-500 mt-1">{errors.agent_customer}</div>
                 )}
             </div>
             <div className="flex flex-col gap-2">
@@ -158,6 +174,14 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 {errors?.warehouse_manager && touched?.warehouse_manager && (
                     <div className="text-xs text-red-500 mt-1">{errors.warehouse_manager}</div>
                 )}
+            </div>
+            <div className="flex flex-col gap-2">
+                <CustomSecurityCode
+                    label="Agreed Stock Capital"
+                    value={values.agreed_stock_capital}
+                    onChange={(e) => setFieldValue('agreed_stock_capital', e.target.value)}
+                    placeholder="Enter Stock Capital"
+                />
             </div>
         </div>
     );

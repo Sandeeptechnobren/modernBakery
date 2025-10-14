@@ -48,46 +48,16 @@ const columns = [
 ];
 
 export default function RouteType() {
- interface RouteTypeItem {
-  id?: number | string;
-  route_type_code?: string;
-  route_type_name?: string;
-  status?: number | "Active" | "Inactive";
-}
-
-  const [routeType, setRouteType] = useState<RouteTypeItem[]>([]);
   const { setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<RouteTypeItem | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const updated = searchParams.get("updated"); // detect if redirected after update
-  const { showSnackbar } = useSnackbar();
 
-  type TableRow = TableDataType & { id?: string };
-
-  // ✅ Table data mapping
-const tableData: TableDataType[] = routeType.map((s) => ({
-  id: s.id?.toString() ?? "",
-  route_type_code: s.route_type_code ?? "",
-  route_type_name: s.route_type_name ?? "",
-  status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive",
-}));
-
-  // ✅ Reusable fetch function
-  // const fetchRouteTypes = async () => {
-  //   const listRes = await routeTypeList({});
-  //   if (listRes.error) showSnackbar(listRes.data.message || "Failed to fetch Route Type", "error");
-  //   else setRouteType(listRes.data);
-  //   setLoading(false);
-  // };
+  type TableRow = TableDataType & { id?: string }
 
     const fetchRouteTypes = useCallback(
       async (
         page: number = 1,
-        pageSize: number = 5
+        pageSize: number = 50
       ): Promise<listReturnType> => {
         try {
           setLoading(true);
@@ -111,45 +81,29 @@ const tableData: TableDataType[] = routeType.map((s) => ({
       []
     );
   
-
-  // ✅ Delete handler with refresh
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
-
-    const res = await deleteRouteTypeById(String(selectedRow.id));
-    if (res.error) showSnackbar(res.data.message || "Failed to delete Route Type ❌", "error");
-    else {
-      showSnackbar("Route Type deleted successfully ✅", "success");
-      fetchRouteTypes();
-    }
-    setShowDeletePopup(false);
-    setSelectedRow(null);
-    setDeletingId(null);
-  };
-
-    // const searchRouteType = useCallback(
-    //   async (
-    //     searchQuery: string,
-    //     pageSize: number
-    //   ): Promise<searchReturnType> => {
-    //     setLoading(true);
-    //     const result = await routeGlobalSearch({
-    //       query: searchQuery,
-    //       per_page: pageSize.toString(),
-    //     });
-    //     setLoading(false);
-    //     if (result.error) throw new Error(result.data.message);
-    //     else {
-    //       return {
-    //         data: result.data || [],
-    //         total: result.pagination.totalPages,
-    //         currentPage: result.pagination.page ,
-    //         pageSize: result.pagination.limit ,
-    //       };
-    //     }
-    //   },
-    //   []
-    // );
+    const searchRouteType = useCallback(
+      async (
+        searchQuery: string,
+        pageSize: number
+      ): Promise<searchReturnType> => {
+        setLoading(true);
+        const result = await routeGlobalSearch({
+          query: searchQuery,
+          per_page: pageSize.toString(),
+        });
+        setLoading(false);
+        if (result.error) throw new Error(result.data.message);
+        else {
+          return {
+            data: result.data || [],
+            total: result.pagination.totalPages,
+            currentPage: result.pagination.page ,
+            pageSize: result.pagination.limit ,
+          };
+        }
+      },
+      []
+    );
 
   return (
     <>
@@ -160,7 +114,7 @@ const tableData: TableDataType[] = routeType.map((s) => ({
         <Table
          
           config={{
-            api:{  list:fetchRouteTypes },
+            api:{  list:fetchRouteTypes, search:searchRouteType },
             header: {
               
               title: "Route Type",
@@ -213,7 +167,7 @@ const tableData: TableDataType[] = routeType.map((s) => ({
                   href="/settings/routetype/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Route Type"
+                  label="Add"
                   labelTw="hidden xl:block"
                 />,
               ],
@@ -224,45 +178,17 @@ const tableData: TableDataType[] = routeType.map((s) => ({
             rowSelection: true,
             rowActions: [
               {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(
-                    `/settings/routetype/details/${data.id}`
-                  );
-                },
-              },
-              {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   router.push(`/settings/routetype/${row.id}`);
                 },
               },
-              // {
-              //   icon: "lucide:trash-2",
-              //   onClick: (data: object) => {
-              //     const row = data as TableRow;
-              //     if (deletingId === String(row.id)) return;
-              //     setSelectedRow({ id: String(row.id) });
-              //     setShowDeletePopup(true);
-              //   },
-              // },
             ],
-            pageSize: 10,
+            pageSize: 50,
           }}
         />
       </div>
-
-      {/* Delete popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Route Type"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

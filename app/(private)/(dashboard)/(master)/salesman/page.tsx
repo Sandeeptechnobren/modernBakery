@@ -15,36 +15,10 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import StatusBtn from "@/app/components/statusBtn2";
 
-// 🔹 API response type
-interface Salesman {
-  id?: string | number;
-  uuid?: string; 
-  osa_code?: string;
-  name?: string;
-  salesman_type?: { id?: number; salesman_type_code?: string; salesman_type_name?: string };
-  sub_type?: string;
-  designation?: string;
-  security_code?: string;
-  route?: { id?: number; route_code?: string; route_name?: string };
-  warehouse?: { id?: number; warehouse_code?: string; warehouse_name?: string };
-  device_no?: string;
-  salesman_role?: string;
-  username?: string;
-  contact_no?: string;
-  sap_id?: string;
-  status?: string | number;
-}
-
-// 🔹 Dropdown menu data
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
-const subTypeMapping: Record<string | number, string> = {
-  0: "None",
-  1: "Merchandiser",
-};
-// 🔹 Table columns
 const columns = [
   { key: "osa_code", label: "Salesman Code",
     render: (row: TableDataType) => (
@@ -67,26 +41,33 @@ const columns = [
  {
   key: "sub_type",
   label: "Sub Type",
-  render: (row: TableDataType) => {
-    const value = row.sub_type;
+  render: (row: TableDataType) => typeof row.sub_type === "object" &&
+            row.sub_type !== null &&
+            "name" in row.sub_type
+                ? (row.sub_type as { name?: string })
+                      .name || "-"
+                : "-",
+    
+  //   {
+  //   const value = row.sub_type;
 
-    // Agar JSON string hai ("{id:1,name:'Merchandiser'}"), to parse karo
-    if (typeof value === "string" && value.startsWith("{")) {
-      try {
-        const obj = JSON.parse(value);
-        return obj.name || subTypeMapping[obj.id] || "-";
-      } catch {
-        return subTypeMapping[value] || "-";
-      }
-    }
+  //   // Agar JSON string hai ("{id:1,name:'Merchandiser'}"), to parse karo
+  //   if (typeof value === "string" && value.startsWith("{")) {
+  //     try {
+  //       const obj = JSON.parse(value);
+  //       return obj.name || subTypeMapping[obj.id] || "-";
+  //     } catch {
+  //       return subTypeMapping[value] || "-";
+  //     }
+  //   }
 
-    // Agar number ya string hai, to mapping se text lao
-    if (typeof value === "number" || typeof value === "string") {
-      return subTypeMapping[value] || "-";
-    }
+  //   // Agar number ya string hai, to mapping se text lao
+  //   if (typeof value === "number" || typeof value === "string") {
+  //     return subTypeMapping[value] || "-";
+  //   }
 
-    return "-";
-  },
+  //   return "-";
+  // },
 },
 
   { key: "designation", label: "Designation" },
@@ -137,15 +118,11 @@ const SalesmanPage = () => {
   const router = useRouter();
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<Salesman | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  // ✅ Fetch salesman list with correct pagination mapping
   const fetchSalesman = useCallback(
         async (
             page: number = 1,
-            pageSize: number = 5
+            pageSize: number = 50
         ): Promise<listReturnType> => {
             try {
               setLoading(true);
@@ -168,29 +145,11 @@ const SalesmanPage = () => {
         []
     );
 
- 
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.uuid) return;
-
-    const res = await deleteSalesman(String(selectedRow.uuid));
-    if (!res || res.status !== "success") {
-      showSnackbar(res.message || "Failed to delete salesman ❌", "error");
-    } else {
-      showSnackbar("Salesman deleted successfully ✅", "success");
-      setRefreshKey(refreshKey + 1);
-    }
-    fetchSalesman();
-
-    setShowDeletePopup(false);
-    setSelectedRow(null);
-  };
-
   return (
     <>
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-        refreshKey={refreshKey}
           config={{
             api: { list: fetchSalesman },
             header: {
@@ -242,8 +201,8 @@ const SalesmanPage = () => {
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
-            rowActions: [ 
-               {
+            rowActions: [
+              {
                 icon: "lucide:eye",
                 onClick: (data: TableDataType) => {
                   router.push(`/salesman/details/${data.uuid}`);
@@ -253,10 +212,9 @@ const SalesmanPage = () => {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
-                  router.push(`/salesman/${r.uuid}`);
+                  router.push(`/dashboard/master/salesman/${r.uuid}`);
                 },
               },
-          
             ],
             pageSize: 50,
           }}

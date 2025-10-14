@@ -55,27 +55,10 @@ export default function Page() {
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
 
-    const handleConfirmDelete = async () => {
-        if (!selectedRowId) throw new Error("Missing id");
-        const res = await deleteMenu(String(selectedRowId));
-        if (res.error)
-            return showSnackbar(
-                res.data.message || "Failed to delete Menu",
-                "error"
-            );
-        else {
-            showSnackbar("Menu deleted successfully ", "success");
-            setRefreshKey(refreshKey + 1);
-        }
-        setLoading(false);
-        setShowDeletePopup(false);
-        setSelectedRowId(null);
-    };
-
     const fetchData = useCallback(
         async (
             page: number = 1,
-            pageSize: number = 5
+            pageSize: number = 50
         ): Promise<listReturnType> => {
             setLoading(true);
             const listRes = await menuList();
@@ -209,28 +192,11 @@ export default function Page() {
                                     );
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data: TableDataType) => {
-                                    setSelectedRowId(data.uuid);
-                                    setShowDeletePopup(true);
-                                },
-                            },
                         ],
-                        pageSize: 5
+                        pageSize: 50
                     }}
                 />
             </div>
-
-            {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Menus"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )}
         </>
     );
 }

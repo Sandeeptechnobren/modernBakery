@@ -5,20 +5,13 @@ import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
+import Table, {
+  TableDataType,
+  listReturnType,
+} from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { deleteCustomerType, getCustomerType } from "@/app/services/allApi";
-
-interface CustomerType {
-  id?: string | number;
-  code?: string;
-  name?: string;
-  status?: number;
-  [key: string]: string | number | undefined;
-}
+import { getCustomerType } from "@/app/services/allApi";
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -56,11 +49,6 @@ const columns = [
 export default function CustomerPage() {
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<CustomerType | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
   // Fetch list for Table
@@ -72,7 +60,7 @@ export default function CustomerPage() {
           per_page: pageSize.toString(),
           page: page.toString(),
         });
-        console.log(listRes)
+        console.log(listRes);
         setLoading(false);
         return {
           data: listRes.data || [],
@@ -95,7 +83,6 @@ export default function CustomerPage() {
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          refreshKey={refreshKey}
           config={{
             api: {
               list: fetchCustomerType,
@@ -158,19 +145,6 @@ export default function CustomerPage() {
                   );
                 },
               },
-              // {
-              //   icon: "lucide:trash",
-              //   onClick: (row: object) => {
-              //     const r = row as TableDataType;
-              //     setSelectedRow({
-              //       id: r.id,
-              //       code: r.code,
-              //       name: r.name,
-              //       status: Number(r.status) === 1 ? 1 : 0,
-              //     });
-              //     setShowDeletePopup(true);
-              //   },
-              // },
             ],
             pageSize: 5,
           }}

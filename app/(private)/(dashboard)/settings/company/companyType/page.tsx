@@ -53,16 +53,13 @@ const columns = [
 ];
 
 export default function CompanyPage() {
-  const [companies, setCompanies] = useState<CompanyType[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const { setLoading } = useLoading();
-  const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // ✅ Fetch companies from API
   const fetchCompanyType = useCallback(
-    async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {
+    async (page: number = 1, pageSize: number = 50): Promise<listReturnType> => {
       try {
         setLoading(true);
         const res = await companyTypeList({
@@ -99,7 +96,6 @@ export default function CompanyPage() {
     <>
       <div className="h-[calc(100%-60px)]">
         <Table
-         key={refreshKey}
           config={{
             api: { list: fetchCompanyType },
             header: {
@@ -135,6 +131,7 @@ export default function CompanyPage() {
                   key="add-company-type"
                   href="/settings/company/companyType/add"
                   leadingIcon="lucide:plus"
+                  label="Add"
                   label="Add"
                   labelTw="hidden sm:block"
                   isActive

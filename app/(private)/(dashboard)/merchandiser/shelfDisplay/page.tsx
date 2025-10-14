@@ -14,7 +14,7 @@ import { deleteShelves, shelvesList } from "@/app/services/merchandiserApi";
 import { useLoading } from "@/app/services/loadingContext";
 
 interface ShelfDisplayItem {
-  id: string;
+  uuid: string;
   date: string;
   name: string;
   customer_code: string;
@@ -41,7 +41,7 @@ export default function ShelfDisplay() {
   const handleConfirmDelete = async () => {
     if (selectedRow) {
       setLoading(true);
-      const res = await deleteShelves(String(selectedRow.id));
+      const res = await deleteShelves(String(selectedRow?.uuid));
       setLoading(false);
       if (res.error) {
         showSnackbar(res.data.message || "Failed to delete row", "error");
@@ -60,6 +60,8 @@ export default function ShelfDisplay() {
         page: pageNo.toString(),
         per_page: pageSize.toString(),
       });
+
+      console.log(res)
       setLoading(false);
       if(res.error) {
         showSnackbar(res.data.message || "failed to fetch the shelf display", "error");
@@ -122,7 +124,7 @@ export default function ShelfDisplay() {
                   key="name"
                   href="/merchandiser/shelfDisplay/add"
                   leadingIcon="lucide:plus"
-                  label="Add Shelf Display"
+                  label="Add"
                   labelTw="hidden lg:block"
                   isActive
                 />,
@@ -147,14 +149,14 @@ export default function ShelfDisplay() {
                   const [y, m, d] = dateStr.split("T")[0].split("-");
                   return `${d}-${m}-${y}`;
               } },
-              { key: "customer_details", label: "Customers", render: (data: TableDataType) => {
-                if (Array.isArray(data.customer_details) && data.customer_details.length > 0) {
-                  return data.customer_details
-                    .map((customer) => `${customer.customer_code} - ${customer.owner_name}`)
-                    .join(", ");
-                }
-                return "-";
-               }},
+              // { key: "customer_details", label: "Customers", render: (data: TableDataType) => {
+              //   if (Array.isArray(data.customer_details) && data.customer_details.length > 0) {
+              //     return data.customer_details
+              //       .map((customer) => `${customer.customer_code} - ${customer.owner_name}`)
+              //       .join(", ");
+              //   }
+              //   return "-";
+              //  }},
             ],
             rowSelection: true,
             rowActions: [
@@ -162,21 +164,21 @@ export default function ShelfDisplay() {
                 icon: "lucide:eye",
                 onClick: (data: object) => {
                   const row = data as TableDataType;
-                  router.push(`/merchandiser/shelfDisplay/view/${row.id}`);
+                  router.push(`/merchandiser/shelfDisplay/view/${row.uuid}`);
                 },
               },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableDataType;
-                  router.push(`/merchandiser/shelfDisplay/${row.id}`);
+                  router.push(`/merchandiser/shelfDisplay/${row.uuid}`);
                 },
               },
               {
                 icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableDataType;
-                  setSelectedRow({ id: row.id, ...row } as ShelfDisplayItem);
+                  setSelectedRow({ uuid: row.uuid, ...row } as ShelfDisplayItem);
                   setShowDeletePopup(true);
                 },
               },

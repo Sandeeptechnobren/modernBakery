@@ -4,7 +4,12 @@ import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import SearchableDropdown from "@/app/components/SearchableDropdown";
-import { addCustomerCategory, channelList, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import {
+  addCustomerCategory,
+  channelList,
+  genearateCode,
+  saveFinalCode,
+} from "@/app/services/allApi";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -21,11 +26,12 @@ interface OutletChannel {
 }
 
 export default function AddCustomerCategory() {
-  
-const [outletChannels, setOutletChannels] = useState<{ value: string; label: string }[]>([]);
+  const [outletChannels, setOutletChannels] = useState<
+    { value: string; label: string }[]
+  >([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
-  const [prefix, setPrefix] = useState('');
+  const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
+  const [prefix, setPrefix] = useState("");
   const [code, setCode] = useState("");
   const codeGeneratedRef = useRef(false);
   const { showSnackbar } = useSnackbar();
@@ -73,7 +79,10 @@ const [outletChannels, setOutletChannels] = useState<{ value: string; label: str
         const res = await addCustomerCategory(payload);
         if (!res.error) {
           try {
-            await saveFinalCode({ reserved_code: values.customer_category_code, model_name: "customer_categories" });
+            await saveFinalCode({
+              reserved_code: values.customer_category_code,
+              model_name: "customer_categories",
+            });
           } catch (e) {}
           showSnackbar("Customer category added successfully ✅", "success");
           resetForm();
@@ -135,8 +144,11 @@ const [outletChannels, setOutletChannels] = useState<{ value: string; label: str
                 name="customer_category_code"
                 value={formik.values.customer_category_code}
                 onChange={formik.handleChange}
-                disabled={codeMode === 'auto'}
-                error={formik.touched.customer_category_code && formik.errors.customer_category_code}
+                disabled={codeMode === "auto"}
+                error={
+                  formik.touched.customer_category_code &&
+                  formik.errors.customer_category_code
+                }
               />
               <IconButton
                 bgClass="white"
@@ -152,10 +164,10 @@ const [outletChannels, setOutletChannels] = useState<{ value: string; label: str
                 setPrefix={setPrefix}
                 onSave={(mode, code) => {
                   setCodeMode(mode);
-                  if (mode === 'auto' && code) {
-                    formik.setFieldValue('customer_category_code', code);
-                  } else if (mode === 'manual') {
-                    formik.setFieldValue('customer_category_code', '');
+                  if (mode === "auto" && code) {
+                    formik.setFieldValue("customer_category_code", code);
+                  } else if (mode === "manual") {
+                    formik.setFieldValue("customer_category_code", "");
                   }
                 }}
               />
@@ -166,7 +178,9 @@ const [outletChannels, setOutletChannels] = useState<{ value: string; label: str
               name="outlet_channel_id"
               value={formik.values.outlet_channel_id}
               options={outletChannels}
-              onChange={(val) => formik.setFieldValue("outlet_channel_id", String(val))}
+              onChange={(e) =>
+                formik.setFieldValue("outlet_channel_id", e.target.value)
+              }
               error={
                 formik.touched.outlet_channel_id &&
                 formik.errors.outlet_channel_id
@@ -188,7 +202,7 @@ const [outletChannels, setOutletChannels] = useState<{ value: string; label: str
             <InputFields
               name="status"
               label="Status"
-              type="select"
+              type="radio"
               value={formik.values.status}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}

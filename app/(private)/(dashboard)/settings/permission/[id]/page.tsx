@@ -11,7 +11,11 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { addPermission, permissionListById, updatePermission } from "@/app/services/allApi";
+import {
+  addPermission,
+  permissionListById,
+  updatePermission,
+} from "@/app/services/allApi";
 
 const permissionSchema = Yup.object().shape({
   name: Yup.string().required("Name is required."),
@@ -19,24 +23,28 @@ const permissionSchema = Yup.object().shape({
 
 type permissionType = {
   name: string;
-}
+};
 
 export default function AddShelfDisplay() {
   const { setLoading } = useLoading();
   useEffect(() => setLoading(false), [setLoading]);
+
   const params = useParams();
   const id = params?.id || "";
+
   const isEditMode = id !== "add" && id !== "";
-  let ID = (isEditMode) ? id : null;
-  if(isEditMode) {
+  let ID = isEditMode ? id : null;
+
+  if (isEditMode) {
     try {
       ID = String(parseInt(id as string, 10));
     } catch (e) {
       throw new Error("Invalid ID");
     }
   }
-  if(ID && Array.isArray(ID)){
-      ID = ID[0] || "";
+
+  if (ID && Array.isArray(ID)) {
+    ID = ID[0] || "";
   }
 
   const { showSnackbar } = useSnackbar();
@@ -46,16 +54,19 @@ export default function AddShelfDisplay() {
   useEffect(() => {
     if (!isEditMode) return;
     const fetchPermission = async () => {
-        setLoading(true);
-        const res = await permissionListById(id as string);
-        setLoading(false);
-        if(res.error) {
-            showSnackbar(res.data.message || "Unable to fetch Shelf Display List", "error");
-            throw new Error("Unable to fetch Shelf Display List");
-        } else {
-          setPermission(res.data);
-        }
-    }
+      setLoading(true);
+      const res = await permissionListById(id as string);
+      setLoading(false);
+      if (res.error) {
+        showSnackbar(
+          res.data.message || "Unable to fetch Shelf Display List",
+          "error"
+        );
+        throw new Error("Unable to fetch Shelf Display List");
+      } else {
+        setPermission(res.data);
+      }
+    };
     fetchPermission();
   }, []);
 
@@ -80,7 +91,7 @@ export default function AddShelfDisplay() {
     }
     setLoading(false);
 
-    if(res.error) {
+    if (res.error) {
       showSnackbar(res.data.message, "error");
       throw new Error("Unable to add Permission");
     } else {
@@ -89,14 +100,16 @@ export default function AddShelfDisplay() {
     }
     setSubmitting(false);
   };
-  
+
   return (
     <div className="w-full h-full p-4">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/settings/permission">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold">{isEditMode ? "Edit Permission" : "Add New Permission"}</h1>
+        <h1 className="text-xl font-semibold">
+          {isEditMode ? "Edit Permission" : "Add New Permission"}
+        </h1>
       </div>
 
       <Formik
@@ -139,7 +152,9 @@ export default function AddShelfDisplay() {
               </button>
               <SidebarBtn
                 type="submit"
-                label={isSubmitting ? "Submitting..." : (isEditMode ? "Update" : "Add")}
+                label={
+                  isSubmitting ? "Submitting..." : isEditMode ? "Update" : "Add"
+                }
                 isActive
                 leadingIcon="mdi:check"
                 disabled={isSubmitting}

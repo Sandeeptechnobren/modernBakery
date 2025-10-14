@@ -26,6 +26,10 @@ interface Item {
     warehouse_type: string;
     city: string;
     location: string;
+    get_company:{
+        company_code: string;
+        company_name: string;
+    }
     address: string;
     stock_capital: string;
     deposite_amount: string;
@@ -139,19 +143,31 @@ export default function ViewPage() {
                                         // { key: <span className="font-bold">Device No.</span>, value: item?.device_no || '-'},
                                         {
                                             key: "Owner Name",
-                                            value: item?.owner_name || "Customer Type",
+                                            value: item?.owner_name || "-",
+                                        },
+                                        {
+                                            key: "Comapny Code",
+                                            value: item?.get_company?.company_code || "-",
+                                        },
+                                        {
+                                            key: "Company Name",
+                                            value: item?.get_company?.company_name || "-",
                                         },
                                         { key: "Warehouse Manager Name", value:item?.warehouse_manager || '-' },
-                                        { 
-  key: "Warehouse Type", 
-  value: (() => {
-    const value = item?.warehouse_type;
-    const strValue = value != null ? String(value) : "";
-    if (strValue === "0") return "Agent";
-    if (strValue === "1") return "Outlet";
-    return strValue || "-";
-  })()
-},
+                                                                                {
+                                                                                        key: "Warehouse Type",
+                                                                                        value: (() => {
+                                                                                                const value = item?.warehouse_type;
+                                                                                                const strValue = value != null ? String(value).toLowerCase() : "";
+                                                                                                // prefer semantic values if present
+                                                                                                if (strValue === "agent_customer") return "Hariss";
+                                                                                                if (strValue === "company_outlet") return "Outlet";
+                                                                                                // fallback to numeric codes for backward compatibility
+                                                                                                if (strValue === "0") return "Hariss";
+                                                                                                if (strValue === "1") return "Outlet";
+                                                                                                return strValue || "-";
+                                                                                        })(),
+                                                                                },
                                     ]}
                                 />
                                 <hr className="text-[#D5D7DA] my-[25px]" />
@@ -182,7 +198,7 @@ export default function ViewPage() {
                                                 width={16}
                                                 className="text-[#EA0A2A]"
                                             />
-                                            <span>{item?.address}</span>
+                                            <span>{item?.location}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -204,7 +220,6 @@ export default function ViewPage() {
                                             value: item?.area?.area_name || "-" },
                                         { key: "Location", value: item?.location || "-" },
                                         { key: "City", value: item?.city || "-" },
-                                        { key: "District", value: item?.district || "-" },
                                         { key: "Town Village", value: item?.town_village || "-" },
                                         { key: "Street", value: item?.street || "-" },
                                         { key: "Landmark", value: item?.landmark || "-" },
