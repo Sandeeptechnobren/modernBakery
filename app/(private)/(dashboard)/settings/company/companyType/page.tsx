@@ -3,15 +3,13 @@
 import { useState, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { deletecompanyType, companyTypeList } from "@/app/services/allApi";
+import { companyTypeList } from "@/app/services/allApi";
 
 interface CompanyType {
   id?: string | number;
@@ -57,8 +55,6 @@ const columns = [
 export default function CompanyPage() {
   const [companies, setCompanies] = useState<CompanyType[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<CompanyType | null>(null);
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -97,28 +93,7 @@ export default function CompanyPage() {
     [setLoading]
   );
 
-  // ✅ Delete handler
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.uuid) {
-      showSnackbar("UUID not found ❌", "error");
-      return;
-    }
-
-    try {
-      const res = await deletecompanyType(String(selectedRow.uuid));
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to delete company ❌", "error");
-      } else {
-        showSnackbar(res.message || "Company deleted successfully ✅", "success");
-        setRefreshKey((prev) => prev + 1);
-      }
-      setShowDeletePopup(false);
-      setSelectedRow(null);
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Delete failed ❌", "error");
-    }
-  };
+  
 
   return (
     <>
@@ -160,7 +135,7 @@ export default function CompanyPage() {
                   key="add-company-type"
                   href="/settings/company/companyType/add"
                   leadingIcon="lucide:plus"
-                  label="Add Company Type"
+                  label="Add"
                   labelTw="hidden sm:block"
                   isActive
                 />,
@@ -178,36 +153,11 @@ export default function CompanyPage() {
                   router.push(`/settings/company/companyType/${r.uuid}`);
                 },
               },
-              {
-                icon: "lucide:trash",
-                onClick: (row: object) => {
-                  const r = row as TableDataType & { uuid?: string };
-                  setSelectedRow({
-                    id: r.id,
-                    uuid: r.uuid, // 👈 Ensure uuid is set here
-                    code: r.code,
-                    name: r.name,
-                    status: Number(r.status),
-                  });
-                  setShowDeletePopup(true);
-                },
-              },
             ],
             pageSize: 5,
           }}
         />
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Delete Company Type"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

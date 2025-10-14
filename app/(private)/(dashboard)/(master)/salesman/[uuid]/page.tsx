@@ -345,8 +345,8 @@ export default function AddEditSalesman() {
                   value={values.sub_type}
                   onChange={(e) => setFieldValue("sub_type", e.target.value)}
                   options={[
-                    { value: "0", label: "None" },
-                    { value: "1", label: "Merchandiser" },
+                    { value: "none", label: "None" },
+                    { value: "merchandiser", label: "Merchandiser" },
                   ]}
                 />
                 <ErrorMessage

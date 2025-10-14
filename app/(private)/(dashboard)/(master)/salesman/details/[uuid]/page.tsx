@@ -19,6 +19,7 @@ interface Salesman {
   uuid?: string;
   osa_code?: string;
   name?: string;
+  vehicle_chesis_no?: string;
   salesman_type?: {
     id?: number;
     salesman_type_code?: string;
@@ -26,8 +27,6 @@ interface Salesman {
   };
   sub_type?: string;
   designation?: string;
-  email?: string;
-  password?: string;
   security_code?: string;
   route?: {
     id?: number;
@@ -103,14 +102,14 @@ export default function ViewPage() {
         <div>
           <ContainerCard className="w-[350px] flex flex-col gap-y-[20px] p-[20px]">
             <Image
-              src={salesman?.image_url || "/no-image.png"}
+              src={salesman?.image_url || "/logo.png"}
               alt="Salesman"
               width={600}
               height={400}
-              className="w-full h-[180px] object-cover rounded-md border border-[#E4E4E4] bg-[#E9EAEB]"
+              className="w-full h-[180px] object-cover-[100%] rounded-md border border-[#E4E4E4] bg-[#E9EAEB]"
             />
             <span className="text-[#181D27] text-[20px] font-semibold">
-              {salesman?.osa_code || "-"}
+              {salesman?.osa_code || "-"} - {salesman?.name}
             </span>
             <div className="flex justify-center">
               <StatusBtn
@@ -124,27 +123,16 @@ export default function ViewPage() {
 
         {/* Right Section */}
         <div className="w-full flex flex-col gap-y-[20px]">
-          {/* Description */}
-          <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
-            <div className="flex sm:flex-row items-center gap-[20px]">
-              <div className="text-center sm:text-left">
-                <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                  Salesman Description
-                </h2>
-                <span className="text-[#414651] text-[16px]">
-                  {salesman?.description || "-"}
-                </span>
-              </div>
-            </div>
-          </ContainerCard>
 
           {/* General Information */}
           <ContainerCard className="w-full">
             <KeyValueData
               title="Salesman Information"
               data={[
-                { key: "Salesman Code", value: salesman?.osa_code || "-" },
-                { key: "Salesman Name", value: salesman?.name || "-" },
+                {
+                  key: "SAP ID",
+                  value: salesman?.sap_id || "-",
+                },
                 {
                   key: "Salesman Type",
                   value:
@@ -153,9 +141,6 @@ export default function ViewPage() {
                 { key: "Sub Type", value: salesman?.sub_type || "-" },
                 { key: "Designation", value: salesman?.designation || "-" },
                 { key: "Device No", value: salesman?.device_no || "-" },
-                { key: "Username", value: salesman?.username || "-" },
-                { key: "Email", value: salesman?.email || "-" },
-                { key: "Password", value: salesman?.password || "-" },
                 { key: "Contact No", value: salesman?.contact_no || "-" },
                 {
                   key: "Warehouse",
@@ -166,48 +151,10 @@ export default function ViewPage() {
                   value: salesman?.route?.route_name || "-",
                 },
                 { key: "Token No", value: salesman?.token_no || "-" },
-                {
-                  key: "SAP ID",
-                  value: salesman?.sap_id || "-",
-                },
+                
               ]}
             />
           </ContainerCard>
-
-          {/* Barcode + Extra */}
-          <div className="flex flex-wrap gap-x-[20px] mt-[20px]">
-            <div className="flex flex-col md:flex-row gap-6 w-full">
-              <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                <div className="text-[18px] font-semibold mb-[25px]">
-                  Barcode
-                </div>
-                <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
-                  <SummaryCard
-                    icon="prime:barcode"
-                    iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
-                    iconWidth={30}
-                    title={salesman?.osa_code || "ABC-abc-1234"}
-                    description={"Salesman Barcode"}
-                  />
-                </ContainerCard>
-                <KeyValueData
-                  data={[
-                    {
-                      key: "Promotional Access",
-                      value: "",
-                      component: (
-                        <Toggle
-                          isChecked={isChecked}
-                          onChange={() => setIsChecked(!isChecked)}
-                        />
-                      ),
-                    },
-                    { key: "Tax", value: "VAT" },
-                  ]}
-                />
-              </ContainerCard>
-            </div>
-          </div>
         </div>
       </div>
     </>

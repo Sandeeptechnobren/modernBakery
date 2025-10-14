@@ -89,24 +89,6 @@ export default function CustomerPage() {
     []
   );
 
-  // Delete handler with refresh
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
-    try {
-      const res = await deleteCustomerType(String(selectedRow.id));
-      if (res?.success || res?.message || res) {
-        showSnackbar("Customer deleted successfully ✅", "success");
-        setShowDeletePopup(false);
-        setSelectedRow(null);
-        setRefreshKey((prev) => prev + 1); // <-- trigger table refresh
-      } else {
-        showSnackbar("Failed to delete customer ❌", "error");
-      }
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Delete failed ❌", "error");
-    }
-  };
 
   return (
     <>
@@ -156,7 +138,7 @@ export default function CustomerPage() {
                   key="add-customer-type"
                   href="/settings/customer/customerType/add"
                   leadingIcon="lucide:plus"
-                  label="Add Customer Type"
+                  label="Add"
                   labelTw="hidden sm:block"
                   isActive
                 />,
@@ -194,17 +176,6 @@ export default function CustomerPage() {
           }}
         />
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Delete Customer Type"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

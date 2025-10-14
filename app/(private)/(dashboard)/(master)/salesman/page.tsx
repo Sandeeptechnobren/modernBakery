@@ -258,21 +258,10 @@ const SalesmanPage = () => {
               },
           
             ],
-            pageSize: 5,
+            pageSize: 50,
           }}
         />
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Delete Salesman"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 };

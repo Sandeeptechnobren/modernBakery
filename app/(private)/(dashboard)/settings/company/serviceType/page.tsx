@@ -114,7 +114,7 @@ export default function ShelfDisplay() {
                   key="name"
                   href="/settings/company/serviceType/add"
                   leadingIcon="lucide:plus"
-                  label="Add Service Type"
+                  label="Add"
                   labelTw="hidden lg:block"
                   isActive
                 />,

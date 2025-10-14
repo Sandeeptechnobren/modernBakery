@@ -35,6 +35,7 @@ type Vehicle = {
   agreement_id: number;
   document_type: string;
   document_id: number;
+  vehicle_chesis_no: string;
 };
 
 const title = "Vehicle Details";
@@ -122,6 +123,7 @@ export default function ViewPage() {
               { value: vehicle?.description ?? "-", key: "Vehicle Description", icon: "lucide:truck" },
               { value: vehicle?.valid_from ?? "-", key: "Valid From", icon: "lucide:calendar" },
               { value: vehicle?.valid_to ?? "-", key: "Valid To", icon: "lucide:calendar" },
+                { key: "Chesis No", value: vehicle?.vehicle_chesis_no || "-"},
               { value: vehicle?.opening_odometer ?? "-", key: "Opening Odometer", icon: "lucide:gauge" },
               { value: "Agent", key: "Vehicle Owner", icon: "lucide:user" },
             ]}
