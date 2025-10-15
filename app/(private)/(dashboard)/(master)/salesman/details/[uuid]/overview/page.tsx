@@ -43,7 +43,11 @@ interface Salesman {
   image_url?: string | null;
   description?: string | null;
   is_block?: string | number;
-  is_block_reason?: string;
+  block_date_from?: string;
+  block_date_to?: string;
+  cashier_description_block?: string;
+  invoice_block?: string | number;
+  reason?: string;
   forceful_login?: string | number;
 }
 
@@ -113,7 +117,7 @@ export default function Overview() {
                   key: "Route",
                   value: salesman?.route?.route_name || "-",
                 },
-                { key: "User Name", value: salesman?.username || "-" },
+                { key: "User Name", value: salesman?.osa_code || "-" },
                 {
                   key: "Forcefull Login",
                   value:
@@ -129,10 +133,21 @@ export default function Overview() {
                       ? "Yes"
                       : "No",
                 },
+                { key: "Block Date From", value: salesman?.block_date_from || "-" },
+                { key: "Block Date To", value: salesman?.block_date_to || "-" },
+                { key: "cashier Description Block", value: salesman?.cashier_description_block || "-" },
+                {
+                  key: "Invoice Block",
+                  value:
+                    salesman?.invoice_block === 1 ||
+                    salesman?.invoice_block === "1"
+                      ? "Yes"
+                      : "No",
+                },
 
                 {
                   key: "Is Block Reason",
-                  value: salesman?.is_block_reason || "-",
+                  value: salesman?.reason || "-",
                 },
               ]}
             />

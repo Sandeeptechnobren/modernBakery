@@ -88,8 +88,12 @@ const columns = [
         ? JSON.parse(data.warehouse)
         : data.warehouse;
       return warehouseObj?.warehouse_name || "-";
-    },
-  },
+    }, filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.warehouse_name}</div>);
+        }
+    } },
   // { key: "ownerReference", label: "Owner Reference" },
   // { key: "vehicleRoute", label: "Vehicle Route" },
   { key: "description", label: "Description", render: (row: TableDataType) => row.description || "-" },

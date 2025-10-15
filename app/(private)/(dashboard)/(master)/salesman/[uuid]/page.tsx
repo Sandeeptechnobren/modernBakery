@@ -17,7 +17,6 @@ import * as Yup from "yup";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import CustomPasswordInput from "@/app/components/customPasswordInput";
-import CustomSecurityCode from "@/app/components/customSecurityCode";
 import StepperForm, {
   useStepperForm,
   StepperStep,
@@ -32,6 +31,7 @@ import {
   updateSalesman,
   getSalesmanById,
 } from "@/app/services/allApi";
+import CustomCheckbox from "@/app/components/customCheckbox";
 
 interface SalesmanFormValues {
   osa_code: string;
@@ -39,14 +39,17 @@ interface SalesmanFormValues {
   type: string;
   designation: string;
   route_id: string;
-  username: string;
   password: string;
   contact_no: string;
   warehouse_id: string;
   forceful_login: string;
   is_block: string;
   status: string;
-  is_block_reason: string;
+  block_date_from: string;
+  block_date_to: string;
+  cashier_description_block?: string;
+  invoice_block?: string;
+  reason: string;
   email: string;
 }
 
@@ -56,7 +59,6 @@ const SalesmanSchema = Yup.object().shape({
   type: Yup.string().required("Type is required"),
   designation: Yup.string().required("Designation is required"),
   contact_no: Yup.string().required("Contact is required").min(9).max(13),
-  username: Yup.string().required("Username is required"),
   password: Yup.string()
     .required("Password is required")
     .min(12, "Password must be at least 12 characters long")
@@ -80,7 +82,6 @@ const stepSchemas = [
   }),
   Yup.object({
     contact_no: Yup.string().required("Contact is required").min(9).max(13),
-    username: Yup.string().required("Username is required"),
     password: Yup.string()
       .required("Password is required")
       .min(12, "Password must be at least 12 characters long")
@@ -92,8 +93,21 @@ const stepSchemas = [
   }),
   Yup.object({
     status: Yup.string().required("Status is required"),
-    is_login: Yup.string(),
-  }),
+    is_block: Yup.string(),
+    cashier_description_block: Yup.string(),
+    invoice_block: Yup.string(),
+  }).test(
+    "only-one-block",
+    "Select only one: Is Block, Cashier Description Block, or Invoice Block",
+    (values) => {
+      const selected = [
+        values.is_block,
+        values.cashier_description_block,
+        values.invoice_block,
+      ].filter((v) => v === "1");
+      return selected.length <= 1;
+    }
+  ),
 ];
 
 export default function AddEditSalesman() {
@@ -117,12 +131,15 @@ export default function AddEditSalesman() {
     route_id: "",
     forceful_login: "0",
     is_block: "0",
-    username: "",
     password: "",
     contact_no: "",
     warehouse_id: "",
     status: "1",
-    is_block_reason: "",
+    cashier_description_block: "0",
+    invoice_block: "0",
+    block_date_from: "",
+    block_date_to: "",
+    reason: "",
     email: "",
   });
 
@@ -155,14 +172,18 @@ export default function AddEditSalesman() {
               type: d.salesman_type?.id?.toString() || "",
               designation: d.designation || "",
               route_id: d.route?.id?.toString() || "",
-              username: d.username || "",
               password: d.password, // password is not returned from API → leave empty
               contact_no: d.contact_no || "",
               warehouse_id: d.warehouse?.id?.toString() || "",
               is_block: d.is_block?.toString() || "0",
-              forceful_login: d.forceful_login?.toString() || "0",
+              forceful_login: d.forceful_login?.toString() || "1",
               status: d.status?.toString() || "1",
-              is_block_reason: d.is_block_reason || "",
+              block_date_from: d.block_date_from || "",
+              block_date_to: d.block_date_to || "",
+              reason: d.is_block_reason || "",
+              cashier_description_block:
+                d.cashier_description_block?.toString() || "0",
+              invoice_block: d.invoice_block?.toString() || "0",
               email: d.email || "",
             });
           }
@@ -188,35 +209,6 @@ export default function AddEditSalesman() {
     })();
   }, [isEditMode, salesmanId]);
 
-  // // ✅ Step validation
-  // const handleNext = async (
-  //   values: SalesmanFormValues,
-  //   actions: FormikHelpers<SalesmanFormValues>
-  // ) => {
-  //   try {
-  //     const schema = stepSchemas[currentStep - 1];
-  //     await schema.validate(values, { abortEarly: false });
-  //     markStepCompleted(currentStep);
-  //     nextStep();
-  //   } catch (err: unknown) {
-  //     if (err instanceof Yup.ValidationError) {
-  //       actions.setTouched(
-  //         err.inner.reduce((acc, curr) => ({ ...acc, [curr.path!]: true }), {})
-  //       );
-  //       actions.setErrors(
-  //         err.inner.reduce(
-  //           (acc, curr) => ({
-  //             ...acc,
-  //             [curr.path as keyof SalesmanFormValues]: curr.message,
-  //           }),
-  //           {}
-  //         )
-  //       );
-  //     }
-  //     showSnackbar("Please fix validation errors before proceeding", "error");
-  //   }
-  // };
-
   const handleNext = async (
     values: SalesmanFormValues,
     actions: FormikHelpers<SalesmanFormValues>
@@ -226,7 +218,6 @@ export default function AddEditSalesman() {
       await schema.validate(values, { abortEarly: false });
 
       markStepCompleted(currentStep);
-      // ✅ Clear errors/touched when moving to next step
       actions.setErrors({});
       actions.setTouched({});
       nextStep();
@@ -239,7 +230,6 @@ export default function AddEditSalesman() {
           }),
           {}
         );
-
         actions.setErrors(fieldErrors);
         actions.setTouched(
           Object.keys(fieldErrors).reduce(
@@ -252,15 +242,11 @@ export default function AddEditSalesman() {
     }
   };
 
-  const handlePrev = (
-    actions: FormikHelpers<SalesmanFormValues>
-  ) => {
+  const handlePrev = (actions: FormikHelpers<SalesmanFormValues>) => {
     actions.setErrors({});
     actions.setTouched({});
     prevStep();
   };
-
-
 
   // ✅ Submit handler
   const handleSubmit = async (
@@ -269,7 +255,6 @@ export default function AddEditSalesman() {
   ) => {
     try {
       await SalesmanSchema.validate(values, { abortEarly: false });
-
       const formData = new FormData();
       (Object.keys(values) as (keyof SalesmanFormValues)[]).forEach((key) => {
         formData.append(key, values[key] ?? "");
@@ -285,14 +270,19 @@ export default function AddEditSalesman() {
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
-        showSnackbar(isEditMode ? "Salesman Updated Successfully" : "Salesman Created Successfully", "success");
+        showSnackbar(
+          isEditMode
+            ? "Salesman Updated Successfully"
+            : "Salesman Created Successfully",
+          "success"
+        );
         router.push("/salesman");
         try {
           await saveFinalCode({
             reserved_code: values.osa_code,
             model_name: "salesman",
           });
-        } catch { }
+        } catch {}
       }
     } catch {
       showSnackbar("Validation failed, please check your inputs", "error");
@@ -344,6 +334,7 @@ export default function AddEditSalesman() {
               </div>
               <div>
                 <InputFields
+                  required
                   label="Salesman Type"
                   name="type"
                   value={values.type}
@@ -359,6 +350,7 @@ export default function AddEditSalesman() {
 
               <div>
                 <InputFields
+                  required
                   label="Designation"
                   name="designation"
                   value={values.designation}
@@ -372,11 +364,14 @@ export default function AddEditSalesman() {
               </div>
               <div>
                 <InputFields
+                  required
                   label="Warehouse"
                   type="select"
                   name="warehouse_id"
                   value={values.warehouse_id}
-                  onChange={(e) => setFieldValue("warehouse_id", e.target.value)}
+                  onChange={(e) =>
+                    setFieldValue("warehouse_id", e.target.value)
+                  }
                   options={warehouseOptions}
                 />
                 <ErrorMessage
@@ -387,6 +382,7 @@ export default function AddEditSalesman() {
               </div>
               <div>
                 <InputFields
+                  required
                   label="Route"
                   name="route_id"
                   value={values.route_id}
@@ -406,8 +402,10 @@ export default function AddEditSalesman() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
+              {/* <div>
                 <InputFields
+                required
+                type="contact"
                   label="Contact No"
                   name="contact_no"
                   value={values.contact_no}
@@ -418,10 +416,61 @@ export default function AddEditSalesman() {
                   component="span"
                   className="text-xs text-red-500"
                 />
+              </div> */}
+
+              <div className="flex flex-col gap-2">
+                <InputFields
+                  required
+                  type="contact"
+                  label="Contact Number"
+                  name="owner_number"
+                  value={`${values.contact_no ?? "+91"}|${
+                    values.contact_no ?? ""
+                  }`}
+                  onChange={(e) => {
+                    const combined = (e.target as HTMLInputElement).value || "";
+                    if (combined.includes("|")) {
+                      const [code = "+256", num = ""] = combined.split("|");
+                      const numDigits = num.replace(/\D/g, "");
+                      const codeDigits = String(code).replace(/\D/g, "");
+                      const localNumber =
+                        codeDigits && numDigits.startsWith(codeDigits)
+                          ? numDigits.slice(codeDigits.length)
+                          : numDigits;
+                      setFieldValue("contact_no", code);
+                      setFieldValue("contact_no", localNumber);
+                    } else {
+                      const digits = combined.replace(/\D/g, "");
+                      const currentCountry = (
+                        values.contact_no || "+256"
+                      ).replace(/\D/g, "");
+                      if (currentCountry && digits.startsWith(currentCountry)) {
+                        setFieldValue("contact_no", `+${currentCountry}`);
+                        setFieldValue(
+                          "contact_no",
+                          digits.slice(currentCountry.length)
+                        );
+                      } else {
+                        setFieldValue("contact_no", digits);
+                      }
+                    }
+                  }}
+                  error={
+                    errors?.contact_no && touched?.contact_no
+                      ? errors.contact_no
+                      : false
+                  }
+                />
+                {errors?.contact_no && touched?.contact_no && (
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.contact_no}
+                  </span>
+                )}
               </div>
 
               <div>
                 <InputFields
+                  required
                   label="Email"
                   name="email"
                   value={values.email}
@@ -434,20 +483,8 @@ export default function AddEditSalesman() {
                 />
               </div>
               <div>
-                <InputFields
-                  label="Username"
-                  name="username"
-                  value={values.username}
-                  onChange={(e) => setFieldValue("username", e.target.value)}
-                />
-                <ErrorMessage
-                  name="username"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
-              </div>
-              <div>
                 <CustomPasswordInput
+                  required
                   label="Password"
                   value={values.password}
                   onChange={(e) => setFieldValue("password", e.target.value)}
@@ -458,9 +495,8 @@ export default function AddEditSalesman() {
                   className="text-xs text-red-500"
                 />
               </div>
-             
-              <div>
-              </div>
+
+              <div></div>
             </div>
           </ContainerCard>
         );
@@ -470,11 +506,14 @@ export default function AddEditSalesman() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <InputFields
-                  label=" forceful login"
+                  required
+                  label="Forceful login"
                   type="radio"
                   name="forceful_login"
                   value={values.forceful_login}
-                  onChange={(e) => setFieldValue("forceful_login", e.target.value)}
+                  onChange={(e) =>
+                    setFieldValue("forceful_login", e.target.value)
+                  }
                   options={[
                     { value: "1", label: "Yes" },
                     { value: "0", label: "No" },
@@ -488,39 +527,7 @@ export default function AddEditSalesman() {
               </div>
               <div>
                 <InputFields
-                  label="Is block"
-                  name="is_block"
-                  type="radio"
-                  value={values.is_block}
-                  onChange={(e) => setFieldValue("is_block", e.target.value)}
-                  options={[
-                    { value: "1", label: "Yes" },
-                    { value: "0", label: "No" },
-                  ]}
-                />
-                <ErrorMessage
-                  name="is_block"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
-              </div>
-              {values.is_block === "1" && (
-                <div>
-                  <InputFields
-                    label="Block Region"
-                    type="select"
-                    name="is_block_reason"
-                    value={values.is_block_reason || ""}
-                    onChange={(e) => setFieldValue("is_block_reason", e.target.value)}
-                    options={[
-                    { value: "Cashier Description", label: "Cashier Description" },
-                    { value: "Invoice", label: "Invoice" },
-                  ]}
-                  />
-                </div>
-              )}
-              <div>
-                <InputFields
+                  required
                   label="Status"
                   name="status"
                   type="radio"
@@ -537,6 +544,94 @@ export default function AddEditSalesman() {
                   className="text-xs text-red-500"
                 />
               </div>
+              <div className="col-span-3">
+                <div className="font-medium mb-2"></div>
+                <div className="flex gap-93">
+                  <CustomCheckbox
+                    id="is_block"
+                    label="Is Block"
+                    checked={values.is_block === "1"}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFieldValue("is_block", "1");
+                        setFieldValue("cashier_description_block", "0");
+                        setFieldValue("invoice_block", "0");
+                      } else {
+                        setFieldValue("is_block", "0");
+                      }
+                    }}
+                  />
+                  <CustomCheckbox
+                    id="cashier_description_block"
+                    label="Cashier Description Block"
+                    checked={values.cashier_description_block === "1"}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFieldValue("is_block", "0");
+                        setFieldValue("cashier_description_block", "1");
+                        setFieldValue("invoice_block", "0");
+                      } else {
+                        setFieldValue("cashier_description_block", "0");
+                      }
+                    }}
+                  />
+                  <CustomCheckbox
+                    id="invoice_block"
+                    label="Invoice Block"
+                    checked={values.invoice_block === "1"}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFieldValue("is_block", "0");
+                        setFieldValue("cashier_description_block", "0");
+                        setFieldValue("invoice_block", "1");
+                      } else {
+                        setFieldValue("invoice_block", "0");
+                      }
+                    }}
+                  />
+                </div>
+                {errors.is_block && (
+                  <span className="text-xs text-red-500">
+                    {errors.is_block}
+                  </span>
+                )}
+              </div>
+              {values.is_block === "1" && (
+                <>
+                  <div>
+                    <InputFields
+                      label="Block Date From"
+                      type="date"
+                      name="block_date_from"
+                      value={values.block_date_from || ""}
+                      onChange={(e) =>
+                        setFieldValue("block_date_from", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <InputFields
+                      label="Block Date To"
+                      type="date"
+                      name="block_date_to"
+                      value={values.block_date_to || ""}
+                      onChange={(e) =>
+                        setFieldValue("block_date_to", e.target.value)
+                      }
+                    />
+                  </div>
+                </>
+              )}
+              {values.invoice_block === "1" && (
+                <div>
+                  <InputFields
+                    label="Reason"
+                    name="reason"
+                    value={values.reason || ""}
+                    onChange={(e) => setFieldValue("reason", e.target.value)}
+                  />
+                </div>
+              )}
             </div>
           </ContainerCard>
         );
@@ -583,8 +678,13 @@ export default function AddEditSalesman() {
                 isCompleted: isStepCompleted(step.id),
               }))}
               currentStep={currentStep}
-              onStepClick={() => { }}
-              onBack={() => handlePrev({ setErrors, setTouched } as FormikHelpers<SalesmanFormValues>)}
+              onStepClick={() => {}}
+              onBack={() =>
+                handlePrev({
+                  setErrors,
+                  setTouched,
+                } as FormikHelpers<SalesmanFormValues>)
+              }
               onNext={() =>
                 handleNext(values, {
                   setErrors,

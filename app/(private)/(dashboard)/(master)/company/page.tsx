@@ -136,6 +136,7 @@ const columns = [
         )},
 ];
 
+
 const CompanyPage = () => {
     const { setLoading } = useLoading();
     const [refreshKey, setRefreshKey] = useState(0);

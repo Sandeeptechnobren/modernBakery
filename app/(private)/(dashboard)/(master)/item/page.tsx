@@ -198,7 +198,7 @@ export default function Item() {
                                     href="/item/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Item"
+                                    label="Add"
                                     labelTw="hidden sm:block"
                                 />,
                             ],
