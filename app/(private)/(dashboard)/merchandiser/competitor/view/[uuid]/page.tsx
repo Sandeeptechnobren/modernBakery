@@ -106,6 +106,7 @@ export default function Page() {
           {/* Shelf Info */}
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 flex-wrap">
             <div className="p-4 rounded-lg flex flex-col items-start justify-center ">
+              <h1 className="text-xs text-gray-500 uppercase mb-1">Comapany Name</h1>
               <h1 className="font-semibold text-xl text-gray-900">
                 {compititor.company_name || "-"}
               </h1>
@@ -119,7 +120,7 @@ export default function Page() {
           </div>
 
           <div className="p-4 rounded-lg flex flex-col items-start justify-center ">
-            <h1 className="text-xs text-gray-500 uppercase mb-1">Complaint  Code</h1>
+            <h1 className="text-xs text-gray-500 uppercase mb-1">  Code</h1>
             <h2 className="text-lg font-semibold text-gray-900">
               {compititor.code || "Compititor-001"}
             </h2>

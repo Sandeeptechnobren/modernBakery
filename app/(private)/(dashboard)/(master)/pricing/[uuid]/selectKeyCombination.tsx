@@ -100,14 +100,14 @@ export default function SelectKeyCombination({ keyCombo, setKeyCombo }: Props) {
     });
   }
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-    setSelectedKey(e.target.value);
-  };
+  // const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+  //   setSelectedKey(e.target.value);
+  // };
 
   return (
     <ContainerCard className="h-fit mt-[20px] flex flex-col gap-2 p-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none text-[#181D27]">
       <div className="font-semibold text-[20px] mb-4">Key Combination</div>
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <InputFields
           label="Select Key"
           type="select"
@@ -121,7 +121,7 @@ export default function SelectKeyCombination({ keyCombo, setKeyCombo }: Props) {
           onChange={handleSelectChange}
           width="w-full"
         />
-      </div>
+      </div> */}
       <div className="grid grid-cols-3 gap-6">
         {keysArray.map((group, index) => (
           <div

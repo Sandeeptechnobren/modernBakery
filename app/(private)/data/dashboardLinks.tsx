@@ -91,7 +91,7 @@ export const initialLinkData: SidebarDataType[] = [
                     {
                         isActive: false,
                         href: "/item",
-                        label: "Products",
+                        label: "Item",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500",
                     },
@@ -143,13 +143,13 @@ export const initialLinkData: SidebarDataType[] = [
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [
-                    //    {
-                    //     isActive: false,
-                    //     href: "/pricing",
-                    //     label: "Pricing",
-                    //     leadingIcon: "mdi:currency-usd",
-                    //     iconColor: "text-yellow-400"
-                    // },
+                       {
+                        isActive: false,
+                        href: "/pricing",
+                        label: "Pricing",
+                        leadingIcon: "mdi:currency-usd",
+                        iconColor: "text-yellow-400"
+                    },
                        // {
     //             isActive: false,
     //             href: "/promotion",
@@ -165,19 +165,6 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "mdi:package-variant",
                 iconColor: "text-cyan-500"
             },
-            {
-                isActive: false,
-                href: "/invoice",
-                label: "Invoice",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
-            
-                   
-                          
-                   
-                   
-                   
                 ],
             },
             {
@@ -188,12 +175,26 @@ export const initialLinkData: SidebarDataType[] = [
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [
+                       {
+                        isActive: false,
+                        href: "/merchandiser/shelfDisplay",
+                        label: "Shelf Display",
+                        leadingIcon: "mdi:map",
+                        iconColor: "text-yellow-400",
+                    },
                     {
                         isActive: false,
                         href: "/merchandiser/planogram",
                         label: "Planogram",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
+                    },
+                       {
+                        isActive: false,
+                        href: "/merchandiser/campaign",
+                        label: "Campaign Info",
+                        leadingIcon: "mdi:map",
+                        iconColor: "text-yellow-400",
                     },
                     //          {
                     //     isActive: false,
@@ -209,13 +210,7 @@ export const initialLinkData: SidebarDataType[] = [
                     //     leadingIcon: "mdi:map",
                     //     iconColor: "text-yellow-400",
                     // },
-                    {
-                        isActive: false,
-                        href: "/merchandiser/shelfDisplay",
-                        label: "Shelf Display",
-                        leadingIcon: "mdi:map",
-                        iconColor: "text-yellow-400",
-                    },
+                 
                     // {
                     //     isActive: false,
                     //     href: "/merchandiser/survey",
@@ -230,13 +225,7 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",
                     },
-                    {
-                        isActive: false,
-                        href: "/merchandiser/campaign",
-                        label: "Campaign Information",
-                        leadingIcon: "mdi:map",
-                        iconColor: "text-yellow-400",
-                    },
+                 
                     {
                         isActive: false,
                         href: "/merchandiser/competitor",
@@ -317,14 +306,20 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500"
                     },
+                    // {
+                    //     isActive: false,
+                    //     href: "/agentTransaction/agentCustomerInvoice",
+                    //     label: "Agent Invoice",
+                    //     leadingIcon: "mdi:package-variant",
+                    //     iconColor: "text-cyan-500"
+                    // },
                     {
                         isActive: false,
-                        href: "/agentTransaction/agentCustomerInvoice",
-                        label: "Agent Invoice",
+                        href: "/invoice",
+                        label: "Invoice",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500"
                     },
-                   
                 ]
             },
             // {

@@ -237,6 +237,8 @@ useEffect(() => {
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
+      <div className="relative">
+        {showSkeleton && <div className="absolute h-[50px] w-full rounded-[5px] bg-gray-300 z-40"></div>}
       {type === "radio" && options && options.length > 0 ? (
         loading ? (
           <Skeleton variant="rounded" width={210} height={60} />
@@ -654,6 +656,6 @@ useEffect(() => {
         />
       ): null}
     </div>
+    </div>
   );
 }
-

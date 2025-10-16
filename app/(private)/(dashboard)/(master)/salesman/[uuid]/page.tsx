@@ -111,7 +111,13 @@ const stepSchemas = [
   ),
 ];
 
-export default function AddEditSalesman() {
+type props={
+  selectedCountry: { name: string; code?: string; flag?: string };
+  setSelectedCountry: ( { name: string; code?: string; flag?: string }) ;
+}
+
+
+export default function AddEditSalesman({selectedCountry, setSelectedCountry}:props) {
   const [prefix, setPrefix] = useState("");
   const [loading, setLoading] = useState(true);
   const { showSnackbar } = useSnackbar();
@@ -447,7 +453,7 @@ export default function AddEditSalesman() {
                 />
               </div> */}
 
-              <div className="flex flex-col gap-2">
+              {/* <div className="flex flex-col gap-2">
                 <InputFields
                   required
                   type="contact"
@@ -495,7 +501,24 @@ export default function AddEditSalesman() {
                     {errors.contact_no}
                   </span>
                 )}
-              </div>
+              </div> */}
+              <div className="flex flex-col gap-2">
+                        <InputFields
+                          required
+                          type="contact"
+                          label="Owner Contact Number"
+                          name="contact_no"
+                          setSelectedCountry={setSelectedCountry}
+                          selectedCountry={selectedCountry}
+                          value={`${values.contact_no ?? ''}`}
+                                   onChange={(e) => setFieldValue("contact_no", e.target.value)}
+              
+                          error={errors?.contact_no && touched?.contact_no ? errors.contact_no : false}
+                        />
+                       {errors?.contact_no && touched?.contact_no && (
+                        <span className="text-xs text-red-500 mt-1">{errors.contact_no}</span>
+                      )}
+                    </div>
 
               <div>
                 <InputFields

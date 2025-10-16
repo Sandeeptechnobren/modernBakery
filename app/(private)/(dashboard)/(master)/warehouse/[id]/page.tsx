@@ -110,7 +110,9 @@ export default function AddEditWarehouse() {
             .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Longitude must be a valid decimal number'),
         // p12_file: Yup.string().required('P12 File is required'),
         // p12_file: isEditMode ? Yup.string() : Yup.string().required('P12 File is required'),
-        is_efris: Yup.string().required('EFRIS Configuration is required'),
+                is_efris: Yup.string()
+                    .oneOf(['0', '1'], 'EFRIS Configuration is required')
+                    .required('EFRIS Configuration is required'),
         is_branch: Yup.string(),
     });
 
@@ -364,12 +366,8 @@ export default function AddEditWarehouse() {
                         <WarehouseContact
                             values={{ ...values, p12_file: typeof values.p12_file === 'string' ? values.p12_file : '' }}
                             errors={errors}
-                            selectedCountry={selectedCountry}
-                            setSelectedCountry={setSelectedCountry}
                             touched={touched}
-                            handleChange={(e) =>setFieldValue(e.target.name as keyof FormValues, e.target.value)
-                            
-                        }
+                            handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
                             setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File, true)}
                         />
                         

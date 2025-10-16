@@ -454,29 +454,38 @@ export default function AddEditItem() {
   const handleSubmit = async () => {
   setLoading(true);
 
- const mappedUoms = uomList.map((u) => ({ uom: u.uom, uom_type: u.uomType || "primary", price: parseFloat(u.price), upc: u.upc || null, is_stock_keeping: u.isStockKeepingUnit === "yes" ? 1 : 0, keeping_quantity: u.isStockKeepingUnit === "yes" ? parseFloat(u.quantity || "0") : undefined, enable_for: u.enableFor || "sales", }));
+ const mappedUoms = uomList.map((u) => ({
+  "uom": u.uom,
+  "uom_type": u.uomType || "primary",
+  "price": parseFloat(u.price),
+  "upc": u.upc || null,
+  "is_stock_keeping": u.isStockKeepingUnit === "yes" ? 1 : 0,
+  "keeping_quantity": u.isStockKeepingUnit === "yes" ? parseFloat(u.quantity || "0") : undefined,
+  "enable_for": u.enableFor || "sales",
+}));
 
 
   try {
-const formData = new FormData();
-formData.append("code", form.itemCode);
-formData.append("erp_code", form.ErpCode);
-formData.append("name", form.itemName);
-formData.append("description", form.itemDesc);
-// if (imageFile) formData.append("image", imageFile);
-formData.append("brand", form.brand);
-formData.append("category_id", form.itemCategory);
-formData.append("sub_category_id", form.itemSubCategory);
-formData.append("item_weight", form.itemWeight || "0");
-formData.append("shelf_life", form.shelfLife || "0");
-formData.append("volume", form.volume || "0");
-formData.append("is_promotional", form.is_Promotional === "yes" ? "1" : "0");
-formData.append("is_taxable", form.is_tax_applicable === "yes" ? "1" : "0");
-formData.append("has_excies", form.excise === "yes" ? "1" : "0");
-formData.append("status", form.status === "active" ? "1" : "0");
-formData.append("commodity_goods_code", form.commodity_goods_code);
-formData.append("excise_duty_code", form.excise_duty_code);
-formData.append("uoms", JSON.stringify(mappedUoms));
+const payload = {
+  code: form.itemCode,
+  erp_code: form.ErpCode,
+  name: form.itemName,
+  description: form.itemDesc,
+  brand: form.brand,
+  category_id: form.itemCategory,
+  sub_category_id: form.itemSubCategory,
+  item_weight: form.itemWeight || "0",
+  shelf_life: form.shelfLife || "0",
+  volume: form.volume || "0",
+  is_promotional: form.is_Promotional === "yes" ? "1" : "0",
+  is_taxable: form.is_tax_applicable === "yes" ? "1" : "0",
+  has_excies: form.excise === "yes" ? "1" : "0",
+  status: form.status === "active" ? "1" : "0",
+  commodity_goods_code: form.commodity_goods_code,
+  excise_duty_code: form.excise_duty_code,
+  uoms: mappedUoms // <-- as an array of objects (NOT stringified)
+};
+
 
 
     // 🖼 Append image file (actual file, not just name)
@@ -484,21 +493,19 @@ formData.append("uoms", JSON.stringify(mappedUoms));
     //   formData.append("image", imageFile);
     // }
 
-    // 🧩 Append UOM array as JSON string
-    formData.append("uoms", JSON.stringify(form.uom));
 
     const itemId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
 
 // 🔥 Use your service functions here
 const res = isEditMode
-  ? await editItem(itemId, formData)
-  : await addItem(formData);
+  ? await editItem(itemId, payload)
+  : await addItem(payload);
     if (res?.status === "success" || res?.success) {
       showSnackbar(
         isEditMode ? "Item updated successfully!" : "Item created successfully!",
         "success"
       );
-      router.push("/items");
+      router.push("/item");
     } else {
       //  console.error("Error:", res);
       throw new Error(res?.data?.message || "Something went wrong");
@@ -689,7 +696,7 @@ const res = isEditMode
               <div>
                 <InputFields
                   required
-                  label="Shelf Life"
+                  label="Shelf Life (Months)"
                   name="shelfLife"
                   value={form.shelfLife}
                   onChange={handleChange}

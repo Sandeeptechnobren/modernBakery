@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { itemList,addPricingHeader } from "@/app/services/allApi";
+import { itemList,addPricingDetail } from "@/app/services/allApi";
 import SelectKeyCombination from "./selectKeyCombination";
 import InputFields from "@/app/components/inputFields";
 import Table from "@/app/components/customTable";
@@ -114,14 +114,16 @@ export default function AddPricing() {
             ],
           },
         ];
-        function getKeyIds(type: string, selectedLabels: string[]): string[] {
-          const group = initialKeys.find(g => g.type === type);
-          if (!group) return [];
-          return selectedLabels.map((label: string) => {
-            const found = group.options.find(opt => opt.label === label);
-            return found ? found.id : label;
-          });
-        }
+        function getKeyIds(type: string, selectedLabels: string[]): number[] {
+  const group = initialKeys.find(g => g.type === type);
+  if (!group) return [];
+  return selectedLabels.map((label: string) => {
+    const found = group.options.find(opt => opt.label === label);
+    // Convert both the found id and label to a number
+    return found ? Number(found.id) : Number(label);
+  });
+}
+
 
         // Flatten all selected key ids into a single array for description
         const description = [
@@ -133,38 +135,47 @@ export default function AddPricing() {
         // Use selected item ids from keyValue["Item"] for item and pricing
         const selectedItemIds = keyValue["Item"] || [];
         const payload = {
-          name: promotion.itemName,
-          start_date: promotion.startDate,
-          end_date: promotion.endDate,
-          status: promotion.status,
-          item: selectedItemIds,
-          description,
-          pricing: selectedItemIds.map(itemId => {
-            // Find the actual itemCode for this itemId
-            let itemData = selectedItemDetails.find(item => String(item.code || item.itemCode) === String(itemId));
-            if (!itemData) {
-              itemData = itemOptions.find(opt => String(opt.value) === String(itemId));
-            }
-            let itemCode = itemId;
-            if (itemData) {
-              if (itemData.code) itemCode = itemData.code;
-              else if (itemData.itemCode) itemCode = itemData.itemCode;
-              else if (itemData.label) {
-                const labelParts = String(itemData.label).split(" - ");
-                itemCode = labelParts.length > 1 ? labelParts[0] : String(itemData.label);
-              }
-            }
-            const orderItem = promotion.orderItems.find(oi => oi.itemCode === itemCode);
-            return {
-              item_id: itemId,
-              price: orderItem ? orderItem.price : ""
-            };
-          }),
-        };
+  name: promotion.itemName,
+  description, // adjust this as needed
+  start_date: promotion.startDate,
+  end_date: promotion.endDate,
+  apply_on: 1, // static/mapped as per requirement
+  warehouse_id: "100", // static, change as needed
+  status: promotion.status, // or fix to 1 if static
+  company_id: "110", // static, change as needed
+  region_id: "1", // static, change as needed
+  area_id: "1", // static, change as needed
+  route_id: "50", // static, change as needed
+  item_category_id: "3", // static, change as needed
+  item_id: selectedItemIds.join(","), // comma-separated string of IDs
+  customer_id: "60", // static, change as needed
+  customer_category_id: "1", // static, change as needed
+  outlet_channel_id: "36", // static, change as needed
+  details: selectedItemIds.map(itemId => {
+    // Find the matching item data
+    let itemData = selectedItemDetails.find(item => String(item.code || item.itemCode) === String(itemId));
+    if (!itemData) {
+      itemData = itemOptions.find(opt => String(opt.value) === String(itemId));
+    }
+    // Determine the item code and name
+    const itemCode = Number(itemId);
+    const itemName = itemData?.name || itemData?.label || "";
+    // Find the order item for prices
+    const orderItem = promotion.orderItems.find(oi => String(oi.itemCode) === String(itemCode));
+    return {
+      name: itemName,
+      item_id: itemCode,
+      // buom_ctn_price: orderItem?.buom_ctn_price ?? orderItem?.price ?? 0,
+      // auom_pc_price: orderItem?.auom_pc_price ?? 0, // fallback/defaults as needed
+      status: 1 // static, or dynamic if needed
+    };
+  })
+};
+
     try {
       await pricingValidationSchema.validate(payload, { abortEarly: false });
       setLoading(true);
-      const res = await addPricingHeader(payload);
+      const res = await addPricingDetail(payload);
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit pricing", "error");
       } else {

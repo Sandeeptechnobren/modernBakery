@@ -62,6 +62,8 @@ interface AgentCustomerFormValues {
     qr_code: string;
 }
 
+interface contactCountry { name: string; code?: string; flag?: string; }
+
 const paymentTypeOptions = [
     { value: "1", label: "cash" },
     { value: "2", label: "credit" },
@@ -84,10 +86,14 @@ export default function AddEditAgentCustomer() {
         customerCategory: false,
         customerSubCategory: false,
     });
+    const [country, setCountry] = useState<Record<string, contactCountry>>({
+        contact_no: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+        contact_no2: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+        whatsapp_no: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+    });
     const [filteredRouteOptions, setFilteredRouteOptions] = useState([] as { label: string; value: string }[]);
     const [filteredCustomerCategoryOptions, setFilteredCustomerCategoryOptions] = useState([] as { label: string; value: string }[]);
     const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState([] as  { label: string; value: string }[]);
-    const [selectedCountry, setSelectedCountry] = useState<{code:string; flag:string; name:string;}>({ name: "Uganda", code: "+256", flag: "🇺🇬"  });
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -339,11 +345,20 @@ export default function AddEditAgentCustomer() {
         town: Yup.string().required("Town is required"),
 
         // contact
-        whatsapp_no: Yup.string().nullable().transform(emptyToNull).max(200),
-        contact_no: Yup.string().required("Contact number is required").max(20),
+        whatsapp_no: Yup.string()
+            .nullable()
+            .transform(emptyToNull)
+            .test(
+                "whatsapp-format",
+                "Whatsapp number must be exactly 10 digits",
+                (val) => val === null || /^\d{10}$/.test(String(val))
+            ),
+        contact_no: Yup.string()
+            .required("Contact number is required")
+            .matches(/^\d{10}$/, "Contact number must be exactly 10 digits"),
         contact_no2: Yup.string()
             .required("Secondary contact number is required")
-            .max(20),
+            .matches(/^\d{10}$/, "Secondary contact number must be exactly 10 digits"),
 
         // financial
         buyertype: Yup.mixed()
@@ -385,8 +400,8 @@ export default function AddEditAgentCustomer() {
         // additional
         category_id: Yup.mixed().required("Category is required"),
         subcategory_id: Yup.mixed().required("Subcategory is required"),
-        latitude: Yup.string().nullable().transform(emptyToNull),
-        longitude: Yup.string().nullable().transform(emptyToNull),
+        latitude: Yup.string().matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Latitude must be a valid decimal number').nullable().transform(emptyToNull),
+        longitude: Yup.string().matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Longitude must be a valid decimal number').nullable().transform(emptyToNull),
         qr_code: Yup.string().nullable().transform(emptyToNull),
 
         status: Yup.mixed()
@@ -701,7 +716,7 @@ export default function AddEditAgentCustomer() {
                                         label="Customer Type"
                                         options={customerTypeOptions}
                                         name="customer_type"
-                                        value={values.customer_type?.toString() ??""}
+                                        value={customerTypeOptions.length === 0 ? "" : values.customer_type?.toString() ?? ""}
                                         disabled={customerTypeOptions.length === 0}
                                         onChange={(e) =>
                                             setFieldValue(
@@ -753,9 +768,7 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Route"
                                         name="route_id"
-                                        value={
-                                            values.route_id?.toString() 
-                                        }
+                                        value={filteredRouteOptions.length === 0 ? "" : values.route_id?.toString() }
                                         onChange={(e) =>
                                             setFieldValue("route_id",e.target.value)
                                         }
@@ -931,7 +944,7 @@ export default function AddEditAgentCustomer() {
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <InputFields
+                                    {/* <InputFields
                                         required
                                         type="contact"
                                         label="Contact Number"
@@ -956,7 +969,22 @@ export default function AddEditAgentCustomer() {
                                             <div className="text-red-500 text-xs mt-1">
                                                 {errors.contact_no}
                                             </div>
-                                        )}
+                                        )} */}
+
+                                    <InputFields
+                                        required
+                                        type="contact"
+                                        label="Contact Number"
+                                        name="contact_no"
+                                        setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, contact_no: country }))}
+                                        selectedCountry={country.contact_no}
+                                        value={`${values.contact_no ?? ''}`}
+                                        onChange={(e) => setFieldValue("contact_no", e.target.value)}
+                                        error={errors?.contact_no && touched?.contact_no ? errors.contact_no : false}
+                                    />
+                                    {errors?.contact_no && touched?.contact_no && (
+                                    <span className="text-xs text-red-500 mt-1">{errors.contact_no}</span>
+                                    )}
                                 </div>
 
                                 <div>
@@ -965,8 +993,8 @@ export default function AddEditAgentCustomer() {
                                         type="contact"
                                         label="Contact Number 2"
                                         name="contact_no2"
-                                        setSelectedCountry={setSelectedCountry}
-                                        selectedCountry={selectedCountry}
+                                        setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, contact_no2: country }))}
+                                        selectedCountry={country.contact_no2}
                                         value={values.contact_no2}
                                         onChange={(e) =>
                                             setFieldValue(
@@ -989,9 +1017,12 @@ export default function AddEditAgentCustomer() {
 
                                 <div>
                                     <InputFields
+                                        type="contact"
                                         label="Whatsapp No"
                                         name="whatsapp_no"
                                         value={values.whatsapp_no}
+                                        setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, whatsapp_no: country }))}
+                                        selectedCountry={country.whatsapp_no}
                                         onChange={(e) =>
                                             setFieldValue(
                                                 "whatsapp_no",
@@ -1152,10 +1183,7 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Outlet Channel"
                                         name="outlet_channel_id"
-                                        value={
-                                            values.outlet_channel_id?.toString() ??
-                                            ""
-                                        }
+                                        value={(channelOptions.length === 0) ? "" : values.outlet_channel_id?.toString() ?? ""}
                                         onChange={(e) => {
                                             setFieldValue("outlet_channel_id", e.target.value);
                                             if (values.outlet_channel_id !== e.target.value) {
@@ -1183,7 +1211,7 @@ export default function AddEditAgentCustomer() {
                                         label="Category"
                                         name="category_id"
                                         value={
-                                            values.category_id?.toString() || filteredCustomerCategoryOptions[0]?.value || ""
+                                            filteredCustomerCategoryOptions.length === 0 ? "" : values.category_id?.toString() || filteredCustomerCategoryOptions[0]?.value || ""
                                         }
                                         onChange={(e) => {
                                             setFieldValue("category_id", e.target.value);
@@ -1212,7 +1240,7 @@ export default function AddEditAgentCustomer() {
                                         label="Subcategory"
                                         name="subcategory_id"
                                         value={
-                                            values.subcategory_id?.toString() || filteredCustomerSubCategoryOptions[0]?.value || ""
+                                            filteredCustomerSubCategoryOptions.length === 0 ? "" : values.subcategory_id?.toString() || filteredCustomerSubCategoryOptions[0]?.value || ""
                                         }
                                         onChange={(e) =>
                                             setFieldValue(

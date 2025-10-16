@@ -142,22 +142,20 @@ export default function CustomerDetails() {
                     </div>
                     <div className="text-center sm:text-left">
                         <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                            {item?.name || "Customer Name"} - {item?.osa_code || ""}
+                            {item?.osa_code || ""} - {item?.name || "Customer Name"}
                         </h2>
-                        <span className="flex items-center">
-                            <span className="text-[#414651] text-[16px]">
+                        <span className="flex items-center text-[#414651] text-[16px]">
                                 <Icon
                                     icon="mdi:location"
                                     width={16}
                                     className="text-[#EA0A2A] mr-[5px]"
                                 />
-                                <span className="mb-[10px]">
+                                <span>
                                     {item?.district}
                                 </span>
                                 {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                                     <StatusBtn status="active" />
                                 </span> */}
-                            </span>
                         </span>
                     </div>
                 </div>
@@ -187,7 +185,7 @@ export default function CustomerDetails() {
                 ))}
             </ContainerCard>
             {activeTab === "Overview" ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px]">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[10px]">
                 <Overview data={item} />
                 <Financial data={item} />
                 <Additional data={item} />

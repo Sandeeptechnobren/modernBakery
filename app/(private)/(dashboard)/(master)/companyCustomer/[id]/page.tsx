@@ -27,7 +27,6 @@ import StepperForm, {
   useStepperForm,
   StepperStep,
 } from "@/app/components/stepperForm";
-import Loading from "@/app/components/Loading";
 
 export type CompanyCustomerFormValues = {
   sapCode: string;
@@ -37,14 +36,11 @@ export type CompanyCustomerFormValues = {
   customerType: string;
   ownerName: string;
   ownerNumber: string;
-  ownerContactCountry?: string;        // <- added
   isWhatsapp: string;
   whatsappNo: string;
-  whatsappContactCountry?: string;     // <- added
   email: string;
   language: string;
   contactNo2: string;
-  contactNo2Country?: string;          // <- added
   buyerType: string;
   roadStreet: string;
   town: string;
@@ -52,7 +48,6 @@ export type CompanyCustomerFormValues = {
   district: string;
   region: string;
   area: string;
-  balance: string;
   paymentType: string;
   bankName: string;
   bankAccountNumber: string;
@@ -93,7 +88,6 @@ interface CompanyCustomerPayload {
   district: string;
   region_id: number;
   area_id: number;
-  balance: number;
   payment_type: string;
   bank_name: string;
   bank_account_number: string;
@@ -112,7 +106,7 @@ interface CompanyCustomerPayload {
   threshold_radius: number;
   dchannel_id: number;
   merchendiser_ids: string;
-  status: number;
+  status: string;
   created_user?: number;
   updated_user?: number;
 }
@@ -126,7 +120,11 @@ const validationSchema = Yup.object({
   ownerName: Yup.string().required("Owner Name is required."),
   ownerNumber: Yup.string()
     .required("Owner Contact is required."),
-  whatsappNo: Yup.string().required("Whatsapp Number is required."),
+  whatsappNo: Yup.string().when('isWhatsapp', {
+  is: (val: string) => val === '1',
+    then: (schema) => schema.required("Whatsapp Number is required."),
+    otherwise: (schema) => schema.notRequired(),
+  }),
   email: Yup.string().email("Invalid email").required("Email is required."),
   language: Yup.string().required("Language is required."),
   contactNo2: Yup.string().required("Contact No 2 is required."),
@@ -136,7 +134,6 @@ const validationSchema = Yup.object({
   district: Yup.string().required("District is required."),
   region: Yup.string().required("Region is required."),
   area: Yup.string().required("Area is required."),
-  balance: Yup.string().required("Balance is required."),
   paymentType: Yup.string().required("Payment Type is required."),
   bankName: Yup.string().required("Bank Name is required."),
   bankAccountNumber: Yup.string().required("Bank Account Number is required."),
@@ -154,26 +151,25 @@ const validationSchema = Yup.object({
   latitude: Yup.string().required("Latitude is required.").matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Latitude must be a valid decimal number"),
   thresholdRadius: Yup.string().required("Threshold Radius is required."),
   dChannelId: Yup.string().required("Channel is required."),
-  status: Yup.string().required("Status is required."),
   merchendiser_ids: Yup.string(),
 });
 
 const stepSchemas = [
   Yup.object({
-    sapCode: validationSchema.fields.sapCode,
     customerCode: validationSchema.fields.customerCode,
+    sapCode: validationSchema.fields.sapCode,
+    vatNo: validationSchema.fields.vatNo,
+    ownerName: validationSchema.fields.ownerName,
     businessName: validationSchema.fields.businessName,
     customerType: validationSchema.fields.customerType,
-    ownerName: validationSchema.fields.ownerName,
-    language: validationSchema.fields.language,
-    vatNo: validationSchema.fields.vatNo,
     dChannelId: validationSchema.fields.dChannelId,
+    language: validationSchema.fields.language,
 
   }),
   Yup.object({
     ownerNumber: validationSchema.fields.ownerNumber,
-    whatsappNo: validationSchema.fields.whatsappNo,
     contactNo2: validationSchema.fields.contactNo2,
+    whatsappNo: validationSchema.fields.whatsappNo,
     email: validationSchema.fields.email,
   }),
   Yup.object({
@@ -189,32 +185,37 @@ const stepSchemas = [
   }),
   Yup.object({
 
-    balance: validationSchema.fields.balance,
     paymentType: validationSchema.fields.paymentType,
     bankName: validationSchema.fields.bankName,
     bankAccountNumber: validationSchema.fields.bankAccountNumber,
     creditDay: validationSchema.fields.creditDay,
-    accuracy: validationSchema.fields.accuracy,
     creditLimit: validationSchema.fields.creditLimit,
     totalCreditLimit: validationSchema.fields.totalCreditLimit,
-    creditLimitValidity: validationSchema.fields.creditLimitValidity,
     guaranteeName: validationSchema.fields.guaranteeName,
     guaranteeAmount: validationSchema.fields.guaranteeAmount,
     guaranteeFrom: validationSchema.fields.guaranteeFrom,
     guaranteeTo: validationSchema.fields.guaranteeTo,
     merchendiser_ids: validationSchema.fields.merchendiser_ids,
+    // accuracy: validationSchema.fields.accuracy,
+    // creditLimitValidity: validationSchema.fields.creditLimitValidity,
   }),
 ];
 
+interface contactCountry { name: string; code?: string; flag?: string; }
+
 export default function AddCompanyCustomer() {
-
-
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
   const { regionOptions, areaOptions, customerTypeOptions,channelOptions,fetchAreaOptions } =
     useAllDropdownListData();
+
+  const [country, setCountry] = useState<Record<string, contactCountry>>({
+      ownerNumber: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+      contactNo2: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+      whatsappNo: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+  });
 
   const steps: StepperStep[] = [
     { id: 1, label: "Customer Details" },
@@ -240,20 +241,16 @@ export default function AddCompanyCustomer() {
   const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>(
     {
       sapCode: "",
-      // company_customer_code: "",
       customerCode: "",
       businessName: "",
       customerType: "",
       ownerName: "",
       ownerNumber: "",
-      ownerContactCountry: "+91",       // <- default country
       isWhatsapp: "",
-      whatsappNo: "",
-      whatsappContactCountry: "+91",    // <- default country
       email: "",
       language: "",
       contactNo2: "",
-      contactNo2Country: "+91",         // <- default country
+      whatsappNo: "",
       buyerType: "",
       roadStreet: "",
       town: "",
@@ -261,7 +258,6 @@ export default function AddCompanyCustomer() {
       district: "",
       region: "",
       area: "",
-      balance: "",
       paymentType: "",
       bankName: "",
       bankAccountNumber: "",
@@ -279,7 +275,7 @@ export default function AddCompanyCustomer() {
       latitude: "",
       thresholdRadius: "",
       dChannelId: "",
-      status: "",
+      status: "1",
       merchendiser_ids: "",
     }
   );
@@ -291,20 +287,16 @@ export default function AddCompanyCustomer() {
       const data = await getCompanyCustomerById(id);
       const mapped: CompanyCustomerFormValues = {
         sapCode: data.sap_code || "",
-        // company_customer_code: data.company_customer_code || "",
         customerCode: data.customer_code || "",
         businessName: data.business_name || "",
         customerType: data.customer_type || "",
         ownerName: data.owner_name || "",
         ownerNumber: data.owner_no || "",
-        ownerContactCountry: data.owner_contact_country || "+91",
         isWhatsapp: String(data.is_whatsapp ?? "1"),
         whatsappNo: data.whatsapp_no || "",
-        whatsappContactCountry: data.whatsapp_contact_country || "+91",
         email: data.email || "",
         language: data.language || "",
         contactNo2: data.contact_no2 || "",
-        contactNo2Country: data.contact_no2_country || "+91",
         buyerType: String(data.buyer_type || "0"),
         roadStreet: data.road_street || "",
         town: data.town || "",
@@ -312,7 +304,6 @@ export default function AddCompanyCustomer() {
         district: data.district || "",
         region: String(data.region_id || ""),
         area: String(data.area_id || ""),
-        balance: String(data.balance || ""),
         paymentType: String(data.payment_type || "1"),
         bankName: data.bank_name || "",
         bankAccountNumber: data.bank_account_number || "",
@@ -357,9 +348,11 @@ export default function AddCompanyCustomer() {
     codeFetchedRef.current = true;
     (async () => {
       try {
+        setLoading(true);
         const res = await genearateCode({ model_name: "tbl_company_customer" });
         if (res?.code) setInitialValues((prev) => ({ ...prev, customerCode: String(res.code) }));
         if (res?.prefix) setPrefix(res.prefix);
+        setLoading(false);
       } catch (err) {
         console.error("Failed to generate code:", err);
       }
@@ -401,6 +394,7 @@ export default function AddCompanyCustomer() {
     values: CompanyCustomerFormValues,
     { setSubmitting, setErrors, setTouched }: FormikHelpers<CompanyCustomerFormValues>
   ) => {
+    console.log(values)
     try {
       await validationSchema.validate(values, { abortEarly: false });
       const payload: CompanyCustomerPayload = {
@@ -422,7 +416,6 @@ export default function AddCompanyCustomer() {
         district: values.district,
         region_id: Number(values.region),
         area_id: Number(values.area),
-        balance: Number(values.balance),
         payment_type: values.paymentType,
         bank_name: values.bankName,
         bank_account_number: values.bankAccountNumber,
@@ -441,9 +434,8 @@ export default function AddCompanyCustomer() {
         threshold_radius: Number(values.thresholdRadius),
         dchannel_id: Number(values.dChannelId),
         merchendiser_ids: values.merchendiser_ids || "",
-        status: Number(values.status),
-        created_user: 1,
-        updated_user: 2,
+        status: String(values.status),
+        
       };
 
       let res;
@@ -495,6 +487,7 @@ export default function AddCompanyCustomer() {
             {}
           )
         );
+        showSnackbar("Please fix the errors in the form.", "error");
       } else {
         showSnackbar(`Failed to ${isEditMode ? "update" : "add"} Company Customer `, "error");
       }
@@ -678,49 +671,36 @@ export default function AddCompanyCustomer() {
                 <InputFields
                   required
                   type="contact"
-                  label="Owner Contact Number"
+                  label="Owner Number"
                   name="ownerNumber"
+                  setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, ownerNumber: country }))}
+                  selectedCountry={country.ownerNumber}
                   value={`${values.ownerNumber ?? ''}`}
-                  onChange={(e) => {
-                    const combined = (e.target as HTMLInputElement).value || '';
-                    if (combined.includes('|')) {
-                      const [code = '+91', num = ''] = combined.split('|');
-                      const numDigits = num.replace(/\D/g, '');
-                      const codeDigits = String(code).replace(/\D/g, '');
-                      const localNumber = codeDigits && numDigits.startsWith(codeDigits) ? numDigits.slice(codeDigits.length) : numDigits;
-                      setFieldValue('ownerNumber', localNumber);
-                    } 
-                  }}
+                  onChange={(e) => setFieldValue("ownerNumber", e.target.value)}
                   error={errors?.ownerNumber && touched?.ownerNumber ? errors.ownerNumber : false}
-                />
-                {errors?.ownerNumber && touched?.ownerNumber && (
-                  <span className="text-xs text-red-500 mt-1">{errors.ownerNumber}</span>
-                )}
+              />
+              {errors?.ownerNumber && touched?.ownerNumber && (
+              <span className="text-xs text-red-500 mt-1">{errors.ownerNumber}</span>
+              )}
               </div>
-             
+
               <div className="flex flex-col gap-2">
                 <InputFields
                   required
                   type="contact"
-                  label="Contact No 2"
+                  label="Contact Number"
                   name="contactNo2"
+                  setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, contactNo2: country }))}
+                  selectedCountry={country.contactNo2}
                   value={`${values.contactNo2 ?? ''}`}
-                  onChange={(e) => {
-                    const combined = (e.target as HTMLInputElement).value || '';
-                    if (combined.includes('|')) {
-                      const [code = '+91', num = ''] = combined.split('|');
-                      const numDigits = num.replace(/\D/g, '');
-                      const codeDigits = String(code).replace(/\D/g, '');
-                      const localNumber = codeDigits && numDigits.startsWith(codeDigits) ? numDigits.slice(codeDigits.length) : numDigits;
-                      setFieldValue('contactNo2', localNumber);
-                    } 
-                  }}
+                  onChange={(e) => setFieldValue("contactNo2", e.target.value)}
                   error={errors?.contactNo2 && touched?.contactNo2 ? errors.contactNo2 : false}
-                />
-                {errors?.contactNo2 && touched?.contactNo2 && (
-                  <span className="text-xs text-red-500 mt-1">{errors.contactNo2}</span>
-                )}
+              />
+              {errors?.contactNo2 && touched?.contactNo2 && (
+              <span className="text-xs text-red-500 mt-1">{errors.contactNo2}</span>
+              )}
               </div>
+             
               <div>
                 <InputFields
                   required
@@ -751,29 +731,23 @@ export default function AddCompanyCustomer() {
                   <span className="text-xs text-red-500 mt-1">{errors.isWhatsapp}</span>
                 )}
               </div>
-              <div className="flex flex-col gap-2">
+
+              {values.isWhatsapp === "1" && <div className="flex flex-col gap-2">
                 <InputFields
                   required
                   type="contact"
                   label="Whatsapp Number"
                   name="whatsappNo"
+                  setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, whatsappNo: country }))}
+                  selectedCountry={country.whatsappNo}
                   value={`${values.whatsappNo ?? ''}`}
-                  onChange={(e) => {
-                    const combined = (e.target as HTMLInputElement).value || '';
-                    if (combined.includes('|')) {
-                      const [code = '+91', num = ''] = combined.split('|');
-                      const numDigits = num.replace(/\D/g, '');
-                      const codeDigits = String(code).replace(/\D/g, '');
-                      const localNumber = codeDigits && numDigits.startsWith(codeDigits) ? numDigits.slice(codeDigits.length) : numDigits;
-                      setFieldValue('whatsappNo', localNumber);
-                    } 
-                  }}
+                  onChange={(e) => setFieldValue("whatsappNo", e.target.value)}
                   error={errors?.whatsappNo && touched?.whatsappNo ? errors.whatsappNo : false}
-                />
-                {errors?.whatsappNo && touched?.whatsappNo && (
-                  <span className="text-xs text-red-500 mt-1">{errors.whatsappNo}</span>
-                )}
-              </div>
+              />
+              {errors?.whatsappNo && touched?.whatsappNo && (
+              <span className="text-xs text-red-500 mt-1">{errors.whatsappNo}</span>
+              )}
+              </div>}
              
               <div>
                 <InputFields
@@ -1143,18 +1117,16 @@ export default function AddCompanyCustomer() {
     }
   };
 
-  if (loading) return <Loading />;
-
   return (
     <>
       <div className="flex align-middle items-center gap-3 text-gray-900 mb-6">
-        <Link
-          href="/companyCustomer"
-          className="hover:underline"
+        <div
+            className="cursor-pointer"
+            onClick={() => router.back()}
         >
-          <Icon icon="mdi:arrow-left" className="text-xl" />
-        </Link>
-        <h1 className="text-xl font-semibold">
+            <Icon icon="lucide:arrow-left" width={24} />
+        </div>
+        <h1 className="text-xl font-semibold text-gray-900">
           {isEditMode ? "Update" : "Add"} Company Customer
         </h1>
       </div>

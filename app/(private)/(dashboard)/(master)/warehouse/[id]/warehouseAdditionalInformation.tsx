@@ -43,7 +43,6 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                         { value: "1", label: "Enable" },
                         { value: "0", label: "Disable" },
                     ]}
-                    error={errors?.is_efris && touched?.is_efris ? errors.is_efris : false}
                 />
                 {errors?.is_efris && touched?.is_efris && (
                     <span className="text-xs text-red-500 mt-1">{errors.is_efris}</span>

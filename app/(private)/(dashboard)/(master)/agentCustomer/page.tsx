@@ -1,19 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import StatusBtn from "@/app/components/statusBtn2";
-import BorderIconButton from "@/app/components/borderIconButton";
-import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
+    configType,
     listReturnType,
+    searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { agentCustomerList, deleteAgentCustomer, exportAgentCustomerData } from "@/app/services/allApi";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
 
@@ -23,10 +20,7 @@ interface DropdownItem {
     iconWidth: number;
 }
 
-const dropdownDataList: DropdownItem[] = [
-    { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-];
-const columns = [
+const columns: configType["columns"] = [
     {
         key: "osa_code",
         label: "Outlet Code",
@@ -35,8 +29,9 @@ const columns = [
                 {row.osa_code || "-"}
             </span>
         ),
+        showByDefault: true,
     },
-    { key: "outlet_name", label: "Outlet Name" },
+    { key: "outlet_name", label: "Outlet Name", showByDefault: true },
     { key: "owner_name", label: "Owner Name" },
     {
         key: "customer_type",
@@ -73,6 +68,35 @@ const columns = [
                 ? (row.subcategory as { customer_sub_category_name?: string })
                       .customer_sub_category_name || "-"
                 : "-",
+        filter: {
+            isFilterable: true,
+            width: 320,
+            render: (data: TableDataType[]) => {
+                if (!data) return null;
+                return <div className="flex flex-col">  
+                    {data.map((item, index) => (
+                        <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
+                            <span className="font-medium">
+                                {typeof item.subcategory === "object" &&
+                                item.subcategory !== null &&
+                                "customer_sub_category_code" in item.subcategory
+                                ? (item.subcategory as { customer_sub_category_code?: string })
+                                .customer_sub_category_code || "-"
+                                : "-"}
+                            </span>{" "}
+                            <span className="text-[#535862]">
+                                {typeof item.subcategory === "object" &&
+                                item.subcategory !== null &&
+                                "customer_sub_category_name" in item.subcategory
+                                ? (item.subcategory as { customer_sub_category_name?: string })
+                                .customer_sub_category_name || "-"
+                                : "-"}
+                            </span>
+                        </div>
+                    ))}
+                </div>},
+        },
+        showByDefault: true,
     },
     {
         key: "outlet_channel",
@@ -84,6 +108,35 @@ const columns = [
                 ? (row.outlet_channel as { outlet_channel?: string })
                       .outlet_channel || "-"
                 : "-",
+        filter: {
+            isFilterable: true,
+            width: 320,
+            render: (data: TableDataType[]) => {
+                if (!data) return null;
+                return <div className="flex flex-col">  
+                    {data.map((item, index) => (
+                        <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
+                            <span className="font-medium">
+                                {typeof item.outlet_channel === "object" &&
+                                item.outlet_channel !== null &&
+                                "outlet_channel_code" in item.outlet_channel
+                                ? (item.outlet_channel as { outlet_channel_code?: string })
+                                .outlet_channel_code || "-"
+                                : "-"}
+                            </span>{" "}
+                            <span className="text-[#535862]">
+                                {typeof item.outlet_channel === "object" &&
+                                item.outlet_channel !== null &&
+                                "outlet_channel" in item.outlet_channel
+                                ? (item.outlet_channel as { outlet_channel?: string })
+                                .outlet_channel || "-"
+                                : "-"}
+                            </span>
+                        </div>
+                    ))}
+                </div>},
+        },
+        showByDefault: true,
     },
     { key: "landmark", label: "Landmark" },
     { key: "district", label: "District" },
@@ -99,6 +152,35 @@ const columns = [
                 ? (row.getWarehouse as { warehouse_name?: string })
                       .warehouse_name || "-"
                 : "-",
+        filter: {
+            isFilterable: true,
+            width: 320,
+            render: (data: TableDataType[]) => {
+                if (!data) return null;
+                return <div className="flex flex-col">  
+                    {data.map((item, index) => (
+                        <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
+                            <span className="font-medium">
+                                {typeof item.getWarehouse === "object" &&
+                                item.getWarehouse !== null &&
+                                "warehouse_code" in item.getWarehouse
+                                ? (item.getWarehouse as { warehouse_code?: string })
+                                .warehouse_code || "-"
+                                : "-"}
+                            </span>{" "}
+                            <span className="text-[#535862]">
+                                {typeof item.getWarehouse === "object" &&
+                                item.getWarehouse !== null &&
+                                "warehouse_name" in item.getWarehouse
+                                ? (item.getWarehouse as { warehouse_name?: string })
+                                .warehouse_name || "-"
+                                : "-"}
+                            </span>
+                        </div>
+                    ))}
+                </div>},
+        },
+        showByDefault: true,
     },
     {
         key: "route",
@@ -113,6 +195,35 @@ const columns = [
             }
             return typeof row.route === 'string' ? row.route : "-";
         },
+        filter: {
+            isFilterable: true,
+            width: 320,
+            render: (data: TableDataType[]) => {
+                if (!data) return null;
+                return <div className="flex flex-col">  
+                    {data.map((item, index) => (
+                        <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
+                            <span className="font-medium">
+                                {typeof item.route === "object" &&
+                                item.route !== null &&
+                                "route_code" in item.route
+                                ? (item.route as { route_code?: string })
+                                .route_code || "-"
+                                : "-"}
+                            </span>{" "}
+                            <span className="text-[#535862]">
+                                {typeof item.route === "object" &&
+                                item.route !== null &&
+                                "route_name" in item.route
+                                ? (item.route as { route_name?: string })
+                                .route_name || "-"
+                                : "-"}
+                            </span>
+                        </div>
+                    ))}
+                </div>},
+        },
+        showByDefault: true,
     },
     { key: "contact_no", label: "Contact No." },
     { key: "whatsapp_no", label: "Whatsapp No." },
@@ -129,21 +240,12 @@ const columns = [
                     row.status.toLowerCase() === "active");
             return <StatusBtn isActive={isActive} />;
         },
+        showByDefault: true,
     },
 ];
 
 export default function AgentCustomer() {
-    interface AgentCustomer {
-        uuid?: number | string;
-        id?: number | string;
-        country_code?: string;
-        country_name?: string;
-        currency?: string;
-    }
-
     const { setLoading } = useLoading();
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<AgentCustomer | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
@@ -161,6 +263,7 @@ export default function AgentCustomer() {
                     page: page.toString(),
                 });
                 setLoading(false);
+                console.log("Agent Customer List Response:", listRes);
                 return {
                     data: listRes.data || [],
                     total: listRes?.pagination?.totalPages || 1,
@@ -170,7 +273,7 @@ export default function AgentCustomer() {
             } catch (error: unknown) {
                 console.error("API Error:", error);
                 setLoading(false);
-                throw error;
+                throw new Error("Failed to fetch Agent Customers");
             }
         },
         []
@@ -202,71 +305,96 @@ export default function AgentCustomer() {
         } finally {
         }
     }
-    // const searchCountries = useCallback(
-    //     async (
-    //         searchQuery: string,
-    //         pageSize: number
-    //     ): Promise<searchReturnType> => {
-    //         setLoading(true);
-    //         const result = await countryListGlobalSearch({
-    //             query: searchQuery,
-    //             per_page: pageSize.toString(),
-    //         });
-    //         setLoading(false);
-    //         if (result.error) throw new Error(result.data.message);
-    //         else {
-    //             return {
-    //                 data: result.data || [],
-    //                 total: result.pagination.pagination.totalPages || 0,
-    //                 currentPage: result.pagination.pagination.current_page || 0,
-    //                 pageSize: result.pagination.pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     []
-    // );
-    // const searchCountries = useCallback(
-    //     async (
-    //         searchQuery: string,
-    //         pageSize: number
-    //     ): Promise<searchReturnType> => {
-    //         setLoading(true);
-    //         const result = await countryListGlobalSearch({
-    //             query: searchQuery,
-    //             per_page: pageSize.toString(),
-    //         });
-    //         setLoading(false);
-    //         if (result.error) throw new Error(result.data.message);
-    //         else {
-    //             return {
-    //                 data: result.data || [],
-    //                 total: result.pagination.pagination.totalPages || 0,
-    //                 currentPage: result.pagination.pagination.current_page || 0,
-    //                 pageSize: result.pagination.pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     []
-    // );
 
-    const handleConfirmDelete = async () => {
-        if (!selectedRow) return;
+    const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {
+        if (!ids || ids.length === 0) return;
+        const res = await agentCustomerStatusUpdate({
+            ids: ids,
+            status: Number(status)
+        });
 
-        if (!selectedRow?.uuid) throw new Error("Missing id");
-        const res = await deleteAgentCustomer(String(selectedRow.uuid));
-        if (res.error)
-            return showSnackbar(
-                res.data.message || "Failed to delete Agent Customer",
-                "error"
-            );
-        else {
-            showSnackbar("Agent Customer deleted successfully ", "success");
-            setRefreshKey(refreshKey + 1);
+        if (res.error) {
+            showSnackbar(res.data.message || "Failed to update status", "error");
+            throw new Error(res.data.message);
         }
-        setLoading(false);
-        setShowDeletePopup(false);
-        setSelectedRow(null);
-    };
+        setRefreshKey(refreshKey + 1);
+        showSnackbar("Status updated successfully", "success");
+        return res;
+    }
+
+    const search = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number,
+            columnName?: string
+        ): Promise<searchReturnType> => {
+            let result;
+            setLoading(true);
+            if(columnName) {
+                result = await agentCustomerList({
+                    per_page: pageSize.toString(),
+                    [columnName]: searchQuery
+                });
+            }
+            // result = await agentCustomer({
+            //     query: searchQuery,
+            //     per_page: pageSize.toString(),
+            // });
+            setLoading(false);
+            if (result.error) throw new Error(result.data.message);
+            else {
+                return {
+                    data: result.data || [],
+                    total: result.pagination.pagination.totalPages || 0,
+                    currentPage: result.pagination.pagination.current_page || 0,
+                    pageSize: result.pagination.pagination.limit || pageSize,
+                };
+            }
+        },
+        []
+    );
+    // const searchCountries = useCallback(
+    //     async (
+    //         searchQuery: string,
+    //         pageSize: number
+    //     ): Promise<searchReturnType> => {
+    //         setLoading(true);
+    //         const result = await countryListGlobalSearch({
+    //             query: searchQuery,
+    //             per_page: pageSize.toString(),
+    //         });
+    //         setLoading(false);
+    //         if (result.error) throw new Error(result.data.message);
+    //         else {
+    //             return {
+    //                 data: result.data || [],
+    //                 total: result.pagination.pagination.totalPages || 0,
+    //                 currentPage: result.pagination.pagination.current_page || 0,
+    //                 pageSize: result.pagination.pagination.limit || pageSize,
+    //             };
+    //         }
+    //     },
+    //     []
+    // );
+
+    // const handleConfirmDelete = async () => {
+    //     if (!selectedRow) return;
+
+    //     if (!selectedRow?.uuid) throw new Error("Missing id");
+    //     const res = await deleteAgentCustomer(String(selectedRow.uuid));
+    //     if (res.error)
+    //         return showSnackbar(
+    //             res.data.message || "Failed to delete Agent Customer",
+    //             "error"
+    //         );
+    //     else {
+    //         showSnackbar("Agent Customer deleted successfully ", "success");
+    //         setRefreshKey(refreshKey + 1);
+    //     }
+    //     setLoading(false);
+    //     setShowDeletePopup(false);
+    //     setSelectedRow(null);
+    // };
 
     useEffect(() => {
         setLoading(true);
@@ -280,6 +408,7 @@ export default function AgentCustomer() {
                     config={{
                         api: {
                             list: fetchAgentCustomers,
+                            search: search,
                         },
                         header: {
                             title: "Agent Customer",
@@ -307,9 +436,48 @@ export default function AgentCustomer() {
                                 {
                                     icon: "lucide:radio",
                                     label: "Inactive",
-                                    showOnSelect: true
+                                    // showOnSelect: true,
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("1") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if(!status.includes(currentStatus)){
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].id;
+                                        })
+                                        handleStatusChange(ids, Number(0));
+                                    },
+                                },
+                                {
+                                    icon: "lucide:radio",
+                                    label: "Active",
+                                    // showOnSelect: true,
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        console.log(status, "status");
+                                        return status?.includes("0") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if(!status.includes(currentStatus)){
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].id;
+                                        })
+                                        handleStatusChange(ids, Number(1));
+                                    },
                                 },
                             ],
+
                             searchBar: false,
                             columnFilter: true,
                             actions: [
@@ -323,6 +491,7 @@ export default function AgentCustomer() {
                                 />,
                             ],
                         },
+                        localStorageKey: "agentCustomer-table",
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
@@ -343,21 +512,13 @@ export default function AgentCustomer() {
                                     );
                                 },
                             },
-                            // {
-                            //     icon: "lucide:trash-2",
-                            //     onClick: (data: object) => {
-                            //         const row = data as TableRow;
-                            //         setSelectedRow({ uuid: row.uuid });
-                            //         setShowDeletePopup(true);
-                            //     },
-                            // },
                         ],
-                        pageSize: 10,
+                        pageSize: 50,
                     }}
                 />
             </div>
 
-            {showDeletePopup && (
+            {/* {showDeletePopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                     <DeleteConfirmPopup
                         title="Agent Customer"
@@ -365,7 +526,7 @@ export default function AgentCustomer() {
                         onConfirm={handleConfirmDelete}
                     />
                 </div>
-            )}
+            )} */}
         </>
     );
 }

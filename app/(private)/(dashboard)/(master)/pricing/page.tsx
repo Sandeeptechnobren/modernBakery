@@ -14,7 +14,6 @@ import Table, {
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
     pricingHeaderList,
-    deletePricingHeader,
     pricingDetailGlobalSearch,
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
@@ -33,7 +32,7 @@ const dropdownDataList: DropdownItem[] = [
     // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
     // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-    { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
+    // { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 const columns = [
@@ -41,30 +40,6 @@ const columns = [
     { key: "name", label: "Name" },
     { key: "start_date", label: "Start Date" },
     { key: "end_date", label: "End Date" },
-    { key: "apply_on", label: "Apply On" },
-    { key: "warehouse", label: "Warehouse Code",render: (data: TableDataType) => {
-            const typeObj = data.warehouse ? JSON.parse(JSON.stringify(data.warehouse)) : null;
-            return typeObj?.warehouse_code ? typeObj.warehouse_code : "-";
-        }, },
-    { key: "warehouse", label: "Warehouse Name",render: (data: TableDataType) => {
-            const typeObj = data.warehouse ? JSON.parse(JSON.stringify(data.warehouse)) : null;
-            return typeObj?.warehouse_name ? typeObj.warehouse_name : "-";
-        }, },
-    { key: "item_type", label: "Item Code",render: (data: TableDataType) => {
-            const typeObj = data.item_type ? JSON.parse(JSON.stringify(data.item_type)) : null;
-            return typeObj?.category_code ? typeObj.category_code : "-";
-        }, },
-    { key: "item_type", label: "Item Name",render: (data: TableDataType) => {
-            const typeObj = data.item_type ? JSON.parse(JSON.stringify(data.item_type)) : null;
-            return typeObj?.category_name ? typeObj.category_name : "-";
-        }, },
-    {
-            key: "status",
-            label: "Status",
-            render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status ? true : false} />
-            ),
-        },
 ];
 
 export default function Pricing() {
@@ -72,9 +47,11 @@ export default function Pricing() {
 
         uuid?: string;
         id?: number | string;
-        ose_code?: string;
-        country_name?: string;
-        currency?: string;
+        code?: string;
+        name?: string;
+        start_date?: string;
+        end_date?: string;
+        status?: string;
     }
 
     const { setLoading } = useLoading();
@@ -89,14 +66,15 @@ export default function Pricing() {
     const fetchCountries = useCallback(
         async (
             page: number = 1,
-            pageSize: number = 5
+            pageSize: number = 50
         ): Promise<listReturnType> => {
             try {
               setLoading(true);
                 const listRes = await pricingHeaderList({
                     // limit: pageSize.toString(),
-                    page: page.toString(),
+                    // page: page.toString(),
                 });
+                console.log("Pricing", listRes)
                 setLoading(false);
                 return {
                     data: listRes.data || [],
@@ -137,25 +115,7 @@ export default function Pricing() {
         []
     );
 
-    const handleConfirmDelete = async () => {
-        if (!selectedRow) return;
-
-        if (!selectedRow?.uuid) throw new Error("Missing id");
-        const res = await deletePricingHeader(String(selectedRow.uuid));
-        if (res.error)
-            return showSnackbar(
-                res.data.message || "Failed to delete Pricing",
-                "error"
-            );
-        else {
-            showSnackbar("Pricing deleted successfully ", "success");
-            setRefreshKey(refreshKey + 1);
-        }
-        setLoading(false);
-        setShowDeletePopup(false);
-        setSelectedRow(null);
-    };
-
+   
     useEffect(() => {
         setLoading(true);
     }, []);
@@ -231,6 +191,11 @@ export default function Pricing() {
                         rowSelection: true,
                         rowActions: [
                             {
+                                icon: "lucide:eye",
+                                onClick: (row: TableDataType) =>
+                                    router.push(`/pricing/details/${row.uuid}`),
+                            },
+                            {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
@@ -245,15 +210,7 @@ export default function Pricing() {
                 />
             </div>
 
-            {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Pricing"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )}
+            
         </>
     );
 }

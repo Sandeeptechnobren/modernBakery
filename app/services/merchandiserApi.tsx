@@ -250,7 +250,7 @@ export const complaintFeedbackList = async (params?: Params) => {
 export const exportShelveData = async (params?: Params) => {
   try {
     console.log(params);
-    const res = await API.get("/web/merchendisher_web/shelve/export", {
+    const res = await API.get("/api/merchendisher/shelves/export", {
       params,
     });
     console.log(res);
@@ -359,25 +359,31 @@ export const exportCmplaintFeedback = async (params: { format: string }) => {
     return handleError(error);
   }
 };
-export const exportCompetitorFile = async (params: { format: "csv" | "xlsx" }) => {
+
+
+
+
+export const exportPlanogram = async (params?: Params) => {
   try {
-    const res = await API.get("/api/merchendisher/competitor-info/exportfile", {
+    console.log(params);
+    const res = await API.get("/api/merchendisher/planogram/export-file", {
       params,
-      responseType: "blob",
     });
-
-    const contentType = res.headers["content-type"];
-
-    // If server returned JSON (error), parse it
-    if (contentType?.includes("application/json")) {
-      const text = await res.data.text();
-      const json = JSON.parse(text);
-      return { error: true, data: json };
-    }
-
-    // Otherwise return blob
+    console.log(res);
     return res.data;
   } catch (error: unknown) {
-    return await handleError(error);
+    return handleError(error);
+  }
+};
+export const exportCompetitor = async (params?: Params) => {
+  try {
+    console.log(params);
+    const res = await API.get("/api/merchendisher/competitor-info/exportfile", {
+      params,
+    });
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
   }
 };

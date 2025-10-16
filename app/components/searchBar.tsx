@@ -27,7 +27,7 @@ export default function SearchBar({
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="border border-gray-300 rounded-md p-2 w-full h-[36px] px-[12px] py-[8px] pl-[40px]"
+                className="border border-gray-300 mt-[2px] rounded-md p-2 w-full h-[36px] px-[12px] py-[8px] pl-[40px] placeholder:text-[#717680]"
             />
         </div>
     );

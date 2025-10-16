@@ -108,13 +108,13 @@ export default function Page() {
       <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
         {/* profile details */}
         <div className="flex flex-col sm:flex-row items-center gap-[20px]">
-          <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
+          <div className=" flex justify-center items-center rounded-full bg-[#E9EAEB]">
             <Image
-              src={"/logo.png"}
+              src={"/dummyuser.webp"}
               alt="salesman Logo"
               width={150}
               height={150}
-              className="h-[50px] w-[50px] object-cover rounded-full border border-[#E4E4E4] bg-[#E9EAEB]"
+              className="h-[100px] w-[100px] object-cover rounded-full]"
             />
           </div>
           <div className="text-center sm:text-left">

@@ -23,7 +23,7 @@ export type searchReturnType = {
     total: number;
 };
 
-type configType = {
+export type configType = {
     api?: {
         search?: (
             search: string,
@@ -53,6 +53,7 @@ type configType = {
             iconWidth?: string;
             onClick?: (data: TableDataType[], selectedRow?: number[]) => void;
             showOnSelect?: boolean;
+            showWhen?: (data: TableDataType[], selectedRow?: number[]) => boolean;
         }[],
         actions?: React.ReactNode[];
     };
@@ -83,6 +84,7 @@ type configType = {
         align?: "left" | "center" | "right"; // yet to implement
         sticky?: string; // yet to implement
         isSortable?: boolean;
+        showByDefault?: boolean;
         filter?: {
             isFilterable?: boolean;
             width?: number | string;
@@ -190,7 +192,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     const { setSelectedColumns } = useContext(ColumnFilterConfig);
     const { setConfig } = useContext(Config);
     const { tableDetails, setTableDetails } = useContext(TableDetails);
-    const { selectedRow } = useContext(SelectedRow);
+    const { selectedRow, setSelectedRow } = useContext(SelectedRow);
     const [showDropdown, setShowDropdown] = useState(false);
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
 
@@ -244,12 +246,19 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
             const key = config?.localStorageKey;
             const saved = key ? localStorage.getItem(key) : null;
             if (!saved) {
+                const allByDefault = config.columns.map((data, index) => { return data.showByDefault ? index : -1});
+                const filtered = allByDefault.filter((n) => n !== -1);
+                if (filtered.length > 0) {
+                    setSelectedColumns(filtered);
+                    return;
+                }
                 setSelectedColumns(config.columns.map((_, index) => index));
             }
         } catch (err) {
             // If reading localStorage fails, fall back to select all
             setSelectedColumns(config.columns.map((_, index) => index));
         }
+        setSelectedRow([]);
     }, [data, refreshKey]);
 
     return (
@@ -282,7 +291,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                                     <div className="absolute top-[40px] right-0 z-30 w-[226px]">
                                         <CustomDropdown>
                                             {config.header?.threeDot?.map((option, idx) => {
-                                                const shouldShow = option.showOnSelect ? selectedRow.length > 0 : true;
+                                                const shouldShow = option.showOnSelect ? selectedRow.length > 0 : option.showWhen ? option.showWhen(displayedData, selectedRow) : true;
                                                 if (!shouldShow) return null;
                                                 return (
                                                     <div
@@ -658,7 +667,7 @@ function TableBody() {
                                         )
                                     );
                                 })}
-
+                            
                             {/* actions */}
                             {rowActions && selectedColumns.length > 0 && (
                                 <th

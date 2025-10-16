@@ -113,6 +113,8 @@ const SalesmanPage = () => {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
+    const [refreshKey, setRefreshKey] = useState(0);
+
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -127,10 +129,13 @@ const SalesmanPage = () => {
     return;
   }
 
+ 
+  
+
   const selectedSalesmen = data.filter((_, index) =>
     selectedRow.includes(index)
   );
-  console.log(data, selectedRow)
+  // console.log(data, selectedRow)
 
   const failedUpdates: string[] = [];
 
@@ -146,6 +151,7 @@ const SalesmanPage = () => {
         "error"
       );
     } else {
+           setRefreshKey((k) => k + 1);
       showSnackbar("Status updated successfully", "success");
       fetchSalesman();
     }
@@ -158,7 +164,6 @@ const SalesmanPage = () => {
     setShowDropdown(false);
   }
 };
-
 
 
   const handleExport = async (fileType: "csv" | "xlsx") => {
@@ -190,7 +195,7 @@ const SalesmanPage = () => {
       // ⬇ Trigger browser download
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `campaign_export.${fileType}`;
+      link.download = `salesman_export.${fileType}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -201,7 +206,7 @@ const SalesmanPage = () => {
       );
     } catch (error) {
       console.error("Export error:", error);
-      showSnackbar("Failed to export campaign data", "error");
+      showSnackbar("Failed to export salesman data", "error");
     } finally {
       setLoading(false);
       setShowExportDropdown(false);
@@ -234,12 +239,14 @@ const SalesmanPage = () => {
     []
   );
 
+
   return (
     <>
       {/* Table */}
       
       <div className="flex flex-col h-full">
         <Table
+                    refreshKey={refreshKey}
           config={{
             api: { list: fetchSalesman },
             header: {
@@ -262,11 +269,13 @@ const SalesmanPage = () => {
                 {
                   icon: "lucide:radio",
                   label: "Inactive",
+                  showOnSelect: true,
                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
                     handleStatusChange(data, selectedRow, "0");
                 },
               }
               ],
+
               // wholeTableActions: [
               //   <div key={0} className="flex gap-[12px] relative">
               //     <DismissibleDropdown
