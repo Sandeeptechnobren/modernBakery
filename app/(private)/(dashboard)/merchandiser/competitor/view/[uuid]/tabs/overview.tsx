@@ -60,7 +60,7 @@ export const OverviewTab = () => {
 
   return (
     <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
-      <div className="w-full flex flex-col gap-y-[20px]">
+      <div className="w-full flex flex-col ">
         <ContainerCard className="w-full h-fit">
           <KeyValueData
             title="Compititor Details"
@@ -68,26 +68,36 @@ export const OverviewTab = () => {
               { key: "Company Name", value: compititorData?.company_name || "-" },
               { key: "Brand", value: compititorData?.brand || "-" },
               { key: "Item Name", value: compititorData?.item_name || "-" },
-              { key: "Depth", value: compititorData?.promotion || "-" },
+              { key: "Promotion", value: compititorData?.promotion || "-" },
               { key: "Notes", value: compititorData?.notes || "-" },
             //   { key: "Merchendiser Info", value: compititorData?.merchendiser_info || "-" },
-            
-            ]}
+ {
+  key: "Merchandiser Info",
+  value:
+    typeof compititorData?.merchendiser_info === "object" &&
+    compititorData?.merchendiser_info !== null
+      ? `${(compititorData.merchendiser_info as { name?: string; osa_code?: string }).name || "-"}`
+      : "-",
+}           ]}
           />
-        {compititorData?.image && (
-  <div className="mt-4">
+       
+
+        </ContainerCard>
+        <ContainerCard>
+           {compititorData?.image && (
+  <div>
     <h3 className="text-lg font-semibold mb-2">Competitor Images</h3>
     <div className="flex gap-4 flex-wrap">
       {compititorData?.image?.image1 && (
         <img
-          src={`https://api.coreexl.com/osa_productionV2${compititorData.image.image1}`}
+          src={`https://api.coreexl.com/osa_productionV2/public${compititorData.image.image1}`}
           alt="Competitor Image 1"
           className="w-48 h-48 object-cover rounded-lg border border-gray-300"
         />
       )}
       {compititorData?.image?.image2 && (
         <img
-          src={`https://api.coreexl.com/osa_productionV2${compititorData.image.image2}`}
+          src={`https://api.coreexl.com/osa_productionV2/public${compititorData.image.image2}`}
           alt="Competitor Image 2"
           className="w-48 h-48 object-cover rounded-lg border border-gray-300"
         />
@@ -95,7 +105,6 @@ export const OverviewTab = () => {
     </div>
   </div>
 )}
-
         </ContainerCard>
       </div>
     </div>

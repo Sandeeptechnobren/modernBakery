@@ -96,7 +96,7 @@ export default function CampaignPage() {
       // ⬇️ Trigger browser download
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `campaign_export.${fileType}`;
+      link.download = `campaign_info_export.${fileType}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -117,68 +117,7 @@ export default function CampaignPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Campaigns Information</h1>
-
-        {/* Export & Options */}
-        <div className="flex gap-2 relative">
-          {/* Export Button */}
-          <div className="relative">
-            <BorderIconButton
-              icon="gala:file-document"
-              label="Export"
-              labelTw="text-[12px] hidden sm:block"
-              onClick={() => setShowExportDropdown(!showExportDropdown)}
-            />
-
-            {showExportDropdown && (
-              <div className="absolute top-full right-0 mt-2 z-30 bg-white border border-gray-200 rounded-md shadow-lg inline-block min-w-max">
-                <div className="py-1">
-                  <button
-                    className="text-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                    onClick={() => handleExport("csv")}
-                  >
-                    CSV
-                  </button>
-                  <hr />
-                  <button
-                    className="text-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                    onClick={() => handleExport("xlsx")}
-                  >
-                    XLSX
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Options Dropdown */}
-          <DismissibleDropdown
-            isOpen={showDropdown}
-            setIsOpen={setShowDropdown}
-            button={<BorderIconButton icon="ic:sharp-more-vert" />}
-            dropdown={
-              <div className="absolute top-full right-0 mt-2 z-30 w-[226px] bg-white border border-gray-200 rounded-md shadow-lg">
-                <div className="py-1">
-                  {dropdownDataList.map((link, idx) => (
-                    <button
-                      key={idx}
-                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                    >
-                      <Icon
-                        icon={link.icon}
-                        width={link.iconWidth}
-                        className="text-gray-500"
-                      />
-                      <span>{link.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            }
-          />
-        </div>
-      </div>
+  
 
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
@@ -187,6 +126,24 @@ export default function CampaignPage() {
           config={{
             api: { list: fetchComplaintFeedback },
             header: {
+              title:"Campaigns Information",
+                threeDot: [
+                {
+                  icon: "gala:file-document",
+                  label: "Export CSV",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    handleExport("csv")
+                  },
+                },
+                {
+                  icon: "gala:file-document",
+                  label: "Export Excel",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    handleExport("xlsx")
+                  },
+                },
+            
+              ],
               searchBar: false,
               columnFilter: true,
               actions: [

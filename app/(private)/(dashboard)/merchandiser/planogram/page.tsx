@@ -12,7 +12,7 @@ import StatusBtn from "@/app/components/statusBtn2";
 import { planogramList } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-
+import { exportPlanogram } from "@/app/services/merchandiserApi";
 interface PlanogramItem {
   id: number | string;
   uuid: string; // <--- add this
@@ -38,6 +38,7 @@ export default function Planogram() {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const [showDropdown, setShowDropdown] = useState(false);
+   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   type TableRow = TableDataType & { id?: string };
@@ -123,6 +124,55 @@ const searchPlanogram = useCallback(
  
   ];
 
+  const handleExport = async (fileType: "csv" | "xlsx") => {
+    try {
+      setLoading(true);
+
+      const res = await exportPlanogram({ format : fileType });
+      console.log("Export API Response:", res);
+
+      let downloadUrl = "";
+
+      if (res?.url && res.url.startsWith("blob:")) {
+        downloadUrl = res.url;
+      } else if (res?.url && res.url.startsWith("http")) {
+        downloadUrl = res.url;
+      } else if (typeof res === "string" && res.includes(",")) {
+        const blob = new Blob([res], {
+          type:
+            fileType === "csv"
+              ? "text/csv;charset=utf-8;"
+              : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        downloadUrl = URL.createObjectURL(blob);
+      } else {
+        showSnackbar("No valid file or URL returned from server", "error");
+        return;
+      }
+
+      // ⬇️ Trigger browser download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `planogram_export.${fileType}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showSnackbar(
+        `Download started for ${fileType.toUpperCase()} file`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Export error:", error);
+      showSnackbar("Failed to export Planogram data", "error");
+    } finally {
+      setLoading(false);
+      setShowExportDropdown(false);
+    }
+  };
+
+  
+
   return (
     <div className="flex flex-col h-full">
       <Table
@@ -134,6 +184,25 @@ const searchPlanogram = useCallback(
           },
           header: {
             title: "Planogram",
+
+  threeDot: [
+                {
+                  icon: "gala:file-document",
+                  label: "Export CSV",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    handleExport("csv")
+                  },
+                },
+                {
+                  icon: "gala:file-document",
+                  label: "Export Excel",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    handleExport("xlsx")
+                  },
+                },
+             
+              ],
+
             searchBar: true,
             columnFilter: true,
             wholeTableActions: [
