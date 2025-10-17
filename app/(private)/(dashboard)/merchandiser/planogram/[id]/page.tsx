@@ -51,6 +51,7 @@ type CustomerFromBackend = {
   id: number;
   customer_code: string;
   business_name: string;
+  merchendiser_ids?: string;
 };
 
 type ShelfFromBackend = {
@@ -66,7 +67,12 @@ type CustomerFromEdit = {
   owner_name: string;
 };
 
-type CustomerOption = { value: string; label: string };
+type CustomerOption = {
+  value: string;
+  label: string;
+  merchendiser_ids: string;
+  id: string;
+};
 
 // --- Planogram payload type for backend ---
 export type PlanogramType = {
@@ -129,6 +135,9 @@ export default function Planogram() {
   const [shelfSelected, setShelfSelected] = useState<Number[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [shelfPayload, setShelfPayload] = useState<{ [key: string]: string[] }>(
+    {}
+  );
   const [merchendiserOptions, setMerchendiserOptions] = useState<
     CustomerOption[]
   >([]);
@@ -185,7 +194,6 @@ export default function Planogram() {
             label: m.name,
           })) || [];
         setMerchendiserOptions(merchOptions);
-
         if (id && id !== "add") {
           setIsEditMode(true);
           const res = await getPlanogramById(String(id));
@@ -230,24 +238,22 @@ export default function Planogram() {
     fetchData();
   }, [id, showSnackbar]);
 
-  const fetchShelves = async (cust_ids: number[]) => {
-    console.log("------------------------========", cust_ids);
-    if (!cust_ids.length) {
+  const fetchShelves = async (shelfPayload: number[]) => {
+    if (!shelfPayload.length) {
       setShelfOptions([]);
       return;
     }
     try {
       const response = await shelfList({
-        customer_ids: cust_ids.map(Number),
+        customer_groups: shelfPayload.map(Number),
       });
 
-      console.log(response);
+      console.log(response)
       if (response?.status && Array.isArray(response.data)) {
         const formatted = response.data.map((shelf: ShelfFromBackend) => ({
           value: String(shelf.id),
           label: formatShelfLabel(shelf),
         }));
-        console.log(formatted);
         setShelfOptions(formatted);
       } else {
         setShelfOptions([]);
@@ -268,6 +274,29 @@ export default function Planogram() {
       const response = await shelvesDropdown({
         merchandiser_ids: merchIds.map(String),
       });
+
+      const payloadMap = new Map<string, string[]>();
+
+      response.data.forEach((customer: CustomerFromBackend) => {
+        // Skip if merchendiser_ids is missing or empty
+        if (!customer?.merchendiser_ids) return;
+
+        // Split comma-separated IDs and clean whitespace
+        const merchIds = customer.merchendiser_ids
+          .split(",")
+          .map((id: string) => id.trim())
+          .filter(Boolean);
+
+        merchIds.forEach((merchId: string) => {
+          const existing = payloadMap.get(merchId) || [];
+          existing.push(customer.id.toString());
+          payloadMap.set(merchId, existing);
+        });
+      });
+
+      const payload = Object.fromEntries(payloadMap);
+      setShelfPayload(payload);
+
       if (response?.status && Array.isArray(response.data)) {
         const formatted = response.data.map(
           (customer: CustomerFromBackend) => ({
@@ -284,6 +313,8 @@ export default function Planogram() {
       setCustomerOptions([]);
     }
   };
+
+  console.log(shelfPayload);
 
   // ---------------- STEP NAVIGATION ----------------
   const handleNext = async (
@@ -336,8 +367,6 @@ export default function Planogram() {
         customer_id: values.customer_ids,
         shelf_id: values.shelf_id,
       };
-
-      console.log(payload);
 
       const res = isEditMode
         ? await updatePlanogramById(String(id), payload)
@@ -407,7 +436,6 @@ export default function Planogram() {
                   className="text-xs text-red-500"
                 />
               </div>
-              <>{console.log(values.valid_from)}</>
               <div>
                 <InputFields
                   disabled={values.valid_from == "" ? true : false}
@@ -434,6 +462,7 @@ export default function Planogram() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <InputFields
+                  width="max-w-[500px]"
                   required
                   label="Merchandisers"
                   name="merchendiser_ids"
@@ -466,6 +495,7 @@ export default function Planogram() {
               </div>
               <div>
                 <InputFields
+                  width="max-w-[500px]"
                   placeholder={
                     values.merchendiser_ids.length == 0
                       ? "A merchandiser must be selected"
@@ -509,6 +539,7 @@ export default function Planogram() {
               </div>
               <div>
                 <InputFields
+                  width="max-w-[500px]"
                   placeholder={
                     values.customer_ids.length === 0
                       ? "A customer must be selected"

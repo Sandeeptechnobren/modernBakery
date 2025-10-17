@@ -327,7 +327,7 @@ export default function ShelfDisplay() {
                       type={field === "shelf_name" ? "text" : "number"}
                       label={`${capitalizeFirstLetter(
                         field.replace("_", " ")
-                      )} (cm)`}
+                      )} ${field !== "shelf_name" ? "(cm)" : ""}`}
                       name={field}
                       value={(Number(values[field]) < 0
                         ? 0
@@ -391,6 +391,7 @@ export default function ShelfDisplay() {
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputFields
+                width="max-w-[500px]"
                 required
                 label="Merchandisers"
                 name="merchandiser_ids"
@@ -417,12 +418,14 @@ export default function ShelfDisplay() {
               />
 
               <InputFields
+                width="max-w-[500px]"
                 required
+                placeholder={values.merchendiser_ids.length == 0 ? "Merchendiser must be selected" : customerOptions.length == 0 ? "No Customer Found" : ""}
                 label="Customers"
                 name="customer_ids"
                 value={values.customer_ids.map(String)}
                 options={customerOptions}
-                disabled={values.merchendiser_ids.length == 0}
+                disabled={values.merchendiser_ids.length == 0 || customerOptions.length == 0}
                 isSingle={false}
                 onChange={(e) => {
                   const vals = Array.isArray(e.target.value)
