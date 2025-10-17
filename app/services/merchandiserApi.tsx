@@ -91,7 +91,7 @@ export const shelvesDropdown = async (params?: Params) => {
   }
 };
 
-export const shelfList = async (body: {}) => {
+export const shelfList = async (body: object) => {
   try {
     console.log(body);
     const res = await API.post("/api/merchendisher/planogram/getshelf", body);

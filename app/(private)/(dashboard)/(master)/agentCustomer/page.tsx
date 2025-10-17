@@ -10,21 +10,17 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData } from "@/app/services/allApi";
+import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData ,downloadFile} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-interface DropdownItem {
-    icon: string;
-    label: string;
-    iconWidth: number;
-}
-
-
-
 export default function AgentCustomer() {
-    const { customerSubCategoryOptions } = useAllDropdownListData();
+    const { customerSubCategoryOptions,channelOptions,warehouseOptions,routeOptions } = useAllDropdownListData();
+    const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
+    const [warehouseId, setWarehouseId] = useState<string>("");
+    const [channelId, setChannelId] = useState<string>("");
+    const [routeId, setRouteId] = useState<string>("");
     const columns: configType["columns"] = [
     {
         key: "osa_code",
@@ -73,14 +69,14 @@ export default function AgentCustomer() {
                 ? (row.subcategory as { customer_sub_category_name?: string })
                       .customer_sub_category_name || "-"
                 : "-",
-//         filter: {
-//     isFilterable: true,
-//     width: 320,
-//     // isSingle:false,
-//     options: customerSubCategoryOptions, // [{ value, label }]
-//     // onSearch: handleSubCategorySearch,   // (search: string) => Promise<options>
-//     // onSelect: handleSubCategorySelect,   // (selected: string) => void
-//   },
+        filter: {
+            isFilterable: true,
+            width: 320,
+            options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [], // [{ value, label }]
+            onSelect: (selected) => {
+                setSelectedSubCategoryId((prev) => prev === selected ? "" : (selected as string));
+            },
+        },
         showByDefault: true,
     },
     {
@@ -93,34 +89,15 @@ export default function AgentCustomer() {
                 ? (row.outlet_channel as { outlet_channel?: string })
                       .outlet_channel || "-"
                 : "-",
-        // filter: {
-        //     isFilterable: true,
-        //     width: 320,
-        //     render: (data: TableDataType[]) => {
-        //         if (!data) return null;
-        //         return <div className="flex flex-col">  
-        //             {data.map((item, index) => (
-        //                 <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
-        //                     <span className="font-medium">
-        //                         {typeof item.outlet_channel === "object" &&
-        //                         item.outlet_channel !== null &&
-        //                         "outlet_channel_code" in item.outlet_channel
-        //                         ? (item.outlet_channel as { outlet_channel_code?: string })
-        //                         .outlet_channel_code || "-"
-        //                         : "-"}
-        //                     </span>{" "}
-        //                     <span className="text-[#535862]">
-        //                         {typeof item.outlet_channel === "object" &&
-        //                         item.outlet_channel !== null &&
-        //                         "outlet_channel" in item.outlet_channel
-        //                         ? (item.outlet_channel as { outlet_channel?: string })
-        //                         .outlet_channel || "-"
-        //                         : "-"}
-        //                     </span>
-        //                 </div>
-        //             ))}
-        //         </div>},
-        // },
+                filter: {
+                    isFilterable: true,
+                    width: 320,
+                    options: Array.isArray(channelOptions) ? channelOptions : [], // [{ value, label }]
+                    onSelect: (selected) => {
+                        setChannelId((prev) => prev === selected ? "" : (selected as string));
+                    },
+                },
+        
         showByDefault: true,
     },
     { key: "landmark", label: "Landmark" },
@@ -137,34 +114,15 @@ export default function AgentCustomer() {
                 ? (row.getWarehouse as { warehouse_name?: string })
                       .warehouse_name || "-"
                 : "-",
-        // filter: {
-        //     isFilterable: true,
-        //     width: 320,
-        //     render: (data: TableDataType[]) => {
-        //         if (!data) return null;
-        //         return <div className="flex flex-col">  
-        //             {data.map((item, index) => (
-        //                 <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
-        //                     <span className="font-medium">
-        //                         {typeof item.getWarehouse === "object" &&
-        //                         item.getWarehouse !== null &&
-        //                         "warehouse_code" in item.getWarehouse
-        //                         ? (item.getWarehouse as { warehouse_code?: string })
-        //                         .warehouse_code || "-"
-        //                         : "-"}
-        //                     </span>{" "}
-        //                     <span className="text-[#535862]">
-        //                         {typeof item.getWarehouse === "object" &&
-        //                         item.getWarehouse !== null &&
-        //                         "warehouse_name" in item.getWarehouse
-        //                         ? (item.getWarehouse as { warehouse_name?: string })
-        //                         .warehouse_name || "-"
-        //                         : "-"}
-        //                     </span>
-        //                 </div>
-        //             ))}
-        //         </div>},
-        // },
+                filter: {
+                    isFilterable: true,
+                    width: 320,
+                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [], // [{ value, label }]
+                    onSelect: (selected) => {
+                        setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+                    },
+                },
+       
         showByDefault: true,
     },
     {
@@ -180,34 +138,15 @@ export default function AgentCustomer() {
             }
             return typeof row.route === 'string' ? row.route : "-";
         },
-        // filter: {
-        //     isFilterable: true,
-        //     width: 320,
-        //     render: (data: TableDataType[]) => {
-        //         if (!data) return null;
-        //         return <div className="flex flex-col">  
-        //             {data.map((item, index) => (
-        //                 <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
-        //                     <span className="font-medium">
-        //                         {typeof item.route === "object" &&
-        //                         item.route !== null &&
-        //                         "route_code" in item.route
-        //                         ? (item.route as { route_code?: string })
-        //                         .route_code || "-"
-        //                         : "-"}
-        //                     </span>{" "}
-        //                     <span className="text-[#535862]">
-        //                         {typeof item.route === "object" &&
-        //                         item.route !== null &&
-        //                         "route_name" in item.route
-        //                         ? (item.route as { route_name?: string })
-        //                         .route_name || "-"
-        //                         : "-"}
-        //                     </span>
-        //                 </div>
-        //             ))}
-        //         </div>},
-        // },
+        filter: {
+            isFilterable: true,
+            width: 320,
+            options: Array.isArray(routeOptions) ? routeOptions : [],
+            onSelect: (selected) => {
+                setRouteId((prev) => prev === selected ? "" : (selected as string));
+            },
+        },
+       
         showByDefault: true,
     },
     { key: "contact_no", label: "Contact No." },
@@ -241,25 +180,40 @@ export default function AgentCustomer() {
         ): Promise<listReturnType> => {
             try {
                 setLoading(true);
-                const listRes = await agentCustomerList({
-                    // limit: pageSize.toString(),
+                const params: any = {
                     page: page.toString(),
-                });
+                };
+                if (selectedSubCategoryId) {
+                    params.subcategory_id = selectedSubCategoryId;
+                }
+                if (warehouseId) {
+                    params.warehouse = warehouseId;
+                }
+                if (channelId) {
+                    params.outlet_channel_id = channelId;
+                }
+                if (routeId) {
+                    params.route_id = routeId;
+                }
+                const listRes = await agentCustomerList(params);
                 setLoading(false);
-                console.log("Agent Customer List Response:", listRes);
                 return {
-                    data: listRes.data || [],
+                    data: Array.isArray(listRes.data) ? listRes.data : [],
                     total: listRes?.pagination?.totalPages || 1,
                     currentPage: listRes?.pagination?.page || 1,
                     pageSize: listRes?.pagination?.limit || pageSize,
                 };
             } catch (error: unknown) {
-                console.error("API Error:", error);
                 setLoading(false);
-                throw new Error("Failed to fetch Agent Customers");
+                return {
+                    data: [],
+                    total: 1,
+                    currentPage: 1,
+                    pageSize: 5,
+                };
             }
         },
-        []
+        [selectedSubCategoryId,channelId,warehouseId,routeId]
     );
 
     const exportfile = async (ids: string[] | undefined) => {
@@ -268,17 +222,8 @@ export default function AgentCustomer() {
             const response = await exportAgentCustomerData({
                 ids: ids
             }); 
-            let fileUrl = response;
             if (response && typeof response === 'object' && response.url) {
-                fileUrl = response.url;
-            }
-            if (fileUrl) {
-                const link = document.createElement('a');
-                link.href = fileUrl;
-                link.download = '';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                await downloadFile(response.url);
                 showSnackbar("File downloaded successfully ", "success");
             } else {
                 showSnackbar("Failed to get download URL", "error");
@@ -382,6 +327,11 @@ export default function AgentCustomer() {
     useEffect(() => {
         setLoading(true);
     }, []);
+
+    // Refresh table when subcategory filter changes
+    useEffect(() => {
+        setRefreshKey((k) => k + 1);
+    }, [selectedSubCategoryId,channelId,warehouseId,routeId]);
 
     return (
         <>

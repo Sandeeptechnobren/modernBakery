@@ -7,7 +7,7 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getWarehouse, deleteWarehouse, warehouseListGlobalSearch,exportWarehouseData,warehouseStatusUpdate } from "@/app/services/allApi";
+import { getWarehouse, deleteWarehouse, warehouseListGlobalSearch,exportWarehouseData,warehouseStatusUpdate, downloadFile } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -245,17 +245,8 @@ export default function Warehouse() {
          const exportFile = async () => {
          try {
            const response = await exportWarehouseData({}); 
-           let fileUrl = response;
            if (response && typeof response === 'object' && response.url) {
-             fileUrl = response.url;
-           }
-           if (fileUrl) {
-             const link = document.createElement('a');
-             link.href = fileUrl;
-             link.download = '';
-             document.body.appendChild(link);
-             link.click();
-             document.body.removeChild(link);
+            await downloadFile(response.url);
              showSnackbar("File downloaded successfully ", "success");
            } else {
              showSnackbar("Failed to get download URL", "error");

@@ -126,7 +126,7 @@ export default function Planogram() {
   const { showSnackbar } = useSnackbar();
 
   const [imageUrl, setImageUrl] = useState<string[] | null>([]);
-  const [shelfSelected, setShelfSelected] = useState<Number[]>([]);
+  const [shelfSelected, setShelfSelected] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [merchendiserOptions, setMerchendiserOptions] = useState<

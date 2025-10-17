@@ -1,4 +1,7 @@
+
 "use client";
+// Reusable component for single-select filter dropdowns with highlight/toggle
+
 
 import SearchBar from "./searchBar";
 import { Icon } from "@iconify-icon/react";
@@ -95,6 +98,7 @@ export type configType = {
             onSearch?: (search: string) => Promise<Array<{ value: string; label: string }>> | Array<{ value: string; label: string }>; // search handler
             onSelect?: (selected: string | string[]) => void; // selection handler, now supports array for multi-select
             isSingle?: boolean; // new prop, default true
+            selectedValue?: string; // <-- add this for single-select highlight
             render?: (
                 data: TableDataType[],
                 search?: (
@@ -476,8 +480,9 @@ function ColumnFilter() {
                 }
                 dropdown={
                     <div className="min-w-[200px] max-w-[350px] w-fit min-h-[200px] max-h-1/2 h-fit fixed right-[50px] translate-y-[10px] z-50 overflow-auto scrollbar-none border-[1px] border-[#E9EAEB] rounded-[8px]">
+                        
                         <CustomDropdown>
-                            <div className="flex gap-[8px] p-[10px]">
+                            <div className="flex p-[10px]">
                                 <CustomCheckbox
                                     id="select-all"
                                     checked={isAllSelected}
@@ -916,35 +921,47 @@ function FilterTableHeader({
                     {children ? (
                         <div>{children}</div>
                     ) : filteredOptions.length > 0 ? (
-                        <div className="flex flex-col">
-                            {(filterConfig?.isSingle !== false
-                                ? filteredOptions.map((option, idx) => (
-                                    <div
-                                        key={option.value}
-                                        className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer"
-                                        onClick={() => handleSelect(option.value)}
-                                    >
-                                        <span className="text-[#535862]">{option.label}</span>
-                                    </div>
-                                ))
-                                : filteredOptions.map((option, idx) => (
-                                    <div
-                                        key={option.value}
-                                        className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer"
-                                    >
-                                        <CustomCheckbox
-                                            id={option.value}
-                                            checked={selectedValues.includes(option.value)}
-                                            label={option.label}
-                                            onChange={() => handleSelect(option.value)}
-                                        />
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                        (filterConfig &&
+                            typeof (filterConfig as any).selectedValue === 'string' &&
+                            (filterConfig as any).onSelect) ? (
+                            <FilterOptionList
+                                options={filteredOptions}
+                                selectedValue={(filterConfig as any).selectedValue}
+                                onSelect={(filterConfig as any).onSelect}
+                            />
+                        ) : filterConfig?.isSingle !== false ? (
+                            filteredOptions.map((option, idx) => (
+                                <div
+                                    key={option.value}
+                                    className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer"
+                                    onClick={() => handleSelect(option.value)}
+                                >
+                                    <span className="text-[#535862]">{option.label}</span>
+                                </div>
+                            ))
+                        ) : (
+                            filteredOptions.map((option, idx) => (
+                                <div
+                                    key={option.value}
+                                    className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer"
+                                >
+                                    <CustomCheckbox
+                                        id={option.value}
+                                        checked={selectedValues.includes(option.value)}
+                                        label={option.label}
+                                        onChange={() => handleSelect(option.value)}
+                                    />
+                                </div>
+                            ))
+                        )
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-4 text-[#EA0A2A] text-sm">
-                            No options available
+                        <div className="flex flex-col items-center justify-center py-4 text-gray-600 text-sm">
+                            {filterConfig?.isSingle === false && filterConfig?.options && filterConfig.options.length > 0
+                                ? filteredOptions.length === 0
+                                    ? "No matching options"
+                                    : null
+                                : "No options available"
+                            }
                         </div>
                     )}
                 </FilterDropdown>
@@ -1097,5 +1114,31 @@ function PaginationBtn({
         >
             {label}
         </div>
+    );
+}
+
+export function FilterOptionList({
+    options,
+    selectedValue,
+    onSelect
+}: {
+    options: Array<{ value: string; label: string }>;
+    selectedValue: string;
+    onSelect: (value: string) => void;
+}) {
+    return (
+        <>
+            {options.map(opt => (
+                <div
+                    key={opt.value}
+                    className={`font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer ${selectedValue === opt.value ? 'bg-[#F0F0F0] font-semibold' : ''}`}
+                    onClick={() => {
+                        onSelect(selectedValue === opt.value ? "" : opt.value);
+                    }}
+                >
+                    {opt.label}
+                </div>
+            ))}
+        </>
     );
 }
