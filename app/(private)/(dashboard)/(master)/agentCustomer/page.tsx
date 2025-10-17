@@ -73,13 +73,14 @@ export default function AgentCustomer() {
                 ? (row.subcategory as { customer_sub_category_name?: string })
                       .customer_sub_category_name || "-"
                 : "-",
-        filter: {
-    isFilterable: true,
-    width: 320,
-    options: customerSubCategoryOptions, // [{ value, label }]
-    // onSearch: handleSubCategorySearch,   // (search: string) => Promise<options>
-    // onSelect: handleSubCategorySelect,   // (selected: string) => void
-  },
+//         filter: {
+//     isFilterable: true,
+//     width: 320,
+//     // isSingle:false,
+//     options: customerSubCategoryOptions, // [{ value, label }]
+//     // onSearch: handleSubCategorySearch,   // (search: string) => Promise<options>
+//     // onSelect: handleSubCategorySelect,   // (selected: string) => void
+//   },
         showByDefault: true,
     },
     {
