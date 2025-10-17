@@ -13,6 +13,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 interface DropdownItem {
     icon: string;
@@ -20,7 +21,11 @@ interface DropdownItem {
     iconWidth: number;
 }
 
-const columns: configType["columns"] = [
+
+
+export default function AgentCustomer() {
+    const { customerSubCategoryOptions } = useAllDropdownListData();
+    const columns: configType["columns"] = [
     {
         key: "osa_code",
         label: "Outlet Code",
@@ -68,34 +73,13 @@ const columns: configType["columns"] = [
                 ? (row.subcategory as { customer_sub_category_name?: string })
                       .customer_sub_category_name || "-"
                 : "-",
-        // filter: {
-        //     isFilterable: true,
-        //     width: 320,
-        //     render: (data: TableDataType[]) => {
-        //         if (!data) return null;
-        //         return <div className="flex flex-col">  
-        //             {data.map((item, index) => (
-        //                 <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
-        //                     <span className="font-medium">
-        //                         {typeof item.subcategory === "object" &&
-        //                         item.subcategory !== null &&
-        //                         "customer_sub_category_code" in item.subcategory
-        //                         ? (item.subcategory as { customer_sub_category_code?: string })
-        //                         .customer_sub_category_code || "-"
-        //                         : "-"}
-        //                     </span>{" "}
-        //                     <span className="text-[#535862]">
-        //                         {typeof item.subcategory === "object" &&
-        //                         item.subcategory !== null &&
-        //                         "customer_sub_category_name" in item.subcategory
-        //                         ? (item.subcategory as { customer_sub_category_name?: string })
-        //                         .customer_sub_category_name || "-"
-        //                         : "-"}
-        //                     </span>
-        //                 </div>
-        //             ))}
-        //         </div>},
-        // },
+        filter: {
+    isFilterable: true,
+    width: 320,
+    options: customerSubCategoryOptions, // [{ value, label }]
+    // onSearch: handleSubCategorySearch,   // (search: string) => Promise<options>
+    // onSelect: handleSubCategorySelect,   // (selected: string) => void
+  },
         showByDefault: true,
     },
     {
@@ -243,8 +227,6 @@ const columns: configType["columns"] = [
         showByDefault: true,
     },
 ];
-
-export default function AgentCustomer() {
     const { setLoading } = useLoading();
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();

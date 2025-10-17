@@ -91,7 +91,10 @@ export type configType = {
             height?: number | string;
             maxHeight?: number | string;
             maxWidth?: number | string;
-            render: (
+            options?: Array<{ value: string; label: string }>; // dropdown options
+            onSearch?: (search: string) => Promise<Array<{ value: string; label: string }>> | Array<{ value: string; label: string }>; // search handler
+            onSelect?: (selected: string) => void; // selection handler
+            render?: (
                 data: TableDataType[],
                 search?: (
                     search: string,
@@ -634,15 +637,17 @@ function TableBody() {
                                             >
                                                 <div className="flex items-center gap-[4px] capitalize">
                                                     {col.label}{" "}
-                                                    { col.filter && <FilterTableHeader
-                                                        column={col.key}
-                                                        dimensions={col.filter}
-                                                    >
-                                                        {col.filter?.render(
-                                                            tableData,
-                                                            api?.search
-                                                        )}
-                                                    </FilterTableHeader>}
+                                                    {col.filter && (
+                                                        <FilterTableHeader
+                                                            column={col.key}
+                                                            dimensions={col.filter}
+                                                            filterConfig={col.filter}
+                                                        >
+                                                            {col.filter.render
+                                                                ? col.filter.render(tableData, api?.search)
+                                                                : null}
+                                                        </FilterTableHeader>
+                                                    )}
                                                     {col.isSortable && (
                                                         <Icon
                                                             className="cursor-pointer"
@@ -808,6 +813,7 @@ function TableBody() {
 function FilterTableHeader({
     column,
     dimensions,
+    filterConfig,
     children,
 }: {
     column: string;
@@ -817,30 +823,42 @@ function FilterTableHeader({
         maxWidth?: number | string;
         maxHeight?: number | string;
     };
-    children: React.ReactNode;
+    filterConfig?: {
+        options?: Array<{ value: string; label: string }>;
+        onSearch?: (search: string) => Promise<Array<{ value: string; label: string }>> | Array<{ value: string; label: string }>;
+        onSelect?: (selected: string) => void;
+    };
+    children?: React.ReactNode;
 }) {
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-    const { config } = useContext(Config);
-    const { setTableDetails } = useContext(TableDetails);
     const [searchBarValue, setSearchBarValue] = useState("");
+    const [filteredOptions, setFilteredOptions] = useState<Array<{ value: string; label: string }>>([]);
+
+    useEffect(() => {
+            if (filterConfig?.options) {
+                setFilteredOptions(filterConfig.options);
+                // Debug log for options
+                console.log('FilterTableHeader options:', filterConfig.options);
+            } else {
+                setFilteredOptions([]);
+                console.log('FilterTableHeader options are empty or undefined');
+            }
+        }, [filterConfig?.options]);
 
     async function handleSearch() {
-        if (!config.api?.search) return;
-        const result = await config.api.search(
-            searchBarValue,
-            config.pageSize || defaultPageSize,
-            column
-        );
-        const resolvedResult =
-            result instanceof Promise ? await result : result;
-        const { data, pageSize } = resolvedResult;
-        setTableDetails({
-            data,
-            total: 0,
-            currentPage: 0,
-            pageSize: pageSize || defaultPageSize,
-        });
+        if (filterConfig?.onSearch) {
+            const result = await filterConfig.onSearch(searchBarValue);
+            setFilteredOptions(result);
+        }
     }
+
+    function handleSelect(value: string) {
+        if (filterConfig?.onSelect) {
+            filterConfig.onSelect(value);
+        }
+        setShowFilterDropdown(false);
+    }
+
     return (
         <DismissibleDropdown
             isOpen={showFilterDropdown}
@@ -859,7 +877,25 @@ function FilterTableHeader({
                     setSearchBarValue={setSearchBarValue}
                     onEnterPress={handleSearch}
                 >
-                    {children}
+                    {children ? (
+                        <div>{children}</div>
+                    ) : filteredOptions.length > 0 ? (
+                        <div className="flex flex-col">
+                            {filteredOptions.map((option, idx) => (
+                                <div
+                                    key={option.value}
+                                    className="font-normal text-[14px] text-[#181D27] py-[10px]  hover:bg-[#FAFAFA] cursor-pointer"
+                                    onClick={() => handleSelect(option.value)}
+                                >
+                                    <span className="text-[#535862]">{option.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-4 text-[#EA0A2A] text-sm">
+                            No options available
+                        </div>
+                    )}
                 </FilterDropdown>
             }
         />
