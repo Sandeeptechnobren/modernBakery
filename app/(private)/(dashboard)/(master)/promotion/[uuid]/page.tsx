@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { itemList,addPromotionHeader ,promotionDetailById,promotionHeaderById} from "@/app/services/allApi";
-// --- Begin SelectKeyCombination component (merged from selectKeyCombination.tsx) ---
+
 type KeyComboType = {
   Location: string[];
   Customer: string[];
