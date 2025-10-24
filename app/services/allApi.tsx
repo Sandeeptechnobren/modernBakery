@@ -1,6 +1,7 @@
 // app/services/allApi.ts
 import axios from "axios";
 import { Params } from "next/dist/server/request/params";
+import { TableDataType } from "../components/customTable";
 
 export const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
