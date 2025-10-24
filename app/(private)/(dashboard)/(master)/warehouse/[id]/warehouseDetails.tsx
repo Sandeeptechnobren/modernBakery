@@ -150,7 +150,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={(e) => {
                         const val = (e.target as HTMLSelectElement).value;
                         setFieldValue('agent_customer', val);
-                        const selected = companyCustomersOptions?.find((c) => c.value === String(val));
+                        const selected = companyCustomersOptions?.find((c) => c.value === String(val)) as { value: string; label: string; region_id?: number; area_id?: number };
                         if (selected && selected.region_id) {
                             setSkeleton({ ...skeleton, region_id: true });
                             const regionId = String(selected.region_id);
