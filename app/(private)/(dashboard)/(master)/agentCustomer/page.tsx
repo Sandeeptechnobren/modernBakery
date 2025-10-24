@@ -16,6 +16,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function AgentCustomer() {
+    console.log(useAllDropdownListData());
     const { customerSubCategoryOptions,channelOptions,warehouseOptions,routeOptions } = useAllDropdownListData();
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
     const [warehouseId, setWarehouseId] = useState<string>("");

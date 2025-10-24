@@ -1,3 +1,4 @@
+
 "use client";
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
@@ -5,9 +6,9 @@ import {
   countryList,
   regionList,
   routeList,
-  warehouseType,
+  warehouseList,
   routeType,
-  getSubRegion,
+  subRegionList,
   getCompanyCustomers,
   getCompanyCustomersType,
   itemCategory,
@@ -26,10 +27,10 @@ import {
   agentCustomerList,
   submenuList,
   permissionList,
-  SurveyList
+  SurveyList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
-import { shelvesList } from '@/app/services/merchandiserApi';
+import { shelvesList,merchandiserList} from '@/app/services/merchandiserApi';
 
 interface DropdownDataContextType {
   companyList: CompanyItem[];
@@ -55,7 +56,11 @@ interface DropdownDataContextType {
   discountType: DiscountType[];
   menuList: MenuList[];
   // mapped dropdown options
-  companyOptions: { value: string; label: string }[];
+      companyOptions: { value: string; label: string }[];
+
+  fetchAreaOptions: (region_id: string | number) => Promise<void>;
+  fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
+  fetchRouteOptions: (warehouse_id: string | number) => Promise<void>;
   countryOptions: { value: string; label: string }[];
   onlyCountryOptions: { value: string; label: string }[];
   countryCurrency: {value: string; label: string }[];
@@ -65,7 +70,7 @@ interface DropdownDataContextType {
   warehouseOptions: { value: string; label: string }[];
   routeTypeOptions: { value: string; label: string }[];
   areaOptions: { value: string; label: string,region_id: number; }[];
-  companyCustomersOptions: { value: string; label: string }[];
+  companyCustomersOptions: { value: string; label: string; region_id?: number; area_id?: number }[];
   companyCustomersTypeOptions: { value: string; label: string }[];
   itemCategoryOptions: { value: string; label: string }[];
   itemSubCategoryOptions: { value: string; label: string }[];
@@ -85,6 +90,7 @@ interface DropdownDataContextType {
   shelvesOptions: { value: string; label: string }[];
   submenuOptions: { value: string; label: string }[];
   permissions: permissionsList[];
+  // fetch area helper to load areaOptions for a given region
   refreshDropdowns: () => Promise<void>;
   loading: boolean;
 }
@@ -144,6 +150,9 @@ interface CustomerItem {
   id?: number | string;
   customer_code?: string;
   owner_name?: string;
+  // optional location fields on customer entries
+  region_id?: number | string;
+  area_id?: number | string;
 }
 
 interface CustomerTypeItem {
@@ -204,7 +213,7 @@ interface CustomerSubCategory {
 
 interface Item {
   id?: number | string;
-  code?: string;
+  item_code?: string;
   name?: string;
 }
 
@@ -241,7 +250,7 @@ interface AgentCustomerList {
     id: number,
     uuid: string,
     osa_code: string,
-    name: string,
+    owner_name: string,
     status: number
 }
 
@@ -354,7 +363,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const companyCustomersOptions = (Array.isArray(companyCustomersData) ? companyCustomersData : []).map((c: CustomerItem) => ({
     value: String(c.id ?? ''),
-    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? '')
+    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? ''),
+    region_id: c.region_id ? Number(c.region_id) : undefined,
+    area_id: c.area_id ? Number(c.area_id) : undefined,
   }));
 
   const companyCustomersTypeOptions = (Array.isArray(companyCustomersTypeData) ? companyCustomersTypeData : []).map((c: CustomerTypeItem) => ({
@@ -408,7 +419,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
     value: String(c.id ?? ''),
-    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+    label: c.item_code && c.name ? `${c.item_code} - ${c.name}` : (c.name ?? '')
   }));
 
   const discountTypeOptions = (Array.isArray(discountType) ? discountType : []).map((c: DiscountType) => ({
@@ -433,7 +444,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
 
   const agentCustomerOptions = (Array.isArray(agentCustomer) ? agentCustomer : []).map((c: AgentCustomerList) => ({
     value: String(c.id ?? ''),
-    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+    label: c.osa_code && c.owner_name ? `${c.osa_code} - ${c.owner_name}` : (c.owner_name ?? '')
   }));
 
   const shelvesOptions = (Array.isArray(shelves) ? shelves : []).map((c: ShelvesList) => ({
@@ -452,6 +463,69 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
     guard_name: c.guard_name ?? ''
   }));
 
+  const fetchAreaOptions = async (region_id: string | number) => {
+    setLoading(false);
+    try {
+      // call subRegionList with an object matching the expected Params shape
+      const res = await subRegionList({ region_id: String(region_id) });
+      const normalize = (r: unknown): AreaItem[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as AreaItem[];
+        }
+        if (Array.isArray(r)) return r as AreaItem[];
+        return [];
+      };
+      setAreaListData(normalize(res));
+    } catch (error) {
+      setAreaListData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRouteOptions = async (warehouse_id: string | number) => {
+    setLoading(false);
+    try {
+      // call routeList with warehouse_id
+      const res = await routeList({ warehouse_id: String(warehouse_id) });
+      const normalize = (r: unknown): RouteItem[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as RouteItem[];
+        }
+        if (Array.isArray(r)) return r as RouteItem[];
+        return [];
+      };
+      setRouteListData(normalize(res));
+    } catch (error) {
+      setRouteListData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchItemSubCategoryOptions = async (category_id: string | number) => {
+    setLoading(false);
+    try {
+      // call itemSubCategory with category_id
+      const res = await itemSubCategory({ category_id: String(category_id) });
+      const normalize = (r: unknown): ItemSubCategoryItem[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as ItemSubCategoryItem[];
+        }
+        if (Array.isArray(r)) return r as ItemSubCategoryItem[];
+        return [];
+      };
+      setItemSubCategoryData(normalize(res));
+    } catch (error) {
+      setItemSubCategoryData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const refreshDropdowns = async () => {
     setLoading(true);
     try {
@@ -461,9 +535,9 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         regionList(),
         SurveyList(),
         routeList({}),
-        warehouseType(1),
+        warehouseList(),
         routeType(),
-        getSubRegion(),
+        subRegionList(),
         getCompanyCustomers(),
         getCompanyCustomersType(),
         itemCategory(),
@@ -593,6 +667,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         item: item,
         discountType: discountType,
         menuList: menuList,
+        fetchItemSubCategoryOptions,
         companyOptions,
         countryOptions,
         onlyCountryOptions,
@@ -624,6 +699,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         submenuOptions,
         permissions,
         refreshDropdowns,
+        fetchAreaOptions,
+        fetchRouteOptions,
         loading
       }}
     >
