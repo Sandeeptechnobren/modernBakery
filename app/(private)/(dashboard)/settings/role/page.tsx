@@ -1,40 +1,32 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-import BorderIconButton from "@/app/components/borderIconButton";
-import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
     listReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { roleGlobalSearch, roleList } from "@/app/services/allApi";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import { deleteRole, roleGlobalSearch, roleList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
-interface DropdownItem {
-    icon: string;
-    label: string;
-    iconWidth: number;
-}
-
-const dropdownDataList: DropdownItem[] = [
-    { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-    { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
-
 const columns = [
     { key: "name", label: "Name" },
-    { key: "permissions", label: "Permissions", render: (data: TableDataType) => Array.isArray(data.permissions) ? data.permissions.join(", ") : data.permissions },
+    { key: "permissions", label: "Permissions", render: (data: TableDataType) => {
+        const row = (data as any)[0];
+        if (row && typeof row === "object" && "menus" in row) {
+            console.log(row, "dfjkdlfjldkj");
+            return row?.menus?.[0]?.menu?.submenu?.[0]?.permissions?.[0] || "-";
+        }
+        return "-";
+    }}
 ];
 
 export default function Roles() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
-    const [showDropdown, setShowDropdown] = useState<boolean>(false);
+    const [refreshKey, setRefreshKey] = useState<number>(0);
     const router = useRouter();
 
     const fetchCountries = useCallback(
@@ -87,91 +79,67 @@ export default function Roles() {
         []
     );
 
+    // const deleteUser = useCallback(async (id: string) => {
+    //     setLoading(true);
+    //     const res = await deleteRole(id);
+    //     setLoading(false);
+    //     if(res.error){
+    //         showSnackbar("Unable to Delete the User", "error");
+    //         throw new Error("Unable to delete user");
+    //     } 
+    //     showSnackbar("User Deleted Successfully", "success");
+    //     setRefreshKey(prev => prev +1);
+    // }, []);
+
     useEffect(() => {
         setLoading(true);
     }, []);
 
     return (
-        <>
-            <div className="h-[calc(100%-60px)] pb-[22px]">
-                <Table
-                    config={{
-                        api: {
-                            list: fetchCountries,
-                            search: searchList,
-                        },
-                        header: {
-                            title: "Roles",
-                            wholeTableActions: [
-                                <div key={0} className="flex gap-[12px] relative">
-                                    <DismissibleDropdown
-                                        isOpen={showDropdown}
-                                        setIsOpen={setShowDropdown}
-                                        button={
-                                            <BorderIconButton icon="ic:sharp-more-vert" />
-                                        }
-                                        dropdown={
-                                            <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                                                <CustomDropdown>
-                                                    {dropdownDataList.map(
-                                                        (link, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                            >
-                                                                <Icon
-                                                                    icon={
-                                                                        link.icon
-                                                                    }
-                                                                    width={
-                                                                        link.iconWidth
-                                                                    }
-                                                                    className="text-[#717680]"
-                                                                />
-                                                                <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                    {
-                                                                        link.label
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    )}
-                                                </CustomDropdown>
-                                            </div>
-                                        }
-                                    />
-                                </div>
-                            ],
-                            searchBar: true,
-                            columnFilter: true,
-                            actions: [
-                                <SidebarBtn
-                                    key={0}
-                                    href="/settings/role/add"
-                                    isActive
-                                    leadingIcon="lucide:plus"
-                                    label="Add"
-                                    labelTw="hidden lg:block"
-                                />,
-                            ],
-                        },
-                        localStorageKey: "role-table",
-                        footer: { nextPrevBtn: true, pagination: true },
-                        columns,
-                        rowSelection: true,
-                        rowActions: [
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (data: TableDataType) => {
-                                    router.push(`/settings/role/${data.id}`);
-
-                                },
-                            },
+        <div className="flex flex-col h-full">
+            <Table
+                refreshKey={refreshKey}
+                config={{
+                    api: {
+                        list: fetchCountries,
+                        search: searchList,
+                    },
+                    header: {
+                        title: "Roles",
+                        searchBar: true,
+                        columnFilter: true,
+                        actions: [
+                            <SidebarBtn
+                                key={0}
+                                href="/settings/role/add"
+                                isActive
+                                leadingIcon="lucide:plus"
+                                label="Add"
+                                labelTw="hidden lg:block"
+                            />,
                         ],
-                        pageSize: 50,
-                    }}
-                />
-            </div>
-        </>
+                    },
+                    localStorageKey: "role-table",
+                    footer: { nextPrevBtn: true, pagination: true },
+                    columns,
+                    rowSelection: true,
+                    rowActions: [
+                        {
+                            icon: "lucide:edit-2",
+                            onClick: (data: TableDataType) => {
+                                router.push(`/settings/role/${data.id}`);
+                            },
+                        },
+                        // {
+                        //     icon: "lucide:trash-2",
+                        //     onClick: (data: TableDataType) => {
+                        //         deleteUser(data.id)
+                        //     },
+                        // },
+                    ],
+                    pageSize: 50,
+                }}
+            />
+        </div>
     );
 }

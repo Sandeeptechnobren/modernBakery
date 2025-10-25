@@ -27,6 +27,7 @@ import StepperForm, {
   useStepperForm,
   StepperStep,
 } from "@/app/components/stepperForm";
+import { useLoading } from "@/app/services/loadingContext";
 
 export type CompanyCustomerFormValues = {
   sapCode: string;
@@ -210,6 +211,9 @@ export default function AddCompanyCustomer() {
   const [isEditMode, setIsEditMode] = useState(false);
   const { regionOptions, areaOptions, customerTypeOptions,channelOptions,fetchAreaOptions } =
     useAllDropdownListData();
+  const [skeleton, setSkeleton] = useState({
+    area: false,
+  });
 
   const [country, setCountry] = useState<Record<string, contactCountry>>({
       ownerNumber: { name: "Uganda", code: "+256", flag: "🇺🇬" },
@@ -236,7 +240,7 @@ export default function AddCompanyCustomer() {
   const [isOpen, setIsOpen] = useState(false);
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [prefix, setPrefix] = useState("");
-  const [loading, setLoading] = useState(false);
+  const {setLoading} = useLoading();
   const codeFetchedRef = useRef(false);
   const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>(
     {
@@ -284,12 +288,14 @@ export default function AddCompanyCustomer() {
   const fetchData = async () => {
     try {
       const id = params?.id as string;
+      setLoading(true);
       const data = await getCompanyCustomerById(id);
+      setLoading(false);
       const mapped: CompanyCustomerFormValues = {
         sapCode: data.sap_code || "",
         customerCode: data.customer_code || "",
         businessName: data.business_name || "",
-        customerType: data.customer_type || "",
+        customerType: String(data.customer_type|| ""),
         ownerName: data.owner_name || "",
         ownerNumber: data.owner_no || "",
         isWhatsapp: String(data.is_whatsapp ?? "1"),
@@ -335,11 +341,11 @@ export default function AddCompanyCustomer() {
 
 
   useEffect(() => {
+    setLoading(true);
     if (!params?.id) return;
     const idStr = params.id.toString().trim().toLowerCase();
     if (idStr !== "add") {
       setIsEditMode(true);
-      setLoading(true);
       fetchData().finally(() => setLoading(false));
       return;
     }
@@ -347,8 +353,8 @@ export default function AddCompanyCustomer() {
     if (codeFetchedRef.current) return;
     codeFetchedRef.current = true;
     (async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const res = await genearateCode({ model_name: "tbl_company_customer" });
         if (res?.code) setInitialValues((prev) => ({ ...prev, customerCode: String(res.code) }));
         if (res?.prefix) setPrefix(res.prefix);
@@ -356,6 +362,7 @@ export default function AddCompanyCustomer() {
       } catch (err) {
         console.error("Failed to generate code:", err);
       }
+      setLoading(false);
     })();
   }, [params?.id]);
 
@@ -363,6 +370,7 @@ export default function AddCompanyCustomer() {
     values: CompanyCustomerFormValues,
     actions: FormikHelpers<CompanyCustomerFormValues>
   ) => {
+    console.log(values);
     try {
       const schema = stepSchemas[currentStep - 1];
       await schema.validate(values, { abortEarly: false });
@@ -394,7 +402,6 @@ export default function AddCompanyCustomer() {
     values: CompanyCustomerFormValues,
     { setSubmitting, setErrors, setTouched }: FormikHelpers<CompanyCustomerFormValues>
   ) => {
-    console.log(values)
     try {
       await validationSchema.validate(values, { abortEarly: false });
       const payload: CompanyCustomerPayload = {
@@ -439,11 +446,13 @@ export default function AddCompanyCustomer() {
       };
 
       let res;
+      setLoading(true);
       if (isEditMode) {
         res = await updateCompanyCustomer(String(params.id), payload);
       } else {
         res = await addCompanyCustomers(payload);
       }
+      setLoading(false);
 
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
@@ -787,7 +796,7 @@ export default function AddCompanyCustomer() {
               <div>
                 <InputFields
                   required
-                  label="Road Street"
+                  label="Road / Street"
                   name="roadStreet"
                   value={values.roadStreet}
                   onChange={(e) => setFieldValue("roadStreet", e.target.value)}
@@ -845,9 +854,15 @@ export default function AddCompanyCustomer() {
                   name="area"
                   value={values.area}
                   onChange={(e) => setFieldValue("area", e.target.value)}
+                  // keep enabled if we already have a value (edit mode) so it shows the current selection
+                  disabled={areaOptions.length === 0 && !values.area}
+                  showSkeleton={skeleton.area}
                   options={
                     areaOptions && areaOptions.length > 0
                       ? areaOptions
+                      : values.area
+                      ? // show the existing area value as an option when areaOptions haven't loaded yet
+                        [{ value: values.area, label: `Selected Area (${values.area})` }]
                       : [{ value: "", label: "No options" }]
                   }
                   error={touched.area && errors.area}
@@ -1152,7 +1167,12 @@ export default function AddCompanyCustomer() {
         }) => (
           <Form>
             {/* Formik-aware watcher for region changes */}
-            <RegionWatcher fetchAreaOptions={fetchAreaOptions} />
+            <RegionWatcher
+              fetchAreaOptions={fetchAreaOptions}
+              setSkeleton={setSkeleton}
+              preserveExistingArea={isEditMode} 
+              initialArea={initialValues.area} 
+            />
             <StepperForm
               steps={steps.map((step) => ({
                 ...step,

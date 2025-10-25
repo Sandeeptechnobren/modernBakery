@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Table, { TableDataType, listReturnType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { vehicleListData, deleteVehicle, vehicleGlobalSearch ,exportVehicleData,vehicleStatusUpdate} from "@/app/services/allApi";
+import { vehicleListData, deleteVehicle, vehicleGlobalSearch ,exportVehicleData,vehicleStatusUpdate, downloadFile} from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -187,17 +187,8 @@ export default function VehiclePage() {
            const exportFile = async () => {
            try {
              const response = await exportVehicleData({ format: "xlsx"}); 
-             let fileUrl = response;
              if (response && typeof response === 'object' && response.url) {
-               fileUrl = response.url;
-             }
-             if (fileUrl) {
-               const link = document.createElement('a');
-               link.href = fileUrl;
-               link.download = '';
-               document.body.appendChild(link);
-               link.click();
-               document.body.removeChild(link);
+             await downloadFile(response.url);
                showSnackbar("File downloaded successfully ", "success");
              } else {
                showSnackbar("Failed to get download URL", "error");
@@ -208,24 +199,23 @@ export default function VehiclePage() {
            }
          };
 
-                const statusUpdate = async (data: Vehicle[], selectedRow?: number[]) => {
+                const statusUpdate = async (ids?: (string | number)[], status: number = 0) => {
                         try {
-                          if (!selectedRow || selectedRow.length === 0) {
+                          if (!ids || ids.length === 0) {
                             showSnackbar("No warehouses selected", "error");
                             return;
                           }
-                          const selectedRowsData: number[] = data.filter((row:Vehicle,index) => selectedRow.includes(index)).map((row:Vehicle) => Number(row.id));
-                          console.log("selectedRowsData",selectedRowsData);
+                          const selectedRowsData: number[] = ids.map((id) => Number(id)).filter((n) => !Number.isNaN(n));
+                          console.log("selectedRowsData", selectedRowsData);
                           if (selectedRowsData.length === 0) {
                             showSnackbar("No warehouses selected", "error");
                             return;
                           }
-                          await vehicleStatusUpdate({ warehouse_ids: selectedRowsData, status: 0 });
+                          await vehicleStatusUpdate({ warehouse_ids: selectedRowsData, status });
                           setRefreshKey((k) => k + 1);
                           showSnackbar("Warehouse status updated successfully", "success");
                         } catch (error) {
                           showSnackbar("Failed to update warehouse status", "error");
-                        } finally {
                         }
                       };
                 
@@ -250,7 +240,7 @@ export default function VehiclePage() {
   return (
     <>
     
-      <div className="h-[calc(100%-60px)]">
+      <div className="flex flex-col h-full">
         <Table
           refreshKey={refreshKey}
           config={{
@@ -273,14 +263,47 @@ export default function VehiclePage() {
                   // You can add onClick for Excel if needed
                 },
                 {
-                  icon: "lucide:radio",
-                  label: "Inactive",
-                  labelTw: "text-[12px] hidden sm:block",
-                  showOnSelect: true,
-                  onClick: (data: Vehicle[], selectedRow?: number[]) => {
-                    statusUpdate(data, selectedRow);
-                },
-                },
+                                    icon: "lucide:radio",
+                                    label: "Inactive",
+                                    // showOnSelect: true,
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("1") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if(!status.includes(currentStatus)){
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].id;
+                                        })
+                                        statusUpdate(ids, Number(0));
+                                    },
+                                },
+                                {
+                                    icon: "lucide:radio",
+                                    label: "Active",
+                                    // showOnSelect: true,
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("0") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if(!status.includes(currentStatus)){
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].id;
+                                        })
+                                        statusUpdate(ids, Number(1));
+                                    },
+                                },
               ],
               title: "Vehicle",
               

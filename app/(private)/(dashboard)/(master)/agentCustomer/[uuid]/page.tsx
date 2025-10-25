@@ -978,7 +978,7 @@ export default function AddEditAgentCustomer() {
                                         type="contact"
                                         label="Contact Number"
                                         name="contact_no"
-                                        setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, contact_no: country }))}
+                                        // setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, contact_no: country }))}
                                         selectedCountry={country.contact_no}
                                         value={`${values.contact_no ?? ''}`}
                                         onChange={(e) => setFieldValue("contact_no", e.target.value)}

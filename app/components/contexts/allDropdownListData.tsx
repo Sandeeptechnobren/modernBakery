@@ -1,4 +1,3 @@
-
 "use client";
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
@@ -6,9 +5,9 @@ import {
   countryList,
   regionList,
   routeList,
-  warehouseList,
+  warehouseType,
   routeType,
-  subRegionList,
+  getSubRegion,
   getCompanyCustomers,
   getCompanyCustomersType,
   itemCategory,
@@ -28,15 +27,17 @@ import {
   submenuList,
   permissionList,
   SurveyList,
+  getWarehouse,
+  subRegionList
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
-import { shelvesList,merchandiserList} from '@/app/services/merchandiserApi';
+import { shelvesList } from '@/app/services/merchandiserApi';
 
 interface DropdownDataContextType {
   companyList: CompanyItem[];
   countryList: CountryItem[];
   regionList: RegionItem[];
-  SurveyList:SurveyItem[];
+  SurveyList: SurveyItem[];
   routeList: RouteItem[];
   warehouseList: WarehouseItem[];
   routeType: RouteTypeItem[];
@@ -56,21 +57,17 @@ interface DropdownDataContextType {
   discountType: DiscountType[];
   menuList: MenuList[];
   // mapped dropdown options
-      companyOptions: { value: string; label: string }[];
-
-  fetchAreaOptions: (region_id: string | number) => Promise<void>;
-  fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
-  fetchRouteOptions: (warehouse_id: string | number) => Promise<void>;
+  companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
   onlyCountryOptions: { value: string; label: string }[];
-  countryCurrency: {value: string; label: string }[];
+  countryCurrency: { value: string; label: string }[];
   regionOptions: { value: string; label: string }[];
   surveyOptions: { value: string; label: string }[];
   routeOptions: { value: string; label: string }[];
   warehouseOptions: { value: string; label: string }[];
   routeTypeOptions: { value: string; label: string }[];
-  areaOptions: { value: string; label: string,region_id: number; }[];
-  companyCustomersOptions: { value: string; label: string; region_id?: number; area_id?: number }[];
+  areaOptions: { value: string; label: string, region_id: number; }[];
+  companyCustomersOptions: { value: string; label: string }[];
   companyCustomersTypeOptions: { value: string; label: string }[];
   itemCategoryOptions: { value: string; label: string }[];
   itemSubCategoryOptions: { value: string; label: string }[];
@@ -90,8 +87,10 @@ interface DropdownDataContextType {
   shelvesOptions: { value: string; label: string }[];
   submenuOptions: { value: string; label: string }[];
   permissions: permissionsList[];
-  // fetch area helper to load areaOptions for a given region
   refreshDropdowns: () => Promise<void>;
+  fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
+  fetchAreaOptions: (region_id: string | number) => Promise<void>;
+  fetchRouteOptions: (warehouse_id: string | number) => Promise<void>;
   loading: boolean;
 }
 
@@ -150,9 +149,6 @@ interface CustomerItem {
   id?: number | string;
   customer_code?: string;
   owner_name?: string;
-  // optional location fields on customer entries
-  region_id?: number | string;
-  area_id?: number | string;
 }
 
 interface CustomerTypeItem {
@@ -213,7 +209,7 @@ interface CustomerSubCategory {
 
 interface Item {
   id?: number | string;
-  item_code?: string;
+  code?: string;
   name?: string;
 }
 
@@ -239,34 +235,34 @@ interface VendorList {
 }
 
 interface SalesmanList {
-    id: number,
-    uuid: string,
-    osa_code: string,
-    name: string,
-    status: number
+  id: number,
+  uuid: string,
+  osa_code: string,
+  name: string,
+  status: number
 }
 
 interface AgentCustomerList {
-    id: number,
-    uuid: string,
-    osa_code: string,
-    owner_name: string,
-    status: number
+  id: number,
+  uuid: string,
+  osa_code: string,
+  name: string,
+  status: number
 }
 
 interface ShelvesList {
-    id: number;
-    shelf_name: string;
+  id: number;
+  shelf_name: string;
 }
 
 interface submenuList {
-    id: number;
-    name: string;
+  id: number;
+  name: string;
 }
 interface permissionsList {
-    id: number;
-    name: string;
-    guard_name: string;
+  id: number;
+  name: string;
+  guard_name: string;
 }
 
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
@@ -284,7 +280,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [companyListData, setCompanyListData] = useState<CompanyItem[]>([]);
   const [countryListData, setCountryListData] = useState<CountryItem[]>([]);
   const [regionListData, setRegionListData] = useState<RegionItem[]>([]);
-    const [surveyListData, setSurveyListData] = useState<SurveyItem[]>([]);
+  const [surveyListData, setSurveyListData] = useState<SurveyItem[]>([]);
   const [routeListData, setRouteListData] = useState<RouteItem[]>([]);
   const [warehouseListData, setWarehouseListData] = useState<WarehouseItem[]>([]);
   const [routeTypeData, setRouteTypeData] = useState<RouteTypeItem[]>([]);
@@ -326,7 +322,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.country_name ? `${c.country_name}` : (c.country_name ?? '')
   }));
 
-   const countryCurrency = (Array.isArray(countryListData) ? countryListData : []).map((c: CountryItem) => ({
+  const countryCurrency = (Array.isArray(countryListData) ? countryListData : []).map((c: CountryItem) => ({
     value: String(c.currency ?? ''),
     label: c.currency ? `${c.currency}` : (c.currency ?? '')
   }));
@@ -335,7 +331,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     value: String(c.id ?? ''),
     label: c.region_code && c.region_name ? `${c.region_code} - ${c.region_name}` : (c.region_name ?? '')
   }));
-    const surveyOptions = (Array.isArray(surveyListData) ? surveyListData : []).map((c: SurveyItem) => ({
+  const surveyOptions = (Array.isArray(surveyListData) ? surveyListData : []).map((c: SurveyItem) => ({
     value: String(c.id ?? ''),
     label: c.survey_code && c.survey_name ? `${c.survey_code} - ${c.survey_name}` : (c.survey_name ?? '')
   }));
@@ -363,9 +359,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const companyCustomersOptions = (Array.isArray(companyCustomersData) ? companyCustomersData : []).map((c: CustomerItem) => ({
     value: String(c.id ?? ''),
-    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? ''),
-    region_id: c.region_id ? Number(c.region_id) : undefined,
-    area_id: c.area_id ? Number(c.area_id) : undefined,
+    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? '')
   }));
 
   const companyCustomersTypeOptions = (Array.isArray(companyCustomersTypeData) ? companyCustomersTypeData : []).map((c: CustomerTypeItem) => ({
@@ -396,7 +390,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     value: String(c.id ?? ''),
     label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
   }));
-  
+
   const salesmanTypeOptions = (Array.isArray(salesmanTypesData) ? salesmanTypesData : []).map((c: SalesmanType) => ({
     value: String(c.id ?? ''),
     label: c.salesman_type_code && c.salesman_type_name ? `${c.salesman_type_code} - ${c.salesman_type_name}` : (c.salesman_type_name ?? '')
@@ -407,7 +401,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.vehicle_code ? c.vehicle_code : '-',
   }));
 
-const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCategory : []).map((c: CustomerCategory) => ({
+  const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCategory : []).map((c: CustomerCategory) => ({
     value: String(c.id ?? ''),
     label: c.customer_category_code && c.customer_category_name ? `${c.customer_category_code} - ${c.customer_category_name}` : (c.customer_category_name ?? '')
   }));
@@ -419,7 +413,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
     value: String(c.id ?? ''),
-    label: c.item_code && c.name ? `${c.item_code} - ${c.name}` : (c.name ?? '')
+    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
   }));
 
   const discountTypeOptions = (Array.isArray(discountType) ? discountType : []).map((c: DiscountType) => ({
@@ -444,7 +438,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
 
   const agentCustomerOptions = (Array.isArray(agentCustomer) ? agentCustomer : []).map((c: AgentCustomerList) => ({
     value: String(c.id ?? ''),
-    label: c.osa_code && c.owner_name ? `${c.osa_code} - ${c.owner_name}` : (c.owner_name ?? '')
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
   }));
 
   const shelvesOptions = (Array.isArray(shelves) ? shelves : []).map((c: ShelvesList) => ({
@@ -535,9 +529,9 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         regionList(),
         SurveyList(),
         routeList({}),
-        warehouseList(),
+        getWarehouse(),
         routeType(),
-        subRegionList(),
+        getSubRegion(),
         getCompanyCustomers(),
         getCompanyCustomersType(),
         itemCategory(),
@@ -599,7 +593,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setShelves(normalize(res[25]) as ShelvesList[]);
       setSubmenu(normalize(res[26]) as submenuList[]);
       setPermissions(normalize(res[27]) as permissionsList[]);
-  
+
     } catch (error) {
       console.error('Error loading dropdown data:', error);
       // on error clear to empty arrays

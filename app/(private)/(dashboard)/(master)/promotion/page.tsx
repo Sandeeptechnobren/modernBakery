@@ -13,7 +13,7 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
-    pricingHeaderList,
+    promotionHeaderList,
     deletePricingHeader,
     pricingDetailGlobalSearch,
 } from "@/app/services/allApi";
@@ -37,27 +37,12 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "code", label: "Promotion Code" },
-    { key: "name", label: "Name" },
-    { key: "start_date", label: "Start Date" },
-    { key: "end_date", label: "End Date" },
-    { key: "apply_on", label: "Apply On" },
-    { key: "warehouse", label: "Warehouse Code",render: (data: TableDataType) => {
-            const typeObj = data.warehouse ? JSON.parse(JSON.stringify(data.warehouse)) : null;
-            return typeObj?.warehouse_code ? typeObj.warehouse_code : "-";
-        }, },
-    { key: "warehouse", label: "Warehouse Name",render: (data: TableDataType) => {
-            const typeObj = data.warehouse ? JSON.parse(JSON.stringify(data.warehouse)) : null;
-            return typeObj?.warehouse_name ? typeObj.warehouse_name : "-";
-        }, },
-    { key: "item_type", label: "Item Code",render: (data: TableDataType) => {
-            const typeObj = data.item_type ? JSON.parse(JSON.stringify(data.item_type)) : null;
-            return typeObj?.category_code ? typeObj.category_code : "-";
-        }, },
-    { key: "item_type", label: "Item Name",render: (data: TableDataType) => {
-            const typeObj = data.item_type ? JSON.parse(JSON.stringify(data.item_type)) : null;
-            return typeObj?.category_name ? typeObj.category_name : "-";
-        }, },
+    // { key: "code", label: "Promotion Code" },
+    { key: "promotion_name", label: "Name" },
+    { key: "description", label: "Description" },
+    { key: "from_date", label: "From Date" },
+    { key: "to_date", label: "To Date" },
+  
     {
             key: "status",
             label: "Status",
@@ -93,7 +78,7 @@ export default function Pricing() {
         ): Promise<listReturnType> => {
             try {
               setLoading(true);
-                const listRes = await pricingHeaderList({
+                const listRes = await promotionHeaderList({
                     // limit: pageSize.toString(),
                     page: page.toString(),
                 });
@@ -231,10 +216,10 @@ export default function Pricing() {
                         rowActions: [
                             {
                                 icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(`/promotion/${row.uuid}`);
-
+                                onClick: (row: object) => {
+                                    const r = row as TableDataType;
+                                    // Always open edit page, not add page
+                                    router.push(`/promotion/${r.id}`);
                                 },
                             },
                             

@@ -19,8 +19,20 @@ import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
 import { useLoading } from "@/app/services/loadingContext";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-const columns = [
+
+export default function Route() {
+    const { warehouseOptions } = useAllDropdownListData();
+    const [warehouseId, setWarehouseId] = useState<string>("");
+    const [selectedRowId, setSelectedRowId] = useState<number | undefined>();
+    const [showDeletePopup, setShowDeletePopup] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const { setLoading } = useLoading();
+    const router = useRouter();
+    const { showSnackbar } = useSnackbar();
+
+    const columns = [
     {
         key: "route_code",
         label: "Route Code",
@@ -84,33 +96,14 @@ const columns = [
             typeof data.warehouse === "object" && data.warehouse !== null
                 ? (data.warehouse as { code?: string }).code
                 : "-",
-        // filter: {
-        //     isFilterable: true,
-        //     render: (data: TableDataType[]) => (
-        //         <>
-        //             {" "}
-        //             {data.map((row, index) => (
-        //                 <div
-        //                     key={index}
-        //                     className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-        //                 >
-        //                     {" "}
-        //                     <span className="font-[500] text-[#181D27]">
-        //                         {" "}
-        //                         {typeof row.warehouse === "object" &&
-        //                         row.warehouse !== null
-        //                             ? (
-        //                                   row.warehouse as {
-        //                                       warehouse_name?: string;
-        //                                   }
-        //                               ).warehouse_name
-        //                             : "-"}{" "}
-        //                     </span>{" "}
-        //                 </div>
-        //             ))}{" "}
-        //         </>
-        //     ),
-        // },
+        filter: {
+            isFilterable: true,
+            width: 320,
+            options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+            onSelect: (selected: string | string[]) => {
+                setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+            },
+        },
     },
     {
         key: "vehicle",
@@ -136,23 +129,24 @@ const columns = [
     },
 ];
 
-export default function Route() {
-    const [selectedRowId, setSelectedRowId] = useState<number | undefined>();
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
-    const { setLoading } = useLoading();
-    const router = useRouter();
-    const { showSnackbar } = useSnackbar();
+useEffect(() => {
+        setRefreshKey((k) => k + 1);
+    }, [warehouseId]);
 
     const fetchRoutes = async (
         pageNo: number = 1,
         pageSize: number = 10
     ): Promise<listReturnType> => {
+        setLoading(true);
         try {
-            const listRes = await routeList({
+            const params: any = {
                 page: pageNo.toString(),
                 per_page: pageSize.toString(),
-            });
+            };
+            if (warehouseId) {
+                params.warehouse_id = warehouseId;
+            }
+            const listRes = await routeList(params);
             return {
                 data: listRes.data || [],
                 currentPage: listRes.pagination.page || pageNo,

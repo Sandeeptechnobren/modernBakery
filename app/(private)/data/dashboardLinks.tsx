@@ -150,13 +150,13 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:currency-usd",
                         iconColor: "text-yellow-400"
                     },
-                       // {
-    //             isActive: false,
-    //             href: "/promotion",
-    //             label: "Promotion",
-    //             leadingIcon: "hugeicons:promotion",
-    //             iconColor: "text-red-500"
-    //         },
+                       {
+                isActive: false,
+                href: "/promotion",
+                label: "Promotion",
+                leadingIcon: "hugeicons:promotion",
+                iconColor: "text-red-500"
+            },
                    
             {
                 isActive: false,

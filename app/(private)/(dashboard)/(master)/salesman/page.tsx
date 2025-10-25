@@ -21,150 +21,60 @@ import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import StatusBtn from "@/app/components/statusBtn2";
-
-const dropdownDataList = [
-  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
-const columns = [
-  {
-    key: "osa_code",
-    label: "Salesman Code",
-    render: (row: TableDataType) => (
-      <span className="font-semibold text-[#181D27] text-[14px]">
-        {row.osa_code}
-      </span>
-    ),
-  },
-  { key: "name", label: "Salesman Name" },
-  {
-    key: "salesman_type",
-    label: "Salesman Type",
-    render: (row: TableDataType) => {
-      const obj =
-        typeof row.salesman_type === "string"
-          ? JSON.parse(row.salesman_type)
-          : row.salesman_type;
-      return obj?.salesman_type_name || "-";
-    },
-  },
-
-  { key: "designation", label: "Designation" },
-  {
-    key: "warehouse",
-    label: "Warehouse",
-    render: (row: TableDataType) => {
-      if (
-        row.warehouse &&
-        typeof row.warehouse === "object" &&
-        "warehouse_name" in row.warehouse
-      ) {
-        return (
-          (row.warehouse as { warehouse_name?: string }).warehouse_name || "-"
-        );
-      }
-      if (typeof row.warehouse_name === "string") {
-        return row.warehouse_name || "-";
-      }
-      return "-";
-    },
-    filter: {
-      isFilterable: true,
-      render: (data: TableDataType[]) => {
-        return data.map((item, index) => (
-          <div key={item.id + index} className="w-full text-left p-2">
-            {item.warehouse_name}
-          </div>
-        ));
-      },
-    },
-  },
-  {
-    key: "route",
-    label: "Route",
-    render: (row: TableDataType) => {
-      const obj =
-        typeof row.route === "string" ? JSON.parse(row.route) : row.route;
-      return obj?.route_name || "-";
-    },
-    filter: {
-      isFilterable: true,
-      render: (data: TableDataType[]) => {
-        return data.map((item, index) => (
-          <div key={item.id + index} className="w-full text-left p-2">
-            {item.route_name}
-          </div>
-        ));
-      },
-    },
-  },
-  { key: "contact_no", label: "Contact No" },
-
-  {
-    key: "status",
-    label: "Status",
-    render: (row: TableDataType) => (
-      <StatusBtn isActive={String(row.status) === "1"} />
-    ),
-  },
-];
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 const SalesmanPage = () => {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-    const [refreshKey, setRefreshKey] = useState(0);
 
-
-  const [showDropdown, setShowDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { warehouseOptions, routeOptions } = useAllDropdownListData();
+  const [warehouseId, setWarehouseId] = useState<string>("");
+  const [routeId, setRouteId] = useState<string>("");
 
   const handleStatusChange = async (
-  data: TableDataType[],
-  selectedRow: number[] | undefined,
-  status: "0" | "1"
-) => {
-  if (!selectedRow || selectedRow.length === 0) {
-    showSnackbar("Please select at least one salesman", "error");
-    return;
-  }
-
- 
-  
-
-  const selectedSalesmen = data.filter((_, index) =>
-    selectedRow.includes(index)
-  );
-  // console.log(data, selectedRow)
-
-  const failedUpdates: string[] = [];
-
-  const selectedRowsData: string[] = data.filter((value, index)=> selectedRow?.includes(index)).map((item) => item.id);
-  try {
-    setLoading(true);
-   
-        const res = await updateSalesmanStatus({salesman_ids: selectedRowsData, status});
-    
-    if (failedUpdates.length > 0) {
-      showSnackbar(
-        `Failed to update status for: ${failedUpdates.join(", ")}`,
-        "error"
-      );
-    } else {
-           setRefreshKey((k) => k + 1);
-      showSnackbar("Status updated successfully", "success");
-      fetchSalesman();
+    data: TableDataType[],
+    selectedRow: number[] | undefined,
+    status: "0" | "1"
+  ) => {
+    if (!selectedRow || selectedRow.length === 0) {
+      showSnackbar("Please select at least one salesman", "error");
+      return;
     }
 
-  } catch (error) {
-    console.error("Status update error:", error);
-    showSnackbar("An error occurred while updating status", "error");
-  } finally {
-    setLoading(false);
-    setShowDropdown(false);
-  }
-};
+    const selectedSalesmen = data.filter((_, index) =>
+      selectedRow.includes(index)
+    );
+    // console.log(data, selectedRow)
 
+    const failedUpdates: string[] = [];
+
+    const selectedRowsData: string[] = data.filter((value, index) => selectedRow?.includes(index)).map((item) => item.id);
+    try {
+      setLoading(true);
+
+      const res = await updateSalesmanStatus({ salesman_ids: selectedRowsData, status });
+
+      if (failedUpdates.length > 0) {
+        showSnackbar(
+          `Failed to update status for: ${failedUpdates.join(", ")}`,
+          "error"
+        );
+      } else {
+        setRefreshKey((k) => k + 1);
+        showSnackbar("Status updated successfully", "success");
+        fetchSalesman();
+      }
+
+    } catch (error) {
+      console.error("Status update error:", error);
+      showSnackbar("An error occurred while updating status", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleExport = async (fileType: "csv" | "xlsx") => {
     try {
@@ -239,14 +149,95 @@ const SalesmanPage = () => {
     []
   );
 
+  const columns = [
+  {
+    key: "osa_code",
+    label: "Salesman Code",
+    render: (row: TableDataType) => (
+      <span className="font-semibold text-[#181D27] text-[14px]">
+        {row.osa_code}
+      </span>
+    ),
+  },
+  { key: "name", label: "Salesman Name" },
+  {
+    key: "salesman_type",
+    label: "Salesman Type",
+    render: (row: TableDataType) => {
+      const obj =
+        typeof row.salesman_type === "string"
+          ? JSON.parse(row.salesman_type)
+          : row.salesman_type;
+      return obj?.salesman_type_name || "-";
+    },
+  },
+
+  { key: "designation", label: "Designation" },
+  {
+        key: "warehouse",
+        label: "Warehouse",
+        render: (row: TableDataType) =>
+            typeof row.warehouse === "object" &&
+            row.warehouse !== null &&
+            "warehouse_name" in row.warehouse
+                ? (row.warehouse as { warehouse_name?: string })
+                      .warehouse_name || "-"
+                : "-",
+                filter: {
+                    isFilterable: true,
+                    width: 320,
+                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [], // [{ value, label }]
+                    onSelect: (selected: string | string[]) => {
+                        setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+                    },
+                    selectedValue: warehouseId,
+                },
+       
+        showByDefault: true,
+    },
+    {
+        key: "route",
+        label: "Route",
+        render: (row: TableDataType) => {
+            if (
+                typeof row.route === "object" &&
+                row.route !== null &&
+                "route_name" in row.route
+            ) {
+                return (row.route as { route_name?: string }).route_name || "-";
+            }
+            return typeof row.route === 'string' ? row.route : "-";
+        },
+        filter: {
+            isFilterable: true,
+            width: 320,
+            options: Array.isArray(routeOptions) ? routeOptions : [],
+            onSelect: (selected: string | string[]) => {
+                setRouteId((prev) => prev === selected ? "" : (selected as string));
+            },
+            selectedValue: routeId,
+        },
+       
+        showByDefault: true,
+    },
+  { key: "contact_no", label: "Contact No" },
+
+  {
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) => (
+      <StatusBtn isActive={String(row.status) === "1"} />
+    ),
+  },
+];
 
   return (
     <>
       {/* Table */}
-      
+
       <div className="flex flex-col h-full">
         <Table
-                    refreshKey={refreshKey}
+          refreshKey={refreshKey}
           config={{
             api: { list: fetchSalesman },
             header: {
@@ -270,10 +261,10 @@ const SalesmanPage = () => {
                   icon: "lucide:radio",
                   label: "Inactive",
                   showOnSelect: true,
-                 onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
                     handleStatusChange(data, selectedRow, "0");
-                },
-              }
+                  },
+                }
               ],
 
               // wholeTableActions: [
@@ -321,7 +312,7 @@ const SalesmanPage = () => {
             },
             localStorageKey: "salesman-table",
             footer: { nextPrevBtn: true, pagination: true },
-            columns,
+            columns: columns,
             rowSelection: true,
             rowActions: [
               {

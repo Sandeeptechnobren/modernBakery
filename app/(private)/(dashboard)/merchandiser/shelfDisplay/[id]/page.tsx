@@ -312,7 +312,7 @@ export default function ShelfDisplay() {
     ) => void,
     errors: FormikErrors<ShelfFormValues>,
     touched: FormikTouched<ShelfFormValues>,
-    handleBlur: (e: React.FocusEvent<any>) => void
+    handleBlur: (e: React.FocusEvent<unknown>) => void
   ) => {
     switch (currentStep) {
       case 1:

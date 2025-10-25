@@ -13,10 +13,11 @@ import { addRoles, getRoleById, editRoles } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { useLoading } from "@/app/services/loadingContext";
 import RolesPermissionTable from "./table2";
+import ContainerCard from "@/app/components/containerCard";
 
 const RoleSchema = Yup.object().shape({
   name: Yup.string().required("Role Name is required."),
-  permissions: Yup.array().min(1, "Permissions is required.").of(Yup.number().required()).required("Permissions is required."),
+  // removed permissions validation — we use the permissions table (menus JSON) instead
 });
 
 export default function AddEditRole() {
@@ -26,20 +27,24 @@ export default function AddEditRole() {
   const params = useParams();
   const [initialValues, setInitialValues] = useState<RoleFormValues>({
     name: "",
-    permissions: []
   });
   const [isEditMode, setIsEditMode] = useState(false);
   const { setLoading } = useLoading();
   useEffect(() => setLoading(true), []);
   const [guardName, setGuardName] = useState<"api" | "web">("api");
 
+  // hold full nested menus -> submenu -> permissions JSON from table
+  const [roleTableRows, setRoleTableRows] = useState<any[]>([]);
+  // optional: keep last permission ids computed by table (if needed)
+  const [tablePermissionIds, setTablePermissionIds] = useState<number[]>([]);
+
   type RoleFormValues = {
     name: string;
-    permissions: Array<number>;
   };
 
   useEffect(() => {
     if (params?.uuid && params.uuid !== "add") {
+      console.log("Edit mode for role ID:", params.uuid);
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -48,16 +53,17 @@ export default function AddEditRole() {
           if (res?.data) {
             setInitialValues({
               name: res.data.name || "",
-              permissions: Array.isArray(res.data.permissions)
-              ? res.data.permissions.map((perm: string | number) => {
-                if (typeof perm === "string") {
-                  const found = permissions.find((p) => p.name === perm);
-                  return found ? found.id : perm;
-                }
-                return perm;
-                })
-              : [],
             });
+
+            // seed the table rows with incoming nested menus if provided by API
+            const menusFromRes =
+              Array.isArray(res.data.menus) ? res.data.menus
+                : Array.isArray(res.data.data) ? res.data.data
+                  : Array.isArray(res.data) ? res.data
+                    : [];
+            if (menusFromRes && menusFromRes.length) {
+              setRoleTableRows(menusFromRes);
+            }
           }
         } catch (error) {
           console.error("Failed to fetch roles", error);
@@ -66,7 +72,7 @@ export default function AddEditRole() {
         }
       })();
     } else setLoading(false);
-  }, [params?.uuid]);
+  }, [params?.uuid, setLoading]);
 
   const handleSubmit = async (
     values: RoleFormValues,
@@ -74,8 +80,9 @@ export default function AddEditRole() {
   ) => {
     const payload = {
       ...values,
-      guard_name: "api",
-      permissions: values.permissions.map(Number)
+      guard_name: guardName,
+      // include the nested menus JSON exactly as the table produces
+      menus: roleTableRows,
     };
     let res;
     if (isEditMode && params?.uuid !== "add") {
@@ -83,7 +90,7 @@ export default function AddEditRole() {
     } else {
       res = await addRoles(payload);
     }
-    if (res.error) {
+    if (res?.error) {
       showSnackbar(res.data?.message || "Failed to submit form", "error");
     } else {
       showSnackbar(
@@ -115,11 +122,11 @@ export default function AddEditRole() {
       >
         {({ handleSubmit, values, setFieldValue, errors, touched }) => (
           <Form onSubmit={handleSubmit}>
-            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-              <div className="p-6">
-                <h2 className="text-lg font-medium text-gray-800 mb-4">
-                  Role Details
-                </h2>
+            <div className="bg-white rounded-2xl mb-6">
+              {/* <h2 className="text-lg font-medium text-gray-800 mb-4">
+                Role Details
+              </h2> */}
+              <ContainerCard>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <InputFields
@@ -135,44 +142,45 @@ export default function AddEditRole() {
                       className="text-xs text-red-500"
                     />
                   </div>
-                    <div>
+                  <div>
                     <InputFields
                       required
                       label="Guard Name"
                       value={guardName}
                       options={[
-                      { label: "API", value: "api" },
-                      { label: "Web", value: "web" }
+                        { label: "API", value: "api" },
+                        { label: "Web", value: "web" }
                       ]}
                       onChange={(e) => setGuardName(e.target.value as "api" | "web")}
                     />
-                    </div>
-                  <div>
-                    <InputFields
-                      required
-                      label="Permissions"
-                      value={values.permissions.map(String)}
-                      isSingle={false}
-                      options={permissions
-                        .filter((opt) => opt.guard_name === guardName)
-                        .map((opt) => ({
-                          value: String(opt.id),
-                          label: opt.name ?? ""
-                        }))
-                      }
-                      onChange={(e) => setFieldValue("permissions", Array.isArray(e.target.value) ? e.target.value.map(Number) : [Number(e.target.value)])}
-                      error={touched.permissions && typeof errors.permissions === "string" ? errors.permissions : undefined}
-                    />
-                    <ErrorMessage
-                      name="permissions"
-                      component="span"
-                      className="text-xs text-red-500"
-                    />
                   </div>
                 </div>
-              </div>
-              {/* <RolesPermissionTable /> */}
+
+                {/* Permissions table replaces select input — parent only updates local state.
+                  onRowsChange is scheduled async to avoid setState during child render */}
+                {isEditMode && <div className="p-6">
+                  {roleTableRows && roleTableRows.length > 0 && <RolesPermissionTable
+                    data={roleTableRows.length ? roleTableRows : undefined}
+                    onRowsChange={(rows, permissionIds) => {
+                      // avoid infinite loop: only update parent state if incoming rows actually changed
+                      try {
+                        const incomingJson = JSON.stringify(rows || []);
+                        const currentJson = JSON.stringify(roleTableRows || []);
+                        if (incomingJson === currentJson) return;
+                      } catch (e) {
+                        // fallback: if stringify fails, still proceed to update once
+                      }
+                      // update asynchronously to be safe (avoid setState during child render)
+                      setTimeout(() => {
+                        setRoleTableRows(rows || []);
+                        setTablePermissionIds(permissionIds || []);
+                      }, 0);
+                    }}
+                  />}
+                </div>}
+              </ContainerCard>
             </div>
+
             <div className="flex justify-end gap-4 mt-6 pr-0">
               <button
                 type="button"

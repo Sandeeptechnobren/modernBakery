@@ -9,7 +9,9 @@ export default function BorderIconButton({
   labelTw,
   onClick,
   disabled = false,
+  className
 }: {
+  className?: string;
   icon?: string;
   iconWidth?: number;
   trailingIcon?: string;
@@ -21,7 +23,7 @@ export default function BorderIconButton({
 }) {
   return (
     <div
-      className={`bg-white h-[34px] border-[1px] border-[#D5D7DA] px-[10px] py-[8px] rounded-[8px] flex justify-center items-center gap-[8px] cursor-pointer ${disabled ? "pointer-events-none opacity-50" : ""}`}
+      className={`bg-white h-[34px] border-[1px] border-[#D5D7DA] px-[10px] py-[8px] rounded-[8px] flex justify-center items-center gap-[8px] cursor-pointer ${disabled ? "pointer-events-none opacity-50" : ""} ${className || ""}`}
       onClick={onClick}
     >
       {icon && <Icon icon={icon} width={iconWidth} />}

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Logo from "../../components/logo";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
+import { useRouter } from "next/navigation";
 
 export default function Sidebar({
   data,
@@ -20,6 +21,7 @@ export default function Sidebar({
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [activeHref, setActiveHref] = useState<string>("");
   const pathname = usePathname();
+  const router = useRouter();
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) => ({
@@ -68,7 +70,9 @@ export default function Sidebar({
       <div className={`${isOpen ? "w-[250px]" : "w-[80px]"} group-hover:w-[250px] h-[100vh] absolute ease-in-out duration-600 bg-white z-50 pb-[40px]`}>
         {/* logo */}
         <div className="w-full h-[60px] px-[16px] py-[12px] border-r-[1px] border-b-[1px] border-[#E9EAEB]">
-          <div className={`${isOpen ? "w-full" : "w-[24px]"}  group-hover:w-full h-full m-auto`}>
+          <div
+            onClick={() => router.push("/")}
+            className={`${isOpen ? "w-full" : "w-[24px]"}  group-hover:w-full h-full m-auto cursor-pointer`}>
             <Logo
               width={128}
               height={35}

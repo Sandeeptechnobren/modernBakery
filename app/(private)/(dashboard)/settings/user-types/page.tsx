@@ -9,11 +9,13 @@ import Table, {
   listReturnType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { userList } from "@/app/services/allApi";
+import { deleteUserType, userList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import StatusBtn from "@/app/components/statusBtn2";
 import { userTypeGlobalSearch } from "@/app/services/allApi";
+import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import Popup from "@/app/components/popUp";
 
 interface DropdownItem {
   icon: string;
@@ -27,20 +29,16 @@ interface UserType {
   status?: number;
 }
 const dropdownDataList: DropdownItem[] = [
-  // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 const columns = [
   { key: "code", label: "User Type Code" ,
     render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.code}
-            </span>
-        ),
+          <span className="font-semibold text-[#181D27] text-[14px]">
+              {row.code}
+          </span>
+      ),
   },
   { key: "name", label: "User Name" },
   {
@@ -58,6 +56,8 @@ export default function UserType() {
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const router = useRouter();
   type TableRow = TableDataType & { id?: string };
 
@@ -75,9 +75,9 @@ export default function UserType() {
         setLoading(false);
         return {
           data: listRes.data || [],
-          total: listRes.pagination.totalPages,
-          currentPage: listRes.pagination.page,
-          pageSize: listRes.pagination.limit,
+          total: listRes.pagination.totalPages || 1,
+          currentPage: listRes.pagination.page || 1,
+          pageSize: listRes.pagination.limit || pageSize,
         };
       } catch (error: unknown) {
         console.error("API Error:", error);
@@ -111,6 +111,19 @@ export default function UserType() {
     []
   );
 
+  const handleDelete = async () => {
+    if(!selectedUserId) return;
+    setLoading(true);
+    const res = await deleteUserType(selectedUserId.toString());
+    if (res.error) {
+      showSnackbar(res.data.message || "Failed to Delete User Type", "error");
+    } else {
+      showSnackbar("User Type Deleted Successfully", "success");
+      router.refresh();
+    }
+    setLoading(false);
+
+  }
   useEffect(() => {
     setLoading(true);
   }, []);
@@ -181,11 +194,31 @@ export default function UserType() {
                   router.push(`/settings/user-types/${row.id}`);
                 },
               },
+              {
+                icon: "lucide:trash-2",
+                onClick: (data: object) => {
+                  const row = data as TableRow;
+                  setShowDeletePopup(true);
+                  setSelectedUserId(row?.id?.toString() || null);
+                },
+              },
             ],
             pageSize: 50,
           }}
         />
       </div>
+      {showDeletePopup && (
+        <Popup
+          isOpen={showDeletePopup}
+          onClose={() => setShowDeletePopup(false)}
+        >
+          <DeleteConfirmPopup
+              title="Delete User Type"
+              onConfirm={() => handleDelete()}
+              onClose={() => setShowDeletePopup(false)}
+          />
+        </Popup>
+      )}
     </>
   );
 }

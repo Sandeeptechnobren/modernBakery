@@ -45,10 +45,11 @@ export default function Sidebar({
                     <div className="flex items-center justify-center w-full h-[40px]">
                         <Image
                             src="/logoWhite.png"
-                            className="p-[10px]"
+                            className="p-[10px] cursor-pointer"
                             width={152}
                             height={222}
                             alt="logo"
+                            onClick={() => router.push("/")}
                         />
                     </div>
 
