@@ -713,7 +713,7 @@ export default function Planogram() {
                                   );
                                 }}
                               />
-
+                              <>{console.log(existingImage)}</>
                               {/* Image Preview */}
                               {(currentImage || existingImage) && (
                                 <div className="flex flex-col gap-[10px] mt-2">
@@ -723,7 +723,8 @@ export default function Planogram() {
                                     src={
                                       currentImage
                                         ? URL.createObjectURL(currentImage)
-                                        : existingImage || ""
+                                        : process.env.NEXT_PUBLIC_API_URL +
+                                            existingImage || ""
                                     }
                                     alt={`Shelf ${shelfId}`}
                                     className="h-32 w-32 object-cover rounded-xl bg-blue-100"
