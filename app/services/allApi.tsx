@@ -2161,7 +2161,7 @@ export const getRoleById = async (id: string, params?: Params) => {
 
 type roletype = {
   name: string;
-  menus: TableDataType[];
+  labels: number[];
 };
 
 export const addRoles = async (payload: roletype) => {
@@ -2181,6 +2181,17 @@ export const editRoles = async (id: string, payload: roletype) => {
     return handleError(error);
   }
 };
+
+// assign permission to role
+export const assignPermissionsToRole = async (roleId: string, rolePermissionData: object) => {
+  try {
+    const res = await API.post(`/api/settings/roles/assign-permissions/${roleId}`, rolePermissionData);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const deleteRole = async (id: string) => {
   try {
     const res = await API.delete(`/api/settings/roles/${id}`);
@@ -2781,6 +2792,56 @@ export const editPromotionDetail = async (uuid: string, payload: object) => {
 export const deletePromotionDetail = async (uuid: string) => {
   try {
     const res = await API.delete(`/api/master/promotion-details/delete/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const labelList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/labels/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const labelGenerateCode = async () => {
+  try {
+    const res = await API.get(`/api/settings/labels/generate-code`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const labelById = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/labels/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+type labelType = {
+  name: string;
+  status: string;
+};
+
+export const addLabel = async (payload: labelType) => {
+  try {
+    const res = await API.post(`/api/settings/labels/add`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editLabel = async (id: string, payload: labelType) => {
+  try {
+    const res = await API.put(`/api/settings/labels/${id}`, payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

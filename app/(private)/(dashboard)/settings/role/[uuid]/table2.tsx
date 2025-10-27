@@ -4,402 +4,252 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 import Table, { TableDataType } from "@/app/components/customTable";
 import Toggle from "@/app/components/toggle";
 import { Icon } from "@iconify-icon/react";
-import { JSX, useEffect, useMemo, useState } from "react";
+import { JSX, useEffect, useMemo, useRef, useState } from "react";
 
-type Permission = { permission_id: number; permission_name: string };
-type Submenu = { id?: number | null; name?: string | null; path?: string | null; permissions?: Permission[] };
-type Menu = { id?: number | null; name?: string | null; path?: string | null; submenu?: Submenu[] };
-type MenuWrapper = { menu?: Menu | null };
-type RoleRow = { id: number | string; name?: string | null; guard_name?: string | null; menus?: MenuWrapper[] };
+type Permission = { permission_id: number; permission_name: string; [k: string]: any };
+type Submenu = { id?: number | null; uuid?: string | null; osa_code?: string | null; name?: string | null; path?: string | null; permissions?: Permission[]; [k: string]: any };
+export type MenuItem = { id?: number | null; uuid?: string | null; osa_code?: string | null; name?: string | null; path?: string | null; submenu?: Submenu[]; sub_menus?: Submenu[]; menus?: any; menu?: any; [k: string]: any };
 
 const DEFAULT_PERMS = ["view", "create", "edit", "delete"];
 
-const SAMPLE_DATA: RoleRow[] = [
-	{
-		id: 100,
-		name: "Organization",
-		guard_name: "api",
-		menus: [
-			{
-				menu: {
-					id: 10,
-					name: "Organization",
-					path: "/organization",
-					submenu: [
-						{
-							id: 101,
-							name: "Manage Organizations",
-							path: "/organization/manage",
-							permissions: [
-								{ permission_id: 1, permission_name: "create" },
-								{ permission_id: 4, permission_name: "view" },
-								{ permission_id: 2, permission_name: "edit" },
-								{ permission_id: 3, permission_name: "delete" },
-							],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		id: 110,
-		name: "Customer",
-		guard_name: "api",
-		menus: [
-			{
-				menu: {
-					id: 11,
-					name: "Customer",
-					path: "/customer",
-					submenu: [
-						{
-							id: 111,
-							name: "Customer List",
-							path: "/customer/list",
-							permissions: [
-								{ permission_id: 4, permission_name: "view" },
-								{ permission_id: 1, permission_name: "create" },
-								{ permission_id: 2, permission_name: "edit" },
-							],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		id: 120,
-		name: "Salesman",
-		guard_name: "api",
-		menus: [
-			{
-				menu: {
-					id: 12,
-					name: "Salesman",
-					path: "/salesman",
-					submenu: [
-						{
-							id: 121,
-							name: "Salesman Directory",
-							path: "/salesman/directory",
-							permissions: [
-								{ permission_id: 4, permission_name: "view" },
-								{ permission_id: 2, permission_name: "edit" },
-							],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		id: 130,
-		name: "Merchandiser",
-		guard_name: "api",
-		menus: [
-			{
-				menu: {
-					id: 13,
-					name: "Merchandiser",
-					path: "/merchandiser",
-					submenu: [
-						{
-							id: 131,
-							name: "Manage Merchandisers",
-							path: "/merchandiser/manage",
-							permissions: [
-								{ permission_id: 1, permission_name: "create" },
-								{ permission_id: 4, permission_name: "view" },
-							],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		id: 140,
-		name: "Journey Plan",
-		guard_name: "api",
-		menus: [
-			{
-				menu: {
-					id: 14,
-					name: "Journey Plan",
-					path: "/journey-plan",
-					submenu: [
-						{
-							id: 141,
-							name: "Plans",
-							path: "/journey-plan/plans",
-							permissions: [
-								{ permission_id: 4, permission_name: "view" },
-								{ permission_id: 2, permission_name: "edit" },
-							],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		id: 150,
-		name: "Promotion",
-		guard_name: "api",
-		menus: [
-			{
-				menu: {
-					id: 15,
-					name: "Promotion",
-					path: "/promotion",
-					submenu: [
-						{
-							id: 151,
-							name: "Campaigns",
-							path: "/promotion/campaigns",
-							permissions: [
-								{ permission_id: 1, permission_name: "create" },
-								{ permission_id: 4, permission_name: "view" },
-								{ permission_id: 3, permission_name: "delete" },
-							],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		id: 160,
-		name: "Assets",
-		guard_name: "api",
-		menus: [
-			{
-				menu: {
-					id: 6,
-					name: "Assets",
-					path: "/assets",
-					submenu: [
-						{
-							id: 601,
-							name: "Manage Assets",
-							path: "/assets/manage",
-							permissions: [
-								{ permission_id: 2, permission_name: "edit" },
-								{ permission_id: 4, permission_name: "view" },
-							],
-						},
-					],
-				},
-			},
-		],
-	},
-	{
-		id: 170,
-		name: "Dashboard",
-		guard_name: "api",
-		menus: [
-			{
-				menu: {
-					id: 1,
-					name: "Dashboard",
-					path: "/dashboard",
-					submenu: [
-						{
-							id: 171,
-							name: "Overview",
-							path: "/dashboard/overview",
-							permissions: [{ permission_id: 4, permission_name: "view" }],
-						},
-					],
-				},
-			},
-		],
-	},
-];
-
 function deepClone<T>(v: T): T {
-	return JSON.parse(JSON.stringify(v));
+    return JSON.parse(JSON.stringify(v));
 }
 
 export default function RolesPermissionTable({
-	data: initialData = SAMPLE_DATA,
-	onRowsChange,
+    menus: initialMenus = [],
+    roleMenus = [], // optional role-specific menus (with submenu.permissions)
+    activeIndex = 0,
+    onMenusChange,
 }: {
-	data?: RoleRow[];
-	// only emit changes to parent, do NOT call Formik here
-	onRowsChange?: (rows: RoleRow[], permissionIds: number[]) => void;
-} = {}): JSX.Element {
-	const { permissions } = useAllDropdownListData();
+    menus?: MenuItem[]; // master / base menus (submenus without permissions)
+    roleMenus?: any[];   // incoming role data menus (may include submenu.permissions)
+    activeIndex?: number;
+    onMenusChange?: (menus: MenuItem[], permissionIds: number[]) => void;
+}): JSX.Element {
+    const { permissions } = useAllDropdownListData();
 
-	const [rows, setRows] = useState<RoleRow[]>(Array.isArray(initialData) ? deepClone(initialData) : []);
-	const [refreshKey, setRefreshKey] = useState<number>(0);
+    const [menus, setMenus] = useState<MenuItem[]>(Array.isArray(initialMenus) ? deepClone(initialMenus) : []);
+    const [refreshKey, setRefreshKey] = useState<number>(0);
+    const lastSentRef = useRef<string | null>(null);
 
-	useEffect(() => {
-		if (Array.isArray(initialData)) setRows(deepClone(initialData));
-	}, [initialData]);
+    // Normalize shape: ensure each item has submenu[] and do not share references.
+    const normalizeMenus = (arr: any[] = []): MenuItem[] =>
+        (arr || []).map((m) => {
+            const subs =
+                (Array.isArray(m.submenu) && m.submenu) ||
+                (m.menu && Array.isArray(m.menu.submenu) && m.menu.submenu) ||
+                (Array.isArray(m.sub_menus) && m.sub_menus) ||
+                (Array.isArray(m.menus?.[0]?.menu?.submenu) && m.menus[0].menu.submenu) ||
+                [];
+            return { ...m, submenu: deepClone(subs) };
+        });
 
-	const permExistsIn = (perms: Permission[] | undefined, key: string) => {
-		if (!Array.isArray(perms)) return false;
-		const k = key.toLowerCase();
-		return perms.some((p) => {
-			const pn = String(p.permission_name || "").toLowerCase();
-			if (k === "view") return pn.includes("view") || pn.includes("list");
-			return pn.includes(k);
-		});
-	};
+    // Build quick map from roleMenus for applying permissions by menu_id -> submenu_id
+    const buildRoleMap = (rmenus: any[] = []) => {
+        const map = new Map<string, Map<string, Permission[]>>();
+        (rmenus || []).forEach((rm) => {
+            const menuId = String(rm.id ?? rm.menu?.id ?? rm.menu_id ?? rm.menuId ?? "");
+            if (!menuId) return;
+            const subArr = Array.isArray(rm.submenu) ? rm.submenu : (Array.isArray(rm.menu?.submenu) ? rm.menu.submenu : []);
+            const subMap = new Map<string, Permission[]>();
+            (subArr || []).forEach((s: any) => {
+                const sid = String(s.id ?? s.submenu_id ?? s.uuid ?? "");
+                if (sid) subMap.set(sid, Array.isArray(s.permissions) ? deepClone(s.permissions) : []);
+            });
+            map.set(menuId, subMap);
+        });
+        return map;
+    };
 
-	const rowHas = (row: RoleRow, key: string) => {
-		if (!Array.isArray(row?.menus)) return false;
-		for (const mw of row.menus) {
-			const m = mw?.menu;
-			if (!m || !Array.isArray(m.submenu)) continue;
-			for (const s of m.submenu) {
-				if (permExistsIn(s.permissions, key)) return true;
-			}
-		}
-		return false;
-	};
+    useEffect(() => {
+        const base = normalizeMenus(Array.isArray(initialMenus) ? initialMenus : []);
+        const roleMap = buildRoleMap(Array.isArray(roleMenus) ? roleMenus : []);
 
-	const extractPermissionIds = (rs: RoleRow[]) => {
-		const set = new Set<number>();
-		for (const r of rs) {
-			if (!Array.isArray(r.menus)) continue;
-			for (const mw of r.menus) {
-				const m = mw?.menu;
-				if (!m || !Array.isArray(m.submenu)) continue;
-				for (const s of m.submenu) {
-					const perms = s?.permissions ?? [];
-					for (const p of perms) if (typeof p.permission_id === "number") set.add(p.permission_id);
-				}
-			}
-		}
-		return Array.from(set);
-	};
+        // apply permissions from roleMap to base submenus (match by id)
+        const merged = base.map((m) => {
+            const menuId = String(m.id ?? m.menu?.id ?? m.osa_code ?? m.uuid ?? "");
+            const subMap = roleMap.get(menuId);
+            const baseSubs = Array.isArray(m.submenu) ? deepClone(m.submenu) : [];
+            // apply permissions to matching submenus; preserve base order; append incoming-only subs optionally
+            const applied = baseSubs.map((s) => {
+                const sid = String(s.id ?? s.uuid ?? s.osa_code ?? "");
+                if (subMap && subMap.has(sid)) {
+                    return { ...s, permissions: deepClone(subMap.get(sid) || []) };
+                }
+                return s;
+            });
+            // also include role-only submenus that are not present in base (append)
+            if (subMap) {
+                for (const [sid, perms] of subMap) {
+                    const exists = applied.some((x) => String(x.id ?? x.uuid ?? x.osa_code ?? "") === sid);
+                    if (!exists) {
+                        applied.push({ id: isFinite(Number(sid)) ? Number(sid) : undefined, permissions: deepClone(perms) } as Submenu);
+                    }
+                }
+            }
+            return { ...m, submenu: applied };
+        });
 
-	const permissionIdForName = (name: string | undefined) => {
-		if (!permissions || !Array.isArray(permissions)) return undefined;
-		const key = String(name || "").toLowerCase();
-		const found = permissions.find((p: any) => {
-			const n = String(p.name || "").toLowerCase();
-			return n === key || n.includes(key);
-		});
-		return found?.id;
-	};
+        setMenus(merged);
+        // mark initial load as already sent so we don't immediately emit to parent
+        lastSentRef.current = JSON.stringify(merged);
+        setRefreshKey((k) => k + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialMenus, JSON.stringify(roleMenus)]);
 
-	const updateRowPermissionsNested = (row: RoleRow, key: string, shouldAdd: boolean) => {
-		if (!Array.isArray(row.menus)) return row;
-		const newMenus = row.menus.map((mw) => {
-			if (!mw || !mw.menu) return mw;
-			const menu = deepClone(mw.menu);
-			if (!Array.isArray(menu.submenu)) return { ...mw, menu };
-			menu.submenu = menu.submenu.map((s) => {
-				const perms = Array.isArray(s.permissions) ? deepClone(s.permissions) : [];
-				if (shouldAdd) {
-					const exists = permExistsIn(perms, key);
-					if (!exists) {
-						const id = permissionIdForName(key) ?? Date.now();
-						perms.push({ permission_id: id, permission_name: key });
-					}
-					return { ...s, permissions: perms };
-				} else {
-					const filtered = perms.filter((p) => {
-						const pn = String(p.permission_name || "").toLowerCase();
-						if (key === "view") return !(pn.includes("view") || pn.includes("list"));
-						return !pn.includes(key.toLowerCase());
-					});
-					return { ...s, permissions: filtered };
-				}
-			});
-			return { ...mw, menu };
-		});
-		return { ...row, menus: newMenus };
-	};
+    const permExistsIn = (perms: Permission[] | undefined, key: string) => {
+        if (!Array.isArray(perms)) return false;
+        const k = key.toLowerCase();
+        return perms.some((p) => {
+            const pn = String(p.permission_name || "").toLowerCase();
+            if (k === "view") return pn.includes("view") || pn.includes("list");
+            return pn.includes(k);
+        });
+    };
 
-	// Toggle handler
-	const handleToggle = (rowId: number | string, field: "all" | string) => {
-		setRows((prev) => {
-			// build the list of permission keys to toggle (fall back to DEFAULT_PERMS)
-			const permList = Array.isArray(permissions)
-				? permissions.map((p: any) => String(p.name ?? "").toLowerCase()).filter(Boolean)
-				: DEFAULT_PERMS;
+    const extractPermissionIds = (ms: MenuItem[]) => {
+        const set = new Set<number>();
+        for (const r of ms) {
+            const subs = Array.isArray(r.submenu) ? r.submenu : [];
+            for (const s of subs) {
+                const perms = s?.permissions ?? [];
+                for (const p of perms) if (typeof p.permission_id === "number") set.add(p.permission_id);
+            }
+        }
+        return Array.from(set);
+    };
 
-			const newRows = deepClone(prev).map((r) => {
-				if (String(r.id) !== String(rowId)) return r;
+    const permissionIdForName = (name: string | undefined) => {
+        if (!permissions || !Array.isArray(permissions)) return undefined;
+        const key = String(name || "").toLowerCase();
+        const found = permissions.find((p: any) => {
+            const n = String(p.name || "").toLowerCase();
+            return n === key || n.includes(key);
+        });
+        return found?.id;
+    };
 
-				if (field === "all") {
-					// check current state across all permission columns dynamically
-					const allCurrently = permList.every((p) => rowHas(r, p));
-					let updated = r;
-					for (const p of permList) updated = updateRowPermissionsNested(updated, p, !allCurrently);
-					return updated;
-				} else {
-					const willAdd = !rowHas(r, field);
-					return updateRowPermissionsNested(r, field, willAdd);
-				}
-			});
+    // Toggle a permission on a specific submenu of the active menu
+    const handleToggle = (submenuId: number | string, field: "all" | string) => {
+        setMenus((prev) => {
+            const newMenus = deepClone(prev);
+            const idx = Math.max(0, Math.min(activeIndex, newMenus.length - 1));
+            const menu = newMenus[idx];
+            if (!menu) return prev;
 
-			setRefreshKey((k) => k + 1);
-			return newRows;
-		});
-	};
+            const subs = Array.isArray(menu.submenu) ? menu.submenu : [];
+            // derive perm list names
+            const permList = Array.isArray(permissions)
+                ? permissions.map((p: any) => String(p.name ?? "").toLowerCase()).filter(Boolean)
+                : DEFAULT_PERMS;
 
-	// notify parent AFTER render and asynchronously to avoid setState during render
-	useEffect(() => {
-		const ids = extractPermissionIds(rows);
-		if (typeof onRowsChange === "function") {
-			setTimeout(() => {
-				try {
-					onRowsChange(deepClone(rows), ids);
-				} catch (e) {
-					// swallow
-				}
-			}, 0);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [rows]);
+            const newSubs = subs.map((s) => {
+                if (String(s.id) !== String(submenuId)) return s;
+                let perms = Array.isArray(s.permissions) ? deepClone(s.permissions) : [];
+                if (field === "all") {
+                    const allCurrently = permList.every((pname) => permExistsIn(perms, pname));
+                    if (!allCurrently) {
+                        for (const pname of permList) {
+                            if (!permExistsIn(perms, pname)) {
+                                const id = permissionIdForName(pname) ?? Date.now();
+                                perms.push({ permission_id: id, permission_name: pname });
+                            }
+                        }
+                    } else {
+                        perms = perms.filter((p) => {
+                            const pn = String(p.permission_name || "").toLowerCase();
+                            return !permList.includes(pn);
+                        });
+                    }
+                } else {
+                    const willAdd = !permExistsIn(perms, field);
+                    if (willAdd) {
+                        const id = permissionIdForName(field) ?? Date.now();
+                        perms.push({ permission_id: id, permission_name: field });
+                    } else {
+                        perms = perms.filter((p) => {
+                            const pn = String(p.permission_name || "").toLowerCase();
+                            if (field === "view") return !(pn.includes("view") || pn.includes("list"));
+                            return !pn.includes(field.toLowerCase());
+                        });
+                    }
+                }
+                return { ...s, permissions: perms };
+            });
 
-	// build permission columns (stable references returned from useMemo)
-	const permissionColumns = useMemo(() => {
-		if (!permissions || !Array.isArray(permissions)) return [];
-		return permissions.map((p: any) => ({
-			key: p.name ?? "",
-			label: p.name ?? "",
-			render: (row: TableDataType) => {
-				const r = row as unknown as RoleRow;
-				const checked = rowHas(r, p.name);
-				return <Toggle isChecked={checked} onChange={() => handleToggle(r.id as number | string, p.name as any)} />;
-			},
-		}));
-		// dependencies: permissions and rows (rowHas uses rows indirectly via closure but it's fine)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [permissions, rows]);
+            newMenus[idx] = { ...menu, submenu: newSubs };
+            setRefreshKey((k) => k + 1);
+            return newMenus;
+        });
+    };
 
-	// memoize full table config to avoid customTable rerender loops
-	const tableConfig = useMemo(() => {
-		return {
-			columns: [
-				{ key: "name", label: "Master", width: 200, sticky: "left" },
-				{
-					key: "search",
-					label: <Icon icon="lucide:search" />,
-					sticky: "center",
-					render: (row: TableDataType) => {
-						const r = row as unknown as RoleRow;
-						const allChecked = DEFAULT_PERMS.every((p) => rowHas(r, p));
-						return <Toggle isChecked={allChecked} onChange={() => handleToggle(r.id as number | string, "all")} />;
-					},
-				},
-                 ...permissionColumns,
-             ],
-         };
-     }, [permissionColumns]);
- 
-	return (
-		<Table
-			refreshKey={refreshKey}
-			data={rows as unknown as TableDataType[]}
-			config={tableConfig as any}
-		/>
-	);
+    // notify parent AFTER render asynchronously, but only when menus actually changed
+    useEffect(() => {
+        const ids = extractPermissionIds(menus);
+        const json = JSON.stringify(menus || []);
+        if (lastSentRef.current === json) return; // already sent this exact shape
+        lastSentRef.current = json;
+
+        if (typeof onMenusChange === "function") {
+            setTimeout(() => {
+                try {
+                    onMenusChange(deepClone(menus), ids);
+                } catch (e) {
+                    // swallow
+                }
+            }, 0);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [menus]);
+
+    // build permission columns
+    const permissionColumns = useMemo(() => {
+        if (!permissions || !Array.isArray(permissions)) return [];
+        return permissions.map((p: any) => ({
+            key: p.name ?? "",
+            label: p.name ?? "",
+            render: (row: TableDataType) => {
+                const m = row as unknown as Submenu;
+                const checked = permExistsIn(m.permissions, p.name);
+                return <Toggle isChecked={checked} onChange={() => handleToggle(m.id as number | string, p.name as any)} />;
+            },
+        }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [permissions, menus]);
+
+    // build table config for submenus of active menu
+    const tableConfig = useMemo(() => {
+        const active = menus && menus.length > 0 ? menus[Math.max(0, Math.min(activeIndex, menus.length - 1))] : undefined;
+        const subrows = active ? (Array.isArray(active.submenu) ? active.submenu : []) : [];
+        return {
+            columns: [
+                { key: "name", label: "Submenu", width: 200, sticky: "left", align: "left", render: (row: TableDataType) => (row as any).name || (row as any).title || "-" },
+                {
+                    key: "search",
+                    label: <Icon icon="lucide:search" />,
+                    align: "center",
+                    render: (row: TableDataType) => {
+                        const r = row as unknown as Submenu;
+                        const permList = Array.isArray(permissions)
+                            ? permissions.map((p: any) => String(p.name ?? "").toLowerCase()).filter(Boolean)
+                            : DEFAULT_PERMS;
+                        const allChecked = permList.every((pname) => permExistsIn(r.permissions, pname));
+                        return <Toggle isChecked={allChecked} onChange={() => handleToggle(r.id as number | string, "all")} />;
+                    },
+                },
+                ...permissionColumns,
+            ],
+            rows: subrows,
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [permissionColumns, menus, activeIndex, refreshKey]);
+
+    return (
+        <Table
+            refreshKey={refreshKey}
+            data={(tableConfig.rows || []) as unknown as TableDataType[]}
+            config={tableConfig as any}
+        />
+    );
 }
