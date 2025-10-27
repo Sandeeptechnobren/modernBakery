@@ -69,8 +69,8 @@ export default function ViewPage() {
                     <KeyValueData
                         title="SubRegion Information"
                         data={[
-                            { value: subRegion?.area_code, key: "Sub Region Code" },
-                            { value: subRegion?.area_name, key: "Sub Region Name" },
+                            { value: subRegion?.area_code, key: "Area Code" },
+                            { value: subRegion?.area_name, key: "Area Name" },
                              {
                                 key: "Region Name",
                                 value: subRegion?.region?.region_name || "-",

@@ -50,14 +50,14 @@ const dropdownDataList: DropdownItem[] = [
 const columns = [
   {
     key: "area_code",
-    label: "Sub Region Code",
+    label: "Area Code",
     render: (row: TableDataType) => (
       <span className="font-semibold text-[#181D27] text-[14px]">
         {row.area_code}
       </span>
     ),
   },
-  { key: "area_name", label: "SubRegion Name" },
+  { key: "area_name", label: "Area Name" },
   // { key: "region_name", label: "Region" },
   {
     key: "region_name",
@@ -161,7 +161,7 @@ export default function SubRegion() {
               search: searchSubRegions,
             },
             header: {
-              title: "SubRegion",
+              title: "Area",
               wholeTableActions: [
                 <div key={0} className="flex gap-[12px] relative">
                   <DismissibleDropdown
@@ -197,7 +197,7 @@ export default function SubRegion() {
               actions: [
                 <SidebarBtn
                   key={0}
-                  href="/settings/company/subRegion/add"
+                  href="/settings/company/area/add"
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add"
@@ -205,7 +205,7 @@ export default function SubRegion() {
                 />,
               ],
             },
-            localStorageKey: "subRegion",
+            localStorageKey: "area",
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
@@ -214,7 +214,7 @@ export default function SubRegion() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/settings/company/subRegion/${row.id}`);
+                  router.push(`/settings/company/area/${row.id}`);
                 },
               },
             ],

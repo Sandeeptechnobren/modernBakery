@@ -128,7 +128,7 @@ export default function Address() {
           { key: "Country", value: company?.country?.country_name || "-" },
           { key: "Region", value: company?.region?.region_name || "-" },
           {
-            key: "Sub Region",
+            key: "Area",
             value: company?.sub_region?.subregion_name || "-",
           },
           { key: "District", value: company?.district || "-" },

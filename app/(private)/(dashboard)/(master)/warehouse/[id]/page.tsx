@@ -1,5 +1,4 @@
 "use client";
-// Unified Add/Edit Warehouse Page
 import WarehouseDetails from "./warehouseDetails";
 import WarehouseContact from "./warehouseContact";
 import WarehouseLocationInformation from "./warehouseLocationInfo";
@@ -14,8 +13,9 @@ import { addWarehouse, getWarehouseById, updateWarehouse, genearateCode, saveFin
 import StepperForm, { StepperStep, useStepperForm } from "@/app/components/stepperForm";
 import { useEffect, useState, useRef } from "react";
 import Loading from "@/app/components/Loading";
-import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched, ErrorMessage } from "formik";
+import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
 
+// TYPES
 type FormValues = {
     warehouse_code: string;
     warehouse_type: string;
@@ -24,7 +24,7 @@ type FormValues = {
     owner_number: string;
     owner_email: string;
     tin_no: string;
-    password:string;
+    password: string;
     agreed_stock_capital: string;
     company: string;
     agent_customer: string;
@@ -36,8 +36,6 @@ type FormValues = {
     city: string;
     region_id: string;
     area_id: string;
-    // district: string;
-    // address: string;
     town_village: string;
     street: string;
     landmark: string;
@@ -49,6 +47,78 @@ type FormValues = {
     status: string;
 };
 
+// IMPROVED VALIDATION SCHEMA
+const validationSchema = Yup.object({
+    warehouse_code: Yup.string().required('Warehouse Code is required'),
+    tin_no: Yup.string().required('TIN No. is required'),
+    warehouse_type: Yup.string().required('Warehouse Type is required'),
+    warehouse_name: Yup.string().required('Warehouse Name is required'),
+    owner_name: Yup.string().required('Owner Name is required'),
+    company: Yup.string().required('Company is required'),
+    agreed_stock_capital: Yup.string(),
+    agent_customer: Yup.string().required('Agent Customer is required'),
+    warehouse_manager: Yup.string().required('Warehouse Manager is required'),
+    owner_number: Yup.string()
+        .required('Owner Contact is required')
+        .matches(/^[\d]+$/, 'Contact must be numeric')
+        .min(7, 'Contact must be at least 7 digits'),
+    warehouse_manager_contact: Yup.string()
+        .required('Manager Contact is required')
+        .matches(/^[\d]+$/, 'Contact must be numeric')
+        .min(7, 'Contact must be at least 7 digits'),
+    owner_email: Yup.string()
+        .required('Owner Email is required')
+        .matches(/^\S+@gmail\.com$/, 'Must be a valid Gmail address'),
+    location: Yup.string().required('Location is required'),
+    city: Yup.string().required('City is required'),
+    region_id: Yup.string().required('Region is required'),
+    area_id: Yup.string().required('Area ID is required'),
+    town_village: Yup.string(),
+    street: Yup.string(),
+    landmark: Yup.string(),
+    latitude: Yup.string()
+        .required('Latitude is required')
+        .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Latitude must be a valid decimal number'),
+    longitude: Yup.string()
+        .required('Longitude is required')
+        .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Longitude must be a valid decimal number'),
+    p12_file: Yup.string(), // required status can be set depending on edit mode
+    is_efris: Yup.string()
+        .oneOf(['0', '1'], 'EFRIS Configuration is required')
+        .required('EFRIS Configuration is required'),
+    is_branch: Yup.string(),
+});
+
+// STEP-WISE SCHEMAS
+const stepSchemas = [
+    Yup.object().shape({
+        warehouse_code: validationSchema.fields.warehouse_code,
+        tin_no: validationSchema.fields.tin_no,
+        warehouse_type: validationSchema.fields.warehouse_type,
+        warehouse_name: validationSchema.fields.warehouse_name,
+        owner_name: validationSchema.fields.owner_name,
+        company: validationSchema.fields.company,
+        agent_customer: validationSchema.fields.agent_customer,
+        warehouse_manager: validationSchema.fields.warehouse_manager,
+    }),
+    Yup.object().shape({
+        owner_number: validationSchema.fields.owner_number,
+        warehouse_manager_contact: validationSchema.fields.warehouse_manager_contact,
+        owner_email: validationSchema.fields.owner_email,
+    }),
+    Yup.object().shape({
+        location: validationSchema.fields.location,
+        city: validationSchema.fields.city,
+        region_id: validationSchema.fields.region_id,
+        area_id: validationSchema.fields.area_id,
+        latitude: validationSchema.fields.latitude,
+        longitude: validationSchema.fields.longitude,
+    }),
+    Yup.object().shape({
+        is_efris: validationSchema.fields.is_efris,
+        is_branch: validationSchema.fields.is_branch,
+    }),
+];
 
 export default function AddEditWarehouse() {
     const params = useParams();
@@ -60,7 +130,12 @@ export default function AddEditWarehouse() {
         { id: 3, label: "Location Information" },
         { id: 4, label: "EFRIS Information" }
     ];
-            const [selectedCountry, setSelectedCountry] = useState<{code:string; flag:string; name:string;}>({ name: "Uganda", code: "+256", flag: "🇺🇬"  });
+
+    const [selectedCountry, setSelectedCountry] = useState<{code: string; flag: string; name: string;}>({
+        name: "Uganda",
+        code: "+256",
+        flag: "🇺🇬"
+    });
 
     const {
         currentStep,
@@ -76,78 +151,6 @@ export default function AddEditWarehouse() {
     const [prefix, setPrefix] = useState('WH');
     const codeGeneratedRef = useRef(false);
 
-    // Validation schema (Yup)
-    const validationSchema = Yup.object({
-        warehouse_code: Yup.string().required('Warehouse Code is required'),
-        tin_no: Yup.string().required('TIN No. is required'),
-        warehouse_type: Yup.string().required('Warehouse Type is required'),
-        warehouse_name: Yup.string().required('Warehouse Name is required'),
-        owner_name: Yup.string().required('Owner Name is required'),
-        company: Yup.string().required('Company is required'),
-        agreed_stock_capital: Yup.string(),
-        agent_customer: Yup.string().required('Agent Customer is required'),
-        warehouse_manager: Yup.string().required('Warehouse Manager is required'),
-        owner_number: Yup.string()
-        .required('Owner Contact is required')
-            .matches(/^[\d]+$/, 'Contact must be numeric')
-            .min(7, 'Contact must be at least 7 digits'),
-        owner_email: Yup.string(),
-        warehouse_manager_contact: Yup.string(),
-        location: Yup.string().required('Location is required'),
-        city: Yup.string().required('City is required'),
-        region_id: Yup.string().required('Region is required'),
-        area_id: Yup.string().required('Area ID is required'),
-        // district: Yup.string(),
-        // address: Yup.string().required('Address is required'),
-        town_village: Yup.string(),
-        street: Yup.string(),
-        landmark: Yup.string(),
-        latitude: Yup.string()
-            .required('Latitude is required')
-            .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Latitude must be a valid decimal number'),
-        longitude: Yup.string()
-            .required('Longitude is required')
-            .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Longitude must be a valid decimal number'),
-        // p12_file: Yup.string().required('P12 File is required'),
-        // p12_file: isEditMode ? Yup.string() : Yup.string().required('P12 File is required'),
-        is_efris: Yup.string()
-            .oneOf(['0', '1'], 'EFRIS Configuration is required')
-            .required('EFRIS Configuration is required'),
-        is_branch: Yup.string(),
-    });
-
-    // Step-wise schemas
-    const stepSchemas = [
-        Yup.object().shape({
-            warehouse_code: validationSchema.fields.warehouse_code,
-            tin_no: validationSchema.fields.tin_no,
-            warehouse_type: validationSchema.fields.warehouse_type,
-            warehouse_name: validationSchema.fields.warehouse_name,
-            owner_name: validationSchema.fields.owner_name,
-            company: validationSchema.fields.company,
-            agent_customer: validationSchema.fields.agent_customer,
-            warehouse_manager: validationSchema.fields.warehouse_manager,
-        }),
-        Yup.object().shape({
-            owner_number: validationSchema.fields.owner_number,
-        }),
-        Yup.object().shape({
-            location: validationSchema.fields.location,
-            city: validationSchema.fields.city,
-            region_id: validationSchema.fields.region_id,
-            area_id: validationSchema.fields.area_id,
-            latitude: validationSchema.fields.latitude,
-            longitude: validationSchema.fields.longitude,
-            // address: validationSchema.fields.address,
-        }),
-        Yup.object().shape({
-            
-            // p12_file: validationSchema.fields.p12_file,
-            is_efris: validationSchema.fields.is_efris,
-            is_branch: validationSchema.fields.is_branch,
-        }),
-    ];
-
     // Initial values
     const [initialValues, setInitialValues] = useState<FormValues>({
         warehouse_code: "",
@@ -156,7 +159,7 @@ export default function AddEditWarehouse() {
         owner_name: "",
         company: "",
         agreed_stock_capital: "",
-        password:"",
+        password: "",
         tin_no: "",
         agent_customer: "",
         warehouse_manager: "",
@@ -169,15 +172,13 @@ export default function AddEditWarehouse() {
         city: "",
         region_id: "",
         area_id: "",
-        // district: "",
-        // address: "",
         town_village: "",
         street: "",
         landmark: "",
         latitude: "",
         longitude: "",
         p12_file: "",
-        is_efris: "0", // Default to 'Disable' (0)
+        is_efris: "0",
         is_branch: "",
         status: "1",
     });
@@ -209,8 +210,6 @@ export default function AddEditWarehouse() {
                         city: data?.city || '',
                         region_id: String(data?.region_id || ''),
                         area_id: String(data?.area_id || ''),
-                        // district: String(data?.district || ''),
-                        // address: String(data?.address || ''),
                         town_village: String(data?.town_village || ''),
                         street: String(data?.street || ''),
                         landmark: data?.landmark || '',
@@ -226,22 +225,15 @@ export default function AddEditWarehouse() {
             } else if (!isEditMode && !codeGeneratedRef.current) {
                 codeGeneratedRef.current = true;
                 const res = await genearateCode({ model_name: "warehouse" });
-                if (res?.code) {
-                    setInitialValues((prev) => ({ ...prev, warehouse_code: res.code }));
-                }
-                if (res?.prefix) {
-                    setPrefix(res.prefix);
-                }
+                if (res?.code) setInitialValues((prev) => ({ ...prev, warehouse_code: res.code }));
+                if (res?.prefix) setPrefix(res.prefix);
             }
         }
         fetchData();
     }, [isEditMode, warehouseId]);
 
     // Stepper navigation
-    const handleNext = async (
-        values: FormValues,
-        actions: FormikHelpers<FormValues>
-    ) => {
+    const handleNext = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
         try {
             const schema = stepSchemas[currentStep - 1];
             await schema.validate(values, { abortEarly: false });
@@ -273,10 +265,8 @@ export default function AddEditWarehouse() {
     const handleSubmit = async (values: FormValues) => {
         try {
             await validationSchema.validate(values, { abortEarly: false });
-            // normalize fields expected by API
             const isBranchStr = String(values.is_branch).toLowerCase();
             const isBranchPayload = (isBranchStr === 'true' || isBranchStr === '1' || isBranchStr === 'yes') ? '1' : '0';
-            // Build payload. The API expects the file key to be 'p12'.
             const base = {
                 ...values,
                 warehouse_type: values.warehouse_type,
@@ -288,7 +278,6 @@ export default function AddEditWarehouse() {
 
             if (p12 instanceof File) {
                 const form = new FormData();
-                // append all keys except p12_file
                 Object.keys(base).forEach((k) => {
                     if (k === 'p12_file') return;
                     const v = base[k];
@@ -298,7 +287,6 @@ export default function AddEditWarehouse() {
                         form.append(k, String(v));
                     }
                 });
-                // append file as 'p12' (backend expects p12:p12.xlsx)
                 form.append('p12', p12);
 
                 if (isEditMode && warehouseId) {
@@ -310,8 +298,7 @@ export default function AddEditWarehouse() {
                     }
                 }
             } else {
-                // send JSON where backend expects 'p12' key with filename string
-                const jsonPayload = { ...base,ownerContactCountry:selectedCountry,managerContactCountry:selectedCountry, p12: typeof p12 === 'string' ? p12 : '' };
+                const jsonPayload = { ...base, ownerContactCountry: selectedCountry, managerContactCountry: selectedCountry, p12: typeof p12 === 'string' ? p12 : '' };
                 if (isEditMode && warehouseId) {
                     res = await updateWarehouse(warehouseId, jsonPayload);
                 } else {
@@ -370,7 +357,6 @@ export default function AddEditWarehouse() {
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
                             setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File, true)}
                         />
-                        
                     </ContainerCard>
                 );
             case 3:

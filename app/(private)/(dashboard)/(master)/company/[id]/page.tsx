@@ -47,75 +47,87 @@ const CompanySchema = Yup.object().shape({
   company_name: Yup.string().required("Company name is required"),
   company_code: Yup.string().required("Company code is required"),
   company_type: Yup.string().required("Company type is required"),
- website: Yup.string()
-  .url("Invalid website URL")
-  .required("Company website is required"),
-    company_logo: Yup.string().required("Company Logo is required"),
+  website: Yup.string()
+    .url("Invalid website URL")
+    .required("Company website is required"),
+  company_logo: Yup.string().required("Company Logo is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
-      region: Yup.string().required("Region is required"),
+  region: Yup.string().required("Region is required"),
   country_id: Yup.string().required("Country is required"),
   selling_currency: Yup.string().required("Selling currency is required"),
   purchase_currency: Yup.string().required("Purchase currency is required"),
-   vat: Yup.string()
-  .required("VAT Number is a required field")
-  .max(15, "VAT Number cannot be more than 15 characters"),
-
+  vat: Yup.string()
+    .required("VAT Number is a required field")
+    .max(15, "VAT Number cannot be more than 15 characters"),
   service_type: Yup.string().required("Service type is required"),
   status: Yup.string().required("Status is required"),
   district: Yup.string().required("District is required"),
   town: Yup.string().required("Town is required"),
   street: Yup.string().required("Street is required"),
   landmark: Yup.string().required("Landmark is required"),
-  sub_region: Yup.string().required("Sub Region is required"),
-  primary_contact: Yup.string().required("Primary contact is required").min(10).max(13),
-  toll_free_no: Yup.string().required("Toll free number is required"),
-    module_access: Yup.string().required("Module is required field "),
-    
-    
-
+  sub_region: Yup.string().required("Area is required"),
+  primary_contact: Yup.string()
+    .required("Primary contact is required")
+    .matches(/^[0-9]+$/, "Primary contact must contain only numbers")
+    .min(10, "Primary contact must be at least 10 digits")
+    .max(13, "Primary contact must not exceed 13 digits"),
+  toll_free_no: Yup.string()
+    .required("Toll free number is required")
+    .matches(/^[0-9]+$/, "Toll free number must contain only numbers")
+    .min(10, "Toll free number must be at least 10 digits")
+    .max(13, "Toll free number must not exceed 13 digits"),
+  module_access: Yup.string().required("Module is required field"),
 });
-
 
 // 🔹 Step-wise schemas
 const stepSchemas = [
-Yup.object({
-  company_name: Yup.string().required("Company name is required"),
-  company_code: Yup.string().required("Company code is required"),
-  company_type: Yup.string().required("Company type is required"),
-  website: Yup.string()
-    .url("Invalid website URL")
-    .required("Company website is required"),
-  company_logo: Yup.string().required("Company Logo is required"),
-}),
+  Yup.object({
+    company_name: Yup.string().required("Company name is required"),
+    company_code: Yup.string().required("Company code is required"),
+    company_type: Yup.string().required("Company type is required"),
+    website: Yup.string()
+      .url("Invalid website URL")
+      .required("Company website is required"),
+    company_logo: Yup.string().required("Company Logo is required"),
+  }),
 
   Yup.object({
-    primary_contact: Yup.string().required("Primary contact is required").min(10).max(13),
+    primary_contact: Yup.string()
+      .required("Primary contact is required")
+      .matches(/^[0-9]+$/, "Primary contact must contain only numbers")
+      .min(10, "Primary contact must be at least 10 digits")
+      .max(13, "Primary contact must not exceed 13 digits"),
     primary_code: Yup.string(),
-    toll_free_no: Yup.string().required("Toll free number is required"),
+    toll_free_no: Yup.string()
+      .required("Toll free number is required")
+      .matches(/^[0-9]+$/, "Toll free number must contain only numbers")
+      .min(10, "Toll free number must be at least 10 digits")
+      .max(13, "Toll free number must not exceed 13 digits"),
     toll_free_code: Yup.string(),
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
+
   Yup.object({
     region: Yup.string().required("Region is required"),
-    sub_region: Yup.string().required("Sub Region is required"),
+    sub_region: Yup.string().required("Area is required"),
     district: Yup.string().required("District is required"),
     town: Yup.string().required("Town is required"),
     street: Yup.string().required("Street is required"),
     landmark: Yup.string().required("Landmark is required"),
     country_id: Yup.string().required("Country is required"),
   }),
- 
-Yup.object({
-  selling_currency: Yup.string()
-    .trim()
-    .required("Please select a selling currency"),
-  purchase_currency: Yup.string()
-    .trim()
-    .required("Please select a purchase currency"),
-vat: Yup.string()
-  .required("VAT Number is a required field")
-  .max(15, "VAT Number cannot be more than 15 characters"), 
-}),
+
+  Yup.object({
+    selling_currency: Yup.string()
+      .trim()
+      .required("Please select a selling currency"),
+    purchase_currency: Yup.string()
+      .trim()
+      .required("Please select a purchase currency"),
+    vat: Yup.string()
+      .required("VAT Number is a required field")
+      .max(15, "VAT Number cannot be more than 15 characters"),
+  }),
 
   Yup.object({
     module_access: Yup.string(),
@@ -189,7 +201,6 @@ export default function AddEditCompany() {
             status: res.data.status || "1",
           });
         }
-
       })();
     } else if ((params?.id === "add" || !params?.id) && !codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
@@ -202,7 +213,6 @@ export default function AddEditCompany() {
           if (res?.prefix) {
             setPrefix(res.prefix);
           } else if (res?.code) {
-            // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
             const match = res.prefix;
             if (match) setPrefix(prefix);
           }
@@ -258,6 +268,12 @@ export default function AddEditCompany() {
     }
   };
 
+  // 🔹 Helper function to allow only numeric input
+  const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string, setFieldValue: any) => {
+    const value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+    setFieldValue(fieldName, value);
+  };
+
   const renderStepContent = (
     values: CompanyFormValues,
     setFieldValue: (
@@ -273,7 +289,6 @@ export default function AddEditCompany() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
               <div className="flex items-start gap-2 max-w-[406px]">
                 <InputFields
                   label="Company Code"
@@ -286,7 +301,7 @@ export default function AddEditCompany() {
                   <>
                     <IconButton
                       bgClass="white"
-                       className="  cursor-pointer text-[#252B37] pt-12"
+                      className="cursor-pointer text-[#252B37] pt-12"
                       icon="mi:settings"
                       onClick={() => setIsOpen(true)}
                     />
@@ -322,324 +337,322 @@ export default function AddEditCompany() {
                 )}
               </div>
 
-             <div>
-              <InputFields
-                required
-                label="Company Type"
-                name="company_type"
-                value={values.company_type}
-                onChange={(e) => setFieldValue("company_type", e.target.value)}
-                options={[
-                  { value: "manufacturing", label: "Manufacturing" },
-                  { value: "trading", label: "Trading" },
-                ]}
-                error={touched.company_type && errors.company_type}
-              />
-              {errors.company_type && (
-                <p className="text-red-500 text-sm mt-1">{errors.company_type}</p>
-              )}
-            </div>
+              <div>
+                <InputFields
+                  required
+                  label="Company Type"
+                  name="company_type"
+                  value={values.company_type}
+                  onChange={(e) => setFieldValue("company_type", e.target.value)}
+                  options={[
+                    { value: "manufacturing", label: "Manufacturing" },
+                    { value: "trading", label: "Trading" },
+                  ]}
+                  error={touched.company_type && errors.company_type}
+                />
+                {errors.company_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.company_type}</p>
+                )}
+              </div>
 
-            <div>
-              <InputFields
-                required
-                label="Website"
-                name="website"
-                value={values.website}
-                onChange={(e) => setFieldValue("website", e.target.value)}
-                error={touched.website && errors.website}
-              />
-              {errors.website && (
-                <p className="text-red-500 text-sm mt-1">{errors.website}</p>
-              )}
+              <div>
+                <InputFields
+                  required
+                  label="Website"
+                  name="website"
+                  value={values.website}
+                  onChange={(e) => setFieldValue("website", e.target.value)}
+                  error={touched.website && errors.website}
+                />
+                {errors.website && (
+                  <p className="text-red-500 text-sm mt-1">{errors.website}</p>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  label="Logo"
+                  name="company_logo"
+                  type="file"
+                  value={values.company_logo}
+                  onChange={(e) => setFieldValue("company_logo", e.target.value)}
+                  error={touched.company_logo && errors.company_logo}
+                />
+                {errors.company_logo && (
+                  <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
+                )}
+              </div>
             </div>
-          <div>
-              <InputFields
-                label="Logo"
-                name="company_logo"
-                type="file"
-                value={values.company_logo}
-                onChange={(e) => setFieldValue("company_logo", e.target.value)}
-                error={touched.company_logo && errors.company_logo}
-              />
-                 {errors.company_logo && (
-                <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
-              )}
-               </div>
-              
-          </div>
-        </ContainerCard>
-      );
+          </ContainerCard>
+        );
 
-    case 2:
-      return (
-        <ContainerCard>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            <div>
-              <FormInputField
-                required
-                type="contact"
-                label="Primary Contact"
-                contact={values.primary_contact}
-                code={values.primary_code}
-                onContactChange={(e) => setFieldValue("primary_contact", e.target.value)}
-                onCodeChange={(e) => setFieldValue("primary_code", e.target.value)}
-                options={onlyCountryOptions}
-                error={touched.primary_contact && errors.primary_contact}
-              />
-              {errors.primary_contact && (
-                <p className="text-red-500 text-sm mt-1">{errors.primary_contact}</p>
-              )}
+      case 2:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div>
+                <FormInputField
+                  required
+                  type="contact"
+                  label="Primary Contact"
+                  contact={values.primary_contact}
+                  code={values.primary_code}
+                  onContactChange={(e) => handleNumericInput(e, "primary_contact", setFieldValue)}
+                  onCodeChange={(e) => setFieldValue("primary_code", e.target.value)}
+                  options={onlyCountryOptions}
+                  error={touched.primary_contact && errors.primary_contact}
+                />
+                {errors.primary_contact && (
+                  <p className="text-red-500 text-sm mt-1">{errors.primary_contact}</p>
+                )}
+              </div>
+
+              <div>
+                <FormInputField
+                  required
+                  type="contact"
+                  label="Toll Free Number"
+                  contact={values.toll_free_no}
+                  code={values.toll_free_code}
+                  onContactChange={(e) => handleNumericInput(e, "toll_free_no", setFieldValue)}
+                  onCodeChange={(e) => setFieldValue("toll_free_code", e.target.value)}
+                  options={onlyCountryOptions}
+                  error={touched.toll_free_no && errors.toll_free_no}
+                />
+                {errors.toll_free_no && (
+                  <p className="text-red-500 text-sm mt-1">{errors.toll_free_no}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Email"
+                  name="email"
+                  value={values.email}
+                  onChange={(e) => setFieldValue("email", e.target.value)}
+                  error={touched.email && errors.email}
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
             </div>
+          </ContainerCard>
+        );
 
-            <div>
-              <FormInputField
-                required
-                type="contact"
-                label="Toll Free Number"
-                contact={values.toll_free_no}
-                code={values.toll_free_code}
-                onContactChange={(e) => setFieldValue("toll_free_no", e.target.value)}
-                onCodeChange={(e) => setFieldValue("toll_free_code", e.target.value)}
-                options={onlyCountryOptions}
-                error={touched.toll_free_no && errors.toll_free_no}
-              />
-              {errors.toll_free_no && (
-                <p className="text-red-500 text-sm mt-1">{errors.toll_free_no}</p>
-              )}
+      case 3:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  required
+                  label="Region"
+                  name="region"
+                  value={String(values.region)}
+                  options={regionOptions}
+                  onChange={(e) => setFieldValue("region", e.target.value)}
+                  error={touched.region && errors.region}
+                />
+                {errors.region && (
+                  <p className="text-red-500 text-sm mt-1">{errors.region}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Area"
+                  name="sub_region"
+                  value={String(values.sub_region)}
+                  options={areaOptions}
+                  onChange={(e) => setFieldValue("sub_region", e.target.value)}
+                  error={touched.sub_region && errors.sub_region}
+                />
+                {errors.sub_region && (
+                  <p className="text-red-500 text-sm mt-1">{errors.sub_region}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="District"
+                  name="district"
+                  value={values.district}
+                  onChange={(e) => setFieldValue("district", e.target.value)}
+                  error={touched.district && errors.district}
+                />
+                {errors.district && (
+                  <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Town"
+                  name="town"
+                  value={values.town}
+                  onChange={(e) => setFieldValue("town", e.target.value)}
+                  error={touched.town && errors.town}
+                />
+                {errors.town && (
+                  <p className="text-red-500 text-sm mt-1">{errors.town}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Street"
+                  name="street"
+                  value={values.street}
+                  onChange={(e) => setFieldValue("street", e.target.value)}
+                  error={touched.street && errors.street}
+                />
+                {errors.street && (
+                  <p className="text-red-500 text-sm mt-1">{errors.street}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  label="Landmark"
+                  name="landmark"
+                  value={values.landmark}
+                  onChange={(e) => setFieldValue("landmark", e.target.value)}
+                  error={touched.landmark && errors.landmark}
+                />
+                {errors.landmark && (
+                  <p className="text-red-500 text-sm mt-1">{errors.landmark}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Country"
+                  name="country_id"
+                  value={values.country_id ? values.country_id.toString() : ""}
+                  options={onlyCountryOptions}
+                  onChange={(e) => setFieldValue("country_id", e.target.value)}
+                  error={touched.country_id && errors.country_id}
+                />
+                {errors.country_id && (
+                  <p className="text-red-500 text-sm mt-1">{errors.country_id}</p>
+                )}
+              </div>
             </div>
+          </ContainerCard>
+        );
 
-            <div>
-              <InputFields
-                required
-                label="Email"
-                name="email"
-                value={values.email}
-                onChange={(e) => setFieldValue("email", e.target.value)}
-                error={touched.email && errors.email}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
+      case 4:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  required
+                  label="Selling Currency"
+                  name="selling_currency"
+                  value={values.selling_currency}
+                  options={countryCurrency}
+                  onChange={(e) => setFieldValue("selling_currency", e.target.value)}
+                  error={touched.selling_currency && errors.selling_currency}
+                />
+                {errors.selling_currency && (
+                  <p className="text-red-500 text-sm mt-1">{errors.selling_currency}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Purchase Currency"
+                  name="purchase_currency"
+                  value={values.purchase_currency}
+                  options={countryCurrency}
+                  onChange={(e) => setFieldValue("purchase_currency", e.target.value)}
+                  error={touched.purchase_currency && errors.purchase_currency}
+                />
+                {errors.purchase_currency && (
+                  <p className="text-red-500 text-sm mt-1">{errors.purchase_currency}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  label="VAT Number"
+                  name="vat"
+                  value={values.vat}
+                  onChange={(e) => setFieldValue("vat", e.target.value)}
+                  error={touched.vat && errors.vat}
+                />
+                {errors.vat && (
+                  <p className="text-red-500 text-sm mt-1">{errors.vat}</p>
+                )}
+              </div>
             </div>
-          </div>
-        </ContainerCard>
-      );
+          </ContainerCard>
+        );
 
-    case 3:
-      return (
-        <ContainerCard>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <InputFields
-                required
-                label="Region"
-                name="region"
-                value={String(values.region)}
-                options={regionOptions}
-                onChange={(e) => setFieldValue("region", e.target.value)}
-                error={touched.region && errors.region}
-              />
-              {errors.region && (
-                <p className="text-red-500 text-sm mt-1">{errors.region}</p>
-              )}
+      case 5:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  label="Module"
+                  name="module_access"
+                  value={values.module_access}
+                  onChange={(e) => setFieldValue("module_access", e.target.value)}
+                  error={touched.module_access && errors.module_access}
+                />
+                {errors.module_access && (
+                  <p className="text-red-500 text-sm mt-1">{errors.module_access}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Service Type"
+                  name="service_type"
+                  value={values.service_type}
+                  onChange={(e) => setFieldValue("service_type", e.target.value)}
+                  options={[
+                    { value: "branch", label: "Branch" },
+                    { value: "warehouse", label: "Warehouse" },
+                  ]}
+                  error={touched.service_type && errors.service_type}
+                />
+                {errors.service_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.service_type}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Status"
+                  name="status"
+                  type="radio"
+                  value={values.status}
+                  onChange={(e) => setFieldValue("status", e.target.value)}
+                  options={[
+                    { value: "1", label: "Active" },
+                    { value: "0", label: "Inactive" },
+                  ]}
+                  error={touched.status && errors.status}
+                />
+                {errors.status && (
+                  <p className="text-red-500 text-sm mt-1">{errors.status}</p>
+                )}
+              </div>
             </div>
-
-            <div>
-              <InputFields
-                required
-                label="Sub Region"
-                name="sub_region"
-                value={String(values.sub_region)}
-                options={areaOptions}
-                onChange={(e) => setFieldValue("sub_region", e.target.value)}
-                error={touched.sub_region && errors.sub_region}
-              />
-              {errors.sub_region && (
-                <p className="text-red-500 text-sm mt-1">{errors.sub_region}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="District"
-                name="district"
-                value={values.district}
-                onChange={(e) => setFieldValue("district", e.target.value)}
-                error={touched.district && errors.district}
-              />
-              {errors.district && (
-                <p className="text-red-500 text-sm mt-1">{errors.district}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Town"
-                name="town"
-                value={values.town}
-                onChange={(e) => setFieldValue("town", e.target.value)}
-                error={touched.town && errors.town}
-              />
-              {errors.town && (
-                <p className="text-red-500 text-sm mt-1">{errors.town}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Street"
-                name="street"
-                value={values.street}
-                onChange={(e) => setFieldValue("street", e.target.value)}
-                error={touched.street && errors.street}
-              />
-              {errors.street && (
-                <p className="text-red-500 text-sm mt-1">{errors.street}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                label="Landmark"
-                name="landmark"
-                value={values.landmark}
-                onChange={(e) => setFieldValue("landmark", e.target.value)}
-                error={touched.landmark && errors.landmark}
-              />
-              {errors.landmark && (
-                <p className="text-red-500 text-sm mt-1">{errors.landmark}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Country"
-                name="country_id"
-                value={values.country_id ? values.country_id.toString() : ""}
-                options={onlyCountryOptions}
-                onChange={(e) => setFieldValue("country_id", e.target.value)}
-                error={touched.country_id && errors.country_id}
-              />
-              {errors.country_id && (
-                <p className="text-red-500 text-sm mt-1">{errors.country_id}</p>
-              )}
-            </div>
-
-          </div>
-        </ContainerCard>
-      );
-
-    case 4:
-      return (
-        <ContainerCard>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <InputFields
-                required
-                label="Selling Currency"
-                name="selling_currency"
-                value={values.selling_currency}
-                options={countryCurrency}
-                onChange={(e) => setFieldValue("selling_currency", e.target.value)}
-                error={touched.selling_currency && errors.selling_currency}
-              />
-              {errors.selling_currency && (
-                <p className="text-red-500 text-sm mt-1">{errors.selling_currency}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Purchase Currency"
-                name="purchase_currency"
-                value={values.purchase_currency}
-                options={countryCurrency}
-                onChange={(e) => setFieldValue("purchase_currency", e.target.value)}
-                error={touched.purchase_currency && errors.purchase_currency}
-              />
-              {errors.purchase_currency && (
-                <p className="text-red-500 text-sm mt-1">{errors.purchase_currency}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                label="VAT Number"
-                name="vat"
-                value={values.vat}
-                onChange={(e) => setFieldValue("vat", e.target.value)}
-                error={touched.vat && errors.vat}
-              />
-              {errors.vat && (
-                <p className="text-red-500 text-sm mt-1">{errors.vat}</p>
-              )}
-            </div>
-          </div>
-        </ContainerCard>
-      );
-
-    case 5:
-      return (
-        <ContainerCard>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <InputFields
-                label="Module"
-                name="module_access"
-                value={values.module_access}
-                onChange={(e) => setFieldValue("module_access", e.target.value)}
-                error={touched.module_access && errors.module_access}
-              />
-              {errors.module_access && (
-                <p className="text-red-500 text-sm mt-1">{errors.module_access}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Service Type"
-                name="service_type"
-                value={values.service_type}
-                onChange={(e) => setFieldValue("service_type", e.target.value)}
-                options={[
-                  { value: "branch", label: "Branch" },
-                  { value: "warehouse", label: "Warehouse" },
-                ]}
-                error={touched.service_type && errors.service_type}
-              />
-              {errors.service_type && (
-                <p className="text-red-500 text-sm mt-1">{errors.service_type}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Status"
-                name="status"
-                type="radio"
-                value={values.status}
-                onChange={(e) => setFieldValue("status", e.target.value)}
-                options={[
-                  { value: "1", label: "Active" },
-                  { value: "0", label: "Inactive" },
-                ]}
-                error={touched.status && errors.status}
-              />
-              {errors.status && (
-                <p className="text-red-500 text-sm mt-1">{errors.status}</p>
-              )}
-            </div>
-          </div>
-        </ContainerCard>
-      );
+          </ContainerCard>
+        );
       default:
         return null;
     }
@@ -671,7 +684,6 @@ export default function AddEditCompany() {
 
               await schema.validate(values, { abortEarly: false });
 
-              // ✅ Mark current step as completed
               markStepCompleted(currentStep);
               nextStep();
             } catch (err: unknown) {
@@ -694,7 +706,7 @@ export default function AddEditCompany() {
                 currentStep={currentStep}
                 onStepClick={() => { }}
                 onBack={prevStep}
-                onNext={handleNextStep} // ✅ step-wise validation
+                onNext={handleNextStep}
                 onSubmit={() => formikSubmit()}
                 showSubmitButton={isLastStep}
                 showNextButton={!isLastStep}

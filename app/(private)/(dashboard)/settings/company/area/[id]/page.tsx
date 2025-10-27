@@ -17,8 +17,8 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 
 // ✅ Yup Schema
 const SubRegionSchema = Yup.object().shape({
-  area_code: Yup.string().required("SubRegion Code is required."),
-  area_name: Yup.string().required("SubRegion Name is required."),
+  area_code: Yup.string().required("Area Code is required."),
+  area_name: Yup.string().required("Area Name is required."),
   status: Yup.string().required("Status is required."),
   region_id: Yup.string().required("Please select a region."),
 });
@@ -66,7 +66,7 @@ export default function AddEditSubRegion() {
             });
           }
         } catch (error) {
-          console.error("Failed to fetch SubRegion", error);
+          console.error("Failed to fetch Area", error);
         } finally {
           setLoading(false);
         }
@@ -116,8 +116,8 @@ export default function AddEditSubRegion() {
       showSnackbar(
         res.message ||
           (isEditMode
-            ? "SubRegion Updated Successfully"
-            : "SubRegion Created Successfully"),
+            ? "Area Updated Successfully"
+            : "Area Created Successfully"),
         "success"
       );
       router.push("/settings/company/subRegion");
@@ -137,11 +137,11 @@ export default function AddEditSubRegion() {
     <div className="w-full h-full overflow-x-hidden p-4">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/settings/company/subRegion">
+          <Link href="/settings/company/area">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Edit SubRegion" : "Add New SubRegion"}
+            {isEditMode ? "Edit Area" : "Add New Area"}
           </h1>
         </div>
       </div>
@@ -158,16 +158,16 @@ export default function AddEditSubRegion() {
             <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
               <div className="p-6">
                 <h2 className="text-lg font-medium text-gray-800 mb-4">
-                  SubRegion Details
+                  Area Details
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* SubRegion Code */}
+                  {/* Area Code */}
                   <div className="flex items-start gap-2 max-w-[406px]">
                     <div className="w-full">
                       <InputFields
                         required
-                        label="SubRegion Code"
+                        label="Area Code"
                         value={values.area_code}
                         onChange={(e) => setFieldValue("area_code", e.target.value)}
                         disabled={codeMode === 'auto'}
@@ -190,7 +190,7 @@ export default function AddEditSubRegion() {
                         <SettingPopUp
                           isOpen={isOpen}
                           onClose={() => setIsOpen(false)}
-                          title="SubRegion Code"
+                          title="Area Code"
                           prefix={prefix}
                           setPrefix={setPrefix}
                           onSave={(mode, code) => {
@@ -206,11 +206,11 @@ export default function AddEditSubRegion() {
                     )}
                   </div>
 
-                  {/* SubRegion Name */}
+                  {/* Area Name */}
                   <div>
                     <InputFields
                       required
-                      label="SubRegion Name"
+                      label="Area Name"
                       value={values.area_name}
                       onChange={(e) =>
                         setFieldValue("area_name", e.target.value)

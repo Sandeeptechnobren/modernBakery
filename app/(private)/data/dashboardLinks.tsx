@@ -233,6 +233,13 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",
                     },
+                    {
+                        isActive: false,
+                        href: "/merchandiser/stockinstore",
+                        label: "Stock in Store",
+                        leadingIcon: "mdi:map",
+                        iconColor: "text-yellow-400",
+                    },
                     // {
                     //     isActive: false,
                     //     href: "dashboard/merchandiser/complaintFeedback",

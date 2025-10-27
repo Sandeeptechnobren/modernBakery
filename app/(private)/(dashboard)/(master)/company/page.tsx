@@ -85,7 +85,7 @@ const columns = [
     } },
     {
         key: 'subregion_name',
-        label: 'Sub Region',
+        label: 'Area',
         render: (row: TableDataType) => {
                 const warehouseObj = typeof row.sub_region === "string"
                     ? JSON.parse(row.sub_region)

@@ -221,8 +221,8 @@ export const initialLinkData: SidebarDataType[] = [
             },
             {
                         isActive: false,
-                        href: "/settings/company/subRegion",
-                        label: "Sub Region",
+                        href: "/settings/company/area",
+                        label: "Area",
                         leadingIcon: "tabler:building-warehouse",
                         iconColor: "text-violet-500",
                     },

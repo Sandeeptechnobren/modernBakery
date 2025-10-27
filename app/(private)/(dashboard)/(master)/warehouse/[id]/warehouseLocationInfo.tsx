@@ -3,47 +3,42 @@
 import InputFields from "@/app/components/inputFields";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import React, { useEffect, useState } from "react";
+
 type Props = {
   values: Record<string, string>;
   errors?: Record<string, string>;
   touched?: Record<string, boolean>;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   setFieldValue: (field: string, value: string) => void;
+  setTouched?: (fields: Record<string, boolean>) => void; // Accept setTouched from Formik
 };
-export default function WarehouseLocationInfo({ values, errors, touched, handleChange, setFieldValue }: Props) {
-   const [skeleton, setSkeleton] = useState({
-              region_id: false,
-              area_id: false,
-          });
-  const { regionOptions, loading, areaOptions,fetchAreaOptions } = useAllDropdownListData();
 
-  const prevRegionRef = React.useRef<string | undefined>(undefined);
+export default function WarehouseLocationInfo({
+  values,
+  errors,
+  touched,
+  handleChange,
+  setFieldValue,
+  setTouched,
+}: Props) {
+  const { regionOptions, areaOptions, loading, fetchAreaOptions } = useAllDropdownListData();
 
+  // Touched tracking for dropdowns
   useEffect(() => {
-    const prev = prevRegionRef.current;
-    if (prev !== values.region_id) {
-      if (prev !== undefined) {
-        setFieldValue("area_id", "");
-      }
-      if (values.region_id) {
-        fetchAreaOptions(values.region_id);
-      }
-    } else {
-      if (values.region_id && (!areaOptions)) {
-        fetchAreaOptions(values.region_id);
-      }
+    if (setTouched) {
+      if (!values.region_id) setTouched({ region_id: true });
+      if (!values.area_id) setTouched({ area_id: true });
     }
+  }, [values.region_id, values.area_id, setTouched]);
 
-    prevRegionRef.current = values.region_id;
-  }, [values.region_id, areaOptions?.length, fetchAreaOptions, setFieldValue]);
-
-  // Keep localAreaOptions in sync with context areaOptions
+  // Fetch area options on region change
+  useEffect(() => {
+    if (values.region_id) fetchAreaOptions(values.region_id);
+  }, [values.region_id, fetchAreaOptions]);
 
   return (
     <>
-      {/* Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Row 1 */}
         <div>
           <InputFields
             required
@@ -52,11 +47,11 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             value={values.location}
             onChange={handleChange}
             options={[
-              { value: 'Urban', label: 'Urban' },
-              { value: 'Suburban', label: 'Suburban' },
-              { value: 'Rural', label: 'Rural' },
+              { value: "Urban", label: "Urban" },
+              { value: "Suburban", label: "Suburban" },
+              { value: "Rural", label: "Rural" },
             ]}
-            error={errors?.location && touched?.location ? errors.location : false}
+            error={errors?.location && touched?.location ? errors.location : undefined}
           />
           {errors?.location && touched?.location && (
             <span className="text-xs text-red-500 mt-1">{errors.location}</span>
@@ -69,7 +64,7 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             name="city"
             value={values.city}
             onChange={handleChange}
-            error={errors?.city && touched?.city ? errors.city : false}
+            error={errors?.city && touched?.city ? errors.city : undefined}
           />
           {errors?.city && touched?.city && (
             <span className="text-xs text-red-500 mt-1">{errors.city}</span>
@@ -80,12 +75,13 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             required
             label="Region"
             name="region_id"
-            disabled={true}
-            showSkeleton={skeleton.region_id}
+            disabled={loading || !regionOptions?.length}
+            showSkeleton={loading}
             value={values.region_id}
             onChange={handleChange}
+            onBlur={() => setTouched && setTouched({ region_id: true })}
             options={regionOptions}
-            error={errors?.region_id && touched?.region_id ? errors.region_id : false}
+            error={errors?.region_id && touched?.region_id ? errors.region_id : undefined}
           />
           {errors?.region_id && touched?.region_id && (
             <span className="text-xs text-red-500 mt-1">{errors.region_id}</span>
@@ -95,27 +91,27 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
           <InputFields
             required
             label="Area"
-            disabled={true}
-            showSkeleton={skeleton.area_id}
             name="area_id"
-            
+            disabled={loading || !areaOptions?.length}
+            showSkeleton={loading}
             value={values.area_id}
             onChange={handleChange}
+            onBlur={() => setTouched && setTouched({ area_id: true })}
             options={areaOptions}
-            error={errors?.area_id && touched?.area_id ? errors.area_id : false}
+            error={errors?.area_id && touched?.area_id ? errors.area_id : undefined}
           />
           {errors?.area_id && touched?.area_id && (
             <span className="text-xs text-red-500 mt-1">{errors.area_id}</span>
           )}
         </div>
-        
+        {/* ...rest fields unchanged */}
         <div>
           <InputFields
             label="Town/Village"
             name="town_village"
             value={values.town_village}
             onChange={handleChange}
-            error={errors?.town_village && touched?.town_village ? errors.town_village : false}
+            error={errors?.town_village && touched?.town_village ? errors.town_village : undefined}
           />
           {errors?.town_village && touched?.town_village && (
             <span className="text-xs text-red-500 mt-1">{errors.town_village}</span>
@@ -127,7 +123,7 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             name="street"
             value={values.street}
             onChange={handleChange}
-            error={errors?.street && touched?.street ? errors.street : false}
+            error={errors?.street && touched?.street ? errors.street : undefined}
           />
           {errors?.street && touched?.street && (
             <span className="text-xs text-red-500 mt-1">{errors.street}</span>
@@ -139,40 +135,40 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             name="landmark"
             value={values.landmark}
             onChange={handleChange}
-            error={errors?.landmark && touched?.landmark ? errors.landmark : false}
+            error={errors?.landmark && touched?.landmark ? errors.landmark : undefined}
           />
           {errors?.landmark && touched?.landmark && (
             <span className="text-xs text-red-500 mt-1">{errors.landmark}</span>
           )}
         </div>
         <div>
-                        <InputFields
-                            required
-                            label="Latitude"
-                            type="number"
-                            name="latitude"
-                            value={values.latitude}
-                            onChange={handleChange}
-                            error={errors?.latitude && touched?.latitude ? errors.latitude : false}
-                        />
-                        {errors?.latitude && touched?.latitude && (
-                            <span className="text-xs text-red-500 mt-1">{errors.latitude}</span>
-                        )}
-                    </div>
-                    <div>
-                        <InputFields
-                            required
-                            label="Longitude"
-                            name="longitude"
-                            type="number"
-                            value={values.longitude}
-                            onChange={handleChange}
-                            error={errors?.longitude && touched?.longitude ? errors.longitude : false}
-                        />
-                        {errors?.longitude && touched?.longitude && (
-                            <span className="text-xs text-red-500 mt-1">{errors.longitude}</span>
-                        )}
-                    </div>
+          <InputFields
+            required
+            label="Latitude"
+            type="number"
+            name="latitude"
+            value={values.latitude}
+            onChange={handleChange}
+            error={errors?.latitude && touched?.latitude ? errors.latitude : undefined}
+          />
+          {errors?.latitude && touched?.latitude && (
+            <span className="text-xs text-red-500 mt-1">{errors.latitude}</span>
+          )}
+        </div>
+        <div>
+          <InputFields
+            required
+            label="Longitude"
+            name="longitude"
+            type="number"
+            value={values.longitude}
+            onChange={handleChange}
+            error={errors?.longitude && touched?.longitude ? errors.longitude : undefined}
+          />
+          {errors?.longitude && touched?.longitude && (
+            <span className="text-xs text-red-500 mt-1">{errors.longitude}</span>
+          )}
+        </div>
       </div>
     </>
   );
