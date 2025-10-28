@@ -93,6 +93,7 @@ interface DropdownDataContextType {
   fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
   fetchAreaOptions: (region_id: string | number) => Promise<void>;
   fetchRouteOptions: (warehouse_id: string | number) => Promise<void>;
+  fetchRegionOptions: (company_id: string | number) => Promise<void>;
   labelOptions: { value: string; label: string }[];
   loading: boolean;
 }
@@ -516,6 +517,27 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   };
 
+  const fetchRegionOptions = async (company_id: string | number) => {
+    setLoading(false);
+    try {
+      // call regionList with company_id
+      const res = await regionList({ company_id: String(company_id) });
+      const normalize = (r: unknown): RegionItem[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as RegionItem[];
+        }
+        if (Array.isArray(r)) return r as RegionItem[];
+        return [];
+      };
+      setRegionListData(normalize(res));
+    } catch (error) {
+      setRegionListData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchItemSubCategoryOptions = async (category_id: string | number) => {
     setLoading(false);
     try {
@@ -683,6 +705,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         menuList: menuList,
         labels: labels,
         fetchItemSubCategoryOptions,
+  fetchRegionOptions,
         companyOptions,
         countryOptions,
         onlyCountryOptions,

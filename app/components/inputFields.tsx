@@ -228,7 +228,7 @@ useEffect(() => {
 
 
   return (
-    <div className={`flex flex-col gap-2 w-full ${width} ${showSkeleton && "animate-pulse"}`}>
+    <div className={`flex flex-col gap-2 w-full ${width} ${showSkeleton && "animate-pulse"} min-w-0`}>
       <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
@@ -271,7 +271,7 @@ useEffect(() => {
             onMouseDown={() => { pointerDownRef.current = true; }}
             onMouseUp={() => { pointerDownRef.current = false; }}
             onFocus={() => { if (!pointerDownRef.current && !disabled) setDropdownOpen(true); }}
-            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
+            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
             onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
           >
             {isSearchable ? (
@@ -417,7 +417,7 @@ useEffect(() => {
             onMouseDown={() => { pointerDownRef.current = true; }}
             onMouseUp={() => { pointerDownRef.current = false; }}
             onFocus={() => { if (!pointerDownRef.current && !disabled) setDropdownOpen(true); }}
-            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
+            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
             onClick={() => { if (!loading && !isSearchable && !disabled) setDropdownOpen(v => !v); }}
           >
             {isSearchable ? (

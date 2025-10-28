@@ -74,13 +74,13 @@ export default function Pricing() {
     const fetchCountries = useCallback(
         async (
             page: number = 1,
-            pageSize: number = 5
+            pageSize: number = 50
         ): Promise<listReturnType> => {
             try {
               setLoading(true);
                 const listRes = await promotionHeaderList({
                     // limit: pageSize.toString(),
-                    page: page.toString(),
+                    limit: pageSize.toString(),
                 });
                 setLoading(false);
                 return {
@@ -217,14 +217,15 @@ export default function Pricing() {
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (row: object) => {
-                                    const r = row as TableDataType;
-                                    // Always open edit page, not add page
-                                    router.push(`/promotion/${r.id}`);
+                                    const r = row as TableDataType & { uuid?: string };
+                                    // Always open the edit page (use uuid if present, fallback to id)
+                                    const targetId = String(r.uuid ?? (r as any).id ?? "");
+                                    if (!targetId) return;
+                                    router.push(`/promotion/${encodeURIComponent(targetId)}`);
                                 },
                             },
-                            
                         ],
-                        pageSize: 10,
+                        pageSize: 50,
                     }}
                 />
             </div>
