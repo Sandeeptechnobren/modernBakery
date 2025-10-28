@@ -59,6 +59,9 @@ export default function WarehouseContactDetails({
           value={`${values.warehouse_manager_contact ?? ""}`}
           onChange={handleChange}
         />
+         {errors?.warehouse_manager_contact && touched?.warehouse_manager_contact && (
+           <span className="text-xs text-red-500 mt-1">{errors.warehouse_manager_contact}</span>
+         )}
       </div>
 
        <div>
@@ -69,9 +72,9 @@ export default function WarehouseContactDetails({
            onChange={handleChange}
            error={errors?.owner_email && touched?.owner_email ? errors.owner_email : false}
          />
-         {errors?.owner_email && touched?.owner_email && (
-           <span className="text-xs text-red-500 mt-1">{errors.owner_email}</span>
-         )}
+       {errors?.owner_email && touched?.owner_email && (
+                   <div className="text-xs text-red-500 mt-1">{errors.owner_email}</div>
+               )}
        </div>
     </div>
   );

@@ -1,14 +1,29 @@
 "use client";
 
-import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
+import StepperForm, {
+  useStepperForm,
+  StepperStep,
+} from "@/app/components/stepperForm";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import FormInputField from "@/app/components/formInputField";
-import { addCompany, getCompanyById, updateCompany, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import {
+  addCompany,
+  getCompanyById,
+  updateCompany,
+  genearateCode,
+  saveFinalCode,
+} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useParams, useRouter } from "next/navigation";
 import * as Yup from "yup";
-import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
+import {
+  Formik,
+  Form,
+  FormikHelpers,
+  FormikErrors,
+  FormikTouched,
+} from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
@@ -47,18 +62,18 @@ const CompanySchema = Yup.object().shape({
   company_name: Yup.string().required("Company name is required"),
   company_code: Yup.string().required("Company code is required"),
   company_type: Yup.string().required("Company type is required"),
- website: Yup.string()
-  .url("Invalid website URL")
-  .required("Company website is required"),
-    company_logo: Yup.string().required("Company Logo is required"),
+  website: Yup.string()
+    .url("Invalid website URL")
+    .required("Company website is required"),
+  company_logo: Yup.string().required("Company Logo is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
-      region: Yup.string().required("Region is required"),
+  region: Yup.string().required("Region is required"),
   country_id: Yup.string().required("Country is required"),
   selling_currency: Yup.string().required("Selling currency is required"),
   purchase_currency: Yup.string().required("Purchase currency is required"),
-   vat: Yup.string()
-  .required("VAT Number is a required field")
-  .max(15, "VAT Number cannot be more than 15 characters"),
+  vat: Yup.string()
+    .required("VAT Number is a required field")
+    .max(15, "VAT Number cannot be more than 15 characters"),
 
   service_type: Yup.string().required("Service type is required"),
   status: Yup.string().required("Status is required"),
@@ -67,31 +82,61 @@ const CompanySchema = Yup.object().shape({
   street: Yup.string().required("Street is required"),
   landmark: Yup.string().required("Landmark is required"),
   sub_region: Yup.string().required("Sub Region is required"),
+<<<<<<< HEAD
   primary_contact: Yup.string().required("Primary contact is required").min(9).max(10),
   toll_free_no: Yup.string().required("Toll free number is required").min(11).max(11),
     module_access: Yup.string().required("Module is required field "),
     
     
+=======
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
 
+  primary_contact: Yup.string()
+    .required("Primary contact is required")
+    .matches(/^[0-9]+$/, "Only numbers are allowed")
+    .min(9, "Must be at least 9 digits")
+    .max(10, "Must be at most 10 digits"),
+
+  toll_free_no: Yup.string()
+    .required("Toll free number is required")
+    .matches(/^[0-9]+$/, "Only numbers are allowed")
+    .min(10, "Must be at least 10 digits")
+    .max(13, "Must be at most 13 digits"),
+
+  module_access: Yup.string().required("Module is required field "),
 });
-
 
 // 🔹 Step-wise schemas
 const stepSchemas = [
-Yup.object({
-  company_name: Yup.string().required("Company name is required"),
-  company_code: Yup.string().required("Company code is required"),
-  company_type: Yup.string().required("Company type is required"),
-  website: Yup.string()
-    .url("Invalid website URL")
-    .required("Company website is required"),
-  company_logo: Yup.string().required("Company Logo is required"),
-}),
+  Yup.object({
+    company_name: Yup.string().required("Company name is required"),
+    company_code: Yup.string().required("Company code is required"),
+    company_type: Yup.string().required("Company type is required"),
+    website: Yup.string()
+      .url("Invalid website URL")
+      .required("Company website is required"),
+    company_logo: Yup.string().required("Company Logo is required"),
+  }),
 
   Yup.object({
+<<<<<<< HEAD
     primary_contact: Yup.string().required("Primary contact is required").min(9).max(10),
     primary_code: Yup.string(),
     toll_free_no: Yup.string().required("Toll free number is required").min(11).max(11),
+=======
+    primary_contact: Yup.string()
+      .required("Primary contact is required")
+      .matches(/^[0-9]+$/, "Only numbers are allowed")
+      .min(9, "Must be at least 9 digits")
+      .max(10, "Must be at most 10 digits"),
+
+    primary_code: Yup.string(),
+    toll_free_no: Yup.string()
+      .required("Toll free number is required")
+      .matches(/^[0-9]+$/, "Only numbers are allowed")
+      .min(10, "Must be at least 9 digits")
+      .max(13, "Must be at most 10 digits"),
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
     toll_free_code: Yup.string(),
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
@@ -104,18 +149,18 @@ Yup.object({
     landmark: Yup.string().required("Landmark is required"),
     country_id: Yup.string().required("Country is required"),
   }),
- 
-Yup.object({
-  selling_currency: Yup.string()
-    .trim()
-    .required("Please select a selling currency"),
-  purchase_currency: Yup.string()
-    .trim()
-    .required("Please select a purchase currency"),
-vat: Yup.string()
-  .required("VAT Number is a required field")
-  .max(15, "VAT Number cannot be more than 15 characters"), 
-}),
+
+  Yup.object({
+    selling_currency: Yup.string()
+      .trim()
+      .required("Please select a selling currency"),
+    purchase_currency: Yup.string()
+      .trim()
+      .required("Please select a purchase currency"),
+    vat: Yup.string()
+      .required("VAT Number is a required field")
+      .max(15, "VAT Number cannot be more than 15 characters"),
+  }),
 
   Yup.object({
     module_access: Yup.string(),
@@ -126,9 +171,10 @@ vat: Yup.string()
 
 export default function AddEditCompany() {
   const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
-  const [prefix, setPrefix] = useState('');
-  const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency } = useAllDropdownListData();
+  const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
+  const [prefix, setPrefix] = useState("");
+  const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency } =
+    useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
@@ -189,9 +235,11 @@ export default function AddEditCompany() {
             status: res.data.status || "1",
           });
         }
-
       })();
-    } else if ((params?.id === "add" || !params?.id) && !codeGeneratedRef.current) {
+    } else if (
+      (params?.id === "add" || !params?.id) &&
+      !codeGeneratedRef.current
+    ) {
       codeGeneratedRef.current = true;
       (async () => {
         try {
@@ -221,10 +269,19 @@ export default function AddEditCompany() {
     { id: 5, label: "Additional" },
   ];
 
-  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
-    useStepperForm(steps.length);
+  const {
+    currentStep,
+    nextStep,
+    prevStep,
+    markStepCompleted,
+    isStepCompleted,
+    isLastStep,
+  } = useStepperForm(steps.length);
 
-  const handleSubmit = async (values: CompanyFormValues, { setSubmitting }: FormikHelpers<CompanyFormValues>) => {
+  const handleSubmit = async (
+    values: CompanyFormValues,
+    { setSubmitting }: FormikHelpers<CompanyFormValues>
+  ) => {
     try {
       await CompanySchema.validate(values, { abortEarly: false });
 
@@ -243,10 +300,22 @@ export default function AddEditCompany() {
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
-        showSnackbar(isEditMode ? "Company Updated Successfully" : "Company Created Successfully", "success");
+        showSnackbar(
+          isEditMode
+            ? "Company Updated Successfully"
+            : "Company Created Successfully",
+          "success"
+        );
         router.push("/company");
         try {
+<<<<<<< HEAD
           await saveFinalCode({ reserved_code: values.company_code, model_name: "company" });
+=======
+          await saveFinalCode({
+            reserved_code: values.company_code,
+            model_name: "company",
+          });
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
         } catch (e) {
           // Optionally handle error, but don't block success
         }
@@ -273,20 +342,21 @@ export default function AddEditCompany() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
               <div className="flex items-start gap-2 max-w-[406px]">
                 <InputFields
                   label="Company Code"
                   name="company_code"
                   value={values.company_code}
-                  onChange={(e) => setFieldValue("company_code", e.target.value)}
-                  disabled={codeMode === 'auto'}
+                  onChange={(e) =>
+                    setFieldValue("company_code", e.target.value)
+                  }
+                  disabled={codeMode === "auto"}
                 />
                 {!isEditMode && (
                   <>
                     <IconButton
                       bgClass="white"
-                       className="  cursor-pointer text-[#252B37] pt-12"
+                      className="  cursor-pointer text-[#252B37] pt-12"
                       icon="mi:settings"
                       onClick={() => setIsOpen(true)}
                     />
@@ -298,10 +368,10 @@ export default function AddEditCompany() {
                       setPrefix={setPrefix}
                       onSave={(mode, code) => {
                         setCodeMode(mode);
-                        if (mode === 'auto' && code) {
-                          setFieldValue('company_code', code);
-                        } else if (mode === 'manual') {
-                          setFieldValue('company_code', '');
+                        if (mode === "auto" && code) {
+                          setFieldValue("company_code", code);
+                        } else if (mode === "manual") {
+                          setFieldValue("company_code", "");
                         }
                       }}
                     />
@@ -314,332 +384,420 @@ export default function AddEditCompany() {
                   label="Company Name"
                   name="company_name"
                   value={values.company_name}
-                  onChange={(e) => setFieldValue("company_name", e.target.value)}
-                  error={touched.company_name && errors.company_name}
+                  onChange={(e) =>
+                    setFieldValue("company_name", e.target.value)
+                  }
+                  error={
+                    errors?.company_name && touched.company_name
+                      ? errors.company_name
+                      : false
+                  }
                 />
-                {errors.company_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.company_name}</p>
+                {errors?.company_name && touched?.company_name && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.company_name}
+                  </p>
                 )}
               </div>
 
-             <div>
-              <InputFields
-                required
-                label="Company Type"
-                name="company_type"
-                value={values.company_type}
-                onChange={(e) => setFieldValue("company_type", e.target.value)}
-                options={[
-                  { value: "manufacturing", label: "Manufacturing" },
-                  { value: "trading", label: "Trading" },
-                ]}
-                error={touched.company_type && errors.company_type}
-              />
-              {errors.company_type && (
-                <p className="text-red-500 text-sm mt-1">{errors.company_type}</p>
-              )}
-            </div>
+              <div>
+                <InputFields
+                  required
+                  label="Company Type"
+                  name="company_type"
+                  value={values.company_type}
+                  onChange={(e) =>
+                    setFieldValue("company_type", e.target.value)
+                  }
+                  options={[
+                    { value: "manufacturing", label: "Manufacturing" },
+                    { value: "trading", label: "Trading" },
+                  ]}
+                  error={
+                    errors?.company_type && touched.company_type
+                      ? errors.company_type
+                      : false
+                  }
+                />
+                {errors?.company_type && touched?.company_type && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.company_type}
+                  </p>
+                )}
+              </div>
 
-            <div>
-              <InputFields
-                required
-                label="Website"
-                name="website"
-                value={values.website}
-                onChange={(e) => setFieldValue("website", e.target.value)}
-                error={touched.website && errors.website}
-              />
-              {errors.website && (
-                <p className="text-red-500 text-sm mt-1">{errors.website}</p>
-              )}
+              <div>
+                <InputFields
+                  required
+                  label="Website"
+                  name="website"
+                  value={values.website}
+                  onChange={(e) => setFieldValue("website", e.target.value)}
+                  error={
+                    errors?.website && touched.website ? errors.website : false
+                  }
+                />
+                {errors?.website && touched?.website && (
+                  <p className="text-red-500 text-sm mt-1">{errors.website}</p>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  label="Logo"
+                  name="company_logo"
+                  type="file"
+                  value={values.company_logo}
+                  onChange={(e) =>
+                    setFieldValue("company_logo", e.target.value)
+                  }
+                  error={
+                    errors?.website && touched.website ? errors.website : false
+                  }
+                />
+                {errors?.company_logo && touched?.company_logo && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.company_logo}
+                  </p>
+                )}
+              </div>
             </div>
-          <div>
-              <InputFields
-                label="Logo"
-                name="company_logo"
-                type="file"
-                value={values.company_logo}
-                onChange={(e) => setFieldValue("company_logo", e.target.value)}
-                error={touched.company_logo && errors.company_logo}
-              />
-                 {errors.company_logo && (
-                <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
-              )}
-               </div>
-              
-          </div>
-        </ContainerCard>
-      );
+          </ContainerCard>
+        );
 
-    case 2:
-      return (
-        <ContainerCard>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            <div>
-              <FormInputField
-                required
-                type="contact"
-                label="Primary Contact"
-                contact={values.primary_contact}
-                code={values.primary_code}
-                onContactChange={(e) => setFieldValue("primary_contact", e.target.value)}
-                onCodeChange={(e) => setFieldValue("primary_code", e.target.value)}
-                options={onlyCountryOptions}
-                error={touched.primary_contact && errors.primary_contact}
-              />
-              {errors.primary_contact && (
-                <p className="text-red-500 text-sm mt-1">{errors.primary_contact}</p>
-              )}
+      case 2:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div>
+                <FormInputField
+                  required
+                  type="contact"
+                  label="Primary Contact"
+                  contact={values.primary_contact}
+                  code={values.primary_code}
+                  onContactChange={(e) =>
+                    setFieldValue("primary_contact", e.target.value)
+                  }
+                  onCodeChange={(e) =>
+                    setFieldValue("primary_code", e.target.value)
+                  }
+                  options={onlyCountryOptions}
+                  error={
+                    errors?.primary_contact && touched.primary_contact
+                      ? errors.primary_contact
+                      : false
+                  }
+                />
+              </div>
+
+              <div>
+                <FormInputField
+                  required
+                  type="contact"
+                  label="Toll Free Number"
+                  contact={values.toll_free_no}
+                  code={values.toll_free_code}
+                  onContactChange={(e) =>
+                    setFieldValue("toll_free_no", e.target.value)
+                  }
+                  onCodeChange={(e) =>
+                    setFieldValue("toll_free_code", e.target.value)
+                  }
+                  options={onlyCountryOptions}
+                  error={
+                    errors?.toll_free_no && touched?.toll_free_no
+                      ? errors.toll_free_no
+                      : false
+                  }
+                />
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Email"
+                  name="email"
+                  value={values.email}
+                  onChange={(e) => setFieldValue("email", e.target.value)}
+                  error={errors?.email && touched?.email ? errors.email : false}
+                />
+                {errors?.email && touched?.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
             </div>
+          </ContainerCard>
+        );
 
-            <div>
-              <FormInputField
-                required
-                type="contact"
-                label="Toll Free Number"
-                contact={values.toll_free_no}
-                code={values.toll_free_code}
-                onContactChange={(e) => setFieldValue("toll_free_no", e.target.value)}
-                onCodeChange={(e) => setFieldValue("toll_free_code", e.target.value)}
-                options={onlyCountryOptions}
-                error={touched.toll_free_no && errors.toll_free_no}
-              />
-              {errors.toll_free_no && (
-                <p className="text-red-500 text-sm mt-1">{errors.toll_free_no}</p>
-              )}
+      case 3:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  required
+                  label="Region"
+                  name="region"
+                  value={String(values.region)}
+                  options={regionOptions}
+                  onChange={(e) => setFieldValue("region", e.target.value)}
+                  error={
+                    errors?.region && touched.region ? errors.region : false
+                  }
+                />
+                {errors?.region && touched?.region && (
+                  <p className="text-red-500 text-sm mt-1">{errors.region}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Sub Region"
+                  name="sub_region"
+                  value={String(values.sub_region)}
+                  options={areaOptions}
+                  onChange={(e) => setFieldValue("sub_region", e.target.value)}
+                  error={
+                    errors?.sub_region && touched.sub_region
+                      ? errors.sub_region
+                      : false
+                  }
+                />
+                {errors?.sub_region && touched?.sub_region && (
+                  <p className="text-red-500 text-sm mt-1">{errors.region}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="District"
+                  name="district"
+                  value={values.district}
+                  onChange={(e) => setFieldValue("district", e.target.value)}
+                  error={
+                    errors?.district && touched.district
+                      ? errors.district
+                      : false
+                  }
+                />
+                {errors?.district && touched?.district && (
+                  <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Town"
+                  name="town"
+                  value={values.town}
+                  onChange={(e) => setFieldValue("town", e.target.value)}
+                  error={errors?.town && touched.town ? errors.town : false}
+                />
+                {errors?.town && touched?.town && (
+                  <p className="text-red-500 text-sm mt-1">{errors.town}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Street"
+                  name="street"
+                  value={values.street}
+                  onChange={(e) => setFieldValue("street", e.target.value)}
+                  error={
+                    errors?.street && touched.street ? errors.street : false
+                  }
+                />
+                {errors?.street && touched?.street && (
+                  <p className="text-red-500 text-sm mt-1">{errors.street}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  label="Landmark"
+                  name="landmark"
+                  value={values.landmark}
+                  onChange={(e) => setFieldValue("landmark", e.target.value)}
+                  error={
+                    errors?.landmark && touched.landmark
+                      ? errors.landmark
+                      : false
+                  }
+                />
+                {errors?.landmark && touched?.landmark && (
+                  <p className="text-red-500 text-sm mt-1">{errors.landmark}</p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Country"
+                  name="country_id"
+                  value={values.country_id ? values.country_id.toString() : ""}
+                  options={onlyCountryOptions}
+                  onChange={(e) => setFieldValue("country_id", e.target.value)}
+                  error={
+                    errors?.country_id && touched.country_id
+                      ? errors.country_id
+                      : false
+                  }
+                />
+                {errors?.country_id && touched?.country_id && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.country_id}
+                  </p>
+                )}
+              </div>
             </div>
+          </ContainerCard>
+        );
 
-            <div>
-              <InputFields
-                required
-                label="Email"
-                name="email"
-                value={values.email}
-                onChange={(e) => setFieldValue("email", e.target.value)}
-                error={touched.email && errors.email}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
+      case 4:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  required
+                  label="Selling Currency"
+                  name="selling_currency"
+                  value={values.selling_currency}
+                  options={countryCurrency}
+                  onChange={(e) =>
+                    setFieldValue("selling_currency", e.target.value)
+                  }
+                  error={
+                    errors?.selling_currency && touched.selling_currency
+                      ? errors.selling_currency
+                      : false
+                  }
+                />
+                {errors?.selling_currency && touched?.selling_currency && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.selling_currency}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Purchase Currency"
+                  name="purchase_currency"
+                  value={values.purchase_currency}
+                  options={countryCurrency}
+                  onChange={(e) =>
+                    setFieldValue("purchase_currency", e.target.value)
+                  }
+                  error={
+                    errors?.purchase_currency && touched.purchase_currency
+                      ? errors.purchase_currency
+                      : false
+                  }
+                />
+                {errors?.purchase_currency && touched?.purchase_currency && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.purchase_currency}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  label="VAT Number"
+                  name="vat"
+                  value={values.vat}
+                  onChange={(e) => setFieldValue("vat", e.target.value)}
+                  error={errors?.vat && touched.vat ? errors.vat : false}
+                />
+                {errors?.vat && touched?.vat && (
+                  <p className="text-red-500 text-sm mt-1">{errors.vat}</p>
+                )}
+              </div>
             </div>
-          </div>
-        </ContainerCard>
-      );
+          </ContainerCard>
+        );
 
-    case 3:
-      return (
-        <ContainerCard>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <InputFields
-                required
-                label="Region"
-                name="region"
-                value={String(values.region)}
-                options={regionOptions}
-                onChange={(e) => setFieldValue("region", e.target.value)}
-                error={touched.region && errors.region}
-              />
-              {errors.region && (
-                <p className="text-red-500 text-sm mt-1">{errors.region}</p>
-              )}
+      case 5:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  label="Module"
+                  name="module_access"
+                  value={values.module_access}
+                  onChange={(e) =>
+                    setFieldValue("module_access", e.target.value)
+                  }
+                  error={
+                    errors?.module_access && touched?.module_access
+                      ? errors.module_access
+                      : false
+                  }
+                />
+                {errors?.module_access && touched?.module_access && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.module_access}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Service Type"
+                  name="service_type"
+                  value={values.service_type}
+                  onChange={(e) =>
+                    setFieldValue("service_type", e.target.value)
+                  }
+                  options={[
+                    { value: "branch", label: "Branch" },
+                    { value: "warehouse", label: "Warehouse" },
+                  ]}
+                  error={
+                    errors?.service_type && touched?.service_type
+                      ? errors.service_type
+                      : false
+                  }
+                />
+                {errors?.service_type && touched?.service_type && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.service_type}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Status"
+                  name="status"
+                  type="radio"
+                  value={values.status}
+                  onChange={(e) => setFieldValue("status", e.target.value)}
+                  options={[
+                    { value: "1", label: "Active" },
+                    { value: "0", label: "Inactive" },
+                  ]}
+                  error={
+                    errors?.status && touched?.status ? errors.status : false
+                  }
+                />
+                {errors?.status && touched?.status && (
+                  <p className="text-red-500 text-sm mt-1">{errors.status}</p>
+                )}
+              </div>
             </div>
-
-            <div>
-              <InputFields
-                required
-                label="Sub Region"
-                name="sub_region"
-                value={String(values.sub_region)}
-                options={areaOptions}
-                onChange={(e) => setFieldValue("sub_region", e.target.value)}
-                error={touched.sub_region && errors.sub_region}
-              />
-              {errors.sub_region && (
-                <p className="text-red-500 text-sm mt-1">{errors.sub_region}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="District"
-                name="district"
-                value={values.district}
-                onChange={(e) => setFieldValue("district", e.target.value)}
-                error={touched.district && errors.district}
-              />
-              {errors.district && (
-                <p className="text-red-500 text-sm mt-1">{errors.district}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Town"
-                name="town"
-                value={values.town}
-                onChange={(e) => setFieldValue("town", e.target.value)}
-                error={touched.town && errors.town}
-              />
-              {errors.town && (
-                <p className="text-red-500 text-sm mt-1">{errors.town}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Street"
-                name="street"
-                value={values.street}
-                onChange={(e) => setFieldValue("street", e.target.value)}
-                error={touched.street && errors.street}
-              />
-              {errors.street && (
-                <p className="text-red-500 text-sm mt-1">{errors.street}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                label="Landmark"
-                name="landmark"
-                value={values.landmark}
-                onChange={(e) => setFieldValue("landmark", e.target.value)}
-                error={touched.landmark && errors.landmark}
-              />
-              {errors.landmark && (
-                <p className="text-red-500 text-sm mt-1">{errors.landmark}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Country"
-                name="country_id"
-                value={values.country_id ? values.country_id.toString() : ""}
-                options={onlyCountryOptions}
-                onChange={(e) => setFieldValue("country_id", e.target.value)}
-                error={touched.country_id && errors.country_id}
-              />
-              {errors.country_id && (
-                <p className="text-red-500 text-sm mt-1">{errors.country_id}</p>
-              )}
-            </div>
-
-          </div>
-        </ContainerCard>
-      );
-
-    case 4:
-      return (
-        <ContainerCard>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <InputFields
-                required
-                label="Selling Currency"
-                name="selling_currency"
-                value={values.selling_currency}
-                options={countryCurrency}
-                onChange={(e) => setFieldValue("selling_currency", e.target.value)}
-                error={touched.selling_currency && errors.selling_currency}
-              />
-              {errors.selling_currency && (
-                <p className="text-red-500 text-sm mt-1">{errors.selling_currency}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Purchase Currency"
-                name="purchase_currency"
-                value={values.purchase_currency}
-                options={countryCurrency}
-                onChange={(e) => setFieldValue("purchase_currency", e.target.value)}
-                error={touched.purchase_currency && errors.purchase_currency}
-              />
-              {errors.purchase_currency && (
-                <p className="text-red-500 text-sm mt-1">{errors.purchase_currency}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                label="VAT Number"
-                name="vat"
-                value={values.vat}
-                onChange={(e) => setFieldValue("vat", e.target.value)}
-                error={touched.vat && errors.vat}
-              />
-              {errors.vat && (
-                <p className="text-red-500 text-sm mt-1">{errors.vat}</p>
-              )}
-            </div>
-          </div>
-        </ContainerCard>
-      );
-
-    case 5:
-      return (
-        <ContainerCard>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <InputFields
-                label="Module"
-                name="module_access"
-                value={values.module_access}
-                onChange={(e) => setFieldValue("module_access", e.target.value)}
-                error={touched.module_access && errors.module_access}
-              />
-              {errors.module_access && (
-                <p className="text-red-500 text-sm mt-1">{errors.module_access}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Service Type"
-                name="service_type"
-                value={values.service_type}
-                onChange={(e) => setFieldValue("service_type", e.target.value)}
-                options={[
-                  { value: "branch", label: "Branch" },
-                  { value: "warehouse", label: "Warehouse" },
-                ]}
-                error={touched.service_type && errors.service_type}
-              />
-              {errors.service_type && (
-                <p className="text-red-500 text-sm mt-1">{errors.service_type}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                label="Status"
-                name="status"
-                type="radio"
-                value={values.status}
-                onChange={(e) => setFieldValue("status", e.target.value)}
-                options={[
-                  { value: "1", label: "Active" },
-                  { value: "0", label: "Inactive" },
-                ]}
-                error={touched.status && errors.status}
-              />
-              {errors.status && (
-                <p className="text-red-500 text-sm mt-1">{errors.status}</p>
-              )}
-            </div>
-          </div>
-        </ContainerCard>
-      );
+          </ContainerCard>
+        );
       default:
         return null;
     }
@@ -663,7 +821,14 @@ export default function AddEditCompany() {
         validationSchema={CompanySchema}
         onSubmit={handleSubmit}
       >
-        {({ values, setFieldValue, errors, touched, setTouched, handleSubmit: formikSubmit }) => {
+        {({
+          values,
+          setFieldValue,
+          errors,
+          touched,
+          setTouched,
+          handleSubmit: formikSubmit,
+        }) => {
           const handleNextStep = async () => {
             try {
               const schema = stepSchemas[currentStep - 1];
@@ -690,9 +855,12 @@ export default function AddEditCompany() {
           return (
             <Form>
               <StepperForm
-                steps={steps.map((s) => ({ ...s, isCompleted: isStepCompleted(s.id) }))}
+                steps={steps.map((s) => ({
+                  ...s,
+                  isCompleted: isStepCompleted(s.id),
+                }))}
                 currentStep={currentStep}
-                onStepClick={() => { }}
+                onStepClick={() => {}}
                 onBack={prevStep}
                 onNext={handleNextStep} // ✅ step-wise validation
                 onSubmit={() => formikSubmit()}

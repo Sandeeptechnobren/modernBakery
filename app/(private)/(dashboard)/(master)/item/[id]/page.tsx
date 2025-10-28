@@ -84,8 +84,8 @@ const ItemSchema = Yup.object().shape({
       })
     )
     .min(1, "At least one UOM must be added"),
-  commodity_goods_code: Yup.string(),
-  excise_duty_code: Yup.string(),
+  commodity_goods_code: Yup.string().required("Commodity Goods Code is required"),
+  excise_duty_code: Yup.string().required("Excise Duty Code is required"),
 });
 
 const StepSchemas = [
@@ -107,8 +107,8 @@ const StepSchemas = [
     is_Promotional: Yup.string().required("Select if Promotional"),
     is_tax_applicable: Yup.string().required("Select if Tax Applicable"),
     excise: Yup.string().required("Excise is required"),
-    commodity_goods_code: Yup.string(),
-    excise_duty_code: Yup.string(),
+     commodity_goods_code: Yup.string().required("Commodity Goods Code is required"),
+    excise_duty_code: Yup.string().required("Excise Duty Code is required"),
     status: Yup.string().required("Status is required"),
   }),
   // Step 3: UOM
@@ -379,12 +379,21 @@ export default function AddEditItem() {
   };
 
   // ------------------ Form Handlers ------------------
-  const handleChange = (
+const handleChange = async (
   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 ) => {
   const { name, value } = e.target;
   setForm((prev) => ({ ...prev, [name]: value }));
   setTouched((prev) => ({ ...prev, [name]: true }));
+
+  try {
+    await StepSchemas[currentStep - 1].validateAt(name, { ...form, [name]: value });
+    setErrors((prev) => ({ ...prev, [name]: "" })); // error hata do agar valid ho gaya
+  } catch (err) {
+    if (err instanceof Yup.ValidationError) {
+      setErrors((prev) => ({ ...prev, [name]: err.message }));
+    }
+  }
 };
 
   const validateCurrentStep = async (step: number) => {
@@ -423,13 +432,16 @@ export default function AddEditItem() {
     });
   };
 
-  const handleNext = async () => {
-    const valid = await validateCurrentStep(currentStep);
-    if (valid) {
-      markStepCompleted(currentStep);
-      nextStep();
-    } 
-  };
+ const handleNext = async () => {
+  const valid = await validateCurrentStep(currentStep);
+  if (valid) {
+    setErrors({});
+    setTouched({});
+    markStepCompleted(currentStep);
+    nextStep();
+  }
+};
+
 
   const handleFileChange = (
   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

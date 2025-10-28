@@ -10,7 +10,6 @@ import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { TableDataType } from "@/app/components/customTable";
 import {
   complaintFeedbackList,
   exportCmplaintFeedback,
@@ -124,8 +123,6 @@ export default function Complaint() {
   return (
     <>
       <div className="flex flex-col h-full">
-        {/* Header */}
-
         <Table
           refreshKey={refreshKey}
 

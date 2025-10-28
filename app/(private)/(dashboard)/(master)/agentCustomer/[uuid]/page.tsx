@@ -353,13 +353,19 @@ export default function AddEditAgentCustomer() {
                 "Whatsapp number must be exactly 10 digits",
                 (val) => val === null || /^\d{10}$/.test(String(val))
             ),
-        contact_no: Yup.string()
-            .required("Contact number is required")
-            .matches(/^\d{10}$/, "Contact number must be exactly 10 digits"),
-        contact_no2: Yup.string()
-            .required("Secondary contact number is required")
-            .matches(/^\d{10}$/, "Secondary contact number must be exactly 10 digits"),
+       
+             contact_no: Yup.string()
+                .required("Contact number is required")
+                .matches(/^[0-9]+$/, "Only numbers are allowed")
+                .min(9, "Must be at least 9 digits")
+                .max(10, "Must be at most 10 digits"),
 
+               contact_no2: Yup.string()
+                .required("Contact number 2 is required")
+                .matches(/^[0-9]+$/, "Only numbers are allowed")
+                .min(9, "Must be at least 9 digits")
+                .max(10, "Must be at most 10 digits"),  
+    
         // financial
         buyertype: Yup.mixed()
             .oneOf([0, 1, "0", "1"], "Invalid buyer type")

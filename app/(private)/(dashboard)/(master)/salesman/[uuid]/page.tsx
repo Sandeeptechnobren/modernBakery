@@ -54,12 +54,22 @@ interface SalesmanFormValues {
   email: string;
 }
 
+interface contactCountry {
+  name: string;
+  code?: string;
+  flag?: string;
+}
+
 // ✅ Validation Schema
 const SalesmanSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   type: Yup.string().required("Type is required"),
   designation: Yup.string().required("Designation is required"),
-  contact_no: Yup.string().required("Contact is required").min(9).max(13),
+  contact_no: Yup.string()
+    .required("Owner Contact number is required")
+    .matches(/^[0-9]+$/, "Only numbers are allowed")
+    .min(9, "Must be at least 9 digits")
+    .max(10, "Must be at most 10 digits"),
   password: Yup.string()
     .required("Password is required")
     .min(12, "Password must be at least 12 characters long")
@@ -82,7 +92,11 @@ const stepSchemas = [
     route_id: Yup.string().required("Route is required"),
   }),
   Yup.object({
-    contact_no: Yup.string().required("Contact is required").min(9).max(13),
+    contact_no: Yup.string()
+      .required("Contact number is required")
+      .matches(/^[0-9]+$/, "Only numbers are allowed")
+      .min(9, "Must be at least 9 digits")
+      .max(13, "Must be at most 13 digits"),
     password: Yup.string()
       .required("Password is required")
       .min(12, "Password must be at least 12 characters long")
@@ -111,13 +125,15 @@ const stepSchemas = [
   ),
 ];
 
-type props={
+type props = {
   selectedCountry: { name: string; code?: string; flag?: string };
-  setSelectedCountry: ( { name: string; code?: string; flag?: string }) ;
-}
+  setSelectedCountry: { name: string; code?: string; flag?: string };
+};
 
-
-export default function AddEditSalesman({selectedCountry, setSelectedCountry}:props) {
+export default function AddEditSalesman({
+  selectedCountry,
+  setSelectedCountry,
+}: props) {
   const [prefix, setPrefix] = useState("");
   const [loading, setLoading] = useState(true);
   const { showSnackbar } = useSnackbar();
@@ -131,6 +147,12 @@ export default function AddEditSalesman({selectedCountry, setSelectedCountry}:pr
     useAllDropdownListData();
   const [filteredRouteOptions, setFilteredRouteOptions] =
     useState(routeOptions);
+
+  const [country, setCountry] = useState<Record<string, contactCountry>>({
+    contact_no: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+    contact_no2: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+    whatsapp_no: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+  });
 
   const [initialValues, setInitialValues] = useState<SalesmanFormValues>({
     osa_code: "",
@@ -268,7 +290,7 @@ export default function AddEditSalesman({selectedCountry, setSelectedCountry}:pr
           )
         );
       }
-      showSnackbar("Please fix validation errors before proceeding", "error");
+      // showSnackbar("Please fix validation errors before proceeding", "error");
     }
   };
 
@@ -399,14 +421,14 @@ export default function AddEditSalesman({selectedCountry, setSelectedCountry}:pr
                   type="select"
                   name="warehouse_id"
                   value={values.warehouse_id}
-                                        options={warehouseOptions}
-                                        disabled={warehouseOptions.length === 0}
-                                        onChange={(e) => {
-                                            setFieldValue("warehouse_id", e.target.value);
-                                            if (values.warehouse_id !== e.target.value) {
-                                                fetchRoutes(e.target.value);
-                                            }
-                                        }}
+                  options={warehouseOptions}
+                  disabled={warehouseOptions.length === 0}
+                  onChange={(e) => {
+                    setFieldValue("warehouse_id", e.target.value);
+                    if (values.warehouse_id !== e.target.value) {
+                      fetchRoutes(e.target.value);
+                    }
+                  }}
                 />
                 <ErrorMessage
                   name="warehouse_id"
@@ -437,59 +459,16 @@ export default function AddEditSalesman({selectedCountry, setSelectedCountry}:pr
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* <div>
-                <InputFields
-                required
-                type="contact"
-                  label="Contact No"
-                  name="contact_no"
-                  value={values.contact_no}
-                  onChange={(e) => setFieldValue("contact_no", e.target.value)}
-                />
-                <ErrorMessage
-                  name="contact_no"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
-              </div> */}
-
-              {/* <div className="flex flex-col gap-2">
+              <div >
                 <InputFields
                   required
                   type="contact"
-                  label="Contact Number"
-                  name="owner_number"
-                  value={`${values.contact_no ?? "+91"}|${
-                    values.contact_no ?? ""
-                  }`}
-                  onChange={(e) => {
-                    const combined = (e.target as HTMLInputElement).value || "";
-                    if (combined.includes("|")) {
-                      const [code = "+256", num = ""] = combined.split("|");
-                      const numDigits = num.replace(/\D/g, "");
-                      const codeDigits = String(code).replace(/\D/g, "");
-                      const localNumber =
-                        codeDigits && numDigits.startsWith(codeDigits)
-                          ? numDigits.slice(codeDigits.length)
-                          : numDigits;
-                      setFieldValue("contact_no", code);
-                      setFieldValue("contact_no", localNumber);
-                    } else {
-                      const digits = combined.replace(/\D/g, "");
-                      const currentCountry = (
-                        values.contact_no || "+256"
-                      ).replace(/\D/g, "");
-                      if (currentCountry && digits.startsWith(currentCountry)) {
-                        setFieldValue("contact_no", `+${currentCountry}`);
-                        setFieldValue(
-                          "contact_no",
-                          digits.slice(currentCountry.length)
-                        );
-                      } else {
-                        setFieldValue("contact_no", digits);
-                      }
-                    }
-                  }}
+                  label="Owner Contact Number"
+                  name="contact_no"
+                  // setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, contact_no: country }))}
+                  selectedCountry={country.contact_no}
+                  value={`${values.contact_no ?? ""}`}
+                  onChange={(e) => setFieldValue("contact_no", e.target.value)}
                   error={
                     errors?.contact_no && touched?.contact_no
                       ? errors.contact_no
@@ -501,24 +480,7 @@ export default function AddEditSalesman({selectedCountry, setSelectedCountry}:pr
                     {errors.contact_no}
                   </span>
                 )}
-              </div> */}
-              <div className="flex flex-col gap-2">
-                        <InputFields
-                          required
-                          type="contact"
-                          label="Owner Contact Number"
-                          name="contact_no"
-                          setSelectedCountry={setSelectedCountry}
-                          selectedCountry={selectedCountry}
-                          value={`${values.contact_no ?? ''}`}
-                                   onChange={(e) => setFieldValue("contact_no", e.target.value)}
-              
-                          error={errors?.contact_no && touched?.contact_no ? errors.contact_no : false}
-                        />
-                       {errors?.contact_no && touched?.contact_no && (
-                        <span className="text-xs text-red-500 mt-1">{errors.contact_no}</span>
-                      )}
-                    </div>
+              </div>
 
               <div>
                 <InputFields

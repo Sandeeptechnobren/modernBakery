@@ -119,7 +119,17 @@ const validationSchema = Yup.object({
   businessName: Yup.string().required("Business Name is required."),
   customerType: Yup.string().required("Customer Type is required."),
   ownerName: Yup.string().required("Owner Name is required."),
+<<<<<<< HEAD
   ownerNumber: Yup.string().required("Owner Contact is required."),
+=======
+
+  ownerNumber: Yup.string()
+    .required("Owner Number is required")
+    .matches(/^[0-9]+$/, "Only numbers are allowed")
+    .min(9, "Must be at least 9 digits")
+    .max(10, "Must be at most 10 digits"),
+
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
   whatsappNo: Yup.string().when("isWhatsapp", {
     is: (val: string) => val === "1",
     then: (schema) => schema.required("Whatsapp Number is required."),
@@ -127,7 +137,13 @@ const validationSchema = Yup.object({
   }),
   email: Yup.string().email("Invalid email").required("Email is required."),
   language: Yup.string().required("Language is required."),
-  contactNo2: Yup.string().required("Contact No 2 is required."),
+
+  contactNo2: Yup.string()
+    .required("Contact Number  is required")
+    .matches(/^[0-9]+$/, "Only numbers are allowed")
+    .min(9, "Must be at least 9 digits")
+    .max(10, "Must be at most 10 digits"),
+
   roadStreet: Yup.string().required("Road/Street is required."),
   town: Yup.string().required("Town is required."),
   landmark: Yup.string().required("Landmark is required."),
@@ -136,13 +152,16 @@ const validationSchema = Yup.object({
   area: Yup.string().required("Area is required."),
   paymentType: Yup.string().required("Payment Type is required."),
   bankName: Yup.string().required("Bank Name is required."),
-  bankAccountNumber: Yup.string().required("Bank Account Number is required."),
+  bankAccountNumber: Yup.string()
+    .required("Bank Account Number is required.")
+    .matches(/^[0-9]+$/, "Only numbers are allowed"),
   creditDay: Yup.string().required("Credit Day is required."),
   vatNo: Yup.string().required("VAT No is required."),
   accuracy: Yup.string(),
   creditLimit: Yup.string().required("Credit Limit is required."),
   guaranteeName: Yup.string().required("Guarantee Name is required."),
   guaranteeAmount: Yup.string().required("Guarantee Amount is required."),
+<<<<<<< HEAD
   guaranteeFrom: Yup.string()
     .required("Guarantee From is required.")
     .test("is-before-guaranteeTo", "Guarantee From must be before Guarantee To", function (value) {
@@ -173,14 +192,41 @@ const validationSchema = Yup.object({
       }
       return true;
     }),
+=======
+
+  guaranteeFrom: Yup.date()
+    .required("Guarantee From is required")
+    .typeError("Please enter a valid date"),
+  guaranteeTo: Yup.date()
+    .required("Guarantee To is required")
+    .typeError("Please enter a valid date")
+    .min(
+      Yup.ref("guaranteeFrom"),
+      "Guarantee To date cannot be before Guarantee From date"
+    ),
+
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
   totalCreditLimit: Yup.string().required("Total Credit Limit is required."),
   creditLimitValidity: Yup.string(),
   longitude: Yup.string()
     .required("Longitude is required.")
+<<<<<<< HEAD
     .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Longitude must be a valid decimal number"),
   latitude: Yup.string()
     .required("Latitude is required.")
     .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Latitude must be a valid decimal number"),
+=======
+    .matches(
+      /^[-+]?\d{1,3}(?:\.\d+)?$/,
+      "Longitude must be a valid decimal number"
+    ),
+  latitude: Yup.string()
+    .required("Latitude is required.")
+    .matches(
+      /^[-+]?\d{1,3}(?:\.\d+)?$/,
+      "Latitude must be a valid decimal number"
+    ),
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
   thresholdRadius: Yup.string().required("Threshold Radius is required."),
   dChannelId: Yup.string().required("Channel is required."),
   merchendiser_ids: Yup.string(),
@@ -196,7 +242,6 @@ const stepSchemas = [
     customerType: validationSchema.fields.customerType,
     dChannelId: validationSchema.fields.dChannelId,
     language: validationSchema.fields.language,
-
   }),
   Yup.object({
     ownerNumber: validationSchema.fields.ownerNumber,
@@ -216,7 +261,6 @@ const stepSchemas = [
     thresholdRadius: validationSchema.fields.thresholdRadius,
   }),
   Yup.object({
-
     paymentType: validationSchema.fields.paymentType,
     bankName: validationSchema.fields.bankName,
     bankAccountNumber: validationSchema.fields.bankAccountNumber,
@@ -233,23 +277,37 @@ const stepSchemas = [
   }),
 ];
 
-interface contactCountry { name: string; code?: string; flag?: string; }
+interface contactCountry {
+  name: string;
+  code?: string;
+  flag?: string;
+}
 
 export default function AddCompanyCustomer() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
+<<<<<<< HEAD
   const { regionOptions, areaOptions, customerTypeOptions,channelOptions,fetchAreaOptions, salesmanOptions } =
     useAllDropdownListData();
+=======
+  const {
+    regionOptions,
+    areaOptions,
+    customerTypeOptions,
+    channelOptions,
+    fetchAreaOptions,
+  } = useAllDropdownListData();
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
   const [skeleton, setSkeleton] = useState({
     area: false,
   });
 
   const [country, setCountry] = useState<Record<string, contactCountry>>({
-      ownerNumber: { name: "Uganda", code: "+256", flag: "🇺🇬" },
-      contactNo2: { name: "Uganda", code: "+256", flag: "🇺🇬" },
-      whatsappNo: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+    ownerNumber: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+    contactNo2: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+    whatsappNo: { name: "Uganda", code: "+256", flag: "🇺🇬" },
   });
 
   const steps: StepperStep[] = [
@@ -259,7 +317,7 @@ export default function AddCompanyCustomer() {
     { id: 4, label: "Customer Financial" },
   ];
 
-    const {
+  const {
     currentStep,
     nextStep,
     prevStep,
@@ -271,7 +329,7 @@ export default function AddCompanyCustomer() {
   const [isOpen, setIsOpen] = useState(false);
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [prefix, setPrefix] = useState("");
-  const {setLoading} = useLoading();
+  const { setLoading } = useLoading();
   const codeFetchedRef = useRef(false);
   const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>(
     {
@@ -315,7 +373,6 @@ export default function AddCompanyCustomer() {
     }
   );
 
-
   const fetchData = async () => {
     try {
       const id = params?.id as string;
@@ -326,7 +383,7 @@ export default function AddCompanyCustomer() {
         sapCode: data.sap_code || "",
         customerCode: data.customer_code || "",
         businessName: data.business_name || "",
-        customerType: String(data.customer_type|| ""),
+        customerType: String(data.customer_type || ""),
         ownerName: data.owner_name || "",
         ownerNumber: data.owner_no || "",
         isWhatsapp: String(data.is_whatsapp ?? "1"),
@@ -370,7 +427,6 @@ export default function AddCompanyCustomer() {
     }
   };
 
-
   useEffect(() => {
     setLoading(true);
     if (!params?.id) return;
@@ -387,7 +443,11 @@ export default function AddCompanyCustomer() {
       setLoading(true);
       try {
         const res = await genearateCode({ model_name: "tbl_company_customer" });
-        if (res?.code) setInitialValues((prev) => ({ ...prev, customerCode: String(res.code) }));
+        if (res?.code)
+          setInitialValues((prev) => ({
+            ...prev,
+            customerCode: String(res.code),
+          }));
         if (res?.prefix) setPrefix(res.prefix);
         setLoading(false);
       } catch (err) {
@@ -417,7 +477,10 @@ export default function AddCompanyCustomer() {
         );
         actions.setErrors(
           err.inner.reduce(
-            (acc: Partial<Record<keyof CompanyCustomerFormValues, string>>, curr) => ({
+            (
+              acc: Partial<Record<keyof CompanyCustomerFormValues, string>>,
+              curr
+            ) => ({
               ...acc,
               [curr.path as keyof CompanyCustomerFormValues]: curr.message,
             }),
@@ -430,7 +493,15 @@ export default function AddCompanyCustomer() {
 
   const handleSubmit = async (
     values: CompanyCustomerFormValues,
+<<<<<<< HEAD
     actions: FormikHelpers<CompanyCustomerFormValues>
+=======
+    {
+      setSubmitting,
+      setErrors,
+      setTouched,
+    }: FormikHelpers<CompanyCustomerFormValues>
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
   ) => {
     try {
       await validationSchema.validate(values, { abortEarly: false });
@@ -442,10 +513,10 @@ export default function AddCompanyCustomer() {
         owner_name: values.ownerName,
         owner_no: values.ownerNumber,
         is_whatsapp: Number(values.isWhatsapp),
-        whatsapp_no: (values.whatsappNo),
+        whatsapp_no: values.whatsappNo,
         email: values.email,
         language: values.language,
-        contact_no2: (values.contactNo2),
+        contact_no2: values.contactNo2,
         buyer_type: Number(values.buyerType),
         road_street: values.roadStreet,
         town: values.town,
@@ -472,7 +543,6 @@ export default function AddCompanyCustomer() {
         dchannel_id: Number(values.dChannelId),
         merchendiser_ids: values.merchendiser_ids || "",
         status: String(values.status),
-        
       };
 
       let res;
@@ -489,9 +559,9 @@ export default function AddCompanyCustomer() {
       } else {
         showSnackbar(
           res.message ||
-          (isEditMode
-            ? "Company Customer Updated Successfully"
-            : "Company Customer Created Successfully"),
+            (isEditMode
+              ? "Company Customer Updated Successfully"
+              : "Company Customer Created Successfully"),
           "success"
         );
 
@@ -519,7 +589,10 @@ export default function AddCompanyCustomer() {
         );
         actions.setErrors(
           error.inner.reduce(
-            (acc: Partial<Record<keyof CompanyCustomerFormValues, string>>, curr) => ({
+            (
+              acc: Partial<Record<keyof CompanyCustomerFormValues, string>>,
+              curr
+            ) => ({
               ...acc,
               [curr.path as keyof CompanyCustomerFormValues]: curr.message,
             }),
@@ -527,7 +600,10 @@ export default function AddCompanyCustomer() {
           )
         );
       } else {
-        showSnackbar(`Failed to ${isEditMode ? "update" : "add"} Company Customer `, "error");
+        showSnackbar(
+          `Failed to ${isEditMode ? "update" : "add"} Company Customer `,
+          "error"
+        );
       }
     } finally {
       actions.setSubmitting(false);
@@ -596,7 +672,9 @@ export default function AddCompanyCustomer() {
                   error={touched.sapCode && errors.sapCode}
                 />
                 {errors?.sapCode && touched?.sapCode && (
-                  <span className="text-xs text-red-500 mt-1">{errors.sapCode}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.sapCode}
+                  </span>
                 )}
               </div>
               <div>
@@ -609,10 +687,12 @@ export default function AddCompanyCustomer() {
                   error={touched.vatNo && errors.vatNo}
                 />
                 {errors?.vatNo && touched?.vatNo && (
-                  <span className="text-xs text-red-500 mt-1">{errors.vatNo}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.vatNo}
+                  </span>
                 )}
               </div>
-  <div>
+              <div>
                 <InputFields
                   required
                   label="Owner Name"
@@ -622,21 +702,27 @@ export default function AddCompanyCustomer() {
                   error={touched.ownerName && errors.ownerName}
                 />
                 {errors?.ownerName && touched?.ownerName && (
-                  <span className="text-xs text-red-500 mt-1">{errors.ownerName}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.ownerName}
+                  </span>
                 )}
               </div>
-              
+
               <div>
                 <InputFields
                   required
                   label="Business Name"
                   name="businessName"
                   value={values.businessName}
-                  onChange={(e) => setFieldValue("businessName", e.target.value)}
+                  onChange={(e) =>
+                    setFieldValue("businessName", e.target.value)
+                  }
                   error={touched.businessName && errors.businessName}
                 />
                 {errors?.businessName && touched?.businessName && (
-                  <span className="text-xs text-red-500 mt-1">{errors.businessName}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.businessName}
+                  </span>
                 )}
               </div>
               <div>
@@ -645,16 +731,19 @@ export default function AddCompanyCustomer() {
                   label="Customer Type"
                   name="customerType"
                   value={values.customerType}
-                  onChange={(e) => setFieldValue("customerType", e.target.value)}
+                  onChange={(e) =>
+                    setFieldValue("customerType", e.target.value)
+                  }
                   options={customerTypeOptions}
                   error={touched.customerType && errors.customerType}
                 />
                 {errors?.customerType && touched?.customerType && (
-                  <span className="text-xs text-red-500 mt-1">{errors.customerType}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.customerType}
+                  </span>
                 )}
               </div>
-            
-             
+
               <div>
                 <InputFields
                   required
@@ -666,15 +755,17 @@ export default function AddCompanyCustomer() {
                   error={touched.dChannelId && errors.dChannelId}
                 />
                 {errors?.dChannelId && touched?.dChannelId && (
-                  <span className="text-xs text-red-500 mt-1">{errors.dChannelId}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.dChannelId}
+                  </span>
                 )}
               </div>
-               <div>
+              <div>
                 <InputFields
                   required
                   label="Language"
                   name="language"
-                   options={[
+                  options={[
                     { value: "English", label: "English" },
                     { value: "Hindi", label: "Hindi" },
                     { value: "Gujarati", label: "Gujarati" },
@@ -694,7 +785,9 @@ export default function AddCompanyCustomer() {
                   error={touched.language && errors.language}
                 />
                 {errors?.language && touched?.language && (
-                  <span className="text-xs text-red-500 mt-1">{errors.language}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.language}
+                  </span>
                 )}
               </div>
             </div>
@@ -711,15 +804,23 @@ export default function AddCompanyCustomer() {
                   type="contact"
                   label="Owner Number"
                   name="ownerNumber"
-                  setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, ownerNumber: country }))}
+                  setSelectedCountry={(country: contactCountry) =>
+                    setCountry((prev) => ({ ...prev, ownerNumber: country }))
+                  }
                   selectedCountry={country.ownerNumber}
-                  value={`${values.ownerNumber ?? ''}`}
+                  value={`${values.ownerNumber ?? ""}`}
                   onChange={(e) => setFieldValue("ownerNumber", e.target.value)}
-                  error={errors?.ownerNumber && touched?.ownerNumber ? errors.ownerNumber : false}
-              />
-              {errors?.ownerNumber && touched?.ownerNumber && (
-              <span className="text-xs text-red-500 mt-1">{errors.ownerNumber}</span>
-              )}
+                  error={
+                    errors?.ownerNumber && touched?.ownerNumber
+                      ? errors.ownerNumber
+                      : false
+                  }
+                />
+                {errors?.ownerNumber && touched?.ownerNumber && (
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.ownerNumber}
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -728,17 +829,25 @@ export default function AddCompanyCustomer() {
                   type="contact"
                   label="Contact Number"
                   name="contactNo2"
-                  setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, contactNo2: country }))}
+                  setSelectedCountry={(country: contactCountry) =>
+                    setCountry((prev) => ({ ...prev, contactNo2: country }))
+                  }
                   selectedCountry={country.contactNo2}
-                  value={`${values.contactNo2 ?? ''}`}
+                  value={`${values.contactNo2 ?? ""}`}
                   onChange={(e) => setFieldValue("contactNo2", e.target.value)}
-                  error={errors?.contactNo2 && touched?.contactNo2 ? errors.contactNo2 : false}
-              />
-              {errors?.contactNo2 && touched?.contactNo2 && (
-              <span className="text-xs text-red-500 mt-1">{errors.contactNo2}</span>
-              )}
+                  error={
+                    errors?.contactNo2 && touched?.contactNo2
+                      ? errors.contactNo2
+                      : false
+                  }
+                />
+                {errors?.contactNo2 && touched?.contactNo2 && (
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.contactNo2}
+                  </span>
+                )}
               </div>
-             
+
               <div>
                 <InputFields
                   required
@@ -749,7 +858,9 @@ export default function AddCompanyCustomer() {
                   error={touched.email && errors.email}
                 />
                 {errors?.email && touched?.email && (
-                  <span className="text-xs text-red-500 mt-1">{errors.email}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.email}
+                  </span>
                 )}
               </div>
               <div>
@@ -766,27 +877,41 @@ export default function AddCompanyCustomer() {
                   ]}
                 />
                 {errors?.isWhatsapp && touched?.isWhatsapp && (
-                  <span className="text-xs text-red-500 mt-1">{errors.isWhatsapp}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.isWhatsapp}
+                  </span>
                 )}
               </div>
 
-              {values.isWhatsapp === "1" && <div className="flex flex-col gap-2">
-                <InputFields
-                  required
-                  type="contact"
-                  label="Whatsapp Number"
-                  name="whatsappNo"
-                  setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, whatsappNo: country }))}
-                  selectedCountry={country.whatsappNo}
-                  value={`${values.whatsappNo ?? ''}`}
-                  onChange={(e) => setFieldValue("whatsappNo", e.target.value)}
-                  error={errors?.whatsappNo && touched?.whatsappNo ? errors.whatsappNo : false}
-              />
-              {errors?.whatsappNo && touched?.whatsappNo && (
-              <span className="text-xs text-red-500 mt-1">{errors.whatsappNo}</span>
+              {values.isWhatsapp === "1" && (
+                <div className="flex flex-col gap-2">
+                  <InputFields
+                    required
+                    type="contact"
+                    label="Whatsapp Number"
+                    name="whatsappNo"
+                    setSelectedCountry={(country: contactCountry) =>
+                      setCountry((prev) => ({ ...prev, whatsappNo: country }))
+                    }
+                    selectedCountry={country.whatsappNo}
+                    value={`${values.whatsappNo ?? ""}`}
+                    onChange={(e) =>
+                      setFieldValue("whatsappNo", e.target.value)
+                    }
+                    error={
+                      errors?.whatsappNo && touched?.whatsappNo
+                        ? errors.whatsappNo
+                        : false
+                    }
+                  />
+                  {errors?.whatsappNo && touched?.whatsappNo && (
+                    <span className="text-xs text-red-500 mt-1">
+                      {errors.whatsappNo}
+                    </span>
+                  )}
+                </div>
               )}
-              </div>}
-             
+
               <div>
                 <InputFields
                   label="Buyer Type"
@@ -799,7 +924,6 @@ export default function AddCompanyCustomer() {
                     { value: "1", label: "Seller" },
                   ]}
                 />
-               
               </div>
             </div>
           </ContainerCard>
@@ -819,7 +943,9 @@ export default function AddCompanyCustomer() {
                   error={touched.town && errors.town}
                 />
                 {errors?.town && touched?.town && (
-                  <span className="text-xs text-red-500 mt-1">{errors.town}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.town}
+                  </span>
                 )}
               </div>
               <div>
@@ -832,11 +958,12 @@ export default function AddCompanyCustomer() {
                   error={touched.roadStreet && errors.roadStreet}
                 />
                 {errors?.roadStreet && touched?.roadStreet && (
-                  <span className="text-xs text-red-500 mt-1">{errors.roadStreet}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.roadStreet}
+                  </span>
                 )}
               </div>
               <div>
-
                 <InputFields
                   required
                   label="Landmark"
@@ -846,7 +973,9 @@ export default function AddCompanyCustomer() {
                   error={touched.landmark && errors.landmark}
                 />
                 {errors?.landmark && touched?.landmark && (
-                  <span className="text-xs text-red-500 mt-1">{errors.landmark}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.landmark}
+                  </span>
                 )}
               </div>
               <div>
@@ -859,7 +988,9 @@ export default function AddCompanyCustomer() {
                   error={touched.district && errors.district}
                 />
                 {errors?.district && touched?.district && (
-                  <span className="text-xs text-red-500 mt-1">{errors.district}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.district}
+                  </span>
                 )}
               </div>
               <div>
@@ -873,7 +1004,9 @@ export default function AddCompanyCustomer() {
                   error={touched.region && errors.region}
                 />
                 {errors?.region && touched?.region && (
-                  <span className="text-xs text-red-500 mt-1">{errors.region}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.region}
+                  </span>
                 )}
               </div>
               <div>
@@ -891,16 +1024,22 @@ export default function AddCompanyCustomer() {
                       ? areaOptions
                       : values.area
                       ? // show the existing area value as an option when areaOptions haven't loaded yet
-                        [{ value: values.area, label: `Selected Area (${values.area})` }]
+                        [
+                          {
+                            value: values.area,
+                            label: `Selected Area (${values.area})`,
+                          },
+                        ]
                       : [{ value: "", label: "No options" }]
                   }
                   error={touched.area && errors.area}
                 />
                 {errors?.area && touched?.area && (
-                  <span className="text-xs text-red-500 mt-1">{errors.area}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.area}
+                  </span>
                 )}
               </div>
-
 
               <div>
                 <InputFields
@@ -913,11 +1052,12 @@ export default function AddCompanyCustomer() {
                   error={touched.longitude && errors.longitude}
                 />
                 {errors?.longitude && touched?.longitude && (
-                  <span className="text-xs text-red-500 mt-1">{errors.longitude}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.longitude}
+                  </span>
                 )}
               </div>
               <div>
-
                 <InputFields
                   required
                   label="Latitude"
@@ -928,7 +1068,9 @@ export default function AddCompanyCustomer() {
                   error={touched.latitude && errors.latitude}
                 />
                 {errors?.latitude && touched?.latitude && (
-                  <span className="text-xs text-red-500 mt-1">{errors.latitude}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.latitude}
+                  </span>
                 )}
               </div>
               <div>
@@ -943,7 +1085,9 @@ export default function AddCompanyCustomer() {
                   error={touched.thresholdRadius && errors.thresholdRadius}
                 />
                 {errors?.thresholdRadius && touched?.thresholdRadius && (
-                  <span className="text-xs text-red-500 mt-1">{errors.thresholdRadius}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.thresholdRadius}
+                  </span>
                 )}
               </div>
             </div>
@@ -957,9 +1101,6 @@ export default function AddCompanyCustomer() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div>
-
-
-
                 <InputFields
                   required
                   label="Payment Type"
@@ -973,7 +1114,9 @@ export default function AddCompanyCustomer() {
                   ]}
                 />
                 {errors?.paymentType && touched?.paymentType && (
-                  <span className="text-xs text-red-500 mt-1">{errors.paymentType}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.paymentType}
+                  </span>
                 )}
               </div>
               <div>
@@ -986,7 +1129,9 @@ export default function AddCompanyCustomer() {
                   error={touched.bankName && errors.bankName}
                 />
                 {errors?.bankName && touched?.bankName && (
-                  <span className="text-xs text-red-500 mt-1">{errors.bankName}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.bankName}
+                  </span>
                 )}
               </div>
               <div>
@@ -1001,7 +1146,9 @@ export default function AddCompanyCustomer() {
                   error={touched.bankAccountNumber && errors.bankAccountNumber}
                 />
                 {errors?.bankAccountNumber && touched?.bankAccountNumber && (
-                  <span className="text-xs text-red-500 mt-1">{errors.bankAccountNumber}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.bankAccountNumber}
+                  </span>
                 )}
               </div>
               <div>
@@ -1014,7 +1161,9 @@ export default function AddCompanyCustomer() {
                   error={touched.creditDay && errors.creditDay}
                 />
                 {errors?.creditDay && touched?.creditDay && (
-                  <span className="text-xs text-red-500 mt-1">{errors.creditDay}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.creditDay}
+                  </span>
                 )}
               </div>
               <div>
@@ -1026,7 +1175,9 @@ export default function AddCompanyCustomer() {
                   error={touched.accuracy && errors.accuracy}
                 />
                 {errors?.accuracy && touched?.accuracy && (
-                  <span className="text-xs text-red-500 mt-1">{errors.accuracy}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.accuracy}
+                  </span>
                 )}
               </div>
               <div>
@@ -1039,7 +1190,9 @@ export default function AddCompanyCustomer() {
                   error={touched.creditLimit && errors.creditLimit}
                 />
                 {errors?.creditLimit && touched?.creditLimit && (
-                  <span className="text-xs text-red-500 mt-1">{errors.creditLimit}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.creditLimit}
+                  </span>
                 )}
               </div>
               <div>
@@ -1054,7 +1207,9 @@ export default function AddCompanyCustomer() {
                   error={touched.totalCreditLimit && errors.totalCreditLimit}
                 />
                 {errors?.totalCreditLimit && touched?.totalCreditLimit && (
-                  <span className="text-xs text-red-500 mt-1">{errors.totalCreditLimit}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.totalCreditLimit}
+                  </span>
                 )}
               </div>
               <div>
@@ -1066,11 +1221,16 @@ export default function AddCompanyCustomer() {
                     setFieldValue("creditLimitValidity", e.target.value)
                   }
                   type="date"
-                  error={touched.creditLimitValidity && errors.creditLimitValidity}
+                  error={
+                    touched.creditLimitValidity && errors.creditLimitValidity
+                  }
                 />
-                {errors?.creditLimitValidity && touched?.creditLimitValidity && (
-                  <span className="text-xs text-red-500 mt-1">{errors.creditLimitValidity}</span>
-                )}
+                {errors?.creditLimitValidity &&
+                  touched?.creditLimitValidity && (
+                    <span className="text-xs text-red-500 mt-1">
+                      {errors.creditLimitValidity}
+                    </span>
+                  )}
               </div>
               <div>
                 <InputFields
@@ -1078,11 +1238,15 @@ export default function AddCompanyCustomer() {
                   label="Guarantee Name"
                   name="guaranteeName"
                   value={values.guaranteeName}
-                  onChange={(e) => setFieldValue("guaranteeName", e.target.value)}
+                  onChange={(e) =>
+                    setFieldValue("guaranteeName", e.target.value)
+                  }
                   error={touched.guaranteeName && errors.guaranteeName}
                 />
                 {errors?.guaranteeName && touched?.guaranteeName && (
-                  <span className="text-xs text-red-500 mt-1">{errors.guaranteeName}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.guaranteeName}
+                  </span>
                 )}
               </div>
               <div>
@@ -1097,7 +1261,9 @@ export default function AddCompanyCustomer() {
                   error={touched.guaranteeAmount && errors.guaranteeAmount}
                 />
                 {errors?.guaranteeAmount && touched?.guaranteeAmount && (
-                  <span className="text-xs text-red-500 mt-1">{errors.guaranteeAmount}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.guaranteeAmount}
+                  </span>
                 )}
               </div>
               <div>
@@ -1106,12 +1272,16 @@ export default function AddCompanyCustomer() {
                   label="Guarantee From"
                   name="guaranteeFrom"
                   value={values.guaranteeFrom}
-                  onChange={(e) => setFieldValue("guaranteeFrom", e.target.value)}
+                  onChange={(e) =>
+                    setFieldValue("guaranteeFrom", e.target.value)
+                  }
                   type="date"
                   error={touched.guaranteeFrom && errors.guaranteeFrom}
                 />
                 {errors?.guaranteeFrom && touched?.guaranteeFrom && (
-                  <span className="text-xs text-red-500 mt-1">{errors.guaranteeFrom}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.guaranteeFrom}
+                  </span>
                 )}
               </div>
               <div>
@@ -1125,11 +1295,12 @@ export default function AddCompanyCustomer() {
                   error={touched.guaranteeTo && errors.guaranteeTo}
                 />
                 {errors?.guaranteeTo && touched?.guaranteeTo && (
-                  <span className="text-xs text-red-500 mt-1">{errors.guaranteeTo}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.guaranteeTo}
+                  </span>
                 )}
               </div>
 
-              
               <div>
                 {!isEditMode && (
                   <>
@@ -1140,17 +1311,29 @@ export default function AddCompanyCustomer() {
                       onChange={(e) =>
                         setFieldValue("merchendiser_ids", e.target.value)
                       }
+<<<<<<< HEAD
                       
                       options={salesmanOptions}
                       error={touched.merchendiser_ids && errors.merchendiser_ids}
+=======
+                      options={[
+                        { value: "1", label: "Merchendiser 1" },
+                        { value: "2", label: "Merchendiser 2" },
+                        { value: "3", label: "Merchendiser 3" },
+                      ]}
+                      error={
+                        touched.merchendiser_ids && errors.merchendiser_ids
+                      }
+>>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
                     />
                     {errors?.merchendiser_ids && touched?.merchendiser_ids && (
-                      <span className="text-xs text-red-500 mt-1">{errors.merchendiser_ids}</span>
+                      <span className="text-xs text-red-500 mt-1">
+                        {errors.merchendiser_ids}
+                      </span>
                     )}
                   </>
                 )}
               </div>
-
             </div>
           </ContainerCard>
         );
@@ -1162,11 +1345,8 @@ export default function AddCompanyCustomer() {
   return (
     <>
       <div className="flex align-middle items-center gap-3 text-gray-900 mb-6">
-        <div
-            className="cursor-pointer"
-            onClick={() => router.back()}
-        >
-            <Icon icon="lucide:arrow-left" width={24} />
+        <div className="cursor-pointer" onClick={() => router.back()}>
+          <Icon icon="lucide:arrow-left" width={24} />
         </div>
         <h1 className="text-xl font-semibold text-gray-900">
           {isEditMode ? "Update" : "Add"} Company Customer
@@ -1195,8 +1375,8 @@ export default function AddCompanyCustomer() {
             <RegionWatcher
               fetchAreaOptions={fetchAreaOptions}
               setSkeleton={setSkeleton}
-              preserveExistingArea={isEditMode} 
-              initialArea={initialValues.area} 
+              preserveExistingArea={isEditMode}
+              initialArea={initialValues.area}
             />
             <StepperForm
               steps={steps.map((step) => ({

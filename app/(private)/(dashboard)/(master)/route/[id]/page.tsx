@@ -133,11 +133,8 @@ export default function AddEditRoute() {
     routeCode: yup.string().required("Route Code is required"),
     routeName: yup
       .string()
-      .required("Route Name is required")
-      .matches(
-        /^[A-Za-z][A-Za-z0-9 ]*$/,
-        "Must start with a letter and no special characters"
-      ),
+      .required("Route Name is required") ,
+     
     routeType: yup.string().required("Route Type is required"),
     vehicleType: yup.string().required("Vehicle is required"),
     warehouse: yup.string().required("Warehouse is required"),
@@ -193,7 +190,7 @@ export default function AddEditRoute() {
           if (e.path) formErrors[e.path] = e.message;
         });
         setErrors(formErrors);
-        showSnackbar("Please fix validation errors before submitting", "error");
+        // showSnackbar("Please fix validation errors before submitting", "error");
       } else {
         showSnackbar(
           isEditMode ? "Failed to update route" : "Failed to add route",
@@ -265,10 +262,11 @@ export default function AddEditRoute() {
                   />
                 </>
               )}
-            </div>
-            {errors.routeCode && (
+                {errors.routeCode && (
               <p className="text-red-500 text-sm mt-1">{errors.routeCode}</p>
             )}
+            </div>
+          
 
             {/* Route Name */}
             <div className="flex flex-col">
