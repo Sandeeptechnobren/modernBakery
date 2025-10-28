@@ -1931,14 +1931,7 @@ export const deleteSurvey = async (id: string) => {
     return handleError(error);
   }
 };
-type PayloadSurvey = {
-  survey_code: string;
-  survey_name: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-};
-export const addSurvey = async (payload: PayloadSurvey) => {
+export const addSurvey = async (payload: object) => {
   try {
     const res = await API.post("/api/merchendisher/survey/add", payload);
     return res.data;
@@ -2043,13 +2036,7 @@ export const getSurveyQuestionBySurveyId = async (
   }
 };
 
-type PayloadSurveyQuestion = {
-  survey_id: number; // ID of the survey this question belongs to
-  question: string; // The question text
-  question_type: "checkbox" | "radio" | "textbox" | "selectbox" | "commentbox"; // Type of question
-  question_based_selected?: string; // Comma-separated options for types that require multiple choices
-};
-export const addSurveyQuestion = async (payload: PayloadSurveyQuestion) => {
+export const addSurveyQuestion = async (payload: object) => {
   try {
     const res = await API.post(
       "/api/merchendisher/survey-questions/add",
@@ -2061,21 +2048,9 @@ export const addSurveyQuestion = async (payload: PayloadSurveyQuestion) => {
   }
 };
 
-type UpdateSurveyQuestion = {
-  survey_id: number; // ID of the survey this question belongs to
-  question: string; // The question text
-  question_type: "checkbox" | "radio" | "textbox" | "selectbox" | "commentbox"; // Type of question
-  question_based_selected?: string; // Comma-separated options for types that require multiple choices
-};
-
 export const UpdateSurveyQuestion = async (
   id: string,
-  payload: {
-    survey_id: string;
-    question: string;
-    question_type: string;
-    question_based_selected?: string;
-  }
+  payload: object
 ) => {
   try {
     // ✅ Send payload directly

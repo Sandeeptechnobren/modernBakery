@@ -3,12 +3,16 @@ export default function CustomCheckbox({
     label,
     checked,
     indeterminate = false,
+    disabled,
+    width,
     onChange,
 }: {
-    id: string;
+    id?: string;
     label: string | React.ReactNode;
     checked: boolean;
     indeterminate?: boolean;
+    disabled?: boolean;
+    width?: string | number;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
     const checkboxClass = `relative flex items-center justify-center w-[20px] h-[20px] cursor-pointer rounded-[6px] transition-all duration-200 ease-in-out ${
@@ -52,6 +56,7 @@ export default function CustomCheckbox({
                 checked={checked || indeterminate}
                 onChange={onChange}
                 className="peer hidden"
+                disabled={disabled}
             />
             <label htmlFor={id} className={checkboxClass}>
                 {" "}
