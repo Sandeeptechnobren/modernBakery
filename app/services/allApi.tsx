@@ -457,6 +457,15 @@ export const saveRouteVisit = async (body: object) => {
   }
 };
 
+export const getRouteVisitList = async () => {
+  try {
+    const res = await API.get("/api/master/route-visits/list");
+    return res.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const updateRouteVisitDetails = async (body: object) => {
   try {
     const res = await API.put(`/api/master/route-visits/bulk-update`, body);
@@ -2233,11 +2242,11 @@ export const permissionListById = async (id: string, params?: Params) => {
   }
 };
 
-
-
 export const rolepermissionListById = async (id: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/roles/permissions/${id}`, { params });
+    const res = await API.get(`/api/settings/roles/permissions/${id}`, {
+      params,
+    });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
