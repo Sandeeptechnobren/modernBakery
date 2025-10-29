@@ -10,17 +10,19 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { deleteRole, roleGlobalSearch, roleList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import StatusBtn from "@/app/components/statusBtn2";
 
 const columns = [
     { key: "name", label: "Name" },
-    { key: "permissions", label: "Permissions", render: (data: TableDataType) => {
-        const row = (data as any)[0];
-        if (row && typeof row === "object" && "menus" in row) {
-            console.log(row, "dfjkdlfjldkj");
-            return row?.menus?.[0]?.menu?.submenu?.[0]?.permissions?.[0] || "-";
-        }
-        return "-";
-    }}
+    { key: "status", label: "Status", render: (data: TableDataType) => <StatusBtn isActive={data.status ? true : false} /> },
+    // { key: "permissions", label: "Permissions", render: (data: TableDataType) => {
+    //     const row = (data as any)[0];
+    //     if (row && typeof row === "object" && "menus" in row) {
+    //         console.log(row, "dfjkdlfjldkj");
+    //         return row?.menus?.[0]?.menu?.submenu?.[0]?.permissions?.[0] || "-";
+    //     }
+    //     return "-";
+    // }}
 ];
 
 export default function Roles() {

@@ -211,11 +211,11 @@ export default function VehiclePage() {
                             showSnackbar("No warehouses selected", "error");
                             return;
                           }
-                          await vehicleStatusUpdate({ warehouse_ids: selectedRowsData, status });
+                          await vehicleStatusUpdate({ vehicle_ids: selectedRowsData, status });
                           setRefreshKey((k) => k + 1);
-                          showSnackbar("Warehouse status updated successfully", "success");
+                          showSnackbar("Vehicle status updated successfully", "success");
                         } catch (error) {
-                          showSnackbar("Failed to update warehouse status", "error");
+                          showSnackbar("Failed to update vehicle status", "error");
                         }
                       };
                 
@@ -260,6 +260,7 @@ export default function VehiclePage() {
                   icon: "gala:file-document",
                   label: "Export Excel",
                   labelTw: "text-[12px] hidden sm:block",
+                  onClick: exportFile,
                   // You can add onClick for Excel if needed
                 },
                 {

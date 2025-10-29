@@ -243,7 +243,7 @@ useEffect(() => {
         loading ? (
           <Skeleton variant="rounded" width={210} height={60} />
         ) : (
-        <div className="flex-wrap flex gap-4 mt-3">
+        <div className="flex-wrap flex gap-4 mt-2 pl-[5px]">
           {options.map((opt, idx) => (
             <label key={opt.value + idx} className="inline-flex items-center gap-3 cursor-pointer">
               <input

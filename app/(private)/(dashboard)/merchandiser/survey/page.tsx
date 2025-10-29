@@ -203,15 +203,15 @@ export default function Survey() {
           columns,
           rowSelection: true,
           rowActions: [
-            {
-              icon: "lucide:eye",
-              onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/survey/view/${data.id}`),
-            },
+            // {
+            //   icon: "lucide:eye",
+            //   onClick: (data: TableDataType) =>
+            //     router.push(`/merchandiser/survey/view/${data.id}`),
+            // },
             {
               icon: "lucide:edit-2",
               onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/survey/update/${data.id}`),
+                router.push(`/merchandiser/survey/${data.id}`),
             },
           ],
           pageSize: 10,

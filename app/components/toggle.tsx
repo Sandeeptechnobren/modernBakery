@@ -13,7 +13,7 @@ export default function Toggle({
         <label className="inline-flex items-center cursor-pointer">
             <input
                 type="checkbox"
-                className="peer invisible"
+                className="peer invisible hidden"
                 checked={isChecked}
                 onChange={onChange}
             />

@@ -24,8 +24,16 @@ interface Discount {
         name?: string;
     };
     item_category?: { id?: number; category_name?: string; category_code?: string };
-    customer_id?: string;
-    customer_channel_id?: string;
+    customer?: {
+        id?: number;
+        name?: string;
+        osa_code?: string;
+    };
+    outlet_channel?: {
+        id?: number;
+        outlet_channel?: string;
+        outlet_channel_code?: string;
+    };
     discount_type?: {
         id?: number;
         discount_code?: string;
@@ -103,38 +111,20 @@ export default function ViewPage() {
                     </ContainerCard>
                 </div>
                 <div className="w-full">
-                    <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
-                        {/* profile details */}
-                        <div className="flex sm:flex-row items-center gap-[20px]">
-                            <div className="text-center sm:text-left">
-                                <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                                    Discount Description
-                                </h2>
-                                <span className="flex items-center">
-                                    <span className="text-[#414651] text-[16px]">
-                                        <span className="font-[400]">
-                                            {discount?.description || "-"}
-                                        </span>
-                                    </span>
-                                </span>
-                            </div>
-                        </div>
-                    </ContainerCard>
                     {/* Location Information */}
                     <ContainerCard className="w-auto h-fit">
                         <KeyValueData
                             title="Product Information"
                             data={[
-                                { key: "Discount Code", value: discount?.osa_code || "-" },
                                 { key: "Item", value: discount?.item?.name || "-" },
                                 {
                                     key: "Item Category",
                                     value: discount?.item_category?.category_name || "-",
                                 },
-                                { key: "Customer", value: discount?.customer_id || "-" },
+                                { key: "Customer", value: discount?.customer?.name || "-" },
                                 {
                                     key: "Customer Channel",
-                                    value: discount?.customer_channel_id || "-",
+                                    value: discount?.outlet_channel?.outlet_channel || "-",
                                 },
                                 { key: "Discount Type", value: discount?.discount_type?.discount_name || "-" },
                                 { key: "Discount Value", value: discount?.discount_value || "-" },
@@ -144,7 +134,7 @@ export default function ViewPage() {
 
                     <div className="flex flex-wrap gap-x-[20px] mt-[20px]">
                         <div className="flex flex-col md:flex-row gap-6 w-full">
-                            <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
+                            <ContainerCard className="flex-1 min-w-[320px] h-full">
                                 <KeyValueData
                                     title="Pricing & Compliance"
                                     data={[
@@ -155,35 +145,7 @@ export default function ViewPage() {
                                     ]}
                                 />
                             </ContainerCard>
-                            <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                                <div className="text-[18px] font-semibold mb-[25px]">
-                                    Barcode
-                                </div>
-                                <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
-                                    <SummaryCard
-                                        icon="prime:barcode"
-                                        iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
-                                        iconWidth={30}
-                                        title={"ABC-abc-1234"}
-                                        description={"Barcode"}
-                                    />
-                                </ContainerCard>
-                                <KeyValueData
-                                    data={[
-                                        {
-                                            key: "Promotional Item",
-                                            value: "",
-                                            component: (
-                                                <Toggle
-                                                    isChecked={isChecked}
-                                                    onChange={() => setIsChecked(!isChecked)}
-                                                />
-                                            ),
-                                        },
-                                        { key: "Tax", value: "Vat" },
-                                    ]}
-                                />
-                            </ContainerCard>
+                            
                         </div>
                     </div>
                 </div>

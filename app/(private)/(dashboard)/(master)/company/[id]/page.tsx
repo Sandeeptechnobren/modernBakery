@@ -65,18 +65,13 @@ const CompanySchema = Yup.object().shape({
   town: Yup.string().required("Town is required"),
   street: Yup.string().required("Street is required"),
   landmark: Yup.string().required("Landmark is required"),
-  sub_region: Yup.string().required("Area is required"),
-  primary_contact: Yup.string()
-    .required("Primary contact is required")
-    .matches(/^[0-9]+$/, "Primary contact must contain only numbers")
-    .min(10, "Primary contact must be at least 10 digits")
-    .max(13, "Primary contact must not exceed 13 digits"),
-  toll_free_no: Yup.string()
-    .required("Toll free number is required")
-    .matches(/^[0-9]+$/, "Toll free number must contain only numbers")
-    .min(10, "Toll free number must be at least 10 digits")
-    .max(13, "Toll free number must not exceed 13 digits"),
-  module_access: Yup.string().required("Module is required field"),
+  sub_region: Yup.string().required("Sub Region is required"),
+  primary_contact: Yup.string().required("Primary contact is required").min(9).max(10),
+  toll_free_no: Yup.string().required("Toll free number is required").min(11).max(11),
+    module_access: Yup.string().required("Module is required field "),
+    
+    
+
 });
 
 // 🔹 Step-wise schemas
@@ -92,17 +87,9 @@ const stepSchemas = [
   }),
 
   Yup.object({
-    primary_contact: Yup.string()
-      .required("Primary contact is required")
-      .matches(/^[0-9]+$/, "Primary contact must contain only numbers")
-      .min(10, "Primary contact must be at least 10 digits")
-      .max(13, "Primary contact must not exceed 13 digits"),
+    primary_contact: Yup.string().required("Primary contact is required").min(9).max(10),
     primary_code: Yup.string(),
-    toll_free_no: Yup.string()
-      .required("Toll free number is required")
-      .matches(/^[0-9]+$/, "Toll free number must contain only numbers")
-      .min(10, "Toll free number must be at least 10 digits")
-      .max(13, "Toll free number must not exceed 13 digits"),
+    toll_free_no: Yup.string().required("Toll free number is required").min(11).max(11),
     toll_free_code: Yup.string(),
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
@@ -256,7 +243,7 @@ export default function AddEditCompany() {
         showSnackbar(isEditMode ? "Company Updated Successfully" : "Company Created Successfully", "success");
         router.push("/company");
         try {
-          await saveFinalCode({ reserved_code: values.company_code, model_name: "companies" });
+          await saveFinalCode({ reserved_code: values.company_code, model_name: "company" });
         } catch (e) {
           // Optionally handle error, but don't block success
         }

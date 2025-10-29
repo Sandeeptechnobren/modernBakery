@@ -223,10 +223,12 @@ export default function AddEditWarehouse() {
                     });
                 }
             } else if (!isEditMode && !codeGeneratedRef.current) {
+                setLoading(true);
                 codeGeneratedRef.current = true;
                 const res = await genearateCode({ model_name: "warehouse" });
                 if (res?.code) setInitialValues((prev) => ({ ...prev, warehouse_code: res.code }));
                 if (res?.prefix) setPrefix(res.prefix);
+                setLoading(false);
             }
         }
         fetchData();

@@ -119,10 +119,9 @@ const validationSchema = Yup.object({
   businessName: Yup.string().required("Business Name is required."),
   customerType: Yup.string().required("Customer Type is required."),
   ownerName: Yup.string().required("Owner Name is required."),
-  ownerNumber: Yup.string()
-    .required("Owner Contact is required."),
-  whatsappNo: Yup.string().when('isWhatsapp', {
-  is: (val: string) => val === '1',
+  ownerNumber: Yup.string().required("Owner Contact is required."),
+  whatsappNo: Yup.string().when("isWhatsapp", {
+    is: (val: string) => val === "1",
     then: (schema) => schema.required("Whatsapp Number is required."),
     otherwise: (schema) => schema.notRequired(),
   }),
@@ -144,12 +143,44 @@ const validationSchema = Yup.object({
   creditLimit: Yup.string().required("Credit Limit is required."),
   guaranteeName: Yup.string().required("Guarantee Name is required."),
   guaranteeAmount: Yup.string().required("Guarantee Amount is required."),
-  guaranteeFrom: Yup.string().required("Guarantee From is required."),
-  guaranteeTo: Yup.string().required("Guarantee To is required."),
+  guaranteeFrom: Yup.string()
+    .required("Guarantee From is required.")
+    .test("is-before-guaranteeTo", "Guarantee From must be before Guarantee To", function (value) {
+      const { guaranteeTo } = this.parent || {};
+      if (!value || !guaranteeTo) return true; // other validations handle required
+      const from = Date.parse(value);
+      const to = Date.parse(guaranteeTo);
+      if (isNaN(from) || isNaN(to)) {
+        return this.createError({ path: "guaranteeFrom", message: "Invalid date" });
+      }
+      if (from >= to) {
+        return this.createError({ path: "guaranteeFrom", message: "Guarantee From must be before Guarantee To" });
+      }
+      return true;
+    }),
+  guaranteeTo: Yup.string()
+    .required("Guarantee To is required.")
+    .test("is-after-guaranteeFrom", "Guarantee To must be after Guarantee From", function (value) {
+      const { guaranteeFrom } = this.parent || {};
+      if (!value || !guaranteeFrom) return true;
+      const to = Date.parse(value);
+      const from = Date.parse(guaranteeFrom);
+      if (isNaN(from) || isNaN(to)) {
+        return this.createError({ path: "guaranteeTo", message: "Invalid date" });
+      }
+      if (to <= from) {
+        return this.createError({ path: "guaranteeTo", message: "Guarantee To must be after Guarantee From" });
+      }
+      return true;
+    }),
   totalCreditLimit: Yup.string().required("Total Credit Limit is required."),
   creditLimitValidity: Yup.string(),
-  longitude: Yup.string().required("Longitude is required.").matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Longitude must be a valid decimal number"),
-  latitude: Yup.string().required("Latitude is required.").matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Latitude must be a valid decimal number"),
+  longitude: Yup.string()
+    .required("Longitude is required.")
+    .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Longitude must be a valid decimal number"),
+  latitude: Yup.string()
+    .required("Latitude is required.")
+    .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Latitude must be a valid decimal number"),
   thresholdRadius: Yup.string().required("Threshold Radius is required."),
   dChannelId: Yup.string().required("Channel is required."),
   merchendiser_ids: Yup.string(),
@@ -209,7 +240,7 @@ export default function AddCompanyCustomer() {
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
-  const { regionOptions, areaOptions, customerTypeOptions,channelOptions,fetchAreaOptions } =
+  const { regionOptions, areaOptions, customerTypeOptions,channelOptions,fetchAreaOptions, salesmanOptions } =
     useAllDropdownListData();
   const [skeleton, setSkeleton] = useState({
     area: false,
@@ -370,7 +401,6 @@ export default function AddCompanyCustomer() {
     values: CompanyCustomerFormValues,
     actions: FormikHelpers<CompanyCustomerFormValues>
   ) => {
-    console.log(values);
     try {
       const schema = stepSchemas[currentStep - 1];
       await schema.validate(values, { abortEarly: false });
@@ -400,7 +430,7 @@ export default function AddCompanyCustomer() {
 
   const handleSubmit = async (
     values: CompanyCustomerFormValues,
-    { setSubmitting, setErrors, setTouched }: FormikHelpers<CompanyCustomerFormValues>
+    actions: FormikHelpers<CompanyCustomerFormValues>
   ) => {
     try {
       await validationSchema.validate(values, { abortEarly: false });
@@ -478,16 +508,16 @@ export default function AddCompanyCustomer() {
 
         router.push("/companyCustomer");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Yup.ValidationError) {
         const fields = error.inner.map((e) => e.path);
-        setTouched(
+        actions.setTouched(
           fields.reduce(
             (acc, key) => ({ ...acc, [key!]: true }),
             {} as Record<string, boolean>
           )
         );
-        setErrors(
+        actions.setErrors(
           error.inner.reduce(
             (acc: Partial<Record<keyof CompanyCustomerFormValues, string>>, curr) => ({
               ...acc,
@@ -496,12 +526,11 @@ export default function AddCompanyCustomer() {
             {}
           )
         );
-        showSnackbar("Please fix the errors in the form.", "error");
       } else {
         showSnackbar(`Failed to ${isEditMode ? "update" : "add"} Company Customer `, "error");
       }
     } finally {
-      setSubmitting(false);
+      actions.setSubmitting(false);
     }
   };
 
@@ -1112,11 +1141,7 @@ export default function AddCompanyCustomer() {
                         setFieldValue("merchendiser_ids", e.target.value)
                       }
                       
-                      options={[
-                        { value: "1", label: "Merchendiser 1" },
-                        { value: "2", label: "Merchendiser 2" },
-                        { value: "3", label: "Merchendiser 3" },
-                      ]}
+                      options={salesmanOptions}
                       error={touched.merchendiser_ids && errors.merchendiser_ids}
                     />
                     {errors?.merchendiser_ids && touched?.merchendiser_ids && (

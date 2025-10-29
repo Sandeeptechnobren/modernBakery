@@ -26,7 +26,6 @@ import CustomCheckbox from "@/app/components/customCheckbox";
 import Table from "@/app/components/customTable";
 import ContainerCard from '../../../../../components/containerCard';
 import { useLoading } from "@/app/services/loadingContext";
-import Item from '../page';
 
 interface ItemFormValues {
   itemCode: string;

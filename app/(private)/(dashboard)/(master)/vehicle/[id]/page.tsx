@@ -53,7 +53,6 @@ const VehicleSchema = Yup.object().shape({
   chassisNumber: Yup.string().required("Chassis Number is required"),
   vehicleType: Yup.string().required("Vehicle Type is required"),
   ownerType: Yup.string().required("Owner Type is required"),
-  warehouseId: Yup.string().required("Warehouse is required"),
   odoMeter: Yup.number().required("Odometer is required"),
   capacity: Yup.string().required("Capacity is required"),
   fuel_reading: Yup.number()
@@ -464,13 +463,9 @@ export default function AddEditVehicleWithStepper() {
                   value={form.warehouseId}
                   onChange={handleChange}
                   name="warehouseId"
-                  error={touched.warehouseId && errors.warehouseId}
                   options={warehouseOptions}
                   disabled={form.ownerType === "company"}
                 />
-                {touched.warehouseId && errors.warehouseId && (
-                  <div className="text-red-500 text-xs mt-1">{errors.warehouseId}</div>
-                )}
               </div>
             </div>
           </ContainerCard>

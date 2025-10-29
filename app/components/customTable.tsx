@@ -480,7 +480,7 @@ function ColumnFilter() {
                     />
                 }
                 dropdown={
-                    <div className="min-w-[200px] max-w-[350px] w-fit min-h-[200px] max-h-1/2 h-fit fixed right-[50px] translate-y-[10px] z-50 overflow-auto scrollbar-none border-[1px] border-[#E9EAEB] rounded-[8px]">
+                    <div className="min-w-[200px] max-w-[350px] w-fit min-h-[200px] max-h-1/2 h-fit fixed right-[50px] translate-y-[10px] z-50 overflow-auto scrollbar-none">
                         
                         <CustomDropdown>
                             <div className="flex p-[10px]">
@@ -627,17 +627,13 @@ function TableBody() {
                                             <th
                                                 className={`w-[${
                                                     col.width
-                                                }px] ${
+                                                }px] ${col.sticky ? "z-10 md:sticky" : ""} ${
                                                     col.sticky === "left"
-                                                        ? "sticky left-0"
+                                                        ? "left-0"
                                                         : ""
                                                 } ${
                                                     col.sticky === "right"
-                                                        ? "sticky right-0"
-                                                        : ""
-                                                } ${
-                                                    col.sticky === "center"
-                                                        ? "sticky"
+                                                        ? "right-0"
                                                         : ""
                                                 } px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap`}
                                                 key={index}
@@ -739,15 +735,13 @@ function TableBody() {
                                                     <td
                                                         key={index}
                                                         width={col.width}
-                                                        className={`px-[24px] py-[12px] ${
-                                                            col.sticky ===
-                                                            "left"
-                                                                ? "sticky left-0 bg-white"
+                                                        className={`px-[24px] py-[12px] bg-white ${col.sticky ? "z-10 md:sticky" : ""} ${
+                                                            col.sticky === "left"
+                                                                ? "left-0"
                                                                 : ""
                                                         } ${
-                                                            col.sticky ===
-                                                            "right"
-                                                                ? "sticky right-0 bg-white"
+                                                            col.sticky === "right"
+                                                                ? "right-0"
                                                                 : ""
                                                         }`}
                                                     >

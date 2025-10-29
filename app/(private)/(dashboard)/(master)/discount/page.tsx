@@ -14,6 +14,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
     discountList,
     deleteDiscount,
+    updateDiscountStatus,
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -32,8 +33,16 @@ interface Discount {
         name?: string;
     };
     item_category?: { id?: number; category_name?: string; category_code?: string };
-    customer_id?: string;
-    customer_channel_id?: string;
+    customer?: {
+        id?: number;
+        name?: string;
+        osa_code?: string;
+    };
+    outlet_channel?: {
+        id?: number;
+        outlet_channel?: string;
+        outlet_channel_code?: string;
+    };
     discount_type?: {
         id?: number;
         discount_code?: string;
@@ -84,8 +93,24 @@ const columns = [
             return discountObj?.category_name || "-";
         },
     },
-    { key: "customer_id", label: "Customer" },
-    { key: "customer_channel_id", label: "Customer Channel" },
+    { key: "customer", label: "Customer", 
+        render: (row: TableDataType) => {
+            const discountObj =
+                typeof row.customer === "string"
+                    ? JSON.parse(row.customer)
+                    : row.customer;
+            return discountObj?.name || "-";
+        }
+     },
+    { key: "outlet_channel", label: "Customer Channel", 
+        render: (row: TableDataType) => {
+            const discountObj =
+                typeof row.outlet_channel === "string"
+                    ? JSON.parse(row.outlet_channel)
+                    : row.outlet_channel;
+            return discountObj?.outlet_channel || "-";
+        }
+     },
     { key: "discount_value", label: "Discount Value" },
     {
         key: "discount_type",
@@ -126,7 +151,7 @@ const DiscountPage = () => {
     const fetchDiscounts = useCallback(
         async (
             pageNo: number = 1,
-            pageSize: number = 5
+            pageSize: number = 50
         ): Promise<listReturnType> => {
             setLoading(true);
             const result = await discountList({
@@ -142,13 +167,56 @@ const DiscountPage = () => {
                 return {
                     data: result.data as TableDataType[],
                     currentPage: result.pagination?.current_page || 1,
-                    pageSize: result.pagination?.per_page || 5,
+                    pageSize: result.pagination?.per_page || 50,
                     total: result.pagination?.total || 0,
                 };
             }
         },
         [showSnackbar, setLoading]
     );
+
+    const handleStatusChange = async (
+                data: TableDataType[],
+                selectedRow: number[] | undefined,
+                status: "0" | "1"
+              ) => {
+                if (!selectedRow || selectedRow.length === 0) {
+                  showSnackbar("Please select at least one salesman", "error");
+                  return;
+                }
+              
+                const selectedItem = data.filter((_, index) =>
+                  selectedRow.includes(index)
+                );
+                // console.log(data, selectedRow)
+              
+                const failedUpdates: string[] = [];
+              
+                const selectedRowsData: string[] = data.filter((value, index)=> selectedRow?.includes(index)).map((item) => item.id);
+                try {
+                  setLoading(true);
+                 
+                      const res = await updateDiscountStatus({id: selectedRowsData, status});
+                  
+                  if (failedUpdates.length > 0) {
+                    showSnackbar(
+                      `Failed to update status for: ${failedUpdates.join(", ")}`,
+                      "error"
+                    );
+                  } else {
+               setRefreshKey((k) => k + 1);
+                    showSnackbar("Status updated successfully", "success");
+                    // fetchItems();
+                  }
+              
+                } catch (error) {
+                  console.error("Status update error:", error);
+                  showSnackbar("An error occurred while updating status", "error");
+                } finally {
+                  setLoading(false);
+                  setShowDropdown(false);
+                }
+              };
 
     // 🔹 Handle Delete
     const handleConfirmDelete = async () => {
@@ -170,7 +238,7 @@ const DiscountPage = () => {
     return (
         <>
             {/* Table */}
-            <div className="h-[calc(100%-60px)]">
+            <div className="h-full">
                 <Table
                 refreshKey={refreshKey}
                     config={{
@@ -179,40 +247,30 @@ const DiscountPage = () => {
                         },
                         header: {
                             title: "Discount",
-                            wholeTableActions: [
-                                <div key={0} className="flex gap-[12px] relative">
-                                    <DismissibleDropdown
-                                        isOpen={showDropdown}
-                                        setIsOpen={setShowDropdown}
-                                        button={
-                                            <BorderIconButton icon="ic:sharp-more-vert" />
-                                        }
-                                        dropdown={
-                                            <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                                                <CustomDropdown>
-                                                    {dropdownDataList.map(
-                                                        (link, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                            >
-                                                                <Icon
-                                                                    icon={link.icon}
-                                                                    width={link.iconWidth}
-                                                                    className="text-[#717680]"
-                                                                />
-                                                                <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                    {link.label}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    )}
-                                                </CustomDropdown>
-                                            </div>
-                                        }
-                                    />
-                                </div>,
-                            ],
+                             threeDot: [
+                // {
+                //   icon: "gala:file-document",
+                //   label: "Export CSV",
+                //   onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                //     handleExport("csv")
+                //   },
+                // },
+                // {
+                //   icon: "gala:file-document",
+                //   label: "Export Excel",
+                //   onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                //     handleExport("xlsx")
+                //   },
+                // },
+                {
+                  icon: "lucide:radio",
+                  label: "Inactive",
+                  showOnSelect: true,
+                 onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    handleStatusChange(data, selectedRow, "0");
+                },
+              }
+              ],
                             searchBar: true,
                             columnFilter: true,
                             actions: [
@@ -221,7 +279,7 @@ const DiscountPage = () => {
                                     href="/discount/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Discount"
+                                    label="Add"
                                     labelTw="hidden sm:block"
                                 />,
                             ],
@@ -255,7 +313,10 @@ const DiscountPage = () => {
                             //     },
                             // },
                         ],
-                        pageSize: 5,
+                        pageSize: 50,
+                        table: {
+                            height: 500,
+                        },
                     }}
                 />
             </div>

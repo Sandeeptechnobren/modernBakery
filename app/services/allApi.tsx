@@ -1447,6 +1447,15 @@ export const updateDiscountType = async (id: string, body: object) => {
   }
 };
 
+export const updateDiscountStatus = async (body: object) => {
+  try {
+    const res = await API.post(`api/master/discount/status-update`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const deleteDiscountType = async (id: string) => {
   try {
     const res = await API.delete(`/api/settings/discount_type/${id}/delete`);
@@ -1931,14 +1940,7 @@ export const deleteSurvey = async (id: string) => {
     return handleError(error);
   }
 };
-type PayloadSurvey = {
-  survey_code: string;
-  survey_name: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-};
-export const addSurvey = async (payload: PayloadSurvey) => {
+export const addSurvey = async (payload: object) => {
   try {
     const res = await API.post("/api/merchendisher/survey/add", payload);
     return res.data;
@@ -2043,13 +2045,7 @@ export const getSurveyQuestionBySurveyId = async (
   }
 };
 
-type PayloadSurveyQuestion = {
-  survey_id: number; // ID of the survey this question belongs to
-  question: string; // The question text
-  question_type: "checkbox" | "radio" | "textbox" | "selectbox" | "commentbox"; // Type of question
-  question_based_selected?: string; // Comma-separated options for types that require multiple choices
-};
-export const addSurveyQuestion = async (payload: PayloadSurveyQuestion) => {
+export const addSurveyQuestion = async (payload: object) => {
   try {
     const res = await API.post(
       "/api/merchendisher/survey-questions/add",
@@ -2061,21 +2057,9 @@ export const addSurveyQuestion = async (payload: PayloadSurveyQuestion) => {
   }
 };
 
-type UpdateSurveyQuestion = {
-  survey_id: number; // ID of the survey this question belongs to
-  question: string; // The question text
-  question_type: "checkbox" | "radio" | "textbox" | "selectbox" | "commentbox"; // Type of question
-  question_based_selected?: string; // Comma-separated options for types that require multiple choices
-};
-
 export const UpdateSurveyQuestion = async (
   id: string,
-  payload: {
-    survey_id: string;
-    question: string;
-    question_type: string;
-    question_based_selected?: string;
-  }
+  payload: object
 ) => {
   try {
     // ✅ Send payload directly
@@ -2161,7 +2145,7 @@ export const getRoleById = async (id: string, params?: Params) => {
 
 type roletype = {
   name: string;
-  menus: TableDataType[];
+  labels: number[];
 };
 
 export const addRoles = async (payload: roletype) => {
@@ -2181,6 +2165,17 @@ export const editRoles = async (id: string, payload: roletype) => {
     return handleError(error);
   }
 };
+
+// assign permission to role
+export const assignPermissionsToRole = async (roleId: string, rolePermissionData: object) => {
+  try {
+    const res = await API.post(`/api/settings/roles/assign-permissions/${roleId}`, rolePermissionData);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const deleteRole = async (id: string) => {
   try {
     const res = await API.delete(`/api/settings/roles/${id}`);
@@ -2660,7 +2655,7 @@ export const exportVehicleData = async (body:object) => {
 export const vehicleStatusUpdate = async (body: object) => {
   try {
     const res = await API.post(
-      `/api/master/vehicle/multiple_status_updat`,
+      `/api/master/vehicle/multiple_status_update`,
       body
     );
     return res.data;
@@ -2781,6 +2776,56 @@ export const editPromotionDetail = async (uuid: string, payload: object) => {
 export const deletePromotionDetail = async (uuid: string) => {
   try {
     const res = await API.delete(`/api/master/promotion-details/delete/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const labelList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/labels/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const labelGenerateCode = async () => {
+  try {
+    const res = await API.get(`/api/settings/labels/generate-code`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const labelById = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/labels/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+type labelType = {
+  name: string;
+  status: string;
+};
+
+export const addLabel = async (payload: labelType) => {
+  try {
+    const res = await API.post(`/api/settings/labels/add`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editLabel = async (id: string, payload: labelType) => {
+  try {
+    const res = await API.put(`/api/settings/labels/${id}`, payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
