@@ -9,12 +9,16 @@ export default function CustomPasswordInput({
   onChange,
   required = false,
   width = "w-full",
+  error,
+  onBlur,
 }: {
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   width?: string;
   required?: boolean;
+  error?: string | false;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -34,7 +38,8 @@ export default function CustomPasswordInput({
           id={label}
           value={value}
           onChange={onChange}
-          className="border h-[44px] w-full border-gray-300 rounded-md px-3 pr-10 text-sm"
+          onBlur={onBlur}
+          className={`border h-[44px] w-full rounded-md px-3 pr-10 text-sm ${error ? 'border-red-500' : 'border-gray-300'}`}
           placeholder="••••••••"
         />
         <div
@@ -48,6 +53,11 @@ export default function CustomPasswordInput({
           )}
         </div>
       </div>
+        {error && (
+          <div className="mt-1">
+            <span className="text-xs text-red-500">{error}</span>
+          </div>
+        )}
     </div>
   );
 }

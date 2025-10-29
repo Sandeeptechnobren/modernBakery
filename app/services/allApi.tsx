@@ -2870,3 +2870,22 @@ export const updateAuthUser = async (uuid: string, body: object) => {
     return handleError(error);
   }
 };
+
+
+export const getUserList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/auth/getUserList", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getUserByUuid = async (uuid?: string) => {
+  try {
+    const res = await API.get(`/api/master/auth/getUserbyUuid/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

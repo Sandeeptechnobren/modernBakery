@@ -4,813 +4,609 @@ import { Icon } from "@iconify-icon/react";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import InputFields from "@/app/components/inputFields";
-import StepperForm, {
-    useStepperForm,
-    StepperStep,
-} from "@/app/components/stepperForm";
+import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import {
-    agentCustomerById,
-    routeList,
-    customerSubCategoryList,
-    customerCategoryList,
-    updateAuthUser,
-    registerAuthUser,
+  agentCustomerById,
+  updateAuthUser,
+  registerAuthUser,
+  getRoleById,
+  getUserByUuid
 } from "@/app/services/allApi";
-import { getRoleById } from "@/app/services/allApi";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import {
-    Form,
-    Formik,
-    FormikErrors,
-    FormikHelpers,
-    FormikTouched,
-} from "formik";
+import { Form, Formik, FormikHelpers } from "formik";
 import { useLoading } from "@/app/services/loadingContext";
 import CustomPasswordInput from "@/app/components/customPasswordInput";
 
-interface user {
-    name: string;
-    email: string;
-    username: string;
-    contact_number: string;
-    password: string;
-    password_confirmation: string;
-    role: string;
-    label: string;
-    company: string;
-    warehouse?: string;
-    route?: string;
-    salesman?: string;
-    region?: string;
-    area?: string;
-    outlet_channel?: string;
+interface User {
+  name: string;
+  email: string;
+  username: string;
+  contact_number: string;
+  password: string;
+  password_confirmation: string;
+  role: string;
+  company?: string | string[];
+  warehouse?: string | string[];
+  route?: string | string[];
+  region?: string | string[];
+  area?: string | string[];
+  salesman?: string | string[];
 }
 
-interface contactCountry { name: string; code?: string; flag?: string; }
+interface ContactCountry {
+  name: string;
+  code?: string;
+  flag?: string;
+}
 
 export default function UserAddEdit() {
-    // starting point
-    const { showSnackbar } = useSnackbar();
-    const { setLoading } = useLoading();
-    const router = useRouter();
-    const params = useParams();
-    const userUUID = params?.uuid as string | undefined;
-    const isEditMode = userUUID !== undefined && userUUID !== "add";
+  const { showSnackbar } = useSnackbar();
+  const { setLoading } = useLoading();
+  const router = useRouter();
+  const params = useParams();
+  const userUUID = params?.uuid as string | undefined;
+  const isEditMode = userUUID !== undefined && userUUID !== "add";
 
-    // Dropdown options from context
-    const { roleOptions ,labelOptions,companyOptions,regionOptions,areaOptions,warehouseOptions,routeOptions} = useAllDropdownListData();
-    // local label options filtered by selected role(s)
-    const [currentLabelOptions, setCurrentLabelOptions] = useState(labelOptions);
-    const [skeleton, setSkeleton] = useState({
-        route: false,
-        customerCategory: false,
-        customerSubCategory: false,
-    });
-    const [filteredRouteOptions, setFilteredRouteOptions] = useState([] as { label: string; value: string }[]);
-    const [filteredCustomerCategoryOptions, setFilteredCustomerCategoryOptions] = useState([] as { label: string; value: string }[]);
-    const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState([] as  { label: string; value: string }[]);
+  const {
+    roleOptions,
+    companyOptions,
+    regionOptions,
+    areaOptions,
+    warehouseOptions,
+    routeOptions,
+    salesmanOptions,
+    fetchRegionOptions,
+    fetchAreaOptions,
+    fetchWarehouseOptions,
+    fetchRouteOptions,
+  } = useAllDropdownListData();
 
-    const [country, setCountry] = useState<Record<string, contactCountry>>({
-        contact_number: { name: "Uganda", code: "+256", flag: "🇺🇬" },
-    });
-    
-    const steps: StepperStep[] = [
-        { id: 1, label: "User Information" },
-        { id: 2, label: "Roles and Permissions" }
-    ];
-    const {
-        currentStep,
-        nextStep,
-        prevStep,
-        markStepCompleted,
-        isStepCompleted,
-        isLastStep,
-    } = useStepperForm(steps.length);
+  const [visibleLabels, setVisibleLabels] = useState<string[]>([]);
+  const [country, setCountry] = useState<Record<string, ContactCountry>>({
+    contact_number: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+  });
+  const [skeleton, setSkeleton] = useState({
+    region: false,
+    area: false,
+    warehouse: false,
+    route: false,
+  });
 
-    const [initialValues, setInitialValues] = useState({
-        name: '',
-        email: '',
-        username: '',
-        contact_number: '',
-        password: '',
-        password_confirmation: '',
-        role: '',
-        label: '',
-        company: '',
-        warehouse: '',
-        route: '',
-        salesman: '',
-        region: '',
-        area: '',
-        outlet_channel: ''
-    });
+  const steps: StepperStep[] = [
+    { id: 1, label: "User Information" },
+    { id: 2, label: "Roles and Permissions" },
+  ];
 
-    const fetchRoutes = async (value: string) => {
-        setSkeleton({ ...skeleton, route: true });
-        const filteredOptions = await routeList({
-            warehouse_id: value,
-            per_page: "10",
-        });
-        if(filteredOptions.error) {
-            showSnackbar(filteredOptions.data?.message || "Failed to fetch routes", "error");
-            return;
-        }
-        const options = filteredOptions?.data || [];
-        setFilteredRouteOptions(options.map((route: { id: number; route_name: string }) => ({
-            value: String(route.id),
-            label: route.route_name,
-        })));
-        setSkeleton({ ...skeleton, route: false });
-    };
+  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
+    useStepperForm(steps.length);
 
-    const fetchCategories = async (value: string) => {
-        setSkeleton({ ...skeleton, customerCategory: true });
-        const filteredOptions = await customerCategoryList({
-            outlet_channel_id: value,
-            per_page: "10",
-        });
-        if(filteredOptions.error) {
-            showSnackbar(filteredOptions.data?.message || "Failed to fetch Customer Categories", "error");
-            return;
-        }
-        const options = filteredOptions?.data || [];
-        setFilteredCustomerCategoryOptions(options.map((category: { id: number; customer_category_code: string; customer_category_name: string }) => ({
-            value: String(category.id),
-            label: category.customer_category_name + " - " + category.customer_category_code,
-        })));
-        setSkeleton({ ...skeleton, customerCategory: false });
-    }
+  const [initialValues, setInitialValues] = useState<User>({
+    name: "",
+    email: "",
+    username: "",
+    contact_number: "",
+    password: "",
+    password_confirmation: "",
+    role: "",
+    company: "",
+    warehouse: "",
+    route: "",
+    region: "",
+    area: "",
+    salesman: "",
+  });
+  const [originalUser, setOriginalUser] = useState<any>(null);
 
-    const fetchSubCategories = async (value: string) => {
-        setSkeleton({ ...skeleton, customerSubCategory: true });
-        const filteredOptions = await customerSubCategoryList({
-            customer_category_id: value,
-            per_page: "10",
-        });
-        if(filteredOptions.error) {
-            showSnackbar(filteredOptions.data?.message || "Failed to fetch Customer Sub Categories", "error");
-            return;
-        }
-        const options = filteredOptions?.data || [];
-        setFilteredCustomerSubCategoryOptions(options.map((subCategory: { id: number; customer_sub_category_code: string; customer_sub_category_name: string }) => ({
-            value: String(subCategory.id),
-            label: subCategory.customer_sub_category_name + " - " + subCategory.customer_sub_category_code,
-        })));
-        setSkeleton({ ...skeleton, customerSubCategory: false });
-    }
-
-    useEffect(() => {
+  useEffect(() => {
+    (async () => {
+      if (isEditMode && userUUID) {
         setLoading(true);
-        if (isEditMode && userUUID) {
-            (async () => {
-                const res = await agentCustomerById(String(userUUID));
-                const data = res?.data ?? res;
-                if (res && !res.error) {
-                    setInitialValues({
-                        name: String(data.name ?? ""),
-                        email: String(data.email ?? ""),
-                        username: String(data.username ?? ""),
-                        contact_number: String(data.contact_number ?? ""),
-                        password: String(data.password ?? ""),
-                        password_confirmation: String(data.password_confirmation ?? ""),
-                        role: String(data.role ?? ""),
-                        label: String(data.label ?? ""),
-                        company: String(data.company ?? ""),
-                        warehouse: String(data.warehouse ?? ""),
-                        route: String(data.route ?? ""),
-                        salesman: String(data.salesman ?? ""),
-                        region: String(data.region ?? ""),
-                        area: String(data.area ?? ""),
-                        outlet_channel: String(data.outlet_channel ?? ""),
-                    });
-                    fetchRoutes(data.get_warehouse != null? String(data.get_warehouse?.id): "");
-                    fetchCategories(data.outlet_channel.id != null? String(data.outlet_channel?.id): "");
-                    fetchSubCategories(data.category.id != null? String(data.category?.id): String(data.category?.id ?? ""));
-                }
-                setLoading(false);
-            })();
+        const res = await getUserByUuid(String(userUUID));
+        const data = res?.data ?? res;
+        if (res && !res.error) {
+          const user = data?.user ?? data;
+          const roleVal = user?.role ? (typeof user.role === "object" ? String(user.role.id ?? user.role) : String(user.role)) : "";
+          // Build arrays of ids for multi-select initial values (preserve all selections)
+          const companyIds = Array.isArray(user?.companies) && user.companies.length > 0 ? user.companies.map((c: any) => String(c.id ?? c)) : (user?.company ? [String(user.company)] : []);
+          const regionIds = Array.isArray(user?.regions) && user.regions.length > 0 ? user.regions.map((r: any) => String(r.id ?? r)) : (user?.region ? [String(user.region)] : []);
+          const areaIds = Array.isArray(user?.areas) && user.areas.length > 0 ? user.areas.map((a: any) => String(a.id ?? a)) : (user?.area ? [String(user.area)] : []);
+          const warehouseIds = Array.isArray(user?.warehouses) && user.warehouses.length > 0 ? user.warehouses.map((w: any) => String(w.id ?? w)) : (user?.warehouse ? [String(user.warehouse)] : []);
+          const routeIds = Array.isArray(user?.routes) && user.routes.length > 0 ? user.routes.map((r: any) => String(r.id ?? r)) : (user?.route ? [String(user.route)] : []);
+          const salesmanVals = Array.isArray(user?.salesmen) && user.salesmen.length > 0 ? user.salesmen.map((s: any) => String(s.id ?? s)) : (user?.salesman ? [String(user.salesman)] : []);
+
+          setInitialValues({
+            name: String(user?.name ?? ""),
+            email: String(user?.email ?? ""),
+            username: String(user?.username ?? ""),
+            contact_number: String(user?.contact_number ?? ""),
+            password: "",
+            password_confirmation: "",
+            role: roleVal,
+            company: companyIds.length ? companyIds : [],
+            warehouse: warehouseIds.length ? warehouseIds : [],
+            route: routeIds.length ? routeIds : [],
+            region: regionIds.length ? regionIds : [],
+            area: areaIds.length ? areaIds : [],
+            salesman: salesmanVals.length ? salesmanVals : [],
+          });
+          setOriginalUser(user);
+
+          try {
+            if (roleVal) await fetchLabelsForRoles(roleVal);
+          } catch (err) {
+            console.error("Failed to fetch labels for role during init:", err);
+          }
+
+          try {
+            // Use first id to fetch dependent dropdowns so options load for the selects
+            if (companyIds.length > 0) {
+              const firstCompany = companyIds[0];
+              setSkeleton((s) => ({ ...s, region: true }));
+              try {
+                await fetchRegionOptions(firstCompany);
+              } finally {
+                setSkeleton((s) => ({ ...s, region: false }));
+              }
+            }
+            if (regionIds.length > 0) {
+              const firstRegion = regionIds[0];
+              setSkeleton((s) => ({ ...s, area: true }));
+              try {
+                await fetchAreaOptions(firstRegion);
+              } finally {
+                setSkeleton((s) => ({ ...s, area: false }));
+              }
+            }
+            if (areaIds.length > 0) {
+              const firstArea = areaIds[0];
+              setSkeleton((s) => ({ ...s, warehouse: true }));
+              try {
+                await fetchWarehouseOptions(firstArea);
+              } finally {
+                setSkeleton((s) => ({ ...s, warehouse: false }));
+              }
+            }
+            if (warehouseIds.length > 0) {
+              const firstWarehouse = warehouseIds[0];
+              setSkeleton((s) => ({ ...s, route: true }));
+              try {
+                await fetchRouteOptions(firstWarehouse);
+              } finally {
+                setSkeleton((s) => ({ ...s, route: false }));
+              }
+            }
+          } catch (err) {
+            console.error("Init dropdown fetch failed:", err);
+          }
         }
         setLoading(false);
-    }, [isEditMode, userUUID]);
+      }
+    })();
+  }, [isEditMode, userUUID]);
 
-    useEffect(() => {
-        setCurrentLabelOptions(labelOptions);
-    }, [labelOptions]);
+  const fetchLabelsForRoles = async (roleId: string) => {
+    if (!roleId) {
+      setVisibleLabels([]);
+      return;
+    }
+    try {
+      const res = await getRoleById(String(roleId));
+      if (res?.error) return;
+      const data = res.data ?? res;
+      const labelsArr = Array.isArray(data?.labels)
+        ? data.labels
+        : Array.isArray(data?.label)
+        ? data.label
+        : [];
+      const labelNames = labelsArr.map((l: any) => l.name?.toLowerCase() || "");
+      setVisibleLabels(labelNames);
+    } catch (err) {
+      console.error("Failed to fetch labels:", err);
+    }
+  };
+  const passwordField = isEditMode
+    ? Yup.string().notRequired()
+    : Yup.string().required("Password is required").min(6, "Password too short");
 
-    const fetchLabelsForRoles = async (roleVals: string | string[]) => {
-        const ids = Array.isArray(roleVals) ? roleVals : (roleVals ? [roleVals] : []);
-        if (!ids || ids.length === 0) {
-            setCurrentLabelOptions(labelOptions);
-            return labelOptions;
-        }
+  const passwordConfirmationField = isEditMode
+    ? Yup.string().notRequired()
+    : Yup.string()
+        .oneOf([Yup.ref("password"), undefined], "Passwords must match")
+        .required("Confirm password is required");
 
-        const labelsMap = new Map<string, string>();
-        for (const id of ids) {
-            try {
-                const res = await getRoleById(String(id));
-                if (!res || res.error) continue;
-                const data = res.data ?? res;
-                const labelsArr = Array.isArray(data?.labels) ? data.labels : (Array.isArray(data?.label) ? data.label : []);
-                (labelsArr || []).forEach((l: any) => {
-                    const val = String(l.id ?? l.uuid ?? l.osa_code ?? l.id ?? "");
-                    const parts: string[] = [];
-                    if (l.osa_code) parts.push(String(l.osa_code));
-                    if (l.name) parts.push(String(l.name));
-                    else if (l.label) parts.push(String(l.label));
-                    const lab = parts.length ? parts.join(" - ") : String(l.id ?? "");
-                    if (val) labelsMap.set(val, lab);
-                });
-            } catch (err) {
-                console.error("Failed to fetch role for labels:", id, err);
-            }
-        }
+  const baseFields = {
+    name: Yup.string().required("Name is required"),
+    email: Yup.string().email("Invalid email").required("Email is required"),
+    username: Yup.string().required("Username is required"),
+    contact_number: Yup.string().required("Contact number is required"),
+    password: passwordField,
+    password_confirmation: passwordConfirmationField,
+  };
 
-        const options = Array.from(labelsMap.entries()).map(([value, label]) => ({ value, label }));
-        setCurrentLabelOptions(options);
-        return options;
-    };
+  const roleField = {
+    role: Yup.string().required("Role is required"),
+  };
 
-    const userSchema = Yup.object().shape({
-        name: Yup.string().required("Name is required").max(255),
-        email: Yup.string().email("Invalid email").required("Email is required"),
-        username: Yup.string().required("Username is required").max(255),
-        contact_number: Yup.string().required("Contact number is required").max(20),
-        password: Yup.string().required("Password is required").min(6).max(100),
-        password_confirmation: Yup.string()
-            .oneOf([Yup.ref("password"), undefined], "Passwords must match")
-            .required("Password confirmation is required"),
+  const dynamicSchema = Yup.object().shape({
+    ...baseFields,
+    ...roleField,
+    ...(visibleLabels.includes("company") && { company: Yup.string().required("Company is required") }),
+    ...(visibleLabels.includes("region") && { region: Yup.string().required("Region is required") }),
+    ...(visibleLabels.includes("area") && { area: Yup.string().required("Area is required") }),
+    ...(visibleLabels.includes("warehouse") && {
+      warehouse: Yup.string().required("Warehouse is required"),
+    }),
+    ...(visibleLabels.includes("route") && { route: Yup.string().required("Route is required") }),
+    ...(visibleLabels.includes("salesman") && { salesman: Yup.string().required("Salesman is required") }),
+  });
 
-        // multi-value fields with hierarchical dependency validation
-        role: Yup.array().of(Yup.string()).min(1, "Role is required"),
-        label: Yup.array().of(Yup.string()).min(1, "Label is required"),
+  const handleNext = async (values: User, actions: FormikHelpers<User>) => {
+    try {
+      const normalized = {
+        ...values,
+        company: Array.isArray((values as any).company) ? (values as any).company[0] : (values as any).company,
+        region: Array.isArray((values as any).region) ? (values as any).region[0] : (values as any).region,
+        area: Array.isArray((values as any).area) ? (values as any).area[0] : (values as any).area,
+        warehouse: Array.isArray((values as any).warehouse) ? (values as any).warehouse[0] : (values as any).warehouse,
+        route: Array.isArray((values as any).route) ? (values as any).route[0] : (values as any).route,
+        salesman: Array.isArray((values as any).salesman) ? (values as any).salesman[0] : (values as any).salesman,
+      } as User;
+      const stepSchema =
+        currentStep === 1
+          ? Yup.object().shape({ ...baseFields })
+          : Yup.object().shape({
+              ...roleField,
+              ...(visibleLabels.includes("company") && {
+                company: Yup.string().required("Company is required"),
+              }),
+              ...(visibleLabels.includes("region") && {
+                region: Yup.string().required("Region is required"),
+              }),
+              ...(visibleLabels.includes("area") && {
+                area: Yup.string().required("Area is required"),
+              }),
+              ...(visibleLabels.includes("warehouse") && {
+                warehouse: Yup.string().required("Warehouse is required"),
+              }),
+              ...(visibleLabels.includes("route") && {
+                route: Yup.string().required("Route is required"),
+              }),
+            });
 
-        // company: Yup.array().of(Yup.string()).min(1, "Company is required"),
+      await stepSchema.validate(normalized, { abortEarly: false });
+      markStepCompleted(currentStep);
+      nextStep();
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const errors = err.inner.reduce((acc: any, curr) => {
+          acc[curr.path!] = curr.message;
+          return acc;
+        }, {});
+        actions.setErrors(errors);
+        actions.setTouched(Object.keys(errors).reduce((a, c) => ({ ...a, [c]: true }), {}));
+      }
+    }
+  };
 
-        // warehouse: Yup.array()
-        //     .of(Yup.string())
-        //     .min(1, "Warehouse is required")
-        //     .test(
-        //         "warehouse-company",
-        //         "Select company before selecting warehouse",
-        //         function (value) {
-        //             if (!value || value.length === 0) return false;
-        //             const { company } = this.parent as any;
-        //             return Array.isArray(company) && company.length > 0;
-        //         }
-        //     ),
+  const handleSubmit = async (
+    values: User,
+    actions?: Pick<FormikHelpers<User>, "setErrors" | "setTouched" | "setSubmitting">
+  ) => {
+    try {
+      const normalized = {
+        ...values,
+        company: Array.isArray((values as any).company) ? (values as any).company[0] : (values as any).company,
+        region: Array.isArray((values as any).region) ? (values as any).region[0] : (values as any).region,
+        area: Array.isArray((values as any).area) ? (values as any).area[0] : (values as any).area,
+        warehouse: Array.isArray((values as any).warehouse) ? (values as any).warehouse[0] : (values as any).warehouse,
+        route: Array.isArray((values as any).route) ? (values as any).route[0] : (values as any).route,
+        salesman: Array.isArray((values as any).salesman) ? (values as any).salesman[0] : (values as any).salesman,
+      } as User;
 
-        // route: Yup.array()
-        //     .of(Yup.string())
-        //     .min(1, "Route is required")
-        //     .test(
-        //         "route-warehouse",
-        //         "Select warehouse before selecting route",
-        //         function (value) {
-        //             if (!value || value.length === 0) return false;
-        //             const { warehouse } = this.parent as any;
-        //             return Array.isArray(warehouse) && warehouse.length > 0;
-        //         }
-        //     ),
+      await dynamicSchema.validate(normalized, { abortEarly: false });
+      const payload: any = { ...normalized };
+      if (payload.role) payload.role = Number(payload.role);
 
-        // salesman: Yup.array()
-        //     .of(Yup.string())
-        //     .min(1, "Salesman is required")
-        //     .test(
-        //         "salesman-route",
-        //         "Select route before selecting salesman",
-        //         function (value) {
-        //             if (!value || value.length === 0) return false;
-        //             const { route } = this.parent as any;
-        //             return Array.isArray(route) && route.length > 0;
-        //         }
-        //     ),
+      const toArray = <T,>(v?: T | T[]): T[] => (Array.isArray(v) ? v : v ? [v] : []);
+      const companies = toArray((values as any).company).map((id: any) => Number(id));
+      const regions = toArray((values as any).region).map((id: any) => Number(id));
+      const areas = toArray((values as any).area).map((id: any) => Number(id));
+      const warehouses = toArray((values as any).warehouse).map((id: any) => Number(id));
+      const routes = toArray((values as any).route).map((id: any) => Number(id));
+  const salesmen = toArray((values as any).salesman).map((id: any) => Number(id));
+  // Always include these keys as arrays (may be empty) per backend requirement
+  payload.company = companies;
+  payload.region = regions;
+  payload.area = areas;
+  payload.warehouse = warehouses;
+  payload.route = routes;
+  payload.salesman = salesmen;
 
-        // region: Yup.array()
-        //     .of(Yup.string())
-        //     .min(1, "Region is required")
-        //     .test(
-        //         "region-deps",
-        //         "Select company, warehouse, route and salesman before selecting region",
-        //         function (value) {
-        //             if (!value || value.length === 0) return false;
-        //             const { company, warehouse, route, salesman } = this.parent as any;
-        //             return (
-        //                 Array.isArray(company) &&
-        //                 company.length > 0 &&
-        //                 Array.isArray(warehouse) &&
-        //                 warehouse.length > 0 &&
-        //                 Array.isArray(route) &&
-        //                 route.length > 0 &&
-        //                 Array.isArray(salesman) &&
-        //                 salesman.length > 0
-        //             );
-        //         }
-        //     ),
+      if (isEditMode) {
+        if (payload.hasOwnProperty("password_confirmation")) delete payload.password_confirmation;
 
-        // area: Yup.array()
-        //     .of(Yup.string())
-        //     .min(1, "Area is required")
-        //     .test(
-        //         "area-region",
-        //         "Select region before selecting area",
-        //         function (value) {
-        //             if (!value || value.length === 0) return false;
-        //             const { region } = this.parent as any;
-        //             return Array.isArray(region) && region.length > 0;
-        //         }
-        //     ),
+        if (!payload.password) delete payload.password;
 
-        // outlet_channel: Yup.array()
-        //     .of(Yup.string())
-        //     .min(1, "Outlet channel is required")
-        //     .test(
-        //         "outlet-area",
-        //         "Select area before selecting outlet channel",
-        //         function (value) {
-        //             if (!value || value.length === 0) return false;
-        //             const { area } = this.parent as any;
-        //             return Array.isArray(area) && area.length > 0;
-        //         }
-        //     ),
-    });
+        if (payload.role) payload.role = Number(payload.role);
+      }
 
-    const stepSchemas = [
-        Yup.object().shape({
-            name: userSchema.fields.name,
-            email: userSchema.fields.email,
-            username: userSchema.fields.username,
-            contact_number: userSchema.fields.contact_number,
-            password: userSchema.fields.password,
-            password_confirmation: userSchema.fields.password_confirmation,
-        }),
-        Yup.object().shape({
-            role: userSchema.fields.role,
-            label: userSchema.fields.label,
-            // company: userSchema.fields.company,
-            // warehouse: userSchema.fields.warehouse,
-            // route: userSchema.fields.route,
-            // salesman: userSchema.fields.salesman,
-            // region: userSchema.fields.region,
-            // area: userSchema.fields.area,
-            // outlet_channel: userSchema.fields.outlet_channel,
-        }),
-    ];
+      let res;
+      if (isEditMode && userUUID) {
+        res = await updateAuthUser(userUUID, payload);
+      } else {
+        res = await registerAuthUser(payload);
+      }
+      if (res?.error) {
+        showSnackbar(res.data?.message || "Failed to submit form", "error");
+      } else {
+        showSnackbar(isEditMode ? "User updated successfully" : "User added successfully", "success");
+        router.push("/settings/user");
+      }
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const errors = err.inner.reduce((acc: any, curr) => {
+          if (curr.path) acc[curr.path] = curr.message;
+          return acc;
+        }, {});
+        actions?.setErrors && actions.setErrors(errors);
+        actions?.setTouched && actions.setTouched(Object.keys(errors).reduce((a, c) => ({ ...a, [c]: true }), {}));
+        actions?.setSubmitting && actions.setSubmitting(false);
+        return;
+      }
+      showSnackbar(isEditMode ? "Update User failed" : "Add User failed", "error");
+    }
+  };
 
-    const handleNext = async (
-        values: user,
-        actions: FormikHelpers<user>
-    ) => {
-        try {
-            // Validate only the current step's fields
-            const schema = stepSchemas[currentStep - 1];
-            await schema.validate(values, { abortEarly: false });
-            markStepCompleted(currentStep);
-            nextStep();
-        } catch (err: unknown) {
-            if (err instanceof Yup.ValidationError) {
-                // Only touch fields in the current step
-                const fields = err.inner.map((e) => e.path);
-                actions.setTouched(
-                    fields.reduce(
-                        (acc, key) => ({ ...acc, [key!]: true }),
-                        {} as Record<string, boolean>
-                    )
-                );
-                actions.setErrors(
-                    err.inner.reduce((acc: Partial<Record<keyof user, string>>, curr) => ({
-                            ...acc,
-                            [curr.path as keyof user]:
-                                curr.message,
-                    }), {})
-                );
-            }
-        }
-    };
-
-    const handleSubmit = async (
-        values: user,
-        actions?: Pick<FormikHelpers<user>, "setErrors" | "setTouched" | "setSubmitting">
-    ) => {
-        try {
-            await userSchema.validate(values, { abortEarly: false });
-            const payload = {
-                ...values,
-            };
-            let res;
-            if (isEditMode && userUUID) {
-                res = await updateAuthUser(userUUID, payload);
-            } else {
-                res = await registerAuthUser(payload);
-            }
-            if (res?.error) {
-                showSnackbar(res.data?.message || "Failed to submit form","error");
-            } else {
-                showSnackbar(
-                    isEditMode
-                        ? "User updated successfully"
-                        : "User added successfully",
-                    "success"
-                );
-                router.push("/settings/user");
-            }
-        } catch (err) {
-            if (err instanceof Yup.ValidationError) {
-                console.error("Yup ValidationError:", err);
-
-                // Map inner errors to { fieldName: message }
-                const fieldErrors = err.inner.reduce<Record<string, string>>(
-                    (acc, e) => {
-                        if (e.path) acc[e.path] = e.message;
-                        return acc;
-                    },
-                    {}
-                );
-
-                // If caller provided Formik helpers, set field errors + touched so UI shows per-field messages
-                if (actions?.setErrors) {
-                    actions.setErrors(
-                        fieldErrors as FormikErrors<user>
-                    );
+  const renderStepContent = (values: User, setFieldValue: any, errors: any, touched: any) => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="bg-white rounded-2xl shadow mb-6 p-6">
+            <h2 className="text-lg font-medium text-gray-800 mb-4">User Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <InputFields
+                required
+                label="Name"
+                name="name"
+                value={values.name}
+                onChange={(e) => setFieldValue("name", e.target.value)}
+                error={touched.name && errors.name}
+              />
+              <InputFields
+                required
+                label="Email"
+                name="email"
+                value={values.email}
+                onChange={(e) => setFieldValue("email", e.target.value)}
+                error={touched.email && errors.email}
+              />
+              <InputFields
+                required
+                label="Username"
+                name="username"
+                value={values.username}
+                onChange={(e) => setFieldValue("username", e.target.value)}
+                error={touched.username && errors.username}
+              />
+              <InputFields
+                required
+                type="contact"
+                label="Contact Number"
+                name="contact_number"
+                value={values.contact_number}
+                selectedCountry={country.contact_number}
+                setSelectedCountry={(c: ContactCountry) =>
+                  setCountry((prev) => ({ ...prev, contact_number: c }))
                 }
-                if (actions?.setTouched) {
-                    const touchedMap = Object.keys(fieldErrors).reduce<
-                        Record<string, boolean>
-                    >((acc, k) => {
-                        acc[k] = true;
-                        return acc;
-                    }, {});
-                    actions.setTouched(
-                        touchedMap as FormikTouched<user>
-                    );
-                }
-
-                return;
-            }
-
-            // fallback for non-Yup errors
-            console.error("Submit error:", err);
-            showSnackbar(
-                isEditMode
-                    ? "Update Agent Customer failed"
-                    : "Add Agent Customer failed",
-                "error"
-            );
-        }
-    };
-
-    const renderStepContent = (
-        values: user,
-        setFieldValue: (
-            field: keyof user,
-            value: string | string[] | File | null,
-            shouldValidate?: boolean
-        ) => void,
-        errors: FormikErrors<user>,
-        touched: FormikTouched<user>
-    ) => {
-        switch (currentStep) {
-            case 1:
-                return (
-                    <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-                        <div className="p-6">
-                            <h2 className="text-lg font-medium text-gray-800 mb-4">
-                                {steps[currentStep].label}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <InputFields
-                                        required
-                                        label="Name"
-                                        name="name"
-                                        value={values.name}
-                                        onChange={(e) => setFieldValue("name",e.target.value)}
-                                        error={touched.name && errors.name}
-                                    />
-                                    {touched.name && errors.name && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.name}
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <InputFields
-                                        required
-                                        label="Email"
-                                        name="email"
-                                        value={values.email}
-                                        onChange={(e) => setFieldValue("email",e.target.value)}
-                                        error={touched.email && errors.email}
-                                    />
-                                    {touched.email && errors.email && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.email}
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <InputFields
-                                        required
-                                        label="Username"
-                                        name="username"
-                                        value={values.username}
-                                        onChange={(e) => setFieldValue("username",e.target.value)}
-                                        error={touched.username && errors.username}
-                                    />
-                                    {touched.username && errors.username && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.username}
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <InputFields
-                                        required
-                                        type="contact"
-                                        label="Contact Number"
-                                        name="contact_number"
-                                        value={values.contact_number}
-                                        selectedCountry={country.contact_number}
-                                        setSelectedCountry={(country: contactCountry) => setCountry(prev => ({ ...prev, contact_number: country }))}
-                                        onChange={(e) => setFieldValue("contact_number",e.target.value)}
-                                        error={touched.contact_number && errors.contact_number}
-                                    />
-                                    {touched.contact_number && errors.contact_number && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.contact_number}
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <CustomPasswordInput
-                                        label="Password"
-                                        width="max-w-[406px]"
-                                        value={values.password}
-                                        onChange={(e) => setFieldValue("password",e.target.value)}
-                                    />
-                                    {touched.password && errors.password && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.password}
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <CustomPasswordInput
-                                        label="Confirm Password"
-                                        width="max-w-[406px]"
-                                        value={values.password_confirmation}
-                                        onChange={(e) => setFieldValue("password_confirmation",e.target.value)}
-                                    />
-                                    {touched.password_confirmation && errors.password_confirmation && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.password_confirmation}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 2: {
-                const selectedLabelValues = Array.isArray(values.label) ? values.label : (values.label ? [values.label] : []);
-                const selectedLabelTexts = (selectedLabelValues || []).map((val) => {
-                    const opt = (currentLabelOptions || []).find((o: any) => String(o.value) === String(val));
-                    return (opt?.label ?? "").toLowerCase();
-                });
-
-                const showCompany = selectedLabelTexts.some((t: string) => t.includes("company"));
-                const showRegion = selectedLabelTexts.some((t: string) => t.includes("region"));
-                const showArea = selectedLabelTexts.some((t: string) => t.includes("area"));
-                const showWarehouse = selectedLabelTexts.some((t: string) => t.includes("warehouse") || t.includes("ware house"));
-                const showRoute = selectedLabelTexts.some((t: string) => t.includes("route"));
-
-                return (
-                    <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-                        <div className="p-6">
-                            <h2 className="text-lg font-medium text-gray-800 mb-4">
-                                {steps[currentStep]?.label}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <InputFields
-                                        required
-                                        label="Role"
-                                        name="role"
-                                        value={values.role}
-                                        options={roleOptions}
-                                        onChange={async (e) => {
-                                            const val = e?.target?.value;
-                                            // update role field
-                                            setFieldValue("role", val);
-                                            // fetch labels associated with selected role(s)
-                                            const options = await fetchLabelsForRoles(val);
-                                            // ensure existing selected labels are still valid
-                                            try {
-                                                const available = new Set(options.map((o: any) => String(o.value)));
-                                                const currentLabels = Array.isArray(values.label) ? values.label : (values.label ? [values.label] : []);
-                                                const filtered = (currentLabels || []).filter((l: any) => available.has(String(l)));
-                                                setFieldValue("label", filtered);
-                                            } catch (err) {
-                                                // ignore filtering errors
-                                                console.error(err);
-                                            }
-                                        }}
-                                        error={touched.role && errors.role}
-                                    />
-                                    {touched.role && errors.role && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.role}
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <InputFields
-                                        required
-                                        label="Label"
-                                        name="label"
-                                        isSingle={false}
-                                        value={values.label}
-                                        options={currentLabelOptions}
-                                        onChange={(e) => setFieldValue("label",e.target.value)}
-                                        error={touched.label && errors.label}
-                                    />
-                                    {touched.label && errors.label && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.label}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Show only the specific dependent dropdown(s) that match the selected label(s) */}
-                                {(selectedLabelValues.length > 0) && (
-                                    <>
-                                        <div className="w-full col-span-3 mt-4">
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                {showCompany && (
-                                                    <div>
-                                                        <InputFields
-                                                            label="Company"
-                                                            name="company"
-                                                            value={values.company}
-                                                            options={companyOptions}
-                                                            onChange={(e) => {
-                                                                const v = e?.target?.value;
-                                                                setFieldValue("company", v);
-                                                                // clear downstream
-                                                                setFieldValue("region", "");
-                                                                setFieldValue("area", "");
-                                                                setFieldValue("warehouse", "");
-                                                                setFieldValue("route", "");
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                {showRegion && (
-                                                    <div>
-                                                        <InputFields
-                                                            label="Region"
-                                                            name="region"
-                                                            value={values.region}
-                                                            options={regionOptions}
-                                                            onChange={(e) => {
-                                                                const v = e?.target?.value;
-                                                                setFieldValue("region", v);
-                                                                setFieldValue("area", "");
-                                                                setFieldValue("warehouse", "");
-                                                                setFieldValue("route", "");
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                {showArea && (
-                                                    <div>
-                                                        <InputFields
-                                                            label="Area"
-                                                            name="area"
-                                                            value={values.area}
-                                                            options={areaOptions}
-                                                            onChange={(e) => {
-                                                                const v = e?.target?.value;
-                                                                setFieldValue("area", v);
-                                                                setFieldValue("warehouse", "");
-                                                                setFieldValue("route", "");
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="w-full col-span-3 mt-4">
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                {showWarehouse && (
-                                                    <div>
-                                                        <InputFields
-                                                            label="Warehouse"
-                                                            name="warehouse"
-                                                            value={values.warehouse}
-                                                            options={warehouseOptions}
-                                                            onChange={(e) => {
-                                                                const v = e?.target?.value;
-                                                                setFieldValue("warehouse", v);
-                                                                setFieldValue("route", "");
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                {showRoute && (
-                                                    <div>
-                                                        <InputFields
-                                                            label="Route"
-                                                            name="route"
-                                                            value={values.route}
-                                                            options={routeOptions}
-                                                            onChange={(e) => setFieldValue("route", e?.target?.value)}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
-        }
-    };
-
-    return (
-        <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
-                    <div
-                        className="cursor-pointer"
-                        onClick={() => router.back()}
-                    >
-                        <Icon icon="lucide:arrow-left" width={24} />
-                    </div>
-                    <h1 className="text-xl font-semibold text-gray-900">
-                        {isEditMode
-                            ? "Edit User"
-                            : "Add User"}
-                    </h1>
-                </div>
+                onChange={(e) => setFieldValue("contact_number", e.target.value)}
+                error={touched.contact_number && errors.contact_number}
+              />
+              {!isEditMode && (
+                <>
+                  <CustomPasswordInput
+                    label="Password"
+                    value={values.password}
+                    onChange={(e) => setFieldValue("password", e.target.value)}
+                    onBlur={() => {
+                      /* optional: touched will be set by step validation; no-op here */
+                    }}
+                    error={touched.password && (errors.password as string)}
+                  />
+                  <CustomPasswordInput
+                    label="Confirm Password"
+                    value={values.password_confirmation}
+                    onChange={(e) => setFieldValue("password_confirmation", e.target.value)}
+                    onBlur={() => {
+                      /* optional: touched will be set by step validation; no-op here */
+                    }}
+                    error={touched.password_confirmation && (errors.password_confirmation as string)}
+                  />
+                </>
+              )}
             </div>
-            <Formik
-                initialValues={initialValues}
-                validationSchema={userSchema}
-                enableReinitialize={true}
-                onSubmit={handleSubmit}
-            >
-                {({
-                    values,
-                    setFieldValue,
-                    errors,
-                    touched,
-                    handleSubmit: formikSubmit,
-                    setErrors,
-                    setTouched,
-                    isSubmitting: issubmitting,
-                }) => (
-                    <Form>
-                        <StepperForm
-                            steps={steps.map((step) => ({
-                                ...step,
-                                isCompleted: isStepCompleted(step.id),
-                            }))}
-                            currentStep={currentStep}
-                            onStepClick={() => {}}
-                            onBack={prevStep}
-                            onNext={() =>
-                                handleNext(values, {
-                                    setErrors,
-                                    setTouched,
-                                } as unknown as FormikHelpers<user>)
-                            }
-                            onSubmit={() => handleSubmit(values)}
-                            showSubmitButton={isLastStep}
-                            showNextButton={!isLastStep}
-                            nextButtonText="Save & Next"
-                            submitButtonText={issubmitting ? "Submitting..." : "Submit"}
-                        >
-                            {renderStepContent(
-                                values,
-                                setFieldValue,
-                                errors,
-                                touched
-                            )}
-                        </StepperForm>
-                    </Form>
-                )}
-            </Formik>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="bg-white rounded-2xl shadow mb-6 p-6">
+            <h2 className="text-lg font-medium text-gray-800 mb-4">Roles and Permissions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <InputFields
+                required
+                label="Role"
+                name="role"
+                value={values.role}
+                options={roleOptions}
+                onChange={async (e: any) => {
+                  const val = e?.target?.value;
+                  setFieldValue("role", val);
+                  await fetchLabelsForRoles(val);
+                }}
+                error={touched.role && errors.role}
+              />
+
+              {visibleLabels.includes("company") && (
+                <InputFields
+                  required
+                  label="Company"
+                  name="company"
+                  isSingle={false}
+                  value={values.company}
+                  options={companyOptions}
+                  onChange={async (e) => {
+                    const v = e?.target?.value;
+                    setFieldValue("company", v);
+                    setSkeleton((s) => ({ ...s, region: true }));
+                    try {
+                      await fetchRegionOptions(v);
+                    } finally {
+                      setSkeleton((s) => ({ ...s, region: false }));
+                    }
+                  }}
+                  error={touched.company && errors.company}
+                  showSkeleton={skeleton.region}
+                />
+              )}
+              {visibleLabels.includes("region") && (
+                <InputFields
+                  required
+                  label="Region"
+                  name="region"
+                  isSingle={false}
+                  value={values.region}
+                  options={regionOptions}
+                  onChange={async (e) => {
+                    const v = e?.target?.value;
+                    setFieldValue("region", v);
+                    setSkeleton((s) => ({ ...s, area: true }));
+                    try {
+                      await fetchAreaOptions(v);
+                    } finally {
+                      setSkeleton((s) => ({ ...s, area: false }));
+                    }
+                  }}
+                  error={touched.region && errors.region}
+                  showSkeleton={skeleton.region}
+                />
+              )}
+              {visibleLabels.includes("area") && (
+                <InputFields
+                  required
+                  label="Area"
+                  name="area"
+                  isSingle={false}
+                  value={values.area}
+                  options={areaOptions}
+                  onChange={async (e) => {
+                    const v = e?.target?.value;
+                    setFieldValue("area", v);
+                    setSkeleton((s) => ({ ...s, warehouse: true }));
+                    try {
+                      await fetchWarehouseOptions(v);
+                    } finally {
+                      setSkeleton((s) => ({ ...s, warehouse: false }));
+                    }
+                  }}
+                  error={touched.area && errors.area}
+                  showSkeleton={skeleton.area}
+                />
+              )}
+              {visibleLabels.includes("warehouse") && (
+                <InputFields
+                  required
+                  label="Warehouse"
+                  name="warehouse"
+                  isSingle={false}
+                  value={values.warehouse}
+                  options={warehouseOptions}
+                  onChange={async (e) => {
+                    const v = e?.target?.value;
+                    setFieldValue("warehouse", v);
+                    setSkeleton((s) => ({ ...s, route: true }));
+                    try {
+                      await fetchRouteOptions(v);
+                    } finally {
+                      setSkeleton((s) => ({ ...s, route: false }));
+                    }
+                  }}
+                  error={touched.warehouse && errors.warehouse}
+                  showSkeleton={skeleton.warehouse}
+                />
+              )}
+              {visibleLabels.includes("route") && (
+                <InputFields
+                  required
+                  label="Route"
+                  name="route"
+                  isSingle={false}
+                  value={values.route}
+                  options={routeOptions}
+                  onChange={(e) => setFieldValue("route", e?.target?.value)}
+                  error={touched.route && errors.route}
+                  showSkeleton={skeleton.route}
+                />
+              )}
+              {visibleLabels.includes("salesman") && (
+                <InputFields
+                  required
+                  label="Salesman"
+                  name="salesman"
+                  isSingle={false}
+                  value={values.salesman}
+                  options={salesmanOptions}
+                  onChange={(e) => setFieldValue("salesman", e?.target?.value)}
+                  error={touched.salesman && errors.salesman}
+                />
+              )}
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-4">
+          <div className="cursor-pointer" onClick={() => router.back()}>
+            <Icon icon="lucide:arrow-left" width={24} />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900">
+            {isEditMode ? "Edit User" : "Add User"}
+          </h1>
         </div>
-    );
+      </div>
+
+      <Formik
+        initialValues={initialValues}
+        validationSchema={dynamicSchema}
+        enableReinitialize
+        onSubmit={handleSubmit}
+      >
+        {({ values, setFieldValue, errors, touched, setErrors, setTouched, isSubmitting }) => (
+          <Form>
+            <StepperForm
+              steps={steps.map((step) => ({
+                ...step,
+                isCompleted: isStepCompleted(step.id),
+              }))}
+              currentStep={currentStep}
+              onBack={prevStep}
+              onNext={() => handleNext(values, { setErrors, setTouched } as any)}
+              onSubmit={() => handleSubmit(values, { setErrors, setTouched } as any)}
+              showSubmitButton={isLastStep}
+              showNextButton={!isLastStep}
+              nextButtonText="Save & Next"
+              submitButtonText={isSubmitting ? "Submitting..." : "Submit"}
+            >
+              {renderStepContent(values, setFieldValue, errors, touched)}
+            </StepperForm>
+          </Form>
+        )}
+      </Formik>
+    </div>
+  );
 }

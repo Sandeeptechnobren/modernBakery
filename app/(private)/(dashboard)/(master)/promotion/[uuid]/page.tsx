@@ -171,7 +171,7 @@ export default function AddPricing() {
   const rawParam = (params as any)?.uuid ?? (params as any)?.id;
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
   const isEditMode = id !== undefined && id !== "add" && id !== "";
-  const { itemOptions,companyOptions,regionOptions,warehouseOptions,areaOptions,routeOptions,customerTypeOptions,channelOptions,customerCategoryOptions,companyCustomersOptions,itemCategoryOptions, fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions, fetchItemOptions } = useAllDropdownListData();
+  const { item, itemOptions, companyOptions, regionOptions, warehouseOptions, areaOptions, routeOptions, customerTypeOptions, channelOptions, customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions, fetchItemOptions } = useAllDropdownListData();
   useEffect(() => {
     async function fetchEditData() {
       if (!isEditMode || !id) return;
@@ -515,16 +515,25 @@ export default function AddPricing() {
           } else if (data && typeof data === "object" && Array.isArray(data.data)) {
             items = data.data as ItemDetail[];
           }
-          setSelectedItemDetails(items);
-          
-         
+
+          // Enrich each returned item with uomSummary from provider `item` state when available
+          const ctxItems: any[] = Array.isArray(item) ? item : [];
+          const enriched = items.map((it: any) => {
+            // match by id or code
+            const match = ctxItems.find(ci => String(ci.id) === String(it.id) || String(ci.id) === String(it.code) || String(ci.id) === String(it.itemCode) || String(ci.uuid) === String(it.id));
+            const uomSummary = match?.uomSummary ?? match?.uom ?? it.uom ?? [];
+            return { ...it, uomSummary };
+          });
+
+          setSelectedItemDetails(enriched);
         })
         .catch(err => {
-          console.error("Failed to fetch item details", err);});
+          console.error("Failed to fetch item details", err);
+        });
     } else {
       setSelectedItemDetails([]);
     }
-  }, [keyValue["Item"]]);
+  }, [keyValue["Item"], item]);
 
   useEffect(() => {
     const companies = keyValue["Company"];
@@ -744,28 +753,48 @@ export default function AddPricing() {
 
       // Helper to set both itemCode and itemName for an order row
       function selectItemForOrder(tableIdx: number, row: any, value: string) {
-        const item = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value));
-        const name = item ? String(item.name || item.itemName || item.label || "") : "";
+        const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || (Array.isArray(item) ? (item as any).find((ci: any) => String(ci.id) === String(value) || String(ci.id) === String(value)) : undefined);
+        const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
         // update itemCode then itemName using the row index so it applies to the correct row
         updateOrderItem(tableIdx, row.idx, "itemCode", value);
         updateOrderItem(tableIdx, row.idx, "itemName", name);
+
+        // If UOM data exists on the selected item, prefill uom and price for this order row.
+        // Prefer a UOM flagged as primary (uom_type === 'primary'), otherwise use the first available UOM.
+        try {
+          const uomList: any[] = (foundItem && ((foundItem as any).uomSummary || (foundItem as any).uom)) || [];
+          if (Array.isArray(uomList) && uomList.length > 0) {
+            const primary = uomList.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomList[0];
+            const uomName = String(primary?.name ?? primary?.uom ?? '');
+            const uomPrice = primary && (primary.price !== undefined && primary.price !== null) ? String(primary.price) : '';
+            if (uomName) updateOrderItem(tableIdx, row.idx, 'uom', uomName);
+            if (uomPrice) updateOrderItem(tableIdx, row.idx, 'price', uomPrice);
+          }
+        } catch (err) {
+          // non-fatal: skip prefill on error
+          console.warn('prefill order uom failed', err);
+        }
       }
 
       // Helper to set both itemCode and itemName for an offer row/table
       function selectItemForOffer(tableIdx: number, rowIdx: string, value: string) {
-        const item = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value));
-        const name = item ? String(item.name || item.itemName || item.label || "") : "";
+        const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || (Array.isArray(item) ? (item as any).find((ci: any) => String(ci.id) === String(value) || String(ci.id) === String(value)) : undefined);
+        const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
+        // choose primary UOM when available, otherwise first UOM
+        const uomListOffer: any[] = (foundItem && ((foundItem as any).uomSummary || (foundItem as any).uom)) || [];
+        const primaryUom = Array.isArray(uomListOffer) && uomListOffer.length > 0 ? (uomListOffer.find((uu: any) => String(uu.uom_type || '').toLowerCase() === 'primary') || uomListOffer[0]) : undefined;
+
         setOfferItems((prev: any) => {
           // bundle mode -> nested arrays
           if (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) {
             return prev.map((arr: any[], idx: number) =>
               idx === tableIdx
-                ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name } : oi))
+                ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name, uom: primaryUom ? String(primaryUom.name ?? '') : (oi.uom ?? '') } : oi))
                 : arr
             );
           }
           // normal single array mode
-          return prev.map((oi: any, i: number) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name } : oi));
+          return prev.map((oi: any, i: number) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name, uom: primaryUom ? String(primaryUom.name ?? '') : (oi.uom ?? '') } : oi));
         });
       }
 
@@ -776,6 +805,23 @@ export default function AddPricing() {
         if (Number.isNaN(n)) return "";
         const clamped = Math.max(0, Math.min(100, n));
         return String(clamped);
+      }
+      // Build UOM options for a given table row using selectedItemDetails or provider `item`.
+      // Always returns an array of options so the UI can render a select dropdown.
+      function getUomOptionsForRow(row: any) {
+        const codeOrName = String(row.itemCode || row.itemName || "");
+        let itemObj: any = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === codeOrName || String(it.name || it.itemName || it.label) === codeOrName);
+        if (!itemObj && Array.isArray(item)) {
+          itemObj = (item as any).find((ci: any) => String(ci.id) === codeOrName || String(ci.code) === codeOrName || String(ci.label) === codeOrName || String(ci.name) === codeOrName);
+        }
+        const uoms = (itemObj && (itemObj.uomSummary || itemObj.uom)) || [];
+        // If no uoms available return a single placeholder option (so dropdown always shows)
+        if (!Array.isArray(uoms) || uoms.length === 0) {
+          const fallback = String(row.uom || "");
+          if (fallback) return [{ label: fallback, value: fallback, price: undefined }];
+          return [{ label: "-", value: "", price: undefined }];
+        }
+        return uoms.map((u: any) => ({ label: `${u.name}${u.uom_type ? ` (${u.uom_type})` : ""}${u.price ? ` - ${u.price}` : ""}`, value: String(u.name), price: u.price }));
       }
       // Render all order tables
       const renderOrderTables = () => {
@@ -844,15 +890,25 @@ export default function AddPricing() {
                         {
                           key: "uom",
                           label: "UOM",
-                          render: (row) => (
-                            <InputFields
-                              label=""
-                              type="text"
-                              value={row.uom || ""}
-                              onChange={e => updateOrderItem(tableIdx, row.idx, "uom", e.target.value)}
-                              width="w-full"
-                            />
-                          ),
+                          render: (row) => {
+                            const uomOptions = getUomOptionsForRow(row);
+                            return (
+                              <InputFields
+                                label=""
+                                type="select"
+                                isSingle={true}
+                                options={[{ label: `Select UOM`, value: "" }, ...uomOptions.map((o: any) => ({ label: o.label, value: o.value }))]}
+                                value={row.uom || ""}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  updateOrderItem(tableIdx, row.idx, "uom", val);
+                                  const found = uomOptions.find((u: any) => String(u.value) === String(val));
+                                  if (found) updateOrderItem(tableIdx, row.idx, "price", String(found.price ?? ""));
+                                }}
+                                width="w-full"
+                              />
+                            );
+                          }
                         },
                         // If offer_type is Item Range (0), show Item column populated from Step-2 selected items
                         ...(promotion.offer_type === "0" ? [
@@ -1437,15 +1493,20 @@ export default function AddPricing() {
                               {
                                 key: "uom",
                                 label: "UOM",
-                                render: (row) => (
-                                  <InputFields
-                                    label=""
-                                    type="text"
-                                    value={row.uom || ""}
-                                    onChange={e => updateOfferItemTable(tableIdx, row.idx, "uom", e.target.value)}
-                                    width="w-full"
-                                  />
-                                ),
+                                render: (row) => {
+                                  const uomOptions = getUomOptionsForRow(row);
+                                  return (
+                                    <InputFields
+                                      label=""
+                                      type="select"
+                                      isSingle={true}
+                                      options={[{ label: `Select UOM`, value: "" }, ...uomOptions.map((o: any) => ({ label: o.label, value: o.value }))]}
+                                      value={row.uom || ""}
+                                      onChange={e => updateOfferItemTable(tableIdx, row.idx, "uom", e.target.value)}
+                                      width="w-full"
+                                    />
+                                  );
+                                }
                               },
                              
                               

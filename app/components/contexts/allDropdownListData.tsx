@@ -82,7 +82,7 @@ interface DropdownDataContextType {
   vehicleListOptions: { value: string; label: string }[];
   customerCategoryOptions: { value: string; label: string }[];
   customerSubCategoryOptions: { value: string; label: string }[];
-  itemOptions: { value: string; label: string }[];
+  itemOptions: { value: string; label: string; uoms?: { id?: string; name?: string; uom_type?: string; price?: string; upc?: string }[] }[];
   discountTypeOptions: { value: string; label: string }[];
   menuOptions: { value: string; label: string }[];
   vendorOptions: { value: string; label: string }[];
@@ -100,6 +100,8 @@ interface DropdownDataContextType {
   fetchCustomerCategoryOptions: (outlet_channel_id: string | number) => Promise<void>;
   fetchCompanyCustomersOptions: (category_id: string | number) => Promise<void>;
   fetchItemOptions: (category_id: string | number) => Promise<void>;
+  getItemUoms: (item_id: string | number) => { id?: string; name?: string; uom_type?: string; price?: string; upc?: string }[];
+  getPrimaryUom: (item_id: string | number) => { id?: string; name?: string; uom_type?: string; price?: string; upc?: string } | null;
   labelOptions: { value: string; label: string }[];
   roleOptions: { value: string; label: string }[];
   loading: boolean;
@@ -222,17 +224,18 @@ interface Item {
   id?: number | string;
   item_code?: string;
   name?: string;
-  // optional raw uom array coming from API
-  uom?: Array<{
-    id?: number;
-    item_id?: number;
-    uom_type?: string;
-    name?: string;
-    price?: string;
-    is_stock_keeping?: boolean;
-    upc?: string;
-    enable_for?: string;
-  }>;
+  uom?: UomItem[];
+}
+
+interface UomItem {
+  id?: number | string;
+  item_id?: number | string;
+  uom_type?: string;
+  name?: string;
+  price?: string;
+  is_stock_keeping?: boolean;
+  upc?: string;
+  enable_for?: string;
 }
 
 interface DiscountType {
@@ -451,8 +454,36 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
     value: String(c.id ?? ''),
-    label: c.item_code && c.name ? `${c.item_code} - ${c.name}` : (c.name ?? '')
+    label: c.item_code && c.name ? `${c.item_code} - ${c.name}` : (c.name ?? ''),
+    uoms: Array.isArray((c as any).uom) ? (c as any).uom.map((u: any) => ({
+      id: String(u.id ?? ''),
+      name: String(u.name ?? ''),
+      uom_type: String(u.uom_type ?? ''),
+      price: String(u.price ?? ''),
+      upc: String(u.upc ?? ''),
+    })) : []
   }));
+
+  const getItemUoms = (item_id: string | number) => {
+    const idStr = String(item_id ?? '');
+    const found = item.find(it => String(it.id ?? '') === idStr);
+    if (!found) return [];
+    return (Array.isArray(found.uom) ? found.uom : []).map(u => ({
+      id: String(u.id ?? ''),
+      name: String(u.name ?? ''),
+      uom_type: String(u.uom_type ?? ''),
+      price: String(u.price ?? ''),
+      upc: String(u.upc ?? ''),
+    }));
+  };
+
+  const getPrimaryUom = (item_id: string | number) => {
+    const uoms = getItemUoms(item_id);
+    if (!uoms || uoms.length === 0) return null;
+    // prefer uom_type === 'primary', otherwise return first
+    const primary = uoms.find(u => (u.uom_type || '').toLowerCase() === 'primary');
+    return primary ?? uoms[0];
+  };
 
   const discountTypeOptions = (Array.isArray(discountType) ? discountType : []).map((c: DiscountType) => ({
     value: String(c.id ?? ''),
@@ -588,33 +619,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         if (Array.isArray(r)) return r as Item[];
         return [];
       };
-
-      // normalize response and also extract UOM summary for each item
-      const rawItems = normalize(res);
-      const mappedItems = (Array.isArray(rawItems) ? rawItems : []).map((it: any) => {
-        // some APIs return 'uom' or 'uoms' as the array name; support both
-        const rawUoms = Array.isArray(it?.uom) ? it.uom : (Array.isArray(it?.uoms) ? it.uoms : []);
-        const uomSummary = (rawUoms || []).map((u: any) => ({
-          name: u?.name ?? "",
-          uom_type: u?.uom_type ?? u?.type ?? "",
-          price: u?.price ?? "",
-          upc: u?.upc ?? "",
-        }));
-
-        // attach a derived field so consumers can use it easily
-        return {
-          ...it,
-          uomSummary,
-        } as Item & { uomSummary: Array<{ name: string; uom_type: string; price: string; upc: string }>; };
-      });
-
-      // store mapped items (with uomSummary) in state
-      setItem(mappedItems as Item[]);
-
-      // console the mapped response as requested
-      // (kept intentionally lightweight to help debugging)
-      // eslint-disable-next-line no-console
-      console.log("fetchItemOptions - mapped items with UOM summary:", mappedItems);
+      setItem(normalize(res));
     } catch (error) {
       setItem([]);
     } finally {
@@ -898,6 +903,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         fetchItemOptions,
         fetchWarehouseOptions,
         roleOptions,
+        getItemUoms,
+        getPrimaryUom,
         loading
       }}
     >
