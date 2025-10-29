@@ -58,7 +58,7 @@ export default function UserAddEdit() {
     const isEditMode = userUUID !== undefined && userUUID !== "add";
 
     // Dropdown options from context
-    const { roleOptions } = useAllDropdownListData();
+    const { roleOptions ,labelOptions} = useAllDropdownListData();
     const [skeleton, setSkeleton] = useState({
         route: false,
         customerCategory: false,
@@ -543,6 +543,22 @@ export default function UserAddEdit() {
                                         name="role"
                                         value={values.role}
                                         options={roleOptions}
+                                        onChange={(e) => setFieldValue("role",e.target.value)}
+                                        error={touched.role && errors.role}
+                                    />
+                                    {touched.role && errors.role && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {errors.role}
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <InputFields
+                                        required
+                                        label="Label"
+                                        name="role"
+                                        value={values.role}
+                                        options={labelOptions}
                                         onChange={(e) => setFieldValue("role",e.target.value)}
                                         error={touched.role && errors.role}
                                     />
