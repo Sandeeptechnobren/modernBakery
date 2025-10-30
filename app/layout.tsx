@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SnackbarProvider } from "./services/snackbarContext";
 import "./globals.css";
-import { LoadingProvider } from "./services/loadingContext";
 
 const inter = Inter({
   variable: "--font-inter",

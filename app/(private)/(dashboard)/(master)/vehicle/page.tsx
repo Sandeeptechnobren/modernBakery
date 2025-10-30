@@ -138,7 +138,7 @@ export default function VehiclePage() {
   const fetchVehicles = useCallback(
     async (
       page: number = 1,
-      pageSize: number = 5
+      pageSize: number = 50
     ): Promise<listReturnType> => {
       try {
         setLoading(true);
@@ -351,7 +351,7 @@ export default function VehiclePage() {
               //   },
               // },
             ],
-            pageSize: 10,
+            pageSize: 50,
           }}
         />
       </div>

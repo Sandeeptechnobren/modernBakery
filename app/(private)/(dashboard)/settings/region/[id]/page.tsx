@@ -17,14 +17,14 @@ const RegionSchema = Yup.object().shape({
   region_code: Yup.string().required("Region Code is required."),
   region_name: Yup.string().required("Region Name is required."),
   status: Yup.string().required("Status is required."),
-  country_id: Yup.string().required("Please select a country."),
+  company_id: Yup.string().required("Please select a Company."),
 });
 
 type RegionFormValues = {
   region_code: string;
   region_name: string;
   status: string;
-  country_id: string;
+  company_id: string;
 };
 
 import IconButton from "@/app/components/iconButton";
@@ -37,7 +37,7 @@ export default function AddEditRegion() {
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const { showSnackbar } = useSnackbar();
-  const { onlyCountryOptions } = useAllDropdownListData();
+  const { onlyCountryOptions,companyOptions } = useAllDropdownListData();
 
   // Determine if edit mode (edit if id is present and not 'add')
   const routeId = params?.id ?? "";
@@ -48,7 +48,7 @@ export default function AddEditRegion() {
     region_code: "",
     region_name: "",
     status: "1",
-    country_id: "",
+    company_id: "",
   });
 
   // Code logic
@@ -71,7 +71,7 @@ export default function AddEditRegion() {
             region_code: res?.data.region_code || "",
             region_name: res?.data.region_name || "",
             status: res?.data.status?.toString() ?? "1",
-            country_id: res?.data.country_id?.toString() ?? "",
+            company_id: res?.data.company_id?.toString() ?? "",
           });
         } catch (err) {
           console.error("Failed to fetch Region by id", err);
@@ -109,7 +109,7 @@ export default function AddEditRegion() {
         region_code: values.region_code,
         region_name: values.region_name.trim(),
         status: Number(values.status),
-        country_id: Number(values.country_id),
+        company_id: Number(values.company_id),
       };
       if (isEditMode) {
         await updateRegion(String(queryId), payload);
@@ -210,14 +210,14 @@ export default function AddEditRegion() {
                   </div>
                   <div>
                     <InputFields
-                      label="Country"
-                      name="country_id"
-                      value={values.country_id}
-                      onChange={(e) => setFieldValue("country_id", e.target.value)}
-                      options={onlyCountryOptions}
+                      label="Company"
+                      name="company_id"
+                      value={String(values.company_id)}
+                      onChange={(e) => setFieldValue("company_id", e.target.value)}
+                      options={companyOptions}
                     />
                     <ErrorMessage
-                      name="country_id"
+                      name="company_id"
                       component="span"
                       className="text-xs text-red-500"
                     />

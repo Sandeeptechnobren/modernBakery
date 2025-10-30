@@ -185,7 +185,7 @@ export default function CustomerSubCategoryPage() {
                   href="/settings/customer/customerSubCategory/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Sub-Category"
+                  label="Add"
                   labelTw="hidden sm:block"
                 />,
               ],

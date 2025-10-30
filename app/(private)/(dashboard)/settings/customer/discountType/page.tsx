@@ -222,7 +222,7 @@ export default function DiscountType() {
                                     href="/settings/customer/discountType/add"
                                     isActive={true}
                                     leadingIcon="lucide:plus"
-                                    label="Add Discount Type"
+                                    label="Add"
                                     labelTw="hidden sm:block"
                                 />
                             ],

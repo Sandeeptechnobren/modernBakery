@@ -122,7 +122,7 @@ export default function ViewPage() {
 
           <div className="flex items-center justify-between w-full">
             <span className="font-medium text-gray-700">Plate Number</span>
-            <div className="inline-block bg-[#FFD200] text-black font-bold text-lg tracking-wider rounded-md border border-black px-4 py-1 shadow-md text-center min-w-[120px]">
+            <div className="inline-block bg-[#FFD200] text-black font-bold text-lg uppercase tracking-wider rounded-md border border-black px-4 py-1 shadow-md text-center min-w-[120px]">
               {vehicle?.number_plat ?? "-"}
             </div>
           </div>

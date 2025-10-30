@@ -402,7 +402,7 @@ export default function CustomerInvoicePage() {
                                     ),
                             },
                             {
-                                icon: "lucide:trash-2",
+                                icon: "lucide:edit-2",
                                 onClick: (row: TableDataType) =>
                                     router.push(
                                         `/agentTransaction/agentCustomerOrder/${row.id}`

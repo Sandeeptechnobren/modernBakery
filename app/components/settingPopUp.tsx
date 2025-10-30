@@ -15,7 +15,6 @@ interface ModalProps {
 export default function SettingPopUp({ isOpen, onClose, title, prefix = "", setPrefix, onSave }: ModalProps) {
   const [option, setOption] = useState<"auto"|"manual">("auto");
   const [nextNumber, setNextNumber] = useState("");
-  const [manualCode, setManualCode] = useState("");
 
   if (!isOpen) return null;
 

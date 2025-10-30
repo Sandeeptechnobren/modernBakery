@@ -655,6 +655,12 @@ useEffect(() => {
           style={textareaResize === false ? { resize: 'none' } : {}}
         />
       ): null}
+      {/* show validation message for non-radio types (radio shows its own message) */}
+      {type !== 'radio' && error && (
+        <div className="mt-1">
+          <span className="text-xs text-red-500">{error}</span>
+        </div>
+      )}
     </div>
     </div>
   );

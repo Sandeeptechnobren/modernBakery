@@ -143,7 +143,7 @@ export default function ChannelList() {
                   buttonTw="px-3 py-2 h-[34px]"
                   href="/settings/outlet-channel/add"
                   leadingIcon="lucide:plus"
-                  label="Add Channel"
+                  label="Add"
                   labelTw="hidden xl:block"
                   isActive
                 />,

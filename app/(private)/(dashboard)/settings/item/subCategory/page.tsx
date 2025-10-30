@@ -185,7 +185,7 @@ export default function SubCategory() {
                                     isActive={true}
                                     buttonTw="px-3 h-9"
                                     leadingIcon="lucide:plus"
-                                    label="Add Sub Category"
+                                    label="Add"
                                     labelTw="hidden lg:block"
                                     onClick={() => setShowCreatePopup(true)}
                                 />,
@@ -210,13 +210,13 @@ export default function SubCategory() {
                                     });
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data) => {
-                                    setShowDeletePopup(true);
-                                    setDeleteItemCategoryId(parseInt(data.id));
-                                },
-                            },
+                            // {
+                            //     icon: "lucide:trash-2",
+                            //     onClick: (data) => {
+                            //         setShowDeletePopup(true);
+                            //         setDeleteItemCategoryId(parseInt(data.id));
+                            //     },
+                            // },
                         ],
                     }}
                 />

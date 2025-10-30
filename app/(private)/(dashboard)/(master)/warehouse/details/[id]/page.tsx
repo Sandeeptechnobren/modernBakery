@@ -208,7 +208,7 @@ export default function ViewPage() {
                                                                                         })(),
                                                                                 },
                                         // { key: <span className="font-bold">Registration No.</span>, value: item?.tin_no || '-'},
-                                        { key: <span className="font-bold">TIN No.</span>, value: item?.registation_no || '-'},
+                                        { key: "TIN No.", value: item?.tin_no || '-'},
                                         // { key: <span className="font-bold">Device No.</span>, value: item?.device_no || '-'},
                                         {
                                             key: "Owner Name",
@@ -363,5 +363,4 @@ export default function ViewPage() {
         </>
     );
 }
-
 

@@ -62,6 +62,13 @@ export const initialLinkData: SidebarDataType[] = [
                     },
                     {
                         isActive: false,
+                        href: "/routeVisit",
+                        label: "Route Visit Plan",
+                        leadingIcon: "mdi:map",
+                        iconColor: "text-yellow-400",
+                    },
+                    {
+                        isActive: false,
                         href: "/agentCustomer",
                         label: "Agent Customer",
                         leadingIcon: "mdi:package-variant",

@@ -179,7 +179,7 @@ export default function Country() {
                   href="/settings/country/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Country"
+                  label="Add"
                   labelTw="hidden sm:block"
                 />,
               ],
