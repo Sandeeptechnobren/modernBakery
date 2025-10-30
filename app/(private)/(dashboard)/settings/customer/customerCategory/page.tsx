@@ -179,7 +179,7 @@ export default function CustomerCategoryPage() {
                   href="/settings/customer/customerCategory/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Category"
+                  label="Add"
                   labelTw="hidden xl:block"
                 />,
               ],

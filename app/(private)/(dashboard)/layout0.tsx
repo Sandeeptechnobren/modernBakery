@@ -161,18 +161,14 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
             // }
             })
             console.log("pathname",pathname)
-            if(!allChildernsUrl.includes(pathname))
-            {
-                if(allChildernsUrl.length>0)
-                {
-                route.push(`${allChildernsUrl[0]}`)
-                }
-                else
-                {
-                route.push("/dashboard")
-
-                }
-            }
+            // if(!allChildernsUrl.includes(pathname))
+            // {
+            //     if(allChildernsUrl.length>0){
+            //         route.push(`${allChildernsUrl[0]}`)
+            //     } else {
+            //         route.push("/dashboard")
+            //     }
+            // }
 
              console.log(allChildernsUrl,"allChildernsUrl")
             //  setLoading(false);

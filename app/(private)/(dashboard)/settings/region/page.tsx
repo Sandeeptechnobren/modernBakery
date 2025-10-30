@@ -197,7 +197,7 @@ const tableData: TableDataType[] = regions.map((s) => ({
                   key="add-region"
                   href="/settings/region/add"
                   leadingIcon="lucide:plus"
-                  label="Add Region"
+                  label="Add"
                   labelTw="hidden lg:block"
                   isActive
                 />,

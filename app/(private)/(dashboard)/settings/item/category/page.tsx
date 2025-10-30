@@ -149,7 +149,7 @@ export default function Category() {
                                         isActive={true}
                                         buttonTw="px-3 h-9"
                                         leadingIcon="lucide:plus"
-                                        label="Add Category"
+                                        label="Add"
                                         labelTw="hidden lg:block"
                                         onClick={() => setShowCreatePopup(true)}
                                     />,

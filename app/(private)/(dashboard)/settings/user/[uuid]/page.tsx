@@ -427,6 +427,7 @@ export default function UserAddEdit() {
                   <CustomPasswordInput
                     label="Password"
                     value={values.password}
+                    width="max-w-[406px]"
                     onChange={(e) => setFieldValue("password", e.target.value)}
                     onBlur={() => {
                       /* optional: touched will be set by step validation; no-op here */
@@ -436,6 +437,7 @@ export default function UserAddEdit() {
                   <CustomPasswordInput
                     label="Confirm Password"
                     value={values.password_confirmation}
+                    width="max-w-[406px]"
                     onChange={(e) => setFieldValue("password_confirmation", e.target.value)}
                     onBlur={() => {
                       /* optional: touched will be set by step validation; no-op here */
