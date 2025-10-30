@@ -515,7 +515,7 @@ export const getWarehouseById = async (id: string) => {
 
 export const getWarehouseCustomerById = async (id: string) => {
   try {
-    const res = await API.get(`/api/master/warehouse/${id}`);
+    const res = await API.get(`/api/master/warehouse/warehouseCustomer/${id}`);
 
     return res.data;
   } catch (error: unknown) {

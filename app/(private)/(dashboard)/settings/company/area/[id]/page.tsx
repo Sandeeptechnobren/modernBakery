@@ -120,7 +120,7 @@ export default function AddEditSubRegion() {
             : "Area Created Successfully"),
         "success"
       );
-      router.push("/settings/company/subRegion");
+      router.push("/settings/company/area");
     }
     setSubmitting(false);
   };
