@@ -158,7 +158,7 @@ export default function AddCustomerTypePage() {
                   error={formik.touched.customer_type_code && formik.errors.customer_type_code}
                 />
                 {!isEditMode && (
-                  <>
+                  <>    
                     <IconButton
                       bgClass="white"
                        className="  cursor-pointer text-[#252B37] pt-12"

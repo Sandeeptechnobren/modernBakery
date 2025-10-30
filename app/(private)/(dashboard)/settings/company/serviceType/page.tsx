@@ -121,7 +121,7 @@ export default function ShelfDisplay() {
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
-                  router.push(`/dashboard/settings/company/serviceType/${data.uuid}`);
+                  router.push(`/settings/company/serviceType/${data.uuid}`);
                 },
               },
             ],

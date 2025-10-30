@@ -222,7 +222,7 @@ export default function AddEditDiscountType() {
                       ]}
                       onChange={(e) => setFieldValue("discount_status", e.target.value)}
                       type="radio"
-                      error={errors?.discount_status && touched?.discount_status ? errors.discount_status : false}
+                     
                     />
                     <ErrorMessage
                       name="discount_status"

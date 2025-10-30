@@ -19,10 +19,10 @@ interface RegionItem {
   region_code?: string;
   region_name?: string;
   status?: number | "Active" | "Inactive";
-  country?: {
+  company?: {
     id?: number;
-    country_name?: string;
-    country_code?: string;   // ✅ Add country_code
+    company_name?: string;
+    company_code?: string;   // ✅ Add country_code
   };
 }
 const dropdownDataList = [
@@ -50,8 +50,8 @@ const tableData: TableDataType[] = regions.map((s) => ({
   id: s.id?.toString() ?? "",
   region_code: s.region_code ?? "",
   region_name: s.region_name ?? "",
-  country_code: s.country?.country_code ?? "",   
-  country_name: s.country?.country_name ?? "", 
+  company_name: s.company?.company_name ?? "",
+  company_code: s.company?.company_code ?? "",
   status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive",
 }));
 
@@ -212,6 +212,20 @@ const tableData: TableDataType[] = regions.map((s) => ({
             </span>
         ), },
               { key: "region_name", label: "Region Name" },
+              
+
+              {
+    key: "company",
+    label: "Company",
+    render: (row: TableDataType) => {
+      const obj =
+        typeof row.company === "string"
+          ? JSON.parse(row.company)
+          : row.company;
+      return obj?.company_name || "-";
+    },
+  },
+
               {
                 key: "status",
                 label: "Status",

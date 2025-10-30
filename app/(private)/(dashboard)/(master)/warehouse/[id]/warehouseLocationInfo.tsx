@@ -26,8 +26,11 @@ export default function WarehouseLocationInfo({
   // Touched tracking for dropdowns
   useEffect(() => {
     if (setTouched) {
-      if (!values.region_id) setTouched({ region_id: true });
-      if (!values.area_id) setTouched({ area_id: true });
+      // Only mark region/area touched when the fields are visible (i.e. agent_customer type)
+      if (values.warehouse_type === 'agent_customer') {
+        if (!values.region_id) setTouched({ region_id: true });
+        if (!values.area_id) setTouched({ area_id: true });
+      }
     }
   }, [values.region_id, values.area_id, setTouched]);
 
@@ -70,40 +73,44 @@ export default function WarehouseLocationInfo({
             <span className="text-xs text-red-500 mt-1">{errors.city}</span>
           )}
         </div>
-        <div>
-          <InputFields
-            required
-            label="Region"
-            name="region_id"
-            disabled={loading || !regionOptions?.length}
-            showSkeleton={loading}
-            value={values.region_id}
-            onChange={handleChange}
-            onBlur={() => setTouched && setTouched({ region_id: true })}
-            options={regionOptions}
-            error={errors?.region_id && touched?.region_id ? errors.region_id : undefined}
-          />
-          {errors?.region_id && touched?.region_id && (
-            <span className="text-xs text-red-500 mt-1">{errors.region_id}</span>
-          )}
-        </div>
-        <div>
-          <InputFields
-            required
-            label="Area"
-            name="area_id"
-            disabled={loading || !areaOptions?.length}
-            showSkeleton={loading}
-            value={values.area_id}
-            onChange={handleChange}
-            onBlur={() => setTouched && setTouched({ area_id: true })}
-            options={areaOptions}
-            error={errors?.area_id && touched?.area_id ? errors.area_id : undefined}
-          />
-          {errors?.area_id && touched?.area_id && (
-            <span className="text-xs text-red-500 mt-1">{errors.area_id}</span>
-          )}
-        </div>
+        {values.warehouse_type === 'agent_customer' && (
+          <>
+            <div>
+              <InputFields
+                required
+                label="Region"
+                name="region_id"
+                disabled={true}
+                showSkeleton={loading}
+                value={values.region_id}
+                onChange={handleChange}
+                onBlur={() => setTouched && setTouched({ region_id: true })}
+                options={regionOptions}
+                error={errors?.region_id && touched?.region_id ? errors.region_id : undefined}
+              />
+              {errors?.region_id && touched?.region_id && (
+                <span className="text-xs text-red-500 mt-1">{errors.region_id}</span>
+              )}
+            </div>
+            <div>
+              <InputFields
+                required
+                label="Area"
+                name="area_id"
+                disabled={true}
+                showSkeleton={loading}
+                value={values.area_id}
+                onChange={handleChange}
+                onBlur={() => setTouched && setTouched({ area_id: true })}
+                options={areaOptions}
+                error={errors?.area_id && touched?.area_id ? errors.area_id : undefined}
+              />
+              {errors?.area_id && touched?.area_id && (
+                <span className="text-xs text-red-500 mt-1">{errors.area_id}</span>
+              )}
+            </div>
+          </>
+        )}
         {/* ...rest fields unchanged */}
         <div>
           <InputFields

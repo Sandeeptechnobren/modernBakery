@@ -32,6 +32,16 @@ const menuSchema = Yup.object().shape({
     .required("Is Visible is required."),
 });
 
+type submenuIncomingType = {
+  name: string,
+  menu: {id: number} | null,
+  parent: {id: number} | null,
+  url: string,
+  display_order: number,
+  action_type: number,
+  is_visible: number,
+}
+
 type submenuType = {
   name: string,
   menu: number,
@@ -56,7 +66,7 @@ export default function AddShelfDisplay() {
   const { submenuOptions, menuOptions } = useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const [menu, setMenu] = useState<submenuType | null>(null);
+  const [menu, setMenu] = useState<submenuIncomingType | null>(null);
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -75,13 +85,19 @@ export default function AddShelfDisplay() {
   }, []);
 
   const initialValues: submenuType = {
-    name: menu?.name || "",
-    menu: menu?.menu || menuOptions.length > 0 ? parseInt(menuOptions[0].value) : 0,
-    parent: menu?.parent || submenuOptions.length > 0 ? parseInt(submenuOptions[0].value) : 0,
-    url: menu?.url || "",
-    display_order: menu?.display_order || 0,
-    action_type: menu?.action_type || 1,
-    is_visible: menu?.is_visible || 0,
+    name: menu?.name ?? "",
+    // Use nullish coalescing and parentheses to avoid precedence issues
+    menu: (menu?.menu?.id ?? (menuOptions.length > 0 ? parseInt(menuOptions[0]?.value) : 0)),
+    // If API explicitly returns parent: null => select "None" (value 0).
+    parent: menu
+      ? (menu.parent === null
+          ? 0
+          : (menu.parent?.id ?? (submenuOptions.length > 0 ? parseInt(submenuOptions[0]?.value) : 0)))
+      : (submenuOptions.length > 0 ? parseInt(submenuOptions[0]?.value) : 0),
+    url: menu?.url ?? "",
+    display_order: menu?.display_order ?? 0,
+    action_type: menu?.action_type ?? 1,
+    is_visible: menu?.is_visible ?? 0,
   };
 
   const handleSubmit = async (
@@ -164,7 +180,7 @@ export default function AddShelfDisplay() {
                     name="menu"
                     value={values.menu.toString()}
                     options={menuOptions}
-                    onChange={(e) => {console.log(values);setFieldValue("menu", e.target.value)}}
+                    onChange={(e) => {setFieldValue("menu", e.target.value)}}
                     error={touched.menu && errors.menu}
                   />
                   <ErrorMessage

@@ -132,9 +132,9 @@ export default function AddEditServiceType() {
           return (
             <Form>
               <ContainerCard>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Service Type Code (pattern-matched UI) */}
-                  <div className="flex items-start gap-2 max-w-[406px]">
+                  <div className="flex items-start gap-2 ">
                     <InputFields
                       label="Service Type Code"
                       name="service_type_code"
@@ -156,7 +156,7 @@ export default function AddEditServiceType() {
                           title="Service Type Code"
                           prefix={prefix}
                           setPrefix={setPrefix}
-                          onSave={(mode, code) => {
+                          onSave={(mode, code) => { 
                             setCodeMode(mode);
                             if (mode === 'auto' && code) {
                               setFieldValue('service_type_code', code);
@@ -168,7 +168,9 @@ export default function AddEditServiceType() {
                       </>
                     )}
                   </div>
-                  <InputFields
+                <div>
+                 <div>
+                     <InputFields
                     required
                     label="Name"
                     name="name"
@@ -176,6 +178,12 @@ export default function AddEditServiceType() {
                     onChange={(e) => setFieldValue("name", e.target.value)}
                     error={touched.name && errors.name}
                   />
+                  <div className="text-sm text-red-500">
+                    {touched.name && errors.name}
+                  </div>  
+                 </div>
+                  
+                </div>
                   <InputFields
                     required
                     label="Status"

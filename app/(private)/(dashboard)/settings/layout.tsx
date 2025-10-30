@@ -10,8 +10,8 @@ import { Icon } from "@iconify-icon/react";
 export default function Settings({ children }: { children: React.ReactNode }) {
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
     const [activeHref, setActiveHref] = useState<string>("");
-    const [showMainScreen, setShowMainScreen] = useState<boolean>(false);
     const [mainScreenLabel, setMainScreenLabel] = useState<string>("");
+    const [isOpen, setIsOpen] = useState<boolean>(false);
 
     const toggleMenu = (label: string) => {
         setOpenMenus((prev) => ({
@@ -25,7 +25,6 @@ export default function Settings({ children }: { children: React.ReactNode }) {
             toggleMenu(label);
         } else {
             setActiveHref(href);
-            setShowMainScreen(true);
             setMainScreenLabel(label);
         }
     };
@@ -60,34 +59,23 @@ export default function Settings({ children }: { children: React.ReactNode }) {
             {/* Page title */}
             <h1 className="text-lg sm:text-xl font-semibold text-[#181D27] mb-4">
                 <div className="flex items-center gap-2">
-                    {showMainScreen && (
-                        <Icon
-                            icon="lucide:arrow-left"
-                            width={24}
-                            onClick={() => setShowMainScreen(false)}
-                        />
-                    )}
-                    <span>Settings
-                    {showMainScreen && (
-                        <span>
-                            {" / "} {mainScreenLabel}
-                        </span>
-                    )}
-                    </span>
+                    <span>Settings</span>
                 </div>
             </h1>
 
             <div className="flex bg-white w-full h-full border border-[#E9EAEB] rounded-[8px] overflow-auto md:overflow-hidden">
                 {/* Sidebar */}
                 <div
-                    className={`${showMainScreen && "hidden"} w-full md:w-[240px] border-b md:border-b-0 md:border-r border-[#E9EAEB] p-3 flex-shrink-0 overflow-auto scrollbar-none`}
+                    onMouseEnter={() => setIsOpen(true)}
+                    onMouseLeave={() => setIsOpen(false)}
+                    className={`${isOpen ? "w-[250px]" : "w-[80px]"} md:${isOpen ? "w-[250px]" : "w-[80px]"} border-b md:border-b-0 md:border-r border-[#E9EAEB] p-3 flex-shrink-0 overflow-auto scrollbar-none transition-all duration-200`}
                 >
                     <div className="flex flex-col gap-[6px]">
                         {initialLinkData.map(
                             (group: SidebarDataType, groupIdx) => (
                                 <div
                                     key={group.name || groupIdx}
-                                    className="mb-[20px]"
+                                    className={`${isOpen ? "mb-[20px]" : "m-0"}`}
                                 >
                                     <ul className="w-full flex flex-col gap-[6px]">
                                         {group.data.map(
@@ -96,12 +84,12 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                                                     link.children &&
                                                     link.children.length > 0
                                                 );
-                                                const isOpen =
+                                                const isMenuOpen =
                                                     openMenus[link.label] ??
                                                     false;
 
                                                 const trailingIcon = hasChildren
-                                                    ? isOpen
+                                                    ? isMenuOpen
                                                         ? "mdi-light:chevron-down"
                                                         : "mdi-light:chevron-right"
                                                     : link.trailingIcon;
@@ -116,15 +104,17 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                                                             isActive={isActive}
                                                             href={ hasChildren ? "#" : link.href }
                                                             label={link.label}
+                                                            labelTw={`${isOpen ? "block" : "hidden"}`}
                                                             leadingIcon={ link.leadingIcon }
                                                             trailingIcon={ trailingIcon }
+                                                            trailingIconTw={`${isOpen ? "block" : "hidden"}`}
                                                             onClick={() => handleClick( link.href, link.label, hasChildren)}
                                                         />
 
                                                         {hasChildren &&
-                                                            isOpen &&
+                                                            isMenuOpen &&
                                                             link.children && (
-                                                                <ul className="gap-[6px] mt-1 ml-[10px]">
+                                                                <ul className={`${isOpen ? "block" : "hidden"} gap-[6px] mt-1 ml-[10px]`}>
                                                                     {link.children.map(
                                                                         ( child: LinkDataType, childIdx ) => {
                                                                             const isChildActive = child.href === activeHref;
@@ -133,23 +123,22 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                                                                                     key={`${child.href || "child"}-${child.label}-${childIdx}`}
                                                                                     className={`w-full cursor-pointer transition-all rounded-md ${isChildActive
                                                                                         ? "text-[#2563eb] font-medium"
-                                                                                        : "hover:bg-[#FFF0F2]"
+                                                                                        : ""
                                                                                     }`}
                                                                                 >
                                                                                     <div
                                                                                         className="flex items-center gap-2 w-full"
                                                                                         onClick={() =>{
                                                                                             setActiveHref(child.href)
-                                                                                            setShowMainScreen(true);
-                                                                                            setMainScreenLabel(link.label + " / " + child.label);
                                                                                         }} 
                                                                                     >
-                                                                                        <span className={`w-0.5 h-8 ml-4 flex-shrink-0 rounded ${isChildActive ? "bg-red-500" : "bg-gray-300"}`}></span>
+                                                                                        <span className={`w-0.5 h-8 ml-4 flex-shrink-0 rounded ${isChildActive ? "bg-blue-500" : "bg-gray-300"}`}></span>
                                                                                         <div className="flex-1">
                                                                                             <SidebarBtn
                                                                                                 isActive={false}
                                                                                                 href={child.href}
                                                                                                 label={child.label}
+                                                                                                labelTw={`${isOpen ? "block" : "hidden"}`}
                                                                                                 isSubmenu={true}
                                                                                             />
                                                                                         </div>
@@ -172,10 +161,7 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                 </div>
 
                 {/* Content */}
-                <div
-                    className={`${showMainScreen ? "block" : "hidden md:block "
-                        } flex-1 overflow-auto p-3 md:p-5 scrollbar-none`}
-                >
+                <div className={`flex-1 overflow-auto p-3 md:p-5 scrollbar-none`}>
                     {children}
                 </div>
             </div>

@@ -178,9 +178,12 @@ export default function Expensetype() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/settings/expenseType/${row.id}`);
-                },
+                router.push(
+                    `/settings/expenseType/${row.id}`
+                  );
               },
+                },
+                
             ],
             pageSize: 50,
           }}

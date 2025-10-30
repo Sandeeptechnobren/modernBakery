@@ -34,6 +34,43 @@ type CustomerSchedule = {
   days: string[];
 };
 
+type CustomerItem = {
+  id: number;
+  osa_code: string;
+  owner_name: string;
+};
+
+type CommonData = {
+  from_date: string | null;
+  to_date: string | null;
+  customer_type: string | null;
+  status: string | null;
+};
+
+type SkeletonState = {
+  route: boolean;
+  region: boolean;
+  area: boolean;
+  warehouse: boolean;
+};
+
+type ApiResponse<T> = {
+  data?: T;
+  error?: boolean;
+  message?: string;
+};
+
+type RouteVisitPayload = {
+  customer_type: number;
+  customers: Array<{
+    customer_id: number;
+    days: string[];
+    from_date: string | null;
+    to_date: string | null;
+    status: number;
+  }>;
+};
+
 export default function AddEditRouteVisit() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,19 +78,19 @@ export default function AddEditRouteVisit() {
   const params = useParams();
   const visitId = params?.id as string | undefined;
   const isEditMode = !!(visitId && visitId !== "add");
-  const [skeleton, setSkeleton] = useState({
+  const [skeleton, setSkeleton] = useState<SkeletonState>({
     route: false,
     region: false,
     area: false,
     warehouse: false,
   });
 
-  const [commonData, setCommonData] = useState<{
-    from_date: string | null;
-    to_date: string | null;
-    customer_type: string | null;
-    status: string | null;
-  }>({ from_date: "", to_date: "", customer_type: "", status: "" });
+  const [commonData, setCommonData] = useState<CommonData>({
+    from_date: "",
+    to_date: "",
+    customer_type: "",
+    status: "",
+  });
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,7 +110,7 @@ export default function AddEditRouteVisit() {
     { value: string; label: string }[]
   >([]);
   */
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<CustomerItem[]>([]);
   const [customerSchedules, setCustomerSchedules] = useState<
     CustomerSchedule[]
   >([]);
@@ -84,7 +121,7 @@ export default function AddEditRouteVisit() {
     const customer_type = searchParams.get("customer_type");
     const status = searchParams.get("status");
 
-    const urlData = {
+    const urlData: CommonData = {
       from_date: from_date && from_date.toString(),
       to_date: to_date && to_date.toString(),
       customer_type: customer_type && customer_type.toString(),
@@ -98,7 +135,7 @@ export default function AddEditRouteVisit() {
       setSelectedCustomerType(urlData.customer_type);
   }, [searchParams]);
 
-  const [selectedCustomerType, setSelectedCustomerType] = useState<string>();
+  const [selectedCustomerType, setSelectedCustomerType] = useState<string>("");
 
   // Commented out form state since region/area/warehouse/route are no longer needed
   /*
@@ -178,15 +215,16 @@ export default function AddEditRouteVisit() {
 
   useEffect(() => {
     const fetchCustomers = async () => {
-      let res = null;
+      let res: ApiResponse<CustomerItem[]> | null = null;
       if (selectedCustomerType == "1") {
         res = await agentCustomerList();
       } else {
         res = await agentCustomerList();
       }
 
-      console.log(res, selectedCustomerType);
-      setCustomers(res.data);
+      if (res?.data) {
+        setCustomers(res.data);
+      }
     };
 
     fetchCustomers();
@@ -346,7 +384,7 @@ export default function AddEditRouteVisit() {
       setSubmitting(true);
 
       // ✅ Build payload in the required format (updated to match your new payload structure)
-      const payload = {
+      const payload: RouteVisitPayload = {
         customer_type: Number(commonData.customer_type),
         customers: customerSchedules
           .filter((schedule) => schedule.days && schedule.days.length > 0)
@@ -359,20 +397,20 @@ export default function AddEditRouteVisit() {
           })),
       };
 
+      console.log(customerSchedules);
       console.log("Submitting payload:", payload);
 
-      let res;
+      let res: ApiResponse<unknown>;
       if (isEditMode) {
         res = await updateRouteVisitDetails(payload);
       } else {
         res = await saveRouteVisit(payload);
       }
 
+      console.log(res);
+
       if (res?.error) {
-        showSnackbar(
-          res?.data?.message || "Failed to save route visit",
-          "error"
-        );
+        showSnackbar("Failed to save route visit");
       } else {
         showSnackbar(
           isEditMode
@@ -382,7 +420,7 @@ export default function AddEditRouteVisit() {
         );
         router.push("/routeVisit");
       }
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof yup.ValidationError) {
         const formErrors: Record<string, string> = {};
         err.inner.forEach((e) => {
@@ -509,6 +547,12 @@ export default function AddEditRouteVisit() {
             Customer Schedule
           </h2>
           <Table
+            searchQuery={{
+              customer_type: commonData.customer_type,
+              from_date: commonData.from_date,
+              to_date: commonData.to_date,
+              status: commonData.status,
+            }}
             isEditMode={isEditMode}
             selectedCustomerType={
               selectedCustomerType ? selectedCustomerType : "Agent Customer"

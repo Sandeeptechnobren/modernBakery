@@ -168,7 +168,10 @@ type,
                     />
                 </div>
 
-                <InputFields
+              <div>
+              <div>
+                    <InputFields
+                    required
                     id="categoryName"
                     name="categoryName"
                     value={formik.values.categoryName}
@@ -176,24 +179,35 @@ type,
                     error={formik.errors.categoryName}
                     onChange={formik.handleChange}
                 />
-
-                <InputDropdown
-                    label="Status"
-                    defaultText="Select Status"
-                    defaultOption={formik.values.status === 1 ? 0 : 1}
-                    options={[
-                        { label: "Active", value: "1" },
-                        { label: "Inactive", value: "0" },
-                    ]}
-                    onOptionSelect={(option) => {
-                        formik.setFieldValue("status", parseInt(option.value));
-                    }}
-                />
-                {formik.touched.status && formik.errors.status ? (
+                {formik.touched.categoryName && formik.errors.categoryName && (
                     <span className="text-xs text-red-500">
-                        {formik.errors.status}
+                        {formik.errors.categoryName}
                     </span>
-                ) : null}
+                )}
+              </div>
+                
+              </div>
+
+               <InputFields
+                                required
+                                label="Status"
+                                name="status"
+                                value={String(formik.values.status)}
+                                options={[
+                                  { value: "1", label: "Active" },
+                                  { value: "0", label: "Inactive" },
+                                ]}
+                                onChange={(e) => formik.setFieldValue("status", e.target.value)}
+                                type="radio"
+                                error={
+                                  formik.touched.status && formik.errors.status
+                                    ? formik.errors.status
+                                    : false
+                                }
+                              />
+                              {formik.touched.status && formik.errors.status ? (
+                                <span className="text-xs text-red-500">{formik.errors.status}</span>
+                              ) : null}
 
                 <div className="flex justify-between gap-[8px] mt-[50px]">
                     <div></div>

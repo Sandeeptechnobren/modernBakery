@@ -17,7 +17,7 @@ const RegionSchema = Yup.object().shape({
   region_code: Yup.string().required("Region Code is required."),
   region_name: Yup.string().required("Region Name is required."),
   status: Yup.string().required("Status is required."),
-  company_id: Yup.string().required("Please select a Company."),
+  company_id: Yup.string().required("Please select a company."),
 });
 
 type RegionFormValues = {
@@ -37,7 +37,7 @@ export default function AddEditRegion() {
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const { showSnackbar } = useSnackbar();
-  const { onlyCountryOptions,companyOptions } = useAllDropdownListData();
+  const { companyOptions } = useAllDropdownListData();
 
   // Determine if edit mode (edit if id is present and not 'add')
   const routeId = params?.id ?? "";
@@ -212,7 +212,7 @@ export default function AddEditRegion() {
                     <InputFields
                       label="Company"
                       name="company_id"
-                      value={String(values.company_id)}
+                      value={values.company_id}
                       onChange={(e) => setFieldValue("company_id", e.target.value)}
                       options={companyOptions}
                     />

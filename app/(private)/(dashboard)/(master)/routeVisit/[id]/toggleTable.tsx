@@ -1,20 +1,56 @@
 "use client";
+import ContainerCard from "@/app/components/containerCard";
 import Loading from "@/app/components/Loading";
 import { getRouteVisitList } from "@/app/services/allApi";
 import { useState, useEffect } from "react";
 
-// Transform function for add mode (existing functionality)
-const transformCustomerList = (apiResponse: any[]) => {
+// Types for API responses
+type CustomerItem = {
+  id: number;
+  osa_code: string;
+  owner_name: string;
+};
+
+type RouteVisitItem = {
+  id: number;
+  uuid: string;
+  osa_code: string;
+  customer?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  days: string[];
+};
+
+type TransformedCustomer = {
+  id: number;
+  name: string;
+};
+
+type TransformedEditCustomer = {
+  id: number; // <-- will now represent customer.id
+  uuid: string;
+  name: string;
+  days: string[];
+};
+
+// ✅ Transform function for add mode (existing functionality)
+const transformCustomerList = (
+  apiResponse: CustomerItem[]
+): TransformedCustomer[] => {
   return apiResponse.map((item) => ({
     id: item.id,
     name: `${item.osa_code} - ${item.owner_name}`,
   }));
 };
 
-// Transform function for edit mode (new functionality)
-const transformEditCustomerList = (apiResponse: any[]) => {
+// ✅ Transform function for edit mode (updated to use customer.id)
+const transformEditCustomerList = (
+  apiResponse: RouteVisitItem[]
+): TransformedEditCustomer[] => {
   return apiResponse.map((item) => ({
-    id: item.id,
+    id: item.customer?.id ?? item.id, // ✅ use customer.id if available, fallback to item.id
     uuid: item.uuid,
     name: item.customer
       ? `${item.customer.code} - ${item.customer.name}`
@@ -22,6 +58,7 @@ const transformEditCustomerList = (apiResponse: any[]) => {
     days: item.days || [],
   }));
 };
+
 type DayState = {
   Monday: boolean;
   Tuesday: boolean;
@@ -40,137 +77,129 @@ type CustomerSchedule = {
 };
 
 type TableProps = {
+  searchQuery: {
+    from_date: string | null;
+    to_date: string | null;
+    customer_type: string | null;
+    status: string | null;
+  };
   isEditMode: boolean;
-  customers: any[];
-  onScheduleUpdate?: (
-    schedules: { customer_id: number; days: string[] }[]
-  ) => void;
-  initialSchedules?: { customer_id: number; days: string[] }[];
+  customers: CustomerItem[];
+  onScheduleUpdate?: (schedules: CustomerSchedule[]) => void;
+  initialSchedules?: CustomerSchedule[];
   selectedCustomerType: string;
 };
 
 export default function Table({
+  searchQuery,
   isEditMode,
   selectedCustomerType,
   customers,
   onScheduleUpdate,
   initialSchedules = [],
 }: TableProps) {
-  const [editModeData, setEditModeData] = useState<any[]>([]);
+  const [editModeData, setEditModeData] = useState<TransformedEditCustomer[]>(
+    []
+  );
+  const [addModeData, setAddModeData] = useState<TransformedCustomer[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ For ADD mode: use the existing transform function
-  const addModeData = transformCustomerList(customers);
+  useEffect(() => {
+    // ✅ If customers is null or undefined, show loading and exit early
+    if (!customers) {
+      setLoading(true);
+      return;
+    }
+
+    // ✅ If customers array is empty, still show loading (no data yet)
+    if (customers.length === 0) {
+      setLoading(true);
+      return;
+    }
+
+    // ✅ Customers available — process data
+    setLoading(true);
+    const data = transformCustomerList(customers);
+    setAddModeData(data);
+    setLoading(false);
+  }, [customers]);
 
   // ✅ For EDIT mode: fetch and transform data from route visit list API
   useEffect(() => {
-    if (isEditMode) {
-      const fetchEditData = async () => {
-        setLoading(true);
-        try {
-          const res = await getRouteVisitList();
-          console.log("Edit mode data:", res);
-          if (res?.data) {
-            const transformedData = transformEditCustomerList(res.data);
-            setEditModeData(transformedData);
-          }
-        } catch (error) {
-          console.error("Failed to fetch edit mode data:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    // ✅ Ensure we're in edit mode
+    if (!isEditMode) return;
 
-      fetchEditData();
-    }
-  }, [isEditMode]);
+    // ✅ Ensure all required search params exist before calling API
+    const { from_date, to_date, customer_type, status } = searchQuery || {};
+
+    const hasValidParams = from_date && to_date && customer_type && status;
+
+    if (!hasValidParams) return; // ⛔ Skip API call if any param is missing
+
+    const fetchEditData = async () => {
+      setLoading(true);
+      try {
+        const res = await getRouteVisitList(searchQuery);
+        if (res?.data) {
+          const transformedData = transformEditCustomerList(
+            res.data as RouteVisitItem[]
+          );
+          setEditModeData(transformedData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch edit mode data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEditData();
+  }, [isEditMode, JSON.stringify(searchQuery)]);
 
   // ✅ Initialize state from props or edit mode data
   const initialRowStates = isEditMode
-    ? editModeData.reduce(
-        (acc, item) => {
-          acc[item.id] = {
-            Monday: item.days.includes("Monday"),
-            Tuesday: item.days.includes("Tuesday"),
-            Wednesday: item.days.includes("Wednesday"),
-            Thursday: item.days.includes("Thursday"),
-            Friday: item.days.includes("Friday"),
-            Saturday: item.days.includes("Saturday"),
-            Sunday: item.days.includes("Sunday"),
-          };
-          return acc;
-        },
-        {} as Record<
-          number,
-          {
-            Monday: boolean;
-            Tuesday: boolean;
-            Wednesday: boolean;
-            Thursday: boolean;
-            Friday: boolean;
-            Saturday: boolean;
-            Sunday: boolean;
-          }
-        >
-      )
-    : initialSchedules.reduce(
-        (acc, sched) => {
-          acc[sched.customer_id] = {
-            Monday: sched.days.includes("Monday"),
-            Tuesday: sched.days.includes("Tuesday"),
-            Wednesday: sched.days.includes("Wednesday"),
-            Thursday: sched.days.includes("Thursday"),
-            Friday: sched.days.includes("Friday"),
-            Saturday: sched.days.includes("Saturday"),
-            Sunday: sched.days.includes("Sunday"),
-          };
-          return acc;
-        },
-        {} as Record<
-          number,
-          {
-            Monday: boolean;
-            Tuesday: boolean;
-            Wednesday: boolean;
-            Thursday: boolean;
-            Friday: boolean;
-            Saturday: boolean;
-            Sunday: boolean;
-          }
-        >
-      );
+    ? editModeData.reduce((acc, item) => {
+        acc[item.id] = {
+          Monday: item.days.includes("Monday"),
+          Tuesday: item.days.includes("Tuesday"),
+          Wednesday: item.days.includes("Wednesday"),
+          Thursday: item.days.includes("Thursday"),
+          Friday: item.days.includes("Friday"),
+          Saturday: item.days.includes("Saturday"),
+          Sunday: item.days.includes("Sunday"),
+        };
+        return acc;
+      }, {} as RowStates)
+    : initialSchedules.reduce((acc, sched) => {
+        acc[sched.customer_id] = {
+          Monday: sched.days.includes("Monday"),
+          Tuesday: sched.days.includes("Tuesday"),
+          Wednesday: sched.days.includes("Wednesday"),
+          Thursday: sched.days.includes("Thursday"),
+          Friday: sched.days.includes("Friday"),
+          Saturday: sched.days.includes("Saturday"),
+          Sunday: sched.days.includes("Sunday"),
+        };
+        return acc;
+      }, {} as RowStates);
 
-  const [rowStates, setRowStates] = useState(initialRowStates);
+  const [rowStates, setRowStates] = useState<RowStates>(initialRowStates);
 
   // ✅ Update rowStates when editModeData changes
   useEffect(() => {
     if (isEditMode && editModeData.length > 0) {
-      const newRowStates = editModeData.reduce(
-        (acc, item) => {
-          acc[item.id] = {
-            Monday: item.days.includes("Monday"),
-            Tuesday: item.days.includes("Tuesday"),
-            Wednesday: item.days.includes("Wednesday"),
-            Thursday: item.days.includes("Thursday"),
-            Friday: item.days.includes("Friday"),
-            Saturday: item.days.includes("Saturday"),
-            Sunday: item.days.includes("Sunday"),
-          };
-          return acc;
-        },
-        {} as Record<
-          number,
-          {
-            Monday: boolean;
-            Tuesday: boolean;
-            Wednesday: boolean;
-            Thursday: boolean;
-            Friday: boolean;
-            Saturday: boolean;
-            Sunday: boolean;
-          }
-        >
-      );
+      const newRowStates = editModeData.reduce((acc, item) => {
+        acc[item.id] = {
+          Monday: item.days.includes("Monday"),
+          Tuesday: item.days.includes("Tuesday"),
+          Wednesday: item.days.includes("Wednesday"),
+          Thursday: item.days.includes("Thursday"),
+          Friday: item.days.includes("Friday"),
+          Saturday: item.days.includes("Saturday"),
+          Sunday: item.days.includes("Sunday"),
+        };
+        return acc;
+      }, {} as RowStates);
       setRowStates(newRowStates);
     }
   }, [isEditMode, editModeData]);
@@ -193,11 +222,8 @@ export default function Table({
     }
   }, [rowStates, onScheduleUpdate]);
 
-  const handleToggle = (
-    rowId: number,
-    field: keyof (typeof rowStates)[number]
-  ) => {
-    setRowStates((prev: any) => {
+  const handleToggle = (rowId: number, field: keyof DayState) => {
+    setRowStates((prev: RowStates) => {
       const current = prev[rowId] || {
         Monday: false,
         Tuesday: false,
@@ -220,14 +246,23 @@ export default function Table({
     });
   };
 
-  // ✅ Determine which data to display
-  const displayData = isEditMode ? editModeData : addModeData;
-
   if (loading) {
     return <Loading />;
   }
 
-  // ✅ Responsive table
+  const hasEditData = editModeData && editModeData.length > 0;
+  const displayData = isEditMode ? editModeData : addModeData;
+
+  // ✅ If in edit mode and no data, show "No Data Found"
+  if (isEditMode && !hasEditData) {
+    return (
+      <ContainerCard className="w-full flex font-semibold justify-center items-center py-10 text-black">
+        No Data Found
+      </ContainerCard>
+    );
+  }
+
+  // ✅ Otherwise, show the table
   return (
     <div className="w-full flex flex-col">
       <div className="rounded-lg border border-[#E9EAEB] overflow-hidden">
@@ -284,9 +319,9 @@ export default function Table({
                         className="px-4 py-3 text-center border-l border-[#E9EAEB] whitespace-nowrap"
                       >
                         <Checkbox
-                          isChecked={state[day as keyof typeof state]}
+                          isChecked={state[day as keyof DayState]}
                           onChange={() =>
-                            handleToggle(row.id, day as keyof typeof state)
+                            handleToggle(row.id, day as keyof DayState)
                           }
                         />
                       </td>
@@ -302,15 +337,17 @@ export default function Table({
   );
 }
 
+type CheckboxProps = {
+  label?: string;
+  isChecked: boolean;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+};
+
 export function Checkbox({
   label,
   isChecked = false,
   onChange,
-}: {
-  label?: string;
-  isChecked: boolean;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
+}: CheckboxProps) {
   return (
     <label className="inline-flex items-center cursor-pointer space-x-2">
       <input

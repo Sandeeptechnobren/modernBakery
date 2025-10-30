@@ -373,7 +373,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.vehicleBrand && errors.vehicleBrand && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.vehicleBrand}
+                    {/* {errors.vehicleBrand} */}
                   </div>
                 )}
               </div>
@@ -389,7 +389,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.numberPlate && errors.numberPlate && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.numberPlate}
+                    {/* {errors.numberPlate} */}
                   </div>
                 )}
               </div>
@@ -404,7 +404,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.chassisNumber && errors.chassisNumber && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.chassisNumber}
+                    {/* {errors.chassisNumber} */}
                   </div>
                 )}
               </div>
@@ -426,7 +426,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.vehicleType && errors.vehicleType && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.vehicleType}
+                    {/* {errors.vehicleType} */}
                   </div>
                 )}
               </div>
@@ -453,7 +453,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.ownerType && errors.ownerType && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.ownerType}
+                    {/* {errors.ownerType} */}
                   </div>
                 )}
               </div>
@@ -488,7 +488,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.odoMeter && errors.odoMeter && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.odoMeter}
+                    {/* {errors.odoMeter} */}
                   </div>
                 )}
               </div>
@@ -503,7 +503,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.capacity && errors.capacity && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.capacity}
+                    {/* {errors.capacity} */}
                   </div>
                 )}
               </div>
@@ -534,7 +534,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                     {touched.description && errors.description && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.description}
+                    {/* {errors.description} */}
                   </div>
                 )}
               </div>
@@ -551,7 +551,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.validFrom && errors.validFrom && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.validFrom}
+                    {/* {errors.validFrom} */}
                   </div>
                 )}
               </div>
@@ -567,7 +567,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.validTo && errors.validTo && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.validTo}
+                    {/* {errors.validTo} */}
                   </div>
                 )}
               </div>
@@ -587,7 +587,7 @@ export default function AddEditVehicleWithStepper() {
                 />
                 {touched.status && errors.status && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.status}
+                    {/* {errors.status} */}
                   </div>
                 )}
               </div>

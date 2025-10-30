@@ -201,8 +201,10 @@ const { showSnackbar } = useSnackbar();
                 )}
               </div>
               {/* Route Type Name */}
-              <InputFields
+              <div>
+                <InputFields
                 type="text"
+                required
                 name="route_type_name"
                 label="Route Type Name"
                 value={formik.values.route_type_name}
@@ -213,9 +215,13 @@ const { showSnackbar } = useSnackbar();
                   formik.errors.route_type_name
                 }
               />
+              <div className="text-xs text-red-500">
+                {formik.touched.route_type_name && formik.errors.route_type_name}
+              </div>
+              </div>
               {/* Status */}
               <InputFields
-                type="select"
+                type="radio"
                 name="status"
                 label="Status"
                 value={formik.values.status}
@@ -227,6 +233,8 @@ const { showSnackbar } = useSnackbar();
                   { value: "inactive", label: "Inactive" },
                 ]}
               />
+
+              
             </div>
           </ContainerCard>
 

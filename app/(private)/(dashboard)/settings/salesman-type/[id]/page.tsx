@@ -207,7 +207,8 @@ export default function AddOrEditSalesmanType() {
               </div>
 
               {/* Name */}
-              <InputFields
+             <div>
+               <InputFields
                 type="text"
                 name="salesman_type_name"
                 label="Salesman Type Name"
@@ -219,24 +220,30 @@ export default function AddOrEditSalesmanType() {
                   formik.errors.salesman_type_name
                 }
               />
+              <div className="text-sm text-red-600">
+                {formik.touched.salesman_type_name && formik.errors.salesman_type_name}
+              </div>
+             </div>
 
               {/* Status */}
-              <InputFields
+         <div>
+               <InputFields
                 type="radio"
                 name="salesman_type_status"
                 label="Status"
                 value={formik.values.salesman_type_status}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                error={
-                  formik.touched.salesman_type_status &&
-                  formik.errors.salesman_type_status
-                }
+               
                 options={[
                   { value: "active", label: "Active" },
                   { value: "inactive", label: "Inactive" },
                 ]}
               />
+               <div className="text-sm text-red-600">
+                {formik.touched.salesman_type_status && formik.errors.salesman_type_status}
+              </div>
+         </div>
             </div>
           </ContainerCard>
 

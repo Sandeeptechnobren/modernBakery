@@ -81,13 +81,6 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
                     },
-                    //    {
-                    //         isActive: false,
-                    //         href: "/companyCustomer",
-                    //         label: "Hariss Customer",
-                    //         leadingIcon: "mdi:package-variant",
-                    //         iconColor: "text-cyan-500"
-                    //     },
                     {
                         isActive: false,
                         href: "/salesman",
@@ -95,19 +88,20 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500",
                     },
-                    {
-                        isActive: false,
-                        href: "/item",
-                        label: "Item",
-                        leadingIcon: "mdi:package-variant",
-                        iconColor: "text-cyan-500",
-                    },
+                    
                     {
                         isActive: false,
                         href: "/company",
                         label: "Company",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
+                    },
+                    {
+                        isActive: false,
+                        href: "/item",
+                        label: "Item",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500",
                     },
 
                     // {
@@ -315,7 +309,7 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [
                     {
                         isActive: false,
-                        href: "/agentTransaction/agentCustomerOrder",
+                        href: "/agentCustomerOrder",
                         label: "Agent Order",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500"
@@ -334,6 +328,20 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500"
                     },
+                    {
+                        isActive: false,
+                        href: "/salesmanLoad",
+                        label: "Salesman Load",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
+                        href: "/salesmanUnload",
+                        label: "Salesman Unload",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
                 ]
             },
             // {
@@ -344,32 +352,5 @@ export const initialLinkData: SidebarDataType[] = [
             //     iconColor: "text-fuchsia-500"
             // },
         ],
-    },
-];
-
-export const miscLinks = [
-    {
-        type: "icon",
-        href: "",
-        label: "maximize",
-        icon: "humbleicons:maximize",
-    },
-    {
-        type: "icon",
-        href: "",
-        label: "Notifications",
-        icon: "lucide:bell",
-    },
-    {
-        type: "icon",
-        href: "/settings",
-        label: "Settings",
-        icon: "mi:settings",
-    },
-    {
-        type: "profile",
-        href: "",
-        src: "/dummyuser.jpg",
-        label: "Profile",
     },
 ];

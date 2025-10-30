@@ -153,10 +153,11 @@ export default function UserAddEdit() {
           try {
             // Use first id to fetch dependent dropdowns so options load for the selects
             if (companyIds.length > 0) {
-              const firstCompany = companyIds[0];
+              // pass comma-separated company ids so regions for all selected companies are fetched
+              const companyCsv = companyIds.join(",");
               setSkeleton((s) => ({ ...s, region: true }));
               try {
-                await fetchRegionOptions(firstCompany);
+                await fetchRegionOptions(companyCsv);
               } finally {
                 setSkeleton((s) => ({ ...s, region: false }));
               }
@@ -217,6 +218,26 @@ export default function UserAddEdit() {
       console.error("Failed to fetch labels:", err);
     }
   };
+
+  // Normalize values passed from InputFields into string[] when appropriate
+  const normalizeToArray = (v: unknown): string[] => {
+    if (Array.isArray(v)) return v.map(String);
+    if (v === null || v === undefined) return [];
+    if (typeof v === "string") {
+      const s = v.trim();
+      if (s === "") return [];
+      if (s.includes(",")) return s.split(",").map(x => x.trim()).filter(Boolean);
+      return [s];
+    }
+    return [String(v)];
+  };
+
+  const anySelectedPresent = (selected: unknown, optionsArr: Array<Record<string, unknown>> | undefined) => {
+    const opts = optionsArr ?? [];
+    const sel = normalizeToArray(selected);
+    if (sel.length === 0) return false;
+    return sel.some(s => opts.some(opt => String(opt?.value ?? "") === String(s)));
+  };
   const passwordField = isEditMode
     ? Yup.string().notRequired()
     : Yup.string().required("Password is required").min(6, "Password too short");
@@ -243,14 +264,13 @@ export default function UserAddEdit() {
   const dynamicSchema = Yup.object().shape({
     ...baseFields,
     ...roleField,
-    ...(visibleLabels.includes("company") && { company: Yup.string().required("Company is required") }),
-    ...(visibleLabels.includes("region") && { region: Yup.string().required("Region is required") }),
-    ...(visibleLabels.includes("area") && { area: Yup.string().required("Area is required") }),
-    ...(visibleLabels.includes("warehouse") && {
-      warehouse: Yup.string().required("Warehouse is required"),
-    }),
-    ...(visibleLabels.includes("route") && { route: Yup.string().required("Route is required") }),
-    ...(visibleLabels.includes("salesman") && { salesman: Yup.string().required("Salesman is required") }),
+    // Handle fields that may be single value (string) or multi-select arrays
+    ...(visibleLabels.includes("company") && { company: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Company is required") : Yup.string().required("Company is required")) }),
+    ...(visibleLabels.includes("region") && { region: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Region is required") : Yup.string().required("Region is required")) }),
+    ...(visibleLabels.includes("area") && { area: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Area is required") : Yup.string().required("Area is required")) }),
+    ...(visibleLabels.includes("warehouse") && { warehouse: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Warehouse is required") : Yup.string().required("Warehouse is required")) }),
+    ...(visibleLabels.includes("route") && { route: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Route is required") : Yup.string().required("Route is required")) }),
+    ...(visibleLabels.includes("salesman") && { salesman: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Salesman is required") : Yup.string().required("Salesman is required")) }),
   });
 
   const handleNext = async (
@@ -272,21 +292,11 @@ export default function UserAddEdit() {
           ? Yup.object().shape({ ...baseFields })
           : Yup.object().shape({
               ...roleField,
-              ...(visibleLabels.includes("company") && {
-                company: Yup.string().required("Company is required"),
-              }),
-              ...(visibleLabels.includes("region") && {
-                region: Yup.string().required("Region is required"),
-              }),
-              ...(visibleLabels.includes("area") && {
-                area: Yup.string().required("Area is required"),
-              }),
-              ...(visibleLabels.includes("warehouse") && {
-                warehouse: Yup.string().required("Warehouse is required"),
-              }),
-              ...(visibleLabels.includes("route") && {
-                route: Yup.string().required("Route is required"),
-              }),
+              ...(visibleLabels.includes("company") && { company: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Company is required") : Yup.string().required("Company is required")) }),
+              ...(visibleLabels.includes("region") && { region: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Region is required") : Yup.string().required("Region is required")) }),
+              ...(visibleLabels.includes("area") && { area: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Area is required") : Yup.string().required("Area is required")) }),
+              ...(visibleLabels.includes("warehouse") && { warehouse: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Warehouse is required") : Yup.string().required("Warehouse is required")) }),
+              ...(visibleLabels.includes("route") && { route: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Route is required") : Yup.string().required("Route is required")) }),
             });
 
       await stepSchema.validate(normalized, { abortEarly: false });
@@ -478,13 +488,26 @@ export default function UserAddEdit() {
                   value={values.company}
                   options={companyOptions}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-                    const v = e?.target?.value;
-                    setFieldValue("company", v);
+                    const raw = e?.target?.value;
+                    // allow CSV of company ids or array
+                    const vals = normalizeToArray(raw);
+                    setFieldValue("company", vals);
                     setSkeleton((s) => ({ ...s, region: true }));
                     try {
-                      await fetchRegionOptions(v);
+                      // fetch regions for all selected companies (CSV)
+                      await fetchRegionOptions(vals.join(","));
                     } finally {
                       setSkeleton((s) => ({ ...s, region: false }));
+                    }
+
+                    // Clear dependent selects if no regions returned or current value not present
+                    const newRegionOptions = (regionOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const regionExists = anySelectedPresent(values.region, newRegionOptions);
+                    if (newRegionOptions.length === 0 || !regionExists) {
+                      setFieldValue("region", []);
+                      setFieldValue("area", []);
+                      setFieldValue("warehouse", []);
+                      setFieldValue("route", []);
                     }
                   }}
                   error={touched.company && errors.company}
@@ -508,6 +531,16 @@ export default function UserAddEdit() {
                     } finally {
                       setSkeleton((s) => ({ ...s, area: false }));
                     }
+
+                    // Clear dependent selects if no areas returned or current area not present
+                    const newAreaOptions = (areaOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curArea = values.area;
+                    const areaExists = newAreaOptions.some(opt => String(opt?.value ?? "") === String(curArea ?? ""));
+                    if (newAreaOptions.length === 0 || !areaExists) {
+                      setFieldValue("area", "");
+                      setFieldValue("warehouse", "");
+                      setFieldValue("route", "");
+                    }
                   }}
                   error={touched.region && errors.region}
                   showSkeleton={skeleton.region}
@@ -530,6 +563,14 @@ export default function UserAddEdit() {
                     } finally {
                       setSkeleton((s) => ({ ...s, warehouse: false }));
                     }
+
+                    const newWarehouseOptions = (warehouseOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curWarehouse = values.warehouse;
+                    const warehouseExists = newWarehouseOptions.some(opt => String(opt?.value ?? "") === String(curWarehouse ?? ""));
+                    if (newWarehouseOptions.length === 0 || !warehouseExists) {
+                      setFieldValue("warehouse", "");
+                      setFieldValue("route", "");
+                    }
                   }}
                   error={touched.area && errors.area}
                   showSkeleton={skeleton.area}
@@ -551,6 +592,14 @@ export default function UserAddEdit() {
                       await fetchRouteOptions(v);
                     } finally {
                       setSkeleton((s) => ({ ...s, route: false }));
+                    }
+
+                    // Clear route if no routes exist or selected route not present
+                    const newRouteOptions = (routeOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curRoute = values.route;
+                    const routeExists = newRouteOptions.some(opt => String(opt?.value ?? "") === String(curRoute ?? ""));
+                    if (newRouteOptions.length === 0 || !routeExists) {
+                      setFieldValue("route", "");
                     }
                   }}
                   error={touched.warehouse && errors.warehouse}

@@ -75,7 +75,18 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     label="Warehouse Type"
                     name="warehouse_type"
                     value={values.warehouse_type}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                        handleChange(e);
+                        const val = (e.target as HTMLSelectElement).value;
+                        if (val === 'company_outlet') {
+                            try {
+                                setFieldValue('agent_customer', '');
+                                setFieldValue('region_id', '');
+                                setFieldValue('area_id', '');
+                            } catch (err) {
+                            }
+                        }
+                    }}
                     options={[
                         { value: "agent_customer", label: "Agent Warehouse" },
                         { value: "company_outlet", label: "Company Outlet" },
@@ -140,6 +151,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 )}
             </div>
             
+            {values.warehouse_type === 'agent_customer' && (
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
@@ -167,6 +179,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     <div className="text-xs text-red-500 mt-1">{errors.agent_customer}</div>
                 )}
             </div>
+            )}
             <div className="flex flex-col gap-2">
                 <InputFields
                     required

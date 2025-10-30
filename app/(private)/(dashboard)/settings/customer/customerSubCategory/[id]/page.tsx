@@ -241,7 +241,7 @@ export default function AddEditCustomerSubCategory() {
                     <>
                       <IconButton
                         bgClass="white"
-                         className="  cursor-pointer text-[#252B37] pt-12"
+                        className="cursor-pointer text-[#252B37] pt-12"
                         icon="mi:settings"
                         onClick={() => setIsOpen(true)}
                       />

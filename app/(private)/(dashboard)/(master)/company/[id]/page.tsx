@@ -30,6 +30,7 @@ import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useEffect, useState, useRef } from "react";
+import { address } from "framer-motion/client";
 
 interface CompanyFormValues {
   company_name: string;
@@ -43,12 +44,8 @@ interface CompanyFormValues {
   toll_free_code: string;
   email: string;
   country_id: string;
-  region: string;
-  sub_region: string;
-  district: string;
-  town: string;
-  street: string;
-  landmark: string;
+  address: string;
+  city: string;
   selling_currency: string;
   purchase_currency: string;
   vat: string;
@@ -56,6 +53,8 @@ interface CompanyFormValues {
   service_type: string;
   status: string;
 }
+
+interface contactCountry { name: string; code?: string; flag?: string; }
 
 // 🔹 Full form schema (used on submit)
 const CompanySchema = Yup.object().shape({
@@ -67,7 +66,6 @@ const CompanySchema = Yup.object().shape({
     .required("Company website is required"),
   company_logo: Yup.string().required("Company Logo is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
-  region: Yup.string().required("Region is required"),
   country_id: Yup.string().required("Country is required"),
   selling_currency: Yup.string().required("Selling currency is required"),
   purchase_currency: Yup.string().required("Purchase currency is required"),
@@ -76,12 +74,8 @@ const CompanySchema = Yup.object().shape({
     .max(15, "VAT Number cannot be more than 15 characters"),
   service_type: Yup.string().required("Service type is required"),
   status: Yup.string().required("Status is required"),
-  district: Yup.string().required("District is required"),
-  town: Yup.string().required("Town is required"),
-  street: Yup.string().required("Street is required"),
-  landmark: Yup.string().required("Landmark is required"),
-  sub_region: Yup.string().required("Sub Region is required"),
-
+  city: Yup.string().required("City is required"),
+  address: Yup.string().required("Address is required"),
   primary_contact: Yup.string()
     .required("Primary contact is required")
     .matches(/^[0-9]+$/, "Only numbers are allowed")
@@ -128,12 +122,9 @@ const stepSchemas = [
   }),
 
   Yup.object({
-    region: Yup.string().required("Region is required"),
-    sub_region: Yup.string().required("Area is required"),
-    district: Yup.string().required("District is required"),
-    town: Yup.string().required("Town is required"),
-    street: Yup.string().required("Street is required"),
-    landmark: Yup.string().required("Landmark is required"),
+   address: Yup.string().required("address is required"),
+    city: Yup.string().required("city is required"),
+    
     country_id: Yup.string().required("Country is required"),
   }),
 
@@ -166,6 +157,10 @@ export default function AddEditCompany() {
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [country, setCountry] = useState<Record<string, contactCountry>>({
+    primary_contact: { name: "Kenya", code: "+254", flag: "🇰🇪" },
+    toll_free_no: { name: "Kenya", code: "+254", flag: "🇰🇪" },
+  });
   const [initialValues, setInitialValues] = useState<CompanyFormValues>({
     company_name: "",
     company_code: "",
@@ -178,12 +173,8 @@ export default function AddEditCompany() {
     toll_free_no: "",
     toll_free_code: "",
     country_id: "",
-    region: "",
-    sub_region: "",
-    district: "",
-    town: "",
-    street: "",
-    landmark: "",
+    address: "",
+    city: "",
     selling_currency: "",
     purchase_currency: "",
     vat: "",
@@ -203,8 +194,6 @@ export default function AddEditCompany() {
           setInitialValues({
             ...res.data,
             country_id: res.data.country?.id?.toString() || "",
-            region: res.data.region?.id?.toString() || "",
-            sub_region: res.data.sub_region?.id?.toString() || "",
             selling_currency: res.data.selling_currency || "",
             purchase_currency: res.data.purchase_currency || "",
             primary_contact: res.data.primary_contact || "",
@@ -213,10 +202,8 @@ export default function AddEditCompany() {
             company_name: res.data.company_name || "",
             email: res.data.email || "",
             vat: res.data.vat || "",
-            street: res.data.street || "",
-            town: res.data.town || "",
-            district: res.data.district || "",
-            landmark: res.data.landmark || "",
+            city: res.data.city || "",
+            address: res.data.address || "",
             module_access: res.data.module_access || "",
             service_type: res.data.service_type || "",
             status: res.data.status || "1",
@@ -375,11 +362,6 @@ export default function AddEditCompany() {
                   onChange={(e) =>
                     setFieldValue("company_name", e.target.value)
                   }
-                  error={
-                    errors?.company_name && touched.company_name
-                      ? errors.company_name
-                      : false
-                  }
                 />
                 {errors?.company_name && touched?.company_name && (
                   <p className="text-red-500 text-sm mt-1">
@@ -399,7 +381,6 @@ export default function AddEditCompany() {
                     { value: "manufacturing", label: "Manufacturing" },
                     { value: "trading", label: "Trading" },
                   ]}
-                  error={touched.company_type && errors.company_type}
                 />
                 {errors.company_type && (
                   <p className="text-red-500 text-sm mt-1">{errors.company_type}</p>
@@ -413,7 +394,6 @@ export default function AddEditCompany() {
                   name="website"
                   value={values.website}
                   onChange={(e) => setFieldValue("website", e.target.value)}
-                  error={touched.website && errors.website}
                 />
                 {errors.website && (
                   <p className="text-red-500 text-sm mt-1">{errors.website}</p>
@@ -421,12 +401,12 @@ export default function AddEditCompany() {
               </div>
               <div>
                 <InputFields
+                  required
                   label="Logo"
                   name="company_logo"
                   type="file"
                   value={values.company_logo}
                   onChange={(e) => setFieldValue("company_logo", e.target.value)}
-                  error={touched.company_logo && errors.company_logo}
                 />
                 {errors.company_logo && (
                   <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
@@ -441,34 +421,50 @@ export default function AddEditCompany() {
           <ContainerCard>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               <div>
-                <FormInputField
+                <InputFields
                   required
                   type="contact"
                   label="Primary Contact"
-                  contact={values.primary_contact}
-                  code={values.primary_code}
-                  onContactChange={(e) => handleNumericInput(e, "primary_contact", setFieldValue)}
-                  onCodeChange={(e) => setFieldValue("primary_code", e.target.value)}
-                  options={onlyCountryOptions}
-                  error={touched.primary_contact && errors.primary_contact}
-                />
+                  name="primary_contact"
+                  setSelectedCountry={(country: contactCountry) => setCountry((prev) => ({ ...prev, primary_contact: country }))}
+                  selectedCountry={country.primary_contact}
+                  value={values.primary_contact}
+                  onChange={(e) =>
+                      setFieldValue(
+                          "primary_contact",
+                          e.target.value
+                      )
+                  }
+                  error={
+                      touched.primary_contact &&
+                      errors.primary_contact
+                  }
+              />
                 {errors.primary_contact && (
                   <p className="text-red-500 text-sm mt-1">{errors.primary_contact}</p>
                 )}
               </div>
 
               <div>
-                <FormInputField
+                <InputFields
                   required
                   type="contact"
                   label="Toll Free Number"
-                  contact={values.toll_free_no}
-                  code={values.toll_free_code}
-                  onContactChange={(e) => handleNumericInput(e, "toll_free_no", setFieldValue)}
-                  onCodeChange={(e) => setFieldValue("toll_free_code", e.target.value)}
-                  options={onlyCountryOptions}
-                  error={touched.toll_free_no && errors.toll_free_no}
-                />
+                  name="toll_free_no"
+                  setSelectedCountry={(country: contactCountry) => setCountry((prev) => ({ ...prev, toll_free_no: country }))}
+                  selectedCountry={country.toll_free_no}
+                  value={values.toll_free_no}
+                  onChange={(e) =>
+                      setFieldValue(
+                          "toll_free_no",
+                          e.target.value
+                      )
+                  }
+                  error={
+                      touched.toll_free_no &&
+                      errors.toll_free_no
+                  }
+              />
                 {errors.toll_free_no && (
                   <p className="text-red-500 text-sm mt-1">{errors.toll_free_no}</p>
                 )}
@@ -495,91 +491,37 @@ export default function AddEditCompany() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <InputFields
-                  required
-                  label="Region"
-                  name="region"
-                  value={String(values.region)}
-                  options={regionOptions}
-                  onChange={(e) => setFieldValue("region", e.target.value)}
-                  error={touched.region && errors.region}
-                />
-                {errors.region && (
-                  <p className="text-red-500 text-sm mt-1">{errors.region}</p>
-                )}
-              </div>
+              
 
               <div>
                 <InputFields
                   required
-                  label="Area"
-                  name="sub_region"
-                  value={String(values.sub_region)}
-                  options={areaOptions}
-                  onChange={(e) => setFieldValue("sub_region", e.target.value)}
-                  error={touched.sub_region && errors.sub_region}
+                  label="Address"
+                  name="address"
+                  value={values.address}
+                  onChange={(e) => setFieldValue("address", e.target.value)}
+                  error={touched.address && errors.address}
                 />
-                {errors.sub_region && (
-                  <p className="text-red-500 text-sm mt-1">{errors.sub_region}</p>
+                {errors.address && (
+                  <p className="text-red-500 text-sm mt-1">{errors.address}</p>
                 )}
               </div>
 
               <div>
                 <InputFields
                   required
-                  label="District"
-                  name="district"
-                  value={values.district}
-                  onChange={(e) => setFieldValue("district", e.target.value)}
-                  error={touched.district && errors.district}
+                  label="City"
+                  name="city"
+                  value={values.city}
+                  onChange={(e) => setFieldValue("city", e.target.value)}
+                  error={touched.city && errors.city}
                 />
-                {errors.district && (
-                  <p className="text-red-500 text-sm mt-1">{errors.district}</p>
+                {errors.city && (
+                  <p className="text-red-500 text-sm mt-1">{errors.city}</p>
                 )}
               </div>
 
-              <div>
-                <InputFields
-                  required
-                  label="Town"
-                  name="town"
-                  value={values.town}
-                  onChange={(e) => setFieldValue("town", e.target.value)}
-                  error={touched.town && errors.town}
-                />
-                {errors.town && (
-                  <p className="text-red-500 text-sm mt-1">{errors.town}</p>
-                )}
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Street"
-                  name="street"
-                  value={values.street}
-                  onChange={(e) => setFieldValue("street", e.target.value)}
-                  error={touched.street && errors.street}
-                />
-                {errors.street && (
-                  <p className="text-red-500 text-sm mt-1">{errors.street}</p>
-                )}
-              </div>
-
-              <div>
-                <InputFields
-                  label="Landmark"
-                  name="landmark"
-                  value={values.landmark}
-                  onChange={(e) => setFieldValue("landmark", e.target.value)}
-                  error={touched.landmark && errors.landmark}
-                />
-                {errors.landmark && (
-                  <p className="text-red-500 text-sm mt-1">{errors.landmark}</p>
-                )}
-              </div>
-
+             
               <div>
                 <InputFields
                   required

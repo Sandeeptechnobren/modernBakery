@@ -155,10 +155,10 @@ export default function RoutevisitPlan() {
           </button>
 
           <button
-            onClick={() => handleNavigate("/routeVisit/bulkUpload")}
+            onClick={() => handleNavigate("/routeVisit/bulkUpdate")}
             className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
           >
-            Bulk Upload
+            Bulk Update
           </button>
         </div>
       </ContainerCard>

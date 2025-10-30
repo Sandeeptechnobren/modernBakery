@@ -131,7 +131,7 @@ const router = useRouter();
           return (
             <Form>
               <ContainerCard>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Company Type Code (pattern-matched UI) */}
                   <div className="flex items-start gap-2 max-w-[406px]">
                   <InputFields
@@ -142,7 +142,7 @@ const router = useRouter();
   disabled={isEditMode || codeMode === 'auto'}
   error={touched.company_type_code && errors.company_type_code}
 />
-                    {!isEditMode && (
+   {!isEditMode && (
                       <>
                         <IconButton
                           bgClass="white"
@@ -153,22 +153,24 @@ const router = useRouter();
                         <SettingPopUp
                           isOpen={isOpen}
                           onClose={() => setIsOpen(false)}
-                          title="Company Type Code"
+                          title="Service Type Code"
                           prefix={prefix}
                           setPrefix={setPrefix}
                           onSave={(mode, code) => {
                             setCodeMode(mode);
                             if (mode === 'auto' && code) {
-                              setFieldValue('company_type_code', code);
+                              setFieldValue('service_type_code', code);
                             } else if (mode === 'manual') {
-                              setFieldValue('company_type_code', '');
+                              setFieldValue('service_type_code', '');
                             }
                           }}
                         />
                       </>
                     )}
+                 
                   </div>
-                  <InputFields
+               <div>
+                   <InputFields
                     required
                     label="Name"
                     name="name"
@@ -176,6 +178,10 @@ const router = useRouter();
                     onChange={(e) => setFieldValue("name", e.target.value)}
                     error={touched.name && errors.name}
                   />
+                  <div className="text-sm text-red-500">
+                    {touched.name && errors.name}
+                  </div>
+               </div>
                   <InputFields
                     required
                     label="Status"
