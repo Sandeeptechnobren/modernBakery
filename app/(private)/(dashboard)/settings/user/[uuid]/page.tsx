@@ -484,6 +484,17 @@ export default function UserAddEdit() {
                     } finally {
                       setSkeleton((s) => ({ ...s, region: false }));
                     }
+
+                    // Clear dependent selects if no regions returned or current value not present
+                    const newRegionOptions = (regionOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curRegion = values.region;
+                    const regionExists = newRegionOptions.some(opt => String(opt?.value ?? "") === String(curRegion ?? ""));
+                    if (newRegionOptions.length === 0 || !regionExists) {
+                      setFieldValue("region", "");
+                      setFieldValue("area", "");
+                      setFieldValue("warehouse", "");
+                      setFieldValue("route", "");
+                    }
                   }}
                   error={touched.company && errors.company}
                   showSkeleton={skeleton.region}
@@ -505,6 +516,16 @@ export default function UserAddEdit() {
                       await fetchAreaOptions(v);
                     } finally {
                       setSkeleton((s) => ({ ...s, area: false }));
+                    }
+
+                    // Clear dependent selects if no areas returned or current area not present
+                    const newAreaOptions = (areaOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curArea = values.area;
+                    const areaExists = newAreaOptions.some(opt => String(opt?.value ?? "") === String(curArea ?? ""));
+                    if (newAreaOptions.length === 0 || !areaExists) {
+                      setFieldValue("area", "");
+                      setFieldValue("warehouse", "");
+                      setFieldValue("route", "");
                     }
                   }}
                   error={touched.region && errors.region}
@@ -528,6 +549,15 @@ export default function UserAddEdit() {
                     } finally {
                       setSkeleton((s) => ({ ...s, warehouse: false }));
                     }
+
+                    // Clear dependent selects if no warehouses returned or current warehouse not present
+                    const newWarehouseOptions = (warehouseOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curWarehouse = values.warehouse;
+                    const warehouseExists = newWarehouseOptions.some(opt => String(opt?.value ?? "") === String(curWarehouse ?? ""));
+                    if (newWarehouseOptions.length === 0 || !warehouseExists) {
+                      setFieldValue("warehouse", "");
+                      setFieldValue("route", "");
+                    }
                   }}
                   error={touched.area && errors.area}
                   showSkeleton={skeleton.area}
@@ -549,6 +579,14 @@ export default function UserAddEdit() {
                       await fetchRouteOptions(v);
                     } finally {
                       setSkeleton((s) => ({ ...s, route: false }));
+                    }
+
+                    // Clear route if no routes exist or selected route not present
+                    const newRouteOptions = (routeOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curRoute = values.route;
+                    const routeExists = newRouteOptions.some(opt => String(opt?.value ?? "") === String(curRoute ?? ""));
+                    if (newRouteOptions.length === 0 || !routeExists) {
+                      setFieldValue("route", "");
                     }
                   }}
                   error={touched.warehouse && errors.warehouse}
