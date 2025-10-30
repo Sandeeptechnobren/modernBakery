@@ -243,14 +243,13 @@ export default function UserAddEdit() {
   const dynamicSchema = Yup.object().shape({
     ...baseFields,
     ...roleField,
-    ...(visibleLabels.includes("company") && { company: Yup.string().required("Company is required") }),
-    ...(visibleLabels.includes("region") && { region: Yup.string().required("Region is required") }),
-    ...(visibleLabels.includes("area") && { area: Yup.string().required("Area is required") }),
-    ...(visibleLabels.includes("warehouse") && {
-      warehouse: Yup.string().required("Warehouse is required"),
-    }),
-    ...(visibleLabels.includes("route") && { route: Yup.string().required("Route is required") }),
-    ...(visibleLabels.includes("salesman") && { salesman: Yup.string().required("Salesman is required") }),
+    // Handle fields that may be single value (string) or multi-select arrays
+    ...(visibleLabels.includes("company") && { company: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Company is required") : Yup.string().required("Company is required")) }),
+    ...(visibleLabels.includes("region") && { region: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Region is required") : Yup.string().required("Region is required")) }),
+    ...(visibleLabels.includes("area") && { area: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Area is required") : Yup.string().required("Area is required")) }),
+    ...(visibleLabels.includes("warehouse") && { warehouse: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Warehouse is required") : Yup.string().required("Warehouse is required")) }),
+    ...(visibleLabels.includes("route") && { route: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Route is required") : Yup.string().required("Route is required")) }),
+    ...(visibleLabels.includes("salesman") && { salesman: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Salesman is required") : Yup.string().required("Salesman is required")) }),
   });
 
   const handleNext = async (
@@ -272,21 +271,11 @@ export default function UserAddEdit() {
           ? Yup.object().shape({ ...baseFields })
           : Yup.object().shape({
               ...roleField,
-              ...(visibleLabels.includes("company") && {
-                company: Yup.string().required("Company is required"),
-              }),
-              ...(visibleLabels.includes("region") && {
-                region: Yup.string().required("Region is required"),
-              }),
-              ...(visibleLabels.includes("area") && {
-                area: Yup.string().required("Area is required"),
-              }),
-              ...(visibleLabels.includes("warehouse") && {
-                warehouse: Yup.string().required("Warehouse is required"),
-              }),
-              ...(visibleLabels.includes("route") && {
-                route: Yup.string().required("Route is required"),
-              }),
+              ...(visibleLabels.includes("company") && { company: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Company is required") : Yup.string().required("Company is required")) }),
+              ...(visibleLabels.includes("region") && { region: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Region is required") : Yup.string().required("Region is required")) }),
+              ...(visibleLabels.includes("area") && { area: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Area is required") : Yup.string().required("Area is required")) }),
+              ...(visibleLabels.includes("warehouse") && { warehouse: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Warehouse is required") : Yup.string().required("Warehouse is required")) }),
+              ...(visibleLabels.includes("route") && { route: Yup.lazy((val) => Array.isArray(val) ? Yup.array().of(Yup.string()).min(1, "Route is required") : Yup.string().required("Route is required")) }),
             });
 
       await stepSchema.validate(normalized, { abortEarly: false });

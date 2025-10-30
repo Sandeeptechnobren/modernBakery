@@ -360,30 +360,3 @@ export const initialLinkData: SidebarDataType[] = [
         ],
     },
 ];
-
-export const miscLinks = [
-    {
-        type: "icon",
-        href: "",
-        label: "maximize",
-        icon: "humbleicons:maximize",
-    },
-    {
-        type: "icon",
-        href: "",
-        label: "Notifications",
-        icon: "lucide:bell",
-    },
-    {
-        type: "icon",
-        href: "/settings",
-        label: "Settings",
-        icon: "mi:settings",
-    },
-    {
-        type: "profile",
-        href: "",
-        src: "/dummyuser.jpg",
-        label: "Profile",
-    },
-];
