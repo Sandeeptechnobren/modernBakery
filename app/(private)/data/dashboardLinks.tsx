@@ -81,13 +81,6 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
                     },
-                    //    {
-                    //         isActive: false,
-                    //         href: "/companyCustomer",
-                    //         label: "Hariss Customer",
-                    //         leadingIcon: "mdi:package-variant",
-                    //         iconColor: "text-cyan-500"
-                    //     },
                     {
                         isActive: false,
                         href: "/salesman",
@@ -95,19 +88,20 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500",
                     },
-                    {
-                        isActive: false,
-                        href: "/item",
-                        label: "Item",
-                        leadingIcon: "mdi:package-variant",
-                        iconColor: "text-cyan-500",
-                    },
+                    
                     {
                         isActive: false,
                         href: "/company",
                         label: "Company",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
+                    },
+                    {
+                        isActive: false,
+                        href: "/item",
+                        label: "Item",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500",
                     },
 
                     // {

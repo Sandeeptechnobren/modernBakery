@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Skeleton from '@mui/material/Skeleton';
-
+import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
 type Option = {

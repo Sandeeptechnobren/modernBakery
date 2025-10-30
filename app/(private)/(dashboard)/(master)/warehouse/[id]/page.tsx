@@ -65,7 +65,11 @@ const validationSchema = Yup.object({
     owner_name: Yup.string().required('Owner Name is required'),
     company: Yup.string().required('Company is required'),
     agreed_stock_capital: Yup.string(),
-    agent_customer: Yup.string().required('Agent Customer is required'),
+    agent_customer: Yup.string().when('warehouse_type', {
+        is: (val: any) => String(val) === 'agent_customer',
+        then: (schema: any) => schema.required('Agent Customer is required'),
+        otherwise: (schema: any) => schema.notRequired(),
+    }),
     warehouse_manager: Yup.string().required('Warehouse Manager is required'),
     owner_number: Yup.string()
         .required('Owner Contact is required')
@@ -80,8 +84,16 @@ const validationSchema = Yup.object({
         .matches(/^\S+@gmail\.com$/, 'Must be a valid Gmail address'),
     location: Yup.string().required('Location is required'),
     city: Yup.string().required('City is required'),
-    region_id: Yup.string().required('Region is required'),
-    area_id: Yup.string().required('Area ID is required'),
+    region_id: Yup.string().when('warehouse_type', {
+        is: (val: any) => String(val) === 'agent_customer',
+        then: (schema: any) => schema.required('Region is required'),
+        otherwise: (schema: any) => schema.notRequired(),
+    }),
+    area_id: Yup.string().when('warehouse_type', {
+        is: (val: any) => String(val) === 'agent_customer',
+        then: (schema: any) => schema.required('Area ID is required'),
+        otherwise: (schema: any) => schema.notRequired(),
+    }),
     town_village: Yup.string(),
     street: Yup.string(),
     landmark: Yup.string(),

@@ -568,7 +568,6 @@ const res = isEditMode
                   name="ErpCode"
                   value={form.ErpCode}
                   onChange={handleChange}
-                  disabled
                 />
               </div>
               <div>
