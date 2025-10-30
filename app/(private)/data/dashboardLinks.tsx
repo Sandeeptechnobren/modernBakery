@@ -64,14 +64,14 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/routeVisit",
                         label: "Route Visit Plan",
-                        leadingIcon: "mdi:map",
+                        leadingIcon: "icon-park-solid:plan",
                         iconColor: "text-yellow-400",
                     },
                     {
                         isActive: false,
                         href: "/agentCustomer",
                         label: "Agent Customer",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "carbon:customer",
                         iconColor: "text-cyan-500",
                     },
                     {
@@ -85,7 +85,7 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/salesman",
                         label: "Salesman",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "carbon:sales-ops",
                         iconColor: "text-cyan-500",
                     },
                     
@@ -174,7 +174,7 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/merchandiser/shelfDisplay",
                         label: "Shelf Display",
-                        leadingIcon: "mdi:map",
+                        leadingIcon: "streamline:shelf",
                         iconColor: "text-yellow-400",
                     },
                     {
@@ -188,7 +188,7 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/merchandiser/campaign",
                         label: "Campaign Info",
-                        leadingIcon: "mdi:map",
+                        leadingIcon: "material-symbols:info-rounded",
                         iconColor: "text-yellow-400",
                     },
                     //          {
@@ -210,14 +210,14 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/merchandiser/survey",
                         label: "Survey",
-                        leadingIcon: "mdi:map",
+                        leadingIcon: "wpf:survey",
                         iconColor: "text-yellow-400",
                     },
                     {
                         isActive: false,
                         href: "/merchandiser/complaintFeedback",
                         label: "Complaint Feedback",
-                        leadingIcon: "mdi:map",
+                        leadingIcon: "hugeicons:chat-feedback",
                         iconColor: "text-yellow-400",
                     },
                  
@@ -225,14 +225,14 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/merchandiser/competitor",
                         label: "Competitor Info",
-                        leadingIcon: "mdi:map",
+                        leadingIcon: "akar-icons:info",
                         iconColor: "text-yellow-400",
                     },
                     {
                         isActive: false,
                         href: "/merchandiser/stockinstore",
                         label: "Stock in Store",
-                        leadingIcon: "mdi:map",
+                        leadingIcon: "vaadin:stock",
                         iconColor: "text-yellow-400",
                     },
                     // {
@@ -259,21 +259,21 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/assets/chiller",
                         label: "Chiller",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "guidance:refrigeration",
                         iconColor: "text-cyan-500",
                     },
                     {
                         isActive: false,
                         href: "/assets/chillerRequest",
                         label: "Chiller Request",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "si:pull-request-duotone",
                         iconColor: "text-cyan-500",
                     },
                     {
                         isActive: false,
                         href: "/assets/vendor",
                         label: "Vendor",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "streamline-freehand:shop",
                         iconColor: "text-cyan-500",
                     },
                 ],
@@ -305,7 +305,7 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/agentCustomerOrder",
                         label: "Agent Order",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "carbon:delivery-parcel",
                         iconColor: "text-cyan-500"
                     },
                     // {
@@ -319,21 +319,21 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/invoice",
                         label: "Invoice",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "hugeicons:invoice",
                         iconColor: "text-cyan-500"
                     },
                     {
                         isActive: false,
                         href: "/salesmanLoad",
                         label: "Salesman Load",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "mdi:tanker-truck",
                         iconColor: "text-cyan-500"
                     },
                     {
                         isActive: false,
                         href: "/salesmanUnload",
                         label: "Salesman Unload",
-                        leadingIcon: "mdi:package-variant",
+                        leadingIcon: "mdi:truck-remove-outline",
                         iconColor: "text-cyan-500"
                     },
                 ]

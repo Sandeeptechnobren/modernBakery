@@ -63,7 +63,7 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                 </div>
             </h1>
 
-            <div className="flex bg-white w-full h-full border border-[#E9EAEB] rounded-[8px] overflow-auto md:overflow-hidden">
+            <div className="flex bg-white w-full h-full border border-[#E9EAEB] rounded-[8px] overflow-auto md:overflow-hidden transition-all duration-200 ease-in-out">
                 {/* Sidebar */}
                 <div
                     onMouseEnter={() => setIsOpen(true)}

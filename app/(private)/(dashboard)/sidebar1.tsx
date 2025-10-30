@@ -233,22 +233,18 @@ export default function Sidebar({
             {/* second sidebar */}
             <div
                 className={`relative ${
-                    isOpen ? "w-[200px]" : "w-[13px] hover:w-[15px]"
+                    isOpen ? "w-[250px]" : "w-[13px] hover:w-[15px]"
                 } h-screen bg-[#223458] group transition-all ease-in-out duration-300`}
             >
                 {/* second sidebar toggle button */}
                 {currentPageForSecondSidebar !== "" && (
                     <>
                         <span
-                            className="hidden group-hover:flex absolute bottom-[50px] -right-3 p-1 bg-white rounded-full w-[20px] h-[20px] items-center justify-center"
+                            className="hidden group-hover:flex absolute bottom-[100px] -right-3 p-1 bg-white rounded-full w-[20px] h-[20px] items-center justify-center"
                             onClick={() => setIsOpen(!isOpen)}
                         >
                             <Icon
-                                icon={
-                                    isOpen
-                                        ? "lucide:chevron-left"
-                                        : "lucide:chevron-right"
-                                }
+                                icon={isOpen ? "lucide:chevron-left" : "lucide:chevron-right"}
                                 width={20}
                             />
                         </span>

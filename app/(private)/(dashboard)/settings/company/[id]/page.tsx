@@ -170,10 +170,6 @@ export default function AddEditCompany() {
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
-  const [country, setCountry] = useState<Record<string, contactCountry>>({
-    primary_contact: { name: "Kenya", code: "+254", flag: "🇰🇪" },
-    toll_free_no: { name: "Kenya", code: "+254", flag: "🇰🇪" },
-  });
   const [initialValues, setInitialValues] = useState<CompanyFormValues>({
     company_name: "",
     company_code: "",
@@ -394,6 +390,11 @@ export default function AddEditCompany() {
                   onChange={(e) =>
                     setFieldValue("company_name", e.target.value)
                   }
+                  error={
+                    errors?.company_name && touched.company_name
+                      ? errors.company_name
+                      : false
+                  }
                 />
                 
               </div>
@@ -409,6 +410,7 @@ export default function AddEditCompany() {
                     { value: "manufacturing", label: "Manufacturing" },
                     { value: "trading", label: "Trading" },
                   ]}
+                  error={touched.company_type && errors.company_type}
                 />
                 
               </div>
@@ -420,6 +422,7 @@ export default function AddEditCompany() {
                   name="website"
                   value={values.website}
                   onChange={(e) => setFieldValue("website", e.target.value)}
+                  error={touched.website && errors.website}
                 />
                 
               </div>
@@ -431,6 +434,7 @@ export default function AddEditCompany() {
                   type="file"
                   value={values.company_logo}
                   onChange={(e) => setFieldValue("company_logo", e.target.value)}
+                  error={touched.company_logo && errors.company_logo}
                 />
                 
               </div>
