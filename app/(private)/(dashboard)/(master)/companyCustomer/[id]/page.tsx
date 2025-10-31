@@ -619,7 +619,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.sapCode && touched?.sapCode && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.sapCode}
+                    {/* {errors.sapCode} */}
                   </span>
                 )}
               </div>
@@ -634,7 +634,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.vatNo && touched?.vatNo && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.vatNo}
+                    {/* {errors.vatNo} */}
                   </span>
                 )}
               </div>
@@ -649,7 +649,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.ownerName && touched?.ownerName && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.ownerName}
+                    {/* {errors.ownerName} */}
                   </span>
                 )}
               </div>
@@ -667,7 +667,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.businessName && touched?.businessName && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.businessName}
+                    {/* {errors.businessName} */}
                   </span>
                 )}
               </div>
@@ -685,7 +685,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.customerType && touched?.customerType && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.customerType}
+                    {/* {errors.customerType} */}
                   </span>
                 )}
               </div>
@@ -702,7 +702,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.dChannelId && touched?.dChannelId && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.dChannelId}
+                    {/* {errors.dChannelId} */}
                   </span>
                 )}
               </div>
@@ -732,7 +732,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.language && touched?.language && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.language}
+                    {/* {errors.language} */}
                   </span>
                 )}
               </div>
@@ -764,7 +764,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.ownerNumber && touched?.ownerNumber && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.ownerNumber}
+                    {/* {errors.ownerNumber} */}
                   </span>
                 )}
               </div>
@@ -789,7 +789,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.contactNo2 && touched?.contactNo2 && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.contactNo2}
+                    {/* {errors.contactNo2} */}
                   </span>
                 )}
               </div>
@@ -805,7 +805,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.email && touched?.email && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.email}
+                    {/* {errors.email} */}
                   </span>
                 )}
               </div>
@@ -852,7 +852,7 @@ export default function AddCompanyCustomer() {
                   />
                   {errors?.whatsappNo && touched?.whatsappNo && (
                     <span className="text-xs text-red-500 mt-1">
-                      {errors.whatsappNo}
+                      {/* {errors.whatsappNo} */}
                     </span>
                   )}
                 </div>
@@ -890,7 +890,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.town && touched?.town && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.town}
+                    {/* {errors.town} */}
                   </span>
                 )}
               </div>
@@ -905,7 +905,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.roadStreet && touched?.roadStreet && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.roadStreet}
+                    {/* {errors.roadStreet} */}
                   </span>
                 )}
               </div>
@@ -920,7 +920,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.landmark && touched?.landmark && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.landmark}
+                    {/* {errors.landmark} */}
                   </span>
                 )}
               </div>
@@ -935,7 +935,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.district && touched?.district && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.district}
+                    {/* {errors.district} */}
                   </span>
                 )}
               </div>
@@ -951,7 +951,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.region && touched?.region && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.region}
+                    {/* {errors.region} */}
                   </span>
                 )}
               </div>
@@ -982,7 +982,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.area && touched?.area && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.area}
+                    {/* {errors.area} */}
                   </span>
                 )}
               </div>
@@ -999,7 +999,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.longitude && touched?.longitude && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.longitude}
+                    {/* {errors.longitude} */}
                   </span>
                 )}
               </div>
@@ -1015,7 +1015,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.latitude && touched?.latitude && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.latitude}
+                    {/* {errors.latitude} */}
                   </span>
                 )}
               </div>
@@ -1032,7 +1032,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.thresholdRadius && touched?.thresholdRadius && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.thresholdRadius}
+                    {/* {errors.thresholdRadius} */}
                   </span>
                 )}
               </div>
@@ -1076,7 +1076,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.bankName && touched?.bankName && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.bankName}
+                    {/* {errors.bankName} */}
                   </span>
                 )}
               </div>
@@ -1093,7 +1093,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.bankAccountNumber && touched?.bankAccountNumber && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.bankAccountNumber}
+                    {/* {errors.bankAccountNumber} */}
                   </span>
                 )}
               </div>
@@ -1108,7 +1108,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.creditDay && touched?.creditDay && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.creditDay}
+                    {/* {errors.creditDay} */}
                   </span>
                 )}
               </div>
@@ -1137,7 +1137,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.creditLimit && touched?.creditLimit && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.creditLimit}
+                    {/* {errors.creditLimit} */}
                   </span>
                 )}
               </div>
@@ -1154,7 +1154,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.totalCreditLimit && touched?.totalCreditLimit && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.totalCreditLimit}
+                    {/* {errors.totalCreditLimit} */}
                   </span>
                 )}
               </div>
@@ -1191,7 +1191,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.guaranteeName && touched?.guaranteeName && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.guaranteeName}
+                    {/* {errors.guaranteeName} */}
                   </span>
                 )}
               </div>
@@ -1208,7 +1208,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.guaranteeAmount && touched?.guaranteeAmount && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.guaranteeAmount}
+                    {/* {errors.guaranteeAmount} */}
                   </span>
                 )}
               </div>
@@ -1226,7 +1226,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.guaranteeFrom && touched?.guaranteeFrom && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.guaranteeFrom}
+                    {/* {errors.guaranteeFrom} */}
                   </span>
                 )}
               </div>
@@ -1242,7 +1242,7 @@ export default function AddCompanyCustomer() {
                 />
                 {errors?.guaranteeTo && touched?.guaranteeTo && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.guaranteeTo}
+                    {/* {errors.guaranteeTo} */}
                   </span>
                 )}
               </div>

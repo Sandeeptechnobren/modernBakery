@@ -692,7 +692,7 @@ export default function AddEditAgentCustomer() {
                                     />
                                     {touched.name && errors.name && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.name}
+                                            {/* {errors.name} */}
                                         </div>
                                     )}
                                 </div>
@@ -712,7 +712,7 @@ export default function AddEditAgentCustomer() {
                                     />
                                     {touched.owner_name && errors.owner_name && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.owner_name}
+                                            {/* {errors.owner_name} */}
                                         </div>
                                     )}
                                 </div>
@@ -738,7 +738,7 @@ export default function AddEditAgentCustomer() {
                                     {touched.customer_type &&
                                         errors.customer_type && (
                                             <div className="text-red-500 text-xs mt-1">
-                                                {errors.customer_type}
+                                                {/* {errors.customer_type} */}
                                             </div>
                                         )}
                                 </div>
@@ -764,7 +764,7 @@ export default function AddEditAgentCustomer() {
                                     />
                                     {touched.warehouse && errors.warehouse && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.warehouse}
+                                            {/* {errors.warehouse} */}
                                         </div>
                                     )}
                                 </div>
@@ -787,7 +787,7 @@ export default function AddEditAgentCustomer() {
                                     />
                                     {touched.route_id && errors.route_id && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.route_id}
+                                            {/* {errors.route_id} */}
                                         </div>
                                     )}
                                 </div>
@@ -820,7 +820,7 @@ export default function AddEditAgentCustomer() {
                                     />
                                     {touched.street && errors.street && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.street}
+                                            {/* {errors.street} */}
                                         </div>
                                     )}
                                 </div>
@@ -843,7 +843,7 @@ export default function AddEditAgentCustomer() {
                                     />
                                     {touched.landmark && errors.landmark && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.landmark}
+                                            {/* {errors.landmark} */}
                                         </div>
                                     )}
                                 </div>
@@ -864,7 +864,7 @@ export default function AddEditAgentCustomer() {
                                     />
                                     {touched.town && errors.town && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.town}
+                                            {/* {errors.town} */}
                                         </div>
                                     )}
                                 </div>
@@ -887,7 +887,7 @@ export default function AddEditAgentCustomer() {
                                     />
                                     {touched.district && errors.district && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.district}
+                                            {/* {errors.district} */}
                                         </div>
                                     )}
                                 </div>
@@ -991,7 +991,9 @@ export default function AddEditAgentCustomer() {
                                         error={errors?.contact_no && touched?.contact_no ? errors.contact_no : false}
                                     />
                                     {errors?.contact_no && touched?.contact_no && (
-                                    <span className="text-xs text-red-500 mt-1">{errors.contact_no}</span>
+                                    <span className="text-xs text-red-500 mt-1">
+                                        {/* {errors.contact_no} */}
+                                        </span>
                                     )}
                                 </div>
 
@@ -1018,7 +1020,7 @@ export default function AddEditAgentCustomer() {
                                     {touched.contact_no2 &&
                                         errors.contact_no2 && (
                                             <div className="text-red-500 text-xs mt-1">
-                                                {errors.contact_no2}
+                                                {/* {errors.contact_no2} */}
                                             </div>
                                         )}
                                 </div>
@@ -1045,7 +1047,7 @@ export default function AddEditAgentCustomer() {
                                     {touched.whatsapp_no &&
                                         errors.whatsapp_no && (
                                             <div className="text-red-500 text-xs mt-1">
-                                                {errors.whatsapp_no}
+                                                {/* {errors.whatsapp_no} */}
                                             </div>
                                         )}
                                 </div>
@@ -1130,7 +1132,7 @@ export default function AddEditAgentCustomer() {
                                 {touched.payment_type &&
                                     errors.payment_type && (
                                         <div className="text-red-500 text-xs mt-1">
-                                            {errors.payment_type}
+                                            {/* {errors.payment_type} */}
                                         </div>
                                     )}
                             </div>

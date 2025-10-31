@@ -138,7 +138,7 @@ export default function WarehouseContactDetails({
         />
         {localErrors.owner_email && touched?.owner_email && (
           <span className="text-xs text-red-500 mt-1">
-            {localErrors.owner_email}
+            {/* {localErrors.owner_email} */}
           </span>
         )}
       </div>

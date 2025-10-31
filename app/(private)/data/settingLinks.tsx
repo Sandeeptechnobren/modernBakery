@@ -92,28 +92,28 @@ export const initialLinkData: SidebarDataType[] = [
              {
                 isActive: false,
                 href: "#",
-                label: "Company",
+                label: "Manage Company",
                 leadingIcon: "fa-regular:building",
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [
                    {
                         isActive: false,
-                        href: "/settings/company",
+                        href: "/settings/manageCompany/company",
                         label: "Company",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
                     },
                     {
                         isActive: false,
-                        href: "/settings/company/serviceType",
+                        href: "/settings/manageCompany/serviceType",
                         label: "Service Types",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500"
                     },
                     {
                         isActive: false,
-                        href: "/settings/company/companyType",
+                        href: "/settings/manageCompany/companyType",
                         label: "Company Type",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
@@ -227,7 +227,7 @@ export const initialLinkData: SidebarDataType[] = [
             },
             {
                         isActive: false,
-                        href: "/settings/company/area",
+                        href: "/settings/area",
                         label: "Area",
                         leadingIcon: "tabler:building-warehouse",
                         iconColor: "text-violet-500",

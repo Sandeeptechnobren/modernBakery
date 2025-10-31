@@ -306,7 +306,7 @@ export default function AddEditCompany() {
             : "Company Created Successfully",
           "success"
         );
-        router.push("/settings/company");
+        router.push("/settings/manageCompany/company");
         try {
           await saveFinalCode({
             reserved_code: values.company_code,

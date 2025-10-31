@@ -57,7 +57,9 @@ export default function WarehouseLocationInfo({
             error={errors?.location && touched?.location ? errors.location : undefined}
           />
           {errors?.location && touched?.location && (
-            <span className="text-xs text-red-500 mt-1">{errors.location}</span>
+            <span className="text-xs text-red-500 mt-1">
+              {/* {errors.location} */}
+              </span>
           )}
         </div>
         <div>
@@ -70,7 +72,9 @@ export default function WarehouseLocationInfo({
             error={errors?.city && touched?.city ? errors.city : undefined}
           />
           {errors?.city && touched?.city && (
-            <span className="text-xs text-red-500 mt-1">{errors.city}</span>
+            <span className="text-xs text-red-500 mt-1">
+              {/* {errors.city} */}
+              </span>
           )}
         </div>
         {values.warehouse_type === 'agent_customer' && (
@@ -89,7 +93,9 @@ export default function WarehouseLocationInfo({
                 error={errors?.region_id && touched?.region_id ? errors.region_id : undefined}
               />
               {errors?.region_id && touched?.region_id && (
-                <span className="text-xs text-red-500 mt-1">{errors.region_id}</span>
+                <span className="text-xs text-red-500 mt-1">
+                  {/* {errors.region_id} */}
+                  </span>
               )}
             </div>
             <div>
@@ -106,7 +112,9 @@ export default function WarehouseLocationInfo({
                 error={errors?.area_id && touched?.area_id ? errors.area_id : undefined}
               />
               {errors?.area_id && touched?.area_id && (
-                <span className="text-xs text-red-500 mt-1">{errors.area_id}</span>
+                <span className="text-xs text-red-500 mt-1">
+                  {/* {errors.area_id} */}
+                  </span>
               )}
             </div>
           </>
@@ -159,7 +167,9 @@ export default function WarehouseLocationInfo({
             error={errors?.latitude && touched?.latitude ? errors.latitude : undefined}
           />
           {errors?.latitude && touched?.latitude && (
-            <span className="text-xs text-red-500 mt-1">{errors.latitude}</span>
+            <span className="text-xs text-red-500 mt-1">
+              {/* {errors.latitude} */}
+              </span>
           )}
         </div>
         <div>
@@ -173,7 +183,9 @@ export default function WarehouseLocationInfo({
             error={errors?.longitude && touched?.longitude ? errors.longitude : undefined}
           />
           {errors?.longitude && touched?.longitude && (
-            <span className="text-xs text-red-500 mt-1">{errors.longitude}</span>
+            <span className="text-xs text-red-500 mt-1">
+              {/* {errors.longitude} */}
+              </span>
           )}
         </div>
       </div>
