@@ -49,7 +49,7 @@ export default function Page() {
   };
 
   const title = "Company Details";
-  const backBtnUrl = "/company";
+  const backBtnUrl = "/settings/company";
 
   useEffect(() => {
     if (!id) return;

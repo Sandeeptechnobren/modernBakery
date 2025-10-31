@@ -15,7 +15,6 @@ import {
   FormikHelpers,
   FormikErrors,
   FormikTouched,
-  ErrorMessage,
 } from "formik";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -30,6 +29,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { genearateCode } from "@/app/services/allApi";
+
 
 const validationSchema = Yup.object({
   serial_number: Yup.string()
@@ -58,7 +58,6 @@ const validationSchema = Yup.object({
     .of(Yup.string().required("ID is required"))
     .min(1, "Select at least one vendor")
     .required("Vender details are required"),
-
   manufacturer: Yup.string()
     .trim()
     .required("Manufacturer is required")
@@ -95,8 +94,8 @@ const validationSchema = Yup.object({
     .typeError("Document ID must be a number"),
 });
 
+
 const stepSchemas = [
-  // Step 1: Chiller Basic Information
   Yup.object().shape({
     serial_number: validationSchema.fields.serial_number,
     asset_number: validationSchema.fields.asset_number,
@@ -105,22 +104,16 @@ const stepSchemas = [
     type_name: validationSchema.fields.type_name,
     sap_code: validationSchema.fields.sap_code,
   }),
-
-  // Step 2: Acquisition and Vendor Information
   Yup.object().shape({
     acquisition: validationSchema.fields.acquisition,
     vender_details: validationSchema.fields.vender_details,
     manufacturer: validationSchema.fields.manufacturer,
     country_id: validationSchema.fields.country_id,
   }),
-
-  // Step 3: Status and Assignment/Location
   Yup.object().shape({
     status: validationSchema.fields.status,
     is_assign: validationSchema.fields.is_assign,
   }),
-
-  // Step 4: Documentation and Records
   Yup.object().shape({
     customer_id: validationSchema.fields.customer_id,
     agreement_id: validationSchema.fields.agreement_id,
@@ -213,7 +206,7 @@ export default function AddOrEditCompanyWithStepper() {
             agreement_id: res.data.agreement_id || 1,
             document_id: res.data.document_id || 1,
           } as chiller);
-        } 
+        }
       } else if(!isEditMode && !codeGeneratedRef[0].current){
         codeGeneratedRef[0].current = true;
         const res = await genearateCode({ model_name: "chiller" });
@@ -236,14 +229,12 @@ export default function AddOrEditCompanyWithStepper() {
     actions: FormikHelpers<chiller>
   ) => {
     try {
-      // Validate only the current step's fields
       const schema = stepSchemas[currentStep - 1];
       await schema.validate(values, { abortEarly: false });
       markStepCompleted(currentStep);
       nextStep();
     } catch (err: unknown) {
       if (err instanceof Yup.ValidationError) {
-        // Only touch fields in the current step
         const fields = err.inner.map((e) => e.path);
         actions.setTouched(
           fields.reduce(
@@ -277,11 +268,10 @@ export default function AddOrEditCompanyWithStepper() {
         acquisition: values.acquisition,
         vender_details: values.vender_details
           .map((v): string | null => {
-            // Type narrowing: check if v is an object and not null, and has an 'id' property
             if (v && typeof v === "object" && "id" in v) {
-              return String((v as { id: number }).id); // safely cast and convert to number
+              return String((v as { id: number }).id);
             }
-            return null; // ignore invalid entries
+            return null;
           })
           .filter((id): id is string => id !== null),
         manufacturer: values.manufacturer,
@@ -295,8 +285,6 @@ export default function AddOrEditCompanyWithStepper() {
         document_type: "ACF",
         document_id: values.document_id,
       };
-
-      // console.log("payload", payload);
 
       let res;
       if (params?.id && params.id !== "add") {
@@ -345,6 +333,7 @@ export default function AddOrEditCompanyWithStepper() {
                     value={values.serial_number}
                     onChange={(e) => setFieldValue("serial_number", e.target.value)}
                     disabled={codeMode === 'auto'}
+                    error={touched.serial_number && errors.serial_number}
                   />
                   {!isEditMode && (
                     <>
@@ -368,7 +357,6 @@ export default function AddOrEditCompanyWithStepper() {
                   )}
                 </div>
               </div>
-
               <div>
                 <InputFields
                   required
@@ -379,11 +367,6 @@ export default function AddOrEditCompanyWithStepper() {
                     setFieldValue("asset_number", e.target.value)
                   }
                   error={touched.asset_number && errors.asset_number}
-                />
-                <ErrorMessage
-                  name="asset_number"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
               <div>
@@ -397,11 +380,6 @@ export default function AddOrEditCompanyWithStepper() {
                   }
                   error={touched.model_number && errors.model_number}
                 />
-                <ErrorMessage
-                  name="model_number"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
               </div>
               <div>
                 <InputFields
@@ -411,11 +389,6 @@ export default function AddOrEditCompanyWithStepper() {
                   value={values.description}
                   onChange={(e) => setFieldValue("description", e.target.value)}
                   error={touched.description && errors.description}
-                />
-                <ErrorMessage
-                  name="description"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
               <div>
@@ -427,11 +400,6 @@ export default function AddOrEditCompanyWithStepper() {
                   onChange={(e) => setFieldValue("type_name", e.target.value)}
                   error={touched.type_name && errors.type_name}
                 />
-                <ErrorMessage
-                  name="type_name"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
               </div>
               <div>
                 <InputFields
@@ -441,11 +409,6 @@ export default function AddOrEditCompanyWithStepper() {
                   value={values.sap_code}
                   onChange={(e) => setFieldValue("sap_code", e.target.value)}
                   error={touched.sap_code && errors.sap_code}
-                />
-                <ErrorMessage
-                  name="sap_code"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
             </div>
@@ -464,11 +427,6 @@ export default function AddOrEditCompanyWithStepper() {
                   value={values.acquisition}
                   onChange={(e) => setFieldValue("acquisition", e.target.value)}
                   error={touched.acquisition && errors.acquisition}
-                />
-                <ErrorMessage
-                  name="acquisition"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
               <div>
@@ -490,12 +448,6 @@ export default function AddOrEditCompanyWithStepper() {
                       : false
                   }
                 />
-
-                <ErrorMessage
-                  name="vender_details"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
               </div>
               <div>
                 <InputFields
@@ -507,11 +459,6 @@ export default function AddOrEditCompanyWithStepper() {
                     setFieldValue("manufacturer", e.target.value)
                   }
                   error={touched.manufacturer && errors.manufacturer}
-                />
-                <ErrorMessage
-                  name="manufacturer"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
               <div>
@@ -527,11 +474,6 @@ export default function AddOrEditCompanyWithStepper() {
                       ? errors.country_id
                       : false
                   }
-                />
-                <ErrorMessage
-                  name="country_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
             </div>
@@ -554,11 +496,6 @@ export default function AddOrEditCompanyWithStepper() {
                   ]}
                   error={touched.status && errors.status}
                 />
-                <ErrorMessage
-                  name="status"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
               </div>
               <div>
                 <InputFields
@@ -572,11 +509,6 @@ export default function AddOrEditCompanyWithStepper() {
                     { value: "0", label: "No" },
                   ]}
                   error={touched.is_assign && errors.is_assign}
-                />
-                <ErrorMessage
-                  name="is_assign"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
             </div>
@@ -595,11 +527,6 @@ export default function AddOrEditCompanyWithStepper() {
                   onChange={(e) => setFieldValue("customer_id", e.target.value)}
                   options={companyCustomersOptions}
                   error={touched.customer_id && errors.customer_id}
-                />
-                <ErrorMessage
-                  name="customer_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
               <div>
@@ -620,29 +547,18 @@ export default function AddOrEditCompanyWithStepper() {
                   ]}
                   error={touched.agreement_id && errors.agreement_id}
                 />
-                <ErrorMessage
-                  name="agreement_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
               </div>
               <div>
                 <InputFields
                   required
                   label="Document Type"
                   name="document_type"
-                  value={values.document_type} // directly "ACF"
+                  value={values.document_type}
                   onChange={(e) =>
                     setFieldValue("document_type", e.target.value)
                   }
-                  options={[{ value: "ACF", label: "ACF" }]} // match backend
+                  options={[{ value: "ACF", label: "ACF" }]}
                   error={touched.document_type && errors.document_type}
-                />
-
-                <ErrorMessage
-                  name="document_type"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
                 />
               </div>
               <div>
@@ -653,6 +569,7 @@ export default function AddOrEditCompanyWithStepper() {
                   value={values.document_id.toString()}
                   onChange={(e) => setFieldValue("document_id", e.target.value)}
                   options={[
+                    { value: "", label: "" },
                     { value: "1", label: "Document 1" },
                     { value: "2", label: "Document 2" },
                     { value: "3", label: "Document 3" },
@@ -661,16 +578,10 @@ export default function AddOrEditCompanyWithStepper() {
                   ]}
                   error={touched.document_id && errors.document_id}
                 />
-                <ErrorMessage
-                  name="document_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
               </div>
             </div>
           </ContainerCard>
         );
-
       default:
         return null;
     }

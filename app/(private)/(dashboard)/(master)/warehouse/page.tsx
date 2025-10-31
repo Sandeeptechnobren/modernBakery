@@ -14,7 +14,6 @@ const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
 ];
 
-// Move WarehouseRow type above columns so it is in scope
 type WarehouseRow = TableDataType & {
   id?:string;
   code?: string;

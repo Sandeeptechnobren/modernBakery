@@ -767,31 +767,36 @@ export default function AddCompanyWithStepper() {
     remark: "",
   };
 
+  const stepFields = [
+    ["owner_name", "contact_number", "landmark", "existing_coolers", "outlet_weekly_sale_volume", "display_location", "chiller_safty_grill"],
+    ["warehouse_id", "salesman_id", "outlet_id", "manager_sales_marketing"],
+    ["national_id", "outlet_stamp", "model", "hil", "ir_reference_no", "installation_done_by", "date_lnitial", "date_lnitial2", "contract_attached", "machine_number", "brand", "asset_number"],
+    ["lc_letter", "trading_licence", "password_photo", "outlet_address_proof", "chiller_asset_care_manager", "national_id_file", "password_photo_file", "outlet_address_proof_file", "trading_licence_file", "lc_letter_file", "outlet_stamp_file", "sign__customer_file", "chiller_manager_id", "is_merchandiser", "status", "fridge_status", "iro_id", "remark"]
+  ];
+  
   const handleNext = async (
     values: Chiller,
     actions: FormikHelpers<Chiller>
   ) => {
     try {
-      const schema = stepSchemas[currentStep - 1];
-      await schema.validate(values, { abortEarly: false });
+      await validationSchema.validate(values, { abortEarly: false });
       markStepCompleted(currentStep);
       nextStep();
     } catch (err: unknown) {
       if (err instanceof Yup.ValidationError) {
         const errors: FormikErrors<Chiller> = {};
         const touched: FormikTouched<Chiller> = {};
-
+        // Only include fields for the current step
+        const fields = stepFields[currentStep - 1];
         err.inner.forEach((error) => {
-          if (error.path) {
+          if (error.path && fields.includes(error.path)) {
             errors[error.path as keyof Chiller] = error.message;
             touched[error.path as keyof Chiller] = true;
           }
         });
-
         actions.setErrors(errors);
         actions.setTouched(touched);
       }
-
       showSnackbar("Please fix validation errors before proceeding", "error");
     }
   };

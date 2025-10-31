@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SnackbarProvider } from "./services/snackbarContext";
+import { CountryFlagPolyfill } from "./emojis";
 import "./globals.css";
-import { LoadingProvider } from "./services/loadingContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -14,9 +14,6 @@ export const metadata: Metadata = {
   description: "",
 };
 
-
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
+          <CountryFlagPolyfill />
           {/* <LoadingProvider> */}
             <SnackbarProvider>
               {children}

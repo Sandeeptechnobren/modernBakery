@@ -1,7 +1,7 @@
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { LinkDataType, miscLinks, SidebarDataType } from "../data/dashboardLinks";
+import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
 import Link from "next/link";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/services/allApi";
 import SidebarBtn1 from "@/app/components/iconButton1";
+import { on } from "events";
 
 export default function Sidebar({
     data,
@@ -28,6 +29,37 @@ export default function Sidebar({
         // keep local activeHref in sync with router pathname
         setActiveHref(pathname ?? window.location.pathname);
     }, [pathname]);
+
+    const miscLinks = [
+    {
+        type: "icon",
+        href: "",
+        label: "maximize",
+        icon: "humbleicons:maximize",
+    },
+    {
+        type: "icon",
+        href: "",
+        label: "Notifications",
+        icon: "lucide:bell",
+    },
+    {
+        type: "icon",
+        href: "/settings",
+        label: "Settings",
+        icon: "mi:settings",
+        onClick: () => {
+            setIsOpen(false);
+            router.push("/settings");
+        }
+    },
+    {
+        type: "profile",
+        href: "",
+        src: "/dummyuser.jpg",
+        label: "Profile",
+    },
+];
 
     const isParentActive = (children: LinkDataType[] | undefined): boolean => {
     if (!children) return false;
@@ -129,6 +161,7 @@ export default function Sidebar({
                                     width={20}
                                     className="w-full"
                                     alt={link.label}
+                                    onClick={link.onClick}
                                 />
                                 <div
                                     className={`hidden group-hover:flex absolute z-20 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
@@ -200,22 +233,18 @@ export default function Sidebar({
             {/* second sidebar */}
             <div
                 className={`relative ${
-                    isOpen ? "w-[200px]" : "w-[13px] hover:w-[15px]"
+                    isOpen ? "w-[250px]" : "w-[13px] hover:w-[15px]"
                 } h-screen bg-[#223458] group transition-all ease-in-out duration-300`}
             >
                 {/* second sidebar toggle button */}
                 {currentPageForSecondSidebar !== "" && (
                     <>
                         <span
-                            className="hidden group-hover:flex absolute bottom-[50px] -right-3 p-1 bg-white rounded-full w-[20px] h-[20px] items-center justify-center"
+                            className="hidden group-hover:flex absolute bottom-[100px] -right-3 p-1 bg-white rounded-full w-[20px] h-[20px] items-center justify-center"
                             onClick={() => setIsOpen(!isOpen)}
                         >
                             <Icon
-                                icon={
-                                    isOpen
-                                        ? "lucide:chevron-left"
-                                        : "lucide:chevron-right"
-                                }
+                                icon={isOpen ? "lucide:chevron-left" : "lucide:chevron-right"}
                                 width={20}
                             />
                         </span>

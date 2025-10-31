@@ -122,7 +122,7 @@ export default function Pricing() {
 
     return (
         <>
-            <div className="h-[calc(100%-60px)] pb-[22px]">
+            <div className="h-[calc(100%-60px)]">
                 <Table
                     refreshKey={refreshKey}
                     config={{
@@ -180,12 +180,15 @@ export default function Pricing() {
                                     href="/pricing/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Pricing"
+                                    label="Add"
                                     labelTw="hidden sm:block"
                                 />,
                             ],
                         },
                         localStorageKey: "pricing-table",
+                        table: {
+                            height: 500,
+                        },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
@@ -205,7 +208,7 @@ export default function Pricing() {
                             },
                             
                         ],
-                        pageSize: 10,
+                        pageSize: 50,
                     }}
                 />
             </div>

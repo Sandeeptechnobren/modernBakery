@@ -97,7 +97,13 @@ export const initialLinkData: SidebarDataType[] = [
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [
-                   
+                   {
+                        isActive: false,
+                        href: "/settings/company",
+                        label: "Company",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500",
+                    },
                     {
                         isActive: false,
                         href: "/settings/company/serviceType",
@@ -506,32 +512,5 @@ export const initialLinkData: SidebarDataType[] = [
     //             iconColor: "text-green-500",
     //         },
         ],
-    },
-];
-
-export const miscLinks = [
-    {
-        type: "icon",
-        href: "",
-        label: "maximize",
-        icon: "humbleicons:maximize",
-    },
-    {
-        type: "icon",
-        href: "",
-        label: "Notifications",
-        icon: "lucide:bell",
-    },
-    {
-        type: "icon",
-        href: "/settings",
-        label: "Settings",
-        icon: "mi:settings",
-    },
-    {
-        type: "profile",
-        href: "",
-        src: "/dummyuser.jpg",
-        label: "Profile",
     },
 ];

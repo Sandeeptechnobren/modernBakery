@@ -97,10 +97,7 @@ const columns = [
             return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.subregion_name}</div>);
         }
     } },
-    { key: "street", label: "Street"},
-    { key: "landmark", label: "Landmark"},
-    { key: "town", label: "Town"},
-    { key: "district", label: "District"},
+    { key: "address", label: "Address"},
     {
         key: 'country_name',
         label: 'Country',
@@ -226,7 +223,7 @@ const CompanyPage = () => {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/company/add"
+                                    href="/settings/company/add"
                                     isActive
                                     leadingIcon="lucide:plus"
                                     label="Add"
@@ -240,12 +237,12 @@ const CompanyPage = () => {
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
-                        rowSelection: false,
+                        rowSelection: true,
                         rowActions: [
                             {
                                 icon: "lucide:eye",
                                 onClick: (data: TableDataType) => {
-                                router.push(`/company/details/${data.id}`);
+                                router.push(`/settings/company/details/${data.id}`);
                                 },
                             },
                             {
@@ -254,7 +251,7 @@ const CompanyPage = () => {
                                 onClick: (row: object) => {
                                     const r = row as TableDataType;
                                     router.push(
-                                        `/company/${r.id}`
+                                        `/settings/company/${r.id}`
                                     );
                                 },
                             },
