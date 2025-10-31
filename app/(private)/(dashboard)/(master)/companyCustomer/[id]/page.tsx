@@ -617,11 +617,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("sapCode", e.target.value)}
                   error={touched.sapCode && errors.sapCode}
                 />
-                {/* {errors?.sapCode && touched?.sapCode && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.sapCode} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -632,11 +627,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("vatNo", e.target.value)}
                   error={touched.vatNo && errors.vatNo}
                 />
-                {/* {errors?.vatNo && touched?.vatNo && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.vatNo} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -647,11 +637,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("ownerName", e.target.value)}
                   error={touched.ownerName && errors.ownerName}
                 />
-                {/* {errors?.ownerName && touched?.ownerName && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.ownerName} */}
-                  </span>
-                )} */}
               </div>
 
               <div>
@@ -665,11 +650,6 @@ export default function AddCompanyCustomer() {
                   }
                   error={touched.businessName && errors.businessName}
                 />
-                {/* {errors?.businessName && touched?.businessName && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.businessName} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -683,11 +663,6 @@ export default function AddCompanyCustomer() {
                   options={customerTypeOptions}
                   error={touched.customerType && errors.customerType}
                 />
-                {/* {errors?.customerType && touched?.customerType && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.customerType} */}
-                  </span>
-                )} */}
               </div>
 
               <div>
@@ -700,11 +675,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("dChannelId", e.target.value)}
                   error={touched.dChannelId && errors.dChannelId}
                 />
-                {/* {errors?.dChannelId && touched?.dChannelId && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.dChannelId} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -733,8 +703,6 @@ export default function AddCompanyCustomer() {
                 {/* {errors?.language && touched?.language && (
                   <span className="text-xs text-red-500 mt-1">
                     {/* {errors.language} */}
-                  </span>
-                )} */}
               </div>
             </div>
           </ContainerCard>
@@ -762,11 +730,6 @@ export default function AddCompanyCustomer() {
                       : false
                   }
                 />
-                {/* {errors?.ownerNumber && touched?.ownerNumber && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.ownerNumber} */}
-                  </span>
-                )} */}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -787,11 +750,6 @@ export default function AddCompanyCustomer() {
                       : false
                   }
                 />
-                {/* {errors?.contactNo2 && touched?.contactNo2 && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.contactNo2} */}
-                  </span>
-                )} */}
               </div>
 
               <div>
@@ -803,11 +761,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("email", e.target.value)}
                   error={touched.email && errors.email}
                 />
-                {/* {errors?.email && touched?.email && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.email} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -822,11 +775,6 @@ export default function AddCompanyCustomer() {
                     { value: "0", label: "No" },
                   ]}
                 />
-                {/* {errors?.isWhatsapp && touched?.isWhatsapp && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {errors.isWhatsapp}
-                  </span>
-                )} */}
               </div>
 
               {values.isWhatsapp === "1" && (
@@ -850,11 +798,6 @@ export default function AddCompanyCustomer() {
                         : false
                     }
                   />
-                  {/* {errors?.whatsappNo && touched?.whatsappNo && (
-                    <span className="text-xs text-red-500 mt-1">
-                      {/* {errors.whatsappNo} */}
-                    </span>
-                  )} */}
                 </div>
               )}
 
@@ -870,8 +813,8 @@ export default function AddCompanyCustomer() {
                     { value: "1", label: "Seller" },
                   ]}
                 />
-              </div>
             </div>
+          </div>
           </ContainerCard>
         );
       case 3:
@@ -888,11 +831,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("town", e.target.value)}
                   error={touched.town && errors.town}
                 />
-                {/* {errors?.town && touched?.town && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.town} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -903,11 +841,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("roadStreet", e.target.value)}
                   error={touched.roadStreet && errors.roadStreet}
                 />
-                {/* {errors?.roadStreet && touched?.roadStreet && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.roadStreet} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -918,11 +851,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("landmark", e.target.value)}
                   error={touched.landmark && errors.landmark}
                 />
-                {/* {errors?.landmark && touched?.landmark && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.landmark} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -933,11 +861,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("district", e.target.value)}
                   error={touched.district && errors.district}
                 />
-                {/* {errors?.district && touched?.district && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.district} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -949,11 +872,6 @@ export default function AddCompanyCustomer() {
                   options={regionOptions}
                   error={touched.region && errors.region}
                 />
-                {/* {errors?.region && touched?.region && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.region} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -980,11 +898,6 @@ export default function AddCompanyCustomer() {
                   }
                   error={touched.area && errors.area}
                 />
-                {/* {errors?.area && touched?.area && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.area} */}
-                  </span>
-                )} */}
               </div>
 
               <div>
@@ -997,11 +910,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("longitude", e.target.value)}
                   error={touched.longitude && errors.longitude}
                 />
-                {/* {errors?.longitude && touched?.longitude && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.longitude} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1013,11 +921,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("latitude", e.target.value)}
                   error={touched.latitude && errors.latitude}
                 />
-                {/* {errors?.latitude && touched?.latitude && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.latitude} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1030,11 +933,6 @@ export default function AddCompanyCustomer() {
                   }
                   error={touched.thresholdRadius && errors.thresholdRadius}
                 />
-                {/* {errors?.thresholdRadius && touched?.thresholdRadius && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.thresholdRadius} */}
-                  </span>
-                )} */}
               </div>
             </div>
           </ContainerCard>
@@ -1059,11 +957,6 @@ export default function AddCompanyCustomer() {
                     { value: "2", label: "Credit" },
                   ]}
                 />
-                {/* {errors?.paymentType && touched?.paymentType && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {errors.paymentType}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1074,11 +967,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("bankName", e.target.value)}
                   error={touched.bankName && errors.bankName}
                 />
-                {/* {errors?.bankName && touched?.bankName && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.bankName} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1091,11 +979,6 @@ export default function AddCompanyCustomer() {
                   }
                   error={touched.bankAccountNumber && errors.bankAccountNumber}
                 />
-                {/* {errors?.bankAccountNumber && touched?.bankAccountNumber && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.bankAccountNumber} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1106,11 +989,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("creditDay", e.target.value)}
                   error={touched.creditDay && errors.creditDay}
                 />
-                {/* {errors?.creditDay && touched?.creditDay && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.creditDay} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1120,11 +998,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("accuracy", e.target.value)}
                   error={touched.accuracy && errors.accuracy}
                 />
-                {/* {errors?.accuracy && touched?.accuracy && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {errors.accuracy}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1135,11 +1008,6 @@ export default function AddCompanyCustomer() {
                   onChange={(e) => setFieldValue("creditLimit", e.target.value)}
                   error={touched.creditLimit && errors.creditLimit}
                 />
-                {/* {errors?.creditLimit && touched?.creditLimit && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.creditLimit} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1152,11 +1020,6 @@ export default function AddCompanyCustomer() {
                   }
                   error={touched.totalCreditLimit && errors.totalCreditLimit}
                 />
-                {/* {errors?.totalCreditLimit && touched?.totalCreditLimit && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.totalCreditLimit} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1171,12 +1034,6 @@ export default function AddCompanyCustomer() {
                     touched.creditLimitValidity && errors.creditLimitValidity
                   }
                 />
-                {/* {errors?.creditLimitValidity &&
-                  touched?.creditLimitValidity && (
-                    <span className="text-xs text-red-500 mt-1">
-                      {errors.creditLimitValidity}
-                    </span>
-                  )} */}
               </div>
               <div>
                 <InputFields
@@ -1189,11 +1046,6 @@ export default function AddCompanyCustomer() {
                   }
                   error={touched.guaranteeName && errors.guaranteeName}
                 />
-                {/* {errors?.guaranteeName && touched?.guaranteeName && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.guaranteeName} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1206,11 +1058,6 @@ export default function AddCompanyCustomer() {
                   }
                   error={touched.guaranteeAmount && errors.guaranteeAmount}
                 />
-                {/* {errors?.guaranteeAmount && touched?.guaranteeAmount && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.guaranteeAmount} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1224,11 +1071,6 @@ export default function AddCompanyCustomer() {
                   type="date"
                   error={touched.guaranteeFrom && errors.guaranteeFrom}
                 />
-                {/* {errors?.guaranteeFrom && touched?.guaranteeFrom && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.guaranteeFrom} */}
-                  </span>
-                )} */}
               </div>
               <div>
                 <InputFields
@@ -1240,11 +1082,6 @@ export default function AddCompanyCustomer() {
                   type="date"
                   error={touched.guaranteeTo && errors.guaranteeTo}
                 />
-                {/* {errors?.guaranteeTo && touched?.guaranteeTo && (
-                  <span className="text-xs text-red-500 mt-1">
-                    {/* {errors.guaranteeTo} */}
-                  </span>
-                )} */}
               </div>
 
               <div>
@@ -1266,11 +1103,6 @@ export default function AddCompanyCustomer() {
                         touched.merchendiser_ids && errors.merchendiser_ids
                       }
                     />
-                    {/* {errors?.merchendiser_ids && touched?.merchendiser_ids && (
-                      <span className="text-xs text-red-500 mt-1">
-                        {errors.merchendiser_ids}
-                      </span>
-                    )} */}
                   </>
                 )}
               </div>

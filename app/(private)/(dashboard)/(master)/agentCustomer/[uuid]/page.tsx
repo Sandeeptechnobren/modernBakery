@@ -748,7 +748,7 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Warehouse"
                                         name="warehouse"
-                                        value={values?.warehouse || warehouseOptions[0]?.value || ""}
+                                        value={values?.warehouse || ""}
                                         options={warehouseOptions}
                                         disabled={warehouseOptions.length === 0}
                                         onChange={(e) => {

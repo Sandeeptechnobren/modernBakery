@@ -25,7 +25,7 @@ export default function DashboardLayout1({
 
     return (
         <div className="flex h-screen">
-            <Sidebar data={sidebarData} onClickHandler={handleLinkClick} />
+            <Sidebar onClickHandler={handleLinkClick} />
 
             <div className="w-full p-[20px] pb-[22px] h-screen bg-gray-50 text-black overflow-auto">
                 <AllDropdownListDataProvider>

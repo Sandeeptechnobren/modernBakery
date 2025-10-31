@@ -10,14 +10,28 @@ import { usePathname } from "next/navigation";
 import { logout } from "@/app/services/allApi";
 import SidebarBtn1 from "@/app/components/iconButton1";
 import { on } from "events";
+import usePermissionManager from "@/app/components/contexts/usePermission";
 
 export default function Sidebar({
-    data,
     onClickHandler,
 }: Readonly<{
-    data: SidebarDataType[];
     onClickHandler: (href: string) => void;
 }>) {
+    const { filteredMenu } = usePermissionManager();
+      const data: SidebarDataType[] = (() => {
+        if (!filteredMenu) return [];
+        // If filteredMenu items are grouped (have 'data') treat as SidebarDataType[]
+        if (Array.isArray(filteredMenu) && filteredMenu.length > 0 && 'data' in filteredMenu[0]) {
+          return filteredMenu as unknown as SidebarDataType[];
+        }
+        // Otherwise assume it's a flat LinkDataType[] and wrap into a single group
+        return [
+          {
+            name: undefined,
+            data: filteredMenu as unknown as LinkDataType[],
+          },
+        ];
+      })();
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [currentPageForSecondSidebar, setCurrentPageForSecondSidebar] = useState("");
