@@ -130,11 +130,11 @@ export default function WarehouseContactDetails({
           name="owner_email"
           value={values.owner_email || ""}
           onChange={handleEmailChange}
-          error={
-            localErrors.owner_email && touched?.owner_email
-              ? localErrors.owner_email
-              : false
-          }
+          // error={
+          //   localErrors.owner_email && touched?.owner_email
+          //     ? localErrors.owner_email
+          //     : false
+          // }
         />
         {localErrors.owner_email && touched?.owner_email && (
           <span className="text-xs text-red-500 mt-1">
