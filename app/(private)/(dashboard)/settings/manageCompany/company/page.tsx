@@ -223,7 +223,7 @@ const CompanyPage = () => {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/settings/company/add"
+                                    href="/settings/manageCompany/company/add"
                                     isActive
                                     leadingIcon="lucide:plus"
                                     label="Add"
@@ -242,7 +242,7 @@ const CompanyPage = () => {
                             {
                                 icon: "lucide:eye",
                                 onClick: (data: TableDataType) => {
-                                router.push(`/settings/company/details/${data.id}`);
+                                router.push(`/settings/manageCompany/company/details/${data.id}`);
                                 },
                             },
                             {
@@ -251,7 +251,7 @@ const CompanyPage = () => {
                                 onClick: (row: object) => {
                                     const r = row as TableDataType;
                                     router.push(
-                                        `/settings/company/${r.id}`
+                                        `/settings/manageCompany/company/${r.id}`
                                     );
                                 },
                             },

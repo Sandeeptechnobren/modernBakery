@@ -378,11 +378,11 @@ export default function AddEditSalesman({
                   onChange={(e) => setFieldValue("name", e.target.value)}
                   error={touched.name && errors.name}
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="name"
                   component="span"
                   className="text-xs text-red-500"
-                />
+                /> */}
               </div>
               <div>
                 <InputFields
@@ -446,11 +446,11 @@ export default function AddEditSalesman({
                   error={touched.route_id && errors.route_id}
                   options={filteredRouteOptions}
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="route_id"
                   component="span"
                   className="text-xs text-red-500"
-                />
+                /> */}
               </div>
             </div>
           </ContainerCard>
@@ -477,7 +477,7 @@ export default function AddEditSalesman({
                 />
                 {errors?.contact_no && touched?.contact_no && (
                   <span className="text-xs text-red-500 mt-1">
-                    {errors.contact_no}
+                    {/* {errors.contact_no} */}
                   </span>
                 )}
               </div>
