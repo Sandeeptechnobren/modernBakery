@@ -19,6 +19,7 @@ export type listReturnType = {
     total: number;
     totalRecords?: number;
 };
+export type searchReturnType = listReturnType;
 export type FilterField = {
     key: string;
     label?: string;
