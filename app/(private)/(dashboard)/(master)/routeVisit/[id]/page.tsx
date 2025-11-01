@@ -149,6 +149,7 @@ export default function AddEditRouteVisit() {
   // ✅ Fetch dropdowns
   const loadDropdownData = async () => {
     try {
+      !isEditMode && setLoading(true);
       // Fetch companies
       setSkeleton({ ...skeleton, company: true });
       const companies = await companyList();
@@ -159,6 +160,7 @@ export default function AddEditRouteVisit() {
         })) || []
       );
       setSkeleton({ ...skeleton, company: false });
+      !isEditMode && setLoading(false);
     } catch {
       showSnackbar("Failed to load dropdown data", "error");
     }
@@ -359,6 +361,7 @@ export default function AddEditRouteVisit() {
 
   // 3️⃣ When Warehouse changes → Fetch Routes
   useEffect(() => {
+    isEditMode && setLoading(true);
     if (!form.warehouse.length) {
       setRouteOptions([]);
       setForm((prev) => ({ ...prev, route: [] }));
@@ -383,6 +386,8 @@ export default function AddEditRouteVisit() {
         console.error("Failed to fetch route list:", err);
         setRouteOptions([]);
       }
+
+      isEditMode && setLoading(false);
     };
 
     fetchRoutes();
