@@ -57,3 +57,21 @@ export const salesmanLoadDetailsById = async (uuid: string, params: object) => {
   }
 };
 
+
+type SalesmanUnloadParams = {
+  start_date?: string;
+  end_date?: string;
+  region_id?: string;
+  page?: string;
+  per_page?: string;
+  submit?: string;
+};
+
+export const salesmanUnloadList = async (params: SalesmanUnloadParams) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/unload/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

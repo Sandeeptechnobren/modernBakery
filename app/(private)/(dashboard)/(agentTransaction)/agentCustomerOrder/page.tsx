@@ -383,7 +383,7 @@ export default function CustomerInvoicePage() {
                               />,
                               <SidebarBtn
                                   key={1}
-                                  href="/agentTransaction/agentCustomerOrder/add"
+                                  href="/agentCustomerOrder/add"
                                   isActive
                                   leadingIcon="mdi:plus"
                                   label="Add"
