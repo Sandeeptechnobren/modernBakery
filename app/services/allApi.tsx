@@ -1331,7 +1331,7 @@ export const updateChannel = async (id: string, payload: object) => {
 
 export const getExpenseTypeList = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/expense_type/list`, {
+    const res = await API.get(`/api/settings/expence-types/list`, {
       params: params,
     });
 
@@ -1342,9 +1342,9 @@ export const getExpenseTypeList = async (params?: Params) => {
   }
 };
 
-export const getExpenseTypeById = async (id: string) => {
+export const getExpenseTypeByUUID = async (uuid: string) => {
   try {
-    const res = await API.get(`/api/settings/expense_type/${id}`);
+    const res = await API.get(`/api/settings/expence-types/${uuid}`);
 
     return res.data;
   } catch (error) {
@@ -1355,7 +1355,7 @@ export const getExpenseTypeById = async (id: string) => {
 
 export const addExpenseType = async (body: object) => {
   try {
-    const res = await API.post(`/api/settings/expense_type/create`, body);
+    const res = await API.post(`/api/settings/expence-types/add`, body);
 
     return res.data;
   } catch (error) {
@@ -1364,16 +1364,16 @@ export const addExpenseType = async (body: object) => {
   }
 };
 
-export const updateExpenseType = async (id: string, body: object) => {
+export const updateExpenseType = async (uuid: string, body: object) => {
   try {
-    const res = await API.put(`/api/settings/expense_type/${id}/update`, body);
+    const res = await API.put(`/api/settings/expence-types/update/${uuid}`, body);
 
     return res.data;
   } catch (error) {
     console.error("User List failed ❌", error);
     throw error;
   }
-};
+};  
 
 export const deleteExpenseType = async (id: string) => {
   try {
