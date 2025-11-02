@@ -6,17 +6,17 @@ import StatusBtn from "@/app/components/statusBtn2";
 import Table, {
     configType,
     listReturnType,
-    searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData ,downloadFile} from "@/app/services/allApi";
-import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import InputFields from "@/app/components/inputFields";
 
 export default function AgentCustomer() {
-    const { customerSubCategoryOptions,channelOptions,warehouseOptions,routeOptions } = useAllDropdownListData();
+    const { customerSubCategoryOptions, itemCategoryOptions, channelOptions,warehouseOptions,routeOptions } = useAllDropdownListData();
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [channelId, setChannelId] = useState<string>("");
@@ -185,20 +185,20 @@ export default function AgentCustomer() {
         ): Promise<listReturnType> => {
             try {
                 setLoading(true);
-                const params: any = {
+                const params: Record<string, string> = {
                     page: page.toString(),
                 };
                 if (selectedSubCategoryId) {
-                    params.subcategory_id = selectedSubCategoryId;
+                    params.subcategory_id = String(selectedSubCategoryId);
                 }
                 if (warehouseId) {
-                    params.warehouse = warehouseId;
+                    params.warehouse = String(warehouseId);
                 }
                 if (channelId) {
-                    params.outlet_channel_id = channelId;
+                    params.outlet_channel_id = String(channelId);
                 }
                 if (routeId) {
-                    params.route_id = routeId;
+                    params.route_id = String(routeId);
                 }
                 const listRes = await agentCustomerList(params);
                 setLoading(false);
@@ -260,7 +260,7 @@ export default function AgentCustomer() {
             searchQuery: string,
             pageSize: number,
             columnName?: string
-        ): Promise<searchReturnType> => {
+        ): Promise<listReturnType> => {
             let result;
             setLoading(true);
             if(columnName) {
@@ -269,10 +269,6 @@ export default function AgentCustomer() {
                     [columnName]: searchQuery
                 });
             }
-            // result = await agentCustomer({
-            //     query: searchQuery,
-            //     per_page: pageSize.toString(),
-            // });
             setLoading(false);
             if (result.error) throw new Error(result.data.message);
             else {
@@ -287,11 +283,41 @@ export default function AgentCustomer() {
         []
     );
 
-    useEffect(() => {
-        setLoading(true);
-    }, []);
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await agentCustomerList(params);
+            } finally {
+                setLoading(false);
+            }
 
-    // Refresh table when subcategory filter changes
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
+
     useEffect(() => {
         setRefreshKey((k) => k + 1);
     }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions, selectedSubCategoryId, warehouseId, channelId, routeId]);
@@ -305,6 +331,7 @@ export default function AgentCustomer() {
                         api: {
                             list: fetchAgentCustomers,
                             search: search,
+                            filterBy: filterBy
                         },
                         header: {
                             title: "Agent Customer",
@@ -372,9 +399,51 @@ export default function AgentCustomer() {
                                     },
                                 },
                             ],
-
                             searchBar: false,
                             columnFilter: true,
+                            filterByFields: [
+                                {
+                                    key: "date_change",
+                                    label: "Date Range",
+                                    type: "dateChange"
+                                },
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+                                {
+                                    key: "outlet_channel_id",
+                                    label: "Outlet Channel",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(channelOptions) ? channelOptions : [],
+                                },
+                                {
+                                    key: "category_id",
+                                    label: "Category",
+                                    type: "select",
+                                    options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                },
+                                {
+                                    key: "subcategory_id",
+                                    label: "Subcategory",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
+                                },
+                            ],
                             actions: [
                                 <SidebarBtn
                                     key={0}
@@ -412,16 +481,6 @@ export default function AgentCustomer() {
                     }}
                 />
             </div>
-
-            {/* {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Agent Customer"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )} */}
         </>
     );
 }

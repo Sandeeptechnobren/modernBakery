@@ -16,7 +16,7 @@ export default function BorderIconButton({
   iconWidth?: number;
   trailingIcon?: string;
   trailingIconSize?: number;
-  label?: string;
+  label?: string | React.ReactNode;
   labelTw?: string;
   onClick?: () => void;
   disabled?: boolean;

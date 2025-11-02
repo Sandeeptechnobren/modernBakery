@@ -1,4 +1,3 @@
-
 "use client";
 
 import SearchBar from "./searchBar";
@@ -7,6 +6,8 @@ import CustomDropdown from "./customDropdown";
 import BorderIconButton from "./borderIconButton";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import FilterDropdown from "./filterDropdown";
+import InputFields from "./inputFields";
+import SidebarBtn from "./dashboardSidebarBtn";
 import CustomCheckbox from "./customCheckbox";
 import DismissibleDropdown from "./dismissibleDropdown";
 import { naturalSort } from "../(private)/utils/naturalSort";
@@ -16,12 +17,17 @@ export type listReturnType = {
     currentPage: number;
     pageSize: number;
     total: number;
+    totalRecords?: number;
 };
-export type searchReturnType = {
-    data: TableDataType[];
-    currentPage: number;
-    pageSize: number;
-    total: number;
+export type searchReturnType = listReturnType;
+export type FilterField = {
+    key: string;
+    label?: string;
+    type?: "text" | "select" | "date" | "dateChange" | "number";
+    options?: Array<{ value: string; label: string }>;
+    placeholder?: string;
+    isSingle?: boolean;
+    multiSelectChips?: boolean;
 };
 
 export type configType = {
@@ -30,9 +36,13 @@ export type configType = {
             search: string,
             pageSize: number,
             columnName?: string
-        ) => Promise<searchReturnType> | searchReturnType;
+        ) => Promise<listReturnType> | listReturnType;
         list: (
             pageNo: number,
+            pageSize: number
+        ) => Promise<listReturnType> | listReturnType;
+        filterBy?: (
+            payload: Record<string, string | number | null>,
             pageSize: number
         ) => Promise<listReturnType> | listReturnType;
     };
@@ -41,12 +51,13 @@ export type configType = {
         wholeTableActions?: React.ReactNode[];
         tableActions?: React.ReactNode[];
         searchBar?:
-            | boolean
-            | {
-                  placeholder: string;
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-              }; // yet to implement
+        | boolean
+        | {
+            placeholder: string;
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        }; // yet to implement
         columnFilter?: boolean;
+        filterByFields?: FilterField[];
         threeDot?: {
             label: string;
             labelTw?: string;
@@ -103,7 +114,7 @@ export type configType = {
                     search: string,
                     pageSize: number,
                     columnName?: string
-                ) => Promise<searchReturnType> | searchReturnType
+                ) => Promise<listReturnType> | listReturnType
             ) => React.ReactNode;
         };
     }[];
@@ -116,7 +127,7 @@ type columnFilterConfigType = {
 
 const ColumnFilterConfig = createContext<columnFilterConfigType>({
     selectedColumns: [],
-    setSelectedColumns: () => {},
+    setSelectedColumns: () => { },
 });
 
 type SelectedRowType = {
@@ -126,7 +137,7 @@ type SelectedRowType = {
 
 const SelectedRow = createContext<SelectedRowType>({
     selectedRow: [],
-    setSelectedRow: () => {},
+    setSelectedRow: () => { },
 });
 
 type configContextType = {
@@ -136,7 +147,7 @@ type configContextType = {
 
 const Config = createContext<configContextType>({
     config: {} as configType,
-    setConfig: () => {},
+    setConfig: () => { },
 });
 
 export type TableDataType = {
@@ -252,7 +263,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
             const key = config?.localStorageKey;
             const saved = key ? localStorage.getItem(key) : null;
             if (!saved) {
-                const allByDefault = config.columns.map((data, index) => { return data.showByDefault ? index : -1});
+                const allByDefault = config.columns.map((data, index) => { return data.showByDefault ? index : -1 });
                 const filtered = allByDefault.filter((n) => n !== -1);
                 if (filtered.length > 0) {
                     setSelectedColumns(filtered);
@@ -276,7 +287,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                             {config.header.title}
                         </h1>
                     )}
-                    
+
                     <div className="flex gap-[8px]">
                         {config.header?.tableActions && config.header?.tableActions?.map((action) => action)}
 
@@ -285,44 +296,44 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                                 (action) => action
                             )}
 
-                        {config.header?.threeDot && 
+                        {config.header?.threeDot &&
                             <div className="flex gap-[12px] relative">
                                 <DismissibleDropdown
-                                isOpen={showDropdown}
-                                setIsOpen={setShowDropdown}
-                                button={
-                                    <BorderIconButton icon="ic:sharp-more-vert" />
-                                }
-                                dropdown={
-                                    <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                                        <CustomDropdown>
-                                            {config.header?.threeDot?.map((option, idx) => {
-                                                const shouldShow = option.showOnSelect ? selectedRow.length > 0 : option.showWhen ? option.showWhen(displayedData, selectedRow) : true;
-                                                if (!shouldShow) return null;
-                                                return (
-                                                    <div
-                                                        key={idx}
-                                                        className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA] cursor-pointer"
-                                                        onClick={() => option.onClick && option.onClick(displayedData, selectedRow)}
-                                                    >
-                                                        {option?.icon && (
-                                                            <Icon
-                                                                icon={option.icon}
-                                                                width={option.iconWidth || 20}
-                                                                className="text-[#717680]"
-                                                            />
-                                                        )}
-                                                        <span className={`text-[#181D27] font-[500] text-[16px] ${option?.labelTw}`}>
-                                                            {option.label}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </CustomDropdown>
-                                    </div>
-                                }   
+                                    isOpen={showDropdown}
+                                    setIsOpen={setShowDropdown}
+                                    button={
+                                        <BorderIconButton icon="ic:sharp-more-vert" />
+                                    }
+                                    dropdown={
+                                        <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                                            <CustomDropdown>
+                                                {config.header?.threeDot?.map((option, idx) => {
+                                                    const shouldShow = option.showOnSelect ? selectedRow.length > 0 : option.showWhen ? option.showWhen(displayedData, selectedRow) : true;
+                                                    if (!shouldShow) return null;
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA] cursor-pointer"
+                                                            onClick={() => option.onClick && option.onClick(displayedData, selectedRow)}
+                                                        >
+                                                            {option?.icon && (
+                                                                <Icon
+                                                                    icon={option.icon}
+                                                                    width={option.iconWidth || 20}
+                                                                    className="text-[#717680]"
+                                                                />
+                                                            )}
+                                                            <span className={`text-[#181D27] font-[500] text-[16px] ${option?.labelTw}`}>
+                                                                {option.label}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </CustomDropdown>
+                                        </div>
+                                    }
                                 />
-                                </div>
+                            </div>
                         }
                     </div>
                 </div>
@@ -363,7 +374,7 @@ function TableHeader() {
             {config.header && (
                 <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-[8px]">
                     <>
-                        <div className="w-[320px] invisible sm:visible">
+                        <div className="flex items-center gap-2 w-[320px] invisible sm:visible">
                             {config.header?.searchBar && (
                                 <SearchBar
                                     value={searchBarValue}
@@ -372,6 +383,13 @@ function TableHeader() {
                                     ) => setSearchBarValue(e.target.value)}
                                     onEnterPress={handleSearch}
                                 />
+                            )}
+
+                            {/* header filter panel button (shows configurable fields) */}
+                            {config.header?.filterByFields && config.header.filterByFields.length > 0 && (
+                                <div className="ml-2">
+                                    <FilterBy />
+                                </div>
                             )}
                         </div>
 
@@ -479,7 +497,7 @@ function ColumnFilter() {
                 }
                 dropdown={
                     <div className="min-w-[200px] max-w-[350px] w-fit min-h-[200px] max-h-1/2 h-fit fixed right-[50px] translate-y-[10px] z-50 overflow-auto scrollbar-none">
-                        
+
                         <CustomDropdown>
                             <div className="flex p-[10px]">
                                 <CustomCheckbox
@@ -516,6 +534,7 @@ function ColumnFilter() {
         </div>
     );
 }
+
 
 function TableBody() {
     const { config } = useContext(Config);
@@ -591,11 +610,11 @@ function TableBody() {
                 style={
                     displayedData.length > 0
                         ? {
-                              height: config.table?.height,
-                              maxHeight: config.table?.maxHeight,
-                              width: config.table?.width,
-                              maxWidth: config.table?.maxWidth,
-                          }
+                            height: config.table?.height,
+                            maxHeight: config.table?.maxHeight,
+                            width: config.table?.width,
+                            maxWidth: config.table?.maxWidth,
+                        }
                         : undefined
                 }
             >
@@ -623,17 +642,14 @@ function TableBody() {
                                     return (
                                         selectedColumns.includes(index) && (
                                             <th
-                                                className={`w-[${
-                                                    col.width
-                                                }px] ${col.sticky ? "z-10 md:sticky" : ""} ${
-                                                    col.sticky === "left"
+                                                className={`w-[${col.width
+                                                    }px] ${col.sticky ? "z-10 md:sticky" : ""} ${col.sticky === "left"
                                                         ? "left-0"
                                                         : ""
-                                                } ${
-                                                    col.sticky === "right"
+                                                    } ${col.sticky === "right"
                                                         ? "right-0"
                                                         : ""
-                                                } px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap`}
+                                                    } px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap`}
                                                 key={index}
                                             >
                                                 <div className="flex items-center gap-[4px] capitalize">
@@ -655,7 +671,7 @@ function TableBody() {
                                                             icon={
                                                                 tableOrder.order ===
                                                                     "asc" &&
-                                                                tableOrder.column ===
+                                                                    tableOrder.column ===
                                                                     col.key
                                                                     ? "mdi-light:arrow-up"
                                                                     : "mdi-light:arrow-down"
@@ -673,7 +689,7 @@ function TableBody() {
                                         )
                                     );
                                 })}
-                            
+
                             {/* actions */}
                             {rowActions && selectedColumns.length > 0 && (
                                 <th
@@ -684,7 +700,7 @@ function TableBody() {
                                 bg-[#FAFAFA] whitespace-nowrap
                                 before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]
                                 "
-                                    //  className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]"
+                                //  className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]"
                                 >
                                     <div className="flex items-center gap-[4px] whitespace-nowrap">
                                         Actions
@@ -733,15 +749,13 @@ function TableBody() {
                                                     <td
                                                         key={index}
                                                         width={col.width}
-                                                        className={`px-[24px] py-[12px] bg-white ${col.sticky ? "z-10 md:sticky" : ""} ${
-                                                            col.sticky === "left"
+                                                        className={`px-[24px] py-[12px] bg-white ${col.sticky ? "z-10 md:sticky" : ""} ${col.sticky === "left"
                                                                 ? "left-0"
                                                                 : ""
-                                                        } ${
-                                                            col.sticky === "right"
+                                                            } ${col.sticky === "right"
                                                                 ? "right-0"
                                                                 : ""
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {col.render ? (
                                                             col.render(row)
@@ -832,6 +846,7 @@ function FilterTableHeader({
         onSearch?: (search: string) => Promise<Array<{ value: string; label: string }>> | Array<{ value: string; label: string }>;
         onSelect?: (selected: string | string[]) => void;
         isSingle?: boolean;
+        selectedValue?: string;
     };
     children?: React.ReactNode;
 }) {
@@ -879,7 +894,7 @@ function FilterTableHeader({
         const isSingle = filterConfig?.isSingle !== undefined ? filterConfig.isSingle : true;
         if (isSingle) {
             // If already selected, deselect (clear filter)
-            const selectedValue = (filterConfig as any)?.selectedValue;
+            const selectedValue = filterConfig?.selectedValue;
             if (filterConfig?.onSelect) {
                 if (selectedValue === value) {
                     filterConfig.onSelect(""); // Deselect
@@ -921,6 +936,7 @@ function FilterTableHeader({
             dropdown={
                 <FilterDropdown
                     anchorRef={parentRef as React.RefObject<HTMLDivElement>}
+                    align="center"
                     dimensions={dimensions}
                     searchBarValue={searchBarValue}
                     setSearchBarValue={setSearchBarValue}
@@ -929,23 +945,21 @@ function FilterTableHeader({
                     {children ? (
                         <div>{children}</div>
                     ) : filteredOptions.length > 0 ? (
-                        (filterConfig &&
-                            typeof (filterConfig as any).selectedValue === 'string' &&
-                            (filterConfig as any).onSelect) ? (
+                        (filterConfig && typeof filterConfig.selectedValue === 'string' && filterConfig.onSelect) ? (
                             <FilterOptionList
                                 options={filteredOptions}
-                                selectedValue={(filterConfig as any).selectedValue}
-                                onSelect={(filterConfig as any).onSelect}
+                                selectedValue={filterConfig.selectedValue as string}
+                                onSelect={filterConfig.onSelect as (v: string) => void}
                             />
                         ) : filterConfig?.isSingle !== false ? (
                             filteredOptions.map((option, idx) => {
-                                const selectedValue = (filterConfig as any)?.selectedValue;
+                                const selectedValue = filterConfig?.selectedValue;
                                 const isSelected = selectedValue === option.value;
                                 return (
                                     <div
-                                    key={option.value}
-                                    className={`font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer ${isSelected ? 'bg-[#F0F0F0] font-semibold' : ''}`}
-                                    onClick={() => handleSelect(option.value)}
+                                        key={option.value}
+                                        className={`font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer ${isSelected ? 'bg-[#F0F0F0] font-semibold' : ''}`}
+                                        onClick={() => handleSelect(option.value)}
                                     >
                                         <span className="text-[#535862]">{option.label}</span>
                                     </div>
@@ -1117,11 +1131,10 @@ function PaginationBtn({
 }) {
     return (
         <div
-            className={`w-[40px] h-[40px] rounded-[8px] p-[12px] flex items-center justify-center cursor-pointer ${
-                isActive
+            className={`w-[40px] h-[40px] rounded-[8px] p-[12px] flex items-center justify-center cursor-pointer ${isActive
                     ? "bg-[#FFF0F2] text-[#EA0A2A]"
                     : "bg-tranparent text-[#717680]"
-            }`}
+                }`}
             onClick={onClick}
         >
             {label}
@@ -1152,5 +1165,230 @@ export function FilterOptionList({
                 </div>
             ))}
         </>
+    );
+}
+
+function FilterBy() {
+    const { config } = useContext(Config);
+    const { tableDetails, setTableDetails } = useContext(TableDetails);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const buttonRef = useRef<HTMLDivElement | null>(null);
+    const [searchBarValue, setSearchBarValue] = useState("");
+    // filters can be single string values or arrays for multi-select fields
+    const [filters, setFilters] = useState<Record<string, string | string[]>>({});
+    const [appliedFilters, setAppliedFilters] = useState(false);
+
+    // initialize filters when fields change
+    useEffect(() => {
+        const initial: Record<string, string | string[]> = {};
+        (config.header?.filterByFields || []).forEach((f: FilterField) => {
+            initial[f.key] = f.isSingle === false ? [] : "";
+        });
+        setFilters(initial);
+    }, [config.header?.filterByFields]);
+
+    const activeFilterCount = Object.keys(filters || {}).reduce((acc, k) => {
+        const v = filters[k];
+        if (Array.isArray(v)) return acc + (v.length > 0 ? 1 : 0);
+        return acc + (String(v ?? '').trim().length > 0 ? 1 : 0);
+    }, 0);
+
+    const applyFilter = async () => {
+        // call API if provided
+        if (config.api?.filterBy) {
+            try {
+                // convert array filter values into comma-separated strings for API
+                const payloadForApi: Record<string, string | number | null> = {};
+                Object.keys(filters || {}).forEach((k) => {
+                    const v = filters[k];
+                    if (Array.isArray(v)) {
+                        payloadForApi[k] = v.length > 0 ? v.join(',') : "";
+                    } else {
+                        payloadForApi[k] = v as string;
+                    }
+                });
+
+                const res = await config.api.filterBy(payloadForApi, config.pageSize || defaultPageSize);
+                const resolved = res instanceof Promise ? await res : res;
+                // prefer totalRecords when provided by API
+                const totalRecords = (resolved as any).totalRecords ?? (resolved as any).total ?? 0;
+                const pageSize = resolved.pageSize || config.pageSize || defaultPageSize;
+                const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(totalRecords / pageSize)) : (resolved.total ?? 1);
+                        setTableDetails({
+                            data: resolved.data || [],
+                            total: totalPages,
+                            totalRecords: totalRecords,
+                            currentPage: resolved.currentPage ?? 0,
+                            pageSize: pageSize,
+                        });
+                        setAppliedFilters(true);
+            } catch (err) {
+                console.error("Filter API error", err);
+            }
+        } else {
+            // fallback to client-side filtering
+            const all = tableDetails.data || [];
+            const filtered = all.filter((row) => {
+                return Object.keys(filters).every((k) => {
+                    const val = filters[k];
+                    if (val === "" || val == null) return true;
+                    const cell = String((row as TableDataType)[k] ?? "").toLowerCase();
+                    if (Array.isArray(val)) {
+                        // match any of the selected values
+                        return val.some(v => cell.includes(String(v).toLowerCase()));
+                    }
+                    return cell.includes(String(val).toLowerCase());
+                });
+            });
+            setTableDetails({
+                data: filtered,
+                total: Math.max(1, Math.ceil(filtered.length / (config.pageSize || defaultPageSize))),
+                currentPage: 0,
+                pageSize: config.pageSize || defaultPageSize,
+            });
+            setAppliedFilters(true);
+        }
+
+        setShowDropdown(false);
+    };
+
+    const clearAll = async () => {
+        // build cleared state matching initialization (arrays for multi-selects)
+        const cleared: Record<string, string | string[]> = {};
+        (config.header?.filterByFields || []).forEach((f: FilterField) => {
+            cleared[f.key] = f.isSingle === false ? [] : "";
+        });
+        setFilters(cleared);
+    setAppliedFilters(false);
+
+        // If API exists, call it with cleared payload to refresh table
+        if (config.api?.filterBy) {
+            try {
+                const payloadForApi: Record<string, string | number | null> = {};
+                Object.keys(cleared).forEach((k) => {
+                    const v = cleared[k];
+                    if (Array.isArray(v)) {
+                        payloadForApi[k] = v.length > 0 ? v.join(',') : "";
+                    } else {
+                        payloadForApi[k] = v as string;
+                    }
+                });
+                const res = await config.api.filterBy(payloadForApi, config.pageSize || defaultPageSize);
+                const resolved = res instanceof Promise ? await res : res;
+                setTableDetails({
+                    data: resolved.data || [],
+                    total: resolved.total || 1,
+                    currentPage: resolved.currentPage ?? 0,
+                    pageSize: resolved.pageSize || config.pageSize || defaultPageSize,
+                });
+            } catch (err) {
+                console.error("Filter API error", err);
+            }
+        }
+    };
+
+    return (
+        <div className="relative">
+            <DismissibleDropdown
+                isOpen={showDropdown}
+                setIsOpen={setShowDropdown}
+                button={
+                    <div ref={buttonRef}>
+                        <div className="inline-flex items-center gap-2">
+                            <BorderIconButton icon="lucide:filter" label={
+                                <div className="flex gap-[5px] items-center">
+                                    <span>Filter</span>
+                                    <span>
+                                        {activeFilterCount > 0 && (
+                                        <span className="inline-flex text-sm items-center justify-center px-2 py-1 text-xs font-semibold text-white bg-gray-800 rounded-full">{activeFilterCount}</span>
+                                    )}
+                                    </span>
+                                    
+                                </div>
+                            } className="h-[34px]" />
+
+                        </div>
+                    </div>
+                }
+                dropdown={
+                    <FilterDropdown
+                        anchorRef={buttonRef}
+                        showInternalSearch={false}
+                        searchBarValue={searchBarValue}
+                        setSearchBarValue={setSearchBarValue}
+                        onEnterPress={applyFilter}
+                        dimensions={{ width: 700 }}
+                    >
+                        <div className="p-4 grid grid-cols-2 gap-4">
+                            {(config.header?.filterByFields || []).map((f: FilterField) => (
+                                <div key={f.key} className="flex flex-col gap-2">
+                                    {/* Use the project's InputFields component for consistent UI */}
+                                    <InputFields
+                                        label={f.label || f.key}
+                                        name={f.key}
+                                        // pass array for multi-select fields, string for single
+                                        value={filters[f.key] ?? (f.isSingle === false ? [] : "")}
+                                        onChange={(e) => {
+                                            const ev = e as any;
+                                            const raw = ev && ev.target ? ev.target.value : e;
+                                            if (f.isSingle === false) {
+                                                // ensure we store an array for multi-select
+                                                if (Array.isArray(raw)) {
+                                                    setFilters(prev => ({ ...prev, [f.key]: raw }));
+                                                } else if (typeof raw === 'string' && raw.length === 0) {
+                                                    setFilters(prev => ({ ...prev, [f.key]: [] }));
+                                                } else {
+                                                    // try to coerce comma-separated string into array
+                                                    const arr = typeof raw === 'string' ? raw.split(',').filter(Boolean) : [];
+                                                    setFilters(prev => ({ ...prev, [f.key]: arr }));
+                                                }
+                                            } else {
+                                                setFilters(prev => ({ ...prev, [f.key]: String(raw) }));
+                                            }
+                                        }}
+                                        placeholder={f.placeholder}
+                                        // map type (support dateChange)
+                                        type={f.type === 'dateChange' ? 'dateChange' : f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : f.type === 'select' ? 'select' : 'text'}
+                                        options={f.options}
+                                        width="w-full"
+                                        isSingle={typeof f.isSingle === 'boolean' ? f.isSingle : true}
+                                        multiSelectChips={!!f.multiSelectChips}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-4 flex items-center justify-end gap-4">
+                            <SidebarBtn
+                                isActive={false}
+                                onClick={() => clearAll()}
+                                label="Clear All"
+                                buttonTw="px-3 py-2 h-9"
+                                className="text-sm"
+                            />
+                            <SidebarBtn
+                                isActive={true}
+                                onClick={() => applyFilter()}
+                                label="Apply Filter"
+                                buttonTw="px-4 py-2 h-9"
+                                className="text-sm"
+                            />
+                        </div>
+                    </FilterDropdown>
+                }
+            />
+            {/* results summary below the filter button (show only when filters active) */}
+            {appliedFilters && activeFilterCount > 0 && (
+                <div className="mt-2 text-sm text-gray-600">
+                    <span className="font-medium">{(tableDetails?.totalRecords ?? tableDetails?.data?.length ?? 0)} Results Found</span>
+                    <button
+                        type="button"
+                        onClick={async () => { await clearAll(); setShowDropdown(false); }}
+                        className="ml-2 underline text-gray-600"
+                    >
+                        Clear Filter
+                    </button>
+                </div>
+            )}
+        </div>
     );
 }
