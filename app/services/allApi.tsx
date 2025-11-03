@@ -1786,6 +1786,17 @@ export const routeGlobalSearch = async (params?: Params) => {
 
 export const agentCustomerList = async (params?: Params) => {
   try {
+    const res = await API.get("/api/master/agent_customers/list", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const agentCustomerFilteredList = async (params?: Params) => {
+  try {
     const res = await API.get("/api/master/agent_customers/agent-list", {
       params: params,
     });
@@ -2956,6 +2967,16 @@ export const registerAuthUser = async (body: object) => {
 export const updateAuthUser = async (uuid: string, body: object) => {
   try {
     const res = await API.put(`/api/master/auth/updateUser/${uuid}`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addPayment = async (body?: any) => {
+  try {
+    const res = await API.post("api/agent_transaction/advancepayments/create", body);
+    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

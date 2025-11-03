@@ -20,6 +20,7 @@ import {
   subRegionList,
   agentCustomerList,
   companyList,
+  agentCustomerFilteredList,
 } from "@/app/services/allApi";
 import Table from "./toggleTable";
 import StepperForm, {
@@ -326,10 +327,14 @@ export default function AddEditRouteVisit() {
     const fetchCustomers = async () => {
       try {
         let res: ApiResponse<Customer[]> | null = null;
-        res = await agentCustomerList({ type: form.salesman_type });
+        if (isEditMode) {
+          res = await agentCustomerList({ type: form.salesman_type });
+        } else {
+          res = await agentCustomerFilteredList({ type: form.salesman_type });
+        }
 
         console.log("Fetched customers:", res);
-        setCustomers(res && res.data || []);
+        setCustomers((res && res.data) || []);
       } catch (error) {
         console.error("Error fetching customers:", error);
         setCustomers([]);

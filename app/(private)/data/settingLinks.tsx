@@ -79,6 +79,13 @@ export const initialLinkData: SidebarDataType[] = [
       },
       {
         isActive: false,
+        href: "/settings/payment",
+        label: "Payment",
+        leadingIcon: "mdi:payment",
+        iconColor: "text-yellow-400",
+      },
+      {
+        isActive: false,
 
         href: "/settings/theme",
         label: "Theme",

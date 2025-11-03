@@ -79,17 +79,32 @@ export default function AddBankPage() {
           res = await createBank(payload);
         }
 
-        if (res?.status === "success") {
-          showSnackbar(
-            res.message ||
-              (isEditMode
-                ? "Bank Updated Successfully"
-                : "Bank Created Successfully"),
-            "success"
-          );
-          router.push("/settings/banks");
+        console.log("API Response:", res);
+
+        // ✅ FIXED: Handle both response structures
+        const isSuccess =
+          res?.success === true || // For create API
+          res?.status === "success" || // For update API
+          res?.code === 200; // Additional success check
+
+        if (isSuccess) {
+          const successMessage =
+            res?.message ||
+            (isEditMode
+              ? "Bank Updated Successfully"
+              : "Bank Created Successfully");
+
+          console.log("Showing success message:", successMessage);
+          showSnackbar(successMessage, "success");
+
+          // ✅ FIXED: Redirect after successful submission
+          setTimeout(() => {
+            router.push("/settings/bank");
+          }, 1500); // 1.5 second delay to see the success message
         } else {
-          showSnackbar(res?.message || "Failed to submit form", "error");
+          const errorMessage = res?.message || "Failed to submit form";
+          console.log("Showing error message:", errorMessage);
+          showSnackbar(errorMessage, "error");
         }
       } catch (error) {
         console.error("Submission error:", error);
@@ -154,7 +169,7 @@ export default function AddBankPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
         <div className="flex items-center gap-[16px]">
-          <Link href="/settings/banks">
+          <Link href="/settings/bank">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
@@ -175,7 +190,6 @@ export default function AddBankPage() {
               <InputFields
                 label="OSA Code"
                 name="osa_code"
-                disabled={true}
                 value={formik.values.osa_code}
                 onChange={formik.handleChange}
                 error={formik.touched.osa_code && formik.errors.osa_code}
@@ -253,7 +267,7 @@ export default function AddBankPage() {
             <button
               className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
               type="button"
-              onClick={() => router.push("/settings/banks")}
+              onClick={() => router.push("/settings/bank")}
             >
               Cancel
             </button>
