@@ -93,8 +93,10 @@ interface DropdownDataContextType {
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
+  fetchSalesmanOptions: (warehouse_id: string | number) => Promise<void>;
   fetchAreaOptions: (region_id: string | number) => Promise<void>;
   fetchRouteOptions: (warehouse_id: string | number) => Promise<void>;
+  fetchRoutebySalesmanOptions: (salesman_id: string | number) => Promise<void>;
   fetchWarehouseOptions: (area_id: string | number) => Promise<void>;
   fetchRegionOptions: (company_id: string | number) => Promise<void>;
   fetchCustomerCategoryOptions: (outlet_channel_id: string | number) => Promise<void>;
@@ -321,6 +323,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [regionListData, setRegionListData] = useState<RegionItem[]>([]);
   const [surveyListData, setSurveyListData] = useState<SurveyItem[]>([]);
   const [routeListData, setRouteListData] = useState<RouteItem[]>([]);
+  const [routeListBySalesman, setRouteListBySalesman] = useState<RouteItem[]>([]);
   const [warehouseListData, setWarehouseListData] = useState<WarehouseItem[]>([]);
   const [routeTypeData, setRouteTypeData] = useState<RouteTypeItem[]>([]);
   const [areaListData, setAreaListData] = useState<AreaItem[]>([]);
@@ -378,6 +381,10 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }));
 
   const routeOptions = (Array.isArray(routeListData) ? routeListData : []).map((c: RouteItem) => ({
+    value: String(c.id ?? ''),
+    label: c.route_code && c.route_name ? `${c.route_code} - ${c.route_name}` : (c.route_name ?? '')
+  }));
+  const routeOptionsBySalesman = (Array.isArray(routeListBySalesman) ? routeListBySalesman : []).map((c: RouteItem) => ({
     value: String(c.id ?? ''),
     label: c.route_code && c.route_name ? `${c.route_code} - ${c.route_name}` : (c.route_name ?? '')
   }));
@@ -631,7 +638,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call routeList with warehouse_id
-      const res = await routeList({ warehouse_id: String(warehouse_id) });
+      const res = await routeList({ warehouse_id: String(warehouse_id)});
       const normalize = (r: unknown): RouteItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -643,6 +650,26 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setRouteListData(normalize(res));
     } catch (error) {
       setRouteListData([]);
+    } finally {
+      setLoading(false);
+    }
+  },[]);
+  const fetchRoutebySalesmanOptions =  useCallback(async (salesman_id: string | number) => {
+    setLoading(false);
+    try {
+      // call routeList with warehouse_id
+      const res = await routeList({ salesman_id: String(salesman_id)});
+      const normalize = (r: unknown): RouteItem[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as RouteItem[];
+        }
+        if (Array.isArray(r)) return r as RouteItem[];
+        return [];
+      };
+      setRouteListBySalesman(normalize(res));
+    } catch (error) {
+      setRouteListBySalesman([]);
     } finally {
       setLoading(false);
     }
@@ -712,6 +739,27 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setLoading(false);
     }
   };
+    const fetchSalesmanOptions = useCallback(async (warehouse_id: string | number) => {
+    // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
+    setLoading(false);
+    try {
+      // call salesmanList with warehouse_id
+      const res = await salesmanList({ warehouse_id: String(warehouse_id) });
+      const normalize = (r: unknown): SalesmanList[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as SalesmanList[];
+        }
+        if (Array.isArray(r)) return r as SalesmanList[];
+        return [];
+      };
+      setSalesman(normalize(res));
+    } catch (error) {
+      setSalesman([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const refreshDropdowns = async () => {
     setLoading(true);
@@ -863,6 +911,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         labels: labels,
         roles: roles,
         fetchItemSubCategoryOptions,
+        fetchSalesmanOptions,
         fetchRegionOptions,
         companyOptions,
         countryOptions,
@@ -898,6 +947,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         refreshDropdowns,
         fetchAreaOptions,
         fetchRouteOptions,
+        fetchRoutebySalesmanOptions,
         fetchCustomerCategoryOptions,
         fetchCompanyCustomersOptions,
         fetchItemOptions,

@@ -9,6 +9,7 @@ import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import CustomTable, { TableDataType } from "@/app/components/customTable";
 import {
   getRouteById,
   addRoutes,
@@ -23,7 +24,7 @@ import ContainerCard from "@/app/components/containerCard";
 import { salesmanLoadHeaderAdd, salesmanLoadHeaderUpdate } from "@/app/services/agentTransaction";
 
 export default function AddEditSalesmanLoad() {
-  const { salesmanTypeOptions, warehouseOptions } = useAllDropdownListData();
+  const { salesmanTypeOptions, warehouseOptions,salesmanOptions ,fetchRoutebySalesmanOptions,fetchSalesmanOptions,routeOptions, itemOptions} = useAllDropdownListData();
   const salesmanTypeOptionWithProject = salesmanTypeOptions.slice();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -38,13 +39,46 @@ export default function AddEditSalesmanLoad() {
   >([]);
   const [form, setForm] = useState({
     salesmanType: "",
-    depot: "",
+    route: "",
+    warehouse: "",
     project: "",
     salesman: ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [skeleton, setSkeleton] = useState(false);
+  
+  // Table data for items
+  const [tableData, setTableData] = useState<TableDataType[]>(
+    itemOptions.map((item) => ({
+      id: item.value,
+      item: item.label,
+      availableStock: "100", // Replace with actual stock data
+      cse: "",
+    }))
+  );
+
+  const handleCseChange = (id: string, value: string) => {
+    setTableData(prev => 
+      prev.map(row => 
+        row.id === id ? { ...row, cse: value } : row
+      )
+    );
+  };
+
+  // Update table data when itemOptions loads
+  useEffect(() => {
+    if (itemOptions && itemOptions.length > 0) {
+      setTableData(
+        itemOptions.map((item) => ({
+          id: item.value,
+          item: item.label,
+          availableStock: "100",
+          cse: "",
+        }))
+      );
+    }
+  }, [itemOptions]);
 
   // Fetch route details in edit mode
   useEffect(() => {
@@ -56,10 +90,15 @@ export default function AddEditSalesmanLoad() {
           const data = res?.data ?? res;
           setForm({
             salesmanType: data?.salesmanType || "",
-            depot: data?.depot || "",
+            route: data?.route || "",
+            warehouse: data?.warehouse || "",
             project: data?.project || "",
             salesman: data?.salesman || "",
           });
+          // Fetch salesmen for the loaded warehouse
+          if (data?.warehouse) {
+            await fetchSalesmanOptions(String(data.warehouse));
+          }
         } catch (err) {
           showSnackbar("Failed to fetch route details", "error");
         } finally {
@@ -71,7 +110,10 @@ export default function AddEditSalesmanLoad() {
 
   // Validation schema
   const validationSchema = yup.object().shape({
-    sdfsd: yup.string().required("Route Code is required"),
+    salesmanType: yup.string().required("Salesman Type is required"),
+    warehouse: yup.string().required("Warehouse is required"),
+    salesman: yup.string().required("Salesman is required"),
+    route: yup.string().required("Route is required"),
   });
 
   const handleChange = (field: string, value: string) => {
@@ -79,15 +121,56 @@ export default function AddEditSalesmanLoad() {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
+  // Fetch routes based on selected salesman id
+  const fetchRoutesBySalesman = async (salesman: string) => {
+    if (!salesman) {
+      setFilteredRouteOptions([]);
+      return;
+    }
+    setSkeleton(true);
+    try {
+      const res = await fetchRoutebySalesmanOptions(String(salesman) );
+      const normalize = (r: unknown): { id?: string | number; route_code?: string; route_name?: string }[] => {
+        if (r && typeof r === "object") {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as any[];
+        }
+        if (Array.isArray(r)) return r as any[];
+        return [];
+      };
+      const routes = normalize(res);
+      const options = routes.map((r) => ({ value: String(r.id ?? ""), label: r.route_code && r.route_name ? `${r.route_code} - ${r.route_name}` : (r.route_name ?? "") }));
+      setFilteredRouteOptions(options);
+    } catch (err) {
+      setFilteredRouteOptions([]);
+    } finally {
+      setSkeleton(false);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       await validationSchema.validate(form, { abortEarly: false });
       setErrors({});
+
+      // Validate CSE values against available stock
+      const invalidItems = tableData.filter(row => {
+        const cse = parseFloat(row.cse) || 0;
+        const availableStock = parseFloat(row.availableStock) || 0;
+        return cse > availableStock;
+      });
+
+      if (invalidItems.length > 0) {
+        showSnackbar("Check the CSE values. CSE cannot exceed available stock.", "error");
+        return;
+      }
+
       setSubmitting(true);
 
       const payload = {
         salesmanType: form.salesmanType,
-        depot: form.depot,
+        route: form.route,
+        warehouse: form.warehouse,
         project: form.project,
         salesman: form.salesman,
       };
@@ -163,27 +246,71 @@ export default function AddEditSalesmanLoad() {
             { form.salesmanType !== "-1" ? <div className="flex flex-col">
               <InputFields
                 required
-                label="Depot"
-                value={form.depot}
-                onChange={(e) => handleChange("depot", e.target.value)}
+                label="Warehouse"
+                value={form.warehouse}
+                onChange={(e) => {
+                  const newWarehouse = e.target.value;
+                  handleChange("warehouse", newWarehouse);
+                  // Clear salesman and fetch salesmen for selected warehouse
+                  handleChange("salesman", "");
+                  if (newWarehouse) {
+                    fetchSalesmanOptions(newWarehouse);
+                  }
+                }}
                 options={warehouseOptions}
               />
-              {errors.depot && (
-                <p className="text-red-500 text-sm mt-1">{errors.depot}</p>
+              {errors.warehouse && (
+                <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
               )}
             </div> : <div className="flex flex-col">
               <InputFields
                 required
-                label="Depot"
-                value={form.depot}
-                onChange={(e) => handleChange("depot", e.target.value)}
+                label="Warehouse"
+                value={form.warehouse}
+                onChange={(e) => {
+                  const newWarehouse = e.target.value;
+                  handleChange("warehouse", newWarehouse);
+                  // Clear salesman and fetch salesmen for selected warehouse
+                  handleChange("salesman", "");
+                  if (newWarehouse) {
+                    fetchSalesmanOptions(newWarehouse);
+                  }
+                }}
                 options={warehouseOptions}
               />
-              {errors.depot && (
-                <p className="text-red-500 text-sm mt-1">{errors.depot}</p>
+              {errors.warehouse && (
+                <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
               )}
             </div>}
+             <div className="flex flex-col">
+              <InputFields
+                required
+                label="Salesman"
+                value={form.salesman}
+                options={salesmanOptions}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleChange("salesman", val);
+                  fetchRoutesBySalesman(val);
+                }}
+              />
+              {errors.salesman && (
+                <p className="text-red-500 text-sm mt-1">{errors.salesman}</p>
+              )}
+            </div>
 
+               <div className="flex flex-col">
+              <InputFields
+                required
+                label="Route"
+                value={form.route}
+                options={routeOptions}
+                onChange={(e) => handleChange("route", e.target.value)}
+              />
+              {errors.route && (
+                <p className="text-red-500 text-sm mt-1">{errors.route}</p>
+              )}
+            </div>
             {/* Warehouse */}
             {/* <div className="flex flex-col">
               <InputFields
@@ -207,48 +334,65 @@ export default function AddEditSalesmanLoad() {
       </ContainerCard>
 
       {/* Additional Information */}
-      <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-        <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4">
-            Additional Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Vehicle */}
-            {/* <div className="flex flex-col">
-              <InputFields
-                required
-                label="Vehicle"
-                value={form.vehicleType}
-                onChange={(e) => handleChange("vehicleType", e.target.value)}
-                options={filteredOptions}
-                showSkeleton={skeleton}
-                disabled={filteredOptions.length === 0}
-                placeholder={form.warehouse ? "Select Vehicle" : "Select warehouse first"}
-              />
-              {errors.vehicleType && (
-                <p className="text-red-500 text-sm mt-1">{errors.vehicleType}</p>
-              )}
-            </div> */}
-
-            {/* Status */}
-            {/* <div className="flex flex-col">
-              <InputFields
-                required
-                label="Status"
-                type="radio"
-                value={form.status}
-                onChange={(e) => handleChange("status", e.target.value)}
-                options={[
-                  { value: "1", label: "Active" },
-                  { value: "0", label: "Inactive" },
-                ]}
-              />
-              {errors.status && (
-                <p className="text-red-500 text-sm mt-1">{errors.status}</p>
-              )}
-            </div> */}
-          </div>
-        </div>
+      <div className="mb-6">
+        <CustomTable
+          data={tableData}
+          config={{
+            header: {
+              title: "Items",
+            },
+            columns: [
+              {
+                key: "item",
+                label: "Item",
+                showByDefault: true,
+                width: 300,
+              },
+              {
+                key: "availableStock",
+                label: "Available Stock",
+                showByDefault: true,
+                width: 150,
+              },
+              {
+                key: "cse",
+                label: "CSE",
+                showByDefault: true,
+                width: 200,
+                render: (row) => {
+                  const cse = parseFloat(row.cse) || 0;
+                  const availableStock = parseFloat(row.availableStock) || 0;
+                  const isInvalid = cse > availableStock;
+                  
+                  return (
+                    <div>
+                      <input
+                        type="number"
+                        value={row.cse}
+                        onChange={(e) => handleCseChange(row.id, e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 text-sm ${
+                          isInvalid
+                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                            : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter CSE"
+                      />
+                      {isInvalid && (
+                        <p className="text-red-500 text-xs mt-1">
+                          Exceeds available stock
+                        </p>
+                      )}
+                    </div>
+                  );
+                },
+              },
+            ],
+            footer: {
+              pagination: false,
+              nextPrevBtn: false,
+            },
+          }}
+        />
       </div>
 
       {/* Buttons */}
@@ -261,7 +405,7 @@ export default function AddEditSalesmanLoad() {
               : "border-gray-300"
           }`}
           onClick={() => router.push("/route")}
-          disabled={submitting} // disable while submitting
+          disabled={submitting} 
         >
           Cancel
         </button>
