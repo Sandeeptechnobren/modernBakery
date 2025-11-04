@@ -460,16 +460,22 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }));
 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
-    value: String(c.id ?? ''),
-    label: c.item_code && c.name ? `${c.item_code} - ${c.name}` : (c.name ?? ''),
-    uoms: Array.isArray((c as any).uom) ? (c as any).uom.map((u: any) => ({
-      id: String(u.id ?? ''),
-      name: String(u.name ?? ''),
-      uom_type: String(u.uom_type ?? ''),
-      price: String(u.price ?? ''),
-      upc: String(u.upc ?? ''),
-    })) : []
-  }));
+  value: String(c.id ?? ""),
+  label:
+    c.item_code && c.name
+      ? `${c.item_code} - ${c.name}`
+      : c.name ?? "",
+  uom: Array.isArray((c as any).uom)
+    ? (c as any).uom.map((u: any) => ({
+        id: Number(u.id ?? 0),
+        name: String(u.name ?? ""),
+        uom_type: String(u.uom_type ?? ""),
+        price: Number(u.price ?? 0),
+        upc: String(u.upc ?? ""),
+      }))
+    : [],
+}));
+
 
   const getItemUoms = (item_id: string | number) => {
     const idStr = String(item_id ?? '');
