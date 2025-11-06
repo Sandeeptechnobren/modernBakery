@@ -10,6 +10,7 @@ import FilterDropdown from "./filterDropdown";
 import CustomCheckbox from "./customCheckbox";
 import DismissibleDropdown from "./dismissibleDropdown";
 import { naturalSort } from "../(private)/utils/naturalSort";
+import { CustomTableSkelton } from "../(private)/(dashboard)/(master)/warehouse/details/[id]/page";
 
 export type listReturnType = {
     data: TableDataType[];
@@ -530,6 +531,7 @@ function TableBody() {
     const tableData = tableDetails.data || [];
 
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
+    const [nestedLoading, setNestedLoading] = useState(false)
     const [tableOrder, setTableOrder] = useState<{
         column: string;
         order: "asc" | "desc";
@@ -548,10 +550,15 @@ function TableBody() {
     const isIndeterminate = selectedRow.length > 0 && !isAllSelected;
 
     useEffect(() => {
+        setNestedLoading(true)
         if (!api?.list) {
             setDisplayedData(tableData.slice(startIndex, endIndex));
+        setNestedLoading(false)
+            
         } else {
             setDisplayedData(tableData);
+        setNestedLoading(false)
+
         }
     }, [tableDetails]);
 
@@ -584,7 +591,7 @@ function TableBody() {
     };
 
     return (
-        <>
+        <>{!nestedLoading?
             <div
                 className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent"
                 style={
@@ -798,7 +805,7 @@ function TableBody() {
                             ))}
                     </tbody>
                 </table>
-            </div>
+            </div>:<CustomTableSkelton/>}
             {displayedData.length <= 0 && (
                 <div className="p-2 content-center text-center py-[12px] text-[24px] max-h-full min-h-[200px] text-primary">
                     No data available

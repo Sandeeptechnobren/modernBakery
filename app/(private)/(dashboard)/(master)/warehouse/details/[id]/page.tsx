@@ -63,6 +63,13 @@ const title = "Warehouse Details";
 const backBtnUrl = "/warehouse";
 
 
+export const CustomTableSkelton  = ()=>{
+
+
+    return(<div><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/></div>)
+}
+
+
 
 export default function ViewPage() {
     const { customerSubCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
@@ -686,20 +693,20 @@ export default function ViewPage() {
                                         </div>
                                         <div className="flex flex-col gap-[20px] text-[#414651]">
                                             <div className="flex items-center gap-[8px] text-[16px]">
-                                                <Icon
+                                                {item?.owner_number?<><Icon
                                                     icon="lucide:phone-call"
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                <span>{item?.owner_number} / {item?.warehouse_manager_contact}</span>
+                                                <span>{item?.owner_number} / {item?.warehouse_manager_contact}</span></>:""}
                                             </div>
                                             <div className="flex items-center gap-[8px] text-[16px]">
-                                                <Icon
+                                               {item?.owner_email? <><Icon
                                                     icon="ic:outline-email"
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                <span>{item?.owner_email}</span>
+                                                <span>{item?.owner_email}</span></>:""}
                                             </div>
 
                                         </div>
