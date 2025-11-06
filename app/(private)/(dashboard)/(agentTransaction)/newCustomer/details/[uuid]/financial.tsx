@@ -28,7 +28,7 @@ export default function Financial({ data }: { data: NewCustomerDetails | null })
                     },
                     {
                         key: "Buyer Type",
-                        value: data?.buyertype == "0" ? "B2B" : "B2C",
+                        value: data?.buyertype === 0 ? "B2B" : "B2C",
                     },
                     {
                         key: "Credit Day",

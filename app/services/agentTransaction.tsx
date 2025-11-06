@@ -68,6 +68,14 @@ export const newCustomerList = async (params?: Params) => {
   }
 };
 
+export const addApprovedCustomer = async (body: object) => {
+  try {
+    const res = await API.post(`/api/agent_transaction/new-customer/add`, body);
+    return res.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
 export const exportNewCustomerData = async (body: object) => {
   try {
     const res = await API.post(`/api/agent_transaction/new-customer/export`, body);
@@ -89,8 +97,9 @@ export const newCustomerStatusUpdate = async (body: object) => {
   }
 };
 
-export const approveOrRejectCustomer  = async (body: object) => {
+export const approveOrRejectCustomer = async (body: object) => {
   try {
+    // correct endpoint for approve/reject
     const res = await API.post(`/api/agent_transaction/new-customer/add`, body);
     return res.data;
   } catch (error: unknown) {

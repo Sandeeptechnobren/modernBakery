@@ -19,7 +19,7 @@ export default function Overview({ data }: { data: NewCustomerDetails | null }) 
                     },
                     {
                         key: "Customer Type",
-                        value: data?.customertype?.name || "-",
+                        value: data?.customertype?.name || "-"
                     },
                 ]}
             />
