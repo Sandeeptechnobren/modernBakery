@@ -160,10 +160,18 @@ export default function OrderAddEditPage() {
     const qty = Number(item.Quantity) || 0;
     // const price = orderData.find((order: FormData) => order.id.toString() === item.item_id)?.find(uom => uom.id.toString() === item.uom_id)?.price ? Number(orderData.find((order: FormData) => order.id.toString() === item.item_id)?.uom?.find(uom => uom.id.toString() === item.uom_id)?.price) : Number(item.Price) || 0;
     let price = Number(item.Price) || 0;
-    if(field === "itemName") {
-      try{
-        const res = await fetchPrice(item.itemName, values?.customer || "", values?.warehouse || "", values?.route || "");
-        price = res || 0;
+    if (field === "itemName") {
+      try {
+        const customerId = values?.customer || "";
+        const warehouseId = values?.warehouse || "";
+        const routeId = values?.route || "";
+        const res = await fetchPrice(item.itemName, customerId, warehouseId, routeId);
+        if (Array.isArray(res)) {
+          const first = (res as any)[0] || {};
+          price = Number(first.ctn_price ?? first.price ?? price) || price;
+        } else if (res && typeof res === "object") {
+          price = Number((res as any).ctn_price ?? (res as any).price ?? price) || price;
+        }
       } catch (error) {
         console.error("Error fetching price:", error);
       }
@@ -191,7 +199,7 @@ export default function OrderAddEditPage() {
         UOM: [],
         uom_id: "",
         Quantity: "1",
-        Price: "-",
+        Price: "",
         Excise: "0.00",
         Discount: "0.00",
         Net: "0.00",
@@ -328,9 +336,9 @@ export default function OrderAddEditPage() {
       return;
     }
     const data = res?.data || [];
-    const options = data.map((customer: { id: number; owner_name: string }) => ({
+    const options = data.map((customer: { id: number; outlet_name: string }) => ({
       value: String(customer.id),
-      label: customer.owner_name
+      label: customer.outlet_name
     }));
     console.log(options)
     setFilteredCustomerOptions(options);
@@ -360,7 +368,7 @@ export default function OrderAddEditPage() {
   }, []);
 
   const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
-    const res = await pricingHeaderGetItemPrice({ item_id, customer_id, warehouse_id, route_id });
+    const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
       setSkeleton({ ...skeleton, item: false });
@@ -526,7 +534,8 @@ export default function OrderAddEditPage() {
                             options={JSON.parse(row.UOM ?? "[]")}
                             disabled={JSON.parse(row.UOM ?? "[]").length === 0}
                             onChange={(e) =>
-                              recalculateItem(Number(row.idx), "uom_id", e.target.value)
+                              // pass current Formik values so recalculateItem can fetch price using current customer/warehouse/route
+                              recalculateItem(Number(row.idx), "uom_id", e.target.value, values)
                             }
                           />
                         ),
@@ -553,12 +562,12 @@ export default function OrderAddEditPage() {
                         label: "Price",
                         width: 200,
                         render: (row) => {
-                          if(row.Price === "-") {
-                            const price = row.Price;
-                            recalculateItem(Number(row.idx), "Price", price);
-                            return <span>{price}</span>;
+                          // Don't trigger side-effects from render. Show placeholder when price isn't set.
+                          const price = String(row.Price ?? "");
+                          if (!price || price === "" || price === "0" || price === "0.00" || price === "-") {
+                            return <span className="text-gray-400">-</span>;
                           }
-                          return row.Price;
+                          return <span>{price}</span>;
                         }
                       },
                       { key: "Net", label: "Net" },
