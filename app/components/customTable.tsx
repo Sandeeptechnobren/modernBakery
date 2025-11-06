@@ -31,7 +31,7 @@ export type configType = {
             pageSize: number,
             columnName?: string
         ) => Promise<searchReturnType> | searchReturnType;
-        list: (
+        list?: (
             pageNo: number,
             pageSize: number
         ) => Promise<listReturnType> | listReturnType;
@@ -580,7 +580,6 @@ function TableBody() {
         } else {
             setTableOrder({ column, order: "desc" });
         }
-
         setDisplayedData(naturalSort(displayedData, tableOrder.order, column));
     };
 

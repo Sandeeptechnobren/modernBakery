@@ -58,24 +58,24 @@ const columns = [
   { key: "warehouse_name", label: "Warehouse Name", showByDefault: true, render: (row: WarehouseRow) => row.warehouse_name || "-" },
   { key: "owner_name", label: "Owner Name", render: (row: WarehouseRow) => row.owner_name || "-" },
   { key: "owner_number", label: "Owner Contact No.", render: (row: WarehouseRow) => row.owner_number || "-" },
-  { key: "owner_email", label: "Owner Email", render: (row: WarehouseRow) => row.owner_email || "-" },
+  // { key: "owner_email", label: "Owner Email", render: (row: WarehouseRow) => row.owner_email || "-" },
   // { key: "location", label: "Warehouse Location", render: (row: WarehouseRow) => row.location || "-" },
-  { key: "company", label: "Company Code", render: (row: WarehouseRow) => row.company?.company_code || "-" },
-  { key: "company", label: "Company Name", render: (row: WarehouseRow) => row.company?.company_name || "-" },
+  // { key: "company", label: "Company Code", render: (row: WarehouseRow) => row.company?.company_code || "-" },
+  // { key: "company", label: "Company Name", render: (row: WarehouseRow) => row.company?.company_name || "-" },
   { key: "warehouse_manager", label: "Warehouse Manager", render: (row: WarehouseRow) => row.warehouse_manager || "-" },
   { key: "warehouse_manager_contact", label: "Warehouse Manager Contact", render: (row: WarehouseRow) => row.warehouse_manager_contact || "-" },
-  {
-    key: "warehouse_type",
-    label: "Warehouse Type",
-    showByDefault: true,
-    render: (row: WarehouseRow) => {
-      const value = row.warehouse_type;
-      const strValue = value != null ? String(value) : "";
-      if (strValue === "0") return "Agent";
-      if (strValue === "1") return "Outlet";
-      return strValue || "-";
-    },
-  },
+  // {
+  //   key: "warehouse_type",
+  //   label: "Warehouse Type",
+  //   showByDefault: true,
+  //   render: (row: WarehouseRow) => {
+  //     const value = row.warehouse_type;
+  //     const strValue = value != null ? String(value) : "";
+  //     if (strValue === "0") return "Agent";
+  //     if (strValue === "1") return "Outlet";
+  //     return strValue || "-";
+  //   },
+  // },
   // { key: "business_type", label: "Business Type", render: (row: WarehouseRow) => {
   //     const value = row.business_type;
   //     const strValue = value != null ? String(value) : "";
@@ -89,19 +89,19 @@ const columns = [
     key: 'region',
     render: (row: WarehouseRow) => row.region?.name || '-',
   },
-  {
-    label: 'Area',
-    showByDefault: true,
-    key: 'area',
-    render: (row: WarehouseRow) => row.area?.name || '-',
-  },
+  // {
+  //   label: 'Area',
+  //   showByDefault: true,
+  //   key: 'area',
+  //   render: (row: WarehouseRow) => row.area?.name || '-',
+  // },
   // { key: "sub_region_id", label: "Sub Region"},
   { key: "city", label: "City", render: (row: WarehouseRow) => row.city || "-" },
   { key: "location", label: "Location", showByDefault: true, render: (row: WarehouseRow) => row.location || "-" },
-  { key: "town_village", label: "Town", render: (row: WarehouseRow) => row.town_village || "-" },
-  { key: "street", label: "Street", render: (row: WarehouseRow) => row.street || "-" },
-  { key: "landmark", label: "Landmark", render: (row: WarehouseRow) => row.landmark || "-" },
-  { key: "agreed_stock_capital", label: "Stock Capital", render: (row: WarehouseRow) => row.agreed_stock_capital || "-" },
+  // { key: "town_village", label: "Town", render: (row: WarehouseRow) => row.town_village || "-" },
+  // { key: "street", label: "Street", render: (row: WarehouseRow) => row.street || "-" },
+  // { key: "landmark", label: "Landmark", render: (row: WarehouseRow) => row.landmark || "-" },
+  // { key: "agreed_stock_capital", label: "Stock Capital", render: (row: WarehouseRow) => row.agreed_stock_capital || "-" },
   { key: "is_efris", label: "EFRIS",
     showByDefault: true,
      render: (row: WarehouseRow) => {

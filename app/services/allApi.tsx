@@ -2980,9 +2980,9 @@ export const getUserByUuid = async (uuid?: string) => {
   }
 };
 
-export const getRouteInWarehouse = async (id?: string) => {
+export const getRouteInWarehouse = async (id?: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/master/warehouse/warehouseRoutes/${id}`);
+    const res = await API.get(`/api/master/warehouse/warehouseRoutes/${id}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -2998,18 +2998,18 @@ export const getVehicleInWarehouse = async (id?: string) => {
   }
 };
 
-export const getSalesmanInWarehouse = async (id?: string) => {
+export const getSalesmanInWarehouse = async (id?: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/master/warehouse/warehouseSalesman/${id}`);
+    const res = await API.get(`/api/master/warehouse/warehouseSalesman/${id}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const getCustomerInWarehouse = async (id?: string) => {
+export const getCustomerInWarehouse = async (id?: string,params?:Params) => {
   try {
-    const res = await API.get(`api/master/warehouse/warehouseCustomer/${id}`);
+    const res = await API.get(`api/master/warehouse/warehouseCustomer/${id}`,{params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
