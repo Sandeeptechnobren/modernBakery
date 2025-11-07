@@ -461,6 +461,7 @@ export default function AddEditWarehouse() {
               showSubmitButton={isLastStep}
               showNextButton={!isLastStep}
               nextButtonText="Save & Next"
+              
                             submitButtonText={
                                 isSubmitting
                                     ? (isEditMode ? "Updating..." : "Submitting...")
@@ -468,6 +469,7 @@ export default function AddEditWarehouse() {
                                     ? "Update"
                                     : "Submit"
                             }
+                            
             >
               {renderStepContent(values, setFieldValue, errors, touched)}
             </StepperForm>
