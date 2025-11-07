@@ -105,7 +105,7 @@ export default function ViewPage() {
           return;
         }
         console.log(res)
-        setCustomer(res);
+        setCustomer(res.data);
       } catch {
         showSnackbar("Unable to fetch company customer details", "error");
       } finally {

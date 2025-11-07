@@ -36,16 +36,16 @@ export default function Overview({ data }: { data: AgentCustomerDetails | null }
                             className="text-[#EA0A2A]"
                         />
                         <span>
-                            {data?.contact_no} / {data?.contact_no2}
+                            {data?.contact_no} <br/>{data?.contact_no2}
                         </span>
                     </div>
                     <div className="flex items-center gap-[8px] text-[16px]">
-                        <Icon
+                       {data?.whatsapp_no?<><Icon
                             icon="ic:baseline-whatsapp"
                             width={16}
                             className="text-[#EA0A2A]"
                         />
-                        <span>{data?.whatsapp_no}</span>
+                        <span>{data?.whatsapp_no}</span> </>:""}
                     </div>
                 </div>
             </div>
