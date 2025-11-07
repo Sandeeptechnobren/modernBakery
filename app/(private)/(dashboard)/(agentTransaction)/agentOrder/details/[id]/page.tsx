@@ -130,10 +130,9 @@ export default function OrderDetailPage() {
             onClick={() => router.back()}
             className="cursor-pointer"
           />
-          <div className="flex flex-col items-end">
-            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Order</span>
-            <span className="text-primary text-[14px] tracking-[8px]">#{data?.order_code || "-"}</span>
-          </div>
+          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[4px]">
+            Order {orderId}
+          </h1>
         </div>
 
         {/* Action Buttons */}
