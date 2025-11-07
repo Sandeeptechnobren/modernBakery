@@ -30,7 +30,8 @@ import {
   getWarehouse,
   subRegionList,
   labelList,
-  roleList
+  roleList,
+  projectList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -60,6 +61,7 @@ interface DropdownDataContextType {
   menuList: MenuList[];
   labels: LabelItem[];
   roles: Role[];
+  projectList: Project[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -90,6 +92,7 @@ interface DropdownDataContextType {
   agentCustomerOptions: { value: string; label: string; contact_no?: string }[];
   shelvesOptions: { value: string; label: string }[];
   submenuOptions: { value: string; label: string }[];
+  projectOptions: { value: string; label: string}[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
@@ -140,6 +143,12 @@ interface SurveyItem {
   id?: number | string;
   survey_code?: string;
   survey_name?: string;
+}
+
+interface Project {
+  id?: number | string;
+  osa_code?: string;
+  name?: string;
 }
 
 
@@ -352,6 +361,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [permissions, setPermissions] = useState<permissionsList[]>([]);
   const [labels, setLabels] = useState<LabelItem[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [project, setProject] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -461,6 +471,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     value: String(c.id ?? ''),
     label: c.customer_sub_category_code && c.customer_sub_category_name ? `${c.customer_sub_category_code} - ${c.customer_sub_category_name}` : (c.customer_sub_category_name ?? '')
   }));
+
+  const projectOptions = (Array.isArray(project) ? project : []).map((c: Project) => ({
+    value: String(c.id ?? ''),
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+  }))
 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
   value: String(c.id ?? ""),
@@ -848,6 +863,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         submenuList(),
         permissionList(),
         labelList(),
+        projectList({}),
         roleList(),
       ]);
 
@@ -892,6 +908,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setPermissions(normalize(res[27]) as permissionsList[]);
       setLabels(normalize(res[28]) as LabelItem[]);
       setRoles(normalize(res[29]) as Role[]);
+      setProject(normalize(res[30]) as Project[]);
 
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -926,6 +943,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setPermissions([]);
       setLabels([]);
       setRoles([]);
+      setProject([]);
     } finally {
       setLoading(false);
     }
@@ -964,6 +982,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         menuList: menuList,
         labels: labels,
         roles: roles,
+        projectList: project,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
@@ -1009,6 +1028,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         fetchItemOptions,
         fetchWarehouseOptions,
         roleOptions,
+        projectOptions,
         getItemUoms,
         getPrimaryUom,
         loading

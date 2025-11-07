@@ -1409,6 +1409,19 @@ export const updateSalesmanStatus = async (body: object) => {
   }
 };
 
+export const projectList = async (params: Params) => {
+  try {
+    const res = await API.get("/api/settings/projects-list", {
+      params: params,
+    });
+
+    return res.data;
+  } catch (error) {
+    console.error("Project List failed ❌", error);
+    throw error;
+  }
+};
+
 export const salesmanTypeList = async (params: Params) => {
   try {
     const res = await API.get("/api/settings/salesman_type/list", {
