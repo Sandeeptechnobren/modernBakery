@@ -210,20 +210,17 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { agentOrderList, deleteAgentOrder } from "@/app/services/agentTransaction";
 import { agentCustomerStatusUpdate } from "@/app/services/allApi";
+import StatusBtn from "@/app/components/statusBtn2";
 
 const columns = [
-    { key: "date", label: "Date" },
-    { key: "time", label: "Time" },
-    { key: "route_code", label: "Route Code" },
-    { key: "depot_name", label: "Depot Name" },
-    { key: "customer_name", label: "Customer Name" },
-    { key: "salesman", label: "Salesman" },
-    { key: "Invoice_type", label: "Invoice Type" },
-    { key: "Invoice_no", label: "Invoice No" },
-    { key: "sap_id", label: "SAP ID" },
-    { key: "sap_status", label: "SAP Status" },
-    { key: "Invoice_amount", label: "Invoice Amount" },
-    { key: "Invoice_status", label: "Invoice Status" },
+    { key: "order_code", label: "Order Code", render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
+    { key: "warehouse_name", label: "Warehouse Name", render: (row: TableDataType) => row.warehouse_name || "-" },
+    { key: "customer_name", label: "Customer Name", render: (row: TableDataType) => row.customer_name || "-" },
+    { key: "delivery_date", label: "Delivery Date", render: (row: TableDataType) => row.delivery_date || "-" },
+    { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
+    { key: "status", label: "Status", render: (row: TableDataType) => (
+        <StatusBtn isActive={row.status === "1"} />
+    )},
 ];
 
 export default function CustomerInvoicePage() {
