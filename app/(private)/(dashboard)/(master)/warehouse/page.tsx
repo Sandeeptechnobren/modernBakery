@@ -192,14 +192,15 @@ export default function Warehouse() {
                    setLoading(true);
                      const listRes = await getWarehouse({
                         //  limit: pageSize.toString(),
+                         page: page.toString(),
                          per_page: pageSize.toString(),
                      });
                      setLoading(false);
                      return {
                          data: listRes.data || [],
-                         total: listRes.pagination.totalPages ,
-                         currentPage: listRes.pagination.page ,
-                         pageSize: listRes.pagination.limit ,
+                         total: listRes?.pagination?.last_page || listRes?.pagination?.pagination?.last_page || 1,
+                         currentPage: listRes?.pagination?.current_page || listRes?.pagination?.pagination?.current_page || 1,
+                         pageSize: listRes?.pagination?.limit || listRes?.pagination?.pagination?.limit || pageSize,
                      };
                  } catch (error: unknown) {
                      console.error("API Error:", error);

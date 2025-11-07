@@ -337,11 +337,11 @@ export default function ShelfDisplay() {
                       onBlur={handleBlur}
                       // error={touched[field] && errors[field]}
                     />
-                    <ErrorMessage
+                    {/* <ErrorMessage
                       name={field}
                       component="span"
                       className="text-xs text-red-500 mt-1"
-                    />
+                    /> */}
                   </div>
                 )
               )}
@@ -357,11 +357,11 @@ export default function ShelfDisplay() {
                   onBlur={handleBlur}
                   // error={touched.valid_from && errors.valid_from}
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="valid_from"
                   component="span"
                   className="text-xs text-red-500 mt-1"
-                />
+                /> */}
               </div>
 
               <div className="flex flex-col">
@@ -376,11 +376,11 @@ export default function ShelfDisplay() {
                   disabled={!values.valid_from}
                   // error={touched.valid_to && errors.valid_to}
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="valid_to"
                   component="span"
                   className="text-xs text-red-500 mt-1"
-                />
+                /> */}
               </div>
             </div>
           </ContainerCard>

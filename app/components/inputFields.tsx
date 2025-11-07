@@ -1,13 +1,14 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Skeleton from '@mui/material/Skeleton';
-import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import LoaderCircle from "./loaderCircle";
+import DateRangePicker from "./DateRangePicker";
 
-type Option = {
+export type Option = {
   value: string;
   label: string;
+  [key: string]: unknown;
 };
 
 type PhoneCountry = {
@@ -31,7 +32,9 @@ type Props = {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
   options?: Option[];
-  type?: "text" | "select" | "file" | "date" | "radio" | "number" | "textarea" | "contact";
+  type?: "text" | "select" | "file" | "date" | "dateChange" | "radio" | "number" | "textarea" | "contact";
+  /** If provided, used to determine whether the date was changed compared to original value */
+  originalValue?: string | null;
   id?: string;
   width?: string;
   error?: string | false;
@@ -40,6 +43,7 @@ type Props = {
   required?: boolean;
   loading?: boolean; 
   searchable?: boolean | string;
+  onSearch?: (search: string) => void;
   placeholder?: string;
   textareaCols?: number;
   textareaRows?: number;
@@ -48,10 +52,11 @@ type Props = {
   trailingElement?: React.ReactNode;
   showBorder?: boolean;
   showSkeleton?: boolean;
-
   maxLength?: number;
   setSelectedCountry?: ({ name: string; code?: string; flag?: string });
   selectedCountry?: { name: string; code?: string; flag?: string };
+  /** When true and this is a multi-select, render selected values as chips inside the field */
+  multiSelectChips?: boolean;
 };
 
 export default function InputFields({
@@ -70,6 +75,9 @@ export default function InputFields({
   required = false,
   loading = false,
   searchable = false,
+  onSearch = () => {},
+  multiSelectChips = false,
+  originalValue = null,
   placeholder,
   textareaCols = 3,
   textareaRows = 3,
@@ -118,6 +126,16 @@ const countries: { name?: string; code?: string; flag?: string }[] = [
     const [phone, setPhone] = useState(value);
     useEffect(()=>{setPhone(value)},[value])
     const toggleDropdown = () => setIsOpen((prev) => !prev);
+    const computeDropdownProps = () => {
+      const dropdown = dropdownRef.current;
+      if (!dropdown) return;
+      const { width, top, left, height } = dropdown.getBoundingClientRect();
+      const w = Math.floor(width);
+      const t = Math.floor(top + height);
+      const l = Math.floor(left);
+      setDropdownProperties({ width: `${w}px`, top: `${t}px`, left: `${l}px` });
+      setDropdownPropertiesString(`!w-[${w}px] !top-[${t}px] !left-[${l}px]`);
+    };
     const handleSelect: (country?: { name?: string; code?: string; flag?: string }) => void = (country) => {
       const found = country?.code ? countries.find(c => c.code === country.code) : undefined;
       if (typeof (setSelectedCountry as any) === "function") {
@@ -137,10 +155,10 @@ const countries: { name?: string; code?: string; flag?: string }[] = [
     };
 
   const filteredOptions = (options?.filter(opt => {
-    const label = opt.label.toLowerCase();
+    const label = opt.label?.toLowerCase();
     // Remove options like 'Select Region', 'Select Item', 'Select ...'
-    if (label.startsWith('select ')) return false;
-    return label.includes(search.toLowerCase());
+    if (label?.startsWith('select ')) return false;
+    return label?.includes(search.toLowerCase());
   })) || [];
 
 useEffect(() => {
@@ -233,7 +251,7 @@ useEffect(() => {
 
 
   return (
-    <div className={`flex flex-col gap-2 w-full ${width} min-w-0`}>
+    <div className={`flex flex-col gap-[6px] w-full ${width} min-w-0`}>
       <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
@@ -277,23 +295,78 @@ useEffect(() => {
             tabIndex={0}
             onMouseDown={() => { pointerDownRef.current = true; }}
             onMouseUp={() => { pointerDownRef.current = false; }}
-            onFocus={() => { if (!pointerDownRef.current && !disabled) setDropdownOpen(true); }}
-            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
-            onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
+            onFocus={() => { if (!pointerDownRef.current && !disabled) { computeDropdownProps(); setDropdownOpen(true); } }}
+            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
+            onClick={() => { if (!loading && !isSearchable) { computeDropdownProps(); setDropdownOpen(v => !v); } }}
           >
-            {isSearchable ? (
+                {isSearchable ? (
               (() => {
-                const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(o => o.label) || [];
-                const displayValue = search || (selectedLabels.length > 0 ? selectedLabels.slice(0,2).join(', ') : '');
-                const hasSelection = !search && selectedLabels.length > 0;
+                const selected = options?.filter(opt => selectedValues.includes(opt.value)).map(o => ({ value: o.value, label: o.label })) || [];
+                const displayValue = search || (selected.length > 0 ? selected.slice(0,2).map(s=>s.label).join(', ') : '');
+                const hasSelection = !search && selected.length > 0;
+                // If multiSelectChips is enabled, render chips before the input
+                if (multiSelectChips) {
+                  return (
+                    <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
+                      {selected.length === 0 && (
+                        <span className="text-gray-400">{`Search ${label}`}</span>
+                      )}
+                      {selected.map((s, idx) => {
+                        if (idx >= 2) return null;
+                        return (
+                          <span key={s.value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate">
+                            <span className="truncate block max-w-[100px]">{s.label}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); if (!disabled) handleCheckbox(s.value); }}
+                              className="ml-2 text-gray-500 hover:text-gray-700"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        );
+                      })}
+                      {selected.length > 2 && <span className="text-sm text-gray-700 ml-1">+{selected.length - 2}</span>}
+                      <input
+                        type="text"
+                        placeholder={selected.length === 0 ? `Search ${label}` : undefined}
+                        value={displayValue}
+                        onChange={e => {
+                          const v = (e.target as HTMLInputElement).value;
+                          console.log("Search input changed:", v);
+                          setSearch(v);
+                          onSearch(v);
+                          if (!dropdownOpen) setDropdownOpen(true);
+                          if (v === '') {
+                            // user cleared the input -> clear selected values for multi-select
+                            safeOnChange(createMultiSelectEvent([]));
+                          }
+                        }}
+                        onFocus={() => setDropdownOpen(true)}
+                        className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                        style={hasSelection ? { color: '#111827' } : undefined}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (!loading && filteredOptions.length > 0) {
+                              // select first match for searchable Enter
+                              handleCheckbox(filteredOptions[0].value);
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  );
+                }
                 return (
                   <input
                     type="text"
-                    placeholder={selectedValues.length === 0 ? `Search ${label}` : undefined}
+                    placeholder={selected.length === 0 ? `Search ${label}` : undefined}
                     value={displayValue}
                     onChange={e => {
                       const v = (e.target as HTMLInputElement).value;
                       setSearch(v);
+                      onSearch(v);
                       if (!dropdownOpen) setDropdownOpen(true);
                       if (v === '') {
                         // user cleared the input -> clear selected values for multi-select
@@ -315,36 +388,49 @@ useEffect(() => {
                   />
                 );
               })()
-            ) : (
-              <span className={`truncate flex-1 ${selectedValues.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
-                {(() => {
-                    const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
-                    if (selectedValues.length === 0) {
-                      return `Select ${label}`;
+                ) : (
+                  (() => {
+                    const selected = options?.filter(opt => selectedValues.includes(opt.value)).map(o => ({ value: o.value, label: o.label })) || [];
+                    if (multiSelectChips) {
+                      return (
+                        <div className="flex-1 flex items-center gap-2 flex-nowrap overflow-hidden min-w-0">
+                          {selected.length === 0 && <span className="text-gray-400">{`Select ${label}`}</span>}
+                          {selected.map((s, idx) => {
+                            if (idx >= 2) return null;
+                            return (
+                              <span key={s.value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate">
+                                <span className="truncate block max-w-[100px]">{s.label}</span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); if (!disabled) handleCheckbox(s.value); }}
+                                  className="ml-2 text-gray-500 hover:text-gray-700"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            );
+                          })}
+                          {selected.length > 2 && <span className="text-sm text-gray-700 ml-1">+{selected.length - 2}</span>}
+                        </div>
+                      );
                     }
-                    if (selectedLabels.length <= 2) {
-                      return selectedLabels.join(", ");
-                    } else {
-                      return selectedLabels.slice(0, 2).join(", ");
-                    }
+                    return (
+                      <span className={`truncate flex-1 ${selected.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
+                        {(() => {
+                          if (selected.length === 0) return `Select ${label}`;
+                          if (selected.length <= 2) return selected.map(s=>s.label).join(', ');
+                          return selected.slice(0,2).map(s=>s.label).join(', ');
+                        })()}
+                      </span>
+                    );
                   })()
-                }
-              </span>
-            )}
-            {/* Show +N before the arrow if more than 2 selected */}
-            {(() => {
-              const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
-              if (selectedLabels.length > 2) {
-                return <span className="ml-2 font-medium text-gray-700">+{selectedLabels.length - 2}</span>;
-              }
-              return null;
-            })()}
+                )}
             {/* Show down arrow only if not disabled and not searchable */}
             {!isSearchable && !disabled && (
               <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             )}
           </div>
-          {dropdownOpen && !loading && (
+          {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
             <>
               <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                 {!isSearchable && (
@@ -354,7 +440,7 @@ useEffect(() => {
                       type="text"
                       placeholder="Search"
                       value={search}
-                      onChange={e => setSearch(e.target.value)}
+                      onChange={e => { setSearch(e.target.value); onSearch(e.target.value); }}
                       className="w-full border-none outline-none text-sm"
                       disabled={disabled}
                     />
@@ -378,7 +464,7 @@ useEffect(() => {
                   />
                   <span className="text-sm select-none">Select All</span>
                 </div>
-                <div className="max-h-80 overflow-auto">
+                <div className="max-h-60 overflow-auto">
                   {filteredOptions.length === 0 ? (
                     <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
                   ) : filteredOptions.map((opt, idx) => (
@@ -423,9 +509,9 @@ useEffect(() => {
             tabIndex={0}
             onMouseDown={() => { pointerDownRef.current = true; }}
             onMouseUp={() => { pointerDownRef.current = false; }}
-            onFocus={() => { if (!pointerDownRef.current && !disabled) setDropdownOpen(true); }}
-            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
-            onClick={() => { if (!loading && !isSearchable && !disabled) setDropdownOpen(v => !v); }}
+            onFocus={() => { if (!pointerDownRef.current && !disabled) { computeDropdownProps(); setDropdownOpen(true); } }}
+            className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
+            onClick={() => { if (!loading && !isSearchable && !disabled) { computeDropdownProps(); setDropdownOpen(v => !v); } }}
           >
             {isSearchable ? (
               (() => {
@@ -441,6 +527,7 @@ useEffect(() => {
                       if(disabled) return;
                       const v = (e.target as HTMLInputElement).value;
                       setSearch(v);
+                      onSearch(v);
                       if (!dropdownOpen) setDropdownOpen(true);
                       if (v === '') {
                         // user cleared the input -> clear selected value for single-select
@@ -457,6 +544,7 @@ useEffect(() => {
                           safeOnChange(createSingleSelectEvent(filteredOptions[0].value));
                           setDropdownOpen(false);
                           setSearch("");
+                          onSearch("");
                         }
                       }
                     }}
@@ -474,7 +562,7 @@ useEffect(() => {
               <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             )}
           </div>
-          {dropdownOpen && !loading && (
+          {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
             <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-80 overflow-auto">
               {!isSearchable && (
                 <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
@@ -483,7 +571,7 @@ useEffect(() => {
                     type="text"
                     placeholder="Search"
                     value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    onChange={e => {setSearch(e.target.value); onSearch(e.target.value); }}
                     className="w-full border-none outline-none text-sm"
                     autoFocus
                   />
@@ -500,6 +588,7 @@ useEffect(() => {
                       safeOnChange(createSingleSelectEvent(opt.value));
                       setDropdownOpen(false);
                       setSearch("");
+                      onSearch("");
                     }}
                   >
                     <div className="text-sm text-gray-800">{opt.label}</div>
@@ -518,7 +607,7 @@ useEffect(() => {
           onChange={safeOnChange}
           onBlur={onBlur}
           autoComplete="off"
-          className={`border h-[44px] w-full rounded-md px-3 py-1 mt-[6px] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
+          className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 py-1 mt-0 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
             }`}
         />
       ) : type === "text" ? (
@@ -532,18 +621,18 @@ useEffect(() => {
             disabled={disabled}
             onBlur={onBlur}
             autoComplete="off"
-            className={`box-border border h-[44px] w-full rounded-md ${leadingElement ? "pl-10" : "pl-3"} ${trailingElement ? "pr-10" : "pr-3"} mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+            className={`box-border border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] ${leadingElement ? "pl-10" : "pl-3"} ${trailingElement ? "pr-10" : "pr-3"} mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
             placeholder={ placeholder || `Enter ${label}` }
           />
           {(leadingElement || trailingElement) && (
             <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 pointer-events-none">
               {leadingElement ? (
-                <div className="flex items-center pointer-events-auto h-full mt-[6px] p-2">
+                <div className="flex items-center pointer-events-auto h-full mt-0 p-2">
                   {leadingElement}
                 </div>
               ) : <div />} 
               {trailingElement ? (
-                <div className="flex items-center pointer-events-auto h-full mt-[6px] p-2">
+                <div className="flex items-center pointer-events-auto h-full mt-0 p-2">
                   {trailingElement}
                 </div>
               ) : <div />}
@@ -551,7 +640,7 @@ useEffect(() => {
           )}
         </div>
         ) : type === "contact" ? (
-          <div className="relative mt-[6px] w-full">
+          <div className="relative mt-0 w-full">
             {/* Custom Phone Input with Country Dropdown */}
             {(() => {
               // include flag on defaultCountry so selectedCountry.flag is always available
@@ -571,7 +660,7 @@ useEffect(() => {
                     </button>
                     {/* Dropdown List */}
                     {dropdownOpen && (
-                      <div style={dropdownProperties} className="fixed bottom-[15%] h-[300px] overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75">
+                  <div style={dropdownProperties} className="fixed bottom-[15%] h-[300px] overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75">
                         <ul className="py-2 text-sm text-gray-700">
                           {countries.map((country:{ name?: string; code?: string; flag?: string } | undefined,index) => (
                             <li key={index}>
@@ -601,7 +690,7 @@ useEffect(() => {
                         type="tel"
                         id="phone-input"
                         placeholder={placeholder || "Enter phone number"}
-                        className="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-e-lg outline-none border border-gray-300"
+                        className="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-e-lg outline-none border border-gray-300 shadow-[0px_1px_2px_0px_#0A0D120D]"
                         value={phone}
                         onChange={handlePhoneChange}
                         disabled={disabled}
@@ -616,7 +705,21 @@ useEffect(() => {
               );
             })()}
           </div>
-) : type === "date" ? (
+      ) : type === "dateChange" ? (
+        <DateRangePicker
+          value={typeof value === 'string' ? value : String(value ?? '')}
+          name={name}
+          id={id}
+          disabled={disabled}
+          error={error}
+          placeholder={placeholder}
+          showBorder={showBorder}
+          onChange={(e) => {
+            // DateRangePicker emits { target: { value, name } }
+            safeOnChange(e as any);
+          }}
+        />
+      ) : type === "date" ? (
         <input
           id={id ?? name}
           name={name}
@@ -625,7 +728,7 @@ useEffect(() => {
           onChange={safeOnChange}
           disabled={disabled}
           onBlur={onBlur}
-          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+          className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
           placeholder={`Enter ${label}`}
         />
       ): type === "number" ? (
@@ -640,7 +743,7 @@ useEffect(() => {
             onChange={safeOnChange}
             disabled={disabled}
             onBlur={onBlur}
-            className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+            className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
             placeholder={`Enter ${label}`}
             maxLength={maxLength}
           />
@@ -652,7 +755,7 @@ useEffect(() => {
           value={value ?? ""}
           onChange={safeOnChange}
           disabled={disabled}
-          className={`border w-full rounded-md px-[14px] py-[10px] mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+          className={`border w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-[14px] py-[10px] mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
           placeholder={placeholder || `Enter ${label}`}
           cols={textareaCols}
           rows={textareaRows}

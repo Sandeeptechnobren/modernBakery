@@ -29,6 +29,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 interface CategoryOption {
   value: string;
   label: string;
+  [key: string]: unknown;
 }
 
 interface CustomerSubCategoryFormValues {

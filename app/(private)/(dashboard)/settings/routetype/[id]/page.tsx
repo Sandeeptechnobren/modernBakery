@@ -215,9 +215,9 @@ const { showSnackbar } = useSnackbar();
                   formik.errors.route_type_name
                 }
               />
-              <div className="text-xs text-red-500">
+              {/* <div className="text-xs text-red-500">
                 {formik.touched.route_type_name && formik.errors.route_type_name}
-              </div>
+              </div> */}
               </div>
               {/* Status */}
               <InputFields

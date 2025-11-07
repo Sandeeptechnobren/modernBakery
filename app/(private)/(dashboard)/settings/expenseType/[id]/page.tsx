@@ -10,21 +10,21 @@ import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import Loading from "@/app/components/Loading";
-import { addExpenseType, getExpenseTypeById, updateExpenseType } from "@/app/services/allApi";
+import { addExpenseType, getExpenseTypeByUUID, updateExpenseType } from "@/app/services/allApi";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { genearateCode, saveFinalCode } from "@/app/services/allApi";
 
 const ExpenseTypeSchema = Yup.object().shape({
-  expense_type_code: Yup.string().required("Expense Type Code is required"),
-  expense_name: Yup.string().required("Expense name is required").max(100),
-  expense_status: Yup.string().required("Status is required").oneOf(["1", "0"], "Invalid status"),
+  // osa_code: Yup.string().required("Expense Type Code is required"),
+  name: Yup.string().required("Expense name is required").max(100),
+  status: Yup.string().required("Status is required").oneOf(["true", "false"], "Invalid status"),
 });
 
 type ExpenseTypeFormValues = {
-  expense_type_code: string;
-  expense_name: string;
-  expense_status: string;
+  osa_code: string;
+  name: string;
+  status: string;
 };
 
 export default function AddEditExpenseType() {
@@ -32,9 +32,9 @@ export default function AddEditExpenseType() {
   const router = useRouter();
   const params = useParams();
   const [initialValues, setInitialValues] = useState<ExpenseTypeFormValues>({
-    expense_type_code: "",
-    expense_name: "",
-    expense_status: "1",
+    osa_code: "",
+    name: "",
+    status: "true",
   });
   const [isOpen, setIsOpen] = useState(false);
   const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
@@ -44,80 +44,90 @@ export default function AddEditExpenseType() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (params?.id && params.id !== "add") {
-      setIsEditMode(true);
-      setLoading(true);
-      (async () => {
-        try {
-          const res = await getExpenseTypeById(String(params.id));
-          if (res?.data) {
-            setInitialValues({
-              expense_type_code: res.data.expense_type_code || "",
-              expense_name: res.data.expense_type_name || "",
-              expense_status: String(res.data.expense_status ?? "1"),
-            });
-          }
-        } catch (error) {
-          console.error("Failed to fetch expense type", error);
-        } finally {
-          setLoading(false);
-        }
-      })();
-    } else if (!codeGeneratedRef.current) {
-      codeGeneratedRef.current = true;
-      (async () => {
-        const res = await genearateCode({ model_name: "expense_type" });
-        if (res?.code) {
-          setCode(res.code);
-          setInitialValues((prev) => ({ ...prev, expense_type_code: res.code }));
-        }
-        if (res?.prefix) {
-          setPrefix(res.prefix);
-        } else if (res?.code) {
-          // fallback: extract prefix from code if possible
-          const match = res.prefix;
-          if (match) setPrefix(prefix);
-        }
-      })();
-    }
-  }, [params?.id]);
+useEffect(() => {
+  if (params?.id && params.id !== "add") {
+    setIsEditMode(true);
+    setLoading(true);
+    (async () => {
+      try {
+        const res = await getExpenseTypeByUUID(String(params.id));
+       if (res?.data) {
+  setInitialValues({
+    osa_code: res.data.osa_code || "",
+    name: res.data.name || "",
+    status:
+      res.data.status === true ||
+      res.data.status === 1 ||
+      res.data.status === "1"
+        ? "true"
+        : "false",
+        
+  });
+  setCode(res.data.osa_code || "");
+}
 
-  const handleSubmit = async (
-    values: ExpenseTypeFormValues,
-    { setSubmitting }: FormikHelpers<ExpenseTypeFormValues>
-  ) => {
-    const payload = {
-      expense_type_code: values.expense_type_code,
-      expense_type_name: values.expense_name,
-      expense_type_status: Number(values.expense_status),
-    };
-    try {
-      let res;
-      if (isEditMode && params?.id !== "add") {
-        res = await updateExpenseType(String(params.id), payload);
-      } else {
-        res = await addExpenseType(payload);
-        try {
-          await saveFinalCode({ reserved_code: values.expense_type_code, model_name: "expense_type" });
-        } catch (e) {}
+      } catch (error) {
+        console.error("Failed to fetch expense type", error);
+      } finally {
+        setLoading(false);
       }
-      if (res?.error) {
-        showSnackbar(res.data?.message || "Failed to submit form", "error");
-      } else {
-        showSnackbar(
-          res.message || (isEditMode ? "Expense Type Updated Successfully" : "Expense Type Created Successfully"),
-          "success"
-        );
-        router.push("/settings/expenseType");
+    })();
+  } else if (!codeGeneratedRef.current) {
+    codeGeneratedRef.current = true;
+    (async () => {
+      const res = await genearateCode({ model_name: "expense_type" });
+      if (res?.code) {
+        setCode(res.code);
+        setInitialValues((prev) => ({ ...prev, osa_code: res.code }));
       }
-    } catch (err) {
-      showSnackbar("Failed to submit form", "error");
-      console.error(err);
-    } finally {
-      setSubmitting(false);
-    }
+      if (res?.prefix) {
+        setPrefix(res.prefix);
+      }
+    })();
+
+
+  }
+}, [params?.id]);
+
+
+const handleSubmit = async (
+  values: ExpenseTypeFormValues,
+  { setSubmitting }: FormikHelpers<ExpenseTypeFormValues>
+) => {
+  const payload = {
+    osa_code: values.osa_code,
+    name: values.name,
+    status: values.status === "true" ? 1 : 0, // ✅ correct conversion
   };
+
+  try {
+    let res;
+    if (isEditMode && params?.id !== "add") {
+      res = await updateExpenseType(String(params.id), payload);
+    } else {
+      res = await addExpenseType(payload);
+      try {
+        await saveFinalCode({ reserved_code: values.osa_code, model_name: "expense_type" });
+      } catch (e) {}
+    }
+
+    if (res?.error) {
+      showSnackbar(res.data?.message || "Failed to submit form", "error");
+    } else {
+      showSnackbar(
+        res.message || (isEditMode ? "Expense Type Updated Successfully" : "Expense Type Created Successfully"),
+        "success"
+      );
+      router.push("/settings/expenseType");
+    }
+  } catch (err) {
+    showSnackbar("Failed to submit form", "error");
+    console.error(err);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   if (isEditMode && loading) {
     return (
@@ -158,11 +168,11 @@ export default function AddEditExpenseType() {
                     <InputFields
                       required
                       label="Expense Type Code"
-                      name="expense_type_code"
-                      value={values.expense_type_code}
+                      name="osa_code"
+                      value={values.osa_code}
                       onChange={(e) => setFieldValue("expense_type_code", e.target.value)}
                       disabled={codeMode === 'auto'}
-                      error={touched?.expense_type_code && errors?.expense_type_code}
+                      error={touched?.osa_code && errors?.osa_code}
                     />
                     {!isEditMode && (
                       <>
@@ -194,31 +204,35 @@ export default function AddEditExpenseType() {
                     <InputFields
                       required
                       label="Expense Name"
-                      value={values.expense_name}
-                      onChange={(e) => setFieldValue("expense_name", e.target.value)}
+                      value={values.name}
+                      onChange={(e) => setFieldValue("name", e.target.value)}
+                      name="name"
+                      type="text"
+                      error={errors?.name && touched?.name ? errors.name : false}
                     />
-                    <ErrorMessage
-                      name="expense_name"
+                    {/* <ErrorMessage
+                      name="name"
                       component="span"
                       className="text-xs text-red-500"
-                    />
+                    /> */}
                   </div>
+
                   <div>
                     <InputFields
                       required
                       label="Status"
-                      name="expense_status"
-                      value={values.expense_status}
+                      name="status"
+                      value={values.status}
                       options={[
-                        { value: "1", label: "Active" },
-                        { value: "0", label: "Inactive" },
-                      ]}
-                      onChange={(e) => setFieldValue("expense_status", e.target.value)}
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+]}
+onChange={(e) => setFieldValue("status", e.target.value)}
                       type="radio"
-                      error={errors?.expense_status && touched?.expense_status ? errors.expense_status : false}
+                      // error={errors?.status && touched?.status ? errors.status : false}
                     />
                     <ErrorMessage
-                      name="expense_status"
+                      name="status"
                       component="span"
                       className="text-xs text-red-500"
                     />

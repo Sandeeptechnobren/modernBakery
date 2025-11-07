@@ -509,7 +509,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     value: String(c.id ?? ''),
     label: c.osa_code && c.outlet_name ? `${c.osa_code} - ${c.outlet_name}` : (c.outlet_name ?? '')
   }));
-  console.log("agent", agentCustomerOptions)
 
   const shelvesOptions = (Array.isArray(shelves) ? shelves : []).map((c: ShelvesList) => ({
     value: String(c.id ?? ''),

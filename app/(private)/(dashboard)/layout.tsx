@@ -4,11 +4,12 @@ import DashboardLayout0 from "./layout0";
 import DashboardLayout1 from "./layout1";
 import { useEffect, useState } from "react";
 import { isVerify } from "@/app/services/allApi";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Loading from "@/app/components/Loading";
 import { ThemeProvider, useTheme } from "./contexts";
 import usePermissionManager from "@/app/components/contexts/usePermission";
 import { PermissionProvider } from "@/app/components/contexts/permissionContext";
+import { a } from "framer-motion/client";
 
 type Role = {
     id: number;
@@ -89,7 +90,8 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const { theme } = useTheme();
-    const { preload } = usePermissionManager();
+    const pathname = usePathname();
+    const { preload, allowedPaths } = usePermissionManager();
 
     useEffect(() => {
         async function verifyUser(){
@@ -107,6 +109,30 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
         }
         verifyUser();
     }, [preload]);
+
+    useEffect(() => {
+        if (!loading) {
+            const normalize = (p: string) => (p.startsWith("/") ? p : `/${p}`);
+            const current = normalize(pathname || "");
+
+            let isAllowed = false;
+            if (allowedPaths) {
+                const entries = Array.isArray(allowedPaths)
+                    ? allowedPaths
+                    : Array.from(allowedPaths);
+                isAllowed = entries.some((ap) => {
+                    const allowed = normalize(ap);
+                    // allow exact match or allowed path being a prefix of the current pathname
+                    return current === allowed || current.startsWith(allowed);
+                });
+            }
+
+            if (!isAllowed) {
+                router.replace("/");
+                console.error("You are not allowed to access this page.");
+            }
+        }
+    }, [allowedPaths, pathname, loading, router]);
 
     return loading ? <Loading /> :(
         <>

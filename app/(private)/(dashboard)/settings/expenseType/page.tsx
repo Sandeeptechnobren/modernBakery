@@ -29,45 +29,45 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "expense_type_code", label: "Expense Type Code",render: (row: TableDataType) => (
+  { key: "osa_code", label: "Expense Type Code",render: (row: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.expense_type_code}
+                {row.osa_code}
             </span>
         ), },
-  { key: "expense_type_name", label: "Expense Type Name" },
+  { key: "name", label: "Expense Type Name" },
   // { key: "created_user", label: "Created User" },
   // { key: "updated_user", label: "Updated User" },
   // { key: "created_date", label: "Created Date" },
 
   //   { key: "expense_type_status", label: "Status" },
-  {
-    key: "expense_type_status",
-    label: "Status",
-    render: (row: TableDataType) => (
-      <div className="flex items-center">
-        {Number(row.expense_type_status) === 1 ? (
-          <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-            Active
-          </span>
-        ) : (
-          <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-            In Active
-          </span>
-        )}
-      </div>
-    ),
-  },
+{
+  key: "status",
+  label: "Status",
+  render: (row: TableDataType) => (
+    <div className="flex items-center">
+      {row.status ? (
+        <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+          Active
+        </span>
+      ) : (
+        <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+          Inactive
+        </span>
+      )}
+    </div>
+  ),
+}
 ];
 
 export default function Expensetype() {
   interface expenseTypeItem {
     id?: number | string;
-    expense_type_code?: string;
-    expense_type_name?: string;
+    osa_code?: string;
+    name?: string;
     // created_user?: string;
     // updated_user?: string;
     created_date?: string;
-    expense_type_status?: string;
+    status?: string;
   }
 
   const { setLoading } = useLoading();
@@ -179,7 +179,7 @@ export default function Expensetype() {
                 onClick: (data: object) => {
                   const row = data as TableRow;
                 router.push(
-                    `/settings/expenseType/${row.id}`
+                    `/settings/expenseType/${row.uuid}`
                   );
               },
                 },

@@ -2,14 +2,13 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import * as yup from "yup";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import Loading from "@/app/components/Loading";
-import { useSearchParams } from "next/navigation";
 import {
   regionList,
   getArea,
@@ -20,83 +19,31 @@ import {
   getRouteVisitDetails,
   subRegionList,
   agentCustomerList,
+  companyList,
 } from "@/app/services/allApi";
 import Table from "./toggleTable";
 import StepperForm, {
   useStepperForm,
   StepperStep,
 } from "@/app/components/stepperForm";
-import ContainerCard from "@/app/components/containerCard";
 
-// Types for customer data
+// Types for customer schedule
 type CustomerSchedule = {
   customer_id: number;
   days: string[];
 };
 
-type CustomerItem = {
-  id: number;
-  osa_code: string;
-  owner_name: string;
-};
-
-type CommonData = {
-  from_date: string | null;
-  to_date: string | null;
-  customer_type: string | null;
-  status: string | null;
-};
-
-type SkeletonState = {
-  route: boolean;
-  region: boolean;
-  area: boolean;
-  warehouse: boolean;
-};
-
-type ApiResponse<T> = {
-  data?: T;
-  error?: boolean;
-  message?: string;
-};
-
-type RouteVisitPayload = {
-  customer_type: number;
-  customers: Array<{
-    customer_id: number;
-    days: string[];
-    from_date: string | null;
-    to_date: string | null;
-    status: number;
-  }>;
-};
-
 export default function AddEditRouteVisit() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { showSnackbar } = useSnackbar();
   const params = useParams();
   const visitId = params?.id as string | undefined;
   const isEditMode = !!(visitId && visitId !== "add");
-  const [skeleton, setSkeleton] = useState<SkeletonState>({
-    route: false,
-    region: false,
-    area: false,
-    warehouse: false,
-  });
 
-  const [commonData, setCommonData] = useState<CommonData>({
-    from_date: "",
-    to_date: "",
-    customer_type: "",
-    status: "",
-  });
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Commented out dropdown options since they're no longer needed in payload
-  /*
   const [regionOptions, setRegionOptions] = useState<
     { value: string; label: string }[]
   >([]);
@@ -109,129 +56,249 @@ export default function AddEditRouteVisit() {
   const [routeOptions, setRouteOptions] = useState<
     { value: string; label: string }[]
   >([]);
-  */
-  const [customers, setCustomers] = useState<CustomerItem[]>([]);
+  const [companyOptions, setCompanyOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [customerSchedules, setCustomerSchedules] = useState<
     CustomerSchedule[]
   >([]);
 
-  useEffect(() => {
-    const from_date = searchParams.get("from_date");
-    const to_date = searchParams.get("to_date");
-    const customer_type = searchParams.get("customer_type");
-    const status = searchParams.get("status");
+  const [selectedCustomerType, setSelectedCustomerType] = useState<string>();
 
-    const urlData: CommonData = {
-      from_date: from_date && from_date.toString(),
-      to_date: to_date && to_date.toString(),
-      customer_type: customer_type && customer_type.toString(),
-      status: status && status.toString(),
-    };
+  const [skeleton, setSkeleton] = useState({
+    region: false,
+    route: false,
+    warehouse: false,
+    area: false,
+    company: false,
+  });
 
-    setCommonData(urlData);
-
-    commonData &&
-      urlData.customer_type &&
-      setSelectedCustomerType(urlData.customer_type);
-  }, [searchParams]);
-
-  const [selectedCustomerType, setSelectedCustomerType] = useState<string>("");
-
-  // Commented out form state since region/area/warehouse/route are no longer needed
-  /*
   const [form, setForm] = useState({
+    salesman_type: "1",
     region: [] as string[],
     area: [] as string[],
     warehouse: [] as string[],
     route: [] as string[],
+    company: [] as string[],
     days: [] as string[],
+    from_date: "",
+    to_date: "",
+    status: "1",
   });
-  */
 
-  // ✅ Updated validation schema - removed region/area/warehouse/route validation
+  // Stepper setup
+  const steps: StepperStep[] = [
+    { id: 1, label: "Route Details" },
+    { id: 2, label: "Customer Schedule" },
+  ];
+
+  const {
+    currentStep,
+    nextStep,
+    prevStep,
+    markStepCompleted,
+    isStepCompleted,
+    isLastStep,
+  } = useStepperForm(steps.length);
+
+  // ✅ Validation schema for multi-selects
   const validationSchema = yup.object().shape({
-    // No fields required since we only need customer schedules
+    salesman_type: yup.string().required("Customer type is required"),
+    region: yup.array().min(1, "At least one region is required"),
+    area: yup.array().min(1, "At least one area is required"),
+    warehouse: yup.array().min(1, "At least one warehouse is required"),
+    route: yup.array().min(1, "At least one route is required"),
+    company: yup.array().min(1, "At least one company is required"),
+    days: yup.array().min(1, "At least one day is required"),
+    from_date: yup.string().required("From date is required"),
+    to_date: yup
+      .string()
+      .required("To date is required")
+      .test(
+        "is-after-or-equal",
+        "To Date must be after or equal to From Date",
+        function (value) {
+          const { from_date } = this.parent;
+          if (!from_date || !value) return true;
+          return new Date(value) >= new Date(from_date);
+        }
+      ),
+    status: yup.string().required("Status is required"),
   });
 
-  // ✅ Fetch dropdowns - commented out since no longer needed
-  /*
+  // Step-specific validation schemas
+  const stepSchemas = [
+    // Step 1: Route Details validation
+    yup.object().shape({
+      region: validationSchema.fields.region,
+      area: validationSchema.fields.area,
+      warehouse: validationSchema.fields.warehouse,
+      route: validationSchema.fields.route,
+      company: validationSchema.fields.company,
+      from_date: validationSchema.fields.from_date,
+      to_date: validationSchema.fields.to_date,
+      status: validationSchema.fields.status,
+    }),
+    // Step 2: Customer Schedule validation
+    yup.object().shape({
+      salesman_type: validationSchema.fields.salesman_type,
+    }),
+  ];
+
+  // ✅ Fetch dropdowns
   const loadDropdownData = async () => {
     try {
-      const regions = await regionList();
-
-      setRegionOptions(
-        regions?.data?.map((r: any) => ({
-          value: String(r.id),
-          label: r.region_name || r.name,
+      !isEditMode && setLoading(true);
+      // Fetch companies
+      setSkeleton({ ...skeleton, company: true });
+      const companies = await companyList();
+      setCompanyOptions(
+        companies?.data?.map((c: any) => ({
+          value: String(c.id),
+          label: c.company_name || c.name,
         })) || []
       );
+      setSkeleton({ ...skeleton, company: false });
+      !isEditMode && setLoading(false);
     } catch {
       showSnackbar("Failed to load dropdown data", "error");
     }
   };
-  */
 
-  // ✅ Load data for editing
-  // const loadVisitData = async (uuid: string) => {
-  //   setLoading(true);
-  //   try {
-  //     const res = await getRouteVisitDetails(uuid);
-  //     console.log(res);
-  //     const allVisits = res?.data || [];
-  //     const existing = allVisits.find(
-  //       (item: any) => String(item.uuid) === String(uuid)
-  //     );
+  // ✅ Load data for editing - UPDATED BASED ON API RESPONSE
+  const loadVisitData = async (uuid: string) => {
+    setLoading(true);
+    try {
+      const res = await getRouteVisitDetails(uuid);
+      console.log("API Response for edit:", res);
 
-  //     if (existing) {
-  //       // Commented out form setting since we don't need region/area/warehouse/route
-  //       /*
-  //       setForm({
-  //         region: existing.region_ids?.map(String) || [],
-  //         area: existing.area_ids?.map(String) || [],
-  //         warehouse: existing.warehouse_ids?.map(String) || [],
-  //         route: existing.route_ids?.map(String) || [],
-  //         days: existing.days || [],
-  //       });
-  //       */
+      if (res?.data) {
+        const existing = res.data;
 
-  //       // If there are existing customer schedules, load them
-  //       if (existing.customers && Array.isArray(existing.customers)) {
-  //         setCustomerSchedules(
-  //           existing.customers.map((customer: any) => ({
-  //             customer_id: customer.customer_id,
-  //             days: customer.days || [],
-  //           }))
-  //         );
-  //       }
-  //     } else {
-  //       showSnackbar("Route visit not found", "error");
-  //     }
-  //   } catch {
-  //     showSnackbar("Failed to fetch route visit details", "error");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+        // Format dates from "2025-10-31T00:00:00.000000Z" to "2025-10-31"
+        const formatDate = (dateString: string) => {
+          if (!dateString) return "";
+          return dateString.split("T")[0];
+        };
+
+        // ✅ FIX: Properly handle status conversion
+        const backendStatus = existing.status;
+        console.log(
+          "Backend status:",
+          backendStatus,
+          "Type:",
+          typeof backendStatus
+        );
+
+        // Convert status to string for the form, but ensure it matches your radio options
+        const statusValue = backendStatus === 0 ? "0" : "1";
+
+        // Set form values based on API response
+        setForm({
+          salesman_type: existing.customer_type || "1",
+          region: existing.region?.map((r: any) => String(r.id)) || [],
+          area: existing.area?.map((a: any) => String(a.id)) || [],
+          warehouse: existing.warehouse?.map((w: any) => String(w.id)) || [],
+          route: existing.route?.map((r: any) => String(r.id)) || [],
+          company: existing.companies?.map((c: any) => String(c.id)) || [],
+          days: existing.days || [],
+          from_date: formatDate(existing.from_date),
+          to_date: formatDate(existing.to_date),
+          status: statusValue, // ✅ Use the properly converted value
+        });
+
+        // Set customer type for fetching customers
+        setSelectedCustomerType(existing.customer_type || "1");
+
+        // Create customer schedule from the API response
+        if (existing.customer && existing.customer.id) {
+          const schedule: CustomerSchedule = {
+            customer_id: existing.customer.id,
+            days: existing.days || [],
+          };
+          setCustomerSchedules([schedule]);
+        }
+
+        console.log("Form set with values:", {
+          salesman_type: existing.customer_type,
+          region: existing.region?.map((r: any) => String(r.id)),
+          area: existing.area?.map((a: any) => String(a.id)),
+          warehouse: existing.warehouse?.map((w: any) => String(w.id)),
+          route: existing.route?.map((r: any) => String(r.id)),
+          company: existing.companies?.map((c: any) => String(c.id)),
+          days: existing.days,
+          from_date: formatDate(existing.from_date),
+          to_date: formatDate(existing.to_date),
+          status: statusValue, // ✅ Log the correct value
+        });
+      } else {
+        showSnackbar("Route visit not found", "error");
+      }
+    } catch (error) {
+      console.error("Error loading visit data:", error);
+      showSnackbar("Failed to fetch route visit details", "error");
+    } finally {
+      // setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchCustomers = async () => {
-      let res: ApiResponse<CustomerItem[]> | null = null;
-      if (selectedCustomerType == "1") {
-        res = await agentCustomerList();
-      } else {
-        res = await agentCustomerList();
-      }
+      try {
+        let res = null;
+        res = await agentCustomerList({ type: form.salesman_type });
 
-      if (res?.data) {
-        setCustomers(res.data);
+        console.log("Fetched customers:", res);
+        setCustomers(res.data || []);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+        setCustomers([]);
       }
     };
 
-    fetchCustomers();
-  }, [selectedCustomerType]);
+    if (form.salesman_type) {
+      fetchCustomers();
+    }
+  }, [form.salesman_type]);
 
-  // Commented out region/area/warehouse/route dependency effects since no longer needed
-  /*
+  // ✅ When Company changes → Fetch Regions
+  useEffect(() => {
+    if (!form.company.length) {
+      setRegionOptions([]);
+      setForm((prev) => ({
+        ...prev,
+        region: [],
+        area: [],
+        warehouse: [],
+        route: [],
+      }));
+      return;
+    }
+
+    const fetchRegions = async () => {
+      try {
+        setSkeleton({ ...skeleton, region: true });
+        // Pass company IDs as parameters to regionList
+        const regions = await regionList({
+          company_id: form.company.join(","),
+        });
+        setRegionOptions(
+          regions?.data?.map((r: any) => ({
+            value: String(r.id),
+            label: r.region_name || r.name,
+          })) || []
+        );
+        setSkeleton({ ...skeleton, region: false });
+      } catch (err) {
+        console.error("Failed to fetch region list:", err);
+        setRegionOptions([]);
+      }
+    };
+
+    fetchRegions();
+  }, [form.company]);
+
   // 1️⃣ When Region changes → Fetch Areas
   useEffect(() => {
     if (!form.region.length) {
@@ -243,7 +310,7 @@ export default function AddEditRouteVisit() {
     const fetchAreas = async () => {
       try {
         setSkeleton({ ...skeleton, area: true });
-        const res = await subRegionList({ region_id: String(form.region[0]) });
+        const res = await subRegionList({ region_id: form.region.join(",") });
         const areaList = res?.data?.data || res?.data || [];
 
         setAreaOptions(
@@ -273,7 +340,7 @@ export default function AddEditRouteVisit() {
     const fetchWarehouses = async () => {
       try {
         setSkeleton({ ...skeleton, warehouse: true });
-        const res = await warehouseList({ area_id: String(form.area[0]) });
+        const res = await warehouseList({ area_id: form.area.join(",") });
         const warehousesList = res?.data?.data || res?.data || [];
 
         setWarehouseOptions(
@@ -294,6 +361,7 @@ export default function AddEditRouteVisit() {
 
   // 3️⃣ When Warehouse changes → Fetch Routes
   useEffect(() => {
+    // isEditMode && setLoading(true);
     if (!form.warehouse.length) {
       setRouteOptions([]);
       setForm((prev) => ({ ...prev, route: [] }));
@@ -303,9 +371,7 @@ export default function AddEditRouteVisit() {
     const fetchRoutes = async () => {
       try {
         setSkeleton({ ...skeleton, route: true });
-        const res = await routeList({
-          warehouse_id: String(form.warehouse[0]),
-        });
+        const res = await routeList({ warehouse_id: form.warehouse.join(",") });
         console.log(res);
         const routeListData = res?.data?.data || res?.data || [];
 
@@ -320,62 +386,105 @@ export default function AddEditRouteVisit() {
         console.error("Failed to fetch route list:", err);
         setRouteOptions([]);
       }
+
+      isEditMode && setLoading(false);
     };
 
     fetchRoutes();
   }, [form.warehouse]);
-  */
 
-  // useEffect(() => {
-  //   // loadDropdownData(); // Commented out since no longer needed
-  //   if (isEditMode && visitId == "add") loadVisitData(visitId);
-  // }, [isEditMode, visitId]);
+  useEffect(() => {
+    loadDropdownData();
+    if (isEditMode && visitId) {
+      console.log("Loading edit data for ID:", visitId);
+      loadVisitData(visitId);
+    }
+  }, [isEditMode, visitId]);
 
-  // ✅ Single select handler - commented out since no longer needed
-  /*
-  const handleSingleSelectChange = (field: string, value: string) => {
-    console.log(field);
-    if (field == "customer_type") {
-      setSelectedCustomerType(value);
-      setForm((prev) => ({ ...prev, [field]: value }));
-    } else if (["region", "area", "warehouse", "route"].includes(field)) {
-      // For array fields, store as single element array
+  // ✅ Multi-select handler
+  const handleMultiSelectChange = (field: string, value: string[]) => {
+    if (field == "salesman_type") {
+      console.log(value);
+      setSelectedCustomerType(value[0] || "");
+      setForm((prev) => ({ ...prev, [field]: value[0] || "" }));
+    } else {
       setForm((prev) => ({
         ...prev,
-        [field]: value ? [value] : [],
+        [field]: value,
         // Reset dependent fields when parent changes
+        ...(field === "company" && {
+          region: [],
+          area: [],
+          warehouse: [],
+          route: [],
+        }),
         ...(field === "region" && { area: [], warehouse: [], route: [] }),
         ...(field === "area" && { warehouse: [], route: [] }),
         ...(field === "warehouse" && { route: [] }),
       }));
-    } else {
-      setForm((prev) => ({ ...prev, [field]: value }));
     }
-
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
-  */
 
-  // ✅ Handle customer schedule updates from Table component
-  const handleCustomerScheduleUpdate = useCallback(
-    (schedules: CustomerSchedule[]) => {
-      setCustomerSchedules(schedules);
-    },
-    []
-  );
+  // ✅ Step navigation
+  const handleNext = async () => {
+    try {
+      const schema = stepSchemas[currentStep - 1];
+      await schema.validate(form, { abortEarly: false });
+      markStepCompleted(currentStep);
+      nextStep();
+      setErrors({});
+    } catch (err) {
+      if (err instanceof yup.ValidationError) {
+        const formErrors: Record<string, string> = {};
+        err.inner.forEach((e) => {
+          if (e.path) formErrors[e.path] = e.message;
+        });
+        setErrors(formErrors);
+      }
+    }
+  };
+
+  // ✅ Convert rowStates object to array format
+  const convertRowStatesToSchedules = (rowStates: Record<number, any>) => {
+    return Object.entries(rowStates)
+      .map(([customerId, daysObj]) => {
+        const days = Object.entries(daysObj)
+          .filter(([_, isSelected]) => isSelected)
+          .map(([day]) => day);
+        return {
+          customer_id: Number(customerId),
+          days,
+        };
+      })
+      .filter((schedule) => schedule.days.length > 0);
+  };
 
   // ✅ Handle submit
   const handleSubmit = async () => {
     try {
-      // Validate route details - commented out since no validation needed
-      // await validationSchema.validate(form, { abortEarly: false });
+      if (form.from_date && form.to_date) {
+        const fromDate = new Date(form.from_date);
+        const toDate = new Date(form.to_date);
+        if (toDate < fromDate) {
+          setErrors({
+            ...errors,
+            to_date: "To Date must be after or equal to From Date",
+          });
+          return;
+        }
+      }
 
-      // Validate that at least one customer has days selected
-      const hasValidSchedules = customerSchedules.some(
-        (schedule) => schedule.days && schedule.days.length > 0
-      );
+      console.log("Form data:", form);
+      console.log("Raw customerSchedules (rowStates):", customerSchedules);
 
-      if (!hasValidSchedules) {
+      // ✅ Convert your raw object to expected format
+      const formattedSchedules = convertRowStatesToSchedules(customerSchedules);
+
+      console.log("✅ Converted customer schedules:", formattedSchedules);
+
+      // Validate if at least one customer has days
+      if (formattedSchedules.length === 0) {
         showSnackbar("Please select days for at least one customer", "error");
         return;
       }
@@ -383,34 +492,40 @@ export default function AddEditRouteVisit() {
       setErrors({});
       setSubmitting(true);
 
-      // ✅ Build payload in the required format (updated to match your new payload structure)
-      const payload: RouteVisitPayload = {
-        customer_type: Number(commonData.customer_type),
-        customers: customerSchedules
-          .filter((schedule) => schedule.days && schedule.days.length > 0)
-          .map((schedule) => ({
-            customer_id: Number(schedule.customer_id),
-            days: schedule.days,
-            from_date: commonData.from_date,
-            to_date: commonData.to_date,
-            status: Number(commonData.status),
-          })),
+      // ✅ Build payload in correct format
+      const payload = {
+        customer_type: Number(form.salesman_type),
+        customers: formattedSchedules.map((schedule) => ({
+          customer_id: Number(schedule.customer_id),
+          company_id: form.company.join(","),
+          region: form.region.join(","),
+          area: form.area.join(","),
+          warehouse: form.warehouse.join(","),
+          route: form.route.join(","),
+          days: schedule.days.join(","), // ✅ Join days
+          from_date: form.from_date,
+          to_date: form.to_date,
+          status: Number(form.status),
+        })),
       };
 
-      console.log(customerSchedules);
-      console.log("Submitting payload:", payload);
+      console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
-      let res: ApiResponse<unknown>;
-      if (isEditMode) {
+      let res;
+      if (isEditMode && visitId) {
+        console.log("Updating existing route visit...");
         res = await updateRouteVisitDetails(payload);
       } else {
+        console.log("Creating new route visit...");
         res = await saveRouteVisit(payload);
       }
 
-      console.log(res);
-
       if (res?.error) {
-        showSnackbar("Failed to save route visit");
+        console.error("API Error:", res.error);
+        showSnackbar(
+          res?.data?.message || "Failed to save route visit",
+          "error"
+        );
       } else {
         showSnackbar(
           isEditMode
@@ -420,18 +535,220 @@ export default function AddEditRouteVisit() {
         );
         router.push("/routeVisit");
       }
-    } catch (err: unknown) {
+    } catch (err) {
+      console.error("Error in handleSubmit:", err);
+
       if (err instanceof yup.ValidationError) {
         const formErrors: Record<string, string> = {};
         err.inner.forEach((e) => {
           if (e.path) formErrors[e.path] = e.message;
         });
         setErrors(formErrors);
+        showSnackbar("Please fix the form errors", "error");
       } else {
         showSnackbar("Failed to submit form", "error");
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ✅ Render step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+            <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* From Date */}
+              <div>
+                <InputFields
+                  required
+                  label="From Date"
+                  type="date"
+                  value={form.from_date.slice(0, 10)}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, from_date: e.target.value }))
+                  }
+                  error={errors.from_date}
+                />
+              </div>
+
+              {/* To Date */}
+              <div>
+                <InputFields
+                  required
+                  label="To Date"
+                  type="date"
+                  value={form.to_date.slice(0, 10)}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, to_date: e.target.value }))
+                  }
+                  error={errors.to_date}
+                />
+              </div>
+
+              {/* Company - Multi Select */}
+              <div>
+                <InputFields
+                  required
+                  label="Company"
+                  value={form.company}
+                  onChange={(e) =>
+                    handleMultiSelectChange(
+                      "company",
+                      Array.isArray(e.target.value) ? e.target.value : []
+                    )
+                  }
+                  showSkeleton={skeleton.company}
+                  options={companyOptions}
+                  isSingle={false}
+                  error={errors.company}
+                />
+              </div>
+
+              {/* Region - Multi Select */}
+              <div>
+                <InputFields
+                  required
+                  disabled={form.company.length === 0}
+                  label="Region"
+                  value={form.region}
+                  onChange={(e) =>
+                    handleMultiSelectChange(
+                      "region",
+                      Array.isArray(e.target.value) ? e.target.value : []
+                    )
+                  }
+                  options={regionOptions}
+                  showSkeleton={skeleton.region}
+                  isSingle={false}
+                  error={errors.region}
+                />
+              </div>
+
+              {/* Area - Multi Select */}
+              <div>
+                <InputFields
+                  required
+                  disabled={form.region.length === 0}
+                  label="Area"
+                  value={form.area}
+                  onChange={(e) =>
+                    handleMultiSelectChange(
+                      "area",
+                      Array.isArray(e.target.value) ? e.target.value : []
+                    )
+                  }
+                  showSkeleton={skeleton.area}
+                  options={areaOptions}
+                  isSingle={false}
+                  error={errors.area}
+                />
+              </div>
+
+              {/* Warehouse - Multi Select */}
+              <div>
+                <InputFields
+                  required
+                  disabled={form.area.length === 0 || areaOptions.length === 0}
+                  label="Warehouse"
+                  value={form.warehouse}
+                  onChange={(e) =>
+                    handleMultiSelectChange(
+                      "warehouse",
+                      Array.isArray(e.target.value) ? e.target.value : []
+                    )
+                  }
+                  showSkeleton={skeleton.warehouse}
+                  options={warehouseOptions}
+                  isSingle={false}
+                  error={errors.warehouse}
+                />
+              </div>
+
+              {/* Route - Multi Select */}
+              <div>
+                <InputFields
+                  required
+                  disabled={form.warehouse.length === 0}
+                  label="Route"
+                  value={form.route}
+                  onChange={(e) =>
+                    handleMultiSelectChange(
+                      "route",
+                      Array.isArray(e.target.value) ? e.target.value : []
+                    )
+                  }
+                  showSkeleton={skeleton.route}
+                  options={routeOptions}
+                  isSingle={false}
+                  error={errors.route}
+                />
+              </div>
+
+              {/* Status */}
+              <div>
+                <InputFields
+                  required
+                  label="Status"
+                  type="radio"
+                  value={form.status}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, status: e.target.value }))
+                  }
+                  options={[
+                    { value: "1", label: "Active" },
+                    { value: "0", label: "Inactive" },
+                  ]}
+                  error={errors.status}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Salesman Type */}
+                <div>
+                  <InputFields
+                    required
+                    label="Salesman Type"
+                    value={form.salesman_type}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        salesman_type: e.target.value,
+                      }))
+                    }
+                    options={[
+                      { value: "1", label: "Agent Customer" },
+                      { value: "2", label: "Merchandiser" },
+                    ]}
+                    error={errors.salesman_type}
+                  />
+                </div>
+              </div>
+
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Customer Schedule
+              </h3>
+              <Table
+                customers={customers}
+                setCustomerSchedules={setCustomerSchedules}
+                initialSchedules={customerSchedules}
+                loading={loading}
+                editMode={isEditMode}
+                visitUuid={visitId} // Pass the visit ID when in edit mode
+              />
+            </div>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -444,7 +761,7 @@ export default function AddEditRouteVisit() {
   }
 
   return (
-    <>
+    <div className="pb-5">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
@@ -457,131 +774,23 @@ export default function AddEditRouteVisit() {
         </div>
       </div>
 
-      {/* Commented out Route Details Section since no longer needed */}
-      {/*
-      <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Route Details
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <InputFields
-                required
-                label="Region"
-                value={form.region[0] || ""}
-                showSkeleton={skeleton.region}
-                onChange={(e) =>
-                  handleSingleSelectChange("region", e.target.value)
-                }
-                options={regionOptions}
-                error={errors.region}
-              />
-              {errors.region && (
-                <p className="text-red-500 text-sm mt-1">{errors.region}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                disabled={form.region.length === 0}
-                label="Area"
-                value={form.area[0] || ""}
-                showSkeleton={skeleton.area}
-                onChange={(e) =>
-                  handleSingleSelectChange("area", e.target.value)
-                }
-                options={areaOptions}
-                error={errors.area}
-              />
-              {errors.area && (
-                <p className="text-red-500 text-sm mt-1">{errors.area}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                disabled={form.area.length === 0 || areaOptions.length === 0}
-                label="Warehouse"
-                value={form.warehouse[0] || ""}
-                showSkeleton={skeleton.warehouse}
-                onChange={(e) =>
-                  handleSingleSelectChange("warehouse", e.target.value)
-                }
-                options={warehouseOptions}
-                error={errors.warehouse}
-              />
-              {errors.warehouse && (
-                <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
-              )}
-            </div>
-
-            <div>
-              <InputFields
-                required
-                disabled={form.warehouse.length === 0}
-                label="Route"
-                value={form.route[0] || ""}
-                showSkeleton={skeleton.route}
-                onChange={(e) =>
-                  handleSingleSelectChange("route", e.target.value)
-                }
-                options={routeOptions}
-                error={errors.route}
-              />
-              {errors.route && (
-                <p className="text-red-500 text-sm mt-1">{errors.route}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      */}
-
-      {/* Customer Schedule Section - Only this section remains */}
-      <ContainerCard>
-        <div className="">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Customer Schedule
-          </h2>
-          <Table
-            searchQuery={{
-              customer_type: commonData.customer_type,
-              from_date: commonData.from_date,
-              to_date: commonData.to_date,
-              status: commonData.status,
-            }}
-            isEditMode={isEditMode}
-            selectedCustomerType={
-              selectedCustomerType ? selectedCustomerType : "Agent Customer"
-            }
-            customers={customers}
-            onScheduleUpdate={handleCustomerScheduleUpdate}
-            initialSchedules={customerSchedules}
-          />
-        </div>
-
-        {/* Submit Button */}
-        <div className="flex justify-end gap-3 mt-5">
-          <button
-            type="button"
-            onClick={() => router.push("/routeVisit")}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? "Submitting..." : "Submit"}
-          </button>
-        </div>
-      </ContainerCard>
-    </>
+      {/* Stepper Form */}
+      <StepperForm
+        steps={steps.map((step) => ({
+          ...step,
+          isCompleted: isStepCompleted(step.id),
+        }))}
+        currentStep={currentStep}
+        onBack={prevStep}
+        onNext={handleNext}
+        onSubmit={handleSubmit}
+        showSubmitButton={isLastStep}
+        showNextButton={!isLastStep}
+        nextButtonText="Save & Next"
+        submitButtonText={submitting ? "Submitting..." : "Submit"}
+      >
+        {renderStepContent()}
+      </StepperForm>
+    </div>
   );
 }

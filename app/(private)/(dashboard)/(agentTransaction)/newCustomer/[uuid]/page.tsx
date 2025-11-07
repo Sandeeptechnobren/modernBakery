@@ -12,15 +12,16 @@ import StepperForm, {
 } from "@/app/components/stepperForm";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import {
-    agentCustomerById,
-    editAgentCustomer,
+    
+   
     genearateCode,
-    addAgentCustomer,
+ 
     saveFinalCode,
     routeList,
     customerSubCategoryList,
     customerCategoryList,
 } from "@/app/services/allApi";
+import { addNewtCustomer,newCustomerById,editNewCustomer} from "@/app/services/agentTransaction";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import {
@@ -32,7 +33,7 @@ import {
 } from "formik";
 import { useLoading } from "@/app/services/loadingContext";
 
-interface AgentCustomerFormValues {
+interface NewCustomerFormValues {
     osa_code: string;
     name: string;
     owner_name: string;
@@ -65,12 +66,12 @@ interface AgentCustomerFormValues {
 interface contactCountry { name: string; code?: string; flag?: string; }
 
 const paymentTypeOptions = [
-    { value: "1", stringValue: "cash", label: "Cash" },
-    { value: "2", stringValue: "credit", label: "Credit" },
-    { value: "3", stringValue: "billTobill", label: "Bill To Bill" },
+    { value: "1", label: "cash" },
+    { value: "2", label: "credit" },
+    { value: "3", label: "billTobill" },
 ];
 
-export default function AddEditAgentCustomer() {
+export default function AddEditNewCustomer() {
     const {
         loading,
         warehouseOptions,
@@ -117,7 +118,7 @@ export default function AddEditAgentCustomer() {
         isLastStep,
     } = useStepperForm(steps.length);
 
-    const [initialValues, setInitialValues] = useState<AgentCustomerFormValues>(
+    const [initialValues, setInitialValues] = useState<NewCustomerFormValues>(
         {
             osa_code: "",
             name: "",
@@ -214,7 +215,7 @@ export default function AddEditAgentCustomer() {
         setLoading(true);
         if (isEditMode && agentCustomerId) {
             (async () => {
-                const res = await agentCustomerById(String(agentCustomerId));
+                const res = await newCustomerById(String(agentCustomerId));
                 const data = res?.data ?? res;
                 if (res && !res.error) {
                     setInitialValues({
@@ -256,14 +257,15 @@ export default function AddEditAgentCustomer() {
                         town: String(data.town ?? ""),
                         district: String(data.district ?? ""),
                         vat_no: data.vat_no ?? data.tin_no ?? null,
-                        payment_type:
-                            data.payment_type != null
-                                ? paymentTypeOptions.find((p) => p.label === String(data.payment_type))?.value || "1"
-                                : "",
-                        is_cash:
-                            (data.payment_type != null
-                                ? paymentTypeOptions.find((p) => p.label === String(data.payment_type))?.value || "1"
-                                : "") === "1" ? "1" : "0",
+                       payment_type:
+  data.payment_type != null
+    ? paymentTypeOptions.find(
+        (p) => p.value.toString() === String(data.payment_type)
+      )?.value || ""
+    : "",
+
+is_cash:
+  data.payment_type && String(data.payment_type) === "1" ? "1" : "0",
                         creditday:
                             data.creditday != null
                                 ? String(data.creditday)
@@ -328,7 +330,7 @@ export default function AddEditAgentCustomer() {
     const emptyToNull = (value: unknown, original: unknown) =>
         original === "" ? null : value;
 
-    const AgentCustomerSchema = Yup.object().shape({
+    const NewCustomerSchema = Yup.object().shape({
         // customer
         osa_code: Yup.string().required("OSA code is required").max(200),
         name: Yup.string().required("Name is required").max(255),
@@ -348,20 +350,23 @@ export default function AddEditAgentCustomer() {
         whatsapp_no: Yup.string()
             .nullable()
             .transform(emptyToNull)
-            .min(9, "Must be at least 9 digits")
-            .max(10, "Must be at most 10 digits"),
+            .test(
+                "whatsapp-format",
+                "Whatsapp number must be exactly 10 digits",
+                (val) => val === null || /^\d{10}$/.test(String(val))
+            ),
        
-        contact_no: Yup.string()
-            .required("Contact number is required")
-            .matches(/^[0-9]+$/, "Only numbers are allowed")
-            .min(9, "Must be at least 9 digits")
-            .max(10, "Must be at most 10 digits"),
+             contact_no: Yup.string()
+                .required("Contact number is required")
+                .matches(/^[0-9]+$/, "Only numbers are allowed")
+                .min(9, "Must be at least 9 digits")
+                .max(10, "Must be at most 10 digits"),
 
-        contact_no2: Yup.string()
-            .required("Contact number 2 is required")
-            .matches(/^[0-9]+$/, "Only numbers are allowed")
-            .min(9, "Must be at least 9 digits")
-            .max(10, "Must be at most 10 digits"),  
+               contact_no2: Yup.string()
+                .required("Contact number 2 is required")
+                .matches(/^[0-9]+$/, "Only numbers are allowed")
+                .min(9, "Must be at least 9 digits")
+                .max(10, "Must be at most 10 digits"),  
     
         // financial
         buyertype: Yup.mixed()
@@ -383,7 +388,7 @@ export default function AddEditAgentCustomer() {
                 is: (val: unknown) => String(val) === "0",
                 then: (schema) =>
                     schema.required(
-                        "Credit days is required"
+                        "Credit days is required when is_cash is 0"
                     ),
                 otherwise: (schema) => schema.nullable(),
             }),
@@ -395,7 +400,7 @@ export default function AddEditAgentCustomer() {
                 is: (val: unknown) => String(val) === "0",
                 then: (schema) =>
                     schema.required(
-                        "Credit limit is required"
+                        "Credit limit is required when is_cash is 0"
                     ),
                 otherwise: (schema) => schema.nullable(),
             }),
@@ -418,54 +423,54 @@ export default function AddEditAgentCustomer() {
     const stepSchemas = [
         // 1. Customer / basic
         Yup.object().shape({
-            osa_code: AgentCustomerSchema.fields.osa_code,
-            name: AgentCustomerSchema.fields.name,
-            owner_name: AgentCustomerSchema.fields.owner_name,
-            customer_type: AgentCustomerSchema.fields.customer_type,
-            warehouse: AgentCustomerSchema.fields.warehouse,
-            route_id: AgentCustomerSchema.fields.route_id,
+            osa_code: NewCustomerSchema.fields.osa_code,
+            name: NewCustomerSchema.fields.name,
+            owner_name: NewCustomerSchema.fields.owner_name,
+            customer_type: NewCustomerSchema.fields.customer_type,
+            warehouse: NewCustomerSchema.fields.warehouse,
+            route_id: NewCustomerSchema.fields.route_id,
         }),
 
         // 2. Location
         Yup.object().shape({
-            street: AgentCustomerSchema.fields.street,
-            landmark: AgentCustomerSchema.fields.landmark,
-            town: AgentCustomerSchema.fields.town,
-            district: AgentCustomerSchema.fields.district,
-            latitude: AgentCustomerSchema.fields.latitude,
-            longitude: AgentCustomerSchema.fields.longitude,
+            street: NewCustomerSchema.fields.street,
+            landmark: NewCustomerSchema.fields.landmark,
+            town: NewCustomerSchema.fields.town,
+            district: NewCustomerSchema.fields.district,
+            latitude: NewCustomerSchema.fields.latitude,
+            longitude: NewCustomerSchema.fields.longitude,
         }),
 
         // 3. Contact
         Yup.object().shape({
-            contact_no: AgentCustomerSchema.fields.contact_no,
-            contact_no2: AgentCustomerSchema.fields.contact_no2,
-            whatsapp_no: AgentCustomerSchema.fields.whatsapp_no,
+            contact_no: NewCustomerSchema.fields.contact_no,
+            contact_no2: NewCustomerSchema.fields.contact_no2,
+            whatsapp_no: NewCustomerSchema.fields.whatsapp_no,
         }),
 
         // 4. Financial
         Yup.object().shape({
-            buyertype: AgentCustomerSchema.fields.buyertype,
-            vat_no: AgentCustomerSchema.fields.vat_no,
-            payment_type: AgentCustomerSchema.fields.payment_type,
-            is_cash: AgentCustomerSchema.fields.is_cash,
-            creditday: AgentCustomerSchema.fields.creditday,
-            credit_limit: AgentCustomerSchema.fields.credit_limit,
+            buyertype: NewCustomerSchema.fields.buyertype,
+            vat_no: NewCustomerSchema.fields.vat_no,
+            payment_type: NewCustomerSchema.fields.payment_type,
+            is_cash: NewCustomerSchema.fields.is_cash,
+            creditday: NewCustomerSchema.fields.creditday,
+            credit_limit: NewCustomerSchema.fields.credit_limit,
         }),
 
         // 5. Additional / extras
         Yup.object().shape({
-            outlet_channel_id: AgentCustomerSchema.fields.outlet_channel_id,
-            category_id: AgentCustomerSchema.fields.category_id,
-            subcategory_id: AgentCustomerSchema.fields.subcategory_id,
-            qr_code: AgentCustomerSchema.fields.qr_code,
-            enable_promotion: AgentCustomerSchema.fields.enable_promotion,
+            outlet_channel_id: NewCustomerSchema.fields.outlet_channel_id,
+            category_id: NewCustomerSchema.fields.category_id,
+            subcategory_id: NewCustomerSchema.fields.subcategory_id,
+            qr_code: NewCustomerSchema.fields.qr_code,
+            enable_promotion: NewCustomerSchema.fields.enable_promotion,
         }),
     ];
 
     const handleNext = async (
-        values: AgentCustomerFormValues,
-        actions: FormikHelpers<AgentCustomerFormValues>
+        values: NewCustomerFormValues,
+        actions: FormikHelpers<NewCustomerFormValues>
     ) => {
         try {
             // Validate only the current step's fields
@@ -487,12 +492,12 @@ export default function AddEditAgentCustomer() {
                     err.inner.reduce(
                         (
                             acc: Partial<
-                                Record<keyof AgentCustomerFormValues, string>
+                                Record<keyof NewCustomerFormValues, string>
                             >,
                             curr
                         ) => ({
                             ...acc,
-                            [curr.path as keyof AgentCustomerFormValues]:
+                            [curr.path as keyof NewCustomerFormValues]:
                                 curr.message,
                         }),
                         {}
@@ -502,118 +507,111 @@ export default function AddEditAgentCustomer() {
         }
     };
 
-    const handleSubmit = async (
-        values: AgentCustomerFormValues,
-        actions?: Pick<
-            FormikHelpers<AgentCustomerFormValues>,
-            "setErrors" | "setTouched" | "setSubmitting"
-        >
-    ) => {
-        try {
-            await AgentCustomerSchema.validate(values, { abortEarly: false });
-            const payload = {
-                ...values,
-                is_cash: Number(values.is_cash),
-                customer_type: Number(values.customer_type),
-                route_id: Number(values.route_id),
-                buyertype: Number(values.buyertype),
-                creditday: Number(values.creditday),
-                payment_type:
-                    paymentTypeOptions.find(
-                        (option) => option.value === String(values.payment_type)
-                    )?.stringValue || "",
-                outlet_channel_id: Number(values.outlet_channel_id),
-                category_id: Number(values.category_id),
-                subcategory_id: Number(values.subcategory_id),
-                whatsapp_no:
-                    values.whatsapp_no === "" || values.whatsapp_no == null
-                        ? null
-                        : values.whatsapp_no,
-                status: 1,
-            };
-            let res;
-            if (isEditMode && agentCustomerId) {
-                res = await editAgentCustomer(agentCustomerId, payload);
-            } else {
-                res = await addAgentCustomer(payload);
-                try {
-                    await saveFinalCode({
-                        reserved_code: values.osa_code,
-                        model_name: "agent_customers",
-                    });
-                } catch (e) {
-                    // Optionally handle error, but don't block success
-                }
+  const handleSubmit = async (
+    values: NewCustomerFormValues,
+    actions?: Pick<
+        FormikHelpers<NewCustomerFormValues>,
+        "setErrors" | "setTouched" | "setSubmitting"
+    >
+) => {
+    try {
+        await NewCustomerSchema.validate(values, { abortEarly: false });
+        const payload = {
+            ...values,
+            is_cash: Number(values.is_cash),
+            customer_type: Number(values.customer_type),
+            route_id: Number(values.route_id),
+            buyertype: Number(values.buyertype),
+            creditday: Number(values.creditday),
+            payment_type: String(values.payment_type), // ✅ Fixed: Send value, not label
+            outlet_channel_id: Number(values.outlet_channel_id),
+            category_id: Number(values.category_id),
+            subcategory_id: Number(values.subcategory_id),
+            whatsapp_no:
+                values.whatsapp_no === "" || values.whatsapp_no == null
+                    ? null
+                    : values.whatsapp_no,
+            status: 1,
+        };
+        let res;
+        if (isEditMode && agentCustomerId) {
+            res = await editNewCustomer(agentCustomerId, payload);
+        } else {
+            res = await addNewtCustomer(payload);
+            try {
+                await saveFinalCode({
+                    reserved_code: values.osa_code,
+                    model_name: "agent_customers",
+                });
+            } catch (e) {
+                // Optionally handle error, but don't block success
             }
-            if (res?.error) {
-                showSnackbar(
-                    res.data?.message || "Failed to submit form",
-                    "error"
-                );
-            } else {
-                showSnackbar(
-                    isEditMode
-                        ? "Agent Customer updated successfully"
-                        : "Agent Customer added successfully",
-                    "success"
-                );
-                router.push("/agentCustomer");
-            }
-        } catch (err) {
-            if (err instanceof Yup.ValidationError) {
-                console.error("Yup ValidationError:", err);
-
-                // Map inner errors to { fieldName: message }
-                const fieldErrors = err.inner.reduce<Record<string, string>>(
-                    (acc, e) => {
-                        if (e.path) acc[e.path] = e.message;
-                        return acc;
-                    },
-                    {}
-                );
-
-                // If caller provided Formik helpers, set field errors + touched so UI shows per-field messages
-                if (actions?.setErrors) {
-                    actions.setErrors(
-                        fieldErrors as FormikErrors<AgentCustomerFormValues>
-                    );
-                }
-                if (actions?.setTouched) {
-                    const touchedMap = Object.keys(fieldErrors).reduce<
-                        Record<string, boolean>
-                    >((acc, k) => {
-                        acc[k] = true;
-                        return acc;
-                    }, {});
-                    actions.setTouched(
-                        touchedMap as FormikTouched<AgentCustomerFormValues>
-                    );
-                }
-
-                return;
-            }
-
-            // fallback for non-Yup errors
-            console.error("Submit error:", err);
+        }
+        if (res?.error) {
             showSnackbar(
-                isEditMode
-                    ? "Update Agent Customer failed"
-                    : "Add Agent Customer failed",
+                res.data?.message || "Failed to submit form",
                 "error"
             );
+        } else {
+            showSnackbar(
+                isEditMode
+                    ? "New Customer updated successfully"
+                    : "New Customer added successfully",
+                "success"
+            );
+            router.push("/newCustomer");
         }
-    };
+    } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+            console.error("Yup ValidationError:", err);
+
+            const fieldErrors = err.inner.reduce<Record<string, string>>(
+                (acc, e) => {
+                    if (e.path) acc[e.path] = e.message;
+                    return acc;
+                },
+                {}
+            );
+
+            if (actions?.setErrors) {
+                actions.setErrors(
+                    fieldErrors as FormikErrors<NewCustomerFormValues>
+                );
+            }
+            if (actions?.setTouched) {
+                const touchedMap = Object.keys(fieldErrors).reduce<
+                    Record<string, boolean>
+                >((acc, k) => {
+                    acc[k] = true;
+                    return acc;
+                }, {});
+                actions.setTouched(
+                    touchedMap as FormikTouched<NewCustomerFormValues>
+                );
+            }
+            return;
+        }
+
+        console.error("Submit error:", err);
+        showSnackbar(
+            isEditMode
+                ? "Update New Customer failed"
+                : "Add New Customer failed",
+            "error"
+        );
+    }
+};
+
 
     const renderStepContent = (
-        values: AgentCustomerFormValues,
+        values: NewCustomerFormValues,
         setFieldValue: (
-            field: keyof AgentCustomerFormValues,
+            field: keyof NewCustomerFormValues,
             value: string | File | null,
             shouldValidate?: boolean
         ) => void,
-        errors: FormikErrors<AgentCustomerFormValues>,
-        touched: FormikTouched<AgentCustomerFormValues>,
-        setFieldError?: (field: string, message?: string) => void
+        errors: FormikErrors<NewCustomerFormValues>,
+        touched: FormikTouched<NewCustomerFormValues>
     ) => {
         switch (currentStep) {
             case 1:
@@ -688,6 +686,11 @@ export default function AddEditAgentCustomer() {
                                         }
                                         error={touched.name && errors.name}
                                     />
+                                    {touched.name && errors.name && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.name} */}
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <InputFields
@@ -703,6 +706,11 @@ export default function AddEditAgentCustomer() {
                                         }
                                         error={touched.owner_name && errors.owner_name}
                                     />
+                                    {touched.owner_name && errors.owner_name && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.owner_name} */}
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <InputFields
@@ -723,6 +731,12 @@ export default function AddEditAgentCustomer() {
                                             errors.customer_type
                                         }
                                     />
+                                    {touched.customer_type &&
+                                        errors.customer_type && (
+                                            <div className="text-red-500 text-xs mt-1">
+                                                {/* {errors.customer_type} */}
+                                            </div>
+                                        )}
                                 </div>
 
                                 <div>
@@ -730,13 +744,12 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Warehouse"
                                         name="warehouse"
-                                        value={values?.warehouse || ""}
+                                        value={values?.warehouse || warehouseOptions[0]?.value || ""}
                                         options={warehouseOptions}
                                         disabled={warehouseOptions.length === 0}
                                         onChange={(e) => {
                                             setFieldValue("warehouse", e.target.value);
                                             if (values.warehouse !== e.target.value) {
-                                                setFieldValue("route_id", "");
                                                 fetchRoutes(e.target.value);
                                             }
                                         }}
@@ -745,6 +758,11 @@ export default function AddEditAgentCustomer() {
                                             errors.warehouse
                                         }
                                     />
+                                    {touched.warehouse && errors.warehouse && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.warehouse} */}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -763,6 +781,11 @@ export default function AddEditAgentCustomer() {
                                         }
                                         options={filteredRouteOptions}
                                     />
+                                    {touched.route_id && errors.route_id && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.route_id} */}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -791,6 +814,11 @@ export default function AddEditAgentCustomer() {
                                         }
                                         error={touched.street && errors.street}
                                     />
+                                    {touched.street && errors.street && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.street} */}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -809,6 +837,11 @@ export default function AddEditAgentCustomer() {
                                             touched.landmark && errors.landmark
                                         }
                                     />
+                                    {touched.landmark && errors.landmark && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.landmark} */}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -825,6 +858,11 @@ export default function AddEditAgentCustomer() {
                                         }
                                         error={touched.town && errors.town}
                                     />
+                                    {touched.town && errors.town && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.town} */}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -843,6 +881,11 @@ export default function AddEditAgentCustomer() {
                                             touched.district && errors.district
                                         }
                                     />
+                                    {touched.district && errors.district && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.district} */}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -861,6 +904,11 @@ export default function AddEditAgentCustomer() {
                                             touched.latitude && errors.latitude
                                         }
                                     />
+                                    {touched.latitude && errors.latitude && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {errors.latitude}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -879,6 +927,11 @@ export default function AddEditAgentCustomer() {
                                             touched.longitude && errors.longitude
                                         }
                                     />
+                                    {touched.longitude && errors.longitude && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {errors.longitude}
+                                        </div>
+                                    )}
                                 </div>
 
                             </div>
@@ -895,6 +948,33 @@ export default function AddEditAgentCustomer() {
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
+                                    {/* <InputFields
+                                        required
+                                        type="contact"
+                                        label="Contact Number"
+                                        name="contact_no"
+                                        value={values.contact_no}
+                                        setSelectedCountry={setSelectedCountry}
+                                        selectedCountry={selectedCountry}
+                                      
+                                        onChange={(e) =>
+                                            setFieldValue(
+                                                "contact_no",
+                                                e.target.value
+                                            )
+                                        }
+                                        error={
+                                            touched.contact_no &&
+                                            errors.contact_no
+                                        }
+                                    />
+                                    {touched.contact_no &&
+                                        errors.contact_no && (
+                                            <div className="text-red-500 text-xs mt-1">
+                                                {errors.contact_no}
+                                            </div>
+                                        )} */}
+
                                     <InputFields
                                         required
                                         type="contact"
@@ -906,6 +986,11 @@ export default function AddEditAgentCustomer() {
                                         onChange={(e) => setFieldValue("contact_no", e.target.value)}
                                         error={errors?.contact_no && touched?.contact_no ? errors.contact_no : false}
                                     />
+                                    {errors?.contact_no && touched?.contact_no && (
+                                    <span className="text-xs text-red-500 mt-1">
+                                        {/* {errors.contact_no} */}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div>
@@ -928,6 +1013,12 @@ export default function AddEditAgentCustomer() {
                                             errors.contact_no2
                                         }
                                     />
+                                    {touched.contact_no2 &&
+                                        errors.contact_no2 && (
+                                            <div className="text-red-500 text-xs mt-1">
+                                                {/* {errors.contact_no2} */}
+                                            </div>
+                                        )}
                                 </div>
 
                                 <div>
@@ -949,6 +1040,12 @@ export default function AddEditAgentCustomer() {
                                             errors.whatsapp_no
                                         }
                                     />
+                                    {touched.whatsapp_no &&
+                                        errors.whatsapp_no && (
+                                            <div className="text-red-500 text-xs mt-1">
+                                                {/* {errors.whatsapp_no} */}
+                                            </div>
+                                        )}
                                 </div>
 
                             </div>
@@ -988,6 +1085,11 @@ export default function AddEditAgentCustomer() {
                                         { value: "0", label: "B2B" }
                                     ]}
                                 />
+                                {touched.buyertype && errors.buyertype && (
+                                    <div className="text-red-500 text-xs mt-1">
+                                        {errors.buyertype}
+                                    </div>
+                                )}
                             </div>
 
                             <div>
@@ -1000,6 +1102,11 @@ export default function AddEditAgentCustomer() {
                                     }
                                     error={touched.vat_no && errors.vat_no}
                                 />
+                                {touched.vat_no && errors.vat_no && (
+                                    <div className="text-red-500 text-xs mt-1">
+                                        {errors.vat_no}
+                                    </div>
+                                )}
                             </div>
 
                             <div>
@@ -1008,16 +1115,23 @@ export default function AddEditAgentCustomer() {
                                     label="Payment Type"
                                     name="payment_type"
                                     value={values.payment_type?.toString() ??""}
-                                    onChange={(e) =>{
-                                        setFieldValue("payment_type",e.target.value)
-                                        setFieldValue("is_cash", (e.target.value === "1") ? "1" : "0")
-                                    }}
+                                  onChange={(e) => {
+  const val = e.target.value;
+  setFieldValue("payment_type", val);
+  setFieldValue("is_cash", val === "1" ? "1" : "0");
+}}
                                     error={
                                         touched.payment_type &&
                                         errors.payment_type
                                     }
                                     options={paymentTypeOptions}
                                 />
+                                {touched.payment_type &&
+                                    errors.payment_type && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.payment_type} */}
+                                        </div>
+                                    )}
                             </div>
 
                             { values.is_cash === "0" && 
@@ -1032,6 +1146,11 @@ export default function AddEditAgentCustomer() {
                                         }
                                         error={touched.creditday && errors.creditday}
                                     />
+                                    {touched.creditday && errors.creditday && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.creditday} */}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -1044,6 +1163,11 @@ export default function AddEditAgentCustomer() {
                                         }
                                         error={touched.credit_limit && errors.credit_limit}
                                     />
+                                    {touched.credit_limit && errors.credit_limit && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {/* {errors.credit_limit} */}
+                                        </div>
+                                    )}
                                 </div>
                             </>
                             }
@@ -1066,11 +1190,10 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Outlet Channel"
                                         name="outlet_channel_id"
-                                        value={(channelOptions.length === 0) ? "" : values.outlet_channel_id?.toString()}
+                                        value={(channelOptions.length === 0) ? "" : values.outlet_channel_id?.toString() ?? ""}
                                         onChange={(e) => {
                                             setFieldValue("outlet_channel_id", e.target.value);
                                             if (values.outlet_channel_id !== e.target.value) {
-                                                setFieldValue("category_id", "");
                                                 fetchCategories(e.target.value);
                                             }
                                         }}
@@ -1081,6 +1204,12 @@ export default function AddEditAgentCustomer() {
                                         options={channelOptions}
                                         disabled={channelOptions.length === 0}
                                     />
+                                    {touched.outlet_channel_id &&
+                                        errors.outlet_channel_id && (
+                                            <div className="text-red-500 text-xs mt-1">
+                                                {errors.outlet_channel_id}
+                                            </div>
+                                        )}
                                 </div>
 
                                 <div>
@@ -1089,17 +1218,12 @@ export default function AddEditAgentCustomer() {
                                         label="Category"
                                         name="category_id"
                                         value={
-                                            filteredCustomerCategoryOptions.length === 0 ? "" : values.category_id?.toString()
+                                            filteredCustomerCategoryOptions.length === 0 ? "" : values.category_id?.toString() || filteredCustomerCategoryOptions[0]?.value || ""
                                         }
                                         onChange={(e) => {
                                             setFieldValue("category_id", e.target.value);
                                             if (values.category_id !== e.target.value) {
-                                                setFieldValue("subcategory_id", "");
                                                 fetchSubCategories(e.target.value);
-                                            }
-                                            // clear any validation error for this field immediately
-                                            if (typeof setFieldError === "function") {
-                                                setFieldError("category_id", undefined);
                                             }
                                         }}
                                         error={
@@ -1110,6 +1234,12 @@ export default function AddEditAgentCustomer() {
                                         showSkeleton={skeleton.customerCategory}
                                         disabled={filteredCustomerCategoryOptions.length === 0}
                                     />
+                                    {touched.category_id &&
+                                        errors.category_id && (
+                                            <div className="text-red-500 text-xs mt-1">
+                                                {errors.category_id}
+                                            </div>
+                                        )}
                                 </div>
                                 <div>
                                     <InputFields
@@ -1117,17 +1247,13 @@ export default function AddEditAgentCustomer() {
                                         label="Subcategory"
                                         name="subcategory_id"
                                         value={
-                                            filteredCustomerSubCategoryOptions.length === 0 ? "" : values.subcategory_id?.toString()
+                                            filteredCustomerSubCategoryOptions.length === 0 ? "" : values.subcategory_id?.toString() || filteredCustomerSubCategoryOptions[0]?.value || ""
                                         }
-                                        onChange={(e) => {
+                                        onChange={(e) =>
                                             setFieldValue(
                                                 "subcategory_id",
                                                 e.target.value
-                                            );
-                                            if (typeof setFieldError === "function") {
-                                                setFieldError("subcategory_id", undefined);
-                                            }
-                                        }
+                                            )
                                         }
                                         error={
                                             touched.subcategory_id &&
@@ -1137,6 +1263,12 @@ export default function AddEditAgentCustomer() {
                                         showSkeleton={skeleton.customerSubCategory}
                                         disabled={filteredCustomerSubCategoryOptions.length === 0}
                                     />
+                                    {touched.subcategory_id &&
+                                        errors.subcategory_id && (
+                                            <div className="text-red-500 text-xs mt-1">
+                                                {errors.subcategory_id}
+                                            </div>
+                                        )}
                                 </div>
 
                                 <div>
@@ -1163,6 +1295,12 @@ export default function AddEditAgentCustomer() {
                                             { label: "No", value: "0" },
                                         ]}
                                     />
+                                    {touched.enable_promotion &&
+                                        errors.enable_promotion && (
+                                            <div className="text-red-500 text-xs mt-1">
+                                                {errors.enable_promotion}
+                                            </div>
+                                        )}
                                 </div>
 
                                 <div>
@@ -1171,8 +1309,12 @@ export default function AddEditAgentCustomer() {
                                         value={values.qr_code}
                                         name="qr_code"
                                         onChange={(e) => setFieldValue("qr_code", e.target.value)}
-                                        error={touched.qr_code && errors.qr_code}
                                     />
+                                    {touched.qr_code && errors.qr_code && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {errors.qr_code}
+                                        </div>
+                                    )}
                                 </div>
 
                             </div>
@@ -1195,28 +1337,27 @@ export default function AddEditAgentCustomer() {
                     </div>
                     <h1 className="text-xl font-semibold text-gray-900">
                         {isEditMode
-                            ? "Update Agent Customer"
-                            : "Add Agent Customer"}
+                            ? "Edit New Customer"
+                            : "Add New Customer"}
                     </h1>
                 </div>
             </div>
             <Formik
                 initialValues={initialValues}
-                validationSchema={AgentCustomerSchema}
+                validationSchema={NewCustomerSchema}
                 enableReinitialize={true}
                 onSubmit={handleSubmit}
             >
                 {({
-                        values,
-                        setFieldValue,
-                        errors,
-                        touched,
-                        handleSubmit: formikSubmit,
-                        setErrors,
-                        setTouched,
-                        setFieldError,
-                        isSubmitting: issubmitting,
-                    }) => (
+                    values,
+                    setFieldValue,
+                    errors,
+                    touched,
+                    handleSubmit: formikSubmit,
+                    setErrors,
+                    setTouched,
+                    isSubmitting: issubmitting,
+                }) => (
                     <Form>
                         <StepperForm
                             steps={steps.map((step) => ({
@@ -1230,26 +1371,19 @@ export default function AddEditAgentCustomer() {
                                 handleNext(values, {
                                     setErrors,
                                     setTouched,
-                                } as unknown as FormikHelpers<AgentCustomerFormValues>)
+                                } as unknown as FormikHelpers<NewCustomerFormValues>)
                             }
-                            onSubmit={() => formikSubmit()}
+                            onSubmit={() => handleSubmit(values)}
                             showSubmitButton={isLastStep}
                             showNextButton={!isLastStep}
                             nextButtonText="Save & Next"
-                            submitButtonText={
-                                issubmitting
-                                    ? (isEditMode ? "Updating..." : "Submitting...")
-                                    : isEditMode
-                                    ? "Update"
-                                    : "Submit"
-                            }
+                            submitButtonText={issubmitting ? "Submitting..." : "Submit"}
                         >
                             {renderStepContent(
                                 values,
                                 setFieldValue,
                                 errors,
-                                touched,
-                                setFieldError
+                                touched
                             )}
                         </StepperForm>
                     </Form>

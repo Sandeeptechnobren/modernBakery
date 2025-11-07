@@ -505,11 +505,11 @@ export default function Planogram() {
                   onChange={(e) => setFieldValue("name", e.target.value)}
                   // error={touched.name && errors.name}
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="name"
                   component="span"
                   className="text-xs text-red-500"
-                />
+                /> */}
               </div>
               <div>
                 <InputFields
@@ -521,11 +521,11 @@ export default function Planogram() {
                   onChange={(e) => setFieldValue("valid_from", e.target.value)}
                   // error={touched.valid_from && errors.valid_from}
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="valid_from"
                   component="span"
                   className="text-xs text-red-500"
-                />
+                /> */}
               </div>
               <div>
                 <InputFields
@@ -538,11 +538,11 @@ export default function Planogram() {
                   onChange={(e) => setFieldValue("valid_to", e.target.value)}
                   // error={touched.valid_to && errors.valid_to}
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="valid_to"
                   component="span"
                   className="text-xs text-red-500"
-                />
+                /> */}
               </div>
             </div>
           </ContainerCard>
@@ -577,11 +577,11 @@ export default function Planogram() {
                       : errors.merchendiser_ids)
                   }
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="merchendiser_ids"
                   component="span"
                   className="text-xs text-red-500"
-                />
+                /> */}
               </div>
               <div>
                 <InputFields
@@ -619,11 +619,11 @@ export default function Planogram() {
                       : errors.customer_ids)
                   }
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="customer_ids"
                   component="span"
                   className="text-xs text-red-500"
-                />
+                /> */}
               </div>
               <div>
                 <InputFields
@@ -658,11 +658,11 @@ export default function Planogram() {
                   //     : errors.shelf_id)
                   // }
                 />
-                <ErrorMessage
+                {/* <ErrorMessage
                   name="shelf_id"
                   component="span"
                   className="text-xs text-red-500"
-                />
+                /> */}
 
                 {/* Selected shelves with image upload */}
                 {values.shelf_id.length > 0 && (

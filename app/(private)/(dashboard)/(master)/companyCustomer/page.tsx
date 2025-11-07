@@ -76,9 +76,9 @@ export default function CompanyCustomers() {
       }
       return {
         data: res.data || [],
-        pageSize: res.data?.pagination?.per_page || pageSize,
-        total: res.data?.pagination?.last_page || 1,
-        currentPage: res.data?.pagination?.current_page || 1,
+        pageSize: res?.pagination?.per_page || pageSize,
+        total: res?.pagination?.last_page || 1,
+        currentPage: res?.pagination?.current_page || 1,
       }
   };
 

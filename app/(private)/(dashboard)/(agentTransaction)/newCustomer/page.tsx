@@ -6,17 +6,18 @@ import StatusBtn from "@/app/components/statusBtn2";
 import Table, {
     configType,
     listReturnType,
+    searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData ,downloadFile} from "@/app/services/allApi";
-import { useSnackbar } from "@/app/services/snackbarContext";
+import { downloadFile} from "@/app/services/allApi";
+import { newCustomerList,exportNewCustomerData,newCustomerStatusUpdate } from "@/app/services/agentTransaction";
+import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import InputFields from "@/app/components/inputFields";
 
-export default function AgentCustomer() {
-    const { customerSubCategoryOptions, itemCategoryOptions, channelOptions,warehouseOptions,routeOptions } = useAllDropdownListData();
+export default function NewCustomer() {
+    const { customerSubCategoryOptions,channelOptions,warehouseOptions,routeOptions } = useAllDropdownListData();
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [channelId, setChannelId] = useState<string>("");
@@ -34,20 +35,20 @@ export default function AgentCustomer() {
     },
     { key: "outlet_name", label: "Outlet Name", showByDefault: true },
     { key: "owner_name", label: "Owner Name" },
-    {
-        key: "customer_type",
-        label: "Customer Type",
-        render: (row: TableDataType) => {
-            if (
-                typeof row.customer_type === "object" &&
-                row.customer_type !== null &&
-                "name" in row.customer_type
-            ) {
-                return (row.customer_type as { name?: string }).name || "-";
-            }
-            return row.customer_type || "-";
-        },
-    },
+    // {
+    //     key: "customer_type",
+    //     label: "Customer Type",
+    //     render: (row: TableDataType) => {
+    //         if (
+    //             typeof row.customer_type === "object" &&
+    //             row.customer_type !== null &&
+    //             "name" in row.customer_type
+    //         ) {
+    //             return (row.customer_type as { name?: string }).name || "-";
+    //         }
+    //         return row.customer_type || "-";
+    //     },
+    // },
     {
         key: "category",
         label: "Customer Category",
@@ -178,29 +179,29 @@ export default function AgentCustomer() {
     const { showSnackbar } = useSnackbar();
     type TableRow = TableDataType & { id?: string };
 
-    const fetchAgentCustomers = useCallback(
+    const fetchNewCustomers = useCallback(
         async (
             page: number = 1,
             pageSize: number = 5
         ): Promise<listReturnType> => {
             try {
                 setLoading(true);
-                const params: Record<string, string> = {
+                const params: any = {
                     page: page.toString(),
                 };
                 if (selectedSubCategoryId) {
-                    params.subcategory_id = String(selectedSubCategoryId);
+                    params.subcategory_id = selectedSubCategoryId;
                 }
                 if (warehouseId) {
-                    params.warehouse = String(warehouseId);
+                    params.warehouse = warehouseId;
                 }
                 if (channelId) {
-                    params.outlet_channel_id = String(channelId);
+                    params.outlet_channel_id = channelId;
                 }
                 if (routeId) {
-                    params.route_id = String(routeId);
+                    params.route_id = routeId;
                 }
-                const listRes = await agentCustomerList(params);
+                const listRes = await newCustomerList(params);
                 setLoading(false);
                 return {
                     data: Array.isArray(listRes.data) ? listRes.data : [],
@@ -224,7 +225,7 @@ export default function AgentCustomer() {
     const exportfile = async (ids: string[] | undefined) => {
         if(!ids) return;
         try {
-            const response = await exportAgentCustomerData({
+            const response = await exportNewCustomerData({
                 ids: ids
             }); 
             if (response && typeof response === 'object' && response.url) {
@@ -241,7 +242,7 @@ export default function AgentCustomer() {
 
     const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {
         if (!ids || ids.length === 0) return;
-        const res = await agentCustomerStatusUpdate({
+        const res = await newCustomerStatusUpdate({
             ids: ids,
             status: Number(status)
         });
@@ -260,15 +261,19 @@ export default function AgentCustomer() {
             searchQuery: string,
             pageSize: number,
             columnName?: string
-        ): Promise<listReturnType> => {
+        ): Promise<searchReturnType> => {
             let result;
             setLoading(true);
             if(columnName) {
-                result = await agentCustomerList({
+                result = await newCustomerList({
                     per_page: pageSize.toString(),
                     [columnName]: searchQuery
                 });
             }
+            // result = await agentCustomer({
+            //     query: searchQuery,
+            //     per_page: pageSize.toString(),
+            // });
             setLoading(false);
             if (result.error) throw new Error(result.data.message);
             else {
@@ -283,41 +288,11 @@ export default function AgentCustomer() {
         []
     );
 
-    const filterBy = useCallback(
-        async (
-            payload: Record<string, string | number | null>,
-            pageSize: number
-        ): Promise<listReturnType> => {
-            let result;
-            setLoading(true);
-            try {
-                const params: Record<string, string> = { per_page: pageSize.toString() };
-                Object.keys(payload || {}).forEach((k) => {
-                    const v = payload[k as keyof typeof payload];
-                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                        params[k] = String(v);
-                    }
-                });
-                result = await agentCustomerList(params);
-            } finally {
-                setLoading(false);
-            }
+    useEffect(() => {
+        setLoading(true);
+    }, []);
 
-            if (result?.error) throw new Error(result.data?.message || "Filter failed");
-            else {
-                const pagination = result.pagination?.pagination || result.pagination || {};
-                return {
-                    data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 0,
-                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-                    pageSize: pagination.limit || pageSize,
-                };
-            }
-        },
-        [setLoading]
-    );
-
+    // Refresh table when subcategory filter changes
     useEffect(() => {
         setRefreshKey((k) => k + 1);
     }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions, selectedSubCategoryId, warehouseId, channelId, routeId]);
@@ -329,12 +304,11 @@ export default function AgentCustomer() {
                     refreshKey={refreshKey}
                     config={{
                         api: {
-                            list: fetchAgentCustomers,
+                            list: fetchNewCustomers,
                             search: search,
-                            filterBy: filterBy
                         },
                         header: {
-                            title: "Agent Customer",
+                            title: "New Customer",
                             threeDot: [
                                 {
                                     icon: "gala:file-document",
@@ -399,55 +373,13 @@ export default function AgentCustomer() {
                                     },
                                 },
                             ],
+
                             searchBar: false,
                             columnFilter: true,
-                            filterByFields: [
-                                {
-                                    key: "date_change",
-                                    label: "Date Range",
-                                    type: "dateChange"
-                                },
-                                {
-                                    key: "warehouse",
-                                    label: "Warehouse",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                                },
-                                {
-                                    key: "route_id",
-                                    label: "Route",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(routeOptions) ? routeOptions : [],
-                                },
-                                {
-                                    key: "outlet_channel_id",
-                                    label: "Outlet Channel",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(channelOptions) ? channelOptions : [],
-                                },
-                                {
-                                    key: "category_id",
-                                    label: "Category",
-                                    type: "select",
-                                    options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                },
-                                {
-                                    key: "subcategory_id",
-                                    label: "Subcategory",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
-                                },
-                            ],
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/agentCustomer/new"
+                                    href="/newCustomer/new"
                                     isActive
                                     leadingIcon="lucide:plus"
                                     label="Add"
@@ -455,7 +387,7 @@ export default function AgentCustomer() {
                                 />,
                             ],
                         },
-                        localStorageKey: "agentCustomer-table",
+                        localStorageKey: "newCustomer-table",
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
@@ -464,7 +396,7 @@ export default function AgentCustomer() {
                                 icon: "lucide:eye",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    router.push(`/agentCustomer/details/${row.uuid}`);
+                                    router.push(`/newCustomer/details/${row.uuid}`);
                                 },
                             },
                             {
@@ -472,7 +404,7 @@ export default function AgentCustomer() {
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
                                     router.push(
-                                        `/agentCustomer/${row.uuid}`
+                                        `/newCustomer/${row.uuid}`
                                     );
                                 },
                             },
@@ -481,6 +413,16 @@ export default function AgentCustomer() {
                     }}
                 />
             </div>
+
+            {/* {showDeletePopup && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+                    <DeleteConfirmPopup
+                        title="Agent Customer"
+                        onClose={() => setShowDeletePopup(false)}
+                        onConfirm={handleConfirmDelete}
+                    />
+                </div>
+            )} */}
         </>
     );
 }

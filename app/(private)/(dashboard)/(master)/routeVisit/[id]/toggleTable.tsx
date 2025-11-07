@@ -1,229 +1,220 @@
 "use client";
-import ContainerCard from "@/app/components/containerCard";
+import { Icon } from "@iconify-icon/react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import Toggle from "@/app/components/toggle";
 import Loading from "@/app/components/Loading";
-import { getRouteVisitList } from "@/app/services/allApi";
-import { useState, useEffect } from "react";
 
-// Types for API responses
-type CustomerItem = {
-  id: number;
-  osa_code: string;
-  owner_name: string;
-};
+// Add your API function import
+import { getRouteVisitDetails } from "@/app/services/allApi";
 
-type RouteVisitItem = {
-  id: number;
-  uuid: string;
-  osa_code: string;
-  customer?: {
-    id: number;
-    code: string;
-    name: string;
-  };
-  days: string[];
-};
-
-type TransformedCustomer = {
-  id: number;
-  name: string;
-};
-
-type TransformedEditCustomer = {
-  id: number; // <-- will now represent customer.id
-  uuid: string;
-  name: string;
-  days: string[];
-};
-
-// ✅ Transform function for add mode (existing functionality)
-const transformCustomerList = (
-  apiResponse: CustomerItem[]
-): TransformedCustomer[] => {
+const transformCustomerList = (apiResponse: any[]) => {
   return apiResponse.map((item) => ({
     id: item.id,
     name: `${item.osa_code} - ${item.owner_name}`,
   }));
 };
 
-// ✅ Transform function for edit mode (updated to use customer.id)
-const transformEditCustomerList = (
-  apiResponse: RouteVisitItem[]
-): TransformedEditCustomer[] => {
-  return apiResponse.map((item) => ({
-    id: item.customer?.id ?? item.id, // ✅ use customer.id if available, fallback to item.id
-    uuid: item.uuid,
-    name: item.customer
-      ? `${item.customer.code} - ${item.customer.name}`
-      : "Unknown Customer",
-    days: item.days || [],
-  }));
-};
-
-type DayState = {
-  Monday: boolean;
-  Tuesday: boolean;
-  Wednesday: boolean;
-  Thursday: boolean;
-  Friday: boolean;
-  Saturday: boolean;
-  Sunday: boolean;
-};
-
-type RowStates = Record<number, DayState>;
-
+// Types for customer schedule
 type CustomerSchedule = {
   customer_id: number;
   days: string[];
 };
 
 type TableProps = {
-  searchQuery: {
-    from_date: string | null;
-    to_date: string | null;
-    customer_type: string | null;
-    status: string | null;
-  };
-  isEditMode: boolean;
-  customers: CustomerItem[];
-  onScheduleUpdate?: (schedules: CustomerSchedule[]) => void;
+  customers: any[];
+  setCustomerSchedules: any;
   initialSchedules?: CustomerSchedule[];
-  selectedCustomerType: string;
+  loading?: boolean;
+  editMode?: boolean;
+  visitUuid?: string;
 };
 
 export default function Table({
-  searchQuery,
-  isEditMode,
-  selectedCustomerType,
   customers,
-  onScheduleUpdate,
+  setCustomerSchedules,
   initialSchedules = [],
+  loading = false,
+  editMode = false,
+  visitUuid = "",
 }: TableProps) {
-  const [editModeData, setEditModeData] = useState<TransformedEditCustomer[]>(
-    []
-  );
-  const [addModeData, setAddModeData] = useState<TransformedCustomer[]>([]);
-  const [loading, setLoading] = useState(false);
+  const data = transformCustomerList(customers);
+  const isInitialMount = useRef(true);
+  const [internalLoading, setInternalLoading] = useState(false);
+  const hasFetchedData = useRef(false);
 
-  useEffect(() => {
-    // ✅ If customers is null or undefined, show loading and exit early
-    if (!customers) {
-      setLoading(true);
-      return;
-    }
+  // ✅ Track pre-filled customer IDs and their days from API
+  const [prefilledCustomerData, setPrefilledCustomerData] = useState<
+    Record<number, string[]>
+  >({});
 
-    // ✅ If customers array is empty, still show loading (no data yet)
-    if (customers.length === 0) {
-      setLoading(true);
-      return;
-    }
-
-    // ✅ Customers available — process data
-    setLoading(true);
-    const data = transformCustomerList(customers);
-    setAddModeData(data);
-    setLoading(false);
-  }, [customers]);
-
-  // ✅ For EDIT mode: fetch and transform data from route visit list API
-  useEffect(() => {
-    // ✅ Ensure we're in edit mode
-    if (!isEditMode) return;
-
-    // ✅ Ensure all required search params exist before calling API
-    const { from_date, to_date, customer_type, status } = searchQuery || {};
-
-    const hasValidParams = from_date && to_date && customer_type && status;
-
-    if (!hasValidParams) return; // ⛔ Skip API call if any param is missing
-
-    const fetchEditData = async () => {
-      setLoading(true);
-      try {
-        const res = await getRouteVisitList(searchQuery);
-        if (res?.data) {
-          const transformedData = transformEditCustomerList(
-            res.data as RouteVisitItem[]
-          );
-          setEditModeData(transformedData);
-        }
-      } catch (error) {
-        console.error("Failed to fetch edit mode data:", error);
-      } finally {
-        setLoading(false);
+  const [rowStates, setRowStates] = useState<
+    Record<
+      number,
+      {
+        Monday: boolean;
+        Tuesday: boolean;
+        Wednesday: boolean;
+        Thursday: boolean;
+        Friday: boolean;
+        Saturday: boolean;
+        Sunday: boolean;
       }
-    };
+    >
+  >({});
 
-    fetchEditData();
-  }, [isEditMode, JSON.stringify(searchQuery)]);
+  const [columnSelection, setColumnSelection] = useState({
+    Monday: false,
+    Tuesday: false,
+    Wednesday: false,
+    Thursday: false,
+    Friday: false,
+    Saturday: false,
+    Sunday: false,
+  });
 
-  // ✅ Initialize state from props or edit mode data
-  const initialRowStates = isEditMode
-    ? editModeData.reduce((acc, item) => {
-        acc[item.id] = {
-          Monday: item.days.includes("Monday"),
-          Tuesday: item.days.includes("Tuesday"),
-          Wednesday: item.days.includes("Wednesday"),
-          Thursday: item.days.includes("Thursday"),
-          Friday: item.days.includes("Friday"),
-          Saturday: item.days.includes("Saturday"),
-          Sunday: item.days.includes("Sunday"),
-        };
-        return acc;
-      }, {} as RowStates)
-    : initialSchedules.reduce((acc, sched) => {
-        acc[sched.customer_id] = {
-          Monday: sched.days.includes("Monday"),
-          Tuesday: sched.days.includes("Tuesday"),
-          Wednesday: sched.days.includes("Wednesday"),
-          Thursday: sched.days.includes("Thursday"),
-          Friday: sched.days.includes("Friday"),
-          Saturday: sched.days.includes("Saturday"),
-          Sunday: sched.days.includes("Sunday"),
-        };
-        return acc;
-      }, {} as RowStates);
+  // ✅ Show ALL customers, not filtered
+  const displayData = data;
 
-  const [rowStates, setRowStates] = useState<RowStates>(initialRowStates);
-
-  // ✅ Update rowStates when editModeData changes
-  useEffect(() => {
-    if (isEditMode && editModeData.length > 0) {
-      const newRowStates = editModeData.reduce((acc, item) => {
-        acc[item.id] = {
-          Monday: item.days.includes("Monday"),
-          Tuesday: item.days.includes("Tuesday"),
-          Wednesday: item.days.includes("Wednesday"),
-          Thursday: item.days.includes("Thursday"),
-          Friday: item.days.includes("Friday"),
-          Saturday: item.days.includes("Saturday"),
-          Sunday: item.days.includes("Sunday"),
-        };
-        return acc;
-      }, {} as RowStates);
-      setRowStates(newRowStates);
+  // ✅ Load visit data for editing
+  const loadVisitData = useCallback(async (uuid: string) => {
+    if (!uuid || hasFetchedData.current) {
+      console.log("Skipping data fetch - no UUID or already fetched");
+      return;
     }
-  }, [isEditMode, editModeData]);
 
-  useEffect(() => {
-    if (typeof onScheduleUpdate === "function") {
-      const schedules: CustomerSchedule[] = Object.entries(rowStates)
-        .map(([customer_id, daysObj]) => {
-          const dayState = daysObj as DayState;
-          const selectedDays = Object.entries(dayState)
-            .filter(([_, isSelected]) => isSelected)
-            .map(([day]) => day);
-          return selectedDays.length > 0
-            ? { customer_id: Number(customer_id), days: selectedDays }
-            : null;
-        })
-        .filter(Boolean) as CustomerSchedule[];
+    setInternalLoading(true);
+    try {
+      console.log("Fetching visit data for UUID:", uuid);
+      const res = await getRouteVisitDetails(uuid);
+      console.log("API Response for edit:", res);
 
-      onScheduleUpdate(schedules);
+      if (res?.data) {
+        const existing = res.data;
+        console.log("Existing data:", existing);
+
+        // Create customer schedule from the API response
+        if (existing.customer && existing.customer.id) {
+          const daysMap = {
+            Monday: existing.days?.includes("Monday") || false,
+            Tuesday: existing.days?.includes("Tuesday") || false,
+            Wednesday: existing.days?.includes("Wednesday") || false,
+            Thursday: existing.days?.includes("Thursday") || false,
+            Friday: existing.days?.includes("Friday") || false,
+            Saturday: existing.days?.includes("Saturday") || false,
+            Sunday: existing.days?.includes("Sunday") || false,
+          };
+
+          const initialRowStates: typeof rowStates = {};
+          initialRowStates[existing.customer.id] = daysMap;
+
+          // ✅ Store pre-filled customer data with days
+          const prefilledData: Record<number, string[]> = {};
+          prefilledData[existing.customer.id] = existing.days || [];
+
+          setRowStates(initialRowStates);
+          setPrefilledCustomerData(prefilledData);
+          hasFetchedData.current = true;
+          console.log("Table initialized with schedule:", initialRowStates);
+          console.log("Prefilled customer data:", prefilledData);
+        } else {
+          console.log("No customer data found in API response");
+        }
+      } else {
+        console.warn("Route visit not found in API response");
+      }
+    } catch (error) {
+      console.error("Error loading visit data:", error);
+      hasFetchedData.current = false;
+    } finally {
+      setInternalLoading(false);
     }
-  }, [rowStates, onScheduleUpdate]);
+  }, []);
 
-  const handleToggle = (rowId: number, field: keyof DayState) => {
-    setRowStates((prev: RowStates) => {
+  // Initialize row states - FIXED VERSION
+  useEffect(() => {
+    console.log("Initialization effect running:", {
+      editMode,
+      visitUuid,
+      initialSchedulesLength: initialSchedules.length,
+      isInitialMount: isInitialMount.current,
+      hasFetchedData: hasFetchedData.current,
+    });
+
+    if (editMode && visitUuid && !hasFetchedData.current) {
+      console.log("Table in edit mode, fetching data for UUID:", visitUuid);
+      loadVisitData(visitUuid);
+    } else if (
+      initialSchedules.length > 0 &&
+      isInitialMount.current &&
+      !editMode
+    ) {
+      console.log("Using initialSchedules:", initialSchedules);
+      const initialRowStates: typeof rowStates = {};
+      const prefilledData: Record<number, string[]> = {};
+
+      initialSchedules.forEach((schedule) => {
+        const daysMap = {
+          Monday: schedule.days.includes("Monday"),
+          Tuesday: schedule.days.includes("Tuesday"),
+          Wednesday: schedule.days.includes("Wednesday"),
+          Thursday: schedule.days.includes("Thursday"),
+          Friday: schedule.days.includes("Friday"),
+          Saturday: schedule.days.includes("Saturday"),
+          Sunday: schedule.days.includes("Sunday"),
+        };
+
+        initialRowStates[schedule.customer_id] = daysMap;
+        prefilledData[schedule.customer_id] = schedule.days;
+      });
+
+      setRowStates(initialRowStates);
+      setPrefilledCustomerData(prefilledData);
+      console.log("Initialized with initialSchedules:", initialRowStates);
+      console.log("Prefilled customer data:", prefilledData);
+    }
+
+    isInitialMount.current = false;
+  }, [initialSchedules, editMode, visitUuid, loadVisitData]);
+
+  // Update parent when rowStates change - SUPPORT MULTIPLE CUSTOMERS
+  useEffect(() => {
+    if (Object.keys(rowStates).length > 0) {
+      console.log("Row states updated, notifying parent:", rowStates);
+      setCustomerSchedules(rowStates);
+    }
+  }, [rowStates, setCustomerSchedules]);
+
+  // Reset row states when customers change - ONLY in create mode
+  const previousCustomers = useRef(customers);
+  useEffect(() => {
+    if (!editMode && customers.length > 0) {
+      const customersChanged =
+        JSON.stringify(previousCustomers.current) !== JSON.stringify(customers);
+
+      if (customersChanged) {
+        console.log("Customers changed in create mode, resetting table states");
+        setRowStates({});
+        setPrefilledCustomerData({}); // Reset pre-filled data in create mode
+        setColumnSelection({
+          Monday: false,
+          Tuesday: false,
+          Wednesday: false,
+          Thursday: false,
+          Friday: false,
+          Saturday: false,
+          Sunday: false,
+        });
+        previousCustomers.current = customers;
+      }
+    }
+  }, [customers, editMode]);
+
+  // Handle individual toggle
+  const handleToggle = (
+    rowId: number,
+    field: keyof (typeof rowStates)[number]
+  ) => {
+    setRowStates((prev) => {
       const current = prev[rowId] || {
         Monday: false,
         Tuesday: false,
@@ -234,64 +225,191 @@ export default function Table({
         Sunday: false,
       };
 
-      const updatedRow = {
-        ...current,
-        [field]: !current[field],
+      const newState = {
+        ...prev,
+        [rowId]: {
+          ...current,
+          [field]: !current[field],
+        },
       };
 
-      return {
-        ...prev,
-        [rowId]: updatedRow,
-      };
+      console.log(`Toggled ${field} for customer ${rowId}:`, newState[rowId]);
+      return newState;
     });
   };
 
-  if (loading) {
-    return <Loading />;
-  }
+  // Handle column selection - UPDATED to use displayData (all customers)
+  const handleColumnSelect = (day: keyof typeof columnSelection) => {
+    const newColumnState = !columnSelection[day];
 
-  const hasEditData = editModeData && editModeData.length > 0;
-  const displayData = isEditMode ? editModeData : addModeData;
+    console.log(`Column ${day} selection:`, newColumnState);
 
-  // ✅ If in edit mode and no data, show "No Data Found"
-  if (isEditMode && !hasEditData) {
+    setColumnSelection((prev) => ({
+      ...prev,
+      [day]: newColumnState,
+    }));
+
+    setRowStates((prev) => {
+      const updatedStates = { ...prev };
+
+      // ✅ Use displayData (ALL customers) instead of filteredData
+      displayData.forEach((customer) => {
+        const currentState = updatedStates[customer.id] || {
+          Monday: false,
+          Tuesday: false,
+          Wednesday: false,
+          Thursday: false,
+          Friday: false,
+          Saturday: false,
+          Sunday: false,
+        };
+
+        updatedStates[customer.id] = {
+          ...currentState,
+          [day]: newColumnState,
+        };
+      });
+
+      console.log(`Updated all rows for column ${day}:`, updatedStates);
+      return updatedStates;
+    });
+  };
+
+  // Handle row selection
+  const handleRowSelect = (rowId: number) => {
+    setRowStates((prev) => {
+      const current = prev[rowId] || {
+        Monday: false,
+        Tuesday: false,
+        Wednesday: false,
+        Thursday: false,
+        Friday: false,
+        Saturday: false,
+        Sunday: false,
+      };
+
+      const allSelected = Object.values(current).every(Boolean);
+
+      const newState = {
+        ...prev,
+        [rowId]: {
+          Monday: !allSelected,
+          Tuesday: !allSelected,
+          Wednesday: !allSelected,
+          Thursday: !allSelected,
+          Friday: !allSelected,
+          Saturday: !allSelected,
+          Sunday: !allSelected,
+        },
+      };
+
+      console.log(`Row ${rowId} selection:`, newState[rowId]);
+      return newState;
+    });
+  };
+
+  // Check if all toggles in a column are selected - UPDATED to use displayData
+  const isColumnFullySelected = (day: keyof typeof columnSelection) => {
+    if (displayData.length === 0) return false;
+
+    return displayData.every((customer) => {
+      const customerState = rowStates[customer.id];
+      return customerState?.[day] === true;
+    });
+  };
+
+  // Check if some toggles in a column are selected - UPDATED to use displayData
+  const isColumnPartiallySelected = (day: keyof typeof columnSelection) => {
+    if (displayData.length === 0) return false;
+
+    const hasTrue = displayData.some((customer) => {
+      const customerState = rowStates[customer.id];
+      return customerState?.[day] === true;
+    });
+
+    const hasFalse = displayData.some((customer) => {
+      const customerState = rowStates[customer.id];
+      return customerState?.[day] === false;
+    });
+
+    return hasTrue && hasFalse;
+  };
+
+  // Check if all toggles in a row are selected
+  const isRowFullySelected = (rowId: number) => {
+    const customerState = rowStates[rowId];
+    if (!customerState) return false;
+
+    return Object.values(customerState).every(Boolean);
+  };
+
+  // Check if some toggles in a row are selected (for indeterminate state)
+  const isRowPartiallySelected = (rowId: number) => {
+    const customerState = rowStates[rowId];
+    if (!customerState) return false;
+
+    const hasTrue = Object.values(customerState).some(Boolean);
+    const hasFalse = Object.values(customerState).some((value) => !value);
+
+    return hasTrue && hasFalse;
+  };
+
+  // Check if a customer has pre-filled data (for visual indication)
+  const hasPrefilledData = (customerId: number) => {
     return (
-      <ContainerCard className="w-full flex font-semibold justify-center items-center py-10 text-black">
-        No Data Found
-      </ContainerCard>
+      prefilledCustomerData[customerId] &&
+      prefilledCustomerData[customerId].length > 0
+    );
+  };
+
+  // Show loading when customers are being fetched or internal loading
+  if (loading || internalLoading) {
+    return (
+      <div className="w-full flex flex-col overflow-hidden">
+        <div className="rounded-lg border border-[#E9EAEB] overflow-hidden">
+          <div className="flex items-center justify-center py-12">
+            <Loading />
+          </div>
+        </div>
+      </div>
     );
   }
 
-  // ✅ Otherwise, show the table
   return (
-    <div className="w-full flex flex-col">
+    <div className="w-full flex flex-col overflow-hidden">
       <div className="rounded-lg border border-[#E9EAEB] overflow-hidden">
-        {/* ✅ Horizontal scroll container for small screens */}
         <div className="overflow-x-auto">
-          <table className="min-w-full table-auto text-sm">
+          <table className="w-full min-w-max">
             <thead className="text-[12px] bg-[#FAFAFA] text-[#535862] sticky top-0 z-20">
-              <tr className="h-[44px] border-b border-[#E9EAEB]">
-                <th className="px-4 py-3 font-[500] text-left border-r border-[#E9EAEB] whitespace-nowrap">
-                  {selectedCustomerType.toString() === "1"
-                    ? "Agent Customer"
-                    : "Merchandiser"}
+              <tr className="border-b-[1px] border-[#E9EAEB]">
+                <th className="px-4 py-3 font-[500] text-left min-w-[220px] sticky left-0 bg-[#FAFAFA] z-10 border-r border-[#E9EAEB]">
+                  <div className="flex items-center gap-2">
+                    <span>Customer List</span>
+                  </div>
                 </th>
-                {[
-                  "Monday",
-                  "Tuesday",
-                  "Wednesday",
-                  "Thursday",
-                  "Friday",
-                  "Saturday",
-                  "Sunday",
-                ].map((day) => (
-                  <th
-                    key={day}
-                    className="px-4 py-3 font-[500] text-center border-l border-[#E9EAEB] whitespace-nowrap"
-                  >
-                    {day}
-                  </th>
-                ))}
+
+                {Object.keys(columnSelection).map((day) => {
+                  const dayKey = day as keyof typeof columnSelection;
+                  const isFullySelected = isColumnFullySelected(dayKey);
+                  const isPartiallySelected = isColumnPartiallySelected(dayKey);
+
+                  return (
+                    <th
+                      key={day}
+                      className="px-4 py-3 font-[500] text-center min-w-[120px] border-l border-[#E9EAEB]"
+                    >
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="text-xs">{day}</span>
+                        <div className="flex items-center">
+                          <Toggle
+                            isChecked={isFullySelected}
+                            onChange={() => handleColumnSelect(dayKey)}
+                          />
+                        </div>
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
 
@@ -307,23 +425,57 @@ export default function Table({
                   Sunday: false,
                 };
 
+                const isRowSelected = isRowFullySelected(row.id);
+                const isRowPartial = isRowPartiallySelected(row.id);
+                const isPrefilled = hasPrefilledData(row.id);
+
                 return (
-                  <tr key={row.id} className="border-b border-[#E9EAEB]">
-                    <td className="px-4 py-3 text-left font-[500] border-r border-[#E9EAEB] whitespace-nowrap">
-                      {row.name}
+                  <tr
+                    className={`border-b-[1px] border-[#E9EAEB] hover:bg-gray-50 ${
+                      isPrefilled ? "bg-blue-50" : ""
+                    }`}
+                    key={row.id}
+                  >
+                    <td className="px-4 py-3 text-left font-[500] sticky left-0 bg-white z-10 border-r border-[#E9EAEB] min-w-[220px]">
+                      <div className="flex items-center gap-3">
+                        <Toggle
+                          isChecked={isRowSelected}
+                          onChange={() => handleRowSelect(row.id)}
+                        />
+                        <span
+                          className={`truncate max-w-[160px] ${
+                            isPrefilled ? "font-semibold text-blue-700" : ""
+                          }`}
+                          title={row.name}
+                        >
+                          {row.name}
+                          {isPrefilled && (
+                            <span className="text-xs text-blue-500 ml-1">
+                              (pre-filled)
+                            </span>
+                          )}
+                        </span>
+                      </div>
                     </td>
 
-                    {Object.keys(state).map((day) => (
+                    {Object.entries(state).map(([day, isChecked]) => (
                       <td
                         key={day}
-                        className="px-4 py-3 text-center border-l border-[#E9EAEB] whitespace-nowrap"
+                        className={`px-4 py-3 text-center border-l border-[#E9EAEB] min-w-[120px] ${
+                          isPrefilled && isChecked ? "bg-green-50" : ""
+                        }`}
                       >
-                        <Checkbox
-                          isChecked={state[day as keyof DayState]}
-                          onChange={() =>
-                            handleToggle(row.id, day as keyof DayState)
-                          }
-                        />
+                        <div className="flex justify-center">
+                          <Toggle
+                            isChecked={isChecked}
+                            onChange={() =>
+                              handleToggle(
+                                row.id,
+                                day as keyof (typeof rowStates)[number]
+                              )
+                            }
+                          />
+                        </div>
                       </td>
                     ))}
                   </tr>
@@ -332,33 +484,13 @@ export default function Table({
             </tbody>
           </table>
         </div>
+
+        {displayData.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            No customers found
+          </div>
+        )}
       </div>
     </div>
-  );
-}
-
-type CheckboxProps = {
-  label?: string;
-  isChecked: boolean;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-};
-
-export function Checkbox({
-  label,
-  isChecked = false,
-  onChange,
-}: CheckboxProps) {
-  return (
-    <label className="inline-flex items-center cursor-pointer space-x-2">
-      <input
-        type="checkbox"
-        className="w-5 h-5 accent-green-500 cursor-pointer border border-gray-300 rounded focus:ring-2 focus:ring-white"
-        checked={isChecked}
-        onChange={onChange}
-      />
-      {label && (
-        <span className="text-sm font-medium text-gray-900">{label}</span>
-      )}
-    </label>
   );
 }

@@ -6,20 +6,29 @@ import { LinkDataType } from "../../(private)/data/dashboardLinks";
 
 type PermissionContextType = {
   filteredMenu: LinkDataType[] | null;
+  settingsMenu: LinkDataType[] | null;
   loading: boolean;
   error?: string | null;
   refreshPermissions: (
     allMenus: LinkDataType[] | null,
+    type:string,
     options?: { roleId?: string; force?: boolean }
   ) => Promise<LinkDataType[]>;
+  allowedPaths?: Set<string>;
 };
 
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
+let allowedDashboardPaths = new Set<string>();
+// let allowedSettingsPaths = new Set<string>();
 
 export function filterMenuByPermissions(allMenus: LinkDataType[] = [], role: any): LinkDataType[] {
   if (!role || !Array.isArray(allMenus)) return [];
   const allowedMenus = (role?.menus || []).map((m: any) => m.menu?.name).filter(Boolean);
-  const allowedSubMenus = (role?.menus || []).flatMap((m: any) => (Array.isArray(m.submenu) ? m.submenu.map((s: any) => s.name) : []));
+  const allowedSubMenus = (role?.menus || []).flatMap((m: any) => {
+    const hrefs = Array.isArray(m.submenu) ? m.submenu.map((s: { path: string}) => s.path) : [];
+    allowedDashboardPaths = new Set([...allowedDashboardPaths, ...hrefs]);
+    return (Array.isArray(m.submenu) ? m.submenu.map((s: any) => s.name) : []);
+  });
 
   return allMenus
     .filter((menu) => allowedMenus.includes(menu.label))
@@ -33,12 +42,46 @@ export function filterMenuByPermissions(allMenus: LinkDataType[] = [], role: any
     });
 }
 
-export async function fetchFilteredMenu(allMenus: LinkDataType[] | null, roleId?: string): Promise<LinkDataType[]> {
+function filterMenusByRole(allMenus:LinkDataType[] | null = [] , roles:{path:string}[]) {
+  // Extract allowed paths from role array
+  const allowedPaths = new Set(roles.map(role => role.path));
+  // allowedSettingsPaths = allowedPaths;
+
+  // Recursive function to filter menu tree
+  const filterRecursive = (menus:any) => {
+    return menus
+      .map((menu:any) => {
+        // Clone menu object
+        const newMenu = { ...menu };
+
+        // If the menu has children, filter them too
+        if (menu.children && menu.children.length > 0) {
+          newMenu.children = filterRecursive(menu.children);
+        }
+
+        // Keep menu if it’s in allowed paths or has allowed children
+        const isAllowed = allowedPaths.has(menu.href);
+        const hasAllowedChildren = newMenu.children && newMenu.children.length > 0;
+
+        return isAllowed || hasAllowedChildren ? newMenu : null;
+      })
+      .filter(Boolean); // remove nulls
+  };
+
+  return filterRecursive(allMenus);
+}
+
+
+export async function fetchFilteredMenu(allMenus: LinkDataType[] | null,type:string, roleId?: string): Promise<LinkDataType[]> {
   try {
     const rid = roleId ?? (typeof window !== "undefined" ? localStorage.getItem("role") : null);
     if (!rid) return [];
     const res = await getRoleById(rid);
     if (res?.error || !res?.data) return [];
+    if(type==="settings"){
+       const rolesSettings = res.data.menus.filter((menu: any) =>  menu.menu.name == "Settings")[0].submenu;
+       return filterMenusByRole(allMenus, rolesSettings);
+    }
     return filterMenuByPermissions(allMenus || [], res.data || {});
   } catch (err) {
     console.error("fetchFilteredMenu error", err);
@@ -48,13 +91,14 @@ export async function fetchFilteredMenu(allMenus: LinkDataType[] | null, roleId?
 
 export const PermissionProvider = ({ children }: { children: React.ReactNode }) => {
   const [filteredMenu, setFilteredMenu] = useState<LinkDataType[] | null>(null);
+  const [settingsMenu, setSettingsMenu] = useState<LinkDataType[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastRoleId = useRef<string | null>(null);
   const inFlight = useRef<Promise<LinkDataType[]> | null>(null);
 
   const refreshPermissions = useCallback(
-    async (allMenus: LinkDataType[] | null, options?: { roleId?: string; force?: boolean }) => {
+    async (allMenus: LinkDataType[] | null,type:string, options?: { roleId?: string; force?: boolean }) => {
       const roleId = options?.roleId ?? (typeof window !== "undefined" ? localStorage.getItem("role") : null);
       if (!roleId) return [] as LinkDataType[];
 
@@ -73,8 +117,9 @@ export const PermissionProvider = ({ children }: { children: React.ReactNode }) 
 
       const promise = (async () => {
         try {
-          const fm = await fetchFilteredMenu(allMenus, roleId);
-          setFilteredMenu(fm);
+          const fm = await fetchFilteredMenu(allMenus,type,roleId);
+          if(type === "settings") setSettingsMenu(fm);
+          if(type === "nav") setFilteredMenu(fm);
           lastRoleId.current = roleId;
           return fm;
         } catch (err: any) {
@@ -94,7 +139,7 @@ export const PermissionProvider = ({ children }: { children: React.ReactNode }) 
   );
 
   return (
-    <PermissionContext.Provider value={{ filteredMenu, loading, error, refreshPermissions }}>
+    <PermissionContext.Provider value={{ filteredMenu, settingsMenu, loading, error, refreshPermissions, allowedPaths: allowedDashboardPaths }}>
       {children}
     </PermissionContext.Provider>
   );

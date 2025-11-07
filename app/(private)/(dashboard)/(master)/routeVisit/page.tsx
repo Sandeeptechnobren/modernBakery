@@ -1,167 +1,201 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-import ContainerCard from "@/app/components/containerCard";
-import InputFields from "@/app/components/inputFields";
+import Table, {
+  listReturnType,
+  searchReturnType,
+  TableDataType,
+} from "@/app/components/customTable";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import { getRouteVisitList } from "@/app/services/allApi"; // Adjust import path
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useLoading } from "@/app/services/loadingContext";
 
-export default function RoutevisitPlan() {
-  const router = useRouter();
+const columns = [
+  { key: "from_date", label: "From Date" },
+  { key: "to_date", label: "To Date" },
+  { key: "customer_type", label: "Customer Type" },
+  { key: "status", label: "Status" },
+];
 
-  const [form, setForm] = useState({
-    customer_type: "1",
-    from_date: "",
-    to_date: "",
-    status: "1", // store as string for consistency with radio inputs
+export default function RouteVisits() {
+  interface RouteVisitItem {
+    uuid?: string;
+    id?: number | string;
+    from_date?: string;
+    to_date?: string;
+    customer_type?: string;
+    status?: string;
+  }
+
+  const { setLoading } = useLoading();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [filters, setFilters] = useState({
+    from_date: null as string | null,
+    to_date: null as string | null,
+    customer_type: null as string | null,
+    status: null as string | null,
   });
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
+  type TableRow = TableDataType & { uuid?: string };
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const fetchRouteVisits = useCallback(
+    async (
+      page: number = 1,
+      pageSize: number = 50
+    ): Promise<listReturnType> => {
+      try {
+        setLoading(true);
 
-  const handleSingleSelectChange = (field: string, value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
+        // Prepare params for the API call
+        const params = {
+          from_date: filters.from_date,
+          to_date: filters.to_date,
+          customer_type: filters.customer_type,
+          status: filters.status,
+        };
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
+        const listRes = await getRouteVisitList(params);
+        console.log("Route Visits", listRes);
 
-    if (!form.from_date) newErrors.from_date = "From Date is required";
-    if (!form.to_date) newErrors.to_date = "To Date is required";
-    if (!form.customer_type)
-      newErrors.customer_type = "Customer Type is required";
-    if (!form.status) newErrors.status = "Status is required";
+        setLoading(false);
 
-    if (form.from_date && form.to_date) {
-      const from = new Date(form.from_date);
-      const to = new Date(form.to_date);
-      if (to < from) {
-        newErrors.to_date = "To Date must be after or equal to From Date";
+        // ✅ Added: transform customer_type names only
+        const transformedData = (listRes.data || []).map((item: any) => ({
+          ...item,
+          customer_type:
+            item.customer_type == 1 ? "Agent Customer" : "Merchandiser",
+          status: item.status == 1 ? "Active" : "Inactive",
+          // Add date formatting:
+          from_date: item.from_date ? item.from_date.split("T")[0] : "",
+          to_date: item.to_date ? item.to_date.split("T")[0] : "",
+        }));
+
+        // Adjust this based on your actual API response structure
+        return {
+          data: transformedData,
+          total: listRes.pagination?.totalPages || 1,
+          currentPage: listRes.pagination?.page || 1,
+          pageSize: listRes.pagination?.limit || pageSize,
+        };
+      } catch (error: unknown) {
+        console.error("API Error:", error);
+        setLoading(false);
+        showSnackbar("Failed to fetch route visits", "error");
+        throw error;
       }
-    }
+    },
+    [filters, setLoading, showSnackbar]
+  );
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const searchRouteVisits = useCallback(
+    async (
+      searchQuery: string,
+      pageSize: number
+    ): Promise<searchReturnType> => {
+      try {
+        setLoading(true);
 
-  const handleNavigate = (path: string) => {
-    if (!validate()) return;
+        // For search, you might want to adjust the params
+        // or use a different search endpoint if available
+        const params = {
+          from_date: filters.from_date,
+          to_date: filters.to_date,
+          customer_type: filters.customer_type,
+          status: filters.status,
+          // Add search query if your API supports it
+          search: searchQuery || null,
+        };
 
-    // Build query string
-    const query = new URLSearchParams({
-      from_date: form.from_date,
-      to_date: form.to_date,
-      customer_type: form.customer_type,
-      status: form.status,
-    }).toString();
+        const result = await getRouteVisitList(params);
+        setLoading(false);
 
-    router.push(`${path}?${query}`);
-  };
+        // ✅ Added: transform customer_type names only
+        const transformedData = (result.data || []).map((item: any) => ({
+          ...item,
+          customer_type:
+            item.customer_type == 1 ? "Agent Customer" : "Merchandiser",
+          status: item.status == 1 ? "Active" : "Inactive",
+          // Add date formatting:
+          from_date: item.from_date ? item.from_date.split("T")[0] : "",
+          to_date: item.to_date ? item.to_date.split("T")[0] : "",
+        }));
+
+        return {
+          data: transformedData,
+          total: result.pagination?.totalPages || 0,
+          currentPage: result.pagination?.page || 1,
+          pageSize: result.pagination?.limit || pageSize,
+        };
+      } catch (error: unknown) {
+        console.error("Search Error:", error);
+        setLoading(false);
+        showSnackbar("Search failed", "error");
+        throw error;
+      }
+    },
+    [filters, setLoading, showSnackbar]
+  );
+
+  // Refresh table when filters change
+  useEffect(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, [filters]);
 
   return (
-    <ContainerCard>
-      <h1 className="mb-4 text-lg font-semibold">Route Visit Plan</h1>
-      <ContainerCard>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* From Date */}
-          <div>
-            <InputFields
-              required
-              label="From Date"
-              type="date"
-              value={form.from_date}
-              onChange={(e) =>
-                handleSingleSelectChange("from_date", e.target.value)
-              }
-              error={errors.from_date}
-            />
-            {errors.from_date && (
-              <p className="text-red-500 text-sm mt-1">{errors.from_date}</p>
-            )}
-          </div>
+    <>
+      <div className="h-[calc(100%-60px)]">
+        {/* Filter Section */}
+        {/* <FilterSection /> */}
 
-          {/* To Date */}
-          <div>
-            <InputFields
-              required
-              label="To Date"
-              type="date"
-              value={form.to_date}
-              onChange={(e) =>
-                handleSingleSelectChange("to_date", e.target.value)
-              }
-              error={errors.to_date}
-            />
-            {errors.to_date && (
-              <p className="text-red-500 text-sm mt-1">{errors.to_date}</p>
-            )}
-          </div>
-
-          {/* Customer Type */}
-          <div>
-            <InputFields
-              required
-              label="Customer Type"
-              value={form.customer_type}
-              onChange={(e) =>
-                handleSingleSelectChange("customer_type", e.target.value)
-              }
-              options={[
-                { value: "1", label: "Agent Customer" },
-                { value: "2", label: "Merchandiser" },
-              ]}
-              error={errors.customer_type}
-            />
-            {errors.customer_type && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.customer_type}
-              </p>
-            )}
-          </div>
-
-          {/* ✅ Status */}
-          <div>
-            <InputFields
-              required
-              label="Status"
-              type="radio"
-              value={form.status}
-              onChange={(e) =>
-                handleSingleSelectChange("status", e.target.value)
-              }
-              options={[
-                { value: "1", label: "Active" },
-                { value: "0", label: "Inactive" },
-              ]}
-              error={errors.status}
-            />
-            {errors.status && (
-              <p className="text-red-500 text-sm mt-1">{errors.status}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex gap-6 mt-10">
-          <button
-            onClick={() => handleNavigate("/routeVisit/add")}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Add
-          </button>
-
-          <button
-            onClick={() => handleNavigate("/routeVisit/bulkUpdate")}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Bulk Update
-          </button>
-        </div>
-      </ContainerCard>
-    </ContainerCard>
+        <Table
+          refreshKey={refreshKey}
+          config={{
+            api: {
+              list: fetchRouteVisits,
+              search: searchRouteVisits,
+            },
+            header: {
+              title: "Route Visits",
+              searchBar: true,
+              columnFilter: true,
+              actions: [
+                <SidebarBtn
+                  key={0}
+                  href="/routeVisit/add"
+                  isActive
+                  leadingIcon="lucide:plus"
+                  label="Add Route Visit"
+                  labelTw="hidden sm:block"
+                />,
+              ],
+            },
+            localStorageKey: "route-visits-table",
+            table: {
+              height: 500,
+            },
+            footer: {
+              nextPrevBtn: true,
+              pagination: true,
+            },
+            columns,
+            rowSelection: false, // Set to true if you need row selection
+            rowActions: [
+              {
+                icon: "lucide:edit-2",
+                onClick: (data: object) => {
+                  const row = data as TableRow;
+                  router.push(`/routeVisit/${row.uuid}`);
+                },
+              },
+            ],
+            pageSize: 50,
+          }}
+        />
+      </div>
+    </>
   );
 }
