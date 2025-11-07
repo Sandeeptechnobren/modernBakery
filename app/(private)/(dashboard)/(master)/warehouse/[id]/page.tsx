@@ -60,17 +60,18 @@ type FormValues = {
 // IMPROVED VALIDATION SCHEMA
 const validationSchema = Yup.object({
     warehouse_code: Yup.string().required('Warehouse Code is required'),
-    tin_no: Yup.string().required('TIN No. is required'),
+    tin_no: Yup.number().required('TIN No. is required'),
     warehouse_type: Yup.string().required('Warehouse Type is required'),
     warehouse_name: Yup.string().required('Warehouse Name is required'),
     owner_name: Yup.string().required('Owner Name is required'),
     company: Yup.string().required('Company is required'),
     agreed_stock_capital: Yup.string(),
-    agent_customer: Yup.string().when('warehouse_type', {
-        is: (val: any) => String(val) === 'company_outlet',
-        then: (schema: any) => schema.required('Agent Customer is required'),
-        otherwise: (schema: any) => schema.notRequired(),
-    }),
+    // agent_customer: Yup.string().when('warehouse_type', {
+    //     is: (val: any) => String(val) === 'company_outlet',
+    //     then: (schema: any) => schema.required('Agent Customer is required'),
+    //     otherwise: (schema: any) => schema.notRequired(),
+    // }),
+    agent_customer:Yup.string().required('Agent Customer is required'),
     warehouse_manager: Yup.string().required('Warehouse Manager is required'),
     owner_number: Yup.string()
         .required('Owner Contact is required')
@@ -80,9 +81,7 @@ const validationSchema = Yup.object({
         .required('Manager Contact is required')
         .matches(/^[\d]+$/, 'Contact must be numeric')
         .min(7, 'Contact must be at least 7 digits'),
-    owner_email: Yup.string()
-        .required('Owner Email is required')
-        .matches(/^\S+@gmail\.com$/, 'Must be a valid Gmail address'),
+    owner_email: Yup.string(),
     location: Yup.string().required('Location is required'),
     city: Yup.string().required('City is required'),
     region_id: Yup.string().when('warehouse_type', {

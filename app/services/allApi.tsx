@@ -2989,6 +2989,15 @@ export const getRouteInWarehouse = async (id?: string, params?: Params) => {
   }
 };
 
+export const getStockOfWarehouse = async (id?: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/warehouse-stocks/warehouseStockInfo/${id}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const getVehicleInWarehouse = async (id?: string) => {
   try {
     const res = await API.get(`/api/master/warehouse/warehouseVehicles/${id}`);

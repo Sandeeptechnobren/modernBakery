@@ -62,11 +62,11 @@ export default function WarehouseContactDetails({
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     handleChange(e);
-    const emailError =
-      "value" in e.target ? validateEmail(e.target.value) : "";
+    // const emailError =
+    //   "value" in e.target ? validateEmail(e.target.value) : "";
     setLocalErrors((prev) => ({
       ...prev,
-      owner_email: emailError,
+      owner_email: e.target.value,
     }));
   };
 
@@ -76,7 +76,7 @@ export default function WarehouseContactDetails({
       ...prev,
       owner_number: validateContact(values.owner_number || ""),
       warehouse_manager_contact: validateContact(values.warehouse_manager_contact || ""),
-      owner_email: validateEmail(values.owner_email || ""),
+
     }));
   }, [values.owner_number, values.warehouse_manager_contact, values.owner_email]);
 
@@ -136,11 +136,7 @@ export default function WarehouseContactDetails({
           //     : false
           // }
         />
-        {localErrors.owner_email && touched?.owner_email && (
-          <span className="text-xs text-red-500 mt-1">
-            {/* {localErrors.owner_email} */}
-          </span>
-        )}
+    
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import { useLoading } from "@/app/services/loadingContext";
-import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse } from "@/app/services/allApi";
+import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse, getStockOfWarehouse } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -358,6 +358,54 @@ export default function ViewPage() {
             isSortable: true
         },
     ];
+
+    const stockColumns: configType["columns"] = [
+    {
+        key: "osa_code",
+        label: "OSA Code",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.osa_code || "-"}
+            </span>
+        ),
+        showByDefault: true,
+    },
+    {
+        key: "item",
+        label: "Item",
+        render: (row: TableDataType) => {
+            if (
+                typeof row.item === "object" &&
+                row.item !== null &&
+                "name" in row.item
+            ) {
+                const item = row.item as { name?: string; code?: string };
+                return (
+                    <div>
+                        <div className="font-medium text-[#181D27] text-[14px]">
+                         {item.code}-{item.name || "-"}
+                        </div>
+                        {/* <div className="text-xs text-gray-500">{item.code || ""}</div> */}
+                    </div>
+                );
+            }
+            return typeof row.item === "string" ? row.item : "-";
+        },
+        showByDefault: true,
+    },
+    {
+        key: "qty",
+        label: "Quantity",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.qty ?? "-"}
+            </span>
+        ),
+        showByDefault: true,
+        isSortable: true,
+    }
+];
+
     const columns: configType["columns"] = [
         {
             key: "osa_code",
@@ -558,6 +606,30 @@ export default function ViewPage() {
             []
         );
 
+          const listStockByWarehouse = useCallback(
+            async (
+                pageNo: number = 1,
+                pageSize: number = 50,
+            ): Promise<searchReturnType> => {
+                const result = await getStockOfWarehouse(id,{
+                    page: pageNo.toString(),
+                    pageSize: pageSize.toString()
+                });
+    
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+                
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
   const searchSalesmanByWarehouse = useCallback(
             async (
                 searchQuery: string,
@@ -565,6 +637,30 @@ export default function ViewPage() {
                 columnName?: string
             ): Promise<searchReturnType> => {
                 const result = await getSalesmanInWarehouse(id,{
+                    query: searchQuery,
+                });
+                
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+    
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
+  const searchStockByWarehouse = useCallback(
+            async (
+                searchQuery: string,
+                pageSize: number = 5,
+                columnName?: string
+            ): Promise<searchReturnType> => {
+                const result = await getStockOfWarehouse(id,{
                     query: searchQuery,
                 });
                 
@@ -803,11 +899,26 @@ export default function ViewPage() {
                 </ContainerCard>
             )}
             {activeTab === "warehouseStock" && (
-                <ContainerCard >
-
-                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                        No Data Found
-                    </div>
+                  <ContainerCard >
+                   
+                        <div className="flex flex-col h-full">
+                            <Table
+                                config={{
+                                    api: {
+                                        search: searchStockByWarehouse,
+                                        list: listStockByWarehouse
+                                    },
+                                    header: {
+                                        searchBar: true
+                                    },
+                                    footer: { nextPrevBtn: true, pagination: true },
+                                    columns: stockColumns,
+                                    rowSelection: false,
+                                    pageSize: 50,
+                                }}
+                            />
+                        </div>
+                   
                 </ContainerCard>
             )}
             {activeTab === "route" && (

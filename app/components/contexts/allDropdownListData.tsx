@@ -161,7 +161,7 @@ interface AreaItem {
 interface CustomerItem {
   id?: number | string;
   customer_code?: string;
-  owner_name?: string;
+  business_name?: string;
 }
 
 interface CustomerTypeItem {
@@ -400,7 +400,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const companyCustomersOptions = (Array.isArray(companyCustomersData) ? companyCustomersData : []).map((c: CustomerItem) => ({
     value: String(c.id ?? ''),
-    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? '')
+    label: c.customer_code && c.business_name ? `${c.customer_code} - ${c.business_name}` : (c.business_name ?? '')
   }));
 
   const companyCustomersTypeOptions = (Array.isArray(companyCustomersTypeData) ? companyCustomersTypeData : []).map((c: CustomerTypeItem) => ({
