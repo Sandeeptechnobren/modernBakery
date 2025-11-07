@@ -97,7 +97,7 @@ const columns = [
   // },
   // { key: "sub_region_id", label: "Sub Region"},
   { key: "city", label: "City", render: (row: WarehouseRow) => row.city || "-" },
-  { key: "location", label: "Location", showByDefault: true, render: (row: WarehouseRow) => row.location || "-" },
+  // { key: "location", label: "Location", showByDefault: true, render: (row: WarehouseRow) => row.location || "-" },
   // { key: "town_village", label: "Town", render: (row: WarehouseRow) => row.town_village || "-" },
   // { key: "street", label: "Street", render: (row: WarehouseRow) => row.street || "-" },
   // { key: "landmark", label: "Landmark", render: (row: WarehouseRow) => row.landmark || "-" },

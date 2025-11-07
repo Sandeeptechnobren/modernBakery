@@ -12,7 +12,7 @@ export default function Financial({ data }: { data: AgentCustomerDetails | null 
                 data={[
                     {
                         key: "Payment Type",
-                        value: data?.payment_type || "-",
+                        value: "Cash",
                     },
                     {
                         key: "Buyer Type",

@@ -79,7 +79,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={(e) => {
                         handleChange(e);
                         const val = (e.target as HTMLSelectElement).value;
-                        if (val === 'agent_customer') {
+                        if (val === 'Agent Customer') {
                             try {
                                 setFieldValue('company_outlet', '');
                                 setFieldValue('region_id', '');
@@ -89,8 +89,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                         }
                     }}
                     options={[
-                        { value: "agent_customer", label: "Agent Warehouse" },
-                        { value: "company_outlet", label: "Company Outlet" },
+                        { value: "Agent Customer", label: "Agent Warehouse" },
+                        { value: "Company Otlet", label: "Company Outlet" },
                     ]}
                 />
                 {errors?.warehouse_type && touched?.warehouse_type && (

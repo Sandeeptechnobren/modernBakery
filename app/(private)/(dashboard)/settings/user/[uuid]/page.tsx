@@ -580,7 +580,7 @@ export default function UserAddEdit() {
                   showSkeleton={skeleton.region}
                 />
               )}
-              {visibleLabels.includes("region") && (
+              {visibleLabels.includes("region") && (regionOptions.length>0?
                 <InputFields
                   required
                   label="Region"
@@ -610,10 +610,40 @@ export default function UserAddEdit() {
                   }}
                   error={touched.region && errors.region}
                   showSkeleton={skeleton.region}
+                />: <InputFields
+                  required
+                  label="Region"
+                  name="region"
+                  isSingle={false}
+                  value={values.region}
+                  options={regionOptions}
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+                    const v = e?.target?.value;
+                    setFieldValue("region", v);
+                    setSkeleton((s) => ({ ...s, area: true }));
+                    try {
+                      await fetchAreaOptions(v);
+                    } finally {
+                      setSkeleton((s) => ({ ...s, area: false }));
+                    }
+
+                    // Clear dependent selects if no areas returned or current area not present
+                    const newAreaOptions = (areaOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curArea = values.area;
+                    const areaExists = newAreaOptions.some(opt => String(opt?.value ?? "") === String(curArea ?? ""));
+                    if (newAreaOptions.length === 0 || !areaExists) {
+                      setFieldValue("area", "");
+                      setFieldValue("warehouse", "");
+                      setFieldValue("route", "");
+                    }
+                  }}
+                  error={touched.region && errors.region}
+                  showSkeleton={skeleton.region}
+                  disabled
                 />
               )}
               {visibleLabels.includes("area") && (
-                <InputFields
+                areaOptions.length>0?<InputFields
                   required
                   label="Area"
                   name="area"
@@ -640,10 +670,38 @@ export default function UserAddEdit() {
                   }}
                   error={touched.area && errors.area}
                   showSkeleton={skeleton.area}
+                />:<InputFields
+                  required
+                  label="Area"
+                  name="area"
+                  isSingle={false}
+                  value={values.area}
+                  options={areaOptions}
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+                    const v = e?.target?.value;
+                    setFieldValue("area", v);
+                    setSkeleton((s) => ({ ...s, warehouse: true }));
+                    try {
+                      await fetchWarehouseOptions(v);
+                    } finally {
+                      setSkeleton((s) => ({ ...s, warehouse: false }));
+                    }
+
+                    const newWarehouseOptions = (warehouseOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curWarehouse = values.warehouse;
+                    const warehouseExists = newWarehouseOptions.some(opt => String(opt?.value ?? "") === String(curWarehouse ?? ""));
+                    if (newWarehouseOptions.length === 0 || !warehouseExists) {
+                      setFieldValue("warehouse", "");
+                      setFieldValue("route", "");
+                    }
+                  }}
+                  error={touched.area && errors.area}
+                  showSkeleton={skeleton.area}
+                  disabled
                 />
               )}
               {visibleLabels.includes("warehouse") && (
-                <InputFields
+                warehouseOptions.length>0?<InputFields
                   required
                   label="Warehouse"
                   name="warehouse"
@@ -671,9 +729,37 @@ export default function UserAddEdit() {
                   error={touched.warehouse && errors.warehouse}
                   showSkeleton={skeleton.warehouse}
                 />
-              )}
+              :<InputFields
+                  required
+                  label="Warehouse"
+                  name="warehouse"
+                  isSingle={false}
+                  value={values.warehouse}
+                  options={warehouseOptions}
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+                    const v = e?.target?.value;
+                    setFieldValue("warehouse", v);
+                    setSkeleton((s) => ({ ...s, route: true }));
+                    try {
+                      await fetchRouteOptions(v);
+                    } finally {
+                      setSkeleton((s) => ({ ...s, route: false }));
+                    }
+
+                    // Clear route if no routes exist or selected route not present
+                    const newRouteOptions = (routeOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                    const curRoute = values.route;
+                    const routeExists = newRouteOptions.some(opt => String(opt?.value ?? "") === String(curRoute ?? ""));
+                    if (newRouteOptions.length === 0 || !routeExists) {
+                      setFieldValue("route", "");
+                    }
+                  }}
+                  error={touched.warehouse && errors.warehouse}
+                  showSkeleton={skeleton.warehouse}
+                  disabled
+                />)}
               {visibleLabels.includes("route") && (
-                <InputFields
+               routeOptions.length>0? <InputFields
                   required
                   label="Route"
                   name="route"
@@ -683,6 +769,19 @@ export default function UserAddEdit() {
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setFieldValue("route", e?.target?.value)}
                   error={touched.route && errors.route}
                   showSkeleton={skeleton.route}
+
+                />: <InputFields
+                  required
+                  label="Route"
+                  name="route"
+                  isSingle={false}
+                  value={values.route}
+                  options={routeOptions}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setFieldValue("route", e?.target?.value)}
+                  error={touched.route && errors.route}
+                  showSkeleton={skeleton.route}
+                  disabled
+
                 />
               )}
               {visibleLabels.includes("salesman") && (

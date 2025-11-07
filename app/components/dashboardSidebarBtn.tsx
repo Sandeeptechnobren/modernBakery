@@ -5,7 +5,7 @@ import React from "react";
 export default function SidebarBtn({
     isActive = false,
     href,
-    className = "",
+    className = "cursor-pointer",
     buttonTw = "px-3 py-2 h-10",
     disabled = false,
     onClick,

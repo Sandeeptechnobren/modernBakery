@@ -29,6 +29,10 @@
     "tailwindcss": "^4.0.0",
     "yup": "^1.7.0"
   },
+  "optionalDependencies": {
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@iconify-icon/react": "^3.0.0",

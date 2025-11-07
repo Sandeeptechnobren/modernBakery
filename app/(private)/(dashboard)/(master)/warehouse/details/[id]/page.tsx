@@ -299,16 +299,15 @@ export default function ViewPage() {
     const salesmanColumns: configType["columns"] = [
         {
             key: "osa_code",
-            label: "Salesman Code",
+            label: "Salesman",
             render: (row: TableDataType) => (
                 <span className="font-semibold text-[#181D27] text-[14px]">
-                    {row.osa_code}
+                    {row.osa_code} - {row.name }
                 </span>
             ),
             showByDefault: true,
         },
-        { key: "name", label: "Salesman Name", showByDefault: true },
-        {
+         {
             key: "salesman_type",
             label: "Salesman Type",
             render: (row: TableDataType) => {
@@ -321,7 +320,7 @@ export default function ViewPage() {
             showByDefault: true,
         },
 
-        { key: "designation", label: "Designation", showByDefault: true, },
+        // { key: "designation", label: "Designation", showByDefault: true, },
         {
             key: "route",
             label: "Route",
@@ -346,7 +345,7 @@ export default function ViewPage() {
             },
             showByDefault: true,
         },
-        { key: "contact_no", label: "Contact No" },
+        { key: "contact_no", label: "Contact No",showByDefault: true, },
 
         {
             key: "status",
@@ -368,7 +367,7 @@ export default function ViewPage() {
                 {row.osa_code || "-"}
             </span>
         ),
-        showByDefault: true,
+        // showByDefault: true,
     },
     {
         key: "item",
@@ -383,7 +382,7 @@ export default function ViewPage() {
                 return (
                     <div>
                         <div className="font-medium text-[#181D27] text-[14px]">
-                         {item.code}-{item.name || "-"}
+                         {item.code} - {item.name || "-"}
                         </div>
                         {/* <div className="text-xs text-gray-500">{item.code || ""}</div> */}
                     </div>
@@ -395,7 +394,8 @@ export default function ViewPage() {
     },
     {
         key: "qty",
-        label: "Quantity",
+        label: `Current Qty 
+        (2000)`,
         render: (row: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
                 {row.qty ?? "-"}
@@ -403,8 +403,89 @@ export default function ViewPage() {
         ),
         showByDefault: true,
         isSortable: true,
+    },
+    {
+        key: "incoming",
+        label: "Incoming",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {getRandomNumber(100) ?? "-"}
+            </span>
+        ),
+        showByDefault: true,
+        isSortable: true,
+    },
+    {
+        key: "usage",
+        label: "Usage",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {getRandomNumber(30) ?? "-"}
+            </span>
+        ),
+        showByDefault: true,
+        isSortable: true,
+    },
+    
+     {
+        key: "ordersBy",
+        label: "Orders By",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {getRandomDateFromLastMonth() ?? "-"}
+            </span>
+        ),
+        showByDefault: true,
+        isSortable: true,
     }
 ];
+
+function getRandomDateFromLastMonth(): string {
+  const now = new Date();
+
+  // Go to previous month
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  // Total days in last month
+  const daysInLastMonth = new Date(
+    lastMonth.getFullYear(),
+    lastMonth.getMonth() + 1,
+    0
+  ).getDate();
+
+  // Generate random day
+  const randomDay: number = Math.floor(Math.random() * daysInLastMonth) + 1;
+
+  // Create random date
+  const randomDate: Date = new Date(
+    lastMonth.getFullYear(),
+    lastMonth.getMonth(),
+    randomDay
+  );
+
+  // Format like "11 Oct 2025"
+  const options: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  };
+
+  const formattedDate: string = randomDate
+    .toLocaleDateString("en-GB", options)
+    .replace(",", "");
+
+  // Extract individual parts
+  const day: number = randomDate.getDate();
+  const month: string = randomDate.toLocaleString("en-GB", { month: "short" });
+  const year: number = randomDate.getFullYear();
+
+  // Return everything in a single formatted string
+  return `${formattedDate} `;
+}
+
+function getRandomNumber(count:number) {
+  return Math.floor(Math.random() * count) + 1;
+}
 
     const columns: configType["columns"] = [
         {
@@ -432,32 +513,9 @@ export default function ViewPage() {
                 }
                 return row.customer_type || "-";
             },
+            //   showByDefault: true,
         },
-        {
-            key: "category",
-            label: "Customer Category",
-            render: (row: TableDataType) =>
-                typeof row.category === "object" &&
-                    row.category !== null &&
-                    "customer_category_name" in row.category
-                    ? (row.category as { customer_category_name?: string })
-                        .customer_category_name || "-"
-                    : "-",
-        },
-        {
-            key: "subcategory",
-            label: "Customer Sub Category",
-            render: (row: TableDataType) =>
-                typeof row.subcategory === "object" &&
-                    row.subcategory !== null &&
-                    "customer_sub_category_name" in row.subcategory
-                    ? (row.subcategory as { customer_sub_category_name?: string })
-                        .customer_sub_category_name || "-"
-                    : "-",
-                isSortable:true,
-            showByDefault: true,
-        },
-        {
+         {
             key: "outlet_channel",
             label: "Outlet Channel",
             render: (row: TableDataType) =>
@@ -471,6 +529,20 @@ export default function ViewPage() {
 
             showByDefault: true,
         },
+        {
+            key: "category",
+            label: "Customer Category",
+            render: (row: TableDataType) =>
+                typeof row.category === "object" &&
+                    row.category !== null &&
+                    "customer_category_name" in row.category
+                    ? (row.category as { customer_category_name?: string })
+                        .customer_category_name || "-"
+                    : "-",
+            showByDefault: true,
+
+        },
+       
         { key: "landmark", label: "Landmark" },
         { key: "district", label: "District" },
         { key: "street", label: "Street" },
@@ -492,7 +564,7 @@ export default function ViewPage() {
 
             showByDefault: true,
         },
-        { key: "contact_no", label: "Contact No." },
+        { key: "contact_no", label: "Contact No.",showByDefault: true, },
         { key: "whatsapp_no", label: "Whatsapp No." },
         { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
         { key: "payment_type", label: "Payment Type" },
@@ -755,15 +827,7 @@ export default function ViewPage() {
                                         data={[
                                             {
                                                 key: "Warehouse Type",
-                                                value: (() => {
-                                                    const value = item?.warehouse_type;
-                                                    const strValue = value != null ? String(value).toLowerCase() : "";
-                                                    if (strValue === "agent_customer") return "Hariss";
-                                                    if (strValue === "company_outlet") return "Outlet";
-                                                    if (strValue === "0") return "Hariss";
-                                                    if (strValue === "1") return "Outlet";
-                                                    return strValue || "-";
-                                                })(),
+                                                value: item?.warehouse_type,
                                             },
                                             { key: "TIN No.", value: item?.tin_no || '-' },
                                             {
@@ -794,7 +858,7 @@ export default function ViewPage() {
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                <span>{item?.owner_number} / {item?.warehouse_manager_contact}</span></>:""}
+                                                <span>{item?.owner_number} <br/>{item?.warehouse_manager_contact}</span></>:""}
                                             </div>
                                             <div className="flex items-center gap-[8px] text-[16px]">
                                                {item?.owner_email? <><Icon
@@ -842,7 +906,7 @@ export default function ViewPage() {
 
                                             // { key: "Invoice Sync", value: item?.invoice_sync || "-" },
                                             {
-                                                key: "Is Ifris", value: (() => {
+                                                key: "Is Efris", value: (() => {
                                                     const value = item?.is_efris;
                                                     const strValue = value != null ? String(value) : "";
                                                     if (strValue === "0") return "Disable";

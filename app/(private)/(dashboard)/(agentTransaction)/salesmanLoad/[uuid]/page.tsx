@@ -157,6 +157,10 @@ export default function AddEditSalesmanLoad() {
         try {
           const res = await salesmanLoadHeaderById(String(loadUUID), {});
           const data = res?.data ?? res;
+          
+          const warehouseId = data?.warehouse?.id?.toString() || "";
+          const salesmanId = data?.salesman?.id?.toString() || "";
+          
           setForm({
             salesman_type: data?.salesman_type || "",
             warehouse: data?.warehouse?.id?.toString() || "",
@@ -189,10 +193,12 @@ export default function AddEditSalesmanLoad() {
   }, [isEditMode, loadUUID, isItemsLoaded, setLoading, showSnackbar]);
 
   // ✅ Validation Schema
+  // ✅ Validation Schema
   const validationSchema = yup.object().shape({
     salesman_type: yup.string().required("Salesman Type is required"),
     warehouse: yup.string().required("Warehouse is required"),
     route: yup.string().required("Route is required"),
+    
     salesman: yup.string().required("Salesman is required"),
   });
 
@@ -322,6 +328,8 @@ export default function AddEditSalesmanLoad() {
         });
         setErrors(formErrors);
       } else {
+        console.error(err);
+        showSnackbar("Failed to submit form", "error");
         console.error(err);
         showSnackbar("Failed to submit form", "error");
       }

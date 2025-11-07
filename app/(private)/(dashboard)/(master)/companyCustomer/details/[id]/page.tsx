@@ -60,7 +60,18 @@ interface CustomerItem {
 
 const title = "Company Customer Details";
 const backBtnUrl = "/companyCustomer";
-
+export function getPaymentType(value: string): string {
+  switch (value) {
+    case "1":
+      return "Cash";
+    case "2":
+      return "Cheque";
+    case "3":
+      return "Transfer";
+    default:
+      return "UNKNOWN";
+  }
+}
 export default function ViewPage() {
   const params = useParams();
   const id = Array.isArray(params.id)
@@ -136,17 +147,13 @@ export default function ViewPage() {
                                          </div>
                                          <div className="text-center sm:text-left">
                                              <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                                                 {customer?.owner_name || "-"} - {customer?.customer_code || "-"}
+                                                 {customer?.customer_code} - {customer?.business_name }
                                              </h2>
                                              <span className="flex items-center">
                                                  <span className="text-[#414651] text-[16px]">
-                                                    <Icon
-                                                        icon="mdi:location"
-                                                        width={16}
-                                                        className="text-[#EA0A2A] mr-[5px]"
-                                                    />
+                                        
                                                     <span className="mb-[10px]">
-                                                        {customer?.district || "-"}
+                                                        {customer?.owner_no || "-"}
                                                     </span>
                                                  </span>
                                              </span>
@@ -184,10 +191,10 @@ export default function ViewPage() {
                 title="Customer Information"
                 data={[
                   { key: "SAP Code", value: customer?.sap_code || "-" },
-                  { key: "Customer Code", value: customer?.customer_code || "-" },
-                  { key: "Business Name", value: customer?.business_name || "-" },
+                  // { key: "Customer Code", value: customer?.customer_code || "-" },
+                  // { key: "Business Name", value: customer?.business_name || "-" },
                   { key: "Owner Name", value: customer?.owner_name || "-" },
-                  { key: "Owner Contact No", value: customer?.owner_no || "-" },
+                  // { key: "Owner Contact No", value: customer?.owner_no || "-" },
                   { key: "WhatsApp No", value: customer?.whatsapp_no || "-" },
                   { key: "Email", value: customer?.email || "-" },
                   { key: "Language", value: customer?.language || "-" },
@@ -201,21 +208,12 @@ export default function ViewPage() {
               <KeyValueData
                 title="Location Information"
                 data={[
-                  { key: "Region Code", value: customer?.get_region?.region_code || "-" },
-                                        {
-                                            key: "Region Name",
-                                            value: customer?.get_region?.region_name || "-",
-                                        },
-                                        { key: "Sub Region Code", value: customer?.get_area?.area_code || "-" },
-                                        {
-                                            key: "Sub Region Name",
-                                            value: customer?.get_area?.area_name || "-",
-                                        },
-                                        { key: "Outlet Channel Code", value: customer?.get_outlet_channel?.outlet_channel_code || "-" },
-                                        {
-                                            key: "Outlet Channel Name",
-                                            value: customer?.get_outlet_channel?.outlet_channel || "-",
-                                        },
+                  { key: "Region", value: `${customer?.get_region?.region_code} - ${customer?.get_region?.region_name }` || "-" },
+                                       
+                                        { key: "Sub Region ", value: `${customer?.get_area?.area_code} - ${customer?.get_area?.area_name}` || "-" },
+                                        
+                                        { key: "Outlet Channel ", value: `${customer?.get_outlet_channel?.outlet_channel_code} - ${customer?.get_outlet_channel?.outlet_channel}` || "-" },
+                                       
                   { key: "Road / Street", value: customer?.road_street || "-" },
                   { key: "Town", value: customer?.town || "-" },
                   { key: "Landmark", value: customer?.landmark || "-" },
@@ -233,7 +231,7 @@ export default function ViewPage() {
                 title="Financial Information"
                 data={[
                   { key: "Balance", value: customer?.balance?.toString() || "-" },
-                  { key: "Payment Type", value: customer?.payment_type || "-" },
+                  { key: "Payment Type", value:getPaymentType(customer?customer.payment_type:"")|| "-" },
                   { key: "Bank Name", value: customer?.bank_name || "-" },
                   { key: "Account Number", value: customer?.bank_account_number || "-" },
                   { key: "Credit Days", value: customer?.creditday || "-" },

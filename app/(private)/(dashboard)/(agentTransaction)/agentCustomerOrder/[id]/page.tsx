@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, ChangeEvent, useState } from "react";
+import React, { Fragment, ChangeEvent, useState, useEffect, useRef } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -10,13 +10,17 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import {genearateCode} from "@/app/services/allApi";
 import { addAgentOrder, editAgentOrder, getAgentOrderById } from "@/app/services/allApi";
 
 export default function OrderAddEditPage() {
   const { warehouseOptions, agentCustomerOptions, itemOptions, routeOptions } = useAllDropdownListData();
   const router = useRouter();
+  const hasFetchedCode = useRef(false);
+  
   const [form, setForm] = useState({
     customerType: "",
+    order_code: "",
     warehouse: "",
     route: "",
     customer: "",
@@ -49,6 +53,28 @@ export default function OrderAddEditPage() {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
+
+  useEffect(() => {
+    if (hasFetchedCode.current) return; // Prevent duplicate calls
+    
+    const fetchOrderCode = async () => {
+      try {
+        hasFetchedCode.current = true; // Mark as fetched
+        const response = await genearateCode({ model_name: "agent_order_headers" });
+        if (response && response.code) {
+          setForm((prevForm) => ({
+            ...prevForm,
+            order_code: response.code,
+          }));
+        }
+      } catch (error) {
+        console.error("Error generating order code:", error);
+        hasFetchedCode.current = false; // Reset on error to allow retry
+      }
+    };
+
+    fetchOrderCode();
+  }, []);
 
   // --- Calculate totals and VAT dynamically
   const recalculateItem = (index: number, field: string, value: string) => {
@@ -134,7 +160,7 @@ export default function OrderAddEditPage() {
     return {
       currency: "UGX",
       country_id: 59,
-      order_code: "ORD-2025-001",
+      order_code: form.order_code,
       warehouse_id: Number(form.warehouse) || 116,
       route_id: Number(form.route) || 60,
       customer_id: Number(form.customer) || 75,
@@ -208,7 +234,7 @@ export default function OrderAddEditPage() {
               O r d e r
             </span>
             <span className="text-primary text-[14px] tracking-[10px]">
-              #W1O20933
+              #{form.order_code}
             </span>
           </div>
         </div>
@@ -229,6 +255,7 @@ export default function OrderAddEditPage() {
           <InputFields
             label="Warehouse"
             name="warehouse"
+            searchable={true}
             value={form.warehouse}
             options={warehouseOptions}
             onChange={handleChange}
@@ -243,6 +270,7 @@ export default function OrderAddEditPage() {
           <InputFields
             label="Customer"
             name="customer"
+            searchable={true}
             value={form.customer}
             options={agentCustomerOptions}
             onChange={handleChange}
@@ -268,6 +296,7 @@ export default function OrderAddEditPage() {
                   <InputFields
                     label=""
                     name="itemName"
+                    searchable={true}
                     options={itemOptions}
                     value={row.itemName}
                     onChange={(e) =>

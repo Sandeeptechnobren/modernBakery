@@ -17,6 +17,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function SalemanLoad() {
+    const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions } = useAllDropdownListData();
     const columns: configType["columns"] = [
         { key: "code", label: "Code" },
         // { key: "date", label: "Collection Date" },
@@ -147,33 +148,40 @@ export default function SalemanLoad() {
                  }
                };
 
-    // const search = useCallback(
-    //     async (
-    //         searchQuery: string,
-    //         pageSize: number,
-    //         columnName?: string
-    //     ): Promise<searchReturnType> => {
-    //         let result;
-    //         setLoading(true);
-    //         if(columnName) {
-    //             result = await agentCustomerList({
-    //                 per_page: pageSize.toString(),
-    //                 [columnName]: searchQuery
-    //             });
-    //         }
-    //         setLoading(false);
-    //         if (result.error) throw new Error(result.data.message);
-    //         else {
-    //             return {
-    //                 data: result.data || [],
-    //                 total: result.pagination.pagination.totalPages || 0,
-    //                 currentPage: result.pagination.pagination.current_page || 0,
-    //                 pageSize: result.pagination.pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     []
-    // );
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await capsCollectionList(params);
+            } finally {
+                setLoading(false);
+            }
+
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
 
     useEffect(() => {
         setLoading(true);
@@ -187,8 +195,48 @@ export default function SalemanLoad() {
                     config={{
                         api: {
                             list: fetchSalesmanLoadHeader,
+                            filterBy: filterBy,
                         },
                         header: {
+                             filterByFields: [
+                                {
+                                    key: "date_change",
+                                    label: "Date Range",
+                                    type: "dateChange"
+                                },
+                                
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                 {
+                                    key: "salesman",
+                                    label: "Salesman",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+
+                               
+                                {
+                                    key: "customer",
+                                    label: "Customer",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(agentCustomerOptions) ? agentCustomerOptions : [],
+                                },
+                                
+                            ],
                              threeDot: [
                 {
                   icon: "gala:file-document",

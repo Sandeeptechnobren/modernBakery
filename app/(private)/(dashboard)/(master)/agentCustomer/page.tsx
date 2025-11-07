@@ -58,29 +58,9 @@ export default function AgentCustomer() {
                 ? (row.category as { customer_category_name?: string })
                       .customer_category_name || "-"
                 : "-",
+                showByDefault: true 
     },
-    {
-        key: "subcategory",
-        label: "Customer Sub Category",
-        render: (row: TableDataType) =>
-            typeof row.subcategory === "object" &&
-            row.subcategory !== null &&
-            "customer_sub_category_name" in row.subcategory
-                ? (row.subcategory as { customer_sub_category_name?: string })
-                      .customer_sub_category_name || "-"
-                : "-",
-        filter: {
-            isFilterable: true,
-            width: 320,
-            options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [], // [{ value, label }]
-            onSelect: (selected) => {
-                setSelectedSubCategoryId((prev) => prev === selected ? "" : (selected as string));
-            },
-            selectedValue: selectedSubCategoryId,
-        },
-        showByDefault: true,
-    },
-    {
+     {
         key: "outlet_channel",
         label: "Outlet Channel",
         render: (row: TableDataType) =>
@@ -101,6 +81,27 @@ export default function AgentCustomer() {
                 },
         
         showByDefault: true,
+    },
+    {
+        key: "subcategory",
+        label: "Customer Sub Category",
+        render: (row: TableDataType) =>
+            typeof row.subcategory === "object" &&
+            row.subcategory !== null &&
+            "customer_sub_category_name" in row.subcategory
+                ? (row.subcategory as { customer_sub_category_name?: string })
+                      .customer_sub_category_name || "-"
+                : "-",
+        filter: {
+            isFilterable: true,
+            width: 320,
+            options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [], // [{ value, label }]
+            onSelect: (selected) => {
+                setSelectedSubCategoryId((prev) => prev === selected ? "" : (selected as string));
+            },
+            selectedValue: selectedSubCategoryId,
+        },
+        
     },
     { key: "landmark", label: "Landmark" },
     { key: "district", label: "District" },
