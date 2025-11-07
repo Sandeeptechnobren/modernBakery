@@ -9,14 +9,20 @@ import Table, { TableDataType, listReturnType } from "@/app/components/customTab
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
-// import { deletewarehouseStock, getwarehouseStock } from "@/app/services/allApi";
+import { getwarehouseStock } from "@/app/services/allApi";
 
 interface WarehouseStock {
-  id?: string | number;
-  code?: string;
-  name?: string;
+  id?: number;
+  uuid?: string;
+  osa_code?: string;
+  warehouse?: string | null;
+  item?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  qty?: number;
   status?: number;
-  [key: string]: string | number | undefined;
 }
 
 const dropdownDataList = [
@@ -25,13 +31,13 @@ const dropdownDataList = [
 ];
 
 const columns = [
-  { key: "code", label: "Code",
+  {
+    key: "code",
+    label: "Code",
     render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.code}
-            </span>
-        ),
-   },
+      <span className="font-semibold text-[#181D27] text-[14px]">{row.code}</span>
+    ),
+  },
   { key: "warehouse", label: "Warehouse" },
   { key: "item", label: "Item" },
   { key: "quantity", label: "Quantity" },
@@ -54,50 +60,55 @@ const columns = [
   },
 ];
 
-export default function CustomerPage() {
+export default function WarehouseStockPage() {
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // Fetch list for Table
-//   const fetchwarehouseStock = useCallback(
-//     async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {
-//       try {
-//         setLoading(true);
-//         const listRes = await getwarehouseStock({
-//           per_page: pageSize.toString(),
-//           page: page.toString(),
-//         });
-//         console.log(listRes)
-//         setLoading(false);
-//         return {
-//           data: listRes.data || [],
-//           total: listRes?.pagination?.totalPages || 1,
-//           currentPage: listRes?.pagination?.page || 1, 
-//           pageSize: listRes?.pagination?.limit || pageSize,
-//         };
-//       } catch (error: unknown) {
-//         console.error("API Error:", error);
-//         setLoading(false);
-//         throw error;
-//       }
-//     },
-//     []
-//   );
+  // ✅ Fetch and normalize data
+  const fetchwarehouseStock = useCallback(
+    async (page: number = 1, pageSize: number = 10): Promise<listReturnType> => {
+      try {
+        setLoading(true);
+        const listRes = await getwarehouseStock({
+          per_page: pageSize.toString(),
+          page: page.toString(),
+        });
+
+        const records: WarehouseStock[] = listRes?.data || [];
+
+        
+
+        const pagination = listRes?.pagination || {};
+
+        return {
+          data: listRes?.data || [],
+          total: pagination?.total || 1,
+          currentPage: pagination?.current_page || 1,
+          pageSize: pagination?.per_page || pageSize,
+        };
+      } catch (error: unknown) {
+        console.error("API Error:", error);
+        showSnackbar("Failed to load warehouse stock", "error");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, showSnackbar]
+  );
 
   return (
     <>
-      {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
           refreshKey={refreshKey}
           config={{
-            // api: {
-            //   list: fetchwarehouseStock,
-            // },
+            api: {
+              list: fetchwarehouseStock,
+            },
             header: {
               title: "Warehouse Stock",
               wholeTableActions: [
@@ -133,7 +144,7 @@ export default function CustomerPage() {
               columnFilter: true,
               actions: [
                 <SidebarBtn
-                  key="add-customer-type"
+                  key="add-warehouse-stock"
                   href="/settings/warehouseStock/add"
                   leadingIcon="lucide:plus"
                   label="Add"
@@ -151,13 +162,11 @@ export default function CustomerPage() {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
-                  router.push(
-                    `/settings/warehouseStock/${r.uuid}`
-                  );
+                  router.push(`/settings/warehouseStock/${r.uuid}`);
                 },
-              }
+              },
             ],
-            pageSize: 50,
+            pageSize: 10,
           }}
         />
       </div>

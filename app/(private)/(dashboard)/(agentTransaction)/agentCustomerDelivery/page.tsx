@@ -13,6 +13,8 @@ import { useLoading } from "@/app/services/loadingContext";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
+import { deliveryList } from "@/app/services/agentTransaction";
+import StatusBtn from "@/app/components/statusBtn2";
 import BorderIconButton from "@/app/components/borderIconButton";
 
 const dropdownDataList = [
@@ -25,18 +27,91 @@ const dropdownDataList = [
 
 // 🔹 Table Columns
 const columns = [
-    { key: "date", label: "Date" },
-    { key: "time", label: "Time" },
-    { key: "route_code", label: "Route Code" },
-    { key: "depot_name", label: "Depot Name" },
-    { key: "customer_name", label: "Customer Name" },
-    { key: "salesman", label: "Salesman" },
-    { key: "Invoice_type", label: "Invoice Type" },
-    { key: "Invoice_no", label: "Invoice No" },
-    { key: "sap_id", label: "SAP ID" },
-    { key: "sap_status", label: "SAP Status" },
-    { key: "Invoice_amount", label: "Invoice Amount" },
-    { key: "Invoice_status", label: "Invoice Status" },
+    { 
+        key: "delivery_date", 
+        label: "Date",
+        showByDefault: true,
+        render: (row: TableDataType) => {
+            if (!row.delivery_date) return "-";
+            const date = new Date(row.delivery_date as string);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+    },
+    { key: "delivery_code", label: "Delivery Code",showByDefault: true },
+    // { key: "order_code", label: "Order Code",showByDefault: true },
+    { key: "customer", label: "Customer Code", render: (row: TableDataType) => {
+            const wh = row.customer;
+            if (!wh) return "-";
+            if (typeof wh === "string") return wh || "-";
+            return (wh as { code?: string }).code || "-";
+        },showByDefault: true },
+    { key: "customer", label: "Customer Name", render: (row: TableDataType) => {
+            const wh = row.customer;
+            if (!wh) return "-";
+            if (typeof wh === "string") return wh || "-";
+            return (wh as { name?: string }).name || "-";
+        },showByDefault: true },
+    { key: "route", label: "Route Code", render: (row: TableDataType) => {
+            const wh = row.route;
+            if (!wh) return "-";
+            if (typeof wh === "string") return wh || "-";
+            return (wh as { code?: string }).code || "-";
+        },showByDefault: true },
+    { key: "route", label: "Route Name", render: (row: TableDataType) => {
+            const wh = row.route;
+            if (!wh) return "-";
+            if (typeof wh === "string") return wh || "-";
+            return (wh as { name?: string }).name || "-";
+        },showByDefault: true },
+    { key: "warehouse", label: "Warehouse Code",
+        render: (row: TableDataType) => {
+            const wh = row.warehouse;
+            if (!wh) return "-";
+            if (typeof wh === "string") return wh || "-";
+            return (wh as { code?: string }).code || "-";
+        },
+        showByDefault: true 
+    },
+    { key: "warehouse", label: "Warehouse Name", render: (row: TableDataType) => {
+            const wh = row.warehouse;
+            if (!wh) return "-";
+            if (typeof wh === "string") return wh || "-";
+            return (wh as { name?: string }).name || "-";
+        },showByDefault: true },
+    { key: "salesman", label: "Salesman Code", render: (row: TableDataType) => {
+            const wh = row.salesman;
+            if (!wh) return "-";
+            if (typeof wh === "string") return wh || "-";
+            return (wh as { code?: string }).code || "-";
+        },showByDefault: true },
+    { key: "salesman", label: "Salesman Name" , render: (row: TableDataType) => {
+            const wh = row.salesman;
+            if (!wh) return "-";
+            if (typeof wh === "string") return wh || "-";
+            return (wh as { name?: string }).name || "-";
+        },showByDefault: true},
+    // { key: "Invoice_type", label: "Invoice Type" },
+    // { key: "Invoice_no", label: "Invoice No" },
+    // { key: "sap_id", label: "SAP ID" },
+    // { key: "sap_status", label: "SAP Status" },
+    { key: "total", label: "Amount",showByDefault: true },
+   {
+           key: "status",
+           label: "Status",
+           render: (row: TableDataType) => {
+               // Treat status 1 or 'active' (case-insensitive) as active
+               const isActive =
+                   String(row.status) === "1" ||
+                   (typeof row.status === "string" &&
+                       row.status.toLowerCase() === "active");
+               return <StatusBtn isActive={isActive} />;
+           },
+           showByDefault: true,
+       },
 ];
 
 export default function CustomerInvoicePage() {
@@ -58,51 +133,32 @@ export default function CustomerInvoicePage() {
         setFilters((prev) => ({ ...prev, [name]: value }));
     };
 
-    // 🔹 Fetch Invoices (Mock API)
-    const fetchInvoices = useCallback(async (): Promise<listReturnType> => {
+    // 🔹 Fetch Invoices
+    const fetchInvoices = useCallback(async (
+        page: number = 1,
+        pageSize: number = 10
+    ): Promise<listReturnType> => {
         try {
             setLoading(true);
-
-            // Simulated API Response
-            const result = {
-                data: [
-                    {
-                        date: "2025-10-08",
-                        time: "11:30 AM",
-                        route_code: "R001",
-                        depot_name: "West Depot",
-                        customer_name: "ABC Traders",
-                        salesman: "John Doe",
-                        Invoice_type: "Online",
-                        Invoice_no: "INV-2025-01",
-                        sap_id: "SAP12345",
-                        sap_status: "Pending",
-                        Invoice_amount: "₹12,500",
-                        Invoice_status: "In Progress",
-                    },
-                    {
-                        date: "2025-10-07",
-                        time: "02:45 PM",
-                        route_code: "R002",
-                        depot_name: "East Depot",
-                        customer_name: "XYZ Stores",
-                        salesman: "Jane Smith",
-                        Invoice_type: "Offline",
-                        Invoice_no: "INV-2025-02",
-                        sap_id: "SAP12346",
-                        sap_status: "Completed",
-                        Invoice_amount: "₹18,900",
-                        Invoice_status: "Delivered",
-                    },
-                ],
-                pagination: { current_page: 1, per_page: 10, last_page: 1 },
-            };
+            const result = await deliveryList({
+                page: page.toString(),
+                per_page: pageSize.toString(),
+            });
 
             return {
-                data: result.data || [],
-                currentPage: result.pagination.current_page,
-                pageSize: result.pagination.per_page,
-                total: result.pagination.last_page,
+                data: Array.isArray(result.data) ? result.data : [],
+                total: result?.pagination?.totalPages || 1,
+                currentPage: result?.pagination?.page || 1,
+                pageSize: result?.pagination?.limit || pageSize,
+            };
+        } catch (error) {
+            console.error(error);
+            showSnackbar("Failed to fetch invoices", "error");
+            return {
+                data: [],
+                total: 1,
+                currentPage: 1,
+                pageSize: pageSize,
             };
         } finally {
             setLoading(false);
@@ -132,7 +188,8 @@ export default function CustomerInvoicePage() {
                     config={{
                         api: { list: fetchInvoices, search: searchInvoices },
                         header: {
-                            title: "Customer Invoices",
+                            title: "Customer Delivery",
+                            columnFilter: true,
                             wholeTableActions: [
                               <div key={0} className="flex gap-[12px] relative">
                                   <DismissibleDropdown
@@ -185,7 +242,7 @@ export default function CustomerInvoicePage() {
                               />,
                               <SidebarBtn
                                   key={1}
-                                  href="/invoice/add"
+                                  href="/agentCustomerDelivery/add"
                                   isActive
                                   leadingIcon="mdi:plus"
                                   label="Add"
@@ -195,12 +252,22 @@ export default function CustomerInvoicePage() {
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
+                        rowSelection: true,
+                        
+                        localStorageKey: "invoice-table",
                         rowActions: [
                             {
-                                icon: "lucide:trash-2",
+                                icon: "lucide:eye",
                                 onClick: (row: TableDataType) =>
                                     router.push(
-                                        `/invoice/${row.id}`
+                                        `/agentCustomerDelivery/details/${row.uuid}`
+                                    ),
+                            },
+                            {
+                                icon: "lucide:edit-2",
+                                onClick: (row: TableDataType) =>
+                                    router.push(
+                                        `/agentCustomerDelivery/${row.uuid}`
                                     ),
                             },
                         ],

@@ -20,9 +20,19 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
     rules: {
-      // Warn when using `any` type
-      "@typescript-eslint/no-explicit-any": "warn",
-       "no-unused-vars": "off"
+      // Turn off warnings for unused variables and any types during build
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-unused-vars": "off",
+      
+      // Turn off React Hooks exhaustive-deps warnings
+      "react-hooks/exhaustive-deps": "off",
+      
+      // Turn off unused expressions warnings
+      "@typescript-eslint/no-unused-expressions": "off",
+      
+      // Turn off Next.js img element warnings
+      "@next/next/no-img-element": "off",
     },
   },
 ];

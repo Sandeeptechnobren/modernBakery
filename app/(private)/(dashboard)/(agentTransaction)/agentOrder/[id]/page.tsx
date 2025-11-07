@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, ChangeEvent, useState, useEffect } from "react";
+import React, { Fragment, ChangeEvent, useState, useEffect, useRef } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -9,11 +9,15 @@ import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
+import AutoSuggestion from "@/app/components/autoSuggestion";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { agentCustomerList, getCompanyCustomers, itemList, pricingHeaderGetItemPrice, routeList, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerList, genearateCode, getCompanyCustomers, itemById, itemList, pricingHeaderGetItemPrice, routeList, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { useLoading } from "@/app/services/loadingContext";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 interface FormData {
   id: number,
@@ -55,7 +59,6 @@ interface FormData {
 
 interface ItemData {
   item_id: string;
-  itemName: string;
   UOM: { label: string; value: string }[];
   uom_id?: string;
   Quantity: string;
@@ -76,50 +79,43 @@ export default function OrderAddEditPage() {
       .typeError("Quantity must be a number")
       .min(1, "Quantity must be at least 1")
       .required("Quantity is required"),
-    Price: Yup.number()
-      .typeError("Price must be a number")
-      .min(0, "Price must be >= 0")
-      .required("Price is required"),
   });
 
   const validationSchema = Yup.object({
     warehouse: Yup.string().required("Warehouse is required"),
-    route: Yup.string().required("Route is required"),
     customer: Yup.string().required("Customer is required"),
     delivery_date: Yup.string()
       .required("Delivery date is required")
       .test("is-date", "Delivery date must be a valid date", (val) => {
         return Boolean(val && !Number.isNaN(new Date(val).getTime()));
       }),
-    note: Yup.string().max(1000, "Note is too long"),
+    note: Yup.string().required("Note is required").max(1000, "Note is too long"),
     items: Yup.array().of(itemRowSchema),
   });
 
-  const { warehouseOptions, agentCustomerOptions, routeOptions } = useAllDropdownListData();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const { setLoading } = useLoading();
   const [skeleton, setSkeleton] = useState({
     route: false,
     customer: false,
     item: false,
   });
-  const [filteredRouteOptions, setFilteredRouteOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
-  const [form, setForm] = useState({
+  const form = {
     warehouse: "",
     route: "",
     customer: "",
     note: "",
     delivery_date: new Date().toISOString().slice(0, 10),
-  });
+  };
 
   const [orderData, setOrderData] = useState<FormData[]>([]);
   const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
   const [itemData, setItemData] = useState<ItemData[]>([
     {
       item_id: "",
-      itemName: "",
       UOM: [],
       Quantity: "1",
       Price: "",
@@ -130,6 +126,67 @@ export default function OrderAddEditPage() {
       Total: "",
     },
   ]);
+
+  // per-row validation errors for item rows (keyed by row index)
+  const [itemErrors, setItemErrors] = useState<Record<number, Record<string, string>>>({});
+
+  // per-row loading (for UOM / price) so UI can show skeletons while fetching
+  const [itemLoading, setItemLoading] = useState<Record<number, { uom?: boolean; price?: boolean }>>({});
+  const validateRow = async (index: number, row?: ItemData, options?: { skipUom?: boolean }) => {
+    const rowData = row ?? itemData[index];
+    if (!rowData) return;
+    // prepare data for Yup: convert numeric strings to numbers
+    const toValidate = {
+      item_id: String(rowData.item_id ?? ""),
+      uom_id: String(rowData.uom_id ?? ""),
+      Quantity: Number(rowData.Quantity) || 0,
+      Price: Number(rowData.Price) || 0,
+    };
+    try {
+      if (options?.skipUom) {
+        // validate only item_id and Quantity to avoid showing UOM required immediately after selecting item
+        const partialErrors: Record<string, string> = {};
+        try {
+          await itemRowSchema.validateAt("item_id", toValidate);
+        } catch (e: any) {
+          if (e?.message) partialErrors["item_id"] = e.message;
+        }
+        try {
+          await itemRowSchema.validateAt("Quantity", toValidate);
+        } catch (e: any) {
+          if (e?.message) partialErrors["Quantity"] = e.message;
+        }
+        if (Object.keys(partialErrors).length === 0) {
+          // clear errors for this row
+          setItemErrors((prev) => {
+            const copy = { ...prev };
+            delete copy[index];
+            return copy;
+          });
+        } else {
+          setItemErrors((prev) => ({ ...prev, [index]: partialErrors }));
+        }
+      } else {
+        await itemRowSchema.validate(toValidate, { abortEarly: false });
+        // clear errors for this row
+        setItemErrors((prev) => {
+          const copy = { ...prev };
+          delete copy[index];
+          return copy;
+        });
+      }
+    } catch (err: any) {
+      const validationErrors: Record<string, string> = {};
+      if (err && err.inner && Array.isArray(err.inner)) {
+        err.inner.forEach((e: any) => {
+          if (e.path) validationErrors[e.path] = e.message;
+        });
+      } else if (err && err.path) {
+        validationErrors[err.path] = err.message;
+      }
+      setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
+    }
+  };
 
   const fetchItem = async (searchTerm: string) => {
     const res = await itemList({ per_page: "10", name: searchTerm });
@@ -146,48 +203,75 @@ export default function OrderAddEditPage() {
     }));
     setItemsOptions(options);
     setSkeleton({ ...skeleton, item: false });
+    return options;
   };
 
+  const codeGeneratedRef = useRef(false);
+  const [code, setCode] = useState("");
   useEffect(() => {
     setSkeleton({ ...skeleton, item: true });
     fetchItem("");
+
+    // generate code
+    if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({
+          model_name: "agent_customers",
+        });
+        if (res?.code) {
+          setCode(res.code);
+        }
+        setLoading(false);
+      })();
+    }
   }, []);
 
   const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
     const newData = [...itemData];
     const item: ItemData = newData[index];
     (item as any)[field] = value;
-    const qty = Number(item.Quantity) || 0;
-    // const price = orderData.find((order: FormData) => order.id.toString() === item.item_id)?.find(uom => uom.id.toString() === item.uom_id)?.price ? Number(orderData.find((order: FormData) => order.id.toString() === item.item_id)?.uom?.find(uom => uom.id.toString() === item.uom_id)?.price) : Number(item.Price) || 0;
-    let price = Number(item.Price) || 0;
-    if (field === "itemName") {
-      try {
-        const customerId = values?.customer || "";
-        const warehouseId = values?.warehouse || "";
-        const routeId = values?.route || "";
-        const res = await fetchPrice(item.itemName, customerId, warehouseId, routeId);
-        if (Array.isArray(res)) {
-          const first = (res as any)[0] || {};
-          price = Number(first.ctn_price ?? first.price ?? price) || price;
-        } else if (res && typeof res === "object") {
-          price = Number((res as any).ctn_price ?? (res as any).price ?? price) || price;
-        }
-      } catch (error) {
-        console.error("Error fetching price:", error);
-      }
+
+    // If user selects an item, update UI immediately and show skeletons while fetching price/UOM
+    if (field === "item_id") {
+      // keep item id and name aligned for existing logic
+      item.item_id = value;
+      item.UOM = [];
+      item.Price = "-";
+      setItemData(newData);
+      setItemLoading((prev) => ({ ...prev, [index]: { uom: true } }));
+      item.UOM = orderData.find((order: FormData) => order.id.toString() === item.item_id)?.uom?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
+      setItemLoading((prev) => ({ ...prev, [index]: { uom: false } }));
     }
 
+    // Ensure numeric calculations use the latest values
+    const qty = Number(item.Quantity) || 0;
+    const price = Number(item.Price) || 0;
     const total = qty * price;
-    const vat = total * 0.18;
+    const vat = total - total / 1.18;
     const net = total - vat;
+    const excise = 0; // Calculate excise based on your business logic
+    const discount = 0; // Calculate discount based on your business logic
+    const gross = total;
 
-    item.Price = price.toFixed(2);
+    // Persist any value changes for qty/uom/price
+    if (field === "Quantity") item.Quantity = value;
+    if (field === "uom_id") item.uom_id = value;
+
     item.Total = total.toFixed(2);
     item.Vat = vat.toFixed(2);
     item.Net = net.toFixed(2);
-    item.UOM = orderData.find((order: FormData) => order.id.toString() === item.itemName)?.uom?.map(uom => ({ label: uom.name, value: uom.id.toString() })) || [];
+    item.Excise = excise.toFixed(2);
+    item.Discount = discount.toFixed(2);
+    item.gross = gross.toFixed(2);
 
     setItemData(newData);
+    // validate this row after updating; if we just changed the item selection, skip UOM required check
+    if (field === "item_id") {
+      validateRow(index, newData[index], { skipUom: true });
+    } else {
+      validateRow(index, newData[index]);
+    }
   };
 
   const handleAddNewItem = () => {
@@ -208,6 +292,7 @@ export default function OrderAddEditPage() {
       },
     ]);
   };
+
   const handleRemoveItem = (index: number) => {
     if (itemData.length <= 1) {
       setItemData([
@@ -243,50 +328,75 @@ export default function OrderAddEditPage() {
     (sum, item) => sum + Number(item.Net || 0),
     0
   );
+  const preVat = totalVat ? grossTotal - totalVat : grossTotal;
   const discount = itemData.reduce(
     (sum, item) => sum + Number(item.Discount || 0),
     0
   );
   const finalTotal = grossTotal + totalVat;
 
-  const generatePayload = () => {
+  const generatePayload = (values?: FormikValues) => {
     return {
-      currency: "UGX",
-      country_id: 59,
-      order_code: "ORD-2025-001",
-      warehouse_id: Number(form.warehouse) || 116,
-      route_id: Number(form.route) || 60,
-      customer_id: Number(form.customer) || 75,
-      salesman_id: 133,
-      delivery_date: form.delivery_date,
+      order_code: code,
+      warehouse_id: Number(values?.warehouse) || null,
+      customer_id: Number(values?.customer) || null,
+      delivery_date: values?.delivery_date || form.delivery_date,
       gross_total: Number(grossTotal.toFixed(2)),
       vat: Number(totalVat.toFixed(2)),
       net_amount: Number(netAmount.toFixed(2)),
       total: Number(finalTotal.toFixed(2)),
       discount: Number(discount.toFixed(2)),
+      comment: values?.note || "",
+      status: 1,
       details: itemData.map((item, i) => ({
-        item_id: Number(item.item_id) || 135,
-        item_price: Number(item.Price) || 0,
-        quantity: Number(item.Quantity) || 0,
-        vat: Number(item.Vat) || 0,
-        uom_id: Number(item.uom_id) || 80,
-        discount: Number(item.Discount) || 0,
-        discount_id: 0,
-        gross_total: Number(item.Total) || 0,
-        net_total: Number(item.Net) || 0,
-        total: Number(item.Total) || 0,
-        is_promotional: false,
-        parent_id: 1,
-        promotion_id: 28,
+        item_id: Number(item.item_id) || null,
+        item_price: Number(item.Price) || null,
+        quantity: Number(item.Quantity) || null,
+        vat: Number(item.Vat) || null,
+        uom_id: Number(item.uom_id) || null,
+        // discount: Number(item.Discount) || null,
+        // discount_id: 0,
+        // gross_total: Number(item.Total) || null,
+        net_total: Number(item.Net) || null,
+        total: Number(item.Total) || null,
       })),
     };
   };
 
   const handleSubmit = async (values: FormikValues, formikHelpers: FormikHelpers<FormikValues>) => {
     try {
-      const payload = generatePayload();
-      console.log("Final Payload:", payload);
-      showSnackbar("Payload logged in console!", "success");
+      // validate item rows separately (they live in local state)
+      const itemsSchema = Yup.array().of(itemRowSchema);
+      try {
+        await itemsSchema.validate(itemData, { abortEarly: false });
+      } catch (itemErr: any) {
+        // log detailed item validation errors and surface a friendly message
+        console.error("Item validation errors:", itemErr.inner || itemErr);
+        showSnackbar(itemErr.inner.map((err: any) => err.message).join(", "), "error");
+        // set a top-level form error to prevent submission
+        formikHelpers.setErrors({ items: "Item rows validation failed" } as any);
+        return;
+      }
+
+      formikHelpers.setSubmitting(true);
+      const payload = generatePayload(values);
+      console.log("Submitting payload:", payload);
+      const res = await addAgentOrder(payload);
+      if (res.error) {
+        showSnackbar(res.data.message || "Failed to create order", "error");
+        console.error("Create order error:", res);
+      } else {
+        try {
+          await saveFinalCode({
+              reserved_code: code,
+              model_name: "agent_order_headers",
+          });
+        } catch (e) {
+            // Optionally handle error, but don't block success
+        }
+        showSnackbar("Order created successfully", "success");
+        router.push("/agentOrder");
+      }
     } catch (err) {
       console.error(err);
       showSnackbar("Failed to submit order", "error");
@@ -298,11 +408,12 @@ export default function OrderAddEditPage() {
   };
 
   const keyValueData = [
-    { key: "Gross Total", value: `AED ${grossTotal.toFixed(2)}` },
-    { key: "Discount", value: `AED ${discount.toFixed(2)}` },
-    { key: "Net Total", value: `AED ${netAmount.toFixed(2)}` },
-    { key: "VAT", value: `AED ${totalVat.toFixed(2)}` },
-    { key: "Delivery Charges", value: "AED 0.00" },
+    { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
+    { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
+    { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
+    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
+    { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
+    { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
   ];
 
   // const fetchRoutes = async (value: string) => {
@@ -340,9 +451,9 @@ export default function OrderAddEditPage() {
       value: String(customer.id),
       label: customer.outlet_name
     }));
-    console.log(options)
     setFilteredCustomerOptions(options);
     setSkeleton({ ...skeleton, customer: false });
+    return options;
   }
 
   const fetchWarehouse = async (searchQuery?: string) => {
@@ -351,6 +462,7 @@ export default function OrderAddEditPage() {
       dropdown: "1",
       per_page: "50"
     });
+
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch customers", "error");
       return;
@@ -361,11 +473,8 @@ export default function OrderAddEditPage() {
       label: warehouse.warehouse_name
     }));
     setFilteredWarehouseOptions(options);
+    return options;
   }
-
-  useEffect(() => {
-    fetchWarehouse();
-  }, []);
 
   const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
     const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
@@ -399,9 +508,9 @@ export default function OrderAddEditPage() {
           <div className="flex flex-col gap-[10px]">
             <Logo type="full" />
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col items-end">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Order</span>
-            <span className="text-primary text-[14px] tracking-[8px]">#W1O20933</span>
+            <span className="text-primary text-[14px] tracking-[8px]">#{code}</span>
           </div>
         </div>
         <hr className="w-full text-[#D5D7DA]" />
@@ -412,26 +521,42 @@ export default function OrderAddEditPage() {
           validationSchema={validationSchema}
           enableReinitialize={true}
         >
-          {({ values, touched, errors, setFieldValue, handleChange, submitForm }: FormikProps<FormikValues>) => {
+          {({ values, touched, errors, setFieldValue, handleChange, submitForm, isSubmitting }: FormikProps<FormikValues>) => {
+            // // Log Formik validation errors to console for easier debugging
+            // useEffect(() => {
+            //   if (errors && Object.keys(errors).length > 0) {
+            //     console.warn("Formik validation errors:", errors);
+            //   }
+            //   console.log("Current Formik errors:", errors);
+            //   console.log("Current Formik errors:", touched.comment);
+            // }, [errors]);
+
             return (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-10">
                   <div>
-                    <InputFields
+                    <AutoSuggestion
                       required
                       label="Warehouse"
                       name="warehouse"
-                      value={values?.warehouse || ""}
-                      options={filteredWarehouseOptions}
-                      disabled={filteredWarehouseOptions.length === 0}
-                      onSearch={(searchQuery) => fetchWarehouse(searchQuery)}
-                      onChange={(e) => {
-                        setFieldValue("warehouse", e.target.value);
-                        setSkeleton((prev) => ({ ...prev, customer: true }));
-                        if (values.warehouse !== e.target.value) {
-                          setFieldValue("route", "");
-                          fetchAgentCustomers(values, "");
+                      placeholder="Search warehouse"
+                      onSearch={(q) => fetchWarehouse(q)}
+                      initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
+                      onSelect={(opt) => {
+                        if (values.warehouse !== opt.value) {
+                          setFieldValue("warehouse", opt.value);
+                          setSkeleton((prev) => ({ ...prev, customer: true }));
+                          setFieldValue("customer", "");
+                          fetchAgentCustomers({ ...values, warehouse: opt.value }, "");
+                        } else {
+                          setFieldValue("warehouse", opt.value);
                         }
+                      }}
+                      onClear={() => {
+                        setFieldValue("warehouse", "");
+                        setFieldValue("customer", "");
+                        setFilteredCustomerOptions([]);
+                        setSkeleton((prev) => ({ ...prev, customer: false }));
                       }}
                       error={
                         touched.warehouse &&
@@ -461,17 +586,26 @@ export default function OrderAddEditPage() {
                     />
                   </div> */}
                   <div>
-                    <InputFields
+                    <AutoSuggestion
                       required
                       label="Customer"
                       name="customer"
-                      value={values.customer}
+                      placeholder="Search customer"
+                      onSearch={(q) => fetchAgentCustomers(values, q)}
+                      initialValue={filteredCustomerOptions.find(o => o.value === String(values?.customer))?.label || ""}
+                      onSelect={(opt) => {
+                        if (values.customer !== opt.value) {
+                          setFieldValue("customer", opt.value);
+                        } else {
+                          setFieldValue("customer", opt.value);
+                        }
+                      }}
+                      onClear={() => {
+                        setFieldValue("customer", "");
+                      }}
                       disabled={filteredCustomerOptions.length === 0}
-                      showSkeleton={skeleton.customer}
-                      options={filteredCustomerOptions}
-                      onSearch={(search) => fetchAgentCustomers(values, search)}
-                      onChange={handleChange}
                       error={touched.customer && (errors.customer as string)}
+                      className="w-full"
                     />
                   </div>
                   <div>
@@ -503,76 +637,129 @@ export default function OrderAddEditPage() {
                   config={{
                     columns: [
                       {
-                        key: "itemName",
+                        key: "item_id",
                         label: "Item Name",
                         width: 300,
-                        render: (row) => (
-                          <InputFields
-                            label=""
-                            name="itemName"
-                            options={itemsOptions}
-                            disabled={itemsOptions.length === 0}
-                            onSearch={(searchTerm: string) => {
-                              fetchItem(searchTerm);
-                            }}
-                            value={row.itemName}
-                            onChange={(e) => {
-                              recalculateItem(Number(row.idx), "itemName", e.target.value, values);
-                            }}
-                          />
-                        ),
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const err = itemErrors[idx]?.item_id;
+                          // Filter out items that are already selected in other rows
+                          const selectedIds = itemData.map((r, i) => (i === idx ? null : r.item_id)).filter(Boolean) as string[];
+                          const filteredOptions = itemsOptions.filter(opt => (
+                            opt.value === row.item_id || !selectedIds.includes(opt.value)
+                          ));
+                          return (
+                            <div>
+                              <AutoSuggestion
+                                label=""
+                                name={`item_id_${row.idx}`}
+                                placeholder="Search item"
+                                onSearch={(q) => fetchItem(q)}
+                                initialValue={
+                                  itemsOptions.find(o => o.value === row.item_id)?.label
+                                  || orderData.find(o => String(o.id) === row.item_id)?.name || ""
+                                }
+                                onSelect={(opt) => {
+                                  if (opt.value !== row.item_id) {
+                                    recalculateItem(Number(row.idx), "item_id", opt.value);
+                                    setFieldValue("uom_id", "");
+                                  } else {
+                                    recalculateItem(Number(row.idx), "item_id", opt.value);
+                                  }
+                                }}
+                                onClear={() => {
+                                  recalculateItem(Number(row.idx), "item_id", "");
+                                  setFieldValue("uom_id", "");
+                                }}
+                                disabled={!values.customer}
+                                error={err && err}
+                                className="w-full"
+                              />
+                            </div>
+                          );
+                        },
                       },
                       {
-                        key: "UOM",
+                        key: "uom_id",
                         label: "UOM",
                         width: 150,
-                        render: (row) => (
-                          <InputFields
-                            label=""
-                            name="UOM"
-                            value={row.uom_id}
-                            options={JSON.parse(row.UOM ?? "[]")}
-                            disabled={JSON.parse(row.UOM ?? "[]").length === 0}
-                            onChange={(e) =>
-                              // pass current Formik values so recalculateItem can fetch price using current customer/warehouse/route
-                              recalculateItem(Number(row.idx), "uom_id", e.target.value, values)
-                            }
-                          />
-                        ),
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const err = itemErrors[idx]?.uom_id;
+                          const options = JSON.parse(row.UOM ?? "[]");
+                          return (
+                            <div>
+                              <InputFields
+                                label=""
+                                name="UOM"
+                                value={row.uom_id}
+                                placeholder="Select UOM"
+                                options={options}
+                                disabled={options.length === 0 && !values.customer}
+                                showSkeleton={Boolean(itemLoading[idx]?.uom)}
+                                onChange={(e) => {
+                                  recalculateItem(Number(row.idx), "uom_id", e.target.value)
+                                  const price = options.find((uom: { value: string }) => String(uom.value) === e.target.value)?.price || "0.00";
+                                  recalculateItem(Number(row.idx), "Price", price);
+                                }}
+                                error={err && err}
+                              />
+                            </div>
+                          );
+                        },
                       },
                       {
                         key: "Quantity",
                         label: "Qty",
                         width: 150,
-                        render: (row) => (
-                          <InputFields
-                            label=""
-                            type="number"
-                            name="Quantity"
-                            placeholder="Enter Qty"
-                            value={row.Quantity}
-                            onChange={(e) =>
-                              recalculateItem(Number(row.idx), "Quantity", e.target.value)
-                            }
-                          />
-                        ),
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const err = itemErrors[idx]?.Quantity;
+                          return (
+                            <div>
+                              <InputFields
+                                label=""
+                                type="number"
+                                name="Quantity"
+                                // integerOnly={true}
+                                placeholder="Enter Qty"
+                                value={row.Quantity}
+                                disabled={!values.customer}
+                                onChange={(e) => {
+                                  const raw = (e.target as HTMLInputElement).value;
+                                  const intPart = raw.split('.')[0];
+                                  const sanitized = intPart === '' ? '' : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                  recalculateItem(Number(row.idx), "Quantity", sanitized);
+                                }}
+                                // numberMin={0}
+                                error={err && err}
+                              />
+                            </div>
+                          );
+                        },
                       },
                       {
                         key: "Price",
                         label: "Price",
-                        width: 200,
                         render: (row) => {
-                          // Don't trigger side-effects from render. Show placeholder when price isn't set.
+                          const idx = Number(row.idx);
+                          const loading = Boolean(itemLoading[idx]?.price);
                           const price = String(row.Price ?? "");
-                          if (!price || price === "" || price === "0" || price === "0.00" || price === "-") {
+                          if (loading) {
+                            return <span className="text-gray-400 animate-pulse">Loading...</span>;
+                          }
+                          if (!price || price === "" || price === "0" || price === "-") {
                             return <span className="text-gray-400">-</span>;
                           }
                           return <span>{price}</span>;
                         }
                       },
-                      { key: "Net", label: "Net" },
-                      { key: "Vat", label: "VAT" },
-                      { key: "Total", label: "Total" },
+                      { key: "excise", label: "Excise", render: (row) => <span>{toInternationalNumber(row.Excise) || "0.00"}</span> },
+                      { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
+                      { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
+                      { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
+                      { key: "Vat", label: "VAT", render: (row) => <span>{toInternationalNumber(row.Vat) || "0.00"}</span> },
+                      { key: "Total", label: "Total", render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span> },
                       {
                         key: "action",
                         label: "Action",
@@ -592,6 +779,7 @@ export default function OrderAddEditPage() {
                         ),
                       },
                     ],
+                    showNestedLoading: false,
                   }}
                 />
 
@@ -611,12 +799,14 @@ export default function OrderAddEditPage() {
                       </div>
                       <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
                         <InputFields
+                          required
                           label="Note"
                           type="textarea"
                           name="note"
-                          placeholder="Enter Description"
+                          placeholder="Enter Note"
                           value={values.note}
                           onChange={handleChange}
+                          error={touched.note && (errors.note as string)}
                         />
                       </div>
                     </div>
@@ -630,7 +820,7 @@ export default function OrderAddEditPage() {
                       ))}
                       <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                         <span>Total</span>
-                        <span>AED {finalTotal.toFixed(2)}</span>
+                        <span>AED {toInternationalNumber(finalTotal)}</span>
                       </div>
                     </div>
                   </div>
@@ -646,7 +836,7 @@ export default function OrderAddEditPage() {
                   >
                     Cancel
                   </button>
-                  <SidebarBtn isActive={true} label="Create Order" onClick={submitForm} />
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting} onClick={() => submitForm()} />
                 </div>
               </>
             );

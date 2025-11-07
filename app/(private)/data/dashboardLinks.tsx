@@ -276,8 +276,15 @@ export const initialLinkData: SidebarDataType[] = [
                     // },
                     {
                         isActive: false,
+                        href: "/agentCustomerDelivery",
+                        label: "Agent Customer Delivery",
+                        leadingIcon: "hugeicons:invoice",
+                        iconColor: "text-cyan-500"
+                    },
+                    {
+                        isActive: false,
                         href: "/invoice",
-                        label: "Invoice",
+                        label: "Agent Customer Invoice",
                         leadingIcon: "hugeicons:invoice",
                         iconColor: "text-cyan-500"
                     },
@@ -299,6 +306,20 @@ export const initialLinkData: SidebarDataType[] = [
                         isActive: false,
                         href: "/newCustomer",
                         label: "New Customer",
+                        leadingIcon: "mdi:truck-remove-outline",
+                        iconColor: "text-cyan-500"
+                    },
+                      {
+                        isActive: false,
+                        href: "/capsCollection",
+                        label: "CAPS Master Collection",
+                        leadingIcon: "mdi:truck-remove-outline",
+                        iconColor: "text-cyan-500"
+                    },
+                      {
+                        isActive: false,
+                        href: "/return",
+                        label: "Return",
                         leadingIcon: "mdi:truck-remove-outline",
                         iconColor: "text-cyan-500"
                     },

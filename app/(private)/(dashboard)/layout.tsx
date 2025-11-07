@@ -128,7 +128,7 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
             }
 
             if (!isAllowed) {
-                router.replace("/");
+                router.replace(allowedPaths && allowedPaths.size > 0 ? Array.from(allowedPaths)[0] : "/");
                 console.error("You are not allowed to access this page.");
             }
         }

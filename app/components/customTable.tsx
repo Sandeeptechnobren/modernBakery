@@ -85,6 +85,7 @@ export type configType = {
         pagination?: boolean;
     };
     localStorageKey?: string;
+    showNestedLoading?: boolean;
     pageSize?: number;
     pageSizeOptions?: number[]; // yet to implement
     rowSelection?: boolean;
@@ -617,7 +618,7 @@ function TableBody() {
     };
 
     return (
-        <>{!nestedLoading?<>
+        <>{(config.showNestedLoading && nestedLoading) ? <CustomTableSkelton/> : <>
             <div
                 className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent"
                 style={
@@ -774,7 +775,7 @@ function TableBody() {
                                                             col.render(row)
                                                         ) : (
                                                             <div className="flex items-center">
-                                                                {row[col.key]}
+                                                                {row[col.key] || "-"}
                                                             </div>
                                                         )}
                                                     </td>
@@ -837,7 +838,7 @@ function TableBody() {
                     No Column Selected
                 </div>
             )}
-            </>:<CustomTableSkelton/>}
+            </>}
             
         </>
     );

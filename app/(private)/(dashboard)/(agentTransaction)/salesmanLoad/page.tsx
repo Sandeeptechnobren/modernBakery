@@ -10,24 +10,111 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData ,downloadFile} from "@/app/services/allApi";
+import { salesmanLoadHeaderList} from "@/app/services/agentTransaction";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
+interface SalesmanLoadRow {
+    osa_code?: string;
+    warehouse?: {
+        code?: string;
+        name?: string;
+    };
+    route?: {
+        code?: string;
+        name?: string;
+    };
+    salesman?: {
+        code?: string;
+        name?: string;
+    };
+    projecttype?: {
+        code?: string;
+        name?: string;
+    };
+    is_confirmed?: boolean;
+    status?: boolean;
+    uuid?: string;
+}
+
 export default function SalemanLoad() {
+    const [warehouseId, setWarehouseId] = useState<string>("");
+    const [channelId, setChannelId] = useState<string>("");
+    const [routeId, setRouteId] = useState<string>("");
+    const { warehouseOptions, routeOptions,regionOptions } = useAllDropdownListData();
     const columns: configType["columns"] = [
-        { key: "date", label: "Date" },
-        { key: "time", label: "Time" },
-        { key: "accepted_date", label: "Accepted Date" },
-        { key: "accepted_time", label: "Accepted Time" },
-        { key: "load_period_no", label: "Load Period Number" },
-        { key: "routename", label: "Route Name" },
+        { key: "osa_code", label: "Code" },
+        { 
+            key: "warehouse", 
+            label: "Warehouse Code", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.warehouse?.code || "-";
+            }
+        },
+        { 
+            key: "warehouse", 
+            label: "Warehouse Name", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.warehouse?.name || "-";
+            }
+        },
+        { 
+            key: "route", 
+            label: "Route Code", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.route?.code || "-";
+            }
+        },
+        { 
+            key: "route", 
+            label: "Route Name", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.route?.name || "-";
+            }
+        },
+        { 
+            key: "salesman", 
+            label: "Salesman Code", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.salesman?.code || "-";
+            }
+        },
+        { 
+            key: "salesman", 
+            label: "Salesman Name", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.salesman?.name || "-";
+            }
+        },
+        { 
+            key: "projecttype", 
+            label: "Project Code", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.projecttype?.code || "-";
+            }
+        },
+        { 
+            key: "projecttype", 
+            label: "Project Name", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.projecttype?.name || "-";
+            }
+        },
         {
-            key: "status",
+            key: "is_confirmed",
             label: "Status",
             render: (row: TableDataType) => {
-                return row.status ? "Confirmed" : "Waiting";
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.status ? "Confirmed" : "Waiting";
             },
         }
     ];
@@ -38,16 +125,16 @@ export default function SalemanLoad() {
     const { showSnackbar } = useSnackbar();
     type TableRow = TableDataType & { id?: string };
 
-    const fetchSalesmanLoadHeader = useCallback(
+const fetchSalesmanLoadHeader = useCallback(
         async (
             page: number = 1,
             pageSize: number = 50
         ): Promise<listReturnType> => {
             try {
                 setLoading(true);
-                const listRes = await agentCustomerList({
-                    page: page.toString(),
-                    per_page: pageSize.toString(),
+                const listRes = await salesmanLoadHeaderList({
+                    // page: page.toString(),
+                    // per_page: pageSize.toString(),
                 });
                 setLoading(false);
                 return {
@@ -67,33 +154,40 @@ export default function SalemanLoad() {
             }
     }, [setLoading]);
 
-    // const search = useCallback(
-    //     async (
-    //         searchQuery: string,
-    //         pageSize: number,
-    //         columnName?: string
-    //     ): Promise<searchReturnType> => {
-    //         let result;
-    //         setLoading(true);
-    //         if(columnName) {
-    //             result = await agentCustomerList({
-    //                 per_page: pageSize.toString(),
-    //                 [columnName]: searchQuery
-    //             });
-    //         }
-    //         setLoading(false);
-    //         if (result.error) throw new Error(result.data.message);
-    //         else {
-    //             return {
-    //                 data: result.data || [],
-    //                 total: result.pagination.pagination.totalPages || 0,
-    //                 currentPage: result.pagination.pagination.current_page || 0,
-    //                 pageSize: result.pagination.pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     []
-    // );
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await salesmanLoadHeaderList(params);
+            } finally {
+                setLoading(false);
+            }
+
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
 
     useEffect(() => {
         setLoading(true);
@@ -107,11 +201,41 @@ export default function SalemanLoad() {
                     config={{
                         api: {
                             list: fetchSalesmanLoadHeader,
+                            filterBy: filterBy
                         },
                         header: {
                             title: "Salesman Load",
                             searchBar: false,
                             columnFilter: true,
+                            filterByFields: [
+                                {
+                                    key: "date_change",
+                                    label: "Date Range",
+                                    type: "dateChange"
+                                },
+                                {
+                                    key: "region",
+                                    label: "Region",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(regionOptions) ? regionOptions : [],
+                                },
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+                                
+                            ],
                             actions: [
                                 <SidebarBtn
                                     key={0}
@@ -127,6 +251,7 @@ export default function SalemanLoad() {
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
+                        
                         rowActions: [
                             {
                                 icon: "lucide:eye",
@@ -146,6 +271,7 @@ export default function SalemanLoad() {
                             },
                         ],
                         pageSize: 50,
+                      
                     }}
                 />
             </div>

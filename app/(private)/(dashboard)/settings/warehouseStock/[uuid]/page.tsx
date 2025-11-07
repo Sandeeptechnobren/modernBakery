@@ -13,23 +13,24 @@ import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-// import {
-//   addCustomerType,
-//   getCustomerTypeById,
-//   updateCustomerType,
-//   genearateCode,
-//   saveFinalCode,
-// } from "@/app/services/allApi";
+import {
+  addWarehouseStock,
+  editWarehouseStock,
+  getWarehouseStockById,
+  genearateCode,
+  saveFinalCode,
+} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
-interface CustomerTypeFormValues {
+interface WarehouseStockFormValues {
   warehouse_stock_code: string;
   warehouse_id: string;
   item_id: string;
+  name?: string;
   status: string; // "active" | "inactive"
 }
 
-export default function AddCustomerTypePage() {
+export default function AddWarehouseStockPage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
@@ -41,11 +42,12 @@ export default function AddCustomerTypePage() {
   const { warehouseOptions, itemOptions } = useAllDropdownListData();
 
   // ✅ Formik setup
-  const formik = useFormik<CustomerTypeFormValues>({
+  const formik = useFormik<WarehouseStockFormValues>({
     initialValues: {
       warehouse_stock_code: "",
       warehouse_id: "",
       item_id: "",
+      name: "",
       status: "active",
     },
     validationSchema: Yup.object({
@@ -59,35 +61,45 @@ export default function AddCustomerTypePage() {
         const payload = {
           warehouse_stock_code: values.warehouse_stock_code,
           warehouse_id: values.warehouse_id,
-          status: values.status === "active" ? 1 : 0,
+          item_id: values.item_id,
+          name: values.name || "", // some APIs need a name field
+          status: values.status === "active" ? "1" : "0",
         };
 
-        // let res;
-        // if (isEditMode && params?.id && params.id !== "add") {
-        //   res = await updateCustomerType(String(params.id), payload);
-        // } else {
-        //   res = await addCustomerType(payload);
-        // }
+        let res;
+        if (isEditMode && params?.uuid && params.uuid !== "add") {
+          res = await editWarehouseStock(String(params.uuid), payload);
+        } else {
+          res = await addWarehouseStock(payload);
+        }
 
-        // if (res.error) {
-        //   showSnackbar(res.data?.message || "Failed to submit form", "error");
-        // } else {
-        //   showSnackbar(
-        //     res.message ||
-        //       (isEditMode
-        //         ? "Warehouse Stock Updated Successfully"
-        //         : "Warehouse Stock Created Successfully"),
-        //     "success"
-        //   );
-        //   // Finalize the reserved code only after successful add
-        //   if (!isEditMode || params?.id === "add") {
-        //     try {
-        //       await saveFinalCode({ reserved_code: values.customer_type_code, model_name: "customer_types" });
-        //     } catch (e) {}
-        //   }
-        //   router.push("/settings/customer/customerType");
-        // }
+        if (res?.error) {
+          showSnackbar(res.data?.message || "Failed to submit form", "error");
+        } else {
+          showSnackbar(
+            res.message ||
+              (isEditMode
+                ? "Warehouse Stock Updated Successfully"
+                : "Warehouse Stock Created Successfully"),
+            "success"
+          );
+
+          // Finalize the reserved code only after successful add
+          if (!isEditMode || params?.uuid === "add") {
+            try {
+              await saveFinalCode({
+                reserved_code: values.warehouse_stock_code,
+                model_name: "warehouse_stock",
+              });
+            } catch (e) {
+              console.error("Code finalization failed", e);
+            }
+          }
+
+          router.push("/settings/warehouseStock");
+        }
       } catch (error) {
+        console.error(error);
         showSnackbar("Something went wrong", "error");
       } finally {
         setSubmitting(false);
@@ -96,37 +108,39 @@ export default function AddCustomerTypePage() {
   });
 
   // ✅ Load existing data for edit mode and generate code in add mode
-//   useEffect(() => {
-//     if (params?.id && params.id !== "add") {
-//       setIsEditMode(true);
-//       setLoading(true);
-//       (async () => {
-//         try {
-//           const res = await getCustomerTypeById(String(params.id));
-//           if (res?.data) {
-//             formik.setValues({
-//               customer_type_code: res.data.code || "",
-//               name: res.data.name || "",
-//               status: res.data.status === 1 ? "active" : "inactive",
-//             });
-//           }
-//         } catch (error) {
-//           console.error("Failed to fetch Warehouse Stock", error);
-//         } finally {
-//           setLoading(false);
-//         }
-//       })();
-//     } else if (!isEditMode && !codeGeneratedRef.current) {
-//       codeGeneratedRef.current = true;
-//       (async () => {
-//         const res = await genearateCode({ model_name: "customer_types" });
-//         if (res?.code) {
-//           formik.setFieldValue("customer_type_code", res.code);
-//         }
-//       })();
-//     }
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [params?.id]);
+  useEffect(() => {
+    if (params?.uuid && params.uuid !== "add") {
+      setIsEditMode(true);
+      setLoading(true);
+      (async () => {
+        try {
+          const res = await getWarehouseStockById(String(params.uuid));
+          if (res?.data) {
+            formik.setValues({
+              warehouse_stock_code: res.data.osa_code || "",
+              warehouse_id: res.data.warehouse?.id?.toString() || "",
+              item_id: res.data.item?.id?.toString() || "",
+              name: res.data.item?.name || "",
+              status: res.data.status === 1 ? "active" : "inactive",
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch Warehouse Stock", error);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    } else if (!isEditMode && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "warehouse_stock" });
+        if (res?.code) {
+          formik.setFieldValue("warehouse_stock_code", res.code);
+        }
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params?.uuid]);
 
   return (
     <>
@@ -144,15 +158,13 @@ export default function AddCustomerTypePage() {
 
       {/* Form */}
       {loading ? (
-        <Loading></Loading>
+        <Loading />
       ) : (
         <form onSubmit={formik.handleSubmit}>
           <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">
-              Warehouse Stock Details
-            </h2>
+            <h2 className="text-lg font-semibold mb-6">Warehouse Stock Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Warehouse Stock Code (pattern-matched UI) */}
+              {/* Warehouse Stock Code */}
               <div className="flex items-start gap-2 max-w-[406px]">
                 <InputFields
                   label="Warehouse Stock Code"
@@ -160,34 +172,45 @@ export default function AddCustomerTypePage() {
                   value={formik.values.warehouse_stock_code}
                   onChange={formik.handleChange}
                   disabled
-                  error={formik.touched.warehouse_stock_code && formik.errors.warehouse_stock_code}
+                  error={
+                    formik.touched.warehouse_stock_code &&
+                    formik.errors.warehouse_stock_code
+                  }
                 />
                 {!isEditMode && (
                   <>
                     <IconButton
                       bgClass="white"
-                       className="  cursor-pointer text-[#252B37] pt-12"
+                      className="cursor-pointer text-[#252B37] pt-12"
                       icon="mi:settings"
                       onClick={() => setIsOpen(true)}
                     />
-                    <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Warehouse Stock Code" />
+                    <SettingPopUp
+                      isOpen={isOpen}
+                      onClose={() => setIsOpen(false)}
+                      title="Warehouse Stock Code"
+                    />
                   </>
                 )}
               </div>
-              {/* Name */}
+
+              {/* Warehouse */}
               <InputFields
-                type="text"
+                type="select"
                 name="warehouse_id"
                 label="Warehouse"
                 value={formik.values.warehouse_id}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 options={warehouseOptions}
-                error={formik.touched.warehouse_id && formik.errors.warehouse_id}
+                error={
+                  formik.touched.warehouse_id && formik.errors.warehouse_id
+                }
               />
 
+              {/* Item */}
               <InputFields
-                type="text"
+                type="select"
                 name="item_id"
                 label="Item"
                 value={formik.values.item_id}
@@ -196,6 +219,7 @@ export default function AddCustomerTypePage() {
                 options={itemOptions}
                 error={formik.touched.item_id && formik.errors.item_id}
               />
+
               {/* Status */}
               <InputFields
                 type="radio"

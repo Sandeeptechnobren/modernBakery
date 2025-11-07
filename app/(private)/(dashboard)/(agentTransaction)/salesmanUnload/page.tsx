@@ -18,8 +18,7 @@ export default function SalesmanUnloadPage() {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { regionOptions } =
-      useAllDropdownListData();
+  const { regionOptions } = useAllDropdownListData();
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFiltered, setIsFiltered] = useState(false);
@@ -70,7 +69,10 @@ export default function SalesmanUnloadPage() {
 
   // ✅ Fetch Data API (used by Table)
   const fetchSalesmanUnloadHeader = useCallback(
-    async (page: number = 1, pageSize: number = 50): Promise<listReturnType> => {
+    async (
+      page: number = 1,
+      pageSize: number = 50
+    ): Promise<listReturnType> => {
       if (!isFiltered) {
         return { data: [], total: 0, currentPage: 1, pageSize };
       }
@@ -125,7 +127,7 @@ export default function SalesmanUnloadPage() {
   const columns: configType["columns"] = [
     { key: "unload_date", label: "Unload Date" },
     { key: "unload_time", label: "Unload Time" },
-    { key: "laod_date", label: "Load Date"  },
+    { key: "laod_date", label: "Load Date" },
     {
       key: "salesman",
       label: "Salesman",
@@ -169,9 +171,10 @@ export default function SalesmanUnloadPage() {
 
   return (
     <div className="flex flex-col h-full">
-<div className="gap-3">
+      <div className="gap-3">
         <h1 className="text-bold-700">Salesman Unload</h1>
-    </div>      {/* 🔍 Filter Section */}
+      </div>{" "}
+      {/* 🔍 Filter Section */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 bg-white p-4 rounded-lg shadow">
         <div>
           <InputFields
@@ -222,9 +225,7 @@ export default function SalesmanUnloadPage() {
             onClick={handleFilter}
           />
         </div>
-
       </div>
-
       {/* 📋 Table Section */}
       <Table
         refreshKey={refreshKey}
@@ -234,6 +235,20 @@ export default function SalesmanUnloadPage() {
             // title: "Salesman Unload",
             searchBar: false,
             columnFilter: true,
+            filterByFields: [
+              {
+                key: "start_date, end_date",
+                label: "From Date",
+                type: "dateChange",
+              },
+              {
+                key: "region_id",
+                label: "Region",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(regionOptions) ? regionOptions : [],
+              },
+            ],
             actions: [
               <SidebarBtn
                 key={0}
@@ -254,7 +269,7 @@ export default function SalesmanUnloadPage() {
               icon: "lucide:eye",
               onClick: (data: object) => {
                 const row = data as TableDataType;
-                router.push(`/salesmanLoad/details/${String(row.uuid)}`);
+                router.push(`/salesmanUnload/details/${String(row.uuid)}`);
               },
             },
             {
