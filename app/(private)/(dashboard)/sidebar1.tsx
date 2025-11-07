@@ -165,7 +165,7 @@ export default function Sidebar({
                                             </div>
                                         </div>
                                         <div
-                                            className={`${!isActive ? "group-hover:flex" : ""} hidden absolute z-20 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                                            className={`${!isActive ? "group-hover:flex" : ""} hidden absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
                                         >
                                             {link.label}
                                         </div>
@@ -194,7 +194,7 @@ export default function Sidebar({
                                     onClick={link.onClick}
                                 />
                                 <div
-                                    className={`hidden group-hover:flex absolute z-20 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                                    className={`hidden group-hover:flex absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
                                 >
                                     {link.label}
                                 </div>

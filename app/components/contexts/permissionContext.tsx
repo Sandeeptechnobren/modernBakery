@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from "react";
 import { getRoleById } from "@/app/services/allApi";
 import { LinkDataType } from "../../(private)/data/dashboardLinks";
-import { permission } from "process";
 
 type PermissionContextType = {
   filteredMenu: LinkDataType[] | null;
@@ -15,18 +14,21 @@ type PermissionContextType = {
     type:string,
     options?: { roleId?: string; force?: boolean }
   ) => Promise<LinkDataType[]>;
+  allowedPaths?: Set<string>;
 };
 
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
+let allowedDashboardPaths = new Set<string>();
+// let allowedSettingsPaths = new Set<string>();
 
 export function filterMenuByPermissions(allMenus: LinkDataType[] = [], role: any): LinkDataType[] {
   if (!role || !Array.isArray(allMenus)) return [];
   const allowedMenus = (role?.menus || []).map((m: any) => m.menu?.name).filter(Boolean);
-  const allowedSubMenus = (role?.menus || []).flatMap((m: any) => (Array.isArray(m.submenu) ? m.submenu.map((s: any) => s.name) : []));
-
-  console.log(allMenus,"allMenus",role);
-
-  
+  const allowedSubMenus = (role?.menus || []).flatMap((m: any) => {
+    const hrefs = Array.isArray(m.submenu) ? m.submenu.map((s: { path: string}) => s.path) : [];
+    allowedDashboardPaths = new Set([...allowedDashboardPaths, ...hrefs]);
+    return (Array.isArray(m.submenu) ? m.submenu.map((s: any) => s.name) : []);
+  });
 
   return allMenus
     .filter((menu) => allowedMenus.includes(menu.label))
@@ -43,6 +45,7 @@ export function filterMenuByPermissions(allMenus: LinkDataType[] = [], role: any
 function filterMenusByRole(allMenus:LinkDataType[] | null = [] , roles:{path:string}[]) {
   // Extract allowed paths from role array
   const allowedPaths = new Set(roles.map(role => role.path));
+  // allowedSettingsPaths = allowedPaths;
 
   // Recursive function to filter menu tree
   const filterRecursive = (menus:any) => {
@@ -77,9 +80,7 @@ export async function fetchFilteredMenu(allMenus: LinkDataType[] | null,type:str
     if (res?.error || !res?.data) return [];
     if(type==="settings"){
        const rolesSettings = res.data.menus.filter((menu: any) =>  menu.menu.name == "Settings")[0].submenu;
-       console.log(rolesSettings,"rolesSettings");
-       console.log(filterMenusByRole(allMenus ,rolesSettings),"filtered settings menu",rolesSettings);
-       return filterMenusByRole(allMenus ,rolesSettings)
+       return filterMenusByRole(allMenus, rolesSettings);
     }
     return filterMenuByPermissions(allMenus || [], res.data || {});
   } catch (err) {
@@ -138,7 +139,7 @@ export const PermissionProvider = ({ children }: { children: React.ReactNode }) 
   );
 
   return (
-    <PermissionContext.Provider value={{ filteredMenu, settingsMenu, loading, error, refreshPermissions }}>
+    <PermissionContext.Provider value={{ filteredMenu, settingsMenu, loading, error, refreshPermissions, allowedPaths: allowedDashboardPaths }}>
       {children}
     </PermissionContext.Provider>
   );

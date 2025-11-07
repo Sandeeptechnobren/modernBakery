@@ -30,7 +30,6 @@ export function usePermissionManager() {
       try {
         await ctx.refreshPermissions(menus as any,"nav", options);
         await ctx.refreshPermissions(settings as any,"settings", options);
-
       } catch (e) {
         console.error("usePermissionManager.refresh failed", e);
       }

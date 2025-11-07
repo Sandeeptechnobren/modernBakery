@@ -18,7 +18,7 @@ export default function CustomDropdown({
         <div
             className={`rounded-[8px] border-[1px] border-[#E9EAEB] bg-white py-[4px] w-full overflow-auto h-full cursor-pointer`}
         >
-            {children && children}
+            {children && children !== null && children}
             {data &&
                 data.map((item: dataType, index: number) => (
                     <div

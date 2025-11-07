@@ -94,9 +94,15 @@ export default function StepperForm({
   const handleSubmit = async () => { 
     setIsSubmitting(true); 
     setLoading(true); 
-    if(onSubmit) await onSubmit();
-    setLoading(false); 
+    if(onSubmit) 
+      {await onSubmit();
+ setLoading(false); 
+
+  setTimeout(()=>{
     setIsSubmitting(false); 
+    },2000)
+      }
+   
   }
 
   return (
@@ -174,13 +180,21 @@ export default function StepperForm({
 
         {showSubmitButton && isLastStep && (
           <div className="w-full sm:w-auto">
-            <SidebarBtn
+           {isSubmitting? <SidebarBtn
               label={isSubmitting ? "Submitting..." : submitButtonText}
-              disabled={isSubmitting}
+              // disabled={isSubmitting}
+              disabled
               isActive={true}
               leadingIcon="mdi:check"
               onClick={handleSubmit}
-            />
+            />:<SidebarBtn
+              label={isSubmitting ? "Submitting..." : submitButtonText}
+              // disabled={isSubmitting}
+              
+              isActive={true}
+              leadingIcon="mdi:check"
+              onClick={handleSubmit}
+            />}
           </div>
         )}
       </div>

@@ -97,7 +97,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     <div className="text-xs text-red-500 mt-1">{errors.warehouse_type}</div>
                 )}
             </div>
-            {values.warehouse_type === 'company_outlet' && (
+            {/* {values.warehouse_type === 'company_outlet' && ( */}
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
@@ -122,7 +122,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     <div className="text-xs text-red-500 mt-1">{errors.agent_customer}</div>
                 )}
             </div>
-            )}
+            {/* )} */}
             <div className="flex flex-col gap-2">
                 <InputFields
                     required

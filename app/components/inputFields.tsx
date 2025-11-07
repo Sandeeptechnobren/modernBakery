@@ -1,14 +1,14 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Skeleton from '@mui/material/Skeleton';
-import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import LoaderCircle from "./loaderCircle";
 import DateRangePicker from "./DateRangePicker";
 
-type Option = {
+export type Option = {
   value: string;
   label: string;
+  [key: string]: unknown;
 };
 
 type PhoneCountry = {
@@ -43,6 +43,7 @@ type Props = {
   required?: boolean;
   loading?: boolean; 
   searchable?: boolean | string;
+  onSearch?: (search: string) => void;
   placeholder?: string;
   textareaCols?: number;
   textareaRows?: number;
@@ -51,7 +52,6 @@ type Props = {
   trailingElement?: React.ReactNode;
   showBorder?: boolean;
   showSkeleton?: boolean;
-
   maxLength?: number;
   setSelectedCountry?: ({ name: string; code?: string; flag?: string });
   selectedCountry?: { name: string; code?: string; flag?: string };
@@ -75,6 +75,7 @@ export default function InputFields({
   required = false,
   loading = false,
   searchable = false,
+  onSearch = () => {},
   multiSelectChips = false,
   originalValue = null,
   placeholder,
@@ -154,10 +155,10 @@ const countries: { name?: string; code?: string; flag?: string }[] = [
     };
 
   const filteredOptions = (options?.filter(opt => {
-    const label = opt.label.toLowerCase();
+    const label = opt.label?.toLowerCase();
     // Remove options like 'Select Region', 'Select Item', 'Select ...'
-    if (label.startsWith('select ')) return false;
-    return label.includes(search.toLowerCase());
+    if (label?.startsWith('select ')) return false;
+    return label?.includes(search.toLowerCase());
   })) || [];
 
 useEffect(() => {
@@ -332,7 +333,9 @@ useEffect(() => {
                         value={displayValue}
                         onChange={e => {
                           const v = (e.target as HTMLInputElement).value;
+                          console.log("Search input changed:", v);
                           setSearch(v);
+                          onSearch(v);
                           if (!dropdownOpen) setDropdownOpen(true);
                           if (v === '') {
                             // user cleared the input -> clear selected values for multi-select
@@ -363,6 +366,7 @@ useEffect(() => {
                     onChange={e => {
                       const v = (e.target as HTMLInputElement).value;
                       setSearch(v);
+                      onSearch(v);
                       if (!dropdownOpen) setDropdownOpen(true);
                       if (v === '') {
                         // user cleared the input -> clear selected values for multi-select
@@ -436,7 +440,7 @@ useEffect(() => {
                       type="text"
                       placeholder="Search"
                       value={search}
-                      onChange={e => setSearch(e.target.value)}
+                      onChange={e => { setSearch(e.target.value); onSearch(e.target.value); }}
                       className="w-full border-none outline-none text-sm"
                       disabled={disabled}
                     />
@@ -523,6 +527,7 @@ useEffect(() => {
                       if(disabled) return;
                       const v = (e.target as HTMLInputElement).value;
                       setSearch(v);
+                      onSearch(v);
                       if (!dropdownOpen) setDropdownOpen(true);
                       if (v === '') {
                         // user cleared the input -> clear selected value for single-select
@@ -539,6 +544,7 @@ useEffect(() => {
                           safeOnChange(createSingleSelectEvent(filteredOptions[0].value));
                           setDropdownOpen(false);
                           setSearch("");
+                          onSearch("");
                         }
                       }
                     }}
@@ -565,7 +571,7 @@ useEffect(() => {
                     type="text"
                     placeholder="Search"
                     value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    onChange={e => {setSearch(e.target.value); onSearch(e.target.value); }}
                     className="w-full border-none outline-none text-sm"
                     autoFocus
                   />
@@ -582,6 +588,7 @@ useEffect(() => {
                       safeOnChange(createSingleSelectEvent(opt.value));
                       setDropdownOpen(false);
                       setSearch("");
+                      onSearch("");
                     }}
                   >
                     <div className="text-sm text-gray-800">{opt.label}</div>

@@ -11,6 +11,7 @@ import SidebarBtn from "./dashboardSidebarBtn";
 import CustomCheckbox from "./customCheckbox";
 import DismissibleDropdown from "./dismissibleDropdown";
 import { naturalSort } from "../(private)/utils/naturalSort";
+import { CustomTableSkelton } from "../(private)/(dashboard)/(master)/warehouse/details/[id]/page";
 
 export type listReturnType = {
     data: TableDataType[];
@@ -549,6 +550,7 @@ function TableBody() {
     const tableData = tableDetails.data || [];
 
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
+    const [nestedLoading, setNestedLoading] = useState(false)
     const [tableOrder, setTableOrder] = useState<{
         column: string;
         order: "asc" | "desc";
@@ -567,10 +569,22 @@ function TableBody() {
     const isIndeterminate = selectedRow.length > 0 && !isAllSelected;
 
     useEffect(() => {
+        setNestedLoading(true)
         if (!api?.list) {
             setDisplayedData(tableData.slice(startIndex, endIndex));
+
+            setTimeout(()=>{
+        setNestedLoading(false)
+
+            },2000)
+            
         } else {
             setDisplayedData(tableData);
+           setTimeout(()=>{
+        setNestedLoading(false)
+
+            },2000)
+
         }
     }, [tableDetails]);
 
@@ -599,12 +613,11 @@ function TableBody() {
         } else {
             setTableOrder({ column, order: "desc" });
         }
-
         setDisplayedData(naturalSort(displayedData, tableOrder.order, column));
     };
 
     return (
-        <>
+        <>{!nestedLoading?<>
             <div
                 className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent"
                 style={
@@ -824,6 +837,8 @@ function TableBody() {
                     No Column Selected
                 </div>
             )}
+            </>:<CustomTableSkelton/>}
+            
         </>
     );
 }

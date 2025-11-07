@@ -3,17 +3,18 @@
 import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import { useLoading } from "@/app/services/loadingContext";
-import { getWarehouseById, getCustomerInWarehouse,getRouteInWarehouse ,getVehicleInWarehouse,getSalesmanInWarehouse} from "@/app/services/allApi";
+import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse, getStockOfWarehouse } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import StatusBtn from "@/app/components/statusBtn2";
 import TabBtn from "@/app/components/tabBtn";
 import Map from "@/app/components/map";
-import Table, { configType, TableDataType } from "@/app/components/customTable";
+import Table, { configType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import Skeleton from "@mui/material/Skeleton";
 
 interface Item {
     id: string;
@@ -62,6 +63,13 @@ const title = "Warehouse Details";
 const backBtnUrl = "/warehouse";
 
 
+export const CustomTableSkelton  = ()=>{
+
+
+    return(<div><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/></div>)
+}
+
+
 
 export default function ViewPage() {
     const { customerSubCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
@@ -73,6 +81,9 @@ export default function ViewPage() {
     const [warehouseVehicle, setWarehouseVehicle] = useState<TableDataType[]>([]);
     const [warehouseSalesman, setWarehouseSalesman] = useState<TableDataType[]>([]);
     const [warehouseCustomer, setWarehouseCustomer] = useState<TableDataType[]>([]);
+    const [nestedLoading, setNestedLoading] = useState<boolean>(false);
+    const [refreshKey, setRefreshKey] = useState(0)
+
     const params = useParams();
     let id: string = "";
     if (params.id) {
@@ -92,11 +103,52 @@ export default function ViewPage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const [item, setItem] = useState<Item | null>(null);
-    const onTabClick = (idx: number) => {
+    const onTabClick = async (idx: number) => {
         // ensure index is within range and set the corresponding tab key
         if (typeof idx !== "number") return;
         if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
         setActiveTab(tabList[idx].key);
+
+        // if (tabList[idx].key == "warehouseCustomer") {
+        //     setNestedLoading(true)
+        //     const cRes = await getCustomerInWarehouse(id);
+        //     if (cRes && !cRes.error) {
+        //         setWarehouseCustomer(cRes?.data);
+        //         setNestedLoading(false)
+        //     }
+        //     else {
+        //         setWarehouseCustomer([])
+        //     }
+
+        // }
+        // else if (tabList[idx].key == "route") {
+        //     setNestedLoading(true)
+
+        //     const rRes = await getRouteInWarehouse(id);
+
+        //     if (rRes && !rRes.error) {
+        //         setWarehouseRoutes(rRes?.data);
+        //         setNestedLoading(false)
+
+        //     }
+        //     else {
+        //         setWarehouseRoutes([]);
+        //     }
+        // }
+
+        // else if (tabList[idx].key == "salesman") {
+        //     setNestedLoading(true)
+
+        //     const sRes = await getSalesmanInWarehouse(id);
+        //     if (sRes && !sRes.error) {
+        //         setWarehouseSalesman(sRes?.data);
+        //         setNestedLoading(false)
+
+        //     }
+        //     else {
+        //         setWarehouseSalesman([]);
+        //     }
+        // }
     };
     const [activeTab, setActiveTab] = useState("overview");
     const tabList = [
@@ -104,7 +156,7 @@ export default function ViewPage() {
         { key: "warehouseCustomer", label: "Warehouse Customer" },
         { key: "warehouseStock", label: "Warehouse Stock" },
         { key: "route", label: "Route" },
-        { key: "vehicle", label: "Vechile" },
+        // { key: "vehicle", label: "Vehicle" },
         { key: "salesman", label: "Salesman" },
         { key: "sales", label: "Sales" },
         { key: "return", label: "Return" },
@@ -124,30 +176,6 @@ export default function ViewPage() {
             } else {
                 setItem(res.data);
 
-                try {
-                    const cRes = await getCustomerInWarehouse(id);
-                    const rRes = await getRouteInWarehouse(id);
-                    const vRes = await getVehicleInWarehouse(id);
-                    const sRes = await getSalesmanInWarehouse(id);
-                    if (rRes && !rRes.error) {
-                        setWarehouseRoutes(rRes?.data);
-                        setWarehouseVehicle(vRes?.data);
-                        setWarehouseSalesman(sRes?.data);
-                        setWarehouseCustomer(cRes?.data);
-                    } else {
-                        if (rRes?.data?.message) showSnackbar(rRes.data.message, "error");
-                        setWarehouseRoutes([]);
-                        setWarehouseVehicle([]);
-                        setWarehouseSalesman([]);
-                        setWarehouseCustomer([]);
-                    }
-                } catch (err) {
-                    console.error("Failed to fetch routes for warehouse", err);
-                    setWarehouseRoutes([]);
-                    setWarehouseVehicle([]);
-                    setWarehouseCustomer([]);
-                    setWarehouseSalesman([]);
-                }
             }
         };
         fetchPlanogramImageDetails();
@@ -220,240 +248,459 @@ export default function ViewPage() {
                 <StatusBtn isActive={row.status && row.status.toString() === "1" ? true : false} />
             ),
             showByDefault: true,
+            isSortable: true
         },
     ];
     const vehicleColumns: configType["columns"] = [
         { key: "vehicle_code", label: "Vehicle Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.vehicle_code || "-"}</span>) },
-         { key: "number_plat", label: "Number Plate", render: (row: TableDataType) => row.number_plat || "-" },
-         { key: "vehicle_chesis_no", label: "Chassis Number", render: (row: TableDataType) => row.vehicle_chesis_no || "-" },
-         { key: "vehicle_brand", label: "Brand", render: (row: TableDataType) => row.vehicle_brand || "-" },
-         { key: "opening_odometer", label: "Odo Meter", render: (row: TableDataType) => row.opening_odometer || "-" },
-         {
-           key: "vehicle_type",
-           label: "Vehicle Type",
-           render: (row: TableDataType) => {
-             const value = row.vehicle_type;
-             if (value == null || value === "") return "-";
-             const strValue = String(value);
-             if (strValue === "1") return "Truck";
-             if (strValue === "2") return "Van";
-             if (strValue === "3") return "Bike";
-             if (strValue === "4") return "Tuktuk";
-             return strValue;
-           },
-         },
-         { key: "capacity", label: "Capacity", render: (row: TableDataType) => row.capacity || "-" },
-         {
-           key: "owner_type",
-           label: "Owner Type",
-           render: (row: TableDataType) => {
-             const value = row.owner_type;
-             if (value == null || value === "") return "-";
-             const strValue = String(value);
-             if (strValue === "0") return "Company Owned";
-             if (strValue === "1") return "Contractor";
-             return strValue;
-           },
-         },
-         { key: "description", label: "Description", render: (row: TableDataType) => row.description || "-" },
-         { key: "valid_from", label: "Valid From", render: (row: TableDataType) => row.valid_from || "-" },
-         { key: "valid_to", label: "Valid To", render: (row: TableDataType) => row.valid_to || "-" },
-         {
-           key: "status",
-           label: "Status",
-           render: (row: TableDataType) => (
-             <StatusBtn isActive={String(row.status) === "1"} />
-           ),
-         },
+        { key: "number_plat", label: "Number Plate", render: (row: TableDataType) => row.number_plat || "-" },
+        { key: "vehicle_chesis_no", label: "Chassis Number", render: (row: TableDataType) => row.vehicle_chesis_no || "-" },
+        { key: "vehicle_brand", label: "Brand", render: (row: TableDataType) => row.vehicle_brand || "-" },
+        { key: "opening_odometer", label: "Odo Meter", render: (row: TableDataType) => row.opening_odometer || "-" },
+        {
+            key: "vehicle_type",
+            label: "Vehicle Type",
+            render: (row: TableDataType) => {
+                const value = row.vehicle_type;
+                if (value == null || value === "") return "-";
+                const strValue = String(value);
+                if (strValue === "1") return "Truck";
+                if (strValue === "2") return "Van";
+                if (strValue === "3") return "Bike";
+                if (strValue === "4") return "Tuktuk";
+                return strValue;
+            },
+        },
+        { key: "capacity", label: "Capacity", render: (row: TableDataType) => row.capacity || "-" },
+        {
+            key: "owner_type",
+            label: "Owner Type",
+            render: (row: TableDataType) => {
+                const value = row.owner_type;
+                if (value == null || value === "") return "-";
+                const strValue = String(value);
+                if (strValue === "0") return "Company Owned";
+                if (strValue === "1") return "Contractor";
+                return strValue;
+            },
+        },
+        { key: "description", label: "Description", render: (row: TableDataType) => row.description || "-" },
+        { key: "valid_from", label: "Valid From", render: (row: TableDataType) => row.valid_from || "-" },
+        { key: "valid_to", label: "Valid To", render: (row: TableDataType) => row.valid_to || "-" },
+        {
+            key: "status",
+            label: "Status",
+            render: (row: TableDataType) => (
+                <StatusBtn isActive={String(row.status) === "1"} />
+            ),
+            isSortable: true
+        },
     ];
     const salesmanColumns: configType["columns"] = [
-         {
-           key: "osa_code",
-           label: "Salesman Code",
-           render: (row: TableDataType) => (
-             <span className="font-semibold text-[#181D27] text-[14px]">
-               {row.osa_code}
-             </span>
-           ),
-         },
-         { key: "name", label: "Salesman Name" },
-         {
-           key: "salesman_type",
-           label: "Salesman Type",
-           render: (row: TableDataType) => {
-             const obj =
-               typeof row.salesman_type === "string"
-                 ? JSON.parse(row.salesman_type)
-                 : row.salesman_type;
-             return obj?.salesman_type_name || "-";
-           },
-         },
-       
-         { key: "designation", label: "Designation" },
-           {
-               key: "route",
-               label: "Route",
-               render: (row: TableDataType) => {
-                   if (
-                       typeof row.route === "object" &&
-                       row.route !== null &&
-                       "route_name" in row.route
-                   ) {
-                       return (row.route as { route_name?: string }).route_name || "-";
-                   }
-                   return typeof row.route === 'string' ? row.route : "-";
-               },
-               filter: {
-                   isFilterable: true,
-                   width: 320,
-                   options: Array.isArray(routeOptions) ? routeOptions : [],
-                   onSelect: (selected: string | string[]) => {
-                       setRouteId((prev) => prev === selected ? "" : (selected as string));
-                   },
-                   selectedValue: routeId,
-               },
-              
-               showByDefault: true,
-           },
-         { key: "contact_no", label: "Contact No" },
-       
-         {
-           key: "status",
-           label: "Status",
-           render: (row: TableDataType) => (
-             <StatusBtn isActive={String(row.status) === "1"} />
-           ),
-         },
-    ];
-    const columns: configType["columns"] = [
         {
-               key: "osa_code",
-               label: "OSA Code",
-               render: (row: TableDataType) => (
-                   <span className="font-semibold text-[#181D27] text-[14px]">
-                       {row.osa_code || "-"}
-                   </span>
-               ),
-               showByDefault: true,
-           },
-           { key: "outlet_name", label: "Outlet Name", showByDefault: true },
-           { key: "owner_name", label: "Owner Name" },
-           {
-               key: "customer_type",
-               label: "Customer Type",
-               render: (row: TableDataType) => {
-                   if (
-                       typeof row.customer_type === "object" &&
-                       row.customer_type !== null &&
-                       "name" in row.customer_type
-                   ) {
-                       return (row.customer_type as { name?: string }).name || "-";
-                   }
-                   return row.customer_type || "-";
-               },
-           },
-           {
-               key: "category",
-               label: "Customer Category",
-               render: (row: TableDataType) =>
-                   typeof row.category === "object" &&
-                   row.category !== null &&
-                   "customer_category_name" in row.category
-                       ? (row.category as { customer_category_name?: string })
-                             .customer_category_name || "-"
-                       : "-",
-           },
-           {
-               key: "subcategory",
-               label: "Customer Sub Category",
-               render: (row: TableDataType) =>
-                   typeof row.subcategory === "object" &&
-                   row.subcategory !== null &&
-                   "customer_sub_category_name" in row.subcategory
-                       ? (row.subcategory as { customer_sub_category_name?: string })
-                             .customer_sub_category_name || "-"
-                       : "-",
-               filter: {
-                   isFilterable: true,
-                   width: 320,
-                   options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [], // [{ value, label }]
-                   onSelect: (selected) => {
-                       setSelectedSubCategoryId((prev) => prev === selected ? "" : (selected as string));
-                   },
-                   selectedValue: selectedSubCategoryId,
-               },
-               showByDefault: true,
-           },
-           {
-               key: "outlet_channel",
-               label: "Outlet Channel",
-               render: (row: TableDataType) =>
-                   typeof row.outlet_channel === "object" &&
-                   row.outlet_channel !== null &&
-                   "outlet_channel" in row.outlet_channel
-                       ? (row.outlet_channel as { outlet_channel?: string })
-                             .outlet_channel || "-"
-                       : "-",
-                       filter: {
-                           isFilterable: true,
-                           width: 320,
-                           options: Array.isArray(channelOptions) ? channelOptions : [], // [{ value, label }]
-                           onSelect: (selected) => {
-                               setChannelId((prev) => prev === selected ? "" : (selected as string));
-                           },
-                           selectedValue: channelId,
-                       },
-               
-               showByDefault: true,
-           },
-           { key: "landmark", label: "Landmark" },
-           { key: "district", label: "District" },
-           { key: "street", label: "Street" },
-           { key: "town", label: "Town" },
-           {
-               key: "route",
-               label: "Route",
-               render: (row: TableDataType) => {
-                   if (
-                       typeof row.route === "object" &&
-                       row.route !== null &&
-                       "route_name" in row.route
-                   ) {
-                       return (row.route as { route_name?: string }).route_name || "-";
-                   }
-                   return typeof row.route === 'string' ? row.route : "-";
-               },
-               filter: {
-                   isFilterable: true,
-                   width: 320,
-                   options: Array.isArray(routeOptions) ? routeOptions : [],
-                   onSelect: (selected) => {
-                       setRouteId((prev) => prev === selected ? "" : (selected as string));
-                   },
-                   selectedValue: routeId,
-               },
-              
-               showByDefault: true,
-           },
-           { key: "contact_no", label: "Contact No." },
-           { key: "whatsapp_no", label: "Whatsapp No." },
-           { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
-           { key: "payment_type", label: "Payment Type" },
-           {
-               key: "status",
-               label: "Status",
-               render: (row: TableDataType) => {
-                   // Treat status 1 or 'active' (case-insensitive) as active
-                   const isActive =
-                       String(row.status) === "1" ||
-                       (typeof row.status === "string" &&
-                           row.status.toLowerCase() === "active");
-                   return <StatusBtn isActive={isActive} />;
-               },
-               showByDefault: true,
-           },
+            key: "osa_code",
+            label: "Salesman Code",
+            render: (row: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {row.osa_code}
+                </span>
+            ),
+            showByDefault: true,
+        },
+        { key: "name", label: "Salesman Name", showByDefault: true },
+        {
+            key: "salesman_type",
+            label: "Salesman Type",
+            render: (row: TableDataType) => {
+                const obj =
+                    typeof row.salesman_type === "string"
+                        ? JSON.parse(row.salesman_type)
+                        : row.salesman_type;
+                return obj?.salesman_type_name || "-";
+            },
+            showByDefault: true,
+        },
+
+        { key: "designation", label: "Designation", showByDefault: true, },
+        {
+            key: "route",
+            label: "Route",
+            render: (row: TableDataType) => {
+                if (
+                    typeof row.route === "object" &&
+                    row.route !== null &&
+                    "route_name" in row.route
+                ) {
+                    return (row.route as { route_name?: string }).route_name || "-";
+                }
+                return typeof row.route === 'string' ? row.route : "-";
+            },
+            filter: {
+                isFilterable: true,
+                width: 320,
+                options: Array.isArray(routeOptions) ? routeOptions : [],
+                onSelect: (selected: string | string[]) => {
+                    setRouteId((prev) => prev === selected ? "" : (selected as string));
+                },
+                selectedValue: routeId,
+            },
+            showByDefault: true,
+        },
+        { key: "contact_no", label: "Contact No" },
+
+        {
+            key: "status",
+            label: "Status",
+            render: (row: TableDataType) => (
+                <StatusBtn isActive={String(row.status) === "1"} />
+            ),
+            showByDefault: true,
+            isSortable: true
+        },
     ];
 
+    const stockColumns: configType["columns"] = [
+    {
+        key: "osa_code",
+        label: "OSA Code",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.osa_code || "-"}
+            </span>
+        ),
+        showByDefault: true,
+    },
+    {
+        key: "item",
+        label: "Item",
+        render: (row: TableDataType) => {
+            if (
+                typeof row.item === "object" &&
+                row.item !== null &&
+                "name" in row.item
+            ) {
+                const item = row.item as { name?: string; code?: string };
+                return (
+                    <div>
+                        <div className="font-medium text-[#181D27] text-[14px]">
+                         {item.code}-{item.name || "-"}
+                        </div>
+                        {/* <div className="text-xs text-gray-500">{item.code || ""}</div> */}
+                    </div>
+                );
+            }
+            return typeof row.item === "string" ? row.item : "-";
+        },
+        showByDefault: true,
+    },
+    {
+        key: "qty",
+        label: "Quantity",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.qty ?? "-"}
+            </span>
+        ),
+        showByDefault: true,
+        isSortable: true,
+    }
+];
+
+    const columns: configType["columns"] = [
+        {
+            key: "osa_code",
+            label: "OSA Code",
+            render: (row: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {row.osa_code || "-"}
+                </span>
+            ),
+            showByDefault: true,
+        },
+        { key: "outlet_name", label: "Outlet Name", showByDefault: true },
+        { key: "owner_name", label: "Owner Name" },
+        {
+            key: "customer_type",
+            label: "Customer Type",
+            render: (row: TableDataType) => {
+                if (
+                    typeof row.customer_type === "object" &&
+                    row.customer_type !== null &&
+                    "name" in row.customer_type
+                ) {
+                    return (row.customer_type as { name?: string }).name || "-";
+                }
+                return row.customer_type || "-";
+            },
+        },
+        {
+            key: "category",
+            label: "Customer Category",
+            render: (row: TableDataType) =>
+                typeof row.category === "object" &&
+                    row.category !== null &&
+                    "customer_category_name" in row.category
+                    ? (row.category as { customer_category_name?: string })
+                        .customer_category_name || "-"
+                    : "-",
+        },
+        {
+            key: "subcategory",
+            label: "Customer Sub Category",
+            render: (row: TableDataType) =>
+                typeof row.subcategory === "object" &&
+                    row.subcategory !== null &&
+                    "customer_sub_category_name" in row.subcategory
+                    ? (row.subcategory as { customer_sub_category_name?: string })
+                        .customer_sub_category_name || "-"
+                    : "-",
+                isSortable:true,
+            showByDefault: true,
+        },
+        {
+            key: "outlet_channel",
+            label: "Outlet Channel",
+            render: (row: TableDataType) =>
+                typeof row.outlet_channel === "object" &&
+                    row.outlet_channel !== null &&
+                    "outlet_channel" in row.outlet_channel
+                    ? (row.outlet_channel as { outlet_channel?: string })
+                        .outlet_channel || "-"
+                    : "-",
+            isSortable:true,
+
+            showByDefault: true,
+        },
+        { key: "landmark", label: "Landmark" },
+        { key: "district", label: "District" },
+        { key: "street", label: "Street" },
+        { key: "town", label: "Town" },
+        {
+            key: "route",
+            label: "Route",
+            render: (row: TableDataType) => {
+                if (
+                    typeof row.route === "object" &&
+                    row.route !== null &&
+                    "route_name" in row.route
+                ) {
+                    return (row.route as { route_name?: string }).route_name || "-";
+                }
+                return typeof row.route === 'string' ? row.route : "-";
+            },
+           isSortable:true,
+
+            showByDefault: true,
+        },
+        { key: "contact_no", label: "Contact No." },
+        { key: "whatsapp_no", label: "Whatsapp No." },
+        { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
+        { key: "payment_type", label: "Payment Type" },
+        {
+            key: "status",
+            label: "Status",
+            render: (row: TableDataType) => {
+                // Treat status 1 or 'active' (case-insensitive) as active
+                const isActive =
+                    String(row.status) === "1" ||
+                    (typeof row.status === "string" &&
+                        row.status.toLowerCase() === "active");
+                return <StatusBtn isActive={isActive} />;
+            },
+            showByDefault: true,
+            isSortable:true,
+        },
+    ];
+  const searchCustomerById= useCallback(
+            async (
+                searchQuery: string,
+                pageSize: number = 5,
+                columnName?: string
+            ): Promise<searchReturnType> => {
+                const result = await getCustomerInWarehouse(id,{
+                    query: searchQuery,
+                    pageSize: pageSize.toString()
+                });
+    
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+    
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
+  const listCustomerById = useCallback(
+            async (
+                pageNo: number = 1,
+                pageSize: number = 50
+            ): Promise<searchReturnType> => {
+                const result = await getCustomerInWarehouse(id,{
+                    page: pageNo.toString(),
+                    pageSize: pageSize.toString()
+                });
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+    
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
+  const searchRouteByWarehouse = useCallback(
+            async (
+                searchQuery: string,
+                pageSize: number = 5,
+                columnName?: string
+            ): Promise<searchReturnType> => {
+                const result = await getRouteInWarehouse(id,{
+                    query: searchQuery,
+                });
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+                
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
+  const listRouteByWarehouse = useCallback(
+            async (
+                pageNo: number = 1,
+                pageSize: number = 5,
+            ): Promise<searchReturnType> => {
+                const result = await getRouteInWarehouse(id,{
+                    page: pageNo.toString(),
+                    pageSize: pageSize.toString()
+                });
+    
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+                
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
+          const listStockByWarehouse = useCallback(
+            async (
+                pageNo: number = 1,
+                pageSize: number = 50,
+            ): Promise<searchReturnType> => {
+                const result = await getStockOfWarehouse(id,{
+                    page: pageNo.toString(),
+                    pageSize: pageSize.toString()
+                });
+    
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+                
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
+  const searchSalesmanByWarehouse = useCallback(
+            async (
+                searchQuery: string,
+                pageSize: number = 5,
+                columnName?: string
+            ): Promise<searchReturnType> => {
+                const result = await getSalesmanInWarehouse(id,{
+                    query: searchQuery,
+                });
+                
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+    
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
+  const searchStockByWarehouse = useCallback(
+            async (
+                searchQuery: string,
+                pageSize: number = 5,
+                columnName?: string
+            ): Promise<searchReturnType> => {
+                const result = await getStockOfWarehouse(id,{
+                    query: searchQuery,
+                });
+                
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+    
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+
+  const listSalesmanByWarehouse = useCallback(
+            async (
+                pageNo: number = 1,
+                pageSize: number = 5,
+            ): Promise<searchReturnType> => {
+                const result = await getSalesmanInWarehouse(id,{
+                    page: pageNo.toString(),
+                    pageSize: pageSize.toString()
+                });
+                
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+    
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
 
     return (
         <>
@@ -542,20 +789,20 @@ export default function ViewPage() {
                                         </div>
                                         <div className="flex flex-col gap-[20px] text-[#414651]">
                                             <div className="flex items-center gap-[8px] text-[16px]">
-                                                <Icon
+                                                {item?.owner_number?<><Icon
                                                     icon="lucide:phone-call"
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                <span>{item?.owner_number} / {item?.warehouse_manager_contact}</span>
+                                                <span>{item?.owner_number} / {item?.warehouse_manager_contact}</span></>:""}
                                             </div>
                                             <div className="flex items-center gap-[8px] text-[16px]">
-                                                <Icon
+                                               {item?.owner_email? <><Icon
                                                     icon="ic:outline-email"
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                <span>{item?.owner_email}</span>
+                                                <span>{item?.owner_email}</span></>:""}
                                             </div>
 
                                         </div>
@@ -626,19 +873,20 @@ export default function ViewPage() {
                     </div>
                 </div>
             )}
-           
+
 
             {activeTab === "warehouseCustomer" && (
                 <ContainerCard >
-                    {warehouseRoutes.length > 0 ? (
+                 
                         <div className="flex flex-col h-full">
                             <Table
-                                data={warehouseCustomer}
                                 config={{
-                                    header: {
-                                        title: "Customer",
-                                        searchBar: false,
-                                        columnFilter: true,
+                                    api:{
+                                        search: searchCustomerById,
+                                        list: listCustomerById
+                                    },
+                                    header:{
+                                        searchBar:true
                                     },
                                     footer: { nextPrevBtn: true, pagination: true },
                                     columns: columns,
@@ -647,34 +895,45 @@ export default function ViewPage() {
                                 }}
                             />
                         </div>
-                    ) : (
-                        <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                            No Data Found
-                        </div>
-                    )}
+                    
                 </ContainerCard>
             )}
             {activeTab === "warehouseStock" && (
-                <ContainerCard >
-
-                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                        No Data Found
-                    </div>
+                  <ContainerCard >
+                   
+                        <div className="flex flex-col h-full">
+                            <Table
+                                config={{
+                                    api: {
+                                        search: searchStockByWarehouse,
+                                        list: listStockByWarehouse
+                                    },
+                                    header: {
+                                        searchBar: true
+                                    },
+                                    footer: { nextPrevBtn: true, pagination: true },
+                                    columns: stockColumns,
+                                    rowSelection: false,
+                                    pageSize: 50,
+                                }}
+                            />
+                        </div>
+                   
                 </ContainerCard>
             )}
             {activeTab === "route" && (
                 <ContainerCard >
-                    {warehouseRoutes.length > 0 ? (
+                    
                         <div className="flex flex-col h-full">
                             <Table
-                                data={warehouseRoutes}
                                 config={{
-                                    header: {
-                                        title: "Route",
-                                        searchBar: false,
-                                        columnFilter: true,
+                                    api: {
+                                        search: searchRouteByWarehouse,
+                                        list: listRouteByWarehouse
                                     },
-                                    localStorageKey: "warehouse-route-table",
+                                    header: {
+                                        searchBar: true,
+                                    },
                                     footer: { nextPrevBtn: true, pagination: true },
                                     columns: routeColumns,
                                     rowSelection: false,
@@ -682,50 +941,21 @@ export default function ViewPage() {
                                 }}
                             />
                         </div>
-                    ) : (
-                        <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                            No Data Found
-                        </div>
-                    )}
-                </ContainerCard>
-            )}
-            {activeTab === "vehicle" && (
-                <ContainerCard >
-                    {warehouseRoutes.length > 0 ? (
-                        <div className="flex flex-col h-full">
-                            <Table
-                                data={warehouseVehicle}
-                                config={{
-                                    header: {
-                                        title: "Vehicle",
-                                        searchBar: false,
-                                        columnFilter: true,
-                                    },
-                                    footer: { nextPrevBtn: true, pagination: true },
-                                    columns: vehicleColumns,
-                                    rowSelection: false,
-                                    pageSize: 50,
-                                }}
-                            />
-                        </div>
-                    ) : (
-                        <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                            No Data Found
-                        </div>
-                    )}
+                    
                 </ContainerCard>
             )}
             {activeTab === "salesman" && (
-               <ContainerCard >
-                    {warehouseRoutes.length > 0 ? (
+                <ContainerCard >
+                   
                         <div className="flex flex-col h-full">
                             <Table
-                                data={warehouseSalesman}
                                 config={{
+                                    api: {
+                                        search: searchSalesmanByWarehouse,
+                                        list: listSalesmanByWarehouse
+                                    },
                                     header: {
-                                        title: "Salesman",
-                                        searchBar: false,
-                                        columnFilter: true,
+                                        searchBar: true
                                     },
                                     footer: { nextPrevBtn: true, pagination: true },
                                     columns: salesmanColumns,
@@ -734,11 +964,7 @@ export default function ViewPage() {
                                 }}
                             />
                         </div>
-                    ) : (
-                        <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                            No Data Found
-                        </div>
-                    )}
+                   
                 </ContainerCard>
             )}
             {activeTab === "sales" && (
