@@ -511,6 +511,13 @@ export const initialLinkData: SidebarDataType[] = [
     //             leadingIcon: "mdi:exit-to-app",
     //             iconColor: "text-green-500",
     //         },
+    {
+                isActive: false,
+                href: "/settings/globalSetting",
+                label: "Global Settings",
+                leadingIcon: "mi:settings",
+                iconColor: "text-green-500",
+            },
         ],
     },
 ];

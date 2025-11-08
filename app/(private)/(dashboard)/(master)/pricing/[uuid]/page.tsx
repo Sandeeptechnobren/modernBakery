@@ -360,17 +360,17 @@ export default function AddPricing() {
       start_date: promotion.startDate,
       end_date: promotion.endDate,
       apply_on: 1, // static/mapped as per requirement
-      warehouse_id: "100", // static, change as needed
+      warehouse_id: "", // static, change as needed
       status: promotion.status, // or fix to 1 if static
-      company_id: "110", // static, change as needed
-      region_id: "1", // static, change as needed
-      area_id: "1", // static, change as needed
-      route_id: "50", // static, change as needed
-      item_category_id: "3", // static, change as needed
+      company_id: "", // static, change as needed
+      region_id: "", // static, change as needed
+      area_id: "", // static, change as needed
+      route_id: "", // static, change as needed
+      item_category_id: "", // static, change as needed
       item_id: selectedItemIds.join(","), // comma-separated string of IDs
-      customer_id: "60", // static, change as needed
-      customer_category_id: "1", // static, change as needed
-      outlet_channel_id: "36", // static, change as needed
+      customer_id: "", // static, change as needed
+      customer_category_id: "", // static, change as needed
+      outlet_channel_id: "", // static, change as needed
       details: selectedItemIds.map((itemId) => {
         // Find the matching item data
         let itemData = selectedItemDetails.find(
@@ -904,14 +904,22 @@ export default function AddPricing() {
                         ),
                       },
                       {
-                        key: "price",
-                        label: "Price",
-                        render: (row) => (
-                          <span className="font-semibold text-[#181D27] text-[14px]">
-                            {row.price || "-"}
-                          </span>
-                        ),
-                      },
+  key: "price",
+  label: "Price",
+  render: (row) => (
+    <div className="text-[14px] text-[#181D27] font-semibold space-y-1">
+      {Array.isArray(row?.uom) && row.uom.length > 0 ? (
+        row.uom.map((u) => (
+          <div key={u.id}>
+            {u.name ? `${u.name} - ₹${u.price}` : `₹${u.price}`}
+          </div>
+        ))
+      ) : (
+        <span>-</span>
+      )}
+    </div>
+  ),
+},
                       {
                         key: "buom_ctn_price",
                         label: "Base Price",

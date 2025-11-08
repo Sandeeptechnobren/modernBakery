@@ -32,15 +32,30 @@ const dropdownDataList = [
 
 const columns = [
   {
-    key: "code",
-    label: "Code",
-    render: (row: TableDataType) => (
-      <span className="font-semibold text-[#181D27] text-[14px]">{row.code}</span>
-    ),
+    key: "osa_code",
+    label: "Code"
   },
-  { key: "warehouse", label: "Warehouse" },
-  { key: "item", label: "Item" },
-  { key: "quantity", label: "Quantity" },
+  {
+      key: "warehouse",
+      label: "Warehouse",
+      render: (row: TableDataType) => {
+        const obj =
+          typeof row.warehouse === "string"
+            ? JSON.parse(row.warehouse)
+            : row.warehouse;
+        return obj ? `${obj.code} - ${obj.name}` : "-";
+      },
+    },
+  { key: "item", label: "Item",
+    render: (row: TableDataType) => {
+        const obj =
+          typeof row.item === "string"
+            ? JSON.parse(row.warehouse)
+            : row.item;
+        return obj ? `${obj.code} - ${obj.name}` : "-";
+      },
+   },
+  { key: "qty", label: "Quantity" },
   {
     key: "status",
     label: "Status",
@@ -85,7 +100,7 @@ export default function WarehouseStockPage() {
 
         return {
           data: listRes?.data || [],
-          total: pagination?.total || 1,
+          total: pagination?.last_page || 1,
           currentPage: pagination?.current_page || 1,
           pageSize: pagination?.per_page || pageSize,
         };
@@ -166,7 +181,7 @@ export default function WarehouseStockPage() {
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 50,
           }}
         />
       </div>

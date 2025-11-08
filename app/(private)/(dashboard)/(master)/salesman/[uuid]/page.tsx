@@ -1,43 +1,44 @@
 "use client";
 
 import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
 import {
-  Formik,
-  Form,
-  FormikHelpers,
-  FormikErrors,
-  FormikTouched,
   ErrorMessage,
+  Form,
+  Formik,
+  FormikErrors,
+  FormikHelpers,
+  FormikTouched,
 } from "formik";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import * as Yup from "yup";
 
 import ContainerCard from "@/app/components/containerCard";
-import InputFields from "@/app/components/inputFields";
-import CustomPasswordInput from "@/app/components/customPasswordInput";
-import StepperForm, {
-  useStepperForm,
-  StepperStep,
-} from "@/app/components/stepperForm";
-import Loading from "@/app/components/Loading";
-import { useSnackbar } from "@/app/services/snackbarContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import CustomCheckbox from "@/app/components/customCheckbox";
+import CustomPasswordInput from "@/app/components/customPasswordInput";
+import InputFields from "@/app/components/inputFields";
+import Loading from "@/app/components/Loading";
+import StepperForm, {
+  StepperStep,
+  useStepperForm,
+} from "@/app/components/stepperForm";
 import {
   addSalesman,
   genearateCode,
-  saveFinalCode,
-  updateSalesman,
   getSalesmanById,
   routeList,
+  saveFinalCode,
+  updateSalesman,
 } from "@/app/services/allApi";
-import CustomCheckbox from "@/app/components/customCheckbox";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface SalesmanFormValues {
   osa_code: string;
   name: string;
   type: string;
+  sub_type: string;
   designation: string;
   route_id: string;
   password: string;
@@ -77,8 +78,7 @@ const SalesmanSchema = Yup.object().shape({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{12,}$/,
       "Password must include uppercase, lowercase, number, and special character"
     ),
-  route_id: Yup.string().required("Route is required"),
-  warehouse_id: Yup.string().required("Warehouse is required"),
+  warehouse_id: Yup.array().required("Warehouse is required"),
   email: Yup.string().required("Email is required").email("Invalid email"),
 });
 
@@ -88,8 +88,7 @@ const stepSchemas = [
     name: Yup.string().required("Name is required"),
     type: Yup.string().required("Type is required"),
     designation: Yup.string().required("Designation is required"),
-    warehouse_id: Yup.string().required("Warehouse is required"),
-    route_id: Yup.string().required("Route is required"),
+    warehouse_id: Yup.array().required("Warehouse is required"),
   }),
   Yup.object({
     contact_no: Yup.string()
@@ -143,7 +142,7 @@ export default function AddEditSalesman({
   const isEditMode = salesmanId && salesmanId !== "add";
   const codeGeneratedRef = useRef(false);
 
-  const { salesmanTypeOptions, warehouseOptions, routeOptions } =
+  const { salesmanTypeOptions, warehouseOptions, routeOptions, projectOptions } =
     useAllDropdownListData();
   const [filteredRouteOptions, setFilteredRouteOptions] =
     useState(routeOptions);
@@ -164,6 +163,7 @@ export default function AddEditSalesman({
     is_block: "0",
     password: "",
     contact_no: "",
+    sub_type: "",
     warehouse_id: "",
     status: "1",
     cashier_description_block: "0",
@@ -222,6 +222,7 @@ export default function AddEditSalesman({
               osa_code: d.osa_code || "",
               name: d.name || "",
               type: d.salesman_type?.id?.toString() || "",
+              sub_type: d.sub_type?.id?.toString() || "",
               designation: d.designation || "",
               route_id: d.route?.id?.toString() || "",
               password: d.password, // password is not returned from API → leave empty
@@ -334,7 +335,7 @@ export default function AddEditSalesman({
             reserved_code: values.osa_code,
             model_name: "salesman",
           });
-        } catch {}
+        } catch { }
       }
     } catch {
       showSnackbar("Validation failed, please check your inputs", "error");
@@ -376,7 +377,7 @@ export default function AddEditSalesman({
                   name="name"
                   value={values.name}
                   onChange={(e) => setFieldValue("name", e.target.value)}
-                  // error={touched.name && errors.name}
+                // error={touched.name && errors.name}
                 />
                 {/* <ErrorMessage
                   name="name"
@@ -384,21 +385,30 @@ export default function AddEditSalesman({
                   className="text-xs text-red-500"
                 /> */}
               </div>
-              <div>
+              <div className="flex flex-col w-full">
                 <InputFields
-                  required
                   label="Salesman Type"
-                  name="type"
+                  name="salesman_type"
                   value={values.type}
-                  onChange={(e) => setFieldValue("type", e.target.value)}
                   options={salesmanTypeOptions}
+                  onChange={(e) => setFieldValue("type", e.target.value)}
                 />
-                <ErrorMessage
-                  name="type"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+                {errors.type && (
+                  <p className="text-red-500 text-sm">{errors.type}</p>
+                )}
               </div>
+
+              {/* Show Project List only when salesman_type id = 6 */}
+              {values.type === "6" && (
+                <div className="flex flex-col w-full">
+                  <InputFields
+                    label="Project List"
+                    value={values.sub_type}
+                    options={projectOptions}
+                    onChange={(e) => setFieldValue("sub_type", e.target.value)}
+                  />
+                </div>
+              )}
 
               <div>
                 <InputFields
@@ -414,6 +424,7 @@ export default function AddEditSalesman({
                   className="text-xs text-red-500"
                 />
               </div>
+
               <div>
                 <InputFields
                   required
@@ -423,6 +434,7 @@ export default function AddEditSalesman({
                   value={values.warehouse_id}
                   options={warehouseOptions}
                   disabled={warehouseOptions.length === 0}
+                  isSingle={!values.sub_type}
                   onChange={(e) => {
                     setFieldValue("warehouse_id", e.target.value);
                     if (values.warehouse_id !== e.target.value) {
@@ -436,22 +448,19 @@ export default function AddEditSalesman({
                   className="text-xs text-red-500"
                 />
               </div>
+
               <div>
                 <InputFields
-                  required
                   label="Route"
                   name="route_id"
                   value={values.route_id?.toString() ?? ""}
                   onChange={(e) => setFieldValue("route_id", e.target.value)}
-                  // error={touched.route_id && errors.route_id}
                   options={filteredRouteOptions}
+                  // 👇 Disable when project is selected
+                  disabled={!!values.sub_type}
                 />
-                {/* <ErrorMessage
-                  name="route_id"
-                  component="span"
-                  className="text-xs text-red-500"
-                /> */}
               </div>
+
             </div>
           </ContainerCard>
         );
@@ -469,11 +478,11 @@ export default function AddEditSalesman({
                   selectedCountry={country.contact_no}
                   value={`${values.contact_no ?? ""}`}
                   onChange={(e) => setFieldValue("contact_no", e.target.value)}
-                  // error={
-                  //   errors?.contact_no && touched?.contact_no
-                  //     ? errors.contact_no
-                  //     : false
-                  // }
+                // error={
+                //   errors?.contact_no && touched?.contact_no
+                //     ? errors.contact_no
+                //     : false
+                // }
                 />
                 {errors?.contact_no && touched?.contact_no && (
                   <span className="text-xs text-red-500 mt-1">
@@ -693,7 +702,7 @@ export default function AddEditSalesman({
                 isCompleted: isStepCompleted(step.id),
               }))}
               currentStep={currentStep}
-              onStepClick={() => {}}
+              onStepClick={() => { }}
               onBack={() =>
                 handlePrev({
                   setErrors,
@@ -711,12 +720,12 @@ export default function AddEditSalesman({
               showNextButton={!isLastStep}
               nextButtonText="Save & Next"
               submitButtonText={
-                                isSubmitting
-                                    ? (isEditMode ? "Updating..." : "Submitting...")
-                                    : isEditMode
-                                    ? "Update"
-                                    : "Submit"
-                            }
+                isSubmitting
+                  ? (isEditMode ? "Updating..." : "Submitting...")
+                  : isEditMode
+                    ? "Update"
+                    : "Submit"
+              }
             >
               {renderStepContent(values, setFieldValue, errors, touched)}
             </StepperForm>

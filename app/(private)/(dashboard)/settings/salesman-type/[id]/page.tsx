@@ -179,7 +179,7 @@ export default function AddOrEditSalesmanType() {
                   disabled={codeMode === 'auto'}
                   error={formik.touched?.salesman_type_code && formik.errors?.salesman_type_code}
                 />
-                {!isEditMode && (
+                {/* {!isEditMode && (
                   <>
                     <IconButton
                       bgClass="white"
@@ -203,7 +203,7 @@ export default function AddOrEditSalesmanType() {
                       }}
                     />
                   </>
-                )}
+                )} */}
               </div>
 
               {/* Name */}

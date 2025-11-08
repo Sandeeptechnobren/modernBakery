@@ -48,6 +48,7 @@ interface ItemFormValues {
   price: string;
   is_stock_keeping_unit: string;
   enable_for: string;
+  caps_promotion: string;
   commodity_goods_code: string;
   excise_duty_code: string;
   status: string;
@@ -65,7 +66,7 @@ const ItemSchema = Yup.object().shape({
   is_Promotional: Yup.string().required("Select if Promotional"),
   is_tax_applicable: Yup.string().required("Select if Tax Applicable"),
   excise: Yup.string().required("Excise is required"),
-  
+  caps_promotion: Yup.string().required("Caps Promotion is required"),
   status: Yup.string().required("Status is required"),
   uoms: Yup.array()
     .of(
@@ -107,6 +108,7 @@ const StepSchemas = [
     is_Promotional: Yup.string().required("Select if Promotional"),
     is_tax_applicable: Yup.string().required("Select if Tax Applicable"),
     excise: Yup.string().required("Excise is required"),
+  caps_promotion: Yup.string().required("Caps Promotion is required"),
      commodity_goods_code: Yup.string().required("Commodity Goods Code is required"),
     excise_duty_code: Yup.string().required("Excise Duty Code is required"),
     status: Yup.string().required("Status is required"),
@@ -189,6 +191,7 @@ export default function AddEditItem() {
     upc: "",
     price: "",
     is_stock_keeping_unit: "",
+    caps_promotion: "",
     enable_for: "",
     commodity_goods_code: "",
     excise_duty_code: "",
@@ -245,7 +248,8 @@ export default function AddEditItem() {
             volume: data.volume?.toString() || "",
             is_Promotional: data.is_promotional ? "yes" : "no",
             is_tax_applicable: data.is_taxable ? "yes" : "no",
-            excise: data.has_excies == true ? "1" : "0", 
+            excise: data.has_excies == true ? "1" : "0",
+            caps_promotion: data.caps_promotion == true ? "1" : "0",
             uom: data.uom?.[0]?.name || "",
             uomType: data.uom?.[0]?.uom_type || "primary",
             upc: data.uom?.[0]?.upc || "",
@@ -481,6 +485,7 @@ const payload = {
   is_promotional: form.is_Promotional === "yes" ? "1" : "0",
   is_taxable: form.is_tax_applicable === "yes" ? "1" : "0",
   has_excies: form.excise === "true" ? "1" : "0",
+  caps_promotion: form.caps_promotion === "true" ? "1" : "0",
   status: form.status === "active" ? "1" : "0",
   commodity_goods_code: form.commodity_goods_code,
   excise_duty_code: form.excise_duty_code,
@@ -739,6 +744,25 @@ const res = isEditMode
                   ]}
                 />
                 {errors.excise && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {/* {errors.excise} */}
+                    </p>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  type="radio"
+                  required
+                  label="Caps Promotion"
+                  name="caps_promotion"
+                  value={form.caps_promotion}
+                  onChange={handleChange}
+                  options={[
+                    { value: "1", label: "Yes" },
+                    { value: "0", label: "No" },
+                  ]}
+                />
+                {errors.caps_promotion && (
                   <p className="text-red-500 text-sm mt-1">
                     {/* {errors.excise} */}
                     </p>

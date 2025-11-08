@@ -2,92 +2,41 @@
 
 import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
-import { useLoading } from "@/app/services/loadingContext";
+import Table, { configType } from "@/app/components/customTable";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import Logo from "@/app/components/logo";
 import { salesmanLoadByUuid } from "@/app/services/agentTransaction";
+import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import StatusBtn from "@/app/components/statusBtn2";
-import Toggle from "@/app/components/toggle";
-import TabBtn from "@/app/components/tabBtn";
-import Map from "@/app/components/map";
-import SummaryCard from "@/app/components/summaryCard";
 
 interface CustomerItem {
   id: number;
   uuid: string;
   osa_code: string;
-  salesman_type: string;
-  warehouse:{
-    code: string;
-    name: string;
-};
-  route:{
-    code: string;
-    name: string;
-};
-  salesman:{
-    code: string;
-    name: string;
-};
-  projecttype:{
-    code: string;
-    name: string;
-};
-details: Array<{
-  id: number;
-  uuid: string;
-  osa_code: string;
-  item: {
+  salesman_type: { id: number; code: string; name: string };
+  warehouse: { id: number; code: string; name: string };
+  route: { id: number; code: string; name: string };
+  salesman: { id: number; code: string; name: string };
+  project_type: { id: number; code: string; name: string };
+  details: Array<{
     id: number;
-    code: string;
-    name: string;
-  };
-  uom: number;
-  qty: number;
-  price: string;
-  status: number;
-}>;
-  customer_code: string;
-  customer: string;
-  contact_person: string;
-  contact_no1: string;
-  contact_no2: string;
-  road_street: string;
-  town: string;
-  landmark: string;
-  district: string;
-  balance: number;
-  payment_type: string;
-  bank_name: string;
-  bank_account_number: string;
-  creditday: string;
-  tin_no: string;
-  accuracy: string;
-  creditlimit: number;
-  guarantee_name: string;
-  guarantee_amount: number;
-  guarantee_from: string;
-  guarantee_to: string;
-  totalcreditlimit: number;
-  credit_limit_validity: string;
-  vat_no: string;
-  longitude: string;
-  latitude: string;
-  threshold_radius: number;
-  dchannel_id: number;
-  status: number;
-  get_outlet_channel: {
-            outlet_channel: string,
-            outlet_channel_code: string
-        },
-    get_region: { region_code: string, region_name: string };
-    get_area: { area_code: string, area_name: string };
+    uuid: string;
+    osa_code: string;
+    item: { id: number; code: string; name: string };
+    uom_name: string;
+    qty: number;
+    price: string;
+    status: number;
+  }>;
 }
 
-const title = "Salesman Load Details";
 const backBtnUrl = "/salesmanLoad";
 
 export default function ViewPage() {
@@ -97,21 +46,50 @@ export default function ViewPage() {
     : (params.uuid as string) || "";
 
   const [customer, setCustomer] = useState<CustomerItem | null>(null);
-  const [isChecked, setIsChecked] = useState(false);
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
 
-   const onTabClick = (idx: number) => {
-    // ensure index is within range and set the corresponding tab key
-    if (typeof idx !== "number") return;
-    if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
-    setActiveTab(tabList[idx].key);
+  const title = `Load ${customer?.osa_code || "-"}`;
+
+  // ✅ PDF Download
+  const handleDownload = async () => {
+    try {
+      const element = document.getElementById("print-area");
+      if (!element) return;
+
+      const canvas = await html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`${customer?.osa_code || "Salesman_Load"}.pdf`);
+    } catch (err) {
+      console.error("Error generating PDF:", err);
+    }
   };
 
-  useEffect(() => {
-    if (!uuid) return;
+  // ✅ Print Function
+  const handlePrint = () => window.print();
 
-    const fetchCompanyCustomerDetails = async () => {
+  // ✅ Fetch data
+  useEffect(() => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const res = await salesmanLoadByUuid(uuid);
@@ -130,178 +108,136 @@ export default function ViewPage() {
       }
     };
 
-    fetchCompanyCustomerDetails();
+    fetchData();
   }, [uuid, setLoading, showSnackbar]);
 
-  // Tab logic
-  const [activeTab, setActiveTab] = useState("overview");
-  const tabList = [
-    { key: "overview", label: "Overview" },
-    { key: "load", label: "Load" },
-    // { key: "financial", label: "Financial Info" },
-    // { key: "guarantee", label: "Guarantee Info" },
-    // { key: "additional", label: "Additional Info" },
+  // ✅ Table config
+  const columns: configType["columns"] = [
+    { key: "item", label: "Item" },
+    { key: "uom", label: "UOM" },
+    { key: "qty", label: "Quantity" },
+    { key: "price", label: "Price" },
   ];
+
+  // ✅ Prepare table data
+  const tableData =
+    customer?.details?.map((detail) => ({
+      item: detail.item
+        ? `${detail.item.code} - ${detail.item.name}`
+        : "-",
+      uom: detail.uom_name || "-",
+      qty: detail.qty?.toString() ?? "-",
+      price: detail.price ?? "-",
+    })) || [];
 
   return (
     <>
-      {/* Header */}
+      {/* ---------- Header ---------- */}
       <div className="flex items-center gap-4 mb-6">
         <Link href={backBtnUrl}>
-          <Icon icon="lucide:arrow-left" width={24} />
+          <Icon
+            icon="lucide:arrow-left"
+            width={24}
+            className="text-gray-700 hover:text-primary transition"
+          />
         </Link>
-        <h1 className="text-xl font-semibold mb-1">{title}</h1>
+        <h1 className="text-2xl font-semibold text-gray-800">{title}</h1>
       </div>
 
-      <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
-       
-         
-
-        <div className="w-full flex flex-col">
-          <div className="flex ">
-           
-            <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
-                        {tabList.map((tab, index) => (
-                          <div key={index}>
-                            <TabBtn
-                              label={tab.label}
-                              isActive={activeTab === tab.key}
-                              onClick={() => onTabClick(index)}
-                            />
-                          </div>
-                        ))}
-                      </ContainerCard>
+      {/* ---------- Main Card ---------- */}
+      <ContainerCard>
+        {/* Add print-area wrapper */}
+        <div id="print-area">
+          {/* Top Section */}
+          <div className="flex justify-between flex-wrap gap-6 items-start">
+            <Logo type="full" />
+            <div className="text-right">
+              <h2 className="text-4xl font-bold text-gray-400 uppercase mb-2">
+                Load
+              </h2>
+              <p className="text-primary text-sm tracking-[5px]">
+                {customer?.osa_code || "-"}
+              </p>
+            </div>
           </div>
 
-          {/* Tab Content */}
-          {activeTab === "overview" && (
-            <ContainerCard className="w-full h-fit">
-              <KeyValueData
-                title="Basic Information"
-                data={[
-                  { key: "Code", value: customer?.osa_code || "-" },
-                  { key: "Warehouse Code", value: customer?.warehouse?.code || "-" },
-                  { key: "Warehouse Name", value: customer?.warehouse?.name || "-" },
-                  { key: "Route Code", value: customer?.route?.code || "-" },
-                  { key: "Route Name", value: customer?.route?.name || "-" },
-                  { key: "Salesman Type", value: customer?.salesman_type|| "-" },
-                  { key: "Salesman Code", value: customer?.salesman?.code || "-" },
-                  { key: "Salesman Name", value: customer?.salesman?.name || "-" },
-                  
-                ]}
-              />
-            </ContainerCard>
-          )}
-          {activeTab === "load" && (
-            <ContainerCard className="w-full h-fit">
-              {customer?.details && customer.details.length > 0 ? (
-                customer.details.map((detail, index) => (
-                  <KeyValueData
-                    key={detail.id || index}
-                    title={`Load Item ${index + 1}`}
-                    data={[
-                      { key: "Code", value: detail.osa_code || "-" },
-                      { key: "Item Code", value: detail.item?.code || "-" },
-                      { key: "Item Name", value: detail.item?.name || "-" },
-                      { key: "UOM", value: detail.uom || "-" },
-                      { key: "Qty", value: detail.qty || "-" },
-                      { key: "Price", value: detail.price || "-" },
-                    ]}
-                  />
-                ))
-              ) : (
-                <div className="text-gray-500 text-center py-4">No load details available</div>
-              )}
-            </ContainerCard>
-          )}
-          {activeTab === "financial" && (
-            <ContainerCard className="w-full h-fit">
-              <KeyValueData
-                title="Financial Information"
-                data={[
-                  { key: "Balance", value: customer?.balance?.toString() || "-" },
-                  { key: "Payment Type", value: customer?.payment_type || "-" },
-                  { key: "Bank Name", value: customer?.bank_name || "-" },
-                  { key: "Account Number", value: customer?.bank_account_number || "-" },
-                  { key: "Credit Days", value: customer?.creditday || "-" },
-                  { key: "Credit Limit", value: customer?.creditlimit?.toString() || "-" },
-                  { key: "Total Credit Limit", value: customer?.totalcreditlimit?.toString() || "-" },
-                  { key: "Credit Limit Validity", value: customer?.credit_limit_validity || "-" },
-                ]}
-              />
-            </ContainerCard>
-          )}
-          {activeTab === "guarantee" && (
-            <ContainerCard className="w-full h-fit">
-              <KeyValueData
-                title="Guarantee Details"
-                data={[
-                  { key: "Guarantee Name", value: customer?.guarantee_name || "-" },
-                  { key: "Guarantee Amount", value: customer?.guarantee_amount?.toString() || "-" },
-                  { key: "Guarantee From", value: customer?.guarantee_from || "-" },
-                  { key: "Guarantee To", value: customer?.guarantee_to || "-" },
-                ]}
-              />
-            </ContainerCard>
-          )}
-          {activeTab === "additional" && (
-            <div className="flex flex-wrap gap-x-[20px] mt-[20px]">
-              <div className="flex flex-col md:flex-row gap-6 w-full">
-                <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                  <KeyValueData
-                    title="Tax & Accuracy"
-                    data={[
-                      { key: "TIN No", value: customer?.tin_no || "-" },
-                      { key: "VAT No", value: customer?.vat_no || "-" },
-                      { key: "Accuracy", value: customer?.accuracy || "-" },
-                    ]}
-                  />
-                </ContainerCard>
+          <hr className="border-gray-200 my-5" />
 
-                {/* Extra */}
-                {/* <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                  <div className="text-[18px] font-semibold mb-[25px]">
-                    Customer Info
-                  </div>
-                  <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
-                    <SummaryCard
-                      icon="prime:barcode"
-                      iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
-                      iconWidth={30}
-                      title={customer?.customer_code || "CUST-1234"}
-                      description={"Customer Code"}
-                    />
-                  </ContainerCard>
+          {/* ---------- Info & Table Section ---------- */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* ---------- Left Side (Details) ---------- */}
+            <div className="flex flex-col ">
+              <KeyValueData
+                data={[
+                  {
+                    key: "Warehouse",
+                    value:
+                      customer?.warehouse?.code && customer?.warehouse?.name
+                        ? `${customer.warehouse.code} - ${customer.warehouse.name}`
+                        : "-",
+                  },
+                  {
+                    key: "Route",
+                    value: customer?.route
+                      ? `${customer.route.code} - ${customer.route.name}`
+                      : "-",
+                  },
+                  {
+                    key: "Salesman Type",
+                    value: customer?.salesman_type?.name || "-",
+                  },
+                  {
+                    key: "Project Type",
+                    value: customer?.project_type?.name || "-",
+                  },
+                  {
+                    key: "Salesman",
+                    value: customer?.salesman
+                      ? `${customer.salesman.code} - ${customer.salesman.name}`
+                      : "-",
+                  },
+                ]}
+              />
 
-                  <KeyValueData
-                    data={[
-                      {
-                        key: "Promotional Access",
-                        value: "",
-                        component: (
-                          <Toggle
-                            isChecked={isChecked}
-                            onChange={() => setIsChecked(!isChecked)}
-                          />
-                        ),
-                      },
-                      {
-                        key: "Threshold Radius",
-                        value: customer?.threshold_radius?.toString() || "-",
-                      },
-                      {
-                        key: "DChannel ID",
-                        value: customer?.dchannel_id?.toString() || "-",
-                      },
-                    ]}
-                  />
-                </ContainerCard> */}
-              </div>
+              {/* Image Section */}
+              {/* <div className="flex justify-start items-center">
+                <Image
+                  src="/logo.png"
+                  alt="Salesman Signature"
+                  width={250}
+                  height={250}
+                  className="rounded-lg object-contain"
+                />
+              </div> */}
             </div>
-          )}
+
+            {/* ---------- Right Side (Table) ---------- */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                Load Items
+              </h3>
+              <Table data={tableData} config={{ columns }} />
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* ---------- Footer Buttons ---------- */}
+        <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200 mt-6">
+          <SidebarBtn
+            leadingIcon="lucide:download"
+            leadingIconSize={20}
+            label="Download"
+            onClick={handleDownload}
+          />
+          <SidebarBtn
+            isActive
+            leadingIcon="lucide:printer"
+            leadingIconSize={20}
+            label="Print Now"
+            onClick={handlePrint}
+          />
+        </div>
+      </ContainerCard>
     </>
   );
 }
-

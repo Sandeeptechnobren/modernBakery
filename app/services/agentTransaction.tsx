@@ -128,6 +128,8 @@ export const editNewCustomer = async (uuid: string, payload: object) => {
     return handleError(error);
   }
 };
+
+
 type SalesmanUnloadParams = {
   start_date?: string;
   end_date?: string;

@@ -328,15 +328,15 @@ export default function SalemanLoad() {
                                     router.push(`/capsCollection/details/${row.uuid}`);
                                 },
                             },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(
-                                        `/capsCollection/${row.uuid}`
-                                    );
-                                },
-                            },
+                            // {
+                            //     icon: "lucide:edit-2",
+                            //     onClick: (data: object) => {
+                            //         const row = data as TableRow;
+                            //         router.push(
+                            //             `/capsCollection/${row.uuid}`
+                            //         );
+                            //     },
+                            // },
                         ],
                         pageSize: 50,
                     }}

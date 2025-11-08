@@ -377,14 +377,14 @@ export default function NewCustomer() {
                             searchBar: false,
                             columnFilter: true,
                             actions: [
-                                <SidebarBtn
-                                    key={0}
-                                    href="/newCustomer/new"
-                                    isActive
-                                    leadingIcon="lucide:plus"
-                                    label="Add"
-                                    labelTw="hidden sm:block"
-                                />,
+                                // <SidebarBtn
+                                //     key={0}
+                                //     href="/newCustomer/new"
+                                //     isActive
+                                //     leadingIcon="lucide:plus"
+                                //     label="Add"
+                                //     labelTw="hidden sm:block"
+                                // />,
                             ],
                         },
                         localStorageKey: "newCustomer-table",
@@ -399,15 +399,15 @@ export default function NewCustomer() {
                                     router.push(`/newCustomer/details/${row.uuid}`);
                                 },
                             },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(
-                                        `/newCustomer/${row.uuid}`
-                                    );
-                                },
-                            },
+                            // {
+                            //     icon: "lucide:edit-2",
+                            //     onClick: (data: object) => {
+                            //         const row = data as TableRow;
+                            //         router.push(
+                            //             `/newCustomer/${row.uuid}`
+                            //         );
+                            //     },
+                            // },
                         ],
                         pageSize: 50,
                     }}

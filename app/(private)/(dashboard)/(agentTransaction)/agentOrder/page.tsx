@@ -10,7 +10,7 @@ import Table, {
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { agentOrderList, deleteAgentOrder } from "@/app/services/agentTransaction";
+import { agentOrderList } from "@/app/services/agentTransaction";
 import { agentCustomerStatusUpdate } from "@/app/services/allApi";
 import StatusBtn from "@/app/components/statusBtn2";
 

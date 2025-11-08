@@ -173,53 +173,53 @@ const SalesmanPage = () => {
   },
 
   { key: "designation", label: "Designation" },
-  {
-        key: "warehouse",
-        label: "Warehouse",
-        render: (row: TableDataType) =>
-            typeof row.warehouse === "object" &&
-            row.warehouse !== null &&
-            "warehouse_name" in row.warehouse
-                ? (row.warehouse as { warehouse_name?: string })
-                      .warehouse_name || "-"
-                : "-",
-                filter: {
-                    isFilterable: true,
-                    width: 320,
-                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [], // [{ value, label }]
-                    onSelect: (selected: string | string[]) => {
-                        setWarehouseId((prev) => prev === selected ? "" : (selected as string));
-                    },
-                    selectedValue: warehouseId,
-                },
+  // {
+  //       key: "warehouse",
+  //       label: "Warehouse",
+  //       render: (row: TableDataType) =>
+  //           typeof row.warehouse === "object" &&
+  //           row.warehouse !== null &&
+  //           "warehouse_name" in row.warehouse
+  //               ? (row.warehouse as { warehouse_name?: string })
+  //                     .warehouse_name || "-"
+  //               : "-",
+  //               filter: {
+  //                   isFilterable: true,
+  //                   width: 320,
+  //                   options: Array.isArray(warehouseOptions) ? warehouseOptions : [], // [{ value, label }]
+  //                   onSelect: (selected: string | string[]) => {
+  //                       setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+  //                   },
+  //                   selectedValue: warehouseId,
+  //               },
        
-        showByDefault: true,
-    },
-    {
-        key: "route",
-        label: "Route",
-        render: (row: TableDataType) => {
-            if (
-                typeof row.route === "object" &&
-                row.route !== null &&
-                "route_name" in row.route
-            ) {
-                return (row.route as { route_name?: string }).route_name || "-";
-            }
-            return typeof row.route === 'string' ? row.route : "-";
-        },
-        filter: {
-            isFilterable: true,
-            width: 320,
-            options: Array.isArray(routeOptions) ? routeOptions : [],
-            onSelect: (selected: string | string[]) => {
-                setRouteId((prev) => prev === selected ? "" : (selected as string));
-            },
-            selectedValue: routeId,
-        },
+  //       showByDefault: true,
+  //   },
+  //   {
+  //       key: "route",
+  //       label: "Route",
+  //       render: (row: TableDataType) => {
+  //           if (
+  //               typeof row.route === "object" &&
+  //               row.route !== null &&
+  //               "route_name" in row.route
+  //           ) {
+  //               return (row.route as { route_name?: string }).route_name || "-";
+  //           }
+  //           return typeof row.route === 'string' ? row.route : "-";
+  //       },
+  //       filter: {
+  //           isFilterable: true,
+  //           width: 320,
+  //           options: Array.isArray(routeOptions) ? routeOptions : [],
+  //           onSelect: (selected: string | string[]) => {
+  //               setRouteId((prev) => prev === selected ? "" : (selected as string));
+  //           },
+  //           selectedValue: routeId,
+  //       },
        
-        showByDefault: true,
-    },
+  //       showByDefault: true,
+  //   },
   { key: "contact_no", label: "Contact No" },
 
   {

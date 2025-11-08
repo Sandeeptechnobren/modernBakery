@@ -1,290 +1,238 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import StatusBtn from "@/app/components/statusBtn2";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
-    configType,
-    listReturnType,
-    searchReturnType,
-    TableDataType,
+  configType,
+  listReturnType,
+  TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { salesmanLoadHeaderList} from "@/app/services/agentTransaction";
-import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import StatusBtn from "@/app/components/statusBtn2";
+import { salesmanLoadHeaderList } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 interface SalesmanLoadRow {
-    osa_code?: string;
-    warehouse?: {
-        code?: string;
-        name?: string;
-    };
-    route?: {
-        code?: string;
-        name?: string;
-    };
-    salesman?: {
-        code?: string;
-        name?: string;
-    };
-    projecttype?: {
-        code?: string;
-        name?: string;
-    };
-    is_confirmed?: boolean;
-    status?: boolean;
-    uuid?: string;
+  osa_code?: string;
+  warehouse?: { code?: string; name?: string };
+  route?: { code?: string; name?: string };
+  salesman?: { code?: string; name?: string };
+  salesman_type?: { id?: number; code?: string; name?: string };
+  project_type?: { id?: number; code?: string; name?: string };
+  status?: number | boolean;
+  uuid?: string;
 }
 
 export default function SalemanLoad() {
-    const [warehouseId, setWarehouseId] = useState<string>("");
-    const [channelId, setChannelId] = useState<string>("");
-    const [routeId, setRouteId] = useState<string>("");
-    const { warehouseOptions, routeOptions,regionOptions } = useAllDropdownListData();
-    const columns: configType["columns"] = [
-        { key: "osa_code", label: "Code" },
-        { 
-            key: "warehouse", 
-            label: "Warehouse Code", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.warehouse?.code || "-";
-            }
-        },
-        { 
-            key: "warehouse", 
-            label: "Warehouse Name", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.warehouse?.name || "-";
-            }
-        },
-        { 
-            key: "route", 
-            label: "Route Code", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.route?.code || "-";
-            }
-        },
-        { 
-            key: "route", 
-            label: "Route Name", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.route?.name || "-";
-            }
-        },
-        { 
-            key: "salesman", 
-            label: "Salesman Code", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.salesman?.code || "-";
-            }
-        },
-        { 
-            key: "salesman", 
-            label: "Salesman Name", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.salesman?.name || "-";
-            }
-        },
-        { 
-            key: "projecttype", 
-            label: "Project Code", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.projecttype?.code || "-";
-            }
-        },
-        { 
-            key: "projecttype", 
-            label: "Project Name", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.projecttype?.name || "-";
-            }
-        },
-        {
-            key: "is_confirmed",
-            label: "Status",
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.status ? "Confirmed" : "Waiting";
-            },
+
+    const { regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions } = useAllDropdownListData();
+  
+
+
+  const columns: configType["columns"] = [
+    {
+      key: "warehouse",
+      label: "Warehouse",
+      render: (row: TableDataType) => {
+        const s = row as SalesmanLoadRow;
+        const nameParts = s.warehouse?.name?.split(" - ");
+        const shortName =
+          nameParts && nameParts.length > 1
+            ? `${nameParts[0]} (${nameParts[1]})`
+            : s.warehouse?.name || "-";
+        return `${s.warehouse?.code ?? ""} - ${shortName}`;
+      },
+    },
+    {
+      key: "route",
+      label: "Route",
+      render: (row: TableDataType) => {
+        const s = row as SalesmanLoadRow;
+        return s.route?.code || "-";
+      },
+    },
+    {
+      key: "salesman",
+      label: "Salesman",
+      render: (row: TableDataType) => {
+        const s = row as SalesmanLoadRow;
+        return `${s.salesman?.code ?? ""} - ${s.salesman?.name ?? ""}`;
+      },
+    },
+    { key: "salesman_type", label: "Salesman Type",
+      render: (row: TableDataType) => {
+        const s = row as SalesmanLoadRow;
+        return `${s.salesman_type?.code ?? ""} - ${s.salesman_type?.name ?? ""}`;
+      },
+    },
+    {
+      key: "project_type",
+      label: "Salesman Role",
+      render: (row: TableDataType) => {
+        const s = row as SalesmanLoadRow;
+
+        // Use project_type if present, otherwise fallback to salesman_type
+        if (s.project_type && typeof s.project_type === "object") {
+          const { code, name } = s.project_type;
+          if (code || name) return `${code ?? ""} - ${name ?? ""}`;
         }
-    ];
 
-    const { setLoading } = useLoading();
-    const [refreshKey, setRefreshKey] = useState(0);
-    const router = useRouter();
-    const { showSnackbar } = useSnackbar();
-    type TableRow = TableDataType & { id?: string };
+        if (s.project_type && typeof s.project_type === "object") {
+          const { code, name } = s.project_type;
+          if (code || name) return `${code ?? ""} - ${name ?? ""}`;
+        }
 
-const fetchSalesmanLoadHeader = useCallback(
-        async (
-            page: number = 1,
-            pageSize: number = 50
-        ): Promise<listReturnType> => {
-            try {
-                setLoading(true);
-                const listRes = await salesmanLoadHeaderList({
-                    // page: page.toString(),
-                    // per_page: pageSize.toString(),
-                });
-                setLoading(false);
-                return {
-                    data: Array.isArray(listRes.data) ? listRes.data : [],
-                    total: listRes?.pagination?.totalPages || 1,
-                    currentPage: listRes?.pagination?.page || 1,
-                    pageSize: listRes?.pagination?.limit || pageSize,
-                };
-            } catch (error: unknown) {
-                setLoading(false);
-                return {
-                    data: [],
-                    total: 1,
-                    currentPage: 1,
-                    pageSize: 5,
-                };
-            }
-    }, [setLoading]);
+        if (typeof s.project_type === "string") return s.project_type;
 
-    const filterBy = useCallback(
-        async (
-            payload: Record<string, string | number | null>,
-            pageSize: number
-        ): Promise<listReturnType> => {
-            let result;
-            setLoading(true);
-            try {
-                const params: Record<string, string> = { };
-                Object.keys(payload || {}).forEach((k) => {
-                    const v = payload[k as keyof typeof payload];
-                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                        params[k] = String(v);
-                    }
-                });
-                result = await salesmanLoadHeaderList(params);
-            } finally {
-                setLoading(false);
-            }
+        return "-";
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => {
+        const s = row as SalesmanLoadRow;
+        return <StatusBtn isActive={!!s.status && Number(s.status) === 1} />;
+      },
+    },
+  ];
 
-            if (result?.error) throw new Error(result.data?.message || "Filter failed");
-            else {
-                const pagination = result.pagination?.pagination || result.pagination || {};
-                return {
-                    data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 0,
-                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-                    pageSize: pagination.limit || pageSize,
-                };
-            }
-        },
-        [setLoading]
-    );
+  const { setLoading } = useLoading();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
 
-    useEffect(() => {
+  const fetchSalesmanLoadHeader = useCallback(
+    async (
+      page: number = 1,
+      pageSize: number = 50
+    ): Promise<listReturnType> => {
+      try {
         setLoading(true);
-    }, []);
+        const listRes = await salesmanLoadHeaderList({});
+        setLoading(false);
 
-    return (
-        <>
-            <div className="flex flex-col h-full">
-                <Table
-                    refreshKey={refreshKey}
-                    config={{
-                        api: {
-                            list: fetchSalesmanLoadHeader,
-                            filterBy: filterBy
-                        },
-                        header: {
-                            title: "Salesman Load",
-                            searchBar: false,
-                            columnFilter: true,
-                            filterByFields: [
-                                {
-                                    key: "date_change",
-                                    label: "Date Range",
-                                    type: "dateChange"
-                                },
-                                {
-                                    key: "region",
-                                    label: "Region",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(regionOptions) ? regionOptions : [],
-                                },
-                                {
-                                    key: "warehouse",
-                                    label: "Warehouse",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                                },
-                                {
-                                    key: "route_id",
-                                    label: "Route",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(routeOptions) ? routeOptions : [],
-                                },
-                                
-                            ],
-                            actions: [
-                                <SidebarBtn
-                                    key={0}
-                                    href="/salesmanLoad/add"
-                                    isActive
-                                    leadingIcon="lucide:plus"
-                                    label="Add"
-                                    labelTw="hidden sm:block"
-                                />
-                            ],
-                        },
-                        localStorageKey: "agentCustomer-table",
-                        footer: { nextPrevBtn: true, pagination: true },
-                        columns,
-                        rowSelection: true,
-                        
-                        rowActions: [
-                            {
-                                icon: "lucide:eye",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(`/salesmanLoad/details/${row.uuid}`);
-                                },
-                            },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(
-                                        `/salesmanLoad/${row.uuid}`
-                                    );
-                                },
-                            },
+        return {
+          data: Array.isArray(listRes.data) ? listRes.data : [],
+          total: listRes?.pagination?.totalPages || 1,
+          currentPage: listRes?.pagination?.page || 1,
+          pageSize: listRes?.pagination?.limit || pageSize,
+        };
+      } catch (error) {
+        setLoading(false);
+        showSnackbar("Failed to load Salesman Load list", "error");
+        return {
+          data: [],
+          total: 1,
+          currentPage: 1,
+          pageSize: pageSize,
+        };
+      }
+    },
+    [setLoading, showSnackbar]
+  );
+
+  useEffect(() => {
+    setLoading(true);
+  }, [setLoading]);
+
+  return (
+    <div className="flex flex-col h-full">
+      <Table
+        refreshKey={refreshKey}
+        config={{
+          api: {
+            list: fetchSalesmanLoadHeader,
+          },
+          header: {
+            title: "Salesman Load",
+            searchBar: false,
+            columnFilter: true,
+            filterByFields: [
+                          {
+                            key: "start_date",
+                            label: "From Date",
+                            type: "date",
+                          },
+                          {
+                            key: "end_date",
+                            label: "To Date",
+                            type: "date",
+                          },
+                          {
+                            key: "warehouse",
+                            label: "Warehouse",
+                            isSingle: false,
+                            multiSelectChips: true,
+                            options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                          },
+                          
+                          {
+                            key: "region_id",
+                            label: "Region",
+                            isSingle: false,
+                            multiSelectChips: true,
+                            options: Array.isArray(regionOptions) ? regionOptions : [{ value: "1", label: "Rajneesh" }],
+                          },
+                          {
+                            key: "route_id",
+                            label: "Route",
+                            isSingle: false,
+                            multiSelectChips: true,
+                            options: Array.isArray(routeOptions) ? routeOptions : [],
+                          },
+                          {
+                            key: "outlet_channel_id",
+                            label: "Outlet Channel",
+                            isSingle: false,
+                            multiSelectChips: true,
+                            options: Array.isArray(channelOptions) ? channelOptions : [],
+                          },
+                          {
+                            key: "category_id",
+                            label: "Category",
+                            type: "select",
+                            options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
+                            isSingle: false,
+                            multiSelectChips: true,
+                          },
+                          {
+                            key: "subcategory_id",
+                            label: "Subcategory",
+                            isSingle: false,
+                            multiSelectChips: true,
+                            options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
+                          },
                         ],
-                        pageSize: 50,
-                      
-                    }}
-                />
-            </div>
-
-            {/* {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Agent Customer"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )} */}
-        </>
-    );
+                        actions: [
+                          <SidebarBtn
+                            key={0}
+                            href="/salesmanLoad/add"
+                            isActive
+                            leadingIcon="lucide:plus"
+                            label="Add"
+                            labelTw="hidden sm:block"
+                          />,
+                        ],
+          },
+          localStorageKey: "salesmanLoad-table",
+          footer: { nextPrevBtn: true, pagination: true },
+          columns,
+          rowSelection: true,
+          rowActions: [
+            {
+              icon: "lucide:eye",
+              onClick: (data: object) => {
+                const row = data as { uuid?: string };
+                if (row.uuid) router.push(`/salesmanLoad/details/${row.uuid}`);
+              },
+            },
+          ],
+          pageSize: 50,
+        }}
+      />
+    </div>
+  );
 }

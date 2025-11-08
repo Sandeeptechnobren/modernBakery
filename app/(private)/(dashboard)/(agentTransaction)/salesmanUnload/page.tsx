@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
   configType,
   listReturnType,
@@ -9,16 +8,16 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { salesmanUnloadList } from "@/app/services/agentTransaction";
-import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import InputFields from "@/app/components/inputFields";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 
 export default function SalesmanUnloadPage() {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { regionOptions } = useAllDropdownListData();
+  const { regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions } = useAllDropdownListData();
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFiltered, setIsFiltered] = useState(false);
@@ -159,7 +158,7 @@ export default function SalesmanUnloadPage() {
         return obj ? `${obj.code} - ${obj.name}` : "-";
       },
     },
-    { key: "routename", label: "Salesman Role" },
+    { key: "Salesman_type", label: "Salesman Role" },
     { key: "unload_no", label: "Unload No." },
     { key: "unload_from", label: "Unload By" },
     {
@@ -174,7 +173,8 @@ export default function SalesmanUnloadPage() {
       <div className="gap-3">
         <h1 className="text-bold-700">Salesman Unload</h1>
       </div>{" "}
-      {/* 🔍 Filter Section */}
+
+      {/* 🔍 Filter Section
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 bg-white p-4 rounded-lg shadow">
         <div>
           <InputFields
@@ -225,7 +225,7 @@ export default function SalesmanUnloadPage() {
             onClick={handleFilter}
           />
         </div>
-      </div>
+      </div> */}
       {/* 📋 Table Section */}
       <Table
         refreshKey={refreshKey}
@@ -237,16 +237,58 @@ export default function SalesmanUnloadPage() {
             columnFilter: true,
             filterByFields: [
               {
-                key: "start_date, end_date",
+                key: "start_date",
                 label: "From Date",
-                type: "dateChange",
+                type: "date",
               },
+              {
+                key: "end_date",
+                label: "To Date",
+                type: "date",
+              },
+              {
+                key: "warehouse",
+                label: "Warehouse",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+              },
+              
               {
                 key: "region_id",
                 label: "Region",
                 isSingle: false,
                 multiSelectChips: true,
-                options: Array.isArray(regionOptions) ? regionOptions : [],
+                options: Array.isArray(regionOptions) ? regionOptions : [{ value: "1", label: "Rajneesh" }],
+              },
+              {
+                key: "route_id",
+                label: "Route",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(routeOptions) ? routeOptions : [],
+              },
+              {
+                key: "outlet_channel_id",
+                label: "Outlet Channel",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(channelOptions) ? channelOptions : [],
+              },
+              {
+                key: "category_id",
+                label: "Category",
+                type: "select",
+                options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
+                isSingle: false,
+                multiSelectChips: true,
+              },
+              {
+                key: "subcategory_id",
+                label: "Subcategory",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
               },
             ],
             actions: [
@@ -272,13 +314,13 @@ export default function SalesmanUnloadPage() {
                 router.push(`/salesmanUnload/details/${String(row.uuid)}`);
               },
             },
-            {
-              icon: "lucide:edit-2",
-              onClick: (data: object) => {
-                const row = data as TableDataType;
-                router.push(`/salesmanUnload/${String(row.uuid)}`);
-              },
-            },
+            // {
+            //   icon: "lucide:edit-2",
+            //   onClick: (data: object) => {
+            //     const row = data as TableDataType;
+            //     router.push(`/salesmanUnload/${String(row.uuid)}`);
+            //   },
+            // },
           ],
           pageSize: 50,
         }}

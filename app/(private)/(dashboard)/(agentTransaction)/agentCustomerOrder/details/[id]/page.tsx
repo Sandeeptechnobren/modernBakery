@@ -8,10 +8,8 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-// import KeyValueData from "../master/customer/[customerId]/keyValueData";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import InputFields from "@/app/components/inputFields"; // ✅ Added InputField for consistency
 
 const dropdownDataList = [
   { icon: "humbleicons:radio", label: "Mark as Pending", iconWidth: 20 },

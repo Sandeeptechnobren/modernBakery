@@ -26,6 +26,7 @@ interface WarehouseStockFormValues {
   warehouse_stock_code: string;
   warehouse_id: string;
   item_id: string;
+  qty: string;
   name?: string;
   status: string; // "active" | "inactive"
 }
@@ -47,6 +48,7 @@ export default function AddWarehouseStockPage() {
       warehouse_stock_code: "",
       warehouse_id: "",
       item_id: "",
+      qty: "",
       name: "",
       status: "active",
     },
@@ -54,6 +56,7 @@ export default function AddWarehouseStockPage() {
       warehouse_stock_code: Yup.string().required("Warehouse Stock Code is required"),
       warehouse_id: Yup.string().required("Warehouse is required"),
       item_id: Yup.string().required("Item is required"),
+      qty: Yup.string().required("Quantity is required"),
       status: Yup.string().required("Status is required"),
     }),
     onSubmit: async (values, { setSubmitting }) => {
@@ -62,6 +65,7 @@ export default function AddWarehouseStockPage() {
           warehouse_stock_code: values.warehouse_stock_code,
           warehouse_id: values.warehouse_id,
           item_id: values.item_id,
+          qty: Number(values.qty),
           name: values.name || "", // some APIs need a name field
           status: values.status === "active" ? "1" : "0",
         };
@@ -120,6 +124,7 @@ export default function AddWarehouseStockPage() {
               warehouse_stock_code: res.data.osa_code || "",
               warehouse_id: res.data.warehouse?.id?.toString() || "",
               item_id: res.data.item?.id?.toString() || "",
+              qty: res.data.qty || "",
               name: res.data.item?.name || "",
               status: res.data.status === 1 ? "active" : "inactive",
             });
@@ -177,7 +182,7 @@ export default function AddWarehouseStockPage() {
                     formik.errors.warehouse_stock_code
                   }
                 />
-                {!isEditMode && (
+                {/* {!isEditMode && (
                   <>
                     <IconButton
                       bgClass="white"
@@ -191,7 +196,7 @@ export default function AddWarehouseStockPage() {
                       title="Warehouse Stock Code"
                     />
                   </>
-                )}
+                )} */}
               </div>
 
               {/* Warehouse */}
@@ -218,6 +223,15 @@ export default function AddWarehouseStockPage() {
                 onBlur={formik.handleBlur}
                 options={itemOptions}
                 error={formik.touched.item_id && formik.errors.item_id}
+              />
+
+               <InputFields
+                name="qty"
+                label="Quantity"
+                value={formik.values.qty}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.qty && formik.errors.qty}
               />
 
               {/* Status */}
