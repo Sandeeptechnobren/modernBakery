@@ -153,7 +153,7 @@ export default function ViewPage() {
     const [activeTab, setActiveTab] = useState("overview");
     const tabList = [
         { key: "overview", label: "Overview" },
-        { key: "warehouseCustomer", label: "Warehouse Customer" },
+        { key: "warehouseCustomer", label: "Warehouse Customers" },
         { key: "warehouseStock", label: "Warehouse Stock" },
         { key: "route", label: "Route" },
         // { key: "vehicle", label: "Vehicle" },

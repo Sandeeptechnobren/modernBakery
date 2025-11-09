@@ -44,8 +44,8 @@ type FormValues = {
     warehouse_manager_contact: string;
     location: string;
     city: string;
-    region_id: string;
-    area_id: string;
+    // region_id: string;
+    // area_id: string;
     town_village: string;
     street: string;
     landmark: string;
@@ -84,16 +84,7 @@ const validationSchema = Yup.object({
     owner_email: Yup.string(),
     location: Yup.string().required('Location is required'),
     city: Yup.string().required('City is required'),
-    region_id: Yup.string().when('warehouse_type', {
-        is: (val: any) => String(val) === 'company_outlet',
-        then: (schema: any) => schema.required('Region is required'),
-        otherwise: (schema: any) => schema.notRequired(),
-    }),
-    area_id: Yup.string().when('warehouse_type', {
-        is: (val: any) => String(val) === 'company_outlet',
-        then: (schema: any) => schema.required('Area ID is required'),
-        otherwise: (schema: any) => schema.notRequired(),
-    }),
+
     town_village: Yup.string(),
     street: Yup.string(),
     landmark: Yup.string(),
@@ -130,8 +121,8 @@ const stepSchemas = [
     Yup.object().shape({
         location: validationSchema.fields.location,
         city: validationSchema.fields.city,
-        region_id: validationSchema.fields.region_id,
-        area_id: validationSchema.fields.area_id,
+        // region_id: validationSchema.fields.region_id,
+        // area_id: validationSchema.fields.area_id,
         latitude: validationSchema.fields.latitude,
         longitude: validationSchema.fields.longitude,
     }),
@@ -191,8 +182,6 @@ export default function AddEditWarehouse() {
         owner_email: "",
         location: "",
         city: "",
-        region_id: "",
-        area_id: "",
         town_village: "",
         street: "",
         landmark: "",
@@ -229,8 +218,8 @@ export default function AddEditWarehouse() {
                         owner_email: data?.owner_email || '',
                         location: data?.location || '',
                         city: data?.city || '',
-                        region_id: String(data?.region_id || ''),
-                        area_id: String(data?.area_id || ''),
+                        // region_id: String(data?.region_id || ''),
+                        // area_id: String(data?.area_id || ''),
                         town_village: String(data?.town_village || ''),
                         street: String(data?.street || ''),
                         landmark: data?.landmark || '',

@@ -79,18 +79,18 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={(e) => {
                         handleChange(e);
                         const val = (e.target as HTMLSelectElement).value;
-                        if (val === 'Agent Customer') {
+                        if (val === 'Agent Warehouse') {
                             try {
-                                setFieldValue('company_outlet', '');
-                                setFieldValue('region_id', '');
-                                setFieldValue('area_id', '');
+                                // setFieldValue('company_outlet', '');
+                                // setFieldValue('region_id', '');
+                                // setFieldValue('area_id', '');
                             } catch (err) {
                             }
                         }
                     }}
                     options={[
-                        { value: "Agent Customer", label: "Agent Warehouse" },
-                        { value: "Company Otlet", label: "Company Outlet" },
+                        { value: "Agent Warehouse", label: "Agent Warehouse" },
+                        { value: "Company Outlet", label: "Company Outlet" },
                     ]}
                 />
                 {errors?.warehouse_type && touched?.warehouse_type && (
@@ -110,8 +110,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                         await getCompanyCustomerById(val).then((res) => {
                             if (res) {
                                 const customer = res;
-                                setFieldValue('region_id', String(customer.region_id) || '');
-                                setFieldValue('area_id', String(customer.area_id) || '');
+                                // setFieldValue('region_id', String(customer.region_id) || '');
+                                // setFieldValue('area_id', String(customer.area_id) || '');
                                 
                             }
                         });

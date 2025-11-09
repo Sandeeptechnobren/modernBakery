@@ -24,20 +24,10 @@ export default function WarehouseLocationInfo({
   const { regionOptions, areaOptions, loading, fetchAreaOptions } = useAllDropdownListData();
 
   // Touched tracking for dropdowns
-  useEffect(() => {
-    if (setTouched) {
-      // Only mark region/area touched when the fields are visible (i.e. agent_customer type)
-      if (values.warehouse_type === 'agent_customer') {
-        if (!values.region_id) setTouched({ region_id: true });
-        if (!values.area_id) setTouched({ area_id: true });
-      }
-    }
-  }, [values.region_id, values.area_id, setTouched]);
+
 
   // Fetch area options on region change
-  useEffect(() => {
-    if (values.region_id) fetchAreaOptions(values.region_id);
-  }, [values.region_id, fetchAreaOptions]);
+
 
   return (
     <>
@@ -77,7 +67,7 @@ export default function WarehouseLocationInfo({
               </span>
           )}
         </div>
-        {values.warehouse_type === 'company_outlet' && (
+        {/* {values.warehouse_type === 'company_outlet' && (
           <>
             <div>
               <InputFields
@@ -94,7 +84,7 @@ export default function WarehouseLocationInfo({
               />
               {errors?.region_id && touched?.region_id && (
                 <span className="text-xs text-red-500 mt-1">
-                  {/* {errors.region_id} */}
+                 
                   </span>
               )}
             </div>
@@ -113,12 +103,12 @@ export default function WarehouseLocationInfo({
               />
               {errors?.area_id && touched?.area_id && (
                 <span className="text-xs text-red-500 mt-1">
-                  {/* {errors.area_id} */}
+               
                   </span>
               )}
             </div>
           </>
-        )}
+        )} */}
         {/* ...rest fields unchanged */}
         <div>
           <InputFields
