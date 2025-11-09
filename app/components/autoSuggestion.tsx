@@ -26,6 +26,8 @@ type Props = {
   width?: string;
   disabled?: boolean;
   onClear?: () => void;
+  /** Pre-selected single option (optional). When provided the input shows its label and backspace clears it. */
+  selectedOption?: Option | null;
   /** When true, allow selecting multiple options (multi-select). */
   multiple?: boolean;
   /** Initial selected options for multi-select */
@@ -51,6 +53,7 @@ export default function AutoSuggestion({
   width = "max-w-[406px]",
   disabled = false,
   onClear,
+  selectedOption,
   multiple = false,
   initialSelected = [],
   onChangeSelected,
@@ -103,6 +106,29 @@ export default function AutoSuggestion({
     }
   // intentionally depend on initialValue only
   }, [initialValue]);
+
+  // When parent provides a pre-selected single option via `selectedOption`, reflect it locally.
+  // Show its label and remember the option so Backspace will clear it. Clearing selectedOption
+  // (setting it to null) will clear the input and remembered selection.
+  useEffect(() => {
+    if (multiple) return; // only relevant for single-select
+    // parent didn't provide selectedOption -> nothing to do
+    if (selectedOption === undefined) return;
+    // avoid triggering the search effect
+    skipSearchRef.current = true;
+    if (selectedOption === null) {
+      selectedSingleRef.current = null;
+      setQuery("");
+      setOptions([]);
+      setOpen(false);
+      return;
+    }
+    // set the visible label and remember the producing option
+    selectedSingleRef.current = selectedOption;
+    setQuery(selectedOption.label);
+    setOptions([]);
+    setOpen(false);
+  }, [selectedOption, multiple]);
 
   useEffect(() => {
     return () => {
@@ -212,21 +238,16 @@ export default function AutoSuggestion({
         }
         // allow default editing behavior otherwise
       } else {
-        // single-select: if current query equals selected label, clear it entirely
+        // single-select: if the input is currently showing the selected option's label,
+        // clear it on a single Backspace press (this makes clearing predictable).
         if (selectedSingleRef.current && query === selectedSingleRef.current.label) {
-          const selStart = input?.selectionStart ?? 0;
-          const selEnd = input?.selectionEnd ?? 0;
-          const fullSelected = selStart === 0 && selEnd === query.length;
-          const caretAtEnd = selStart === selEnd && selStart === query.length;
-          if (fullSelected || caretAtEnd) {
-            e.preventDefault();
-            selectedSingleRef.current = null;
-            setQuery("");
-            setOptions([]);
-            setOpen(false);
-            try { onClearRef.current && onClearRef.current(); } catch (err) {}
-            return;
-          }
+          e.preventDefault();
+          selectedSingleRef.current = null;
+          setQuery("");
+          setOptions([]);
+          setOpen(false);
+          try { onClearRef.current && onClearRef.current(); } catch (err) {}
+          return;
         }
       }
     }
