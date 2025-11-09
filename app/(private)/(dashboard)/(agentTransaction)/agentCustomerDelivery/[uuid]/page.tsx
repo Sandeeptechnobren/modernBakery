@@ -589,14 +589,14 @@ export default function DeliveryAddEditPage() {
         >
           {({ values, touched, errors, setFieldValue, handleChange, submitForm, isSubmitting }: FormikProps<FormikValues>) => {
             // // Log Formik validation errors to console for easier debugging
-            useEffect(() => {
-              if (errors && Object.keys(errors).length > 0) {
-                console.warn("Formik validation errors:", errors);
-              }
-              console.log("Current Formik errors:", errors);
-              console.log("Current Formik errors:", touched.comment);
-              console.log(values, "values")
-            }, [errors]);
+            // useEffect(() => {
+            //   if (errors && Object.keys(errors).length > 0) {
+            //     console.warn("Formik validation errors:", errors);
+            //   }
+            //   console.log("Current Formik errors:", errors);
+            //   console.log("Current Formik errors:", touched.comment);
+            //   console.log(values, "values")
+            // }, [errors]);
 
             return (
               <>
