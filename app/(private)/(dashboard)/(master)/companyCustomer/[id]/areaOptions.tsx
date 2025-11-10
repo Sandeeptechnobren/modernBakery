@@ -20,22 +20,22 @@ export default function RegionWatcher({ fetchAreaOptions, setSkeleton, preserveE
   useEffect(() => {
     const prev = prevRegionRef.current;
     // only react when region actually changes
-    if (prev !== values.region) {
-      console.log("RegionWatcher render - current region:", values.region, "initialArea:", initialArea);
+    if (prev !== values.region_id) {
+      console.log("RegionWatcher render - current region:", values.region_id, "initialArea:", initialArea);
       // clear area when user actively changes region (but not on first mount)
       if (prev !== undefined) {
         setFieldValue("area", "");
       }
 
-      if (values.region) {
+      if (values.region_id) {
         setSkeleton((prev:Record<string, boolean>) => ({ ...prev, area: true }));
-        fetchAreaOptions(values.region)
+        fetchAreaOptions(values.region_id)
           .then((areas) => {
             // Only preserve existing area when an actual initial area value exists.
             // If initialArea is present and Formik doesn't yet have it, set it,
             // then skip auto-selecting the first fetched area.
             if (preserveExistingArea && initialArea) {
-              if (!values.area) {
+              if (!values.area_id) {
                 setFieldValue("area", initialArea);
                 initialAppliedRef.current = true;
               }
@@ -43,7 +43,7 @@ export default function RegionWatcher({ fetchAreaOptions, setSkeleton, preserveE
             }
 
             // Only auto-select when form currently has no area value
-            if (!values.area && areas && areas.length > 0) {
+            if (!values.area_id && areas && areas.length > 0) {
               setFieldValue("area", String(areas[0].value ?? areas[0].id ?? ""));
             }
           })
@@ -51,22 +51,22 @@ export default function RegionWatcher({ fetchAreaOptions, setSkeleton, preserveE
       }
     }
 
-    prevRegionRef.current = values.region;
+    prevRegionRef.current = values.region_id;
     // include preserveExistingArea & setSkeleton so effect reacts to them too
-  }, [values.region, fetchAreaOptions, setFieldValue, setSkeleton, preserveExistingArea, initialArea]);
+  }, [values.region_id, fetchAreaOptions, setFieldValue, setSkeleton, preserveExistingArea, initialArea]);
 
   // If initialArea arrives after the first fetch, ensure we apply it once.
   useEffect(() => {
     if (!preserveExistingArea) return;
     if (!initialArea) return;
-    if (!values.region) return;
-    if (values.area) return; // already set
+    if (!values.region_id) return;
+    if (values.area_id) return; // already set
     if (initialAppliedRef.current) return; // already applied
 
     // ensure options are loaded (fetch once) then apply the initialArea
     initialAppliedRef.current = true;
     setSkeleton((prev:Record<string, boolean>) => ({ ...prev, area: true }));
-    fetchAreaOptions(values.region)
+    fetchAreaOptions(values.region_id)
       .then(() => {
         setFieldValue("area", initialArea);
       })
@@ -75,7 +75,7 @@ export default function RegionWatcher({ fetchAreaOptions, setSkeleton, preserveE
         setFieldValue("area", initialArea);
       })
       .finally(() => setSkeleton((prev:Record<string, boolean>) => ({ ...prev, area: false })));
-  }, [initialArea, values.region, preserveExistingArea, values.area, fetchAreaOptions, setFieldValue, setSkeleton]);
+  }, [initialArea, values.region_id, preserveExistingArea, values.area_id, fetchAreaOptions, setFieldValue, setSkeleton]);
  
   return null;
 }

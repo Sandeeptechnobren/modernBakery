@@ -3,7 +3,6 @@
 import React from "react";
 import RegionWatcher from "./areaOptions";
 import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
@@ -28,208 +27,138 @@ import StepperForm, {
   StepperStep,
 } from "@/app/components/stepperForm";
 import { useLoading } from "@/app/services/loadingContext";
+import { number } from "framer-motion";
 
 export type CompanyCustomerFormValues = {
-  sapCode: string;
-  company_customer_code?: string;
-  customerCode: string;
-  businessName: string;
-  customerType: string;
-  ownerName: string;
-  ownerNumber: string;
-  isWhatsapp: string;
-  whatsappNo: string;
-  email: string;
+  sap_code: string;
+  osa_code: string;
+  business_name: string;
+  company_type: number;
   language: string;
-  contactNo2: string;
-  buyerType: string;
-  roadStreet: string;
+  contact_number?: string;
+  business_type: number;
   town: string;
   landmark: string;
   district: string;
-  region: string;
-  area: string;
-  paymentType: string;
-  bankName: string;
-  bankAccountNumber: string;
-  creditDay: string;
-  vatNo: string;
-  accuracy: string;
-  creditLimit: string;
-  guaranteeName: string;
-  guaranteeAmount: string;
-  guaranteeFrom: string;
-  guaranteeTo: string;
-  totalCreditLimit: string;
-  creditLimitValidity: string;
-  longitude: string;
-  latitude: string;
-  thresholdRadius: string;
-  dChannelId: string;
-  status: string;
+  region_id: string;
+  area_id: string;
+  payment_type: string;
+  creditday: string;
+  tin_no: string;
+  creditlimit: string;
+  totalcreditlimit: string;
+  credit_limit_validity?: string;
+  bank_guarantee_name: string;
+  bank_guarantee_amount: string;
+  bank_guarantee_from: string;
+  bank_guarantee_to: string;
+  distribution_channel_id: string;
   merchendiser_ids: string;
+  status: string;
 };
 
 interface CompanyCustomerPayload {
   sap_code: string;
-  customer_code: string;
+  osa_code: string;
   business_name: string;
-  customer_type: string;
-  owner_name: string;
-  owner_no: string;
-  is_whatsapp: number;
-  whatsapp_no?: string;
-  email: string;
+  company_type: number;
   language: string;
-  contact_no2?: string;
-  buyer_type: number;
-  road_street: string;
+  contact_number?: string;
+  business_type: number;
   town: string;
   landmark: string;
   district: string;
   region_id: number;
   area_id: number;
   payment_type: string;
-  bank_name: string;
-  bank_account_number: string;
   creditday: string;
-  vat_no: string;
-  accuracy: string;
+  tin_no: string;
   creditlimit: number;
   totalcreditlimit: number;
   credit_limit_validity?: string;
-  guarantee_name: string;
-  guarantee_amount: number;
-  guarantee_from: string;
-  guarantee_to: string;
-  longitude: string;
-  latitude: string;
-  threshold_radius: number;
-  dchannel_id: number;
+  bank_guarantee_name: string;
+  bank_guarantee_amount: number;
+  bank_guarantee_from: string;
+  bank_guarantee_to: string;
+  distribution_channel_id: string;
   merchendiser_ids: string;
   status: string;
-  created_user?: number;
-  updated_user?: number;
 }
+
+
 
 // Validation schema (Yup)
 const validationSchema = Yup.object({
-  sapCode: Yup.string().required("SAP Code is required."),
-  customerCode: Yup.string().required("Customer Code is required."),
-  businessName: Yup.string().required("Business Name is required."),
-  customerType: Yup.string().required("Customer Type is required."),
-  ownerName: Yup.string().required("Owner Name is required."),
-
-  ownerNumber: Yup.string()
-    .required("Owner Number is required")
-    .matches(/^[0-9]+$/, "Only numbers are allowed")
-    .min(9, "Must be at least 9 digits")
-    .max(10, "Must be at most 10 digits"),
-
-  whatsappNo: Yup.string().when("isWhatsapp", {
-    is: (val: string) => val === "1",
-    then: (schema) => schema.required("Whatsapp Number is required."),
-    otherwise: (schema) => schema.notRequired(),
-  }),
-  email: Yup.string().email("Invalid email").required("Email is required."),
+  sap_code: Yup.string().required("SAP Code is required."),
+  business_name: Yup.string().required("Business Name is required."),
+  company_type: Yup.string().required("Customer Type is required."),
+  business_type: Yup.string().required("Invalid email").required("Email is required."),
   language: Yup.string().required("Language is required."),
 
-  contactNo2: Yup.string()
+  contact_number: Yup.string()
     .required("Contact Number  is required")
     .matches(/^[0-9]+$/, "Only numbers are allowed")
     .min(9, "Must be at least 9 digits")
     .max(10, "Must be at most 10 digits"),
-
-  roadStreet: Yup.string().required("Road/Street is required."),
   town: Yup.string().required("Town is required."),
   landmark: Yup.string().required("Landmark is required."),
   district: Yup.string().required("District is required."),
-  region: Yup.string().required("Region is required."),
-  area: Yup.string().required("Area is required."),
-  paymentType: Yup.string().required("Payment Type is required."),
-  bankName: Yup.string().required("Bank Name is required."),
-  bankAccountNumber: Yup.string()
-    .required("Bank Account Number is required.")
-    .matches(/^[0-9]+$/, "Only numbers are allowed"),
-  creditDay: Yup.string().required("Credit Day is required."),
-  vatNo: Yup.string().required("VAT No is required."),
-  accuracy: Yup.string(),
-  creditLimit: Yup.string().required("Credit Limit is required."),
-  guaranteeName: Yup.string().required("Guarantee Name is required."),
-  guaranteeAmount: Yup.string().required("Guarantee Amount is required."),
+  region_id: Yup.string().required("Region is required."),
+  area_id: Yup.string().required("Area is required."),
+  payment_type: Yup.string().required("Payment Type is required."),
+  creditday: Yup.string().required("Credit Day is required."),
+  tin_no: Yup.string().required("VAT No is required."),
+  creditlimit: Yup.string().required("Credit Limit is required."),
+  bank_guarantee_name: Yup.string().required("Guarantee Name is required."),
+  bank_guarantee_amount: Yup.string().required("Guarantee Amount is required."),
 
-  guaranteeFrom: Yup.date()
-    .required("Guarantee From is required")
+  bank_guarantee_from: Yup.date()
+    // .required("Guarantee From is required")
     .typeError("Please enter a valid date"),
-  guaranteeTo: Yup.date()
-    .required("Guarantee To is required")
+  bank_guarantee_to: Yup.date()
+    // .required("Guarantee To is required")
     .typeError("Please enter a valid date")
     .min(
-      Yup.ref("guaranteeFrom"),
+      Yup.ref("bank_guarantee_from"),
       "Guarantee To date cannot be before Guarantee From date"
     ),
 
-  totalCreditLimit: Yup.string().required("Total Credit Limit is required."),
-  creditLimitValidity: Yup.string(),
-  longitude: Yup.string()
-    .required("Longitude is required.")
-    .matches(
-      /^[-+]?\d{1,3}(?:\.\d+)?$/,
-      "Longitude must be a valid decimal number"
-    ),
-  latitude: Yup.string()
-    .required("Latitude is required.")
-    .matches(
-      /^[-+]?\d{1,3}(?:\.\d+)?$/,
-      "Latitude must be a valid decimal number"
-    ),
-  thresholdRadius: Yup.string().required("Threshold Radius is required."),
-  dChannelId: Yup.string().required("Channel is required."),
+  totalcreditlimit: Yup.string(),
+  // .required("Total Credit Limit is required."),
+  credit_limit_validity: Yup.string(),
+  dChannelId: Yup.string(),
+  // .required("Channel is required."),
   merchendiser_ids: Yup.string(),
 });
 
 const stepSchemas = [
   Yup.object({
-    customerCode: validationSchema.fields.customerCode,
-    sapCode: validationSchema.fields.sapCode,
-    vatNo: validationSchema.fields.vatNo,
-    ownerName: validationSchema.fields.ownerName,
-    businessName: validationSchema.fields.businessName,
-    customerType: validationSchema.fields.customerType,
-    dChannelId: validationSchema.fields.dChannelId,
+    sap_code: validationSchema.fields.sap_code,
+    tin_no: validationSchema.fields.tin_no,
+    business_name: validationSchema.fields.business_name,
+    company_type: validationSchema.fields.company_type,
     language: validationSchema.fields.language,
   }),
   Yup.object({
-    ownerNumber: validationSchema.fields.ownerNumber,
-    contactNo2: validationSchema.fields.contactNo2,
-    whatsappNo: validationSchema.fields.whatsappNo,
-    email: validationSchema.fields.email,
+    contact_number: validationSchema.fields.contact_number,
+    business_type: validationSchema.fields.business_type,
   }),
   Yup.object({
     town: validationSchema.fields.town,
-    roadStreet: validationSchema.fields.roadStreet,
     landmark: validationSchema.fields.landmark,
     district: validationSchema.fields.district,
-    region: validationSchema.fields.region,
-    area: validationSchema.fields.area,
-    longitude: validationSchema.fields.longitude,
-    latitude: validationSchema.fields.latitude,
-    thresholdRadius: validationSchema.fields.thresholdRadius,
+    region_id: validationSchema.fields.region_id,
+    area_id: validationSchema.fields.area_id,
   }),
   Yup.object({
-    paymentType: validationSchema.fields.paymentType,
-    bankName: validationSchema.fields.bankName,
-    bankAccountNumber: validationSchema.fields.bankAccountNumber,
-    creditDay: validationSchema.fields.creditDay,
-    creditLimit: validationSchema.fields.creditLimit,
-    totalCreditLimit: validationSchema.fields.totalCreditLimit,
-    guaranteeName: validationSchema.fields.guaranteeName,
-    guaranteeAmount: validationSchema.fields.guaranteeAmount,
-    guaranteeFrom: validationSchema.fields.guaranteeFrom,
-    guaranteeTo: validationSchema.fields.guaranteeTo,
-    merchendiser_ids: validationSchema.fields.merchendiser_ids,
-    // accuracy: validationSchema.fields.accuracy,
-    // creditLimitValidity: validationSchema.fields.creditLimitValidity,
+    payment_type: validationSchema.fields.payment_type,
+    creditday: validationSchema.fields.creditday,
+    creditlimit: validationSchema.fields.creditlimit,
+    totalcreditlimit: validationSchema.fields.totalcreditlimit,
+    bank_guarantee_name: validationSchema.fields.bank_guarantee_name,
+    bank_guarantee_amount: validationSchema.fields.bank_guarantee_amount,
+    bank_guarantee_from: validationSchema.fields.bank_guarantee_from,
+    bank_guarantee_to: validationSchema.fields.bank_guarantee_to,
   }),
 ];
 
@@ -247,17 +176,17 @@ export default function AddCompanyCustomer() {
   const {
     regionOptions,
     areaOptions,
-    customerTypeOptions,
+    companyTypeOptions,
     channelOptions,
     fetchAreaOptions,
   } = useAllDropdownListData();
   const [skeleton, setSkeleton] = useState({
-    area: false,
+    area_id: false,
   });
 
   const [country, setCountry] = useState<Record<string, contactCountry>>({
     ownerNumber: { name: "Uganda", code: "+256", flag: "🇺🇬" },
-    contactNo2: { name: "Uganda", code: "+256", flag: "🇺🇬" },
+    contact_number: { name: "Uganda", code: "+256", flag: "🇺🇬" },
     whatsappNo: { name: "Uganda", code: "+256", flag: "🇺🇬" },
   });
 
@@ -284,41 +213,29 @@ export default function AddCompanyCustomer() {
   const codeFetchedRef = useRef(false);
   const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>(
     {
-      sapCode: "",
-      customerCode: "",
-      businessName: "",
-      customerType: "",
-      ownerName: "",
-      ownerNumber: "",
-      isWhatsapp: "",
-      email: "",
+      sap_code: "",
+      osa_code: "",
+      business_name: "",
+      business_type: 0,
+      company_type: 0,
       language: "",
-      contactNo2: "",
-      whatsappNo: "",
-      buyerType: "",
-      roadStreet: "",
+      contact_number: "",
       town: "",
       landmark: "",
       district: "",
-      region: "",
-      area: "",
-      paymentType: "",
-      bankName: "",
-      bankAccountNumber: "",
-      creditDay: "",
-      vatNo: "",
-      accuracy: "",
-      creditLimit: "",
-      guaranteeName: "",
-      guaranteeAmount: "",
-      guaranteeFrom: "",
-      guaranteeTo: "",
-      totalCreditLimit: "",
-      creditLimitValidity: "",
-      longitude: "",
-      latitude: "",
-      thresholdRadius: "",
-      dChannelId: "",
+      region_id: "",
+      area_id: "",
+      payment_type: "",
+      creditday: "",
+      tin_no: "",
+      creditlimit: "",
+      bank_guarantee_name: "",
+      bank_guarantee_amount: "",
+      bank_guarantee_from: "",
+      bank_guarantee_to: "",
+      totalcreditlimit: "",
+      credit_limit_validity: "",
+      distribution_channel_id: "",
       status: "1",
       merchendiser_ids: "",
     }
@@ -328,49 +245,43 @@ export default function AddCompanyCustomer() {
     try {
       const id = params?.id as string;
       setLoading(true);
-      const data = await getCompanyCustomerById(id);
+      const res = await getCompanyCustomerById(id);
+
+      const data = res.data;
+      console.log("Fetched data:", data);
+
+
+
       setLoading(false);
       const mapped: CompanyCustomerFormValues = {
-        sapCode: data.sap_code || "",
-        customerCode: data.customer_code || "",
-        businessName: data.business_name || "",
-        customerType: String(data.customer_type || ""),
-        ownerName: data.owner_name || "",
-        ownerNumber: data.owner_no || "",
-        isWhatsapp: String(data.is_whatsapp ?? "1"),
-        whatsappNo: data.whatsapp_no || "",
-        email: data.email || "",
+        sap_code: data.sap_code || "",
+        osa_code: data.osa_code || "",
+        business_name: data.business_name || "",
+        company_type: Number(data.company_type || 0),
         language: data.language || "",
-        contactNo2: data.contact_no2 || "",
-        buyerType: String(data.buyer_type || "0"),
-        roadStreet: data.road_street || "",
+        contact_number: data.contact_number || "",
+        business_type: Number(data.business_type || 0),
         town: data.town || "",
         landmark: data.landmark || "",
         district: data.district || "",
-        region: String(data.region_id || ""),
-        area: String(data.area_id || ""),
-        paymentType: String(data.payment_type || "1"),
-        bankName: data.bank_name || "",
-        bankAccountNumber: data.bank_account_number || "",
-        creditDay: String(data.creditday || ""),
-        vatNo: data.vat_no || "",
-        accuracy: data.accuracy || "",
-        creditLimit: String(data.creditlimit || ""),
-        guaranteeName: data.guarantee_name || "",
-        guaranteeAmount: String(data.guarantee_amount || ""),
-        guaranteeFrom: data.guarantee_from || "",
-        guaranteeTo: data.guarantee_to || "",
-        totalCreditLimit: String(data.totalcreditlimit || ""),
-        creditLimitValidity: data.credit_limit_validity || "",
-        longitude: data.longitude || "",
-        latitude: data.latitude || "",
-        thresholdRadius: String(data.threshold_radius || ""),
-        dChannelId: String(data.dchannel_id || ""),
+        region_id: String(data?.get_region?.id || ""),
+        area_id: String(data?.get_area?.id || ""),
+        payment_type: String(data.payment_type || "1"),
+        creditday: String(data.creditday || ""),
+        tin_no: data.tin_no || "",
+        creditlimit: String(data.creditlimit || ""),
+        bank_guarantee_name: data.bank_guarantee_name || "",
+        bank_guarantee_amount: String(data.bank_guarantee_amount || ""),
+        bank_guarantee_from: data.bank_guarantee_from || "",
+        bank_guarantee_to: data.bank_guarantee_to || "",
+        totalcreditlimit: String(data.totalcreditlimit || ""),
+        credit_limit_validity: data.credit_limit_validity || "",
+        distribution_channel_id: data.distribution_channel_id || "",
         status: String(data.status || "1"),
         merchendiser_ids: data.merchendiser_ids || "",
       };
 
-      console.log(mapped);
+
       setInitialValues(mapped);
     } catch (error) {
       console.error(error);
@@ -397,7 +308,7 @@ export default function AddCompanyCustomer() {
         if (res?.code)
           setInitialValues((prev) => ({
             ...prev,
-            customerCode: String(res.code),
+            osa_code: String(res.code),
           }));
         if (res?.prefix) setPrefix(res.prefix);
         setLoading(false);
@@ -444,6 +355,7 @@ export default function AddCompanyCustomer() {
 
   const handleSubmit = async (
     values: CompanyCustomerFormValues,
+    
     {
       setSubmitting,
       setErrors,
@@ -457,41 +369,29 @@ export default function AddCompanyCustomer() {
     try {
       await validationSchema.validate(values, { abortEarly: false });
       const payload: CompanyCustomerPayload = {
-        sap_code: values.sapCode,
-        customer_code: values.customerCode,
-        business_name: values.businessName,
-        customer_type: values.customerType,
-        owner_name: values.ownerName,
-        owner_no: values.ownerNumber,
-        is_whatsapp: Number(values.isWhatsapp),
-        whatsapp_no: values.whatsappNo,
-        email: values.email,
+        sap_code: values.sap_code,
+        osa_code: values.osa_code,
+        business_name: values.business_name,
+        company_type: values.company_type,
         language: values.language,
-        contact_no2: values.contactNo2,
-        buyer_type: Number(values.buyerType),
-        road_street: values.roadStreet,
         town: values.town,
+        contact_number: values.contact_number,
+        business_type: values.business_type,
+        distribution_channel_id: values.distribution_channel_id,
         landmark: values.landmark,
         district: values.district,
-        region_id: Number(values.region),
-        area_id: Number(values.area),
-        payment_type: values.paymentType,
-        bank_name: values.bankName,
-        bank_account_number: values.bankAccountNumber,
-        creditday: values.creditDay,
-        vat_no: values.vatNo,
-        accuracy: values.accuracy || "",
-        creditlimit: Number(values.creditLimit),
-        totalcreditlimit: Number(values.totalCreditLimit),
-        credit_limit_validity: values.creditLimitValidity,
-        guarantee_name: values.guaranteeName,
-        guarantee_amount: Number(values.guaranteeAmount),
-        guarantee_from: values.guaranteeFrom,
-        guarantee_to: values.guaranteeTo,
-        longitude: values.longitude,
-        latitude: values.latitude,
-        threshold_radius: Number(values.thresholdRadius),
-        dchannel_id: Number(values.dChannelId),
+        region_id: Number(values.region_id),
+        area_id: Number(values.area_id),
+        payment_type: values.payment_type,
+        creditday: values.creditday,
+        tin_no: values.tin_no,
+        creditlimit: Number(values.creditlimit),
+        totalcreditlimit: Number(values.totalcreditlimit),
+        credit_limit_validity: values.credit_limit_validity,
+        bank_guarantee_name: values.bank_guarantee_name,
+        bank_guarantee_amount: Number(values.bank_guarantee_amount),
+        bank_guarantee_from: values.bank_guarantee_from,
+        bank_guarantee_to: values.bank_guarantee_to,
         merchendiser_ids: values.merchendiser_ids || "",
         status: String(values.status),
       };
@@ -519,7 +419,7 @@ export default function AddCompanyCustomer() {
         if (!isEditMode) {
           try {
             await saveFinalCode({
-              reserved_code: values.customerCode || "",
+              reserved_code: values.osa_code || "",
               model_name: "tbl_company_customer",
             });
           } catch (e) {
@@ -574,13 +474,13 @@ export default function AddCompanyCustomer() {
               <div className="flex items-start gap-2 max-w-[406px]">
                 <InputFields
                   label="Customer Code"
-                  name="customerCode"
-                  value={values.customerCode}
+                  name="osa_code"
+                  value={values.osa_code}
                   onChange={(e) =>
-                    setFieldValue("customerCode", e.target.value)
+                    setFieldValue("osa_code", e.target.value)
                   }
                   disabled={codeMode === "auto"}
-                  error={touched.customerCode && errors.customerCode}
+                  error={touched.osa_code && errors.osa_code}
                 />
                 {!isEditMode && false && (
                   <>
@@ -599,9 +499,9 @@ export default function AddCompanyCustomer() {
                       onSave={(mode, code) => {
                         setCodeMode(mode);
                         if (mode === "auto" && code) {
-                          setFieldValue("customerCode", code);
+                          setFieldValue("osa_code", code);
                         } else if (mode === "manual") {
-                          setFieldValue("customerCode", "");
+                          setFieldValue("osa_code", "");
                         }
                       }}
                     />
@@ -612,68 +512,45 @@ export default function AddCompanyCustomer() {
                 <InputFields
                   required
                   label="SAP Code"
-                  name="sapCode"
-                  value={values.sapCode}
-                  onChange={(e) => setFieldValue("sapCode", e.target.value)}
-                  error={touched.sapCode && errors.sapCode}
+                  name="sap_code"
+                  value={values.sap_code}
+                  onChange={(e) => setFieldValue("sap_code", e.target.value)}
+                  error={touched.sap_code && errors.sap_code}
                 />
               </div>
               <div>
                 <InputFields
                   required
-                  label="VAT No"
-                  name="vatNo"
-                  value={values.vatNo}
-                  onChange={(e) => setFieldValue("vatNo", e.target.value)}
-                  error={touched.vatNo && errors.vatNo}
+                  label="TIN No"
+                  name="tin_no"
+                  value={values.tin_no}
+                  onChange={(e) => setFieldValue("tin_no", e.target.value)}
+                  error={touched.tin_no && errors.tin_no}
                 />
               </div>
-              <div>
-                <InputFields
-                  required
-                  label="Owner Name"
-                  name="ownerName"
-                  value={values.ownerName}
-                  onChange={(e) => setFieldValue("ownerName", e.target.value)}
-                  error={touched.ownerName && errors.ownerName}
-                />
-              </div>
-
               <div>
                 <InputFields
                   required
                   label="Business Name"
-                  name="businessName"
-                  value={values.businessName}
+                  name="business_name"
+                  value={values.business_name}
                   onChange={(e) =>
-                    setFieldValue("businessName", e.target.value)
+                    setFieldValue("business_name", e.target.value)
                   }
-                  error={touched.businessName && errors.businessName}
+                  error={touched.business_name && errors.business_name}
                 />
               </div>
               <div>
                 <InputFields
                   required
-                  label="Customer Type"
-                  name="customerType"
-                  value={values.customerType}
+                  label="Company Type"
+                  name="company_type"
+                  value={(  values.company_type).toString()}
                   onChange={(e) =>
-                    setFieldValue("customerType", e.target.value)
+                    setFieldValue("company_type", e.target.value)
                   }
-                  options={customerTypeOptions}
-                  error={touched.customerType && errors.customerType}
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Outlet Channel"
-                  name="dChannelId"
-                  options={channelOptions}
-                  value={values.dChannelId}
-                  onChange={(e) => setFieldValue("dChannelId", e.target.value)}
-                  error={touched.dChannelId && errors.dChannelId}
+                  options={companyTypeOptions}
+                  error={touched.company_type && errors.company_type}
                 />
               </div>
               <div>
@@ -716,37 +593,17 @@ export default function AddCompanyCustomer() {
                 <InputFields
                   required
                   type="contact"
-                  label="Owner Number"
-                  name="ownerNumber"
-                  setSelectedCountry={(country: contactCountry) =>
-                    setCountry((prev) => ({ ...prev, ownerNumber: country }))
-                  }
-                  selectedCountry={country.ownerNumber}
-                  value={`${values.ownerNumber ?? ""}`}
-                  onChange={(e) => setFieldValue("ownerNumber", e.target.value)}
-                  error={
-                    errors?.ownerNumber && touched?.ownerNumber
-                      ? errors.ownerNumber
-                      : false
-                  }
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <InputFields
-                  required
-                  type="contact"
                   label="Contact Number"
-                  name="contactNo2"
+                  name="contact_number"
                   setSelectedCountry={(country: contactCountry) =>
-                    setCountry((prev) => ({ ...prev, contactNo2: country }))
+                    setCountry((prev) => ({ ...prev, contact_number: country }))
                   }
-                  selectedCountry={country.contactNo2}
-                  value={`${values.contactNo2 ?? ""}`}
-                  onChange={(e) => setFieldValue("contactNo2", e.target.value)}
+                  selectedCountry={country.contact_number}
+                  value={`${values.contact_number ?? ""}`}
+                  onChange={(e) => setFieldValue("contact_number", e.target.value)}
                   error={
-                    errors?.contactNo2 && touched?.contactNo2
-                      ? errors.contactNo2
+                    errors?.contact_number && touched?.contact_number
+                      ? errors.contact_number
                       : false
                   }
                 />
@@ -754,60 +611,11 @@ export default function AddCompanyCustomer() {
 
               <div>
                 <InputFields
-                  required
-                  label="Email"
-                  name="email"
-                  value={values.email}
-                  onChange={(e) => setFieldValue("email", e.target.value)}
-                  error={touched.email && errors.email}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Whatsapp Available?"
-                  name="isWhatsapp"
+                  label="Business Type"
+                  name="business_type"
                   type="radio"
-                  value={values.isWhatsapp}
-                  onChange={(e) => setFieldValue("isWhatsapp", e.target.value)}
-                  options={[
-                    { value: "1", label: "Yes" },
-                    { value: "0", label: "No" },
-                  ]}
-                />
-              </div>
-
-              {values.isWhatsapp === "1" && (
-                <div className="flex flex-col gap-2">
-                  <InputFields
-                    required
-                    type="contact"
-                    label="Whatsapp Number"
-                    name="whatsappNo"
-                    setSelectedCountry={(country: contactCountry) =>
-                      setCountry((prev) => ({ ...prev, whatsappNo: country }))
-                    }
-                    selectedCountry={country.whatsappNo}
-                    value={`${values.whatsappNo ?? ""}`}
-                    onChange={(e) =>
-                      setFieldValue("whatsappNo", e.target.value)
-                    }
-                    error={
-                      errors?.whatsappNo && touched?.whatsappNo
-                        ? errors.whatsappNo
-                        : false
-                    }
-                  />
-                </div>
-              )}
-
-              <div>
-                <InputFields
-                  label="Buyer Type"
-                  name="buyerType"
-                  type="radio"
-                  value={values.buyerType}
-                  onChange={(e) => setFieldValue("buyerType", e.target.value)}
+                  value={( values.business_type).toString()}
+                  onChange={(e) => setFieldValue("business_type", e.target.value)}
                   options={[
                     { value: "0", label: "Buyer" },
                     { value: "1", label: "Seller" },
@@ -835,16 +643,6 @@ export default function AddCompanyCustomer() {
               <div>
                 <InputFields
                   required
-                  label="Road / Street"
-                  name="roadStreet"
-                  value={values.roadStreet}
-                  onChange={(e) => setFieldValue("roadStreet", e.target.value)}
-                  error={touched.roadStreet && errors.roadStreet}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
                   label="Landmark"
                   name="landmark"
                   value={values.landmark}
@@ -866,72 +664,37 @@ export default function AddCompanyCustomer() {
                 <InputFields
                   required
                   label="Region"
-                  name="region"
-                  value={values.region}
-                  onChange={(e) => setFieldValue("region", e.target.value)}
+                  name="region_id"
+                  value={values.region_id}
+                  onChange={(e) => setFieldValue("region_id", e.target.value)}
                   options={regionOptions}
-                  error={touched.region && errors.region}
+                  error={touched.region_id && errors.region_id}
                 />
               </div>
               <div>
                 <InputFields
                   required
                   label="Area"
-                  name="area"
-                  value={values.area}
-                  onChange={(e) => setFieldValue("area", e.target.value)}
+                  name="area_id"
+                  value={values.area_id}
+                  onChange={(e) => setFieldValue("area_id", e.target.value)}
                   // keep enabled if we already have a value (edit mode) so it shows the current selection
-                  disabled={areaOptions.length === 0 && !values.area}
-                  showSkeleton={skeleton.area}
+                  disabled={areaOptions.length === 0 && !values.area_id}
+                  showSkeleton={skeleton.area_id}
                   options={
                     areaOptions && areaOptions.length > 0
                       ? areaOptions
-                      : values.area
-                      ? // show the existing area value as an option when areaOptions haven't loaded yet
+                      : values.area_id
+                      ? // show the existing area_id value as an option when areaOptions haven't loaded yet
                         [
                           {
-                            value: values.area,
-                            label: `Selected Area (${values.area})`,
+                            value: values.area_id,
+                            label: `Selected Area (${values.area_id})`,
                           },
                         ]
                       : [{ value: "", label: "No options" }]
                   }
-                  error={touched.area && errors.area}
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Longitude"
-                  type="number"
-                  name="longitude"
-                  value={values.longitude}
-                  onChange={(e) => setFieldValue("longitude", e.target.value)}
-                  error={touched.longitude && errors.longitude}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Latitude"
-                  type="number"
-                  name="latitude"
-                  value={values.latitude}
-                  onChange={(e) => setFieldValue("latitude", e.target.value)}
-                  error={touched.latitude && errors.latitude}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Threshold Radius"
-                  name="thresholdRadius"
-                  value={values.thresholdRadius}
-                  onChange={(e) =>
-                    setFieldValue("thresholdRadius", e.target.value)
-                  }
-                  error={touched.thresholdRadius && errors.thresholdRadius}
+                  error={touched.area_id && errors.area_id}
                 />
               </div>
             </div>
@@ -948,10 +711,10 @@ export default function AddCompanyCustomer() {
                 <InputFields
                   required
                   label="Payment Type"
-                  name="paymentType"
+                  name="payment_type"
                   type="radio"
-                  value={values.paymentType}
-                  onChange={(e) => setFieldValue("paymentType", e.target.value)}
+                  value={values.payment_type}
+                  onChange={(e) => setFieldValue("payment_type", e.target.value)}
                   options={[
                     { value: "1", label: "Cash" },
                     { value: "2", label: "Credit" },
@@ -961,77 +724,46 @@ export default function AddCompanyCustomer() {
               <div>
                 <InputFields
                   required
-                  label="Bank Name"
-                  name="bankName"
-                  value={values.bankName}
-                  onChange={(e) => setFieldValue("bankName", e.target.value)}
-                  error={touched.bankName && errors.bankName}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Bank Account Number"
-                  name="bankAccountNumber"
-                  value={values.bankAccountNumber}
-                  onChange={(e) =>
-                    setFieldValue("bankAccountNumber", e.target.value)
-                  }
-                  error={touched.bankAccountNumber && errors.bankAccountNumber}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
                   label="Credit Day"
-                  name="creditDay"
-                  value={values.creditDay}
-                  onChange={(e) => setFieldValue("creditDay", e.target.value)}
-                  error={touched.creditDay && errors.creditDay}
-                />
-              </div>
-              <div>
-                <InputFields
-                  label="Accuracy"
-                  name="accuracy"
-                  value={values.accuracy}
-                  onChange={(e) => setFieldValue("accuracy", e.target.value)}
-                  error={touched.accuracy && errors.accuracy}
+                  name="creditday"
+                  value={values.creditday}
+                  onChange={(e) => setFieldValue("creditday", e.target.value)}
+                  error={touched.creditday && errors.creditday}
                 />
               </div>
               <div>
                 <InputFields
                   required
                   label="Credit Limit"
-                  name="creditLimit"
-                  value={values.creditLimit}
-                  onChange={(e) => setFieldValue("creditLimit", e.target.value)}
-                  error={touched.creditLimit && errors.creditLimit}
+                  name="creditlimit"
+                  value={values.creditlimit}
+                  onChange={(e) => setFieldValue("creditlimit", e.target.value)}
+                  error={touched.creditlimit && errors.creditlimit}
                 />
               </div>
               <div>
                 <InputFields
                   required
                   label="Total Credit Limit"
-                  name="totalCreditLimit"
-                  value={values.totalCreditLimit}
+                  name="totalcreditlimit"
+                  value={values.totalcreditlimit}
                   onChange={(e) =>
-                    setFieldValue("totalCreditLimit", e.target.value)
+                    setFieldValue("totalcreditlimit", e.target.value)
                   }
-                  error={touched.totalCreditLimit && errors.totalCreditLimit}
+                  error={touched.totalcreditlimit && errors.totalcreditlimit}
                 />
               </div>
               <div>
                 <InputFields
                   label="Credit Limit Validity"
-                  name="creditLimitValidity"
-                  value={values.creditLimitValidity}
+                  name="credit_limit_validity"
+                  value={values.credit_limit_validity}
                   onChange={(e) =>
-                    setFieldValue("creditLimitValidity", e.target.value)
+                    setFieldValue("credit_limit_validity", e.target.value)
                   }
                   type="date"
                   error={
-                    touched.creditLimitValidity && errors.creditLimitValidity
+                    touched.credit_limit_validity && errors.credit_limit_validity
                   }
                 />
               </div>
@@ -1039,48 +771,48 @@ export default function AddCompanyCustomer() {
                 <InputFields
                   required
                   label="Guarantee Name"
-                  name="guaranteeName"
-                  value={values.guaranteeName}
+                  name="bank_guarantee_name"
+                  value={values.bank_guarantee_name}
                   onChange={(e) =>
-                    setFieldValue("guaranteeName", e.target.value)
+                    setFieldValue("bank_guarantee_name", e.target.value)
                   }
-                  error={touched.guaranteeName && errors.guaranteeName}
+                  error={touched.bank_guarantee_name && errors.bank_guarantee_name}
                 />
               </div>
               <div>
                 <InputFields
                   required
                   label="Guarantee Amount"
-                  name="guaranteeAmount"
-                  value={values.guaranteeAmount}
+                  name="bank_guarantee_amount"
+                  value={values.bank_guarantee_amount}
                   onChange={(e) =>
-                    setFieldValue("guaranteeAmount", e.target.value)
+                    setFieldValue("bank_guarantee_amount", e.target.value)
                   }
-                  error={touched.guaranteeAmount && errors.guaranteeAmount}
+                  error={touched.bank_guarantee_amount && errors.bank_guarantee_amount}
                 />
               </div>
               <div>
                 <InputFields
                   required
                   label="Guarantee From"
-                  name="guaranteeFrom"
-                  value={values.guaranteeFrom}
+                  name="bank_guarantee_from"
+                  value={values.bank_guarantee_from}
                   onChange={(e) =>
-                    setFieldValue("guaranteeFrom", e.target.value)
+                    setFieldValue("bank_guarantee_from", e.target.value)
                   }
                   type="date"
-                  error={touched.guaranteeFrom && errors.guaranteeFrom}
+                  error={touched.bank_guarantee_from && errors.bank_guarantee_from}
                 />
               </div>
               <div>
                 <InputFields
                   required
                   label="Guarantee To"
-                  name="guaranteeTo"
-                  value={values.guaranteeTo}
-                  onChange={(e) => setFieldValue("guaranteeTo", e.target.value)}
+                  name="bank_guarantee_to"
+                  value={values.bank_guarantee_to}
+                  onChange={(e) => setFieldValue("bank_guarantee_to", e.target.value)}
                   type="date"
-                  error={touched.guaranteeTo && errors.guaranteeTo}
+                  error={touched.bank_guarantee_to && errors.bank_guarantee_to}
                 />
               </div>
 
@@ -1143,12 +875,12 @@ export default function AddCompanyCustomer() {
           isSubmitting,
         }) => (
           <Form>
-            {/* Formik-aware watcher for region changes */}
+            {/* Formik-aware watcher for region_id changes */}
             <RegionWatcher
               fetchAreaOptions={fetchAreaOptions}
               setSkeleton={setSkeleton}
               preserveExistingArea={isEditMode}
-              initialArea={initialValues.area}
+              initialArea={initialValues.area_id}
             />
             <StepperForm
               steps={steps.map((step) => ({

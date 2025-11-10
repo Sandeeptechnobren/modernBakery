@@ -18,42 +18,30 @@ import StatusBtn from "@/app/components/statusBtn2";
 interface CustomerItem {
   id: number;
   sap_code: string;
-  customer_code: string;
+  osa_code: string;
   business_name: string;
-  owner_name: string;
-  owner_no: string;
-  whatsapp_no: string;
-  email: string;
+  company_type: string;
   language: string;
-  contact_no2: string;
-  road_street: string;
+  contact_number?: string;
+  business_type: string;
   town: string;
   landmark: string;
   district: string;
-  balance: number;
+  region_id: number;
+  area_id: number;
   payment_type: string;
-  bank_name: string;
-  bank_account_number: string;
   creditday: string;
   tin_no: string;
-  accuracy: string;
   creditlimit: number;
-  guarantee_name: string;
-  guarantee_amount: number;
-  guarantee_from: string;
-  guarantee_to: string;
   totalcreditlimit: number;
-  credit_limit_validity: string;
-  vat_no: string;
-  longitude: string;
-  latitude: string;
-  threshold_radius: number;
-  dchannel_id: number;
-  status: number;
-  created_user: number;
-  updated_user: number;
-  created_at: string;
-  updated_at: string;
+  credit_limit_validity?: string;
+  bank_guarantee_name: string;
+  bank_guarantee_amount: number;
+  bank_guarantee_from: string;
+  bank_guarantee_to: string;
+  distribution_channel_id: string;
+  merchendiser_ids: string;
+  status: string;
 }
 
 export default function CompanyCustomers() {
@@ -122,9 +110,9 @@ export default function CompanyCustomers() {
 
   /* ---------- Column Configuration ---------- */
   const columns = [
-    { key: "customer_code", label: "Customer Code", showByDefault: true, render: (row: TableDataType) => (
+    { key: "osa_code", label: "Customer Code", showByDefault: true, render: (row: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.customer_code}
+                {row.osa_code}
             </span>
         ) },
     { key: "sap_code", label: "SAP Code", showByDefault: true, render: (row: TableDataType) => (
@@ -132,13 +120,8 @@ export default function CompanyCustomers() {
             {row.sap_code}
         </span>
     ),},
-    { key: "owner_name", label: "Owner Name", showByDefault: true },
-    { key: "owner_no", label: "Owner Number" },
     { key: "business_name", label: "Business Name" },
-    { key: "whatsapp_no", label: "WhatsApp No" },
-    { key: "email", label: "Email" },
     { key: "district", label: "District", showByDefault: true },
-    { key: "balance", label: "Balance" },
     { key: "creditlimit", label: "Credit Limit" },
     { key: "totalcreditlimit", label: "Total Credit Limit" },
     { key: "payment_type", label: "Payment Type",

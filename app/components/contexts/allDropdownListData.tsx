@@ -32,9 +32,11 @@ import {
   labelList,
   roleList,
   projectList,
+  companyTypeList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
+import { set } from 'date-fns';
 
 interface DropdownDataContextType {
   companyList: CompanyItem[];
@@ -62,6 +64,7 @@ interface DropdownDataContextType {
   labels: LabelItem[];
   roles: Role[];
   projectList: Project[];
+  companyTypeList: CompanyType[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -93,6 +96,7 @@ interface DropdownDataContextType {
   shelvesOptions: { value: string; label: string }[];
   submenuOptions: { value: string; label: string }[];
   projectOptions: { value: string; label: string}[];
+  companyTypeOptions: { value: string; label: string}[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
@@ -126,6 +130,12 @@ interface CountryItem {
   country_code?: string;
   country_name?: string;
   currency?: string;
+}
+
+interface CompanyType {
+  id?: number | string;
+  code?: string;
+  name?: string;
 }
 
 interface RegionItem {
@@ -364,6 +374,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [labels, setLabels] = useState<LabelItem[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [project, setProject] = useState<Project[]>([]);
+  const [companyType, setComapanyType] = useState<CompanyType[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -426,6 +437,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }));
 
   const companyCustomersTypeOptions = (Array.isArray(companyCustomersTypeData) ? companyCustomersTypeData : []).map((c: CustomerTypeItem) => ({
+    value: String(c.id ?? ''),
+    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+  }));
+
+  const companyTypeOptions = (Array.isArray(companyType) ? companyType : []).map((c: CompanyType) => ({
     value: String(c.id ?? ''),
     label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
   }));
@@ -867,6 +883,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         labelList(),
         roleList(),
         projectList({}),
+        companyTypeList(),
       ]);
 
 
@@ -911,6 +928,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setLabels(normalize(res[28]) as LabelItem[]);
       setRoles(normalize(res[29]) as Role[]);
       setProject(normalize(res[30]) as Project[]);
+      setComapanyType(normalize(res[31]) as CompanyType[]);
 
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -946,6 +964,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setLabels([]);
       setRoles([]);
       setProject([]);
+      setComapanyType([]);
     } finally {
       setLoading(false);
     }
@@ -985,6 +1004,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         labels: labels,
         roles: roles,
         projectList: project,
+        companyTypeList: companyType,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
@@ -1031,6 +1051,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         fetchWarehouseOptions,
         roleOptions,
         projectOptions,
+        companyTypeOptions,
         getItemUoms,
         getPrimaryUom,
         loading

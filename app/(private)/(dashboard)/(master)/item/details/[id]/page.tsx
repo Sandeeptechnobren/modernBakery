@@ -11,6 +11,7 @@ import Link from "next/link";
 import KeyValueData from "@/app/components/keyValueData";
 import Image from "next/image";
 import StatusBtn from "@/app/components/statusBtn2";
+import { useLoading } from "@/app/services/loadingContext";
 
 interface Item {
   id?: number;
@@ -39,14 +40,19 @@ interface Item {
     code?: string;
   };
   uom: {
-    id: number;
-    name: string;
-    price: string;
-    uom_type: string;
-    upc: string | null;
-    is_stock_keeping_unit: boolean;
-    enable_for: string;
-  }
+    "id": number,
+                "item_id": number,
+                "name": string,
+                "uom_type": string,
+                "upc": string,
+                "price": string,
+                "is_stock_keeping": boolean,
+                "enable_for": string,
+                "status": string,
+              
+                "keeping_quantity": number,
+                "uom_id": number
+  }[]
 }
 
 interface UOM {
@@ -73,13 +79,12 @@ export default function Page() {
   const [uomList, setUomList] = useState<Item[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const { id, tabName } = useParams();
-  const [loading, setLoading] = useState(false);
+  const { setLoading } = useLoading();
   const [item, setItem] = useState<Item | null>(null);
 
   const { showSnackbar } = useSnackbar();
 
   const onTabClick = (idx: number) => {
-    // ensure index is within range and set the corresponding tab key
     if (typeof idx !== "number") return;
     if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
     setActiveTab(tabList[idx].key);
@@ -94,7 +99,10 @@ export default function Page() {
     const fetchItemDetails = async () => {
       setLoading(true);
       try {
+        setLoading(true);
         const res = await itemById(id.toString());
+        setLoading(false);
+        console.log(res,"res")
 
         if (res.error) {
           showSnackbar(res.data?.message || "Unable to fetch item details", "error");
@@ -214,34 +222,39 @@ export default function Page() {
             </div>
           )}
           {activeTab === "uom" && (
-            <ContainerCard className="w-full p-5">
-              <h2 className="text-lg font-semibold mb-4">Unit of Measurement (UOM)</h2>
+            item?.uom.map((singleItem,index)=>{
+
+
+              return(<ContainerCard key={index} className="w-full p-5">
 
 
 
               <h3 className="text-md font-semibold text-gray-800 mb-2">
-                {item?.uom.uom_type || "UOM"}
+                {singleItem?.uom_type || "UOM"}
               </h3>
 
               <div className="space-y-1 text-gray-700 text-sm">
                 <p>
-                  <strong>Name:</strong> {item?.uom.name || "-"}
+                  <strong>Name:</strong> {singleItem?.name || "-"}
                 </p>
                 <p>
-                  <strong>Price:</strong> ₹{item?.uom.price || "0.00"}
+                  <strong>Price:</strong> ₹{singleItem?.price || "0.00"}
                 </p>
                 <p>
-                  <strong>UPC:</strong> {item?.uom.upc || "N/A"}
+                  <strong>UPC:</strong> {singleItem?.upc || "N/A"}
                 </p>
                 <p>
-                  <strong>Enable For:</strong> {item?.uom.enable_for || "-"}
+                  <strong>Enable For:</strong> {singleItem?.enable_for || "-"}
                 </p>
                 <p>
-                  <strong>Is Stock Keeping Unit:</strong>{" "}
-                  {item?.uom.is_stock_keeping_unit ? "Yes" : "No"}
+                  <strong>Stock Keeping Unit:</strong>{" "}
+                  {singleItem?.keeping_quantity}
                 </p>
               </div>
-            </ContainerCard>
+            </ContainerCard>)
+
+            })
+            
 
 
 

@@ -18,44 +18,30 @@ import SummaryCard from "@/app/components/summaryCard";
 interface CustomerItem {
   id: number;
   sap_code: string;
-  customer_code: string;
+  osa_code: string;
   business_name: string;
-  owner_name: string;
-  owner_no: string;
-  whatsapp_no: string;
-  email: string;
+  company_type: string;
   language: string;
-  contact_no2: string;
-  road_street: string;
+  contact_number?: string;
+  business_type: string;
   town: string;
   landmark: string;
   district: string;
-  balance: number;
+  get_region: { id: number; region_code: string; region_name: string; }
+  get_area: { id: number; area_code: string; area_name: string; }
   payment_type: string;
-  bank_name: string;
-  bank_account_number: string;
   creditday: string;
   tin_no: string;
-  accuracy: string;
   creditlimit: number;
-  guarantee_name: string;
-  guarantee_amount: number;
-  guarantee_from: string;
-  guarantee_to: string;
   totalcreditlimit: number;
-  credit_limit_validity: string;
-  vat_no: string;
-  longitude: string;
-  latitude: string;
-  threshold_radius: number;
-  dchannel_id: number;
-  status: number;
-  get_outlet_channel: {
-            outlet_channel: string,
-            outlet_channel_code: string
-        },
-    get_region: { region_code: string, region_name: string };
-    get_area: { area_code: string, area_name: string };
+  credit_limit_validity?: string;
+  bank_guarantee_name: string;
+  bank_guarantee_amount: number;
+  bank_guarantee_from: string;
+  bank_guarantee_to: string;
+  distribution_channel_id: string;
+  merchendiser_ids: string;
+  status: string;
 }
 
 const title = "Company Customer Details";
@@ -147,20 +133,13 @@ export default function ViewPage() {
                                          </div>
                                          <div className="text-center sm:text-left">
                                              <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                                                 {customer?.customer_code} - {customer?.business_name }
+                                                 {customer?.osa_code} - {customer?.business_name }
                                              </h2>
-                                             <span className="flex items-center">
-                                                 <span className="text-[#414651] text-[16px]">
-                                        
-                                                    <span className="mb-[10px]">
-                                                        {customer?.owner_no || "-"}
-                                                    </span>
-                                                 </span>
-                                             </span>
+                                            
                                          </div>
                                      </div>
                        <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
-                                                         <StatusBtn isActive={customer?.status === 1} />
+                                                         <StatusBtn isActive={customer?.status === "1"} />
                                                      </span>
                                    
                                  </ContainerCard>
@@ -191,14 +170,8 @@ export default function ViewPage() {
                 title="Customer Information"
                 data={[
                   { key: "SAP Code", value: customer?.sap_code || "-" },
-                  // { key: "Customer Code", value: customer?.customer_code || "-" },
-                  // { key: "Business Name", value: customer?.business_name || "-" },
-                  { key: "Owner Name", value: customer?.owner_name || "-" },
-                  // { key: "Owner Contact No", value: customer?.owner_no || "-" },
-                  { key: "WhatsApp No", value: customer?.whatsapp_no || "-" },
-                  { key: "Email", value: customer?.email || "-" },
                   { key: "Language", value: customer?.language || "-" },
-                  { key: "Contact No 2", value: customer?.contact_no2 || "-" },
+                  { key: "Contact No.", value: customer?.contact_number || "-" },
                 ]}
               />
             </ContainerCard>
@@ -212,17 +185,13 @@ export default function ViewPage() {
                                        
                                         { key: "Sub Region ", value: `${customer?.get_area?.area_code} - ${customer?.get_area?.area_name}` || "-" },
                                         
-                                        { key: "Outlet Channel ", value: `${customer?.get_outlet_channel?.outlet_channel_code} - ${customer?.get_outlet_channel?.outlet_channel}` || "-" },
                                        
-                  { key: "Road / Street", value: customer?.road_street || "-" },
                   { key: "Town", value: customer?.town || "-" },
                   { key: "Landmark", value: customer?.landmark || "-" },
                   { key: "District", value: customer?.district || "-" },
                 ]}
               />
-              {customer?.latitude && customer?.longitude && (
-                                    <Map latitude={customer.latitude} longitude={customer.longitude} title="Customer Location" />
-                                )}
+              
             </ContainerCard>
           )}
           {activeTab === "financial" && (
@@ -230,10 +199,7 @@ export default function ViewPage() {
               <KeyValueData
                 title="Financial Information"
                 data={[
-                  { key: "Balance", value: customer?.balance?.toString() || "-" },
                   { key: "Payment Type", value:getPaymentType(customer?customer.payment_type:"")|| "-" },
-                  { key: "Bank Name", value: customer?.bank_name || "-" },
-                  { key: "Account Number", value: customer?.bank_account_number || "-" },
                   { key: "Credit Days", value: customer?.creditday || "-" },
                   { key: "Credit Limit", value: customer?.creditlimit?.toString() || "-" },
                   { key: "Total Credit Limit", value: customer?.totalcreditlimit?.toString() || "-" },
@@ -247,10 +213,10 @@ export default function ViewPage() {
               <KeyValueData
                 title="Guarantee Details"
                 data={[
-                  { key: "Guarantee Name", value: customer?.guarantee_name || "-" },
-                  { key: "Guarantee Amount", value: customer?.guarantee_amount?.toString() || "-" },
-                  { key: "Guarantee From", value: customer?.guarantee_from || "-" },
-                  { key: "Guarantee To", value: customer?.guarantee_to || "-" },
+                  { key: "Guarantee Name", value: customer?.bank_guarantee_name || "-" },
+                  { key: "Guarantee Amount", value: customer?.bank_guarantee_amount?.toString() || "-" },
+                  { key: "Guarantee From", value: customer?.bank_guarantee_from || "-" },
+                  { key: "Guarantee To", value: customer?.bank_guarantee_to || "-" },
                 ]}
               />
             </ContainerCard>
@@ -263,8 +229,7 @@ export default function ViewPage() {
                     title="Tax & Accuracy"
                     data={[
                       { key: "TIN No", value: customer?.tin_no || "-" },
-                      { key: "VAT No", value: customer?.vat_no || "-" },
-                      { key: "Accuracy", value: customer?.accuracy || "-" },
+                      { key: "VAT No", value: customer?.tin_no || "-" },
                     ]}
                   />
                 </ContainerCard>
@@ -279,7 +244,7 @@ export default function ViewPage() {
                       icon="prime:barcode"
                       iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
                       iconWidth={30}
-                      title={customer?.customer_code || "CUST-1234"}
+                      // title={customer?.customer_code || "CUST-1234"}
                       description={"Customer Code"}
                     />
                   </ContainerCard>
@@ -297,12 +262,8 @@ export default function ViewPage() {
                         ),
                       },
                       {
-                        key: "Threshold Radius",
-                        value: customer?.threshold_radius?.toString() || "-",
-                      },
-                      {
-                        key: "DChannel ID",
-                        value: customer?.dchannel_id?.toString() || "-",
+                        key: "Distribution Channel ID",
+                        value: customer?.distribution_channel_id?.toString() || "-",
                       },
                     ]}
                   />
