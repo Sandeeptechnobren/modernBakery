@@ -21,13 +21,22 @@ export default function SalemanLoad() {
     const columns: configType["columns"] = [
         { key: "code", label: "Code" },
         // { key: "date", label: "Collection Date" },
-        { key: "warehouse_code", label: "Warehouse Code" },
-        { key: "warehouse_name", label: "Warehouse Name" },
-        { key: "salesman_code", label: "Salesman Code" },
-        { key: "salesman_name", label: "Salesman Name" },
-        { key: "route_code", label: "Route Code" },
-        { key: "route_name", label: "Route Name" },
-        { key: "customer", label: "Customer" },
+        { key: "warehouse_code", label: "Warehouse Code",  render: (row: TableDataType) => {
+        const code = row.warehouse_code || "-";
+        const name = row.warehouse_name || "-";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      } },
+      { key: "route_code", label: "Route Code",  render: (row: TableDataType) => {
+      const code = row.route_code || "-";
+      const name = row.route_name || "-";
+      return `${code}${code && name ? " - " : ""}${name}`;
+    }  },
+    { key: "customer", label: "Customer" },
+        { key: "salesman_code", label: "Salesman Code",  render: (row: TableDataType) => {
+        const code = row.salesman_code || "-";
+        const name = row.salesman_name || "-";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }  },
         {
             key: "status",
             label: "Status",

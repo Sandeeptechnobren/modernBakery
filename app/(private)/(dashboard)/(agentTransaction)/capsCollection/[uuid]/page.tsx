@@ -1,6 +1,7 @@
 "use client";
 
 import ContainerCard from "@/app/components/containerCard";
+import AutoSuggestion from "@/app/components/autoSuggestion";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import CustomTable, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
@@ -18,6 +19,48 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import * as yup from "yup";
+import { warehouseListGlobalSearch, getCompanyCustomers, agentCustomerList, itemGlobalSearch } from "@/app/services/allApi";
+interface Uom {
+  id: string;
+  name?: string;
+  price?: string;
+}
+interface Warehouse {
+  id: number;
+  code?: string;
+  warehouse_code?: string;
+  name?: string;
+  warehouse_name?: string;
+}
+interface Route {
+  id: number;
+  route_code?: string;
+  code?: string;
+  route_name?: string;
+  name?: string;
+}
+interface CompanyCustomer {
+  id: number;
+  osa_code?: string;
+  business_name?: string;
+}
+interface AgentCustomer {
+  id: number;
+  osa_code?: string;
+  outlet_name?: string;
+  customer_name?: string;
+  name?: string;
+}
+interface Item {
+  id: number;
+  item_code?: string;
+  code?: string;
+  name?: string;
+  uom?: Uom[];
+  uoms?: Uom[];
+}
+
+
 
 export default function AddEditCapsCollection() {
   const {
@@ -47,6 +90,73 @@ export default function AddEditCapsCollection() {
   const [rowUomOptions, setRowUomOptions] = useState<
     Record<string, { value: string; label: string; price?: string }[]>
   >({});
+
+
+// AutoSuggestion search functions (same as return page)
+const handleWarehouseSearch = async (searchText: string) => {
+  try {
+    const response = await warehouseListGlobalSearch({ query: searchText });
+    const data = Array.isArray(response?.data) ? response.data : [];
+    return data.map((warehouse: Warehouse) => ({
+      value: String(warehouse.id),
+      label: `${warehouse.code || warehouse.warehouse_code || ""} - ${warehouse.name || warehouse.warehouse_name || ""}`,
+      code: warehouse.code || warehouse.warehouse_code,
+      name: warehouse.name || warehouse.warehouse_name,
+    }));
+  } catch {
+    return [];
+  }
+};
+
+const handleCustomerSearch = async (searchText: string, warehouseId: string, customerType: string) => {
+  if (!warehouseId) return [];
+  try {
+    let response;
+    if (customerType === "1") {
+      response = await getCompanyCustomers({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
+    } else {
+      response = await agentCustomerList({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
+    }
+    const data = Array.isArray(response?.data) ? response.data : [];
+    return data.map((customer: any) => {
+      // Always include contact_no in the returned option
+      if (customerType === "1") {
+        return {
+          value: String(customer.id),
+          label: `${customer.osa_code || ""} - ${customer.business_name || ""}`.trim(),
+          name: customer.business_name || "",
+          contact_no: customer.contact_no || "",
+        };
+      } else {
+        return {
+          value: String(customer.id),
+          label: `${customer.osa_code || ""} - ${customer.outlet_name || ""}`,
+          name: customer.outlet_name || customer.customer_name || customer.name || '',
+          contact_no: customer.contact_no || "",
+        };
+      }
+    });
+  } catch {
+    return [];
+  }
+};
+
+const handleItemSearch = async (searchText: string) => {
+  if (!searchText || searchText.trim().length < 1) return [];
+  try {
+    const response = await itemGlobalSearch({ query: searchText });
+    const data = Array.isArray(response?.data) ? response.data : [];
+    return data.map((item: Item) => ({
+      value: String(item.id),
+      label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
+      code: item.item_code || item.code,
+      name: item.name,
+      uoms: item.uom || item.uoms || [],
+    }));
+  } catch {
+    return [];
+  }
+};
 
   const [tableData, setTableData] = useState<TableDataType[]>([
     {
@@ -245,7 +355,7 @@ export default function AddEditCapsCollection() {
           </div>
           <div className="flex flex-col text-right">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-              Load
+              CAPS COLLECTION
             </span>
             <span className="text-primary text-[14px] tracking-[10px]">#L0201</span>
           </div>
@@ -258,18 +368,22 @@ export default function AddEditCapsCollection() {
           CAPS Master Collection Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
           <div>
-            <InputFields
+            <AutoSuggestion
               required
               label="Warehouse"
-              value={form.warehouse}
-              options={warehouseOptions}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleChange("warehouse", val);
+              name="warehouse"
+              placeholder="Search warehouse..."
+              initialValue={form.warehouse}
+              onSearch={handleWarehouseSearch}
+              onSelect={(option: { value: string }) => {
+                handleChange("warehouse", option.value);
                 handleChange("customer", "");
-                if (val) fetchAgentCustomerOptions(val);
+                if (option.value) fetchAgentCustomerOptions(option.value);
               }}
+              onClear={() => handleChange("warehouse", "")}
+              error={errors.warehouse}
             />
             {errors.warehouse && (
               <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
@@ -277,17 +391,21 @@ export default function AddEditCapsCollection() {
           </div>
 
           <div>
-            <InputFields
+            <AutoSuggestion
               required
               label="Customer"
-              value={form.customer}
-              options={agentCustomerOptions}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleChange("customer", val);
-                const selected = agentCustomerOptions.find((opt) => opt.value === val);
-                setCustomerContactNo(selected?.contact_no || "");
+              name="customer"
+              placeholder="Search customer..."
+              initialValue={form.customer}
+              onSearch={(searchText: string) => handleCustomerSearch(searchText, form.warehouse, "0")}
+              onSelect={(option: { value: string; contact_no?: string }) => {
+                handleChange("customer", option.value);
+                setCustomerContactNo(option.contact_no || "");
               }}
+              onClear={() => handleChange("customer", "")}
+              error={errors.customer}
+              disabled={!form.warehouse}
+              noOptionsMessage={!form.warehouse ? "Please select a warehouse first" : "No customers found"}
             />
             {errors.customer && (
               <p className="text-red-500 text-sm mt-1">{errors.customer}</p>
@@ -301,7 +419,7 @@ export default function AddEditCapsCollection() {
             onChange={() => {}}
           />
 
-          <InputFields
+          {/* <InputFields
             type="radio"
             label="Status"
             name="status"
@@ -311,7 +429,7 @@ export default function AddEditCapsCollection() {
               { value: "1", label: "Active" },
               { value: "0", label: "Inactive" },
             ]}
-          />
+          /> */}
         </div>
 
         <hr className="mb-4" />
@@ -326,15 +444,14 @@ export default function AddEditCapsCollection() {
                 key: "item",
                 label: "Item",
                 render: (row) => (
-                  <InputFields
-                    options={itemOptions}
-                    value={row.item}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      handleTableChange(row.id, "item", val);
-                      const selectedItem = itemOptions.find((i) => i.value === val);
-                      if (selectedItem?.uoms?.length) {
-                        const uomOpts = selectedItem.uoms.map((u: any) => ({
+                  <AutoSuggestion
+                    placeholder="Search item..."
+                    initialValue={row.item}
+                    onSearch={handleItemSearch}
+                    onSelect={(option: { value: string; uoms?: Uom[] }) => {
+                      handleTableChange(row.id, "item", option.value);
+                      if (option.uoms && option.uoms.length > 0) {
+                        const uomOpts = option.uoms.map((u: Uom) => ({
                           value: u.id || "",
                           label: u.name || "",
                           price: u.price || "0",
@@ -346,6 +463,14 @@ export default function AddEditCapsCollection() {
                           handleTableChange(row.id, "price", first.price || "0");
                         }
                       }
+                    }}
+                    onClear={() => {
+                      handleTableChange(row.id, "item", "");
+                      setRowUomOptions((prev) => {
+                        const newOpts = { ...prev };
+                        delete newOpts[row.id];
+                        return newOpts;
+                      });
                     }}
                   />
                 ),
@@ -441,7 +566,7 @@ export default function AddEditCapsCollection() {
           </button>
           <SidebarBtn
             isActive={!submitting}
-            label={isEditMode ? "Update" : "Create Order"}
+            label={isEditMode ? "Update CAPS Collection" : "Create CAPS Collection"}
             onClick={handleSubmit}
           />
         </div>

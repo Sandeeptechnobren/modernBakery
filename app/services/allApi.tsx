@@ -1882,7 +1882,7 @@ export const itemList = async (params?: Params) => {
 
 export const itemGlobalSearch = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/items/global_search", { params: params });
+    const res = await API.get("/api/master/items/global-search", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
