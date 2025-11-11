@@ -183,6 +183,18 @@ export const countryList = async (params?: Params) => {
   }
 };
 
+
+export const uomList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/settings/uom/list", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const countryListGlobalSearch = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/country/global_search", {

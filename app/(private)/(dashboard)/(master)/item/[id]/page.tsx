@@ -140,6 +140,7 @@ export default function AddEditItem() {
     itemCategoryOptions,
     itemSubCategoryOptions,
     fetchItemSubCategoryOptions,
+    uomOptions,
   } = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
   const [prefix, setPrefix] = useState("");
@@ -875,10 +876,7 @@ const res = isEditMode
                   label="UOM"
                   name="uom"
                   value={uomData.uom}
-                  options={[
-                    { label: "Pieces", value: "pieces" },
-                    { label: "Cartoon", value: "cartoon" },
-                  ]}
+                  options={uomOptions}
                   onChange={handleUomChange}
                   error={touched.uom && errors.uom}
                   // Make full width inside grid cell
