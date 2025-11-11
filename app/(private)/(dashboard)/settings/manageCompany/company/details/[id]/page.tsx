@@ -13,8 +13,8 @@ import StatusBtn from "@/app/components/statusBtn2";
 import { getCompanyById } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
-import Overview from "./overview/page";
 import Address from "./address/page";
+import Overview from "./overview/page";
 
 interface Company {
   id?: string | number;
@@ -112,7 +112,11 @@ export default function Page() {
             <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
               {company?.company_code || "-"} - {company?.company_name || "-"}
             </h2>
-            <span className="flex items-center">
+            
+          </div>
+        </div>
+
+        <span className="flex items-center">
               <span className="text-[#414651] text-[16px]">
                 <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                   <StatusBtn
@@ -123,17 +127,7 @@ export default function Page() {
                 </span>
               </span>
             </span>
-          </div>
-        </div>
 
-        {/* contact button */}
-        <SidebarBtn
-          isActive={true}
-          label="Send Email"
-          labelTw="text-[16px] font-semibold mb-[4px] sm:hidden md:flex"
-          leadingIcon="ic:outline-email"
-          leadingIconSize={20}
-        />
       </ContainerCard>
 
       {/* Tabs */}

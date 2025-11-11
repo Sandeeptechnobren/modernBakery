@@ -370,7 +370,8 @@ export default function AddEditRoute() {
               : "border-gray-300"
           }`}
           onClick={() => router.push("/route")}
-          disabled={submitting} // disable while submitting
+          disabled={submitting}
+           // disable while submitting
         >
           Cancel
         </button>

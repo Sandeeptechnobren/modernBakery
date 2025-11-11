@@ -201,7 +201,7 @@ export default function AddCustomerTypePage() {
             <button
               className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
               type="button"
-              onClick={() => formik.resetForm()}
+              onClick={() => router.back()}
             >
               Cancel
             </button>

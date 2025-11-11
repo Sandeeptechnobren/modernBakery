@@ -163,6 +163,15 @@ export const companyListGlobalSearch = async (params: Params) => {
   }
 };
 
+export const SalesmanListGlobalSearch = async (params: Params) => {
+  try {
+    const res = await API.get("/api/master/salesmen/global_search", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const countryList = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/country/list_country", {

@@ -1,27 +1,23 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 
-import BorderIconButton from "@/app/components/borderIconButton";
-import CustomDropdown from "@/app/components/customDropdown";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
   listReturnType,
   TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import {
-  salesmanList,
-  updateSalesmanStatus,
-  exportSalesmanData,
-} from "@/app/services/allApi";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { useLoading } from "@/app/services/loadingContext";
 import StatusBtn from "@/app/components/statusBtn2";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import {
+  exportSalesmanData,
+  salesmanList,
+  SalesmanListGlobalSearch,
+  updateSalesmanStatus,
+} from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 const SalesmanPage = () => {
   const { setLoading } = useLoading();
@@ -76,6 +72,7 @@ const SalesmanPage = () => {
     }
   };
 
+
   const handleExport = async (fileType: "csv" | "xlsx") => {
     try {
       setLoading(true);
@@ -123,6 +120,39 @@ const SalesmanPage = () => {
     }
   };
 
+  const searchSalesman = useCallback(
+    async (
+      query: string,
+      page: number = 1,
+      columnName?: string,
+      pageSize: number = 50
+    ): Promise<listReturnType> => {
+      try {
+        setLoading(true);
+        const res = await SalesmanListGlobalSearch({ query: query.toString(), page: page.toString() });
+        setLoading(false);
+        console.log({
+          data: res.data || [],
+          total: res.pagination.totalPages || 1,
+          currentPage: res.pagination.page || 1,
+          pageSize: res.pagination.limit || pageSize,
+        })
+
+        return {
+          data: res.data || [],
+          total: res.pagination.totalPages || 1,
+          currentPage: res.pagination.page || 1,
+          pageSize: res.pagination.limit || pageSize,
+        };
+      } catch (error) {
+        setLoading(false);
+        console.error(error);
+        throw error;
+      }
+    },
+    []
+  );
+
   const fetchSalesman = useCallback(
     async (
       page: number = 1,
@@ -136,9 +166,9 @@ const SalesmanPage = () => {
         setLoading(false);
         return {
           data: listRes.data || [],
-          total: listRes.pagination.totalPages,
-          currentPage: listRes.pagination.page,
-          pageSize: listRes.pagination.limit,
+          total: listRes.pagination.totalPages || 1,
+          currentPage: listRes.pagination.page || 1,
+          pageSize: listRes.pagination.limit || pageSize,
         };
       } catch (error: unknown) {
         console.error("API Error:", error);
@@ -150,86 +180,86 @@ const SalesmanPage = () => {
   );
 
   const columns = [
-  {
-    key: "osa_code",
-    label: "Salesman Code",
-    render: (row: TableDataType) => (
-      <span className="font-semibold text-[#181D27] text-[14px]">
-        {row.osa_code}
-      </span>
-    ),
-  },
-  { key: "name", label: "Salesman Name" },
-  {
-    key: "salesman_type",
-    label: "Salesman Type",
-    render: (row: TableDataType) => {
-      const obj =
-        typeof row.salesman_type === "string"
-          ? JSON.parse(row.salesman_type)
-          : row.salesman_type;
-      return obj?.salesman_type_name || "-";
+    {
+      key: "osa_code",
+      label: "Salesman Code",
+      render: (row: TableDataType) => (
+        <span className="font-semibold text-[#181D27] text-[14px]">
+          {row.osa_code}
+        </span>
+      ),
     },
-  },
+    { key: "name", label: "Salesman Name" },
+    {
+      key: "salesman_type",
+      label: "Salesman Type",
+      render: (row: TableDataType) => {
+        const obj =
+          typeof row.salesman_type === "string"
+            ? JSON.parse(row.salesman_type)
+            : row.salesman_type;
+        return obj?.salesman_type_name || "-";
+      },
+    },
 
-  { key: "designation", label: "Designation" },
-  // {
-  //       key: "warehouse",
-  //       label: "Warehouse",
-  //       render: (row: TableDataType) =>
-  //           typeof row.warehouse === "object" &&
-  //           row.warehouse !== null &&
-  //           "warehouse_name" in row.warehouse
-  //               ? (row.warehouse as { warehouse_name?: string })
-  //                     .warehouse_name || "-"
-  //               : "-",
-  //               filter: {
-  //                   isFilterable: true,
-  //                   width: 320,
-  //                   options: Array.isArray(warehouseOptions) ? warehouseOptions : [], // [{ value, label }]
-  //                   onSelect: (selected: string | string[]) => {
-  //                       setWarehouseId((prev) => prev === selected ? "" : (selected as string));
-  //                   },
-  //                   selectedValue: warehouseId,
-  //               },
-       
-  //       showByDefault: true,
-  //   },
-  //   {
-  //       key: "route",
-  //       label: "Route",
-  //       render: (row: TableDataType) => {
-  //           if (
-  //               typeof row.route === "object" &&
-  //               row.route !== null &&
-  //               "route_name" in row.route
-  //           ) {
-  //               return (row.route as { route_name?: string }).route_name || "-";
-  //           }
-  //           return typeof row.route === 'string' ? row.route : "-";
-  //       },
-  //       filter: {
-  //           isFilterable: true,
-  //           width: 320,
-  //           options: Array.isArray(routeOptions) ? routeOptions : [],
-  //           onSelect: (selected: string | string[]) => {
-  //               setRouteId((prev) => prev === selected ? "" : (selected as string));
-  //           },
-  //           selectedValue: routeId,
-  //       },
-       
-  //       showByDefault: true,
-  //   },
-  { key: "contact_no", label: "Contact No" },
+    { key: "designation", label: "Designation" },
+    // {
+    //       key: "warehouse",
+    //       label: "Warehouse",
+    //       render: (row: TableDataType) =>
+    //           typeof row.warehouse === "object" &&
+    //           row.warehouse !== null &&
+    //           "warehouse_name" in row.warehouse
+    //               ? (row.warehouse as { warehouse_name?: string })
+    //                     .warehouse_name || "-"
+    //               : "-",
+    //               filter: {
+    //                   isFilterable: true,
+    //                   width: 320,
+    //                   options: Array.isArray(warehouseOptions) ? warehouseOptions : [], // [{ value, label }]
+    //                   onSelect: (selected: string | string[]) => {
+    //                       setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+    //                   },
+    //                   selectedValue: warehouseId,
+    //               },
 
-  {
-    key: "status",
-    label: "Status",
-    render: (row: TableDataType) => (
-      <StatusBtn isActive={String(row.status) === "1"} />
-    ),
-  },
-];
+    //       showByDefault: true,
+    //   },
+    //   {
+    //       key: "route",
+    //       label: "Route",
+    //       render: (row: TableDataType) => {
+    //           if (
+    //               typeof row.route === "object" &&
+    //               row.route !== null &&
+    //               "route_name" in row.route
+    //           ) {
+    //               return (row.route as { route_name?: string }).route_name || "-";
+    //           }
+    //           return typeof row.route === 'string' ? row.route : "-";
+    //       },
+    //       filter: {
+    //           isFilterable: true,
+    //           width: 320,
+    //           options: Array.isArray(routeOptions) ? routeOptions : [],
+    //           onSelect: (selected: string | string[]) => {
+    //               setRouteId((prev) => prev === selected ? "" : (selected as string));
+    //           },
+    //           selectedValue: routeId,
+    //       },
+
+    //       showByDefault: true,
+    //   },
+    { key: "contact_no", label: "Contact No" },
+
+    {
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => (
+        <StatusBtn isActive={String(row.status) === "1"} />
+      ),
+    },
+  ];
 
   return (
     <>
@@ -239,7 +269,7 @@ const SalesmanPage = () => {
         <Table
           refreshKey={refreshKey}
           config={{
-            api: { list: fetchSalesman },
+            api: { list: fetchSalesman, search: searchSalesman },
             header: {
               title: "Salesman",
               threeDot: [
@@ -297,7 +327,7 @@ const SalesmanPage = () => {
               //     />
               //   </div>,
               // ],
-              searchBar: false,
+              searchBar: true,
               columnFilter: true,
               actions: [
                 <SidebarBtn
