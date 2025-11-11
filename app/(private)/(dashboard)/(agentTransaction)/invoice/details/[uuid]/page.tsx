@@ -96,8 +96,8 @@ interface TableRow {
 
 const columns = [
   { key: "id", label: "#", width: 60 },
-  { key: "itemCode", label: "Product Code" },
-  { key: "itemName", label: "Product Name", width: 250 },
+  { key: "itemCode", label: "Item Code" },
+  { key: "itemName", label: "Item Name", width: 250 },
   { key: "UOM", label: "UOM" },
   { key: "Quantity", label: "Quantity" },
   { key: "Price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.Price) || '0.00'}</> },
@@ -134,7 +134,7 @@ export default function OrderDetailPage() {
           if (data?.details && Array.isArray(data.details)) {
             const mappedData = data.details.map((detail: TableRow, index: number) => ({
               id: String(index + 1),
-              itemCode: String(detail.item_name ?? "-"),
+              itemCode: String(detail.item_code ?? "-"),
               itemName: String(detail.item_name ?? "-"),
               UOM: String(detail.uom_name ?? detail.uom ?? "-"),
               Quantity: String(detail.quantity ?? 0),
