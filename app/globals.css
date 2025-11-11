@@ -10,6 +10,7 @@ body {
   /* box-sizing:border-box; */
   font-family: "Twemoji Country Flags", "Inter", sans-serif;
   line-height: 20px;
+  user-select: none;
 }
 
 @theme {

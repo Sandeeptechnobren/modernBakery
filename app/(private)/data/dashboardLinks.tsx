@@ -244,118 +244,146 @@ export const initialLinkData: SidebarDataType[] = [
         ],
       },
 
-            {
-                isActive: false,
-                href: "#",
-                label: "Assets",
-                leadingIcon: "streamline-freehand:money-bag",
-                iconColor: "text-green-500",
-                trailingIcon: "mdi-light:chevron-right",
-                children: [
-                    {
-                        isActive: false,
-                        href: "/assets/chiller",
-                        label: "Chiller",
-                        leadingIcon: "guidance:refrigeration",
-                        iconColor: "text-cyan-500",
-                    },
-                    {
-                        isActive: false,
-                        href: "/assets/chillerRequest",
-                        label: "Chiller Request",
-                        leadingIcon: "si:pull-request-duotone",
-                        iconColor: "text-cyan-500",
-                    },
-                    {
-                        isActive: false,
-                        href: "/assets/vendor",
-                        label: "Vendor",
-                        leadingIcon: "streamline-freehand:shop",
-                        iconColor: "text-cyan-500",
-                    },
-                ],
-            },
-            // {
-            //     isActive: false,
-            //     href: "/report",
-            //     label: "Report",
-            //     leadingIcon: "tabler:file-text",
-            //     trailingIcon: "mdi-light:chevron-right",
-            //     iconColor: "text-red-500"
-            // },
-            // {
-            //     isActive: false,
-            //     href: "#",
-            //     label: "Agent Transaction",
-            //     leadingIcon: "mdi:account-cash-outline",
-            //     iconColor: "text-violet-500"
-            // },
- {
-                isActive: false,
-                href: "#",
-                label: "Agent Transaction",
-                leadingIcon: "mdi:account-cash-outline",
-                iconColor: "text-green-500",
-                trailingIcon: "mdi-light:chevron-right",
-                children: [
-                    {
-                        isActive: false,
-                        href: "/agentOrder",
-                        label: "Agent Order",
-                        leadingIcon: "carbon:delivery-parcel",
-                        iconColor: "text-cyan-500"
-                    },
-                    {
-                        isActive: false,
-                        href: "/invoice",
-                        label: "Invoice",
-                        leadingIcon: "hugeicons:invoice",
-                        iconColor: "text-cyan-500"
-                    },
-                    {
-                        isActive: false,
-                        href: "/capsCollection",
-                        label: "CAPS Master Collection",
-                        leadingIcon: "hugeicons:collection",
-                        iconColor: "text-cyan-500"
-                    },
-                    {
-                        isActive: false,
-                        href: "/salesmanLoad",
-                        label: "Salesman Load",
-                        leadingIcon: "mdi:tanker-truck",
-                        iconColor: "text-cyan-500"
-                    },
-                    {
-                        isActive: false,
-                        href: "/salesmanUnload",
-                        label: "Salesman Unload",
-                        leadingIcon: "mdi:truck-remove-outline",
-                        iconColor: "text-cyan-500"
-                    },
-                      {
-                        isActive: false,
-                        href: "/newCustomer",
-                        label: "Approval Customers",
-                        leadingIcon: "mdi:truck-remove-outline",
-                        iconColor: "text-cyan-500"
-                    },
-                    {
-                        isActive: false,
-                        href: "/advancePayment",
-                        label: "Advance Payment",
-                        leadingIcon: "mdi:package-variant",
-                        iconColor: "text-cyan-500"
-                    },
-                ]
-            },
-            // {
-            //     isActive: false,
-            //     href: "/harissTransaction",
-            //     label: "Report",
-            //     leadingIcon: "hugeicons:transaction",
-            //     iconColor: "text-fuchsia-500"
-            // },
+      {
+        isActive: false,
+        href: "#",
+        label: "Assets",
+        leadingIcon: "streamline-freehand:money-bag",
+        iconColor: "text-green-500",
+        trailingIcon: "mdi-light:chevron-right",
+        children: [
+          {
+            isActive: false,
+            href: "/assets/chiller",
+            label: "Chiller",
+            leadingIcon: "guidance:refrigeration",
+            iconColor: "text-cyan-500",
+          },
+          {
+            isActive: false,
+            href: "/assets/chillerRequest",
+            label: "Chiller Request",
+            leadingIcon: "si:pull-request-duotone",
+            iconColor: "text-cyan-500",
+          },
+          {
+            isActive: false,
+            href: "/assets/vendor",
+            label: "Vendor",
+            leadingIcon: "streamline-freehand:shop",
+            iconColor: "text-cyan-500",
+          },
         ],
-    },
+      },
+      // {
+      //     isActive: false,
+      //     href: "/report",
+      //     label: "Report",
+      //     leadingIcon: "tabler:file-text",
+      //     trailingIcon: "mdi-light:chevron-right",
+      //     iconColor: "text-red-500"
+      // },
+      // {
+      //     isActive: false,
+      //     href: "#",
+      //     label: "Agent Transaction",
+      //     leadingIcon: "mdi:account-cash-outline",
+      //     iconColor: "text-violet-500"
+      // },
+      {
+        isActive: false,
+        href: "#",
+        label: "Agent Transaction",
+        leadingIcon: "mdi:account-cash-outline",
+        iconColor: "text-green-500",
+        trailingIcon: "mdi-light:chevron-right",
+        children: [
+          {
+            isActive: false,
+            href: "/agentOrder",
+            label: "Agent Order",
+            leadingIcon: "carbon:delivery-parcel",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/agentCustomerDelivery",
+            label: "Agent Delivery",
+            leadingIcon: "hugeicons:invoice",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/invoice",
+            label: "Agent Invoice",
+            leadingIcon: "hugeicons:invoice",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/return",
+            label: "Return",
+            leadingIcon: "mdi:truck-remove-outline",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/exchange",
+            label: "Exchange",
+            leadingIcon: "mdi:truck-remove-outline",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/salesmanLoad",
+            label: "Salesman Load",
+            leadingIcon: "mdi:tanker-truck",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/salesmanUnload",
+            label: "Salesman Unload",
+            leadingIcon: "mdi:truck-remove-outline",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/capsCollection",
+            label: "CAPS Master Collection",
+            leadingIcon: "hugeicons:collection",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/collection",
+            label: "Collection",
+            leadingIcon: "hugeicons:collection",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/newCustomer",
+            label: "Approval Customers",
+            leadingIcon: "mdi:truck-remove-outline",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/advancePayment",
+            label: "Advance Payment",
+            leadingIcon: "mdi:package-variant",
+            iconColor: "text-cyan-500"
+          },
+        ]
+      },
+      // {
+      //     isActive: false,
+      //     href: "/harissTransaction",
+      //     label: "Report",
+      //     leadingIcon: "hugeicons:transaction",
+      //     iconColor: "text-fuchsia-500"
+      // },
+    ],
+  },
 ];

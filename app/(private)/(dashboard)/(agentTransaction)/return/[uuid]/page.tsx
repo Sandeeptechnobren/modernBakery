@@ -8,13 +8,21 @@ import { Icon } from "@iconify-icon/react";
 import { useRouter, useParams } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
+import AutoSuggestion from "@/app/components/autoSuggestion";
 import { createReturn,deliveryByUuid,updateDelivery } from "@/app/services/agentTransaction";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import * as yup from "yup";
+import { warehouseListGlobalSearch, routeList, agentCustomerList, getCompanyCustomers, itemGlobalSearch } from "@/app/services/allApi";
 
 // TypeScript interfaces
+interface Uom {
+  id: string;
+  name?: string;
+  price?: string;
+}
+
 interface DeliveryDetail {
   item?: {
     id: number;
@@ -81,6 +89,7 @@ export default function OrderAddEditPage() {
     {
       item_id: "",
       itemName: "",
+      itemLabel: "", // Store the display label separately
       UOM: "",
       uom_id: "",
       Quantity: "1",
@@ -118,7 +127,7 @@ export default function OrderAddEditPage() {
               
               const selectedItem = itemOptions.find(item => item.value === itemId);
               if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
-                const uomOpts = selectedItem.uoms.map(uom => ({
+                const uomOpts = (selectedItem.uoms as Uom[]).map((uom: Uom) => ({
                   value: uom.id || "",
                   label: uom.name || "",
                   price: uom.price || "0"
@@ -135,6 +144,7 @@ export default function OrderAddEditPage() {
               return {
                 item_id: itemId,
                 itemName: itemId,
+                itemLabel: detail.item?.name || "", // Store the display label
                 UOM: uomId,
                 uom_id: uomId,
                 Quantity: (detail?.quantity ?? 1).toString(),
@@ -210,6 +220,7 @@ export default function OrderAddEditPage() {
       {
         item_id: "",
         itemName: "",
+        itemLabel: "",
         UOM: "",
         uom_id: "",
         Quantity: "1",
@@ -225,6 +236,7 @@ export default function OrderAddEditPage() {
         {
           item_id: "",
           itemName: "",
+          itemLabel: "",
           UOM: "",
           uom_id: "",
           Quantity: "1",
@@ -348,6 +360,128 @@ export default function OrderAddEditPage() {
 
 
 
+  // Search functions for AutoSuggestion components
+const handleWarehouseSearch = async (searchText: string) => {
+  try {
+    const response = await warehouseListGlobalSearch({ query: searchText });
+    const data = Array.isArray(response?.data) ? response.data : [];
+    interface Warehouse {
+      id: number;
+      code?: string;
+      warehouse_code?: string;
+      name?: string;
+      warehouse_name?: string;
+    }
+    return data.map((warehouse: Warehouse) => ({
+      value: String(warehouse.id),
+      label: `${warehouse.code || warehouse.warehouse_code || ""} - ${warehouse.name || warehouse.warehouse_name || ""}`,
+      code: warehouse.code || warehouse.warehouse_code,
+      name: warehouse.name || warehouse.warehouse_name,
+    }));
+  } catch {
+    return [];
+  }
+};
+
+const handleRouteSearch = async (searchText: string) => {
+  if (!form.warehouse) return [];
+  try {
+    const response = await routeList({ warehouse_id: form.warehouse, search: searchText, per_page: "50" });
+    const data = Array.isArray(response?.data) ? response.data : [];
+    interface Route {
+      id: number;
+      route_code?: string;
+      code?: string;
+      route_name?: string;
+      name?: string;
+    }
+    return data.map((route: Route) => ({
+      value: String(route.id),
+      label: `${route.route_code || route.code || ""} - ${route.route_name || route.name || ""}`,
+      code: route.route_code || route.code,
+      name: route.route_name || route.name,
+    }));
+  } catch {
+    return [];
+  }
+};
+
+const handleCustomerSearch = async (searchText: string) => {
+  if (!form.route) return [];
+  try {
+    let response;
+    if (form.customer_type === "1") {
+      response = await getCompanyCustomers({ route_id: form.route, search: searchText, per_page: "50" });
+    } else {
+      response = await agentCustomerList({ route_id: form.route, search: searchText, per_page: "50" });
+    }
+    const data = Array.isArray(response?.data) ? response.data : [];
+    interface CompanyCustomer {
+      id: number;
+      osa_code?: string;
+      business_name?: string;
+    }
+    interface AgentCustomer {
+      id: number;
+      osa_code?: string;
+      outlet_name?: string;
+      customer_name?: string;
+      name?: string;
+    }
+    return data.map((customer: CompanyCustomer | AgentCustomer) => {
+      if (form.customer_type === "1") {
+        // Company customer: show osa_code - business_name
+        const company = customer as CompanyCustomer;
+        return {
+          value: String(company.id),
+          label: `${company.osa_code || ""} - ${company.business_name || ""}`.trim(),
+          name: company.business_name || "",
+        };
+      } else {
+        // Agent customer
+        const agent = customer as AgentCustomer;
+        return {
+          value: String(agent.id),
+          label:  `${agent.osa_code || ""} - ${agent.outlet_name || ""}` ,
+          name: agent.outlet_name || agent.customer_name || agent.name || '',
+        };
+      }
+    });
+  } catch {
+    return [];
+  }
+};
+
+const handleItemSearch = async (searchText: string) => {
+  if (!searchText || searchText.trim().length < 1) return [];
+  try {
+    const response = await itemGlobalSearch({ query: searchText });
+    const data = Array.isArray(response?.data) ? response.data : [];
+    interface Item {
+      id: number;
+      item_code?: string;
+      code?: string;
+      name?: string;
+      uom?: Uom[];
+      uoms?: Uom[];
+    }
+    interface Uom {
+      id: string;
+      name?: string;
+      price?: string;
+    }
+    return data.map((item: Item) => ({
+      value: String(item.id),
+      label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
+      code: item.item_code || item.code,
+      name: item.name,
+      uoms: item.uom || item.uoms || [],
+    }));
+  } catch {
+    return [];
+  }
+};
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-[20px]">
@@ -385,60 +519,63 @@ export default function OrderAddEditPage() {
 
         {/* --- Form Fields --- */}
         <div className="flex flex-col sm:flex-row gap-4 mt-10 mb-10 flex-wrap">
-            <InputFields
-              label="Customer Type"
-              required
-              name="customer_type"
-              value={form.customer_type}
-              options={[
-                { label: "Agent Customer", value: "0" },
-                { label: "Company Customer", value: "1" },
-              ]}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleChange(e);
-               
-               
-              }}
-              error={errors.customer_type}
-            />
-            <InputFields
-              label="Warehouse"
-              required
-              name="warehouse"
-              value={form.warehouse}
-              options={warehouseOptions}
-              searchable={true}
-              onChange={
-                handleChange
-                
-              }
-              error={errors.warehouse}
-            />
-            
-            <InputFields
-              required
-              label="Customer"
-              name="customer"
-              searchable={true}
-              value={form.customer}
-              options={form.customer_type === "0" ? agentCustomerOptions : companyCustomersOptions}
-              onChange={handleChange}
-              error={errors.customer}
-            />
-            <InputFields
-              required
-              label="Route"
-              name="route"
-              value={form.route}
-              options={routeOptions}
-              onChange={handleChange}
-              error={errors.route}
-            />
-            
-           
-           
-</div>
+          <InputFields
+            label="Customer Type"
+            required
+            name="customer_type"
+            value={form.customer_type}
+            options={[{ label: "Agent Customer", value: "0" }, { label: "Company Customer", value: "1" }]}
+            onChange={handleChange}
+            error={errors.customer_type}
+          />
+          <AutoSuggestion
+            required
+            label="Warehouse"
+            name="warehouse"
+            placeholder="Search warehouse..."
+            initialValue={form.warehouse}
+            onSearch={handleWarehouseSearch}
+            onSelect={(option) => {
+              setForm(prev => ({ ...prev, warehouse: option.value }));
+              if (errors.warehouse) setErrors(prev => ({ ...prev, warehouse: "" }));
+            }}
+            onClear={() => setForm(prev => ({ ...prev, warehouse: "" }))}
+            error={errors.warehouse}
+          />
+           <AutoSuggestion
+            required
+            label="Route"
+            name="route"
+            placeholder="Search route..."
+            initialValue={form.route}
+            onSearch={handleRouteSearch}
+            onSelect={(option) => {
+              setForm(prev => ({ ...prev, route: option.value }));
+              if (errors.route) setErrors(prev => ({ ...prev, route: "" }));
+            }}
+            onClear={() => setForm(prev => ({ ...prev, route: "" }))}
+            error={errors.route}
+            disabled={!form.warehouse}
+            noOptionsMessage={!form.warehouse ? "Please select a warehouse first" : "No routes found"}
+          />
+          <AutoSuggestion
+            required
+            label="Customer"
+            name="customer"
+            placeholder="Search customer..."
+            initialValue={form.customer}
+            onSearch={handleCustomerSearch}
+            onSelect={(option) => {
+              setForm(prev => ({ ...prev, customer: option.value }));
+              if (errors.customer) setErrors(prev => ({ ...prev, customer: "" }));
+            }}
+            onClear={() => setForm(prev => ({ ...prev, customer: "" }))}
+            error={errors.customer}
+            disabled={!form.route}
+            noOptionsMessage={!form.route ? "Please select a route first" : "No customers found"}
+          />
+         
+        </div>
         {/* --- Table --- */}
         <Table
           data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
@@ -447,56 +584,64 @@ export default function OrderAddEditPage() {
               {
                 key: "itemName",
                 label: "Item Name",
-                 width: 390,
+                width: 390,
                 render: (row) => (
                   <div style={{ minWidth: '390px', maxWidth: '390px' }}>
-                  <InputFields
-                    label=""
-                    name="itemName"
-                    searchable={true}
-                    options={itemOptions}
-                    value={row.item_id}
-                    onChange={(e) => {
-                      const selectedItemId = e.target.value;
-                      const newData = [...itemData];
-                      const index = Number(row.idx);
-                      newData[index].item_id = selectedItemId;
-                      newData[index].itemName = selectedItemId;
-                      
-                      // Find selected item and set UOM options
-                      const selectedItem = itemOptions.find(item => item.value === selectedItemId);
-                      if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
-                        const uomOpts = selectedItem.uoms.map(uom => ({
-                          value: uom.id || "",
-                          label: uom.name || "",
-                          price: uom.price || "0"
-                        }));
-                        
-                        setRowUomOptions(prev => ({
-                          ...prev,
-                          [row.idx]: uomOpts
-                        }));
-                        
-                        // Auto-select first UOM
-                        const firstUom = uomOpts[0];
-                        if (firstUom) {
-                          newData[index].uom_id = firstUom.value;
-                          newData[index].UOM = firstUom.value;
+                    <AutoSuggestion
+                      key={`item-${row.idx}`}
+                      placeholder="Search item..."
+                      initialValue={row.itemLabel}
+                      onSearch={handleItemSearch}
+                      onSelect={(option) => {
+                        const selectedItemId = option.value;
+                        const newData = [...itemData];
+                        const index = Number(row.idx);
+                        newData[index].item_id = selectedItemId;
+                        newData[index].itemName = selectedItemId;
+                        newData[index].itemLabel = option.label;
+                        // Find selected item and set UOM options
+                        const selectedItem = option;
+                        if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
+                          const uomOpts = (selectedItem.uoms as Uom[]).map((uom: Uom) => ({
+                            value: uom.id || "",
+                            label: uom.name || "",
+                            price: uom.price || "0"
+                          }));
+                          setRowUomOptions(prev => ({ ...prev, [row.idx]: uomOpts }));
+                          // Auto-select first UOM
+                          const firstUom = uomOpts[0];
+                          if (firstUom) {
+                            newData[index].uom_id = firstUom.value;
+                            newData[index].UOM = firstUom.value;
+                          }
+                        } else {
+                          setRowUomOptions(prev => {
+                            const newOpts = { ...prev };
+                            delete newOpts[row.idx];
+                            return newOpts;
+                          });
+                          newData[index].uom_id = "";
+                          newData[index].UOM = "";
                         }
-                      } else {
+                        setItemData(newData);
+                        recalculateItem(index, "itemName", selectedItemId);
+                      }}
+                      onClear={() => {
+                        const newData = [...itemData];
+                        const index = Number(row.idx);
+                        newData[index].item_id = "";
+                        newData[index].itemName = "";
+                        newData[index].itemLabel = "";
+                        newData[index].uom_id = "";
+                        newData[index].UOM = "";
                         setRowUomOptions(prev => {
                           const newOpts = { ...prev };
                           delete newOpts[row.idx];
                           return newOpts;
                         });
-                        newData[index].uom_id = "";
-                        newData[index].UOM = "";
-                      }
-                      
-                      setItemData(newData);
-                      recalculateItem(index, "itemName", selectedItemId);
-                    }}
-                  />
+                        setItemData(newData);
+                      }}
+                    />
                   </div>
                 ),
               },
@@ -541,20 +686,11 @@ export default function OrderAddEditPage() {
                     type="number"
                     name="Quantity"
                     value={row.Quantity}
+                    integerOnly={true}
+                    min={1}
                     onChange={(e) => {
-                        const value = e.target.value;
-                        const numValue = parseFloat(value);
-                        if (value === "") {
-                          recalculateItem(Number(row.idx), "Quantity", value);
-                        } else if (numValue <= 0) {
-                          recalculateItem(Number(row.idx), "Quantity", "1");
-                        } else {
-                          recalculateItem(Number(row.idx), "Quantity", value);
-                        }
-                      }}
-                    // onChange={(e) =>
-                    //   recalculateItem(Number(row.idx), "Quantity", e.target.value)
-                    // }
+                      recalculateItem(Number(row.idx), "Quantity", e.target.value);
+                    }}
                   />
                   </div>
                 ),

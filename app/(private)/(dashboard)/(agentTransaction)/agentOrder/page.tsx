@@ -6,27 +6,72 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Table, {
     listReturnType,
     TableDataType,
-    searchReturnType,
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { agentOrderList } from "@/app/services/agentTransaction";
-import { agentCustomerStatusUpdate } from "@/app/services/allApi";
-import StatusBtn from "@/app/components/statusBtn2";
+import { agentOrderList, changeStatusAgentOrder } from "@/app/services/agentTransaction";
+import OrderStatus from "@/app/components/orderStatus";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 const columns = [
-    { key: "order_code", label: "Order Code", render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
-    { key: "warehouse_name", label: "Warehouse Name", render: (row: TableDataType) => row.warehouse_name || "-" },
-    { key: "customer_name", label: "Customer Name", render: (row: TableDataType) => row.customer_name || "-" },
-    { key: "delivery_date", label: "Delivery Date", render: (row: TableDataType) => row.delivery_date || "-" },
+    { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.created_at.split("T")[0]}</span> },
+    { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
+    {
+        key: "warehouse_name",
+        label: "Warehouse Name",
+        showByDefault: true,
+        render: (row: TableDataType) => {
+            const code = row.warehouse_code ?? "";
+            const name = row.warehouse_name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    {
+        key: "customer_name",
+        label: "Customer Name",
+        showByDefault: true,
+        render: (row: TableDataType) => {
+            const code = row.customer_code ?? "";
+            const name = row.customer_name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    {
+        key: "salesman_name",
+        label: "Salesman Name",
+        render: (row: TableDataType) => {
+            const code = row.salesman_code ?? "";
+            const name = row.salesman_name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    {
+        key: "route_name",
+        label: "Route Name",
+        render: (row: TableDataType) => {
+            const code = row.route_code ?? "";
+            const name = row.route_name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    { key: "payment_method", label: "Payment Method", render: (row: TableDataType) => row.payment_method || "-" },
+    { key: "order_source", label: "Order Source", render: (row: TableDataType) => row.order_source || "-" },
+    { key: "delivery_date", label: "Delivery Date", showByDefault: true, render: (row: TableDataType) => row.delivery_date || "-" },
     { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
-    { key: "status", label: "Status", render: (row: TableDataType) => (
-        <StatusBtn isActive={row.status === "1"} />
-    )},
+    {
+        key: "status", label: "Status", showByDefault: true, render: (row: TableDataType) => (
+            <OrderStatus status={row.status} />
+        )
+    },
 ];
 
 export default function CustomerInvoicePage() {
     const { setLoading } = useLoading();
+    const { customerSubCategoryOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
 
@@ -52,35 +97,44 @@ export default function CustomerInvoicePage() {
             };
         }, [setLoading, showSnackbar]);
 
-    // const searchInvoices = useCallback(async (): Promise<searchReturnType> => {
-    //     try {
-    //         setLoading(true);
-    //         return {
-    //             data: [],
-    //             currentPage: 1,
-    //             pageSize: 10,
-    //             total: 0,
-    //         };
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // }, [setLoading]);
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await agentOrderList(params);
+            } finally {
+                setLoading(false);
+            }
 
-    const handleStatusChange = async (order_ids: (string | number)[] | undefined, status: number) => {
-        if (!order_ids || order_ids.length === 0) return;
-        const res = await agentCustomerStatusUpdate({
-            order_ids,
-            status: Number(status)
-        });
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
 
-        if (res.error) {
-            showSnackbar(res.data.message || "Failed to update status", "error");
-            throw new Error(res.data.message);
-        }
-        setRefreshKey(refreshKey + 1);
-        showSnackbar("Status updated successfully", "success");
-        return res;
-    }
+    useEffect(() => {
+        setRefreshKey((k) => k + 1);
+    }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions]);
 
 
     return (
@@ -89,54 +143,52 @@ export default function CustomerInvoicePage() {
                 <Table
                     refreshKey={refreshKey}
                     config={{
-                        api: { list: fetchOrders },
+                        api: { list: fetchOrders, filterBy: filterBy },
                         header: {
                             title: "Customer Orders",
-                            threeDot: [
-                                {
-                                    icon: "lucide:radio",
-                                    label: "Inactive",
-                                    showOnSelect: true,
-                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
-                                        const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        return status?.includes("1") || false;
-                                    },
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const status: string[] = [];
-                                        const ids = selectedRow?.map((id) => {
-                                            const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
-                                                status.push(currentStatus);
-                                            }
-                                            return data[id].id;
-                                        })
-                                        handleStatusChange(ids, Number(0));
-                                    },
-                                },
-                                {
-                                    icon: "lucide:radio",
-                                    label: "Active",
-                                    showOnSelect: true,
-                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
-                                        const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        return status?.includes("0") || false;
-                                    },
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const status: string[] = [];
-                                        const ids = selectedRow?.map((id) => {
-                                            const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
-                                                status.push(currentStatus);
-                                            }
-                                            return data[id].id;
-                                        })
-                                        handleStatusChange(ids, Number(1));
-                                    },
-                                },
-                            ],
                             searchBar: false,
+                            columnFilter: true,
+                            filterByFields: [
+                                {
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+                                {
+                                    key: "salesman_id",
+                                    label: "Salesman",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                },
+                                {
+                                    key: "customer_id",
+                                    label: "Customer",
+                                    type: "select",
+                                    options: Array.isArray(agentCustomerOptions) ? agentCustomerOptions : [],
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                }
+                            ],
                             actions: [
                                 // <SidebarBtn
                                 //     key={0}

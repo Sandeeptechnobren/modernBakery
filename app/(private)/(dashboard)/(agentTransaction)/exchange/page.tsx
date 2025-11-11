@@ -43,57 +43,65 @@ const columns = [
     },
     { key: "delivery_code", label: "Delivery Code",showByDefault: true },
     // { key: "order_code", label: "Order Code",showByDefault: true },
-    { key: "customer", label: "Customer Code", render: (row: TableDataType) => {
-            const wh = row.customer;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { code?: string }).code || "-";
-        },showByDefault: true },
-    { key: "customer", label: "Customer Name", render: (row: TableDataType) => {
-            const wh = row.customer;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { name?: string }).name || "-";
-        },showByDefault: true },
-    { key: "route", label: "Route Code", render: (row: TableDataType) => {
-            const wh = row.route;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { code?: string }).code || "-";
-        },showByDefault: true },
-    { key: "route", label: "Route Name", render: (row: TableDataType) => {
-            const wh = row.route;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { name?: string }).name || "-";
-        },showByDefault: true },
-    { key: "warehouse", label: "Warehouse Code",
+    {
+        key: "warehouse",
+        label: "Warehouse Name",
+        showByDefault: true,
         render: (row: TableDataType) => {
             const wh = row.warehouse;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { code?: string }).code || "-";
+            let code = "";
+            let name = "";
+
+            if (typeof wh === "string") {
+                code = wh;
+            } else if (wh && typeof wh === "object") {
+                code = (wh as {code: string}).code ?? "";
+                name = (wh as {name: string}).name ?? "";
+            }
+
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
         },
-        showByDefault: true 
     },
-    { key: "warehouse", label: "Warehouse Name", render: (row: TableDataType) => {
-            const wh = row.warehouse;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { name?: string }).name || "-";
-        },showByDefault: true },
-    { key: "salesman", label: "Salesman Code", render: (row: TableDataType) => {
-            const wh = row.salesman;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { code?: string }).code || "-";
-        },showByDefault: true },
-    { key: "salesman", label: "Salesman Name" , render: (row: TableDataType) => {
-            const wh = row.salesman;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { name?: string }).name || "-";
-        },showByDefault: true},
+    {
+        key: "customer",
+        label: "Customer Name",
+        showByDefault: true,
+        render: (row: TableDataType) => {
+            const wh = row.customer;
+            let code = "";
+            let name = "";
+            if (typeof wh === "string") {
+                code = wh;
+            } else if (wh && typeof wh === "object") {
+                code = (wh as {code: string}).code ?? "";
+                name = (wh as {name: string}).name ?? "";
+            }
+
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    // {
+    //     key: "salesman",
+    //     label: "Salesman Name",
+    //     render: (row: TableDataType) => {
+    //         const code = row.salesman_code ?? "";
+    //         const name = row.salesman_name ?? "";
+    //         if (!code && !name) return "-";
+    //         return `${code}${code && name ? " - " : ""}${name}`;
+    //     },
+    // },
+    // {
+    //     key: "route",
+    //     label: "Route Name",
+    //     render: (row: TableDataType) => {
+    //         const code = row.route_code ?? "";
+    //         const name = row.route_name ?? "";
+    //         if (!code && !name) return "-";
+    //         return `${code}${code && name ? " - " : ""}${name}`;
+    //     },
+    // },
     // { key: "Invoice_type", label: "Invoice Type" },
     // { key: "Invoice_no", label: "Invoice No" },
     // { key: "sap_id", label: "SAP ID" },
@@ -190,56 +198,16 @@ export default function CustomerInvoicePage() {
                         header: {
                             title: "Exchange",
                             columnFilter: true,
-                            wholeTableActions: [
-                              <div key={0} className="flex gap-[12px] relative">
-                                  <DismissibleDropdown
-                                      isOpen={showDropdown}
-                                      setIsOpen={setShowDropdown}
-                                      button={
-                                          <BorderIconButton icon="ic:sharp-more-vert" />
-                                      }
-                                      dropdown={
-                                          <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                                              <CustomDropdown>
-                                                  {dropdownDataList.map(
-                                                      (link, idx) => (
-                                                          <div
-                                                              key={idx}
-                                                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                          >
-                                                              <Icon
-                                                                  icon={
-                                                                      link.icon
-                                                                  }
-                                                                  width={
-                                                                      link.iconWidth
-                                                                  }
-                                                                  className="text-[#717680]"
-                                                              />
-                                                              <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                  {
-                                                                      link.label
-                                                                  }
-                                                              </span>
-                                                          </div>
-                                                      )
-                                                  )}
-                                              </CustomDropdown>
-                                          </div>
-                                      }
-                                  />
-                              </div>
-                            ],
                             searchBar: false,
                             actions: [
-                              <SidebarBtn
-                                  key={0}
-                                  href="#"
-                                  isActive
-                                  leadingIcon="mdi:download"
-                                  label="Download"
-                                  labelTw="hidden lg:block"
-                              />,
+                            //   <SidebarBtn
+                            //       key={0}
+                            //       href="#"
+                            //       isActive
+                            //       leadingIcon="mdi:download"
+                            //       label="Download"
+                            //       labelTw="hidden lg:block"
+                            //   />,
                               <SidebarBtn
                                   key={1}
                                   href="/exchange/add"
@@ -262,14 +230,7 @@ export default function CustomerInvoicePage() {
                                     router.push(
                                         `/exchange/details/${row.uuid}`
                                     ),
-                            },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (row: TableDataType) =>
-                                    router.push(
-                                        `/exchange/${row.uuid}`
-                                    ),
-                            },
+                            }
                         ],
                         pageSize: 10,
                     }}

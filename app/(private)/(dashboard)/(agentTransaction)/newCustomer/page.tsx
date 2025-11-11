@@ -455,6 +455,15 @@ export default function NewCustomer() {
                             //         );
                             //     },
                             // },
+                            // {
+                            //     icon: "lucide:edit-2",
+                            //     onClick: (data: object) => {
+                            //         const row = data as TableRow;
+                            //         router.push(
+                            //             `/newCustomer/${row.uuid}`
+                            //         );
+                            //     },
+                            // },
                         ],
                         pageSize: 50,
                     }}

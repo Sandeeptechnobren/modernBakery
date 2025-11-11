@@ -428,7 +428,6 @@ export default function Warehouse() {
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
-          
             rowActions: [
                 {
                 icon: "lucide:eye",

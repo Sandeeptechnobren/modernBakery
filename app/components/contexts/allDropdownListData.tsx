@@ -99,6 +99,7 @@ interface DropdownDataContextType {
   companyTypeOptions: { value: string; label: string}[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
+  refreshDropdown: (name: string, params?: any) => Promise<void>;
   fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
   fetchAgentCustomerOptions: (warehouse_id: string | number) => Promise<void>;
   fetchSalesmanOptions: (warehouse_id: string | number) => Promise<void>;
@@ -494,7 +495,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     value: String(c.id ?? ''),
     label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
   }))
-  console.log(projectOptions)
 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
   value: String(c.id ?? ""),
@@ -970,11 +970,198 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   };
 
+  // normalize helper: accept unknown response and extract array of items from `.data` when present
+  const normalizeResponse = (r: unknown): unknown[] => {
+    if (r && typeof r === 'object') {
+      const obj = r as Record<string, unknown>;
+      if (Array.isArray(obj.data)) return obj.data as unknown[];
+    }
+    if (Array.isArray(r)) return r as unknown[];
+    return (r as unknown) ? [r as unknown] : [];
+  };
+
+  // refresh a particular dropdown/list by name. `params` can be provided for APIs that need it.
+  const refreshDropdown = async (name: string, params?: any) => {
+    setLoading(true);
+    try {
+      switch ((name || '').toLowerCase()) {
+        case 'company': {
+          const res = await companyList(params ?? {});
+          setCompanyListData(normalizeResponse(res) as CompanyItem[]);
+          break;
+        }
+        case 'country': {
+          const res = await countryList(params ?? {});
+          setCountryListData(normalizeResponse(res) as CountryItem[]);
+          break;
+        }
+        case 'region': {
+          const res = await regionList(params ?? {});
+          setRegionListData(normalizeResponse(res) as RegionItem[]);
+          break;
+        }
+        case 'survey': {
+          const res = await SurveyList(params ?? {});
+          setSurveyListData(normalizeResponse(res) as SurveyItem[]);
+          break;
+        }
+        case 'route': {
+          const res = await routeList(params ?? {});
+          setRouteListData(normalizeResponse(res) as RouteItem[]);
+          break;
+        }
+        case 'warehouse': {
+          const res = await getWarehouse(params ?? {});
+          setWarehouseListData(normalizeResponse(res) as WarehouseItem[]);
+          break;
+        }
+        case 'routetype':
+        case 'route_type': {
+          const res = await routeType(params ?? {});
+          setRouteTypeData(normalizeResponse(res) as RouteTypeItem[]);
+          break;
+        }
+        case 'area': {
+          // expects region_id in params or will fetch all
+          const res = await subRegionList(params ?? {});
+          setAreaListData(normalizeResponse(res) as AreaItem[]);
+          break;
+        }
+        case 'companycustomers': {
+          const res = await getCompanyCustomers(params ?? {});
+          setCompanyCustomersData(normalizeResponse(res) as CustomerItem[]);
+          break;
+        }
+        case 'companycustomerstype': {
+          const res = await getCompanyCustomersType(params ?? {});
+          setCompanyCustomersTypeData(normalizeResponse(res) as CustomerTypeItem[]);
+          break;
+        }
+        case 'itemcategory': {
+          const res = await itemCategory(params ?? {});
+          setItemCategoryData(normalizeResponse(res) as ItemCategoryItem[]);
+          break;
+        }
+        case 'itemsubcategory': {
+          const res = await itemSubCategory(params ?? {});
+          setItemSubCategoryData(normalizeResponse(res) as ItemSubCategoryItem[]);
+          break;
+        }
+        case 'channel': {
+          const res = await channelList(params ?? {});
+          setChannelListData(normalizeResponse(res) as ChannelItem[]);
+          break;
+        }
+        case 'customertype': {
+          const res = await getCustomerType(params ?? {});
+          setCustomerTypeData(normalizeResponse(res) as CustomerType[]);
+          break;
+        }
+        case 'usertypes': {
+          const res = await userTypes(params ?? {});
+          setUserTypesData(normalizeResponse(res) as UserTypeItem[]);
+          break;
+        }
+        case 'salesmantype': {
+          const res = await salesmanTypeList(params ?? {});
+          setSalesmanTypesData(normalizeResponse(res) as SalesmanType[]);
+          break;
+        }
+        case 'vehiclelist': {
+          const res = await vehicleListData(params ?? {});
+          setVehicleList(normalizeResponse(res) as VehicleListItem[]);
+          break;
+        }
+        case 'customercategory': {
+          const res = await customerCategoryList(params ?? {});
+          setCustomerCategory(normalizeResponse(res) as CustomerCategory[]);
+          break;
+        }
+        case 'customersubcategory': {
+          const res = await customerSubCategoryList(params ?? {});
+          setCustomerSubCategory(normalizeResponse(res) as CustomerSubCategory[]);
+          break;
+        }
+        case 'item': {
+          const res = await itemList(params ?? {});
+          setItem(normalizeResponse(res) as Item[]);
+          break;
+        }
+        case 'discounttype': {
+          const res = await getDiscountTypeList(params ?? {});
+          setDiscountType(normalizeResponse(res) as DiscountType[]);
+          break;
+        }
+        case 'menulist': {
+          const res = await getMenuList(params ?? {});
+          setMenuList(normalizeResponse(res) as MenuList[]);
+          break;
+        }
+        case 'vendor': {
+          const res = await vendorList(params ?? {});
+          setVendor(normalizeResponse(res) as VendorList[]);
+          break;
+        }
+        case 'salesman': {
+          const res = await salesmanList(params ?? {});
+          setSalesman(normalizeResponse(res) as SalesmanList[]);
+          break;
+        }
+        case 'agentcustomer': {
+          const res = await agentCustomerList(params ?? {});
+          setAgentCustomer(normalizeResponse(res) as AgentCustomerList[]);
+          break;
+        }
+        case 'shelves': {
+          const res = await shelvesList(params ?? {});
+          setShelves(normalizeResponse(res) as ShelvesList[]);
+          break;
+        }
+        case 'submenu': {
+          const res = await submenuList(params ?? {});
+          setSubmenu(normalizeResponse(res) as submenuList[]);
+          break;
+        }
+        case 'permissions': {
+          const res = await permissionList(params ?? {});
+          setPermissions(normalizeResponse(res) as permissionsList[]);
+          break;
+        }
+        case 'labels': {
+          const res = await labelList(params ?? {});
+          setLabels(normalizeResponse(res) as LabelItem[]);
+          break;
+        }
+        case 'roles': {
+          const res = await roleList(params ?? {});
+          setRoles(normalizeResponse(res) as Role[]);
+          break;
+        }
+        case 'project': {
+          const res = await projectList(params ?? {});
+          setProject(normalizeResponse(res) as Project[]);
+          break;
+        }
+        case 'companytype': {
+          const res = await companyTypeList(params ?? {});
+          setComapanyType(normalizeResponse(res) as CompanyType[]);
+          break;
+        }
+        default: {
+          console.warn('refreshDropdown: unknown dropdown name', name);
+          break;
+        }
+      }
+    } catch (err) {
+      console.error('refreshDropdown error for', name, err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     refreshDropdowns();
   }, []);
-
-
 
   return (
     <AllDropdownListDataContext.Provider
@@ -1041,7 +1228,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         submenuOptions,
         permissions,
         labelOptions,
-        refreshDropdowns,
+  refreshDropdowns,
+  refreshDropdown,
         fetchAreaOptions,
         fetchRouteOptions,
         fetchRoutebySalesmanOptions,

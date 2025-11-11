@@ -241,8 +241,8 @@ export default function RolesPermissionTable({
                 ...permissionColumns,
             ],
             rows: subrows,
+            showNestedLoading: false,
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [permissionColumns, menus, activeIndex, refreshKey]);
 
     return (

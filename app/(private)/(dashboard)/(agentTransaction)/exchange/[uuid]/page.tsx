@@ -1,206 +1,298 @@
 "use client";
 
-import React, { Fragment, ChangeEvent, useState, useEffect } from "react";
+import React, { Fragment, useState, useEffect, useRef } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
-import { createReturn,deliveryByUuid,updateDelivery } from "@/app/services/agentTransaction";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import AutoSuggestion from "@/app/components/autoSuggestion";
+import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
+import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import * as yup from "yup";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
+import { addExchange } from "@/app/services/agentTransaction";
 
-// TypeScript interfaces
-interface DeliveryDetail {
-  item?: {
-    id: number;
-    code: string;
-    name: string;
-  };
-  uom_id: number;
-  quantity: number;
-  return_type: string;
-  return_reason: string;
+interface FormData {
+  id: number,
+  erp_code: string,
+  item_code: string,
+  name: string,
+  description: string,
+  item_uoms: {
+    id: number,
+    item_id: number,
+    uom_type: string,
+    name: string,
+    price: string,
+    is_stock_keeping: boolean,
+    upc: string,
+    enable_for: string
+  }[],
+  brand: string,
+  image: string,
+  category: {
+    id: number,
+    name: string,
+    code: string
+  },
+  itemSubCategory: {
+    id: number,
+    name: string,
+    code: string
+  },
+  shelf_life: string,
+  commodity_goods_code: string,
+  excise_duty_code: string,
+  status: number,
+  is_taxable: boolean,
+  has_excies: boolean,
+  item_weight: string,
+  volume: number
 }
 
-interface DeliveryResponse {
-  warehouse?: {
-    id: number;
-    code: string;
-    name: string;
-  };
-  customer?: {
-    id: number;
-    name: string;
-  };
-  customer_type?: {
-    id: number;
-    name: string;
-  };
-  route?: {
-    id: number;
-    name: string;
-  };
-  details?: DeliveryDetail[];
+interface ItemData {
+  item_id: string;
+  item_name: string;
+  // stored human-readable label for a selected item (used when server results don't include it)
+  item_label?: string;
+  UOM: { label: string; value: string }[];
+  uom_id?: string;
+  Quantity: string;
+  Price: string;
+  Excise: string;
+  Discount: string;
+  Net: string;
+  Vat: string;
+  Total: string;
+  [key: string]: string | { label: string; value: string }[] | undefined;
 }
 
+export default function ExchangeAddEditPage() {
+  const itemRowSchema = Yup.object({
+    item_id: Yup.string().required("Please select an item"),
+    uom_id: Yup.string().required("Please select a UOM"),
+    Quantity: Yup.number()
+      .typeError("Quantity must be a number")
+      .min(1, "Quantity must be at least 1")
+      .required("Quantity is required"),
+  });
 
-export default function OrderAddEditPage() {
-  const { warehouseOptions, agentCustomerOptions, companyCustomersOptions,itemOptions, fetchAgentCustomerOptions ,routeOptions} = useAllDropdownListData();
+  const validationSchema = Yup.object({
+    warehouse: Yup.string().required("Warehouse is required"),
+    customer: Yup.string().required("Customer is required"),
+    delivery_date: Yup.string()
+      .required("Delivery date is required")
+      .test("is-date", "Delivery date must be a valid date", (val) => {
+        return Boolean(val && !Number.isNaN(new Date(val).getTime()));
+      }),
+    note: Yup.string().max(1000, "Note is too long"),
+    items: Yup.array().of(itemRowSchema),
+  });
+
+  const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
-  const router = useRouter();
-  const params = useParams();
-  
-  const uuid = params?.uuid as string | undefined;
-  const isEditMode = uuid !== undefined && uuid !== "add";
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    warehouse: "",
-    customer: "",
-    customer_type: "",
-    route: "",
+  const [skeleton, setSkeleton] = useState({
+    route: false,
+    customer: false,
+    item: false,
   });
-  const goodOptions = [{ label: "Near By Expiry", value: "0" },
-                      { label: "Package Issue", value: "1" },
-                      { label: "Not Saleable", value: "2" },];
-  const badOptions = [{ label: "Damage", value: "0" },
-                      { label: "Expiry", value: "1" },
-                      ];
+  const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
+  const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
+  const form = {
+    warehouse: "",
+    route: "",
+    customer: "",
+    note: "",
+    delivery_date: new Date().toISOString().slice(0, 10),
+  };
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Store UOM options for each row
-  const [rowUomOptions, setRowUomOptions] = useState<Record<string, { value: string; label: string; price?: string }[]>>({});
-
-  const [itemData, setItemData] = useState([
+  const [exchangeData, setExchangeData] = useState<FormData[]>([]);
+  const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
+  const [itemData, setItemData] = useState<ItemData[]>([
     {
       item_id: "",
-      itemName: "",
-      UOM: "",
-      uom_id: "",
+      item_name: "",
+      item_label: "",
+      UOM: [],
       Quantity: "1",
-      return_type: "",
-      return_reason: "",
+      Price: "",
+      Excise: "",
+      Discount: "",
+      Net: "",
+      Vat: "",
+      Total: "",
     },
   ]);
 
-  // Fetch delivery data in edit mode
-  useEffect(() => {
-    if (isEditMode && uuid && itemOptions.length > 0) {
-      (async () => {
-        try {
-          setLoading(true);
-          const response = await deliveryByUuid(uuid);
-          const data = (response?.data ?? response) as DeliveryResponse;
-          
-          // Set form data
-          setForm({
-            warehouse: data?.warehouse?.id ? String(data.warehouse.id) : "",
-            customer: data?.customer?.id ? String(data.customer.id) : "",
-            customer_type: data?.customer_type?.id ? String(data.customer_type?.id) : "",
-            route: data?.route?.id ? String(data.route?.id) : "",
-          });
-          
-          if (data?.warehouse?.id) {
-            await fetchAgentCustomerOptions(String(data.warehouse.id));
-          }
-          
-          if (data?.details && Array.isArray(data.details) && data.details.length > 0) {
-            const loadedItemData = data.details.map((detail: DeliveryDetail, index: number) => {
-              const itemId = detail.item?.id ? String(detail.item.id) : "";
-              const uomId = detail.uom_id ? String(detail.uom_id) : "";
-              const rowIdx = index.toString();
-              
-              const selectedItem = itemOptions.find(item => item.value === itemId);
-              if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
-                const uomOpts = selectedItem.uoms.map(uom => ({
-                  value: uom.id || "",
-                  label: uom.name || "",
-                  price: uom.price || "0"
-                }));
-                
-                setRowUomOptions(prev => ({
-                  ...prev,
-                  [rowIdx]: uomOpts
-                }));
-              }
-              
-             
-              
-              return {
-                item_id: itemId,
-                itemName: itemId,
-                UOM: uomId,
-                uom_id: uomId,
-                Quantity: (detail?.quantity ?? 1).toString(),
-               return_type: detail?.return_type || "",
-               return_reason: detail?.return_reason || "",
-              };
-            });
-            
-            setItemData(loadedItemData);
-          }
-        } catch (error) {
-          console.error("Error fetching delivery data:", error);
-          
-          // Extract error message from API response
-          let errorMessage = "Failed to fetch delivery details";
-          
-          if (error && typeof error === 'object') {
-            // Check for error message in response
-            if ('response' in error && error.response && typeof error.response === 'object') {
-              const response = error.response as { data?: { message?: string } };
-              if (response.data?.message) {
-                errorMessage = response.data.message;
-              }
-            } else if ('data' in error && error.data && typeof error.data === 'object') {
-              const data = error.data as { message?: string };
-              if (data.message) {
-                errorMessage = data.message;
-              }
-            } else if ('message' in error && typeof error.message === 'string') {
-              errorMessage = error.message;
-            }
-          }
-          
-          showSnackbar(errorMessage, "error");
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, uuid ?? ""]);
+  // per-row validation errors for item rows (keyed by row index)
+  const [itemErrors, setItemErrors] = useState<Record<number, Record<string, string>>>({});
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+  // per-row loading (for UOM / price) so UI can show skeletons while fetching
+  const [itemLoading, setItemLoading] = useState<Record<number, { uom?: boolean; price?: boolean }>>({});
+  const validateRow = async (index: number, row?: ItemData, options?: { skipUom?: boolean }) => {
+    const rowData = row ?? itemData[index];
+    if (!rowData) return;
+    // prepare data for Yup: convert numeric strings to numbers
+    const toValidate = {
+      item_id: String(rowData.item_id ?? ""),
+      uom_id: String(rowData.uom_id ?? ""),
+      Quantity: Number(rowData.Quantity) || 0,
+      Price: Number(rowData.Price) || 0,
+    };
+    try {
+      if (options?.skipUom) {
+        // validate only item_id and Quantity to avoid showing UOM required immediately after selecting item
+        const partialErrors: Record<string, string> = {};
+        try {
+          await itemRowSchema.validateAt("item_id", toValidate);
+        } catch (e: any) {
+          if (e?.message) partialErrors["item_id"] = e.message;
+        }
+        try {
+          await itemRowSchema.validateAt("Quantity", toValidate);
+        } catch (e: any) {
+          if (e?.message) partialErrors["Quantity"] = e.message;
+        }
+        if (Object.keys(partialErrors).length === 0) {
+          // clear errors for this row
+          setItemErrors((prev) => {
+            const copy = { ...prev };
+            delete copy[index];
+            return copy;
+          });
+        } else {
+          setItemErrors((prev) => ({ ...prev, [index]: partialErrors }));
+        }
+      } else {
+        await itemRowSchema.validate(toValidate, { abortEarly: false });
+        // clear errors for this row
+        setItemErrors((prev) => {
+          const copy = { ...prev };
+          delete copy[index];
+          return copy;
+        });
+      }
+    } catch (err: any) {
+      const validationErrors: Record<string, string> = {};
+      if (err && err.inner && Array.isArray(err.inner)) {
+        err.inner.forEach((e: any) => {
+          if (e.path) validationErrors[e.path] = e.message;
+        });
+      } else if (err && err.path) {
+        validationErrors[err.path] = err.message;
+      }
+      setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
     }
   };
 
-  // Validation schema
-  const validationSchema = yup.object().shape({
-    warehouse: yup.string().required("Warehouse is required"),
-    customer: yup.string().required("Customer is required"),
-    customer_type: yup.string().required("Customer Typa is required"),
-    route: yup.string().required("Route is required"),
-  });
+  // Function for fetching Item
+  const fetchItem = async (searchTerm: string) => {
+    const res = await itemGlobalSearch({ perPage: "10", query: searchTerm });
+    if (res.error) {
+      showSnackbar(res.data?.message || "Failed to fetch items", "error");
+      setSkeleton({ ...skeleton, item: false });
+      return;
+    }
+    const data = res?.data || [];
+    setExchangeData(data);
+      const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
+        value: String(item.id),
+        label: (item.code ?? item.item_code ?? item.erp_code ?? "") + " - " + (item.name ?? "")
+      }));
+      // Merge newly fetched options with existing ones so previously selected items remain available
+      setItemsOptions((prev: { label: string; value: string }[] = []) => {
+        const map = new Map<string, { label: string; value: string }>();
+        prev.forEach((o) => map.set(o.value, o));
+        options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+        return Array.from(map.values());
+      });
+    setSkeleton({ ...skeleton, item: false });
+    return options;
+  };
 
-  // --- Calculate totals and VAT dynamically
-  const recalculateItem = (index: number, field: string, value: string) => {
+  const codeGeneratedRef = useRef(false);
+  const [code, setCode] = useState("");
+  useEffect(() => {
+    // generate code
+    if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({
+          model_name: "exchange",
+        });
+        if (res?.code) {
+          setCode(res.code);
+        }
+        setLoading(false);
+      })();
+    }
+  }, []);
+
+  const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
     const newData = [...itemData];
-    const item = newData[index];
-    item[field as keyof typeof item] = value;
+    const item: ItemData = newData[index] as ItemData;
+    (item as any)[field] = value;
+
+    // If user selects an item, update UI immediately and persist a label so selection survives searches
+    if (field === "item_id") {
+      // set item_id to the chosen value
+      item.item_id = value;
+      if (!value) {
+        // cleared selection
+        item.item_name = "";
+        item.UOM = [];
+        item.uom_id = "";
+        item.Price = "";
+        item.Quantity = "1";
+        item.item_label = "";
+      } else {
+        const selectedExchange = exchangeData.find((exchange: FormData) => exchange.id.toString() === value);
+        item.item_id = selectedExchange ? String(selectedExchange.id || value) : value;
+        item.item_name = selectedExchange?.name ?? "";
+        item.UOM = selectedExchange?.item_uoms?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
+        item.uom_id = selectedExchange?.item_uoms?.[0]?.id ? String(selectedExchange.item_uoms[0].id) : "";
+        item.Price = selectedExchange?.item_uoms?.[0]?.price ? String(selectedExchange.item_uoms[0].price) : "";
+        item.Quantity = "1";
+        // persist a readable label
+        const computedLabel = selectedExchange ? `${selectedExchange.item_code ?? selectedExchange.erp_code ?? ''}${selectedExchange.item_code || selectedExchange.erp_code ? ' - ' : ''}${selectedExchange.name ?? ''}` : "";
+        item.item_label = computedLabel;
+        // ensure the selected item is available in itemsOptions
+        if (item.item_label) {
+          setItemsOptions((prev: { label: string; value: string }[] = []) => {
+            if (prev.some(o => o.value === item.item_id)) return prev;
+            return [...prev, { value: item.item_id, label: item.item_label as string }];
+          });
+        }
+      }
+    }
+    const qty = Number(item.Quantity) || 0;
+    const price = Number(item.Price) || 0;
+    const total = qty * price;
+    const vat = total - total / 1.18;
+    const preVat = total - vat;
+    const net = total - vat;
+    // const excise = 0;
+    // const discount = 0;
+    // const gross = total;
+
+    item.Total = total.toFixed(2);
+    item.Vat = vat.toFixed(2);
+    item.Net = net.toFixed(2);
+    item.preVat = preVat.toFixed(2);
+    // item.Excise = excise.toFixed(2);
+    // item.Discount = discount.toFixed(2);
+    // item.gross = gross.toFixed(2);
+
+    if (field !== "item_id") {
+      validateRow(index, newData[index]);
+    }
     setItemData(newData);
   };
 
@@ -209,14 +301,43 @@ export default function OrderAddEditPage() {
       ...itemData,
       {
         item_id: "",
-        itemName: "",
-        UOM: "",
+        item_name: "",
+        item_label: "",
+        UOM: [],
         uom_id: "",
         Quantity: "1",
-        return_type: "",
-        return_reason: "",
+        Price: "",
+        Excise: "0.00",
+        Discount: "0.00",
+        Net: "0.00",
+        Vat: "0.00",
+        Total: "0.00",
       },
     ]);
+  };
+
+  // Add an item from the fetched exchangeData list into the itemData rows
+  const handleAddItemFromList = (exchange: FormData) => {
+    const newRow: ItemData = {
+      item_id: String(exchange.id ?? ""),
+      item_name: exchange.name ?? "",
+      item_label: `${exchange.item_code ?? exchange.erp_code ?? ""}${exchange.item_code || exchange.erp_code ? ' - ' : ''}${exchange.name ?? ''}`,
+      UOM: exchange.item_uoms?.map(uom => ({ label: uom.name, value: String(uom.id), price: uom.price })) || [],
+      uom_id: exchange.item_uoms?.[0]?.id ? String(exchange.item_uoms[0].id) : "",
+      Quantity: "1",
+      Price: exchange.item_uoms?.[0]?.price ? String(exchange.item_uoms[0].price) : "",
+      Excise: "0.00",
+      Discount: "0.00",
+      Net: "0.00",
+      Vat: "0.00",
+      Total: "0.00",
+    };
+    setItemData((prev) => [...prev, newRow]);
+    // ensure itemsOptions contains this selection so AutoSuggestion can show it
+    setItemsOptions((prev: { label: string; value: string }[] = []) => {
+      if (prev.some(o => o.value === String(exchange.id))) return prev;
+      return [...prev, { value: String(exchange.id), label: newRow.item_label as string }];
+    });
   };
 
   const handleRemoveItem = (index: number) => {
@@ -224,12 +345,17 @@ export default function OrderAddEditPage() {
       setItemData([
         {
           item_id: "",
-          itemName: "",
-          UOM: "",
+          item_name: "",
+          item_label: "",
+          UOM: [],
           uom_id: "",
           Quantity: "1",
-            return_type: "",
-            return_reason: "",
+          Price: "",
+          Excise: "",
+          Discount: "",
+          Net: "",
+          Vat: "",
+          Total: "",
         },
       ]);
       return;
@@ -237,119 +363,161 @@ export default function OrderAddEditPage() {
     setItemData(itemData.filter((_, i) => i !== index));
   };
 
- 
+  // --- Compute totals for summary
+  const grossTotal = itemData.reduce(
+    (sum, item) => sum + Number(item.Total || 0),
+    0
+  );
+  const totalVat = itemData.reduce(
+    (sum, item) => sum + Number(item.Vat || 0),
+    0
+  );
+  const netAmount = itemData.reduce(
+    (sum, item) => sum + Number(item.Net || 0),
+    0
+  );
+  const preVat = totalVat ? grossTotal - totalVat : grossTotal;
+  const discount = itemData.reduce(
+    (sum, item) => sum + Number(item.Discount || 0),
+    0
+  );
+  const finalTotal = grossTotal + totalVat;
 
-  // --- Create Payload for API
-  const generatePayload = () => {
+  const generatePayload = (values?: FormikValues) => {
     return {
-      warehouse_id: Number(form.warehouse),
-      customer_id: Number(form.customer),
-      customer_type: Number(form.customer_type),
-      route_id: Number(form.route),
-      details: itemData
-        .filter(item => item.item_id && item.uom_id) // Only include rows with item and UOM selected
-        .map((item) => ({
-          item_id: Number(item.item_id),
-          uom_id: Number(item.uom_id),
-          quantity: Number(item.Quantity) || 0,
-            return_type: item.return_type,
-            return_reason: item.return_reason,
-        })),
+      exchange_code: code,
+      warehouse_id: Number(values?.warehouse) || null,
+      customer_id: Number(values?.customer) || null,
+      delivery_date: values?.delivery_date || form.delivery_date,
+      gross_total: Number(grossTotal.toFixed(2)),
+      vat: Number(totalVat.toFixed(2)),
+      net_amount: Number(netAmount.toFixed(2)),
+      total: Number(finalTotal.toFixed(2)),
+      discount: Number(discount.toFixed(2)),
+      comment: values?.note || "",
+      status: 1,
+      details: itemData.map((item, i) => ({
+        item_id: Number(item.item_id) || null,
+        item_price: Number(item.Price) || null,
+        quantity: Number(item.Quantity) || null,
+        vat: Number(item.Vat) || null,
+        uom_id: Number(item.uom_id) || null,
+        // discount: Number(item.Discount) || null,
+        // discount_id: 0,
+        // gross_total: Number(item.Total) || null,
+        net_total: Number(item.Net) || null,
+        total: Number(item.Total) || null,
+      })),
     };
   };
 
-  // --- On Submit
-  const handleSubmit = async () => {
-    if (isSubmitting) return; // Prevent multiple submissions
-    
+  const handleSubmit = async (values: FormikValues, formikHelpers: FormikHelpers<FormikValues>) => {
     try {
-      // Validate form using yup schema
-      await validationSchema.validate(form, { abortEarly: false });
-      setErrors({});
-
-      // Validate that at least one item is added
-      const validItems = itemData.filter(item => item.item_id && item.uom_id);
-      if (validItems.length === 0) {
-        showSnackbar("Please add at least one item with UOM selected", "error");
+      // validate item rows separately (they live in local state)
+      const itemsSchema = Yup.array().of(itemRowSchema);
+      try {
+        await itemsSchema.validate(itemData, { abortEarly: false });
+      } catch (itemErr: any) {
+        // log detailed item validation errors and surface a friendly message
+        console.error("Item validation errors:", itemErr.inner || itemErr);
+        showSnackbar(itemErr.inner.map((err: any) => err.message).join(", "), "error");
+        // set a top-level form error to prevent submission
+        formikHelpers.setErrors({ items: "Item rows validation failed" } as any);
         return;
       }
 
-      setIsSubmitting(true);
-      const payload = generatePayload();
-      
-      let res;
-      if (isEditMode && uuid) {
-        // Update existing delivery
-        res = await updateDelivery(uuid, payload);
+      formikHelpers.setSubmitting(true);
+      const payload = generatePayload(values);
+      console.log("Submitting payload:", payload);
+      const res = await addExchange(payload);
+      if (res.error) {
+        showSnackbar(res.data.message || "Failed to create Exchange", "error");
+        console.error("Create exchange error:", res);
       } else {
-        // Create new delivery
-        res = await createReturn(payload);
-      }
-      
-      // Check if response contains an error
-      if (res?.error) {
-        showSnackbar(
-          res.data?.message || (isEditMode ? "Failed to update delivery" : "Failed to create delivery"),
-          "error"
-        );
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Success
-      showSnackbar(
-        isEditMode 
-          ? "Return updated successfully!" 
-          : "Return created successfully!", 
-        "success"
-      );
-      router.push("/return");
-    } catch (error) {
-      if (error instanceof yup.ValidationError) {
-        // Handle yup validation errors
-        const formErrors: Record<string, string> = {};
-        error.inner.forEach((err) => {
-          if (err.path) {
-            formErrors[err.path] = err.message;
-          }
-        });
-        setErrors(formErrors);
-      } else {
-        console.error("Error saving delivery:", error);
-        
-        // Extract error message from API response (similar to agentCustomer)
-        let errorMessage = isEditMode 
-          ? "Failed to update delivery. Please try again." 
-          : "Failed to create delivery. Please try again.";
-        
-        if (error && typeof error === 'object') {
-          // Check for error message in response
-          if ('response' in error && error.response && typeof error.response === 'object') {
-            const response = error.response as { data?: { message?: string } };
-            if (response.data?.message) {
-              errorMessage = response.data.message;
-            }
-          } else if ('data' in error && error.data && typeof error.data === 'object') {
-            const data = error.data as { message?: string };
-            if (data.message) {
-              errorMessage = data.message;
-            }
-          } else if ('message' in error && typeof error.message === 'string') {
-            errorMessage = error.message;
-          }
+        try {
+          await saveFinalCode({
+              reserved_code: code,
+              model_name: "exchange",
+          });
+        } catch (e) {
+            // Optionally handle error, but don't block success
         }
-        
-        showSnackbar(errorMessage, "error");
+        showSnackbar("Exchange created successfully", "success");
+        router.push("/exchange");
       }
+    } catch (err) {
+      console.error(err);
+      showSnackbar("Failed to submit exchange", "error");
     } finally {
-      setIsSubmitting(false);
+      if (formikHelpers && typeof formikHelpers.setSubmitting === "function") {
+        formikHelpers.setSubmitting(false);
+      }
     }
   };
 
+  const keyValueData = [
+    // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
+    // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
+    { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
+    { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
+    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
+    // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
+  ];
 
+  const fetchAgentCustomers = async (values: FormikValues, search: string) => {
+    const res = await agentCustomerGlobalSearch({
+      warehouse_id: values.warehouse,
+      query: search || "",
+      per_page: "10"
+    });
+    if (res.error) {
+      showSnackbar(res.data?.message || "Failed to fetch customers", "error");
+      setSkeleton({ ...skeleton, customer: false });
+      return;
+    }
+    const data = res?.data || [];
+    const options = data.map((customer: { id: number; osa_code: string; name: string }) => ({
+      value: String(customer.id),
+      label: customer.osa_code + " - " + customer.name
+    }));
+    setFilteredCustomerOptions(options);
+    setSkeleton({ ...skeleton, customer: false });
+    return options;
+  }
+
+  const fetchWarehouse = async (searchQuery?: string) => {
+    const res = await warehouseListGlobalSearch({
+      query: searchQuery || "",
+      dropdown: "1",
+      per_page: "50"
+    });
+
+    if (res.error) {
+      showSnackbar(res.data?.message || "Failed to fetch customers", "error");
+      return;
+    }
+    const data = res?.data || [];
+    const options = data.map((warehouse: { id: number; warehouse_code: string; warehouse_name: string }) => ({
+      value: String(warehouse.id),
+      label:  warehouse.warehouse_code + " - " + warehouse.warehouse_name
+    }));
+    setFilteredWarehouseOptions(options);
+    return options;
+  }
+
+  // const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
+  //   const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
+  //   if (res.error) {
+  //     showSnackbar(res.data?.message || "Failed to fetch items", "error");
+  //     setSkeleton({ ...skeleton, item: false });
+  //     return;
+  //   }
+  //   const data = res?.data || [];
+  //   return data;
+  // };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       <div className="flex justify-between items-center mb-[20px]">
         <div className="flex items-center gap-[16px]">
           <Icon
@@ -357,8 +525,8 @@ export default function OrderAddEditPage() {
             width={24}
             onClick={() => router.back()}
           />
-          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[4px]">
-            {isEditMode ? "Update Return" : "Add Return"}
+          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
+            Add Exchange
           </h1>
         </div>
       </div>
@@ -368,310 +536,362 @@ export default function OrderAddEditPage() {
         <div className="flex justify-between mb-10 flex-wrap gap-[20px]">
           <div className="flex flex-col gap-[10px]">
             <Logo type="full" />
-            <span className="text-primary font-normal text-[16px]">
-              Emma-Köhler-Allee 4c, Germering - 13907
-            </span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-              Return
-            </span>
-            <span className="text-primary text-[14px] tracking-[10px]">
-              #W1O20933
-            </span>
+          <div className="flex flex-col items-end">
+            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Exchange</span>
+            <span className="text-primary text-[14px] tracking-[8px]">#{code}</span>
           </div>
         </div>
         <hr className="w-full text-[#D5D7DA]" />
 
-        {/* --- Form Fields --- */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-10 mb-10 flex-wrap">
-            <InputFields
-              label="Customer Type"
-              required
-              name="customer_type"
-              value={form.customer_type}
-              options={[
-                { label: "Agent Customer", value: "0" },
-                { label: "Company Customer", value: "1" },
-              ]}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleChange(e);
-               
-               
-              }}
-              error={errors.customer_type}
-            />
-            <InputFields
-              label="Warehouse"
-              required
-              name="warehouse"
-              value={form.warehouse}
-              options={warehouseOptions}
-              searchable={true}
-              onChange={
-                handleChange
-                
-              }
-              error={errors.warehouse}
-            />
-            
-            <InputFields
-              required
-              label="Customer"
-              name="customer"
-              searchable={true}
-              value={form.customer}
-              options={form.customer_type === "0" ? agentCustomerOptions : companyCustomersOptions}
-              onChange={handleChange}
-              error={errors.customer}
-            />
-            <InputFields
-              required
-              label="Route"
-              name="route"
-              value={form.route}
-              options={routeOptions}
-              onChange={handleChange}
-              error={errors.route}
-            />
-            
-           
-           
-</div>
-        {/* --- Table --- */}
-        <Table
-          data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
-          config={{
-            columns: [
-              {
-                key: "itemName",
-                label: "Item Name",
-                 width: 390,
-                render: (row) => (
-                  <div style={{ minWidth: '390px', maxWidth: '390px' }}>
-                  <InputFields
-                    label=""
-                    name="itemName"
-                    searchable={true}
-                    options={itemOptions}
-                    value={row.item_id}
-                    onChange={(e) => {
-                      const selectedItemId = e.target.value;
-                      const newData = [...itemData];
-                      const index = Number(row.idx);
-                      newData[index].item_id = selectedItemId;
-                      newData[index].itemName = selectedItemId;
-                      
-                      // Find selected item and set UOM options
-                      const selectedItem = itemOptions.find(item => item.value === selectedItemId);
-                      if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
-                        const uomOpts = selectedItem.uoms.map(uom => ({
-                          value: uom.id || "",
-                          label: uom.name || "",
-                          price: uom.price || "0"
-                        }));
-                        
-                        setRowUomOptions(prev => ({
-                          ...prev,
-                          [row.idx]: uomOpts
-                        }));
-                        
-                        // Auto-select first UOM
-                        const firstUom = uomOpts[0];
-                        if (firstUom) {
-                          newData[index].uom_id = firstUom.value;
-                          newData[index].UOM = firstUom.value;
+        <Formik<FormikValues>
+          initialValues={form}
+          onSubmit={handleSubmit}
+          validationSchema={validationSchema}
+          enableReinitialize={true}
+        >
+          {({ values, touched, errors, setFieldValue, handleChange, submitForm, isSubmitting }: FormikProps<FormikValues>) => {
+            // // Log Formik validation errors to console for easier debugging
+            // useEffect(() => {
+            //   if (errors && Object.keys(errors).length > 0) {
+            //     console.warn("Formik validation errors:", errors);
+            //   }
+            //   console.log("Current Formik errors:", errors);
+            //   console.log("Current Formik errors:", touched.comment);
+            //   console.log(values, "values")
+            // }, [errors]);
+
+            return (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-10">
+                  <div>
+                    <AutoSuggestion
+                      required
+                      label="Warehouse"
+                      name="warehouse"
+                      placeholder="Search warehouse"
+                      onSearch={(q) => fetchWarehouse(q)}
+                      initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
+                      onSelect={(opt) => {
+                        if (values.warehouse !== opt.value) {
+                          setFieldValue("warehouse", opt.value);
+                          setSkeleton((prev) => ({ ...prev, customer: true }));
+                          setFieldValue("customer", "");
+                        } else {
+                          setFieldValue("warehouse", opt.value);
                         }
-                      } else {
-                        setRowUomOptions(prev => {
-                          const newOpts = { ...prev };
-                          delete newOpts[row.idx];
-                          return newOpts;
-                        });
-                        newData[index].uom_id = "";
-                        newData[index].UOM = "";
+                      }}
+                      onClear={() => {
+                        setFieldValue("warehouse", "");
+                        setFieldValue("customer", "");
+                        setFilteredCustomerOptions([]);
+                        setSkeleton((prev) => ({ ...prev, customer: false }));
+                      }}
+                      error={
+                        touched.warehouse &&
+                        (errors.warehouse as string)
                       }
-                      
-                      setItemData(newData);
-                      recalculateItem(index, "itemName", selectedItemId);
+                    />
+                  </div>
+                  <div>
+                    <AutoSuggestion
+                      required
+                      label="Customer"
+                      name="customer"
+                      placeholder="Search customer"
+                      onSearch={(q) => {console.log("Searching customer:", q); return fetchAgentCustomers(values, q)}}
+                      initialValue={filteredCustomerOptions.find(o => o.value === String(values?.customer))?.label || ""}
+                      onSelect={(opt) => {
+                        if (values.customer !== opt.value) {
+                          setFieldValue("customer", opt.value);
+                        } else {
+                          setFieldValue("customer", opt.value);
+                        }
+                      }}
+                      onClear={() => {
+                        setFieldValue("customer", "");
+                      }}
+                      disabled={values.warehouse === ""}
+                      error={touched.customer && (errors.customer as string)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <InputFields
+                      required
+                      label="Delivery Date"
+                      type="date"
+                      name="delivery_date"
+                      value={values.delivery_date}
+                      min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 mb-6">
+                <h3 className="text-[16px] font-semibold mb-2">Return</h3>
+                <Table
+                  data={itemData.map((row, idx) => ({
+                    ...row,
+                    idx: idx.toString(),
+                    UOM: Array.isArray(row.UOM) ? JSON.stringify(row.UOM) : "[]",
+                    item_id: String(row.item_id ?? ""),
+                    Quantity: String(row.Quantity ?? ""),
+                    Price: String(row.Price ?? ""),
+                    Excise: String(row.Excise ?? ""),
+                    Discount: String(row.Discount ?? ""),
+                    Net: String(row.Net ?? ""),
+                    Vat: String(row.Vat ?? ""),
+                    Total: String(row.Total ?? ""),
+                    PreVat: String(row.PreVat ?? ""),
+                  }))}
+                  config={{
+                    showNestedLoading: false,
+                    columns: [
+                      {
+                        key: "item_id",
+                        label: "Item Name",
+                        width: 300,
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const err = itemErrors[idx]?.item_id;
+                          // Optimized: avoid mapping+filtering arrays on every render.
+                          // Find the option for the current row (if still present) and fall back to stored label
+                          // so the selection remains visible even when the option isn't returned by a search.
+                          const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
+                          const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
+                          console.log(row);
+                          return (
+                            <div>
+                              <AutoSuggestion
+                                label=""
+                                name={`item_id_${row.idx}`}
+                                placeholder="Search item"
+                                onSearch={(q) => fetchItem(q)}
+                                initialValue={initialLabel}
+                                onSelect={(opt) => {
+                                  if (opt.value !== row.item_id) {
+                                    recalculateItem(Number(row.idx), "item_id", opt.value);
+                                  }
+                                }}
+                                onClear={() => {
+                                  recalculateItem(Number(row.idx), "item_id", "");
+                                }}
+                                disabled={!values.customer}
+                                error={err && err}
+                                className="w-full"
+                              />
+                            </div>
+                          );
+                        },
+                      },
+                      {
+                        key: "uom_id",
+                        label: "UOM",
+                        width: 150,
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const err = itemErrors[idx]?.uom_id;
+                          const options = JSON.parse(row.UOM ?? "[]");
+                          return (
+                            <div>
+                              <InputFields
+                                label=""
+                                value={row.uom_id}
+                                placeholder="Select UOM"
+                                width="max-w-[150px]"
+                                options={options}
+                                searchable={true}
+                                disabled={options.length === 0 || !values.customer}
+                                showSkeleton={Boolean(itemLoading[idx]?.uom)}
+                                onChange={(e) => {
+                                  recalculateItem(Number(row.idx), "uom_id", e.target.value)
+                                  const price = options.find((uom: { value: string }) => String(uom.value) === e.target.value)?.price || "0.00";
+                                  recalculateItem(Number(row.idx), "Price", price);
+                                }}
+                                error={err && err}
+                              />
+                            </div>
+                          );
+                        },
+                      },
+                      {
+                        key: "Quantity",
+                        label: "Qty",
+                        width: 150,
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const err = itemErrors[idx]?.Quantity;
+                          return (
+                            <div>
+                              <InputFields
+                                label=""
+                                type="number"
+                                name="Quantity"
+                                // integerOnly={true}
+                                placeholder="Enter Qty"
+                                value={row.Quantity}
+                                disabled={ !row.uom_id || !values.customer}
+                                onChange={(e) => {
+                                  const raw = (e.target as HTMLInputElement).value;
+                                  const intPart = raw.split('.')[0];
+                                  const sanitized = intPart === '' ? '' : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                  recalculateItem(Number(row.idx), "Quantity", sanitized);
+                                }}
+                                min={1}
+                                integerOnly={true}
+                                error={err && err}
+                              />
+                            </div>
+                          );
+                        },
+                      },
+                      {
+                        key: "Price",
+                        label: "Price",
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const loading = Boolean(itemLoading[idx]?.price);
+                          const price = String(row.Price ?? "");
+                          if (loading) {
+                            return <span className="text-gray-400 animate-pulse">Loading...</span>;
+                          }
+                          if (!price || price === "" || price === "0" || price === "-") {
+                            return <span className="text-gray-400">-</span>;
+                          }
+                          return <span>{price}</span>;
+                        }
+                      },
+                      // { key: "excise", label: "Excise", render: (row) => <span>{toInternationalNumber(row.Excise) || "0.00"}</span> },
+                      // { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
+                      { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
+                      { key: "Vat", label: "VAT", render: (row) => <span>{toInternationalNumber(row.Vat) || "0.00"}</span> },
+                      { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
+                      // { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
+                      { key: "Total", label: "Total", render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span> },
+                      {
+                        key: "action",
+                        label: "Action",
+                        render: (row) => (
+                          <button
+                            type="button"
+                            className={`${itemData.length <= 1
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                              } text-red-500 flex items-center`}
+                            onClick={() =>
+                              itemData.length > 1 && handleRemoveItem(Number(row.idx))
+                            }
+                          >
+                            <Icon icon="hugeicons:delete-02" width={20} />
+                          </button>
+                        ),
+                      },
+                    ],
+                  }}
+                />
+                </div>
+
+                {/* --- Available items list (table) --- */}
+                <div className="mt-6 mb-6">
+                  <h3 className="text-[16px] font-semibold mb-2">Collect</h3>
+                  <Table
+                    data={(exchangeData || []).map((it: any) => ({
+                      id: String(it.id ?? ""),
+                      code: it.item_code ?? it.erp_code ?? "",
+                      name: it.name ?? "",
+                      brand: it.brand ?? "",
+                      uom_count: Array.isArray(it.item_uoms) ? it.item_uoms.length : 0,
+                      price: it.item_uoms && it.item_uoms[0] ? String(it.item_uoms[0].price) : "",
+                      raw: it,
+                    }))}
+                    config={{
+                      showNestedLoading: false,
+                      columns: [
+                        { key: "code", label: "Code", width: 150, render: (r) => <span>{r.code}</span> },
+                        { key: "name", label: "Name", width: 300, render: (r) => <span>{r.name}</span> },
+                        { key: "brand", label: "Brand", render: (r) => <span>{r.brand}</span> },
+                        { key: "uom_count", label: "UOMs", align: "center", render: (r) => <span>{r.uom_count}</span> },
+                        { key: "price", label: "Price", align: "right", render: (r) => <span>{r.price || '-'}</span> },
+                        {
+                          key: "action",
+                          label: "",
+                          render: (r) => (
+                            <button
+                              type="button"
+                              className="text-primary text-sm"
+                              onClick={() => {
+                                const original = exchangeData.find((o: any) => String(o.id) === String(r.id));
+                                if (original) handleAddItemFromList(original as FormData);
+                              }}
+                            >
+                              Add
+                            </button>
+                          ),
+                        },
+                      ],
                     }}
                   />
-                  </div>
-                ),
-              },
-              {
-                key: "UOM",
-                label: "UOM",
-                width: 120,
-                render: (row) => {
-                  const uomOptions = rowUomOptions[row.idx] || [];
-                  return (
-                    <div style={{ minWidth: '120px', maxWidth: '120px' }}>  
-                    <InputFields
-                      label=""
-                      name="UOM"
-                      options={uomOptions}
-                      value={row.uom_id}
-                      disabled={uomOptions.length === 0}
-                      onChange={(e) => {
-                        const selectedUomId = e.target.value;
-                        const selectedUom = uomOptions.find(uom => uom.value === selectedUomId);
-                        const newData = [...itemData];
-                        const index = Number(row.idx);
-                        newData[index].uom_id = selectedUomId;
-                        newData[index].UOM = selectedUomId;
-                        
-                        setItemData(newData);
-                        recalculateItem(index, "UOM", selectedUomId);
-                      }}
-                    />
+                </div>
+
+                {/* --- Summary --- */}
+                <div className="flex justify-between text-primary gap-0 mb-10">
+                  <div className="flex justify-between flex-wrap w-full mt-[20px]">
+                    <div className="flex flex-col justify-between gap-[20px] w-full lg:w-auto">
+                      <div className="">
+                        <button
+                          type="button"
+                          className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
+                          onClick={handleAddNewItem}
+                        >
+                          <Icon icon="material-symbols:add-circle-outline" width={20} />
+                          Add New Item
+                        </button>
+                      </div>
+                      <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
+                        <InputFields
+                          label="Note"
+                          type="textarea"
+                          name="note"
+                          placeholder="Enter Note"
+                          value={values.note}
+                          onChange={handleChange}
+                          error={touched.note && (errors.note as string)}
+                        />
+                      </div>
                     </div>
-                  );
-                },
-              },
-              {
-                key: "Quantity",
-                label: "Qty",
-                width: 100,
-                render: (row) => (
-                  <div style={{ minWidth: '100px', maxWidth: '100px' }}>  
-                  <InputFields
-                    label=""
-                    type="number"
-                    name="Quantity"
-                    value={row.Quantity}
-                    onChange={(e) => {
-                        const value = e.target.value;
-                        const numValue = parseFloat(value);
-                        if (value === "") {
-                          recalculateItem(Number(row.idx), "Quantity", value);
-                        } else if (numValue <= 0) {
-                          recalculateItem(Number(row.idx), "Quantity", "1");
-                        } else {
-                          recalculateItem(Number(row.idx), "Quantity", value);
-                        }
-                      }}
-                    // onChange={(e) =>
-                    //   recalculateItem(Number(row.idx), "Quantity", e.target.value)
-                    // }
-                  />
-                  </div>
-                ),
-              },
-              {
-                key: "return_type",
-                label: "Return Type",
-                width: 100,
-                render: (row) => (
-                  <div style={{ minWidth: '100px', maxWidth: '100px' }}>
-                    <InputFields
-                      label=""
-                      name="return_type"
-                      value={row.return_type}
-                      options={[
-                        { label: "Good", value: "1" },
-                        { label: "Bad", value: "2" },
-                      ]}
-                      disabled={!row.item_id}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const newData = [...itemData];
-                        const index = Number(row.idx);
-                        newData[index].return_type = value;
-                        // Reset return_reason when type changes
-                        newData[index].return_reason = "";
-                        setItemData(newData);
-                      }}
-                    />
-                  </div>
-                ),
-              },
-              {
-                key: "return_reason",
-                label: "Return Reason",
-                width: 200,
-                render: (row) => {
-                  const options = row.return_type === "1" ? goodOptions : row.return_type === "2" ? badOptions : [];
-                  return (
-                    <div style={{ minWidth: '200px', maxWidth: '200px' }}>
-                      <InputFields
-                        label=""
-                        name="return_reason"
-                        value={row.return_reason}
-                        options={options}
-                        disabled={!row.return_type}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const newData = [...itemData];
-                          const index = Number(row.idx);
-                          newData[index].return_reason = value;
-                          setItemData(newData);
-                        }}
-                      />
+
+                    <div className="flex flex-col gap-[10px] w-full lg:w-[350px]">
+                      {keyValueData.map((item) => (
+                        <Fragment key={item.key}>
+                          <KeyValueData data={[item]} />
+                          <hr className="text-[#D5D7DA]" />
+                        </Fragment>
+                      ))}
+                      <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
+                        <span>Total</span>
+                        <span>AED {toInternationalNumber(finalTotal)}</span>
+                      </div>
                     </div>
-                  );
-                },
-              },
-              
-             
-              {
-                key: "action",
-                label: "Action",
-                render: (row) => (
+                  </div>
+                </div>
+
+                {/* --- Buttons --- */}
+                <div className="flex justify-end gap-4 mt-6">
                   <button
                     type="button"
-                    className={`${
-                      itemData.length <= 1
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    } text-red-500 flex items-center`}
-                    onClick={() =>
-                      itemData.length > 1 && handleRemoveItem(Number(row.idx))
-                    }
+                    className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+                    onClick={() => router.push("/exchange")}
                   >
-                    <Icon icon="hugeicons:delete-02" width={20} />
+                    Cancel
                   </button>
-                ),
-              },
-            ],
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Exchange..." : "Create Exchange"} disabled={isSubmitting} onClick={() => submitForm()} />
+                </div>
+              </>
+            );
           }}
-        />
-
-        {/* --- Add New Item --- */}
-        <div className="mt-4">
-          <button
-            type="button"
-            className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-            onClick={handleAddNewItem}
-          >
-            <Icon icon="material-symbols:add-circle-outline" width={20} />
-            Add New Item
-          </button>
-        </div>
-
-       
-
-        {/* --- Buttons --- */}
-        <div className="flex justify-end gap-4 mt-6">
-          <button
-            type="button"
-            className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-            onClick={() => router.push("/return")}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </button>
-          <SidebarBtn 
-            isActive={!isSubmitting} 
-            label={
-              isSubmitting 
-                ? (isEditMode ? "Updating Return..." : "Creating Return...") 
-                : (isEditMode ? "Update Return" : "Create Return")
-            } 
-            onClick={handleSubmit} 
-          />
-        </div>
+        </Formik>
       </ContainerCard>
     </div>
   );

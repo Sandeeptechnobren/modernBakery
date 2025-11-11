@@ -319,9 +319,6 @@ export default function AddEditRole() {
                       onChange={(e) => setFieldValue("name", e.target.value)}
                       error={touched.name && errors.name}
                     />
-                    {errors.name && (
-                        <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                    )}
                   </div>
                   <div>
                     <InputFields
@@ -334,9 +331,6 @@ export default function AddEditRole() {
                       onChange={(e) => setFieldValue("labels", e.target.value)}
                       error={touched.labels && (Array.isArray(errors.labels) ? errors.labels.join(", ") : errors.labels)}
                     />
-                    {errors.labels && (
-                        <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.labels) ? errors.labels.join(", ") : errors.labels}</p>
-                      )}
                   </div>
                   <div>
                     <InputFields
@@ -352,9 +346,6 @@ export default function AddEditRole() {
                         ]}
                         error={touched.status && errors.status}
                       />
-                      {errors.status && (
-                        <p className="text-red-500 text-sm mt-1">{errors.status}</p>
-                      )}
                   </div>
                 </div>
 

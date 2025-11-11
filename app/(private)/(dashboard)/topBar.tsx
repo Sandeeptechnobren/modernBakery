@@ -5,9 +5,10 @@ import ImageButton from "../../components/imageButton";
 import HorizontalSidebar from "../(dashboard)/horizontalSidebar";
 import Logo from "../../components/logo";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
+import NotificationPopover from "@/app/components/notificationPopover";
 import { logout } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { initialLinkData } from "../data/dashboardLinks";
@@ -25,6 +26,7 @@ export default function TopBar({
 }) {
     const { showSnackbar } = useSnackbar();
     const [isOpenDropdown, setIsOpenDropdown] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const router = useRouter();
     const [searchBarValue, setSearchBarValue] = useState("");
 
@@ -37,6 +39,30 @@ export default function TopBar({
         localStorage.removeItem("token");
         router.push("/");
     }
+
+    // Fullscreen toggle
+    const toggleFullscreen = async () => {
+        try {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+                setIsFullscreen(true);
+                showSnackbar?.("Entered fullscreen", "success");
+            } else {
+                await document.exitFullscreen();
+                setIsFullscreen(false);
+                showSnackbar?.("Exited fullscreen", "success");
+            }
+        } catch (err) {
+            console.warn("Fullscreen toggle failed:", err);
+            showSnackbar?.("Unable to change fullscreen", "error");
+        }
+    };
+
+    useEffect(() => {
+        const handler = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener("fullscreenchange", handler);
+        return () => document.removeEventListener("fullscreenchange", handler);
+    }, []);
 
     return (
         <div
@@ -73,12 +99,18 @@ export default function TopBar({
 
                     <div className="flex items-center gap-[10px]">
                         <IconButton
-                            icon="humbleicons:maximize"
-                            onClick={() => {
-                                toggleSidebar();
-                            }}
+                            icon={isFullscreen ? "mdi:fullscreen-exit" : "humbleicons:maximize"}
+                            onClick={() => toggleFullscreen()}
                         />
-                        <IconButton icon="lucide:bell" notification={true} />
+                        <NotificationPopover
+                            count={3}
+                            items={[
+                                { title: "New order created" },
+                                { title: "Payment received" },
+                                { title: "Delivery assigned" },
+                            ]}
+                            buttonClassName="bg-[#F5F5F5] text-black"
+                        />
                         <IconButton
                             icon="mi:settings"
                             onClick={() => {
@@ -99,7 +131,7 @@ export default function TopBar({
                                 />
                             }
                             dropdown={
-                                <div className="absolute w-[200px] top-[40px] right-0 z-30">
+                                <div className="absolute w-[200px] top-[40px] right-0 z-60">
                                     <CustomDropdown
                                         data={[
                                             {

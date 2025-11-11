@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Table, {
@@ -10,25 +10,22 @@ import Table, {
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import CustomDropdown from "@/app/components/customDropdown";
-import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import { deliveryList } from "@/app/services/agentTransaction";
 import StatusBtn from "@/app/components/statusBtn2";
-import BorderIconButton from "@/app/components/borderIconButton";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-const dropdownDataList = [
-    // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-    // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-    // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
-    { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-    { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
+// const dropdownDataList = [
+//     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
+//     // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
+//     // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+//     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
+//     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
+// ];
 
 // 🔹 Table Columns
 const columns = [
-    { 
-        key: "delivery_date", 
+    {
+        key: "delivery_date",
         label: "Date",
         showByDefault: true,
         render: (row: TableDataType) => {
@@ -41,97 +38,78 @@ const columns = [
             });
         }
     },
-    { key: "delivery_code", label: "Delivery Code",showByDefault: true },
+    { key: "delivery_code", label: "Delivery Code", showByDefault: true },
     // { key: "order_code", label: "Order Code",showByDefault: true },
-    { key: "customer", label: "Customer Code", render: (row: TableDataType) => {
-            const wh = row.customer;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { code?: string }).code || "-";
-        },showByDefault: true },
-    { key: "customer", label: "Customer Name", render: (row: TableDataType) => {
-            const wh = row.customer;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { name?: string }).name || "-";
-        },showByDefault: true },
-    { key: "route", label: "Route Code", render: (row: TableDataType) => {
-            const wh = row.route;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { code?: string }).code || "-";
-        },showByDefault: true },
-    { key: "route", label: "Route Name", render: (row: TableDataType) => {
-            const wh = row.route;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { name?: string }).name || "-";
-        },showByDefault: true },
-    { key: "warehouse", label: "Warehouse Code",
+    {
+        key: "customer",
+        label: "Customer Name",
         render: (row: TableDataType) => {
-            const wh = row.warehouse;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { code?: string }).code || "-";
-        },
-        showByDefault: true 
+            const customer = typeof row.customer === "string" ? { code: "", name: row.customer } : (row.customer ?? {});
+            const code = customer.code ?? "";
+            const name = customer.name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        }
     },
-    { key: "warehouse", label: "Warehouse Name", render: (row: TableDataType) => {
-            const wh = row.warehouse;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { name?: string }).name || "-";
-        },showByDefault: true },
-    { key: "salesman", label: "Salesman Code", render: (row: TableDataType) => {
-            const wh = row.salesman;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { code?: string }).code || "-";
-        },showByDefault: true },
-    { key: "salesman", label: "Salesman Name" , render: (row: TableDataType) => {
-            const wh = row.salesman;
-            if (!wh) return "-";
-            if (typeof wh === "string") return wh || "-";
-            return (wh as { name?: string }).name || "-";
-        },showByDefault: true},
+    {
+        key: "route",
+        label: "Route Name",
+        render: (row: TableDataType) => {
+            const route = typeof row.route === "string" ? { code: "", name: row.route } : (row.route ?? {});
+            const code = route.code ?? "";
+            const name = route.name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        }
+    },
+    {
+        key: "warehouse",
+        label: "Warehouse Name",
+        render: (row: TableDataType) => {
+            const warehouse = typeof row.warehouse === "string" ? { code: "", name: row.warehouse } : (row.warehouse ?? {});
+            const code = warehouse.code ?? "";
+            const name = warehouse.name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        }
+    },
+    {
+        key: "salesman",
+        label: "Salesman Name",
+        render: (row: TableDataType) => {
+            const salesman = typeof row.salesman === "string" ? { code: "", name: row.salesman } : (row.salesman ?? {});
+            const code = salesman.code ?? "";
+            const name = salesman.name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
     // { key: "Invoice_type", label: "Invoice Type" },
     // { key: "Invoice_no", label: "Invoice No" },
     // { key: "sap_id", label: "SAP ID" },
     // { key: "sap_status", label: "SAP Status" },
-    { key: "total", label: "Amount",showByDefault: true },
-   {
-           key: "status",
-           label: "Status",
-           render: (row: TableDataType) => {
-               // Treat status 1 or 'active' (case-insensitive) as active
-               const isActive =
-                   String(row.status) === "1" ||
-                   (typeof row.status === "string" &&
-                       row.status.toLowerCase() === "active");
-               return <StatusBtn isActive={isActive} />;
-           },
-           showByDefault: true,
-       },
+    { key: "total", label: "Amount", showByDefault: true },
+    {
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => {
+            // Treat status 1 or 'active' (case-insensitive) as active
+            const isActive =
+                String(row.status) === "1" ||
+                (typeof row.status === "string" &&
+                    row.status.toLowerCase() === "active");
+            return <StatusBtn isActive={isActive} />;
+        },
+        showByDefault: true,
+    },
 ];
 
 export default function CustomerInvoicePage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
-
-    const [filters, setFilters] = useState({
-        fromDate: new Date().toISOString().split("T")[0],
-        toDate: new Date().toISOString().split("T")[0],
-        region: "",
-        routeCode: "",
-    });
-
-    const [refreshKey, setRefreshKey] = useState(0);
-    const [showDropdown, setShowDropdown] = useState(false);
-
-    const handleChange = (name: string, value: string) => {
-        setFilters((prev) => ({ ...prev, [name]: value }));
-    };
+    const [refreshKey, setRefreshKey] = useState<number>(0);
+    const { customerSubCategoryOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
 
     // 🔹 Fetch Invoices
     const fetchInvoices = useCallback(async (
@@ -180,100 +158,132 @@ export default function CustomerInvoicePage() {
         }
     }, [setLoading]);
 
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await deliveryList(params);
+            } finally {
+                setLoading(false);
+            }
+
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination?.last_page || 1,
+                    totalRecords: pagination?.total || 0,
+                    currentPage: pagination?.current_page || 1,
+                    pageSize: pagination?.per_page || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
+
+
+    useEffect(() => {
+        setRefreshKey((k) => k + 1);
+    }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions]);
+
     return (
         <div className="flex flex-col h-full">
-                {/* 🔹 Table Section */}
-                <Table
-                    refreshKey={refreshKey}
-                    config={{
-                        api: { list: fetchInvoices, search: searchInvoices },
-                        header: {
-                            title: "Customer Delivery",
-                            columnFilter: true,
-                            wholeTableActions: [
-                              <div key={0} className="flex gap-[12px] relative">
-                                  <DismissibleDropdown
-                                      isOpen={showDropdown}
-                                      setIsOpen={setShowDropdown}
-                                      button={
-                                          <BorderIconButton icon="ic:sharp-more-vert" />
-                                      }
-                                      dropdown={
-                                          <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                                              <CustomDropdown>
-                                                  {dropdownDataList.map(
-                                                      (link, idx) => (
-                                                          <div
-                                                              key={idx}
-                                                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                          >
-                                                              <Icon
-                                                                  icon={
-                                                                      link.icon
-                                                                  }
-                                                                  width={
-                                                                      link.iconWidth
-                                                                  }
-                                                                  className="text-[#717680]"
-                                                              />
-                                                              <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                  {
-                                                                      link.label
-                                                                  }
-                                                              </span>
-                                                          </div>
-                                                      )
-                                                  )}
-                                              </CustomDropdown>
-                                          </div>
-                                      }
-                                  />
-                              </div>
-                            ],
-                            searchBar: false,
-                            actions: [
-                              <SidebarBtn
-                                  key={0}
-                                  href="#"
-                                  isActive
-                                  leadingIcon="mdi:download"
-                                  label="Download"
-                                  labelTw="hidden lg:block"
-                              />,
-                              <SidebarBtn
-                                  key={1}
-                                  href="/agentCustomerDelivery/add"
-                                  isActive
-                                  leadingIcon="mdi:plus"
-                                  label="Add"
-                                  labelTw="hidden lg:block"
-                              />
-                            ]
-                        },
-                        footer: { nextPrevBtn: true, pagination: true },
-                        columns,
-                        rowSelection: true,
-                        
-                        localStorageKey: "invoice-table",
-                        rowActions: [
-                            {
-                                icon: "lucide:eye",
-                                onClick: (row: TableDataType) =>
-                                    router.push(
-                                        `/agentCustomerDelivery/details/${row.uuid}`
-                                    ),
-                            },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (row: TableDataType) =>
-                                    router.push(
-                                        `/agentCustomerDelivery/${row.uuid}`
-                                    ),
-                            },
+            {/* 🔹 Table Section */}
+            <Table
+                refreshKey={refreshKey}
+                config={{
+                    api: { list: fetchInvoices, search: searchInvoices, filterBy: filterBy },
+                    header: {
+                        title: "Customer Delivery",
+                        columnFilter: true,
+                        searchBar: false,
+                        actions: [
+                            <SidebarBtn
+                                key={1}
+                                href="/agentCustomerDelivery/add"
+                                isActive
+                                leadingIcon="mdi:plus"
+                                label="Add"
+                                labelTw="hidden lg:block"
+                            />
                         ],
-                        pageSize: 10,
-                    }}
-                />
+                        filterByFields: [
+                            {
+                                key: "start_date",
+                                label: "Start Date",
+                                type: "date"
+                            },
+                            {
+                                key: "end_date",
+                                label: "End Date",
+                                type: "date"
+                            },
+                            {
+                                key: "warehouse",
+                                label: "Warehouse",
+                                isSingle: false,
+                                multiSelectChips: true,
+                                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                            },
+                            {
+                                key: "route_id",
+                                label: "Route",
+                                isSingle: false,
+                                multiSelectChips: true,
+                                options: Array.isArray(routeOptions) ? routeOptions : [],
+                            },
+                            {
+                                key: "salesman_id",
+                                label: "Salesman",
+                                isSingle: false,
+                                multiSelectChips: true,
+                                options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                            },
+                            {
+                                key: "customer_id",
+                                label: "Customer",
+                                type: "select",
+                                options: Array.isArray(agentCustomerOptions) ? agentCustomerOptions : [],
+                                isSingle: false,
+                                multiSelectChips: true,
+                            }
+                        ],
+                    },
+                    footer: { nextPrevBtn: true, pagination: true },
+                    columns,
+                    rowSelection: true,
+                    localStorageKey: "invoice-table",
+                    rowActions: [
+                        {
+                            icon: "lucide:eye",
+                            onClick: (row: TableDataType) =>
+                                router.push(
+                                    `/agentCustomerDelivery/details/${row.uuid}`
+                                ),
+                        },
+                        // {
+                        //     icon: "lucide:edit-2",
+                        //     onClick: (row: TableDataType) =>
+                        //         router.push(
+                        //             `/agentCustomerDelivery/${row.uuid}`
+                        //         ),
+                        // },
+                    ],
+                    pageSize: 10,
+                }}
+            />
         </div>
     );
 }

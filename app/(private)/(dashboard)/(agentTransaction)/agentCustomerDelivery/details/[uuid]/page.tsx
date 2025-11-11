@@ -172,7 +172,7 @@ export default function OrderDetailPage() {
 
         {/* Action Buttons */}
         <div className="flex gap-[12px] relative">
-          <div className="gap-[12px] hidden sm:flex">
+          {/* <div className="gap-[12px] hidden sm:flex">
             <BorderIconButton 
               icon="lucide:edit-2" 
               onClick={() => router.push(`/agentCustomerDelivery/${uuid}`)}
@@ -195,7 +195,7 @@ export default function OrderDetailPage() {
                 </div>
               }
             />
-          </div>
+          </div> */}
         </div>
       </div>
 

@@ -16,6 +16,7 @@ import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import { invoiceList } from "@/app/services/agentTransaction";
 import StatusBtn from "@/app/components/statusBtn2";
 import BorderIconButton from "@/app/components/borderIconButton";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 const dropdownDataList = [
     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -31,45 +32,38 @@ const columns = [
         key: "invoice_date", 
         label: "Date",
         showByDefault: true,
-        render: (row: TableDataType) => {
-            if (!row.invoice_date) return "-";
-            const date = new Date(row.invoice_date as string);
-            return date.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        }
+        
     },
     { 
         key: "invoice_time", 
         label: "Time",
         showByDefault: true,
-        render: (row: TableDataType) => {
-            if (!row.invoice_time) return "-";
-            const date = new Date(row.invoice_time as string);
-            return date.toLocaleTimeString('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: true
-            });
-        }
+        
     },
     { key: "invoice_code", label: "Invoice Code",showByDefault: true },
     { key: "order_code", label: "Order Code",showByDefault: true },
-    { key: "customer_code", label: "Customer Code",showByDefault: true },
-    { key: "customer_name", label: "Customer Name",showByDefault: true },
-    { key: "route_code", label: "Route Code",showByDefault: true },
-    { key: "route_name", label: "Route Name",showByDefault: true },
-    { key: "warehouse_code", label: "Warehouse Code",showByDefault: true },
-    { key: "warehouse_name", label: "Warehouse Name",showByDefault: true },
-    { key: "salesman_code", label: "Salesman Code",showByDefault: true },
-    { key: "salesman_name", label: "Salesman Name" ,showByDefault: true},
-    // { key: "Invoice_type", label: "Invoice Type" },
-    // { key: "Invoice_no", label: "Invoice No" },
-    // { key: "sap_id", label: "SAP ID" },
-    // { key: "sap_status", label: "SAP Status" },
+    { key: "customer_code", label: "Customer",showByDefault: true , render: (row: TableDataType) => {
+        const code = row.customer_code || "";
+        const name = row.customer_name || "";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }},
+    { key: "route_code", label: "Route",showByDefault: true , render: (row: TableDataType) => {
+        const code = row.route_code || "";
+        const name = row.route_name || "";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }},
+    { key: "warehouse_code", label: "Warehouse", showByDefault: true,
+      render: (row: TableDataType) => {
+        const code = row.warehouse_code || "";
+        const name = row.warehouse_name || "";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }
+    },
+    { key: "salesman_code", label: "Salesman",showByDefault: true  , render: (row: TableDataType) => {
+        const code = row.salesman_code || "";
+        const name = row.salesman_name || "";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }},
     { key: "total_amount", label: "Invoice Amount",showByDefault: true },
    {
            key: "status",
@@ -90,6 +84,7 @@ export default function CustomerInvoicePage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
+    const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions } = useAllDropdownListData();
 
     const [filters, setFilters] = useState({
         fromDate: new Date().toISOString().split("T")[0],
@@ -152,16 +147,90 @@ export default function CustomerInvoicePage() {
         }
     }, [setLoading]);
 
+        const filterBy = useCallback(
+            async (
+                payload: Record<string, string | number | null>,
+                pageSize: number
+            ): Promise<listReturnType> => {
+                let result;
+                setLoading(true);
+                try {
+                    const params: Record<string, string> = { };
+                    Object.keys(payload || {}).forEach((k) => {
+                        const v = payload[k as keyof typeof payload];
+                        if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                            params[k] = String(v);
+                        }
+                    });
+                    result = await invoiceList(params);
+                } finally {
+                    setLoading(false);
+                }
+    
+                if (result?.error) throw new Error(result.data?.message || "Filter failed");
+                else {
+                    const pagination = result.pagination?.pagination || result.pagination || {};
+                    return {
+                        data: result.data || [],
+                        total: pagination.totalPages || result.pagination?.totalPages || 0,
+                        totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                        currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                        pageSize: pagination.limit || pageSize,
+                    };
+                }
+            },
+            [setLoading]
+        );
+
     return (
         <div className="flex flex-col h-full">
                 {/* 🔹 Table Section */}
                 <Table
                     refreshKey={refreshKey}
                     config={{
-                        api: { list: fetchInvoices, search: searchInvoices },
+                        api: { list: fetchInvoices, search: searchInvoices,filterBy: filterBy, },
                         header: {
                             title: "Customer Invoices",
                             columnFilter: true,
+                             filterByFields: [
+                                {
+                                    key: "date_change",
+                                    label: "Date Range",
+                                    type: "dateChange"
+                                },
+                                
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                 {
+                                    key: "salesman",
+                                    label: "Salesman",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+
+                               
+                                {
+                                    key: "customer",
+                                    label: "Customer",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(agentCustomerOptions) ? agentCustomerOptions : [],
+                                },
+                                
+                            ],
                             wholeTableActions: [
                               <div key={0} className="flex gap-[12px] relative">
                                   <DismissibleDropdown
@@ -204,14 +273,14 @@ export default function CustomerInvoicePage() {
                             ],
                             searchBar: false,
                             actions: [
-                              <SidebarBtn
-                                  key={0}
-                                  href="#"
-                                  isActive
-                                  leadingIcon="mdi:download"
-                                  label="Download"
-                                  labelTw="hidden lg:block"
-                              />,
+                            //   <SidebarBtn
+                            //       key={0}
+                            //       href="#"
+                            //       isActive
+                            //       leadingIcon="mdi:download"
+                            //       label="Download"
+                            //       labelTw="hidden lg:block"
+                            //   />,
                               <SidebarBtn
                                   key={1}
                                   href="/invoice/add"
@@ -236,10 +305,10 @@ export default function CustomerInvoicePage() {
                                     ),
                             },
                             // {
-                            //     icon: "lucide:trash-2",
+                            //     icon: "lucide:edit-2",
                             //     onClick: (row: TableDataType) =>
                             //         router.push(
-                            //             `/invoice/${row.id}`
+                            //             `/invoice/${row.uuid}`
                             //         ),
                             // },
                         ],

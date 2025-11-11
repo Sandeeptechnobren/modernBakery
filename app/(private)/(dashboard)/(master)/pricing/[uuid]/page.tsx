@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { itemList, addPricingDetail, pricingDetailById,pricingHeaderById, editPricingDetail } from "@/app/services/allApi";
+import { itemList, addPricingDetail, pricingDetailById, pricingHeaderById, editPricingDetail } from "@/app/services/allApi";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import InputFields from "@/app/components/inputFields";
 import Table from "@/app/components/customTable";
@@ -451,30 +451,31 @@ export default function AddPricing() {
   });
 
   type OrderItem = {
-  itemName: string;
-  itemCode: string;
-  quantity: string;
-  toQuantity: string;
-  uom: string;
-  price?: string;
-  buom_ctn_price?: string;
-  auom_pc_price?: string;
-};
+    itemName: string;
+    itemCode: string;
+    quantity: string;
+    toQuantity: string;
+    uom: string;
+    price?: string;
+    buom_ctn_price?: string;
+    auom_pc_price?: string;
+  };
 
   const [keyValue, setKeyValue] = useState<Record<string, string[]>>({});
   const [promotion, setPromotion] = useState<{
     itemName: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  orderType: string;
-  offerType: string;
-  type: string;
-  discountType: string;
-  discountApplyOn: string;
-  bundle: boolean;
-  orderItems: OrderItem[];
-  offerItems: Array<{ itemName: string; uom: string; quantity: string }>;}>({
+    startDate: string;
+    endDate: string;
+    status: string;
+    orderType: string;
+    offerType: string;
+    type: string;
+    discountType: string;
+    discountApplyOn: string;
+    bundle: boolean;
+    orderItems: OrderItem[];
+    offerItems: Array<{ itemName: string; uom: string; quantity: string }>;
+  }>({
     itemName: "",
     startDate: "",
     endDate: "",
@@ -580,9 +581,9 @@ export default function AddPricing() {
                         options={
                           locationDropdownMap[locKey]
                             ? [
-                                { label: `Select ${locKey}`, value: "" },
-                                ...locationDropdownMap[locKey],
-                              ]
+                              { label: `Select ${locKey}`, value: "" },
+                              ...locationDropdownMap[locKey],
+                            ]
                             : [{ label: `Select ${locKey}`, value: "" }]
                         }
                         value={keyValue[locKey] || []}
@@ -616,9 +617,9 @@ export default function AddPricing() {
                         options={
                           customerDropdownMap[custKey]
                             ? [
-                                { label: `Select ${custKey}`, value: "" },
-                                ...customerDropdownMap[custKey],
-                              ]
+                              { label: `Select ${custKey}`, value: "" },
+                              ...customerDropdownMap[custKey],
+                            ]
                             : [{ label: `Select ${custKey}`, value: "" }]
                         }
                         value={keyValue[custKey] || []}
@@ -652,9 +653,9 @@ export default function AddPricing() {
                         options={
                           itemDropdownMap[itemKey]
                             ? [
-                                { label: `Select ${itemKey}`, value: "" },
-                                ...itemDropdownMap[itemKey],
-                              ]
+                              { label: `Select ${itemKey}`, value: "" },
+                              ...itemDropdownMap[itemKey],
+                            ]
                             : [{ label: `Select ${itemKey}`, value: "" }]
                         }
                         value={keyValue[itemKey] || []}
@@ -677,48 +678,48 @@ export default function AddPricing() {
         );
       case 3:
         const itemsData = (keyValue["Item"] || []).map((itemId, idx) => {
-    let itemData = selectedItemDetails.find(
-      (item) => String(item.code || item.itemCode) === String(itemId)
-    );
-    if (!itemData) {
-      itemData = itemOptions.find(
-        (opt) => String(opt.value) === String(itemId)
-      );
-    }
-    let itemCode = "-";
-    if (itemData) {
-      if (itemData.code) itemCode = itemData.code;
-      else if (itemData.itemCode) itemCode = itemData.itemCode;
-      else if (itemData.label) {
-        const labelParts = String(itemData.label).split(" - ");
-        itemCode =
-          labelParts.length > 1 ? labelParts[0] : String(itemData.label);
-      }
-    } else {
-      itemCode = String(itemId);
-    }
-    let itemName = "-";
-    if (itemData) {
-      if (itemData.name) itemName = itemData.name;
-      else if (itemData.itemName) itemName = itemData.itemName;
-      else if (itemData.label) {
-        const labelParts = String(itemData.label).split(" - ");
-        itemName =
-          labelParts.length > 1
-            ? labelParts.slice(1).join(" - ")
-            : labelParts[0];
-      }
-    }
-    const orderItem = promotion.orderItems.find((oi) => oi.itemCode === itemCode);
-   return {
-    itemName,
-    itemCode,
-    price: orderItem?.price || "",
-    buom_ctn_price: orderItem?.buom_ctn_price || "",
-    auom_pc_price: orderItem?.auom_pc_price || "",
-    idx: String(idx),
-  };
-  });
+          let itemData = selectedItemDetails.find(
+            (item) => String(item.code || item.itemCode) === String(itemId)
+          );
+          if (!itemData) {
+            itemData = itemOptions.find(
+              (opt) => String(opt.value) === String(itemId)
+            );
+          }
+          let itemCode = "-";
+          if (itemData) {
+            if (itemData.code) itemCode = itemData.code;
+            else if (itemData.itemCode) itemCode = itemData.itemCode;
+            else if (itemData.label) {
+              const labelParts = String(itemData.label).split(" - ");
+              itemCode =
+                labelParts.length > 1 ? labelParts[0] : String(itemData.label);
+            }
+          } else {
+            itemCode = String(itemId);
+          }
+          let itemName = "-";
+          if (itemData) {
+            if (itemData.name) itemName = itemData.name;
+            else if (itemData.itemName) itemName = itemData.itemName;
+            else if (itemData.label) {
+              const labelParts = String(itemData.label).split(" - ");
+              itemName =
+                labelParts.length > 1
+                  ? labelParts.slice(1).join(" - ")
+                  : labelParts[0];
+            }
+          }
+          const orderItem = promotion.orderItems.find((oi) => oi.itemCode === itemCode);
+          return {
+            itemName,
+            itemCode,
+            price: orderItem?.price || "",
+            buom_ctn_price: orderItem?.buom_ctn_price || "",
+            auom_pc_price: orderItem?.auom_pc_price || "",
+            idx: String(idx),
+          };
+        });
 
         const totalPages = Math.ceil(itemsData.length / pageSize);
         const paginatedData = itemsData.slice(
@@ -736,11 +737,10 @@ export default function AddPricing() {
           onClick,
         }: PaginationBtnProps) => (
           <button
-            className={`w-[32px] h-[32px] rounded-[6px] flex items-center justify-center mx-[2px] text-[14px] font-semibold transition-colors duration-150 border-none outline-none focus:ring-2 focus:ring-[#EA0A2A] select-none ${
-              isActive
+            className={`w-[32px] h-[32px] rounded-[6px] flex items-center justify-center mx-[2px] text-[14px] font-semibold transition-colors duration-150 border-none outline-none focus:ring-2 focus:ring-[#EA0A2A] select-none ${isActive
                 ? "bg-[#FFF0F2] text-[#EA0A2A] shadow-sm"
                 : "bg-white text-[#717680] hover:bg-[#F5F5F5]"
-            }`}
+              }`}
             style={{ minWidth: 32 }}
             onClick={onClick}
             disabled={label === "..."}
@@ -884,6 +884,7 @@ export default function AddPricing() {
                     table: {
                       height: 500,
                     },
+                    showNestedLoading: false,
                     columns: [
                       {
                         key: "itemCode",
@@ -904,22 +905,22 @@ export default function AddPricing() {
                         ),
                       },
                       {
-  key: "price",
-  label: "Price",
-  render: (row) => (
-    <div className="text-[14px] text-[#181D27] font-semibold space-y-1">
-      {Array.isArray(row?.uom) && row.uom.length > 0 ? (
-        row.uom.map((u) => (
-          <div key={u.id}>
-            {u.name ? `${u.name} - ₹${u.price}` : `₹${u.price}`}
-          </div>
-        ))
-      ) : (
-        <span>-</span>
-      )}
-    </div>
-  ),
-},
+                        key: "price",
+                        label: "Price",
+                        render: (row) => (
+                          <div className="text-[14px] text-[#181D27] font-semibold space-y-1">
+                            {Array.isArray(row?.uom) && row.uom.length > 0 ? (
+                              row.uom.map((u) => (
+                                <div key={u.id}>
+                                  {u.name ? `${u.name} - ₹${u.price}` : `₹${u.price}`}
+                                </div>
+                              ))
+                            ) : (
+                              <span>-</span>
+                            )}
+                          </div>
+                        ),
+                      },
                       {
                         key: "buom_ctn_price",
                         label: "Base Price",
@@ -1081,7 +1082,7 @@ export default function AddPricing() {
             isCompleted: isStepCompleted(step.id),
           }))}
           currentStep={currentStep}
-          onStepClick={() => {}}
+          onStepClick={() => { }}
           onBack={prevStep}
           onNext={handleNext}
           onSubmit={handleSubmit}

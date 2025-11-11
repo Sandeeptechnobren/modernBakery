@@ -499,20 +499,34 @@ export const initialLinkData: SidebarDataType[] = [
       //             iconColor: "text-green-500",
       //         },
 
-      //         {
-      //             isActive: false,
-      //             href: "/salesman",
-      //             label: "Distribution Org Structure",
-      //             leadingIcon: "mdi:source-branch",
-      //             iconColor: "text-green-500",
-      //         },
-      //         {
-      //             isActive: false,
-      //             href: "/salesman",
-      //             label: "Exit Reason",
-      //             leadingIcon: "mdi:exit-to-app",
-      //             iconColor: "text-green-500",
-      //         },
-    ],
-  },
+    //         {
+    //             isActive: false,
+    //             href: "/salesman",
+    //             label: "Distribution Org Structure",
+    //             leadingIcon: "mdi:source-branch",
+    //             iconColor: "text-green-500",
+    //         },
+    //         {
+    //             isActive: false,
+    //             href: "/salesman",
+    //             label: "Exit Reason",
+    //             leadingIcon: "mdi:exit-to-app",
+    //             iconColor: "text-green-500",
+    //         },
+    {
+                isActive: false,
+                href: "/settings/globalSetting",
+                label: "Global Settings",
+                leadingIcon: "mi:settings",
+                iconColor: "text-green-500",
+            },
+            {
+                isActive: false,
+                href: "/settings/approval",
+                label: "Approval Settings",
+                leadingIcon: "mi:settings",
+                iconColor: "text-green-500",
+            }
+        ],
+    },
 ];

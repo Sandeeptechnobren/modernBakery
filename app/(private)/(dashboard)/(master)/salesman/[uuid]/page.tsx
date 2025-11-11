@@ -15,7 +15,6 @@ import { useEffect, useRef, useState } from "react";
 import * as Yup from "yup";
 
 import ContainerCard from "@/app/components/containerCard";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import CustomPasswordInput from "@/app/components/customPasswordInput";
 import InputFields from "@/app/components/inputFields";
@@ -33,6 +32,7 @@ import {
   updateSalesman,
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 interface SalesmanFormValues {
   osa_code: string;

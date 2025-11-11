@@ -5,6 +5,7 @@ import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
 import Link from "next/link";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
+import NotificationPopover from "@/app/components/notificationPopover";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/services/allApi";
@@ -18,22 +19,23 @@ export default function Sidebar({
     onClickHandler: (href: string) => void;
 }>) {
     const { filteredMenu } = usePermissionManager();
-      const data: SidebarDataType[] = (() => {
+    const data: SidebarDataType[] = (() => {
         if (!filteredMenu) return [];
         // If filteredMenu items are grouped (have 'data') treat as SidebarDataType[]
         if (Array.isArray(filteredMenu) && filteredMenu.length > 0 && 'data' in filteredMenu[0]) {
-          return filteredMenu as unknown as SidebarDataType[];
+            return filteredMenu as unknown as SidebarDataType[];
         }
         // Otherwise assume it's a flat LinkDataType[] and wrap into a single group
         return [
-          {
-            name: undefined,
-            data: filteredMenu as unknown as LinkDataType[],
-          },
+            {
+                name: undefined,
+                data: filteredMenu as unknown as LinkDataType[],
+            },
         ];
-      })();
+    })();
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [currentPageForSecondSidebar, setCurrentPageForSecondSidebar] = useState("");
     const router = useRouter();
     const pathname = usePathname();
@@ -60,45 +62,63 @@ export default function Sidebar({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen]);
 
-    const miscLinks = [
-    {
-        type: "icon",
-        href: "",
-        label: "maximize",
-        icon: "humbleicons:maximize",
-    },
-    {
-        type: "icon",
-        href: "",
-        label: "Notifications",
-        icon: "lucide:bell",
-    },
-    {
-        type: "icon",
-        href: "/settings",
-        label: "Settings",
-        icon: "mi:settings",
-        onClick: () => {
-            setIsOpen(false);
-            router.push("/settings");
+    // Fullscreen toggle for sidebar maximize button
+    const toggleFullscreen = async () => {
+        try {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+                setIsFullscreen(true);
+            } else {
+                await document.exitFullscreen();
+                setIsFullscreen(false);
+            }
+        } catch (err) {
+            console.warn("Fullscreen toggle failed:", err);
         }
-    },
-    {
-        type: "profile",
-        href: "",
-        src: "/dummyuser.jpg",
-        label: "Profile",
-    },
-];
+    };
+
+    const miscLinks = [
+        {
+            type: "icon",
+            href: "",
+            label: "maximize",
+            icon: isFullscreen ? "mdi:fullscreen-exit" : "humbleicons:maximize",
+            onClick: () => {
+                toggleFullscreen();
+            }
+        },
+        {
+            type: "icon",
+            href: "",
+            label: "Notifications",
+            icon: "lucide:bell",
+        },
+        {
+            type: "icon",
+            href: "/settings",
+            label: "Settings",
+            icon: "mi:settings",
+            onClick: () => {
+                setIsOpen(false);
+                router.push("/settings");
+            }
+        },
+        {
+            type: "profile",
+            href: "",
+            src: "/dummyuser.jpg",
+            label: "Profile",
+        },
+    ];
 
     const isParentActive = (children: LinkDataType[] | undefined): boolean => {
-    if (!children) return false;
-    return Boolean(children.some((child) => child.href === activeHref));
+        if (!children) return false;
+        return Boolean(children.some((child) => child.href === activeHref));
     };
 
 
     return (
-    <div className="flex" ref={wrapperRef}>
+        <div className="flex" ref={wrapperRef}>
             {/* first side bar */}
             <div className="w-[40px] h-screen bg-[#121D33] text-white flex flex-col justify-between items-center">
                 {/* upper part */}
@@ -125,81 +145,109 @@ export default function Sidebar({
                     {/* icons */}
 
                     <div className="flex flex-col items-center gap-[8px] w-full">
-                    {data.map((group, groupIndex) =>
-                        group.data.map((link, index) => {
-                            const isActive = isParentActive(link.children);
-                            return (
-                                <Link
-                                    className="w-full relative cursor-pointer group"
-                                    key={`${groupIndex}-${index}`}
-                                    href={link.href}
-                                    onClick={() => {
-                                        onClickHandler(link.href);
-                                        setActiveHref(link.href);
-                                        if (link.children && link.children.length > 0) {
-                                            setIsOpen(true);
-                                            setCurrentPageForSecondSidebar(link.href);
-                                            setSecondSidebarChildren(link.children);
-                                        } else {
-                                            setIsOpen(false);
-                                            setCurrentPageForSecondSidebar("");
-                                        }
-                                    }}
-                                >
-                                    <div
-                                        className={`w-full h-[40px] p-[6px] flex justify-center items-center relative rounded-l-[8px] ${
-                                            isActive ? "bg-[#223458]" : ""
-                                        }`}
+                        {data.map((group, groupIndex) =>
+                            group.data.map((link, index) => {
+                                const isActive = isParentActive(link.children);
+                                return (
+                                    <Link
+                                        className="w-full relative cursor-pointer group"
+                                        key={`${groupIndex}-${index}`}
+                                        href={link.href}
+                                        onClick={() => {
+                                            onClickHandler(link.href);
+                                            setActiveHref(link.href);
+                                            if (link.children && link.children.length > 0) {
+                                                setIsOpen(true);
+                                                setCurrentPageForSecondSidebar(link.href);
+                                                setSecondSidebarChildren(link.children);
+                                            } else {
+                                                setIsOpen(false);
+                                                setCurrentPageForSecondSidebar("");
+                                            }
+                                        }}
                                     >
-                                        <Icon
-                                            icon={link.leadingIcon}
-                                            width={20}
-                                            className={`z-10 ${link.iconColor || "text-white"}`}
-                                        />
-                                        <div className={`z-10 ${isActive ? "block" : "hidden"}`}>
-                                            <div className="absolute -top-[8px] right-0 w-[8px] h-[8px] bg-[#223458]">
-                                                <div className="w-full h-full bg-[#121D33] rounded-br-[8px]"></div>
-                                            </div>
-                                            <div className="absolute -bottom-[8px] right-0 w-[8px] h-[8px] bg-[#223458]">
-                                                <div className="w-full h-full bg-[#121D33] rounded-tr-[8px]"></div>
-                                            </div>
-                                        </div>
                                         <div
-                                            className={`${!isActive ? "group-hover:flex" : ""} hidden absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                                            className={`w-full h-[40px] p-[6px] flex justify-center items-center relative rounded-l-[8px] ${isActive ? "bg-[#223458]" : ""
+                                                }`}
                                         >
-                                            {link.label}
+                                            <Icon
+                                                icon={link.leadingIcon}
+                                                width={20}
+                                                className={`z-10 ${link.iconColor || "text-white"}`}
+                                            />
+                                            <div className={`z-10 ${isActive ? "block" : "hidden"}`}>
+                                                <div className="absolute -top-[8px] right-0 w-[8px] h-[8px] bg-[#223458]">
+                                                    <div className="w-full h-full bg-[#121D33] rounded-br-[8px]"></div>
+                                                </div>
+                                                <div className="absolute -bottom-[8px] right-0 w-[8px] h-[8px] bg-[#223458]">
+                                                    <div className="w-full h-full bg-[#121D33] rounded-tr-[8px]"></div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                className={`${!isActive ? "group-hover:flex" : ""} hidden absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                                            >
+                                                {link.label}
+                                            </div>
                                         </div>
-                                    </div>
-                                </Link>
-                            );
-                        })
-                    )}
+                                    </Link>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
 
                 {/* lower part */}
                 <div className="flex flex-col items-center gap-[8px] w-full mb-[16px]">
-                    {miscLinks.map((link, index) =>
-                        link.type === "icon" ? (
-                            <Link
-                                href={link.href}
-                                key={index}
-                                className="relative group flex items-center hover:bg-[#223458] w-[32px] h-[32px] rounded-[8px]"
-                            >
-                                <Icon
-                                    icon={link.icon || "lucide:circle"}
-                                    width={20}
-                                    className="w-full"
-                                    alt={link.label}
-                                    onClick={link.onClick}
-                                />
-                                <div
-                                    className={`hidden group-hover:flex absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                    {miscLinks.map((link, index) => {
+                        if (link.type === "icon") {
+                            // render notification popover for bell icon
+                            if (link.icon === "lucide:bell") {
+                                return (
+                                    <div key={index} className="relative group flex items-center hover:bg-[#223458] w-[32px] h-[32px] rounded-[8px] justify-center">
+                                        <NotificationPopover
+                                            count={3}
+                                            items={[
+                                                { title: "New order created" },
+                                                { title: "Payment received" },
+                                                { title: "Delivery assigned" },
+                                            ]}
+                                            position="right-center"
+                                            dropdownClassName="w-[260px]"
+                                            bgClassName="bg-[#0F1724] text-white"
+                                            buttonClassName="bg-transparent text-white"
+                                        />
+                                        {/* <div className={`hidden group-hover:flex absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}>
+                                            {link.label}
+                                        </div> */}
+                                    </div>
+                                );
+                            }
+
+                            // default icon link
+                            return (
+                                <Link
+                                    href={link.href}
+                                    key={index}
+                                    className="relative group flex items-center hover:bg-[#223458] w-[32px] h-[32px] rounded-[8px]"
                                 >
-                                    {link.label}
-                                </div>
-                            </Link>
-                        ) : (
+                                    <Icon
+                                        icon={link.icon || "lucide:circle"}
+                                        width={20}
+                                        className="w-full"
+                                        alt={link.label}
+                                        onClick={link.onClick}
+                                    />
+                                    {/* <div
+                                        className={`hidden group-hover:flex absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                                    >
+                                        {link.label}
+                                    </div> */}
+                                </Link>
+                            );
+                        }
+
+                        // profile dropdown case (unchanged)
+                        return (
                             <DismissibleDropdown
                                 key={index}
                                 isOpen={showDropdown}
@@ -219,8 +267,9 @@ export default function Sidebar({
                                     </Link>
                                 }
                                 dropdown={
-                                    <div className="absolute w-[200px] bottom-0 left-[40px] z-30">
+                                    <div className="absolute w-[200px] bottom-0 left-[40px] z-60">
                                         <CustomDropdown
+                                            mode="dark"
                                             data={[
                                                 {
                                                     icon: "mynaui:lock",
@@ -255,16 +304,15 @@ export default function Sidebar({
                                     </div>
                                 }
                             />
-                        )
-                    )}
+                        );
+                    })}
                 </div>
             </div>
 
             {/* second sidebar */}
             <div
-                className={`relative ${
-                    isOpen ? "w-[250px]" : "w-[13px] hover:w-[15px]"
-                } h-screen bg-[#223458] group transition-all ease-in-out duration-300`}
+                className={`relative ${isOpen ? "w-[250px]" : "w-[13px] hover:w-[15px]"
+                    } h-screen bg-[#223458] group transition-all ease-in-out duration-300`}
             >
                 {/* second sidebar toggle button */}
                 {currentPageForSecondSidebar !== "" && (
@@ -283,10 +331,10 @@ export default function Sidebar({
 
                 {/* inner content */}
                 <div>
-                    
+
                 </div>
                 <div className="w-full h-full flex flex-col p-[8px] gap-[10px]">
-                    { secondSidebarChildren && isOpen && secondSidebarChildren.map((link, index) =>{
+                    {secondSidebarChildren && isOpen && secondSidebarChildren.map((link, index) => {
                         return <div key={index}>
                             <SidebarBtn1
                                 isActive={activeHref === link.href}

@@ -217,6 +217,10 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     const { selectedRow, setSelectedRow } = useContext(SelectedRow);
     const [showDropdown, setShowDropdown] = useState(false);
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
+    // ordering of columns (array of original column indices). initialized from config.columns
+    const [columnOrder, setColumnOrder] = useState<number[]>(
+        () => (config.columns || []).map((_, i) => i)
+    );
 
     async function checkForData() {
         // if data is passed, use default values
@@ -283,6 +287,8 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
         setSelectedRow([]);
     }, [data, refreshKey]);
 
+    const orderedColumns = (columnOrder || []).map((i) => config.columns[i]).filter(Boolean);
+
     return (
         <>
             {(config.header?.title || config.header?.wholeTableActions || config.header?.tableActions) && (
@@ -345,7 +351,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
             )}
             <div className="flex flex-col bg-white w-full border-[1px] border-[#E9EAEB] rounded-[8px] overflow-hidden">
                 <TableHeader />
-                <TableBody />
+                <TableBody orderedColumns={orderedColumns} setColumnOrder={setColumnOrder} />
                 <TableFooter />
             </div>
         </>
@@ -541,15 +547,12 @@ function ColumnFilter() {
 }
 
 
-function TableBody() {
+function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configType['columns']; setColumnOrder: React.Dispatch<React.SetStateAction<number[]>> }) {
     const { config } = useContext(Config);
-    const {
-        api,
-        columns,
-        rowSelection,
-        rowActions,
-        pageSize = defaultPageSize,
-    } = config;
+    const { api, rowSelection, rowActions, pageSize = defaultPageSize } = config;
+    // columns is derived from orderedColumns passed from TableContainer; fallback to config.columns
+    const columns = orderedColumns && orderedColumns.length > 0 ? orderedColumns : config.columns;
+    const dragIndex = useRef<number | null>(null);
     const { tableDetails } = useContext(TableDetails);
     const tableData = tableDetails.data || [];
 
@@ -577,17 +580,17 @@ function TableBody() {
         if (!api?.list) {
             setDisplayedData(tableData.slice(startIndex, endIndex));
 
-            setTimeout(()=>{
-        setNestedLoading(false)
+            setTimeout(() => {
+                setNestedLoading(false)
 
-            },2000)
-            
+            }, 2000)
+
         } else {
             setDisplayedData(tableData);
-           setTimeout(()=>{
-        setNestedLoading(false)
+            setTimeout(() => {
+                setNestedLoading(false)
 
-            },2000)
+            }, 2000)
 
         }
     }, [tableDetails]);
@@ -621,7 +624,7 @@ function TableBody() {
     };
 
     return (
-        <>{(config.showNestedLoading && nestedLoading) ? <CustomTableSkelton/> : <>
+        <>{(config.showNestedLoading && nestedLoading) ? <CustomTableSkelton /> : <>
             <div
                 className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent"
                 style={
@@ -655,10 +658,47 @@ function TableBody() {
 
                             {/* main data */}
                             {columns &&
-                                columns.map((col, index) => {
+                                columns.map((col, orderIdx) => {
+                                    // find original index in config.columns to check selectedColumns
+                                    const originalIndex = config.columns?.findIndex((c) => c.key === col.key);
+                                    if (!selectedColumns.includes(originalIndex)) return null;
                                     return (
-                                        selectedColumns.includes(index) && (
                                             <th
+                                                // enable native drag only when config.dragableColumn is true
+                                                draggable={!!config.dragableColumn}
+                                                onDragStart={(e) => {
+                                                    if (!config.dragableColumn) return;
+                                                    dragIndex.current = orderIdx;
+                                                    try {
+                                                        e.dataTransfer?.setData('text/plain', String(orderIdx));
+                                                        e.dataTransfer!.effectAllowed = 'move';
+                                                    } catch (err) {
+                                                        /* ignore */
+                                                    }
+                                                }}
+                                                onDragOver={(e) => {
+                                                    if (!config.dragableColumn) return;
+                                                    e.preventDefault();
+                                                    try { e.dataTransfer!.dropEffect = 'move'; } catch (err) { }
+                                                }}
+                                                onDrop={(e) => {
+                                                    if (!config.dragableColumn) return;
+                                                    e.preventDefault();
+                                                    const from = dragIndex.current;
+                                                    const to = orderIdx;
+                                                    if (from == null) return;
+                                                    if (from === to) {
+                                                        dragIndex.current = null;
+                                                        return;
+                                                    }
+                                                    setColumnOrder((prev) => {
+                                                        const next = [...prev];
+                                                        const item = next.splice(from, 1)[0];
+                                                        next.splice(to, 0, item);
+                                                        return next;
+                                                    });
+                                                    dragIndex.current = null;
+                                                }}
                                                 className={`w-[${col.width
                                                     }px] ${col.sticky ? "z-10 md:sticky" : ""} ${col.sticky === "left"
                                                         ? "left-0"
@@ -666,44 +706,43 @@ function TableBody() {
                                                     } ${col.sticky === "right"
                                                         ? "right-0"
                                                         : ""
-                                                    } px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap`}
-                                                key={index}
+                                                    } px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap ${config.dragableColumn ? 'cursor-move' : ''}`}
+                                                key={col.key}
                                             >
-                                                <div className="flex items-center gap-[4px] capitalize">
-                                                    {col.label}{" "}
-                                                    {col.filter && (
-                                                        <FilterTableHeader
-                                                            column={col.key}
-                                                            dimensions={col.filter}
-                                                            filterConfig={col.filter}
-                                                        >
-                                                            {col.filter.render
-                                                                ? col.filter.render(tableData, api?.search)
-                                                                : null}
-                                                        </FilterTableHeader>
-                                                    )}
-                                                    {col.isSortable && (
-                                                        <Icon
-                                                            className="cursor-pointer"
-                                                            icon={
-                                                                tableOrder.order ===
-                                                                    "asc" &&
-                                                                    tableOrder.column ===
-                                                                    col.key
-                                                                    ? "mdi-light:arrow-up"
-                                                                    : "mdi-light:arrow-down"
-                                                            }
-                                                            width={16}
-                                                            onClick={() =>
-                                                                handleSort(
-                                                                    col.key
-                                                                )
-                                                            }
-                                                        />
-                                                    )}
-                                                </div>
-                                            </th>
-                                        )
+                                            <div className="flex items-center gap-[4px] capitalize">
+                                                {col.label}{" "}
+                                                {col.filter && (
+                                                    <FilterTableHeader
+                                                        column={col.key}
+                                                        dimensions={col.filter}
+                                                        filterConfig={col.filter}
+                                                    >
+                                                        {col.filter.render
+                                                            ? col.filter.render(tableData, api?.search)
+                                                            : null}
+                                                    </FilterTableHeader>
+                                                )}
+                                                {col.isSortable && (
+                                                    <Icon
+                                                        className="cursor-pointer"
+                                                        icon={
+                                                            tableOrder.order ===
+                                                                "asc" &&
+                                                                tableOrder.column ===
+                                                                col.key
+                                                                ? "mdi-light:arrow-up"
+                                                                : "mdi-light:arrow-down"
+                                                        }
+                                                        width={16}
+                                                        onClick={() =>
+                                                            handleSort(
+                                                                col.key
+                                                            )
+                                                        }
+                                                    />
+                                                )}
+                                            </div>
+                                        </th>
                                     );
                                 })}
 
@@ -754,38 +793,31 @@ function TableBody() {
                                             </td>
                                         )}
 
-                                    {columns.map(
-                                        (
-                                            col: configType["columns"][0],
-                                            index
-                                        ) => {
-                                            return (
-                                                selectedColumns.includes(
-                                                    index
-                                                ) && (
-                                                    <td
-                                                        key={index}
-                                                        width={col.width}
-                                                        className={`px-[24px] py-[12px] bg-white ${col.sticky ? "z-10 md:sticky" : ""} ${col.sticky === "left"
-                                                                ? "left-0"
-                                                                : ""
-                                                            } ${col.sticky === "right"
-                                                                ? "right-0"
-                                                                : ""
-                                                            }`}
-                                                    >
-                                                        {col.render ? (
-                                                            col.render(row)
-                                                        ) : (
-                                                            <div className="flex items-center">
-                                                                {row[col.key] || "-"}
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                )
-                                            );
-                                        }
-                                    )}
+                                    {columns.map((col: configType["columns"][0], orderIdx) => {
+                                        const originalIndex = config.columns.findIndex((c) => c.key === col.key);
+                                        if (!selectedColumns.includes(originalIndex)) return null;
+                                        return (
+                                            <td
+                                                key={col.key}
+                                                width={col.width}
+                                                className={`px-[24px] py-[12px] bg-white ${col.sticky ? "z-10 md:sticky" : ""} ${col.sticky === "left"
+                                                    ? "left-0"
+                                                    : ""
+                                                } ${col.sticky === "right"
+                                                    ? "right-0"
+                                                    : ""
+                                                }`}
+                                            >
+                                                {col.render ? (
+                                                    col.render(row)
+                                                ) : (
+                                                    <div className="flex items-center">
+                                                        {row[col.key] || "-"}
+                                                    </div>
+                                                )}
+                                            </td>
+                                        );
+                                    })}
 
                                     {rowActions &&
                                         selectedColumns.length > 0 && (
@@ -841,8 +873,8 @@ function TableBody() {
                     No Column Selected
                 </div>
             )}
-            </>}
-            
+        </>}
+
         </>
     );
 }
@@ -1022,15 +1054,16 @@ function TableFooter() {
     const cPage = tableDetails.currentPage || 0;
     const totalPages = tableDetails.total || 1;
 
-    // Determine the start and end page indices
-    const firstThreePageIndices = [0, 1, 2];
-
-    // Ensure we don't try to get a negative index if there are fewer than 6 pages
-    const lastThreePageIndices =
-        totalPages > 3 ? [totalPages - 3, totalPages - 2, totalPages - 1] : [];
-
     async function handlePageChange(pageNo: number) {
         if (pageNo < 0 || pageNo > totalPages - 1) return;
+        // notify any filter UI to clear its local state when page changes
+        try {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("customTable:clearFilters"));
+            }
+        } catch (err) {
+            // ignore if event dispatch fails in unusual environments
+        }
         if (api?.list) {
             const result = await api.list(pageNo + 1, pageSize);
             const resolvedResult =
@@ -1066,59 +1099,65 @@ function TableFooter() {
                 <div>
                     {footer?.pagination && (
                         <div className="gap-[2px] text-[14px] hidden md:flex select-none">
-                            {totalPages > 6 ? (
-                                <>
-                                    {firstThreePageIndices.map(
-                                        (pageNo, index) => {
-                                            return (
+                            {(() => {
+                                // Build pagination elements based on totalPages and current page (cPage)
+                                if (totalPages <= 6) {
+                                    return (
+                                        <>
+                                            {[...Array(totalPages)].map((_, index) => (
                                                 <PaginationBtn
                                                     key={index}
-                                                    label={(
-                                                        pageNo + 1
-                                                    ).toString()}
-                                                    isActive={pageNo === cPage}
-                                                    onClick={() =>
-                                                        handlePageChange(pageNo)
-                                                    }
+                                                    label={(index + 1).toString()}
+                                                    isActive={index === cPage}
+                                                    onClick={() => handlePageChange(index)}
                                                 />
-                                            );
-                                        }
-                                    )}
-                                    <PaginationBtn
-                                        label={"..."}
-                                        isActive={false}
-                                    />
-                                    {lastThreePageIndices.map(
-                                        (pageNo, index) => {
-                                            return (
+                                            ))}
+                                        </>
+                                    );
+                                }
+
+                                // totalPages > 6: show smart pagination
+                                const elems: (number | string)[] = [];
+
+                                // If near the start, show first up to five pages then ellipsis + last
+                                if (cPage <= 2) {
+                                    const end = Math.min(totalPages - 1, 4); // pages 0..4 (1..5)
+                                    for (let i = 0; i <= end; i++) elems.push(i);
+                                    if (end < totalPages - 1) elems.push("...", totalPages - 1);
+                                }
+                                // If near the end, show first, ellipsis, then last up to five pages
+                                else if (cPage >= totalPages - 3) {
+                                    const start = Math.max(0, totalPages - 5); // show last 5 pages
+                                    elems.push(0);
+                                    if (start > 1) elems.push("...");
+                                    for (let i = start; i <= totalPages - 1; i++) elems.push(i);
+                                }
+                                // Middle: show first page, ellipsis, two before/after current, ellipsis, last page
+                                else {
+                                    elems.push(0, "...");
+                                    const start = Math.max(0, cPage - 2);
+                                    const end = Math.min(totalPages - 1, cPage + 2);
+                                    for (let i = start; i <= end; i++) elems.push(i);
+                                    elems.push("...", totalPages - 1);
+                                }
+
+                                return (
+                                    <>
+                                        {elems.map((p, idx) =>
+                                            typeof p === "string" ? (
+                                                <PaginationBtn key={`e-${idx}`} label={p} isActive={false} />
+                                            ) : (
                                                 <PaginationBtn
-                                                    key={index}
-                                                    label={(
-                                                        pageNo + 1
-                                                    ).toString()}
-                                                    isActive={pageNo === cPage}
-                                                    onClick={() =>
-                                                        handlePageChange(pageNo)
-                                                    }
+                                                    key={p}
+                                                    label={(p + 1).toString()}
+                                                    isActive={p === cPage}
+                                                    onClick={() => handlePageChange(p)}
                                                 />
-                                            );
-                                        }
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    {[...Array(totalPages)].map((_, index) => (
-                                        <PaginationBtn
-                                            key={index}
-                                            label={(index + 1).toString()}
-                                            isActive={index === cPage}
-                                            onClick={() =>
-                                                handlePageChange(index)
-                                            }
-                                        />
-                                    ))}
-                                </>
-                            )}
+                                            )
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
                     )}
                 </div>
@@ -1150,9 +1189,9 @@ function PaginationBtn({
 }) {
     return (
         <div
-            className={`w-[40px] h-[40px] rounded-[8px] p-[12px] flex items-center justify-center cursor-pointer ${isActive
-                    ? "bg-[#FFF0F2] text-[#EA0A2A]"
-                    : "bg-tranparent text-[#717680]"
+            className={`min-w-[40px] h-[40px] rounded-[8px] p-[12px] flex items-center justify-center cursor-pointer ${isActive
+                ? "bg-[#FFF0F2] text-[#EA0A2A]"
+                : "bg-tranparent text-[#717680]"
                 }`}
             onClick={onClick}
         >
@@ -1233,14 +1272,14 @@ function FilterBy() {
                 const totalRecords = (resolved as any).totalRecords ?? (resolved as any).total ?? 0;
                 const pageSize = resolved.pageSize || config.pageSize || defaultPageSize;
                 const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(totalRecords / pageSize)) : (resolved.total ?? 1);
-                        setTableDetails({
-                            data: resolved.data || [],
-                            total: totalPages,
-                            totalRecords: totalRecords,
-                            currentPage: resolved.currentPage ?? 0,
-                            pageSize: pageSize,
-                        });
-                        setAppliedFilters(true);
+                setTableDetails({
+                    data: resolved.data || [],
+                    total: totalPages,
+                    totalRecords: totalRecords,
+                    currentPage: resolved.currentPage ?? 0,
+                    pageSize: pageSize,
+                });
+                setAppliedFilters(true);
             } catch (err) {
                 console.error("Filter API error", err);
             }
@@ -1278,7 +1317,7 @@ function FilterBy() {
             cleared[f.key] = f.isSingle === false ? [] : "";
         });
         setFilters(cleared);
-    setAppliedFilters(false);
+        setAppliedFilters(false);
 
         // If API exists, call it with cleared payload to refresh table
         if (config.api?.filterBy) {
@@ -1306,6 +1345,37 @@ function FilterBy() {
         }
     };
 
+    // Reset only local filter UI state (used when external actions like pagination change)
+    const resetLocalFilters = () => {
+        const cleared: Record<string, string | string[]> = {};
+        (config.header?.filterByFields || []).forEach((f: FilterField) => {
+            cleared[f.key] = f.isSingle === false ? [] : "";
+        });
+        setFilters(cleared);
+        setAppliedFilters(false);
+    };
+
+    // listen for global clear filter signal (e.g., page change) and reset local filters
+    useEffect(() => {
+        const handler = () => {
+            try {
+                resetLocalFilters();
+                setShowDropdown(false);
+            } catch (err) {
+                // swallow errors from handler
+                console.warn('Failed to reset filter UI state', err);
+            }
+        };
+        if (typeof window !== 'undefined') {
+            window.addEventListener('customTable:clearFilters', handler as EventListener);
+        }
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('customTable:clearFilters', handler as EventListener);
+            }
+        };
+    }, [config.header?.filterByFields]);
+
     return (
         <div className="relative">
             <DismissibleDropdown
@@ -1319,10 +1389,10 @@ function FilterBy() {
                                     <span>Filter</span>
                                     <span>
                                         {activeFilterCount > 0 && (
-                                        <span className="inline-flex text-sm items-center justify-center px-2 py-1 text-xs font-semibold text-white bg-gray-800 rounded-full">{activeFilterCount}</span>
-                                    )}
+                                            <span className="inline-flex text-sm items-center justify-center px-2 py-1 text-xs font-semibold text-white bg-gray-800 rounded-full">{activeFilterCount}</span>
+                                        )}
                                     </span>
-                                    
+
                                 </div>
                             } className="h-[34px]" />
 
@@ -1401,7 +1471,23 @@ function FilterBy() {
                     <span className="font-medium">{(tableDetails?.totalRecords ?? tableDetails?.data?.length ?? 0)} Results Found</span>
                     <button
                         type="button"
-                        onClick={async () => { await clearAll(); setShowDropdown(false); }}
+                        onClick={async () => {
+                            await clearAll(); setShowDropdown(false); if (config.api?.list) {
+                                const result = await config.api.list(
+                                    1,
+                                    config.pageSize || defaultPageSize
+                                );
+                                const resolvedResult =
+                                    result instanceof Promise ? await result : result;
+                                const { data, total, currentPage } = resolvedResult;
+                                setTableDetails({
+                                    data,
+                                    total,
+                                    currentPage: currentPage - 1,
+                                    pageSize: config.pageSize || defaultPageSize,
+                                });
+                            }
+                        }}
                         className="ml-2 underline text-gray-600"
                     >
                         Clear Filter

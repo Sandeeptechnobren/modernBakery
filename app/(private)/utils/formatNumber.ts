@@ -12,11 +12,17 @@ export type FormatNumberOptions = {
   maximumFractionDigits?: number;
   style?: 'decimal' | 'currency' | 'percent';
   currency?: string;
+  /**
+   * If set, number will be rounded to this many decimal places before formatting.
+   * Example: roundToPlaces: 0 will round 33123.22 -> 33123, and with minimumFractionDigits:2
+   * the output becomes "33,123.00".
+   */
+  roundToPlaces?: number;
 };
 
 export function toInternationalNumber(
   value: string | number | null | undefined,
-  options?: FormatNumberOptions
+  options: FormatNumberOptions = { roundToPlaces: 0 }
 ): string {
   if (value === null || value === undefined || value === '') return '';
 
@@ -34,6 +40,13 @@ export function toInternationalNumber(
   }
 
   if (Number.isNaN(num)) return String(value);
+  // If user requested rounding to specific places, apply it first. Otherwise keep high precision.
+  if (typeof options?.roundToPlaces === 'number' && Number.isFinite(options.roundToPlaces)) {
+    num = roundOff(num, Math.max(0, Math.floor(options.roundToPlaces)));
+  } else {
+    num = roundOff(num, 12);
+  }
+  // Debug logging removed (was useful during development)
 
   // By default, format with 2 fraction digits (fixed to 2 decimals)
   const minimumFractionDigits =
@@ -49,6 +62,15 @@ export function toInternationalNumber(
   } as Intl.NumberFormatOptions);
 
   return formatter.format(num);
+}
+
+function roundOff(value: number, decimals = 12): number {
+  const d = Number.isFinite(decimals) ? Math.max(0, Math.floor(decimals)) : 0;
+  if (!Number.isFinite(value) || d === 0) {
+    return d === 0 && Number.isFinite(value) ? Math.round(value) : value;
+  }
+  const factor = Math.pow(10, d);
+  return Math.round(value * factor) / factor;
 }
 
 export default toInternationalNumber;

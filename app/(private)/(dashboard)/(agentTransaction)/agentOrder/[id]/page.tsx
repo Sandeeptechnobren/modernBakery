@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, ChangeEvent, useState, useEffect, useRef } from "react";
+import React, { Fragment, useState, useEffect, useRef } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -10,8 +10,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { agentCustomerList, genearateCode, getCompanyCustomers, itemById, itemList, pricingHeaderGetItemPrice, routeList, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
@@ -25,7 +24,7 @@ interface FormData {
   item_code: string,
   name: string,
   description: string,
-  uom: {
+  item_uoms: {
     id: number,
     item_id: number,
     uom_type: string,
@@ -35,6 +34,10 @@ interface FormData {
     upc: string,
     enable_for: string
   }[],
+  pricing: {
+    buom_ctn_price: string,
+    auom_pc_price: string
+  },
   brand: string,
   image: string,
   category: {
@@ -59,6 +62,9 @@ interface FormData {
 
 interface ItemData {
   item_id: string;
+  item_name: string;
+  // stored human-readable label for a selected item (used when server results don't include it)
+  item_label?: string;
   UOM: { label: string; value: string }[];
   uom_id?: string;
   Quantity: string;
@@ -89,7 +95,7 @@ export default function OrderAddEditPage() {
       .test("is-date", "Delivery date must be a valid date", (val) => {
         return Boolean(val && !Number.isNaN(new Date(val).getTime()));
       }),
-    note: Yup.string().required("Note is required").max(1000, "Note is too long"),
+    note: Yup.string().max(1000, "Note is too long"),
     items: Yup.array().of(itemRowSchema),
   });
 
@@ -116,6 +122,8 @@ export default function OrderAddEditPage() {
   const [itemData, setItemData] = useState<ItemData[]>([
     {
       item_id: "",
+      item_name: "",
+      item_label: "",
       UOM: [],
       Quantity: "1",
       Price: "",
@@ -188,20 +196,42 @@ export default function OrderAddEditPage() {
     }
   };
 
+  // Function for fetching Item
   const fetchItem = async (searchTerm: string) => {
-    const res = await itemList({ per_page: "10", name: searchTerm });
+    const res = await itemGlobalSearch({ per_page: "10", query: searchTerm });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
       setSkeleton({ ...skeleton, item: false });
       return;
     }
     const data = res?.data || [];
-    setOrderData(data);
-    const options = data.map((item: { id: number; name: string; }) => ({
+
+    // sets the price directly in the item_uoms
+    const updatedData = data.map((item: any) => {
+      const item_uoms = item?.item_uoms ? item?.item_uoms?.map((uom: any) => {
+        if (uom?.uom_type === "primary") {
+          return { ...uom, price: item.pricing?.auom_pc_price }
+        } else if (uom?.uom_type === "secondary") {
+          return { ...uom, price: item.pricing?.buom_ctn_price }
+        }
+      }) : item?.item_uoms;
+      return { ...item, item_uoms}
+    })
+
+    // console.log(updatedData);
+
+    setOrderData(updatedData);
+    const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
       value: String(item.id),
-      label: item.name
+      label: (item.code ?? item.item_code ?? item.erp_code ?? "") + " - " + (item.name ?? "")
     }));
-    setItemsOptions(options);
+    // Merge newly fetched options with existing ones so previously selected items remain available
+    setItemsOptions((prev: { label: string; value: string }[] = []) => {
+      const map = new Map<string, { label: string; value: string }>();
+      prev.forEach((o) => map.set(o.value, o));
+      options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+      return Array.from(map.values());
+    });
     setSkeleton({ ...skeleton, item: false });
     return options;
   };
@@ -209,15 +239,12 @@ export default function OrderAddEditPage() {
   const codeGeneratedRef = useRef(false);
   const [code, setCode] = useState("");
   useEffect(() => {
-    setSkeleton({ ...skeleton, item: true });
-    fetchItem("");
-
     // generate code
     if (!codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
       (async () => {
         const res = await genearateCode({
-          model_name: "agent_customers",
+          model_name: "order",
         });
         if (res?.code) {
           setCode(res.code);
@@ -229,49 +256,64 @@ export default function OrderAddEditPage() {
 
   const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
     const newData = [...itemData];
-    const item: ItemData = newData[index];
+    const item: ItemData = newData[index] as ItemData;
     (item as any)[field] = value;
 
-    // If user selects an item, update UI immediately and show skeletons while fetching price/UOM
+    // If user selects an item, update UI immediately and persist a label so selection survives searches
     if (field === "item_id") {
-      // keep item id and name aligned for existing logic
+      // set item_id to the chosen value
       item.item_id = value;
-      item.UOM = [];
-      item.Price = "-";
-      setItemData(newData);
-      setItemLoading((prev) => ({ ...prev, [index]: { uom: true } }));
-      item.UOM = orderData.find((order: FormData) => order.id.toString() === item.item_id)?.uom?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
-      setItemLoading((prev) => ({ ...prev, [index]: { uom: false } }));
+      if (!value) {
+        // cleared selection
+        item.item_name = "";
+        item.UOM = [];
+        item.uom_id = "";
+        item.Price = "";
+        item.Quantity = "1";
+        item.item_label = "";
+      } else {
+        const selectedOrder = orderData.find((order: FormData) => order.id.toString() === value);
+        console.log(selectedOrder);
+        item.item_id = selectedOrder ? String(selectedOrder.id || value) : value;
+        item.item_name = selectedOrder?.name ?? "";
+        item.UOM = selectedOrder?.item_uoms?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
+        item.uom_id = selectedOrder?.item_uoms?.[0]?.id ? String(selectedOrder.item_uoms[0].id) : "";
+        item.Price = selectedOrder?.item_uoms?.[0]?.price ? String(selectedOrder.item_uoms[0].price) : "";
+        item.Quantity = "1";
+        // persist a readable label
+        const computedLabel = selectedOrder ? `${selectedOrder.item_code ?? selectedOrder.erp_code ?? ''}${selectedOrder.item_code || selectedOrder.erp_code ? ' - ' : ''}${selectedOrder.name ?? ''}` : "";
+        item.item_label = computedLabel;
+        // ensure the selected item is available in itemsOptions
+        if (item.item_label) {
+          setItemsOptions((prev: { label: string; value: string }[] = []) => {
+            if (prev.some(o => o.value === item.item_id)) return prev;
+            return [...prev, { value: item.item_id, label: item.item_label as string }];
+          });
+        }
+      }
     }
-
-    // Ensure numeric calculations use the latest values
     const qty = Number(item.Quantity) || 0;
     const price = Number(item.Price) || 0;
     const total = qty * price;
     const vat = total - total / 1.18;
+    const preVat = total - vat;
     const net = total - vat;
-    const excise = 0; // Calculate excise based on your business logic
-    const discount = 0; // Calculate discount based on your business logic
-    const gross = total;
-
-    // Persist any value changes for qty/uom/price
-    if (field === "Quantity") item.Quantity = value;
-    if (field === "uom_id") item.uom_id = value;
+    // const excise = 0;
+    // const discount = 0;
+    // const gross = total;
 
     item.Total = total.toFixed(2);
     item.Vat = vat.toFixed(2);
     item.Net = net.toFixed(2);
-    item.Excise = excise.toFixed(2);
-    item.Discount = discount.toFixed(2);
-    item.gross = gross.toFixed(2);
+    item.preVat = preVat.toFixed(2);
+    // item.Excise = excise.toFixed(2);
+    // item.Discount = discount.toFixed(2);
+    // item.gross = gross.toFixed(2);
 
-    setItemData(newData);
-    // validate this row after updating; if we just changed the item selection, skip UOM required check
-    if (field === "item_id") {
-      validateRow(index, newData[index], { skipUom: true });
-    } else {
+    if (field !== "item_id") {
       validateRow(index, newData[index]);
     }
+    setItemData(newData);
   };
 
   const handleAddNewItem = () => {
@@ -279,7 +321,8 @@ export default function OrderAddEditPage() {
       ...itemData,
       {
         item_id: "",
-        itemName: "",
+        item_name: "",
+        item_label: "",
         UOM: [],
         uom_id: "",
         Quantity: "1",
@@ -298,7 +341,8 @@ export default function OrderAddEditPage() {
       setItemData([
         {
           item_id: "",
-          itemName: "",
+          item_name: "",
+          item_label: "",
           UOM: [],
           uom_id: "",
           Quantity: "1",
@@ -380,7 +424,7 @@ export default function OrderAddEditPage() {
 
       formikHelpers.setSubmitting(true);
       const payload = generatePayload(values);
-      console.log("Submitting payload:", payload);
+      // console.log("Submitting payload:", payload);
       const res = await addAgentOrder(payload);
       if (res.error) {
         showSnackbar(res.data.message || "Failed to create order", "error");
@@ -388,11 +432,11 @@ export default function OrderAddEditPage() {
       } else {
         try {
           await saveFinalCode({
-              reserved_code: code,
-              model_name: "agent_order_headers",
+            reserved_code: code,
+            model_name: "agent_order_headers",
           });
         } catch (e) {
-            // Optionally handle error, but don't block success
+          // Optionally handle error, but don't block success
         }
         showSnackbar("Order created successfully", "success");
         router.push("/agentOrder");
@@ -408,37 +452,18 @@ export default function OrderAddEditPage() {
   };
 
   const keyValueData = [
-    { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
-    { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
+    // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
+    // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
     { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
-    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
     { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
-    { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
+    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
+    // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
   ];
 
-  // const fetchRoutes = async (value: string) => {
-  //   setSkeleton({ ...skeleton, route: true });
-  //   const filteredOptions = await routeList({
-  //     warehouse_id: value,
-  //     per_page: "10",
-  //   });
-  //   if (filteredOptions.error) {
-  //     showSnackbar(filteredOptions.data?.message || "Failed to fetch routes", "error");
-  //     return;
-  //   }
-  //   const options = filteredOptions?.data || [];
-  //   setFilteredRouteOptions(options.map((route: { id: number; route_name: string }) => ({
-  //     value: String(route.id),
-  //     label: route.route_name,
-  //   })));
-  //   setSkeleton({ ...skeleton, route: false });
-  // };
-
   const fetchAgentCustomers = async (values: FormikValues, search: string) => {
-    const res = await agentCustomerList({
+    const res = await agentCustomerGlobalSearch({
       warehouse_id: values.warehouse,
-      search: search || "",
-      // dropdown: "1",
+      query: search || "",
       per_page: "10"
     });
     if (res.error) {
@@ -447,9 +472,9 @@ export default function OrderAddEditPage() {
       return;
     }
     const data = res?.data || [];
-    const options = data.map((customer: { id: number; outlet_name: string }) => ({
+    const options = data.map((customer: { id: number; osa_code: string; name: string }) => ({
       value: String(customer.id),
-      label: customer.outlet_name
+      label: customer.osa_code + " - " + customer.name
     }));
     setFilteredCustomerOptions(options);
     setSkeleton({ ...skeleton, customer: false });
@@ -470,22 +495,22 @@ export default function OrderAddEditPage() {
     const data = res?.data || [];
     const options = data.map((warehouse: { id: number; warehouse_code: string; warehouse_name: string }) => ({
       value: String(warehouse.id),
-      label: warehouse.warehouse_name
+      label: warehouse.warehouse_code + " - " + warehouse.warehouse_name
     }));
     setFilteredWarehouseOptions(options);
     return options;
   }
 
-  const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
-    const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
-    if (res.error) {
-      showSnackbar(res.data?.message || "Failed to fetch items", "error");
-      setSkeleton({ ...skeleton, item: false });
-      return;
-    }
-    const data = res?.data || [];
-    return data;
-  };
+  // const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
+  //   const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
+  //   if (res.error) {
+  //     showSnackbar(res.data?.message || "Failed to fetch items", "error");
+  //     setSkeleton({ ...skeleton, item: false });
+  //     return;
+  //   }
+  //   const data = res?.data || [];
+  //   return data;
+  // };
 
   return (
     <div className="flex flex-col">
@@ -529,6 +554,7 @@ export default function OrderAddEditPage() {
             //   }
             //   console.log("Current Formik errors:", errors);
             //   console.log("Current Formik errors:", touched.comment);
+            //   console.log(values, "values")
             // }, [errors]);
 
             return (
@@ -547,7 +573,6 @@ export default function OrderAddEditPage() {
                           setFieldValue("warehouse", opt.value);
                           setSkeleton((prev) => ({ ...prev, customer: true }));
                           setFieldValue("customer", "");
-                          fetchAgentCustomers({ ...values, warehouse: opt.value }, "");
                         } else {
                           setFieldValue("warehouse", opt.value);
                         }
@@ -556,6 +581,7 @@ export default function OrderAddEditPage() {
                         setFieldValue("warehouse", "");
                         setFieldValue("customer", "");
                         setFilteredCustomerOptions([]);
+                        setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
                         setSkeleton((prev) => ({ ...prev, customer: false }));
                       }}
                       error={
@@ -564,34 +590,13 @@ export default function OrderAddEditPage() {
                       }
                     />
                   </div>
-                  {/* <div>
-                    <InputFields
-                      required
-                      label="Route"
-                      name="route"
-                      value={filteredRouteOptions.length === 0 ? "" : (values.route?.toString() || "")}
-                      onChange={(e) => {
-                        setSkeleton((prev) => ({ ...prev, customer: true }));
-                        setFieldValue("route", e.target.value);
-                        setFieldValue("customer", "");
-                        console.log(e.target.value, "route id");
-                        fetchAgentCustomers(e.target.value);
-                      }}
-                      disabled={filteredRouteOptions.length === 0}
-                      showSkeleton={skeleton.route}
-                      error={
-                        touched.route && (errors.route as string)
-                      }
-                      options={filteredRouteOptions}
-                    />
-                  </div> */}
                   <div>
                     <AutoSuggestion
                       required
                       label="Customer"
                       name="customer"
                       placeholder="Search customer"
-                      onSearch={(q) => fetchAgentCustomers(values, q)}
+                      onSearch={(q) => { return fetchAgentCustomers(values, q) }}
                       initialValue={filteredCustomerOptions.find(o => o.value === String(values?.customer))?.label || ""}
                       onSelect={(opt) => {
                         if (values.customer !== opt.value) {
@@ -602,8 +607,9 @@ export default function OrderAddEditPage() {
                       }}
                       onClear={() => {
                         setFieldValue("customer", "");
+                        setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
                       }}
-                      disabled={filteredCustomerOptions.length === 0}
+                      disabled={values.warehouse === ""}
                       error={touched.customer && (errors.customer as string)}
                       className="w-full"
                     />
@@ -615,6 +621,7 @@ export default function OrderAddEditPage() {
                       type="date"
                       name="delivery_date"
                       value={values.delivery_date}
+                      min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
                       onChange={handleChange}
                     />
                   </div>
@@ -633,6 +640,7 @@ export default function OrderAddEditPage() {
                     Net: String(row.Net ?? ""),
                     Vat: String(row.Vat ?? ""),
                     Total: String(row.Total ?? ""),
+                    PreVat: String(row.PreVat ?? ""),
                   }))}
                   config={{
                     columns: [
@@ -643,11 +651,12 @@ export default function OrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.item_id;
-                          // Filter out items that are already selected in other rows
-                          const selectedIds = itemData.map((r, i) => (i === idx ? null : r.item_id)).filter(Boolean) as string[];
-                          const filteredOptions = itemsOptions.filter(opt => (
-                            opt.value === row.item_id || !selectedIds.includes(opt.value)
-                          ));
+                          // Optimized: avoid mapping+filtering arrays on every render.
+                          // Find the option for the current row (if still present) and fall back to stored label
+                          // so the selection remains visible even when the option isn't returned by a search.
+                          const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
+                          const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
+                          // console.log(row);
                           return (
                             <div>
                               <AutoSuggestion
@@ -655,21 +664,14 @@ export default function OrderAddEditPage() {
                                 name={`item_id_${row.idx}`}
                                 placeholder="Search item"
                                 onSearch={(q) => fetchItem(q)}
-                                initialValue={
-                                  itemsOptions.find(o => o.value === row.item_id)?.label
-                                  || orderData.find(o => String(o.id) === row.item_id)?.name || ""
-                                }
+                                initialValue={initialLabel}
                                 onSelect={(opt) => {
                                   if (opt.value !== row.item_id) {
-                                    recalculateItem(Number(row.idx), "item_id", opt.value);
-                                    setFieldValue("uom_id", "");
-                                  } else {
                                     recalculateItem(Number(row.idx), "item_id", opt.value);
                                   }
                                 }}
                                 onClear={() => {
                                   recalculateItem(Number(row.idx), "item_id", "");
-                                  setFieldValue("uom_id", "");
                                 }}
                                 disabled={!values.customer}
                                 error={err && err}
@@ -691,11 +693,12 @@ export default function OrderAddEditPage() {
                             <div>
                               <InputFields
                                 label=""
-                                name="UOM"
                                 value={row.uom_id}
                                 placeholder="Select UOM"
+                                width="max-w-[150px]"
                                 options={options}
-                                disabled={options.length === 0 && !values.customer}
+                                searchable={true}
+                                disabled={options.length === 0 || !values.customer}
                                 showSkeleton={Boolean(itemLoading[idx]?.uom)}
                                 onChange={(e) => {
                                   recalculateItem(Number(row.idx), "uom_id", e.target.value)
@@ -724,14 +727,15 @@ export default function OrderAddEditPage() {
                                 // integerOnly={true}
                                 placeholder="Enter Qty"
                                 value={row.Quantity}
-                                disabled={!values.customer}
+                                disabled={!row.uom_id || !values.customer}
                                 onChange={(e) => {
                                   const raw = (e.target as HTMLInputElement).value;
                                   const intPart = raw.split('.')[0];
                                   const sanitized = intPart === '' ? '' : String(Math.max(0, parseInt(intPart, 10) || 0));
                                   recalculateItem(Number(row.idx), "Quantity", sanitized);
                                 }}
-                                // numberMin={0}
+                                min={1}
+                                integerOnly={true}
                                 error={err && err}
                               />
                             </div>
@@ -754,11 +758,12 @@ export default function OrderAddEditPage() {
                           return <span>{price}</span>;
                         }
                       },
-                      { key: "excise", label: "Excise", render: (row) => <span>{toInternationalNumber(row.Excise) || "0.00"}</span> },
-                      { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
-                      { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
-                      { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
+                      // { key: "excise", label: "Excise", render: (row) => <span>{toInternationalNumber(row.Excise) || "0.00"}</span> },
+                      // { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
+                      { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
                       { key: "Vat", label: "VAT", render: (row) => <span>{toInternationalNumber(row.Vat) || "0.00"}</span> },
+                      { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
+                      // { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
                       { key: "Total", label: "Total", render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span> },
                       {
                         key: "action",
@@ -786,7 +791,7 @@ export default function OrderAddEditPage() {
                 {/* --- Summary --- */}
                 <div className="flex justify-between text-primary gap-0 mb-10">
                   <div className="flex justify-between flex-wrap w-full mt-[20px]">
-                    <div className="flex flex-col justify-between gap-[20px]">
+                    <div className="flex flex-col justify-between gap-[20px] w-full lg:w-auto">
                       <div className="">
                         <button
                           type="button"
@@ -799,7 +804,6 @@ export default function OrderAddEditPage() {
                       </div>
                       <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
                         <InputFields
-                          required
                           label="Note"
                           type="textarea"
                           name="note"
@@ -832,7 +836,7 @@ export default function OrderAddEditPage() {
                   <button
                     type="button"
                     className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-                    onClick={() => router.push("/agentCustomerOrder")}
+                    onClick={() => router.push("/agentOrder")}
                   >
                     Cancel
                   </button>

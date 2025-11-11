@@ -1,53 +1,33 @@
 "use client";
 
-import BorderIconButton from "@/app/components/borderIconButton";
 import ContainerCard from "@/app/components/containerCard";
-import CustomDropdown from "@/app/components/customDropdown";
-import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
+import Table, { TableDataType } from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
-import { Fragment, use, useCallback, useEffect, useRef, useState, RefObject } from "react";
+import { Fragment, useEffect, useRef, useState, RefObject } from "react";
 // import KeyValueData from "../master/customer/[customerId]/keyValueData";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import InputFields from "@/app/components/inputFields"; // ✅ Added InputField for consistency
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { getAgentOrderById } from "@/app/services/allApi";
+import { downloadFile, getAgentOrderById } from "@/app/services/allApi";
 import KeyValueData from "@/app/components/keyValueData";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
-import { title } from "process";
 import PrintButton from "@/app/components/printButton";
-
-const dropdownDataList = [
-  { icon: "humbleicons:radio", label: "Mark as Pending", iconWidth: 20 },
-  { icon: "hugeicons:delete-02", label: "Delete Order", iconWidth: 20 },
-];
-
-const data = new Array(2).fill(null).map((_, index) => ({
-  id: index.toString(),
-  itemCode: "MMGW001",
-  itemName: "Masafi Pure 4 Gallons (1 Bottle)",
-  UOM: "BOT",
-  Quantity: "5.00",
-  Price: "14.00",
-  Excise: "0.00",
-  Discount: "0.00",
-  Net: "70.00",
-  Vat: "3.50",
-  Total: "73.50",
-}));
+import { agentOrderExport } from "@/app/services/agentTransaction";
+import { format } from "path/win32";
 
 const columns = [
+  { key: "index", label: "#" },
   { key: "item_name", label: "Item Name" },
   { key: "uom_name", label: "UOM" },
   { key: "quantity", label: "Quantity" },
   { key: "item_price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.item_price) || '0.00'}</> },
-  { key: "excise", label: "Excise", render: (value: TableDataType) => <>{toInternationalNumber(value.excise) || '0.00'}</> },
-  { key: "discount", label: "Discount", render: (value: TableDataType) => <>{toInternationalNumber(value.discount) || '0.00'}</> },
+  { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.vat) || '0.00'}</> },
+  { key: "preVat", label: "Pre VAT", render: (value: TableDataType) => <>{toInternationalNumber(Number(value.total) - Number(value.vat)) || '0.00'}</> },
+  // { key: "discount", label: "Discount", render: (value: TableDataType) => <>{toInternationalNumber(value.discount) || '0.00'}</> },
   { key: "net_total", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.net_total) || '0.00'}</> },
-  { key: "total_gross", label: "Gross", render: (value: TableDataType) => <>{toInternationalNumber(value.total_gross) || '0.00'}</> },
+  // { key: "total_gross", label: "Gross", render: (value: TableDataType) => <>{toInternationalNumber(value.total_gross) || '0.00'}</> },
   { key: "total", label: "Total", render: (value: TableDataType) => <>{toInternationalNumber(value.total) || '0.00'}</> },
 ];
 
@@ -84,7 +64,7 @@ interface OrderData {
       item_code: string,
       item_name: string,
       uom_id: number,
-      uom_name: "pieces",
+      uom_name: string,
       item_price: number,
       quantity: number,
       vat: number,
@@ -98,7 +78,6 @@ interface OrderData {
 
 export default function OrderDetailPage() {
   const router = useRouter();
-  const [showDropdown, setShowDropdown] = useState(false);
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const [data, setData] = useState<OrderData | null>(null);
@@ -142,13 +121,13 @@ export default function OrderDetailPage() {
   const finalTotal = grossTotal + totalVat;
 
   const keyValueData = [
-    { key: "Gross Total", value: "AED "+toInternationalNumber( grossTotal ?? 0 ) },
-    { key: "Discount", value: "AED "+toInternationalNumber( discount ?? 0 ) },
-    { key: "Net Total", value: "AED "+toInternationalNumber( netAmount ?? 0 ) },
-    { key: "Excise", value: "AED 0.00" },
-    { key: "Pre VAT", value: "AED "+toInternationalNumber(preVat ?? 0) },
+    { key: "Net Total", value: "AED "+toInternationalNumber( netAmount ?? 0) },
+    // { key: "Gross Total", value: "AED "+toInternationalNumber( grossTotal ?? 0 ) },
+    // { key: "Discount", value: "AED "+toInternationalNumber( discount ?? 0 ) },
+    // { key: "Excise", value: "AED 0.00" },
     { key: "Vat", value: "AED "+toInternationalNumber( totalVat ?? 0 ) },
-    { key: "Delivery Charges", value: "AED 0.00" },
+    { key: "Pre VAT", value: "AED "+toInternationalNumber(preVat ?? 0) },
+    // { key: "Delivery Charges", value: "AED 0.00" },
   ];
 
   const targetRef = useRef<HTMLDivElement | null>(null);
@@ -216,10 +195,11 @@ export default function OrderDetailPage() {
             <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
               <span>From (Seller)</span>
               <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">{data?.warehouse_name || "-"}</span>
-                <span>{data?.warehouse_address ?? ""} {data?.warehouse_address && ", "} Dubai - UAE</span>
+                <span className="font-semibold">{data?.warehouse_code && data?.warehouse_name  
+                  ? `${data?.warehouse_code} - ${data?.warehouse_name } ` : "-"}</span>
+                <span>{data?.warehouse_address ?? ""} {data?.warehouse_address && ", "}</span>
                 <span>
-                  Phone: {data?.warehouse_contact || "N/A"} <br /> Email: {data?.warehouse_email || "N/A"}
+                  {data?.warehouse_contact && <>Phone: {data?.warehouse_contact}</>} <br /> {data?.warehouse_email && <>Email: {data?.warehouse_email}</>}
                 </span>
               </div>
             </div>
@@ -230,10 +210,10 @@ export default function OrderDetailPage() {
             <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
               <span>To (Customer)</span>
               <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">{data?.customer_name || "-"}</span>
-                <span>{data?.customer_street || ""}{data?.customer_street && ", "} Dubai - UAE</span>
+                <span className="font-semibold">{data?.customer_code && data?.customer_name  ? `${data?.customer_code} - ${data?.customer_name}` : "-"}</span>
+                <span>{data?.customer_street && ` ${data?.customer_street}`}</span>
                 <span>
-                  Phone: {data?.customer_contact || "N/A"} <br /> Email: {data?.customer_email || "N/A"}
+                  {data?.customer_contact && `Phone: ${data?.customer_contact}`} <br /> {data?.customer_email && `Email: ${data?.customer_email}`}
                 </span>
               </div>
             </div>
@@ -242,23 +222,23 @@ export default function OrderDetailPage() {
           {/* Dates / meta - right column */}
           <div className="flex md:justify-end">
             <div className="text-primary-bold text-[14px] md:text-right">
-              <div>
-                Order Date: <span className="font-bold">{data?.created_at.split("T")[0] || "-"}</span>
-              </div>
-              <div className="mt-2">
-                Delivery Date: <span className="font-bold">{data?.delivery_date || "-"}</span>
-              </div>
-              <div className="mt-2">
+              {data?.created_at && <div>
+                Order Date: <span className="font-bold">{data?.created_at.split("T")[0] || ""}</span>
+              </div>}
+              {data?.delivery_date && <div className="mt-2">
+                Delivery Date: <span className="font-bold">{data?.delivery_date || ""}</span>
+              </div>}
+              {data?.order_source && <div className="mt-2">
                 Order Source: <span className="font-bold">{data?.order_source || "Online"}</span>
-              </div>
+              </div>}
             </div>
           </div>
         </div>
 
         {/* ---------- Order Table ---------- */}
         <Table
-          data={(data?.details || []).map((row) => {
-            const mappedRow: Record<string, string> = {};
+          data={(data?.details || []).map((row, index) => {
+            const mappedRow: Record<string, string> = { index: String(index + 1) };
             Object.keys(row).forEach((key) => {
               const value = (row as any)[key];
               mappedRow[key] = value === null || value === undefined ? "" : String(value);
@@ -275,17 +255,15 @@ export default function OrderDetailPage() {
           <div className="flex justify-between flex-wrap w-full">
             {/* Notes Section */}
             <div className="hidden flex-col justify-end gap-[20px] w-full lg:flex lg:w-[400px]">
-              <div className="flex flex-col space-y-[10px]">
+              {data?.comment && <div className="flex flex-col space-y-[10px]">
                 <div className="font-semibold text-[#181D27]">Customer Note</div>
-                <div>
-                  Please deliver between 10 AM to 1 PM. Contact before delivery.
-                </div>
-              </div>
+                <div>{data?.comment}</div>
+              </div>}
               <div className="flex flex-col space-y-[10px]">
                 <div className="font-semibold text-[#181D27]">
                   Payment Method
                 </div>
-                <div>Cash on Delivery</div>
+                <div>{"Cash on Delivery"}</div>
               </div>
             </div>
 
@@ -305,40 +283,42 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Notes (Mobile) */}
-            <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px]">
-              <div className="flex flex-col space-y-[10px]">
+            <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px] mt-[20px]">
+              {data?.comment && <div className="flex flex-col space-y-[10px]">
                 <div className="font-semibold text-[#181D27]">Customer Note</div>
-                <div>
-                  Please deliver between 10 AM to 1 PM. Contact before delivery.
-                </div>
-              </div>
+                <div>{data?.comment}</div>
+              </div>}
               <div className="flex flex-col space-y-[10px]">
                 <div className="font-semibold text-[#181D27]">
                   Payment Method
                 </div>
-                <div>{data?.payment_method || "Cash on Delivery"}</div>
+                <div>{"Cash on Delivery"}</div>
               </div>
+              {/* {data?.payment_method && <div className="flex flex-col space-y-[10px]">
+                <div className="font-semibold text-[#181D27]">
+                  Payment Method
+                </div>
+                <div>{data?.payment_method || "Cash on Delivery"}</div>
+              </div>} */}
             </div>
           </div>
         </div>
 
-        <hr className="text-[#D5D7DA]" />
+        <hr className="text-[#D5D7DA] print:hidden" />
 
         {/* ---------- Footer Buttons ---------- */}
-        <div className="flex flex-wrap justify-end gap-[20px]">
+        <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
           <SidebarBtn
             leadingIcon={"lucide:download"}
             leadingIconSize={20}
             label="Download"
             onClick={async () => {
-              try {
-                const mod = await import('@/app/components/generatePdf');
-                const generatePdf = mod.default;
-                await generatePdf(targetRef.current, { fileName: `${data?.order_code || 'order'}.pdf`, scale: 2 });
-              } catch (err) {
-                console.error('PDF generation failed', err);
-                // fallback to print dialog if PDF generation fails
-                window.print();
+              const res = await agentOrderExport({uuid: UUID,format:"csv"});
+              if(res.error){
+                showSnackbar(res.error.message || "Failed to export order", "error");
+              } else {
+                const downloadUrl = res.data?.download_url;
+                downloadFile(downloadUrl || "", `order_${data?.order_code || UUID}.csv`);
               }
             }}
           />

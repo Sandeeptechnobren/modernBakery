@@ -60,7 +60,23 @@ export default function UserAddEdit() {
     fetchAreaOptions,
     fetchWarehouseOptions,
     fetchRouteOptions,
+    refreshDropdown
   } = useAllDropdownListData();
+  
+  useEffect(() => {
+    (async () => {
+      try {
+      const res = await Promise.all([
+        refreshDropdown("roles"),
+        refreshDropdown("company"),
+        refreshDropdown("region"),
+        refreshDropdown("area"),
+        refreshDropdown("warehouse"),
+        refreshDropdown("route"),
+        refreshDropdown("salesman")
+      ])} catch(e) {}
+    })();
+  }, []);
 
   const [visibleLabels, setVisibleLabels] = useState<string[]>([]);
   const [country, setCountry] = useState<Record<string, ContactCountry>>({

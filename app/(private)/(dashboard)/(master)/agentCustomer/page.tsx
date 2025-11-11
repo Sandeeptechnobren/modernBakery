@@ -9,168 +9,168 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData ,downloadFile, agentCustomerGlobalSearch} from "@/app/services/allApi";
+import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData, downloadFile, agentCustomerGlobalSearch } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import InputFields from "@/app/components/inputFields";
 
 export default function AgentCustomer() {
-    const { customerSubCategoryOptions, itemCategoryOptions, channelOptions,warehouseOptions,routeOptions } = useAllDropdownListData();
+    const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [channelId, setChannelId] = useState<string>("");
     const [routeId, setRouteId] = useState<string>("");
     const columns: configType["columns"] = [
-    {
-        key: "osa_code",
-        label: "Outlet Code",
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.osa_code || "-"}
-            </span>
-        ),
-        showByDefault: true,
-    },
-    { key: "outlet_name", label: "Outlet Name", showByDefault: true },
-    { key: "owner_name", label: "Owner Name" },
-    {
-        key: "customer_type",
-        label: "Customer Type",
-        render: (row: TableDataType) => {
-            if (
-                typeof row.customer_type === "object" &&
-                row.customer_type !== null &&
-                "name" in row.customer_type
-            ) {
-                return (row.customer_type as { name?: string }).name || "-";
-            }
-            return row.customer_type || "-";
+        {
+            key: "osa_code",
+            label: "Outlet Code",
+            render: (row: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {row.osa_code || "-"}
+                </span>
+            ),
+            showByDefault: true,
         },
-    },
-    {
-        key: "category",
-        label: "Customer Category",
-        render: (row: TableDataType) =>
-            typeof row.category === "object" &&
-            row.category !== null &&
-            "customer_category_name" in row.category
-                ? (row.category as { customer_category_name?: string })
-                      .customer_category_name || "-"
-                : "-",
-                showByDefault: true 
-    },
-     {
-        key: "outlet_channel",
-        label: "Outlet Channel",
-        render: (row: TableDataType) =>
-            typeof row.outlet_channel === "object" &&
-            row.outlet_channel !== null &&
-            "outlet_channel" in row.outlet_channel
-                ? (row.outlet_channel as { outlet_channel?: string })
-                      .outlet_channel || "-"
-                : "-",
-                filter: {
-                    isFilterable: true,
-                    width: 320,
-                    options: Array.isArray(channelOptions) ? channelOptions : [], // [{ value, label }]
-                    onSelect: (selected) => {
-                        setChannelId((prev) => prev === selected ? "" : (selected as string));
-                    },
-                    selectedValue: channelId,
-                },
-        
-        showByDefault: true,
-    },
-    {
-        key: "subcategory",
-        label: "Customer Sub Category",
-        render: (row: TableDataType) =>
-            typeof row.subcategory === "object" &&
-            row.subcategory !== null &&
-            "customer_sub_category_name" in row.subcategory
-                ? (row.subcategory as { customer_sub_category_name?: string })
-                      .customer_sub_category_name || "-"
-                : "-",
-        filter: {
-            isFilterable: true,
-            width: 320,
-            options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [], // [{ value, label }]
-            onSelect: (selected) => {
-                setSelectedSubCategoryId((prev) => prev === selected ? "" : (selected as string));
+        { key: "outlet_name", label: "Outlet Name", showByDefault: true },
+        { key: "owner_name", label: "Owner Name" },
+        {
+            key: "customer_type",
+            label: "Customer Type",
+            render: (row: TableDataType) => {
+                if (
+                    typeof row.customer_type === "object" &&
+                    row.customer_type !== null &&
+                    "name" in row.customer_type
+                ) {
+                    return (row.customer_type as { name?: string }).name || "-";
+                }
+                return row.customer_type || "-";
             },
-            selectedValue: selectedSubCategoryId,
         },
-        
-    },
-    { key: "landmark", label: "Landmark" },
-    { key: "district", label: "District" },
-    { key: "street", label: "Street" },
-    { key: "town", label: "Town" },
-    {
-        key: "getWarehouse",
-        label: "Warehouse",
-        render: (row: TableDataType) =>
-            typeof row.getWarehouse === "object" &&
-            row.getWarehouse !== null &&
-            "warehouse_name" in row.getWarehouse
-                ? (row.getWarehouse as { warehouse_name?: string })
-                      .warehouse_name || "-"
-                : "-",
-                filter: {
-                    isFilterable: true,
-                    width: 320,
-                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [], // [{ value, label }]
-                    onSelect: (selected) => {
-                        setWarehouseId((prev) => prev === selected ? "" : (selected as string));
-                    },
-                    selectedValue: warehouseId,
+        {
+            key: "category",
+            label: "Customer Category",
+            render: (row: TableDataType) =>
+                typeof row.category === "object" &&
+                    row.category !== null &&
+                    "customer_category_name" in row.category
+                    ? (row.category as { customer_category_name?: string })
+                        .customer_category_name || "-"
+                    : "-",
+            showByDefault: true
+        },
+        {
+            key: "outlet_channel",
+            label: "Outlet Channel",
+            render: (row: TableDataType) =>
+                typeof row.outlet_channel === "object" &&
+                    row.outlet_channel !== null &&
+                    "outlet_channel" in row.outlet_channel
+                    ? (row.outlet_channel as { outlet_channel?: string })
+                        .outlet_channel || "-"
+                    : "-",
+            filter: {
+                isFilterable: true,
+                width: 320,
+                options: Array.isArray(channelOptions) ? channelOptions : [], // [{ value, label }]
+                onSelect: (selected) => {
+                    setChannelId((prev) => prev === selected ? "" : (selected as string));
                 },
-       
-        showByDefault: true,
-    },
-    {
-        key: "route",
-        label: "Route",
-        render: (row: TableDataType) => {
-            if (
-                typeof row.route === "object" &&
-                row.route !== null &&
-                "route_name" in row.route
-            ) {
-                return (row.route as { route_name?: string }).route_name || "-";
-            }
-            return typeof row.route === 'string' ? row.route : "-";
-        },
-        filter: {
-            isFilterable: true,
-            width: 320,
-            options: Array.isArray(routeOptions) ? routeOptions : [],
-            onSelect: (selected) => {
-                setRouteId((prev) => prev === selected ? "" : (selected as string));
+                selectedValue: channelId,
             },
-            selectedValue: routeId,
+
+            showByDefault: true,
         },
-       
-        showByDefault: true,
-    },
-    { key: "contact_no", label: "Contact No." },
-    { key: "whatsapp_no", label: "Whatsapp No." },
-    { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
-    { key: "payment_type", label: "Payment Type" },
-    {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => {
-            // Treat status 1 or 'active' (case-insensitive) as active
-            const isActive =
-                String(row.status) === "1" ||
-                (typeof row.status === "string" &&
-                    row.status.toLowerCase() === "active");
-            return <StatusBtn isActive={isActive} />;
+        {
+            key: "subcategory",
+            label: "Customer Sub Category",
+            render: (row: TableDataType) =>
+                typeof row.subcategory === "object" &&
+                    row.subcategory !== null &&
+                    "customer_sub_category_name" in row.subcategory
+                    ? (row.subcategory as { customer_sub_category_name?: string })
+                        .customer_sub_category_name || "-"
+                    : "-",
+            filter: {
+                isFilterable: true,
+                width: 320,
+                options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [], // [{ value, label }]
+                onSelect: (selected) => {
+                    setSelectedSubCategoryId((prev) => prev === selected ? "" : (selected as string));
+                },
+                selectedValue: selectedSubCategoryId,
+            },
+
         },
-        showByDefault: true,
-    },
+        { key: "landmark", label: "Landmark" },
+        { key: "district", label: "District" },
+        { key: "street", label: "Street" },
+        { key: "town", label: "Town" },
+        {
+            key: "getWarehouse",
+            label: "Warehouse",
+            render: (row: TableDataType) =>
+                typeof row.getWarehouse === "object" &&
+                    row.getWarehouse !== null &&
+                    "warehouse_name" in row.getWarehouse
+                    ? (row.getWarehouse as { warehouse_name?: string })
+                        .warehouse_name || "-"
+                    : "-",
+            filter: {
+                isFilterable: true,
+                width: 320,
+                options: Array.isArray(warehouseOptions) ? warehouseOptions : [], // [{ value, label }]
+                onSelect: (selected) => {
+                    setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+                },
+                selectedValue: warehouseId,
+            },
+
+            showByDefault: true,
+        },
+        {
+            key: "route",
+            label: "Route",
+            render: (row: TableDataType) => {
+                if (
+                    typeof row.route === "object" &&
+                    row.route !== null &&
+                    "route_name" in row.route
+                ) {
+                    return (row.route as { route_name?: string }).route_name || "-";
+                }
+                return typeof row.route === 'string' ? row.route : "-";
+            },
+            filter: {
+                isFilterable: true,
+                width: 320,
+                options: Array.isArray(routeOptions) ? routeOptions : [],
+                onSelect: (selected) => {
+                    setRouteId((prev) => prev === selected ? "" : (selected as string));
+                },
+                selectedValue: routeId,
+            },
+
+            showByDefault: true,
+        },
+        { key: "contact_no", label: "Contact No." },
+        { key: "whatsapp_no", label: "Whatsapp No." },
+        { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
+        { key: "payment_type", label: "Payment Type" },
+        {
+            key: "status",
+            label: "Status",
+            render: (row: TableDataType) => {
+                // Treat status 1 or 'active' (case-insensitive) as active
+                const isActive =
+                    String(row.status) === "1" ||
+                    (typeof row.status === "string" &&
+                        row.status.toLowerCase() === "active");
+                return <StatusBtn isActive={isActive} />;
+            },
+            showByDefault: true,
+        },
     ];
 
     const { setLoading } = useLoading();
@@ -223,11 +223,11 @@ export default function AgentCustomer() {
     );
 
     const exportfile = async (ids: string[] | undefined) => {
-        if(!ids) return;
+        if (!ids) return;
         try {
             const response = await exportAgentCustomerData({
                 ids: ids
-            }); 
+            });
             if (response && typeof response === 'object' && response.url) {
                 await downloadFile(response.url);
                 showSnackbar("File downloaded successfully ", "success");
@@ -264,13 +264,13 @@ export default function AgentCustomer() {
         ): Promise<listReturnType> => {
             let result;
             setLoading(true);
-            if(columnName) {
+            if (columnName) {
                 result = await agentCustomerList({
                     per_page: pageSize.toString(),
                     [columnName]: searchQuery
                 });
             }
-            else{
+            else {
                 result = await agentCustomerGlobalSearch({
                     per_page: pageSize.toString(),
                     query: searchQuery
@@ -279,8 +279,14 @@ export default function AgentCustomer() {
             setLoading(false);
             if (result.error) throw new Error(result.data.message);
             else {
-                if(columnName)
-                {
+                if (columnName) {
+                    return {
+                        data: result.data || [],
+                        total: result.pagination.pagination.totalPages || 0,
+                        currentPage: result.pagination.pagination.current_page || 0,
+                        pageSize: result.pagination.pagination.limit || pageSize,
+                    };
+                }
                 return {
                     data: result.data || [],
                     total: result.pagination.pagination.totalPages || 0,
@@ -288,52 +294,8 @@ export default function AgentCustomer() {
                     pageSize: result.pagination.pagination.limit || pageSize,
                 };
             }
-            else{
-                 return {
-                    data: result.data || [],
-                    total: result.pagination.total_pages || 0,
-                    currentPage: result.pagination.current_page || 0,
-                    pageSize: result.pagination.per_page || pageSize,
-                };
-            }
-            }
         },
         []
-    );
-
-    const filterBy = useCallback(
-        async (
-            payload: Record<string, string | number | null>,
-            pageSize: number
-        ): Promise<listReturnType> => {
-            let result;
-            setLoading(true);
-            try {
-                const params: Record<string, string> = { per_page: pageSize.toString() };
-                Object.keys(payload || {}).forEach((k) => {
-                    const v = payload[k as keyof typeof payload];
-                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                        params[k] = String(v);
-                    }
-                });
-                result = await agentCustomerList(params);
-            } finally {
-                setLoading(false);
-            }
-
-            if (result?.error) throw new Error(result.data?.message || "Filter failed");
-            else {
-                const pagination = result.pagination?.pagination || result.pagination || {};
-                return {
-                    data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 0,
-                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-                    pageSize: pagination.limit || pageSize,
-                };
-            }
-        },
-        [setLoading]
     );
 
     useEffect(() => {
@@ -348,8 +310,7 @@ export default function AgentCustomer() {
                     config={{
                         api: {
                             list: fetchAgentCustomers,
-                            search: search,
-                            // filterBy: filterBy
+                            search: search
                         },
                         header: {
                             title: "Agent Customer",
@@ -379,7 +340,7 @@ export default function AgentCustomer() {
                                     label: "Inactive",
                                     // showOnSelect: true,
                                     showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        if (!selectedRow || selectedRow.length === 0) return false;
                                         const status = selectedRow?.map((id) => data[id].status).map(String);
                                         return status?.includes("1") || false;
                                     },
@@ -387,7 +348,7 @@ export default function AgentCustomer() {
                                         const status: string[] = [];
                                         const ids = selectedRow?.map((id) => {
                                             const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
+                                            if (!status.includes(currentStatus)) {
                                                 status.push(currentStatus);
                                             }
                                             return data[id].id;
@@ -400,7 +361,7 @@ export default function AgentCustomer() {
                                     label: "Active",
                                     // showOnSelect: true,
                                     showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        if (!selectedRow || selectedRow.length === 0) return false;
                                         const status = selectedRow?.map((id) => data[id].status).map(String);
                                         return status?.includes("0") || false;
                                     },
@@ -408,7 +369,7 @@ export default function AgentCustomer() {
                                         const status: string[] = [];
                                         const ids = selectedRow?.map((id) => {
                                             const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
+                                            if (!status.includes(currentStatus)) {
                                                 status.push(currentStatus);
                                             }
                                             return data[id].id;
@@ -419,54 +380,6 @@ export default function AgentCustomer() {
                             ],
                             searchBar: true,
                             columnFilter: true,
-                            // filterByFields: [
-                            //     {
-                            //         key: "start_date",
-                            //         label: "Start Date",
-                            //         type: "date"
-                            //     },
-                            //      {
-                            //         key: "end_date",
-                            //         label: "End Date",
-                            //         type: "date"
-                            //     },
-                            //     {
-                            //         key: "warehouse",
-                            //         label: "Warehouse",
-                            //         isSingle: false,
-                            //         multiSelectChips: true,
-                            //         options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                            //     },
-                            //     {
-                            //         key: "route_id",
-                            //         label: "Route",
-                            //         isSingle: false,
-                            //         multiSelectChips: true,
-                            //         options: Array.isArray(routeOptions) ? routeOptions : [],
-                            //     },
-                            //     {
-                            //         key: "outlet_channel_id",
-                            //         label: "Outlet Channel",
-                            //         isSingle: false,
-                            //         multiSelectChips: true,
-                            //         options: Array.isArray(channelOptions) ? channelOptions : [],
-                            //     },
-                            //     {
-                            //         key: "category_id",
-                            //         label: "Category",
-                            //         type: "select",
-                            //         options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
-                            //         isSingle: false,
-                            //         multiSelectChips: true,
-                            //     },
-                            //     {
-                            //         key: "subcategory_id",
-                            //         label: "Subcategory",
-                            //         isSingle: false,
-                            //         multiSelectChips: true,
-                            //         options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
-                            //     },
-                            // ],
                             actions: [
                                 <SidebarBtn
                                     key={0}

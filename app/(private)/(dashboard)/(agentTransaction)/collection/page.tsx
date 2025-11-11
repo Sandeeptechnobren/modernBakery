@@ -1,0 +1,158 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import StatusBtn from "@/app/components/statusBtn2";
+import Table, {
+    configType,
+    listReturnType,
+    searchReturnType,
+    TableDataType,
+} from "@/app/components/customTable";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import { capsCollectionList, exportCapsCollection, capsCollectionStatusUpdate } from "@/app/services/agentTransaction";
+import { downloadFile } from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import { useLoading } from "@/app/services/loadingContext";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+
+export default function SalemanLoad() {
+    const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions } = useAllDropdownListData();
+    const columns: configType["columns"] = [
+        { key: "code", label: "Code" },
+        // { key: "date", label: "Collection Date" },
+        { key: "warehouse_code", label: "Warehouse Code" },
+        { key: "warehouse_name", label: "Warehouse Name" },
+        { key: "salesman_code", label: "Salesman Code" },
+        { key: "salesman_name", label: "Salesman Name" },
+        { key: "route_code", label: "Route Code" },
+        { key: "route_name", label: "Route Name" },
+        { key: "customer", label: "Customer" },
+        {
+            key: "status",
+            label: "Status",
+            render: (row: TableDataType) => {
+                return row.status ? "Confirmed" : "Waiting";
+            },
+        }
+    ];
+
+    const { setLoading } = useLoading();
+    const [refreshKey, setRefreshKey] = useState(0);
+    const router = useRouter();
+    const { showSnackbar } = useSnackbar();
+    type TableRow = TableDataType & { id?: string };
+
+    const fetchSalesmanLoadHeader = useCallback(
+        async (
+            page: number = 1,
+            pageSize: number = 50
+        ): Promise<listReturnType> => {
+            try {
+                setLoading(true);
+                const listRes = await capsCollectionList({
+                    // page: page.toString(),
+                    // per_page: pageSize.toString(),
+                });
+                setLoading(false);
+                return {
+                    data: Array.isArray(listRes.data) ? listRes.data : [],
+                    total: listRes?.pagination?.totalPages || 1,
+                    currentPage: listRes?.pagination?.page || 1,
+                    pageSize: listRes?.pagination?.limit || pageSize,
+                };
+            } catch (error: unknown) {
+                setLoading(false);
+                return {
+                    data: [],
+                    total: 1,
+                    currentPage: 1,
+                    pageSize: 5,
+                };
+            }
+        }, [setLoading]);
+
+    useEffect(() => {
+        setLoading(true);
+    }, []);
+
+    return (
+        <>
+            <div className="flex flex-col h-full">
+                <Table
+                    refreshKey={refreshKey}
+                    config={{
+                        api: {
+                            list: fetchSalesmanLoadHeader,
+                            // filterBy: filterBy,
+                        },
+                        header: {
+                            filterByFields: [
+                                {
+                                    key: "date_change",
+                                    label: "Date Range",
+                                    type: "dateChange"
+                                },
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                {
+                                    key: "salesman",
+                                    label: "Salesman",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+                                {
+                                    key: "customer",
+                                    label: "Customer",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(agentCustomerOptions) ? agentCustomerOptions : [],
+                                },
+
+                            ],
+                            title: "Collection",
+                            searchBar: false,
+                            columnFilter: true,
+                            // actions: [
+                            //     <SidebarBtn
+                            //         key={0}
+                            //         href="/c/add"
+                            //         isActive
+                            //         leadingIcon="lucide:plus"
+                            //         label="Add"
+                            //         labelTw="hidden sm:block"
+                            //     />
+                            // ],
+                        },
+                        footer: { nextPrevBtn: true, pagination: true },
+                        columns,
+                        rowSelection: true,
+                        // rowActions: [
+                        //     {
+                        //         icon: "lucide:eye",
+                        //         onClick: (data: object) => {
+                        //             const row = data as TableRow;
+                        //             router.push(`/capsCollection/details/${row.uuid}`);
+                        //         },
+                        //     },
+                        // ],
+                        pageSize: 50,
+                    }}
+                />
+            </div>
+        </>
+    );
+}
