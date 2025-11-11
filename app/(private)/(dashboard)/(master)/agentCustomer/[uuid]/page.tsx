@@ -223,7 +223,7 @@ export default function AddEditAgentCustomer() {
                         owner_name: String(data.owner_name ?? ""),
                         warehouse:
                             data.get_warehouse != null
-                                ? String(data.get_warehouse?.id)
+                                ? data.get_warehouse?.id?.toString()
                                 : "",
                         customer_type:
                             data.customertype != null

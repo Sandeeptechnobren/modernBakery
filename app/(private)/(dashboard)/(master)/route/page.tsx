@@ -122,7 +122,7 @@ export default function Route() {
         render: (row: TableDataType) => (
             <StatusBtn
                 isActive={
-                    row.status && row.status.toString() === "1" ? true : false
+                    row.status && row.status.toString() === "0" ? false : true
                 }
             />
         ),

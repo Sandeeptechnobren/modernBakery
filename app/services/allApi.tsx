@@ -183,6 +183,18 @@ export const countryList = async (params?: Params) => {
   }
 };
 
+
+export const uomList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/settings/uom/list", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const countryListGlobalSearch = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/country/global_search", {
@@ -1708,6 +1720,16 @@ export const getSalesmanById = async (uuid: string) => {
     return handleError(error);
   }
 };
+
+export const getSalesmanBySalesId = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/master/salesmen/salespersalesman/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const updateSalesman = async (uuid: string, body: object) => {
   try {
     const res = await API.put(`/api/master/salesmen/update/${uuid}`, body);

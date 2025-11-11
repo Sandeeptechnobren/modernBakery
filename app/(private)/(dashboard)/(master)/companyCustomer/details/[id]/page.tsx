@@ -2,18 +2,17 @@
 
 import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
-import { useLoading } from "@/app/services/loadingContext";
+import StatusBtn from "@/app/components/statusBtn2";
+import SummaryCard from "@/app/components/summaryCard";
+import TabBtn from "@/app/components/tabBtn";
+import Toggle from "@/app/components/toggle";
 import { getCompanyCustomerById } from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import StatusBtn from "@/app/components/statusBtn2";
-import Toggle from "@/app/components/toggle";
-import TabBtn from "@/app/components/tabBtn";
-import Map from "@/app/components/map";
-import SummaryCard from "@/app/components/summaryCard";
 
 interface CustomerItem {
   id: number;
@@ -69,7 +68,7 @@ export default function ViewPage() {
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
 
-   const onTabClick = (idx: number) => {
+  const onTabClick = (idx: number) => {
     // ensure index is within range and set the corresponding tab key
     if (typeof idx !== "number") return;
     if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
@@ -110,6 +109,8 @@ export default function ViewPage() {
     { key: "financial", label: "Financial Info" },
     { key: "guarantee", label: "Guarantee Info" },
     { key: "additional", label: "Additional Info" },
+    { key: "return", label: "Return" },
+    { key: "purchase", label: "Purchase" },
   ];
 
   return (
@@ -121,46 +122,46 @@ export default function ViewPage() {
         </Link>
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
- <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
-                                     {/* profile details */}
-                                     <div className="flex flex-col sm:flex-row items-center gap-[20px]">
-                                         <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
-                                             <Icon
-                                                 icon="lucide:user"
-                                                 width={40}
-                                                 className="text-[#535862] scale-[1.5]"
-                                             />
-                                         </div>
-                                         <div className="text-center sm:text-left">
-                                             <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                                                 {customer?.osa_code} - {customer?.business_name }
-                                             </h2>
-                                            
-                                         </div>
-                                     </div>
-                       <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
-                                                         <StatusBtn isActive={customer?.status === "1"} />
-                                                     </span>
-                                   
-                                 </ContainerCard>
+      <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
+        {/* profile details */}
+        <div className="flex flex-col sm:flex-row items-center gap-[20px]">
+          <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
+            <Icon
+              icon="lucide:user"
+              width={40}
+              className="text-[#535862] scale-[1.5]"
+            />
+          </div>
+          <div className="text-center sm:text-left">
+            <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
+              {customer?.osa_code} - {customer?.business_name}
+            </h2>
+
+          </div>
+        </div>
+        <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
+          <StatusBtn isActive={customer?.status == "1"} />
+        </span>
+
+      </ContainerCard>
       <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
-       
-         
+
+
 
         <div className="w-full flex flex-col">
           <div className="flex ">
-           
+
             <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
-                        {tabList.map((tab, index) => (
-                          <div key={index}>
-                            <TabBtn
-                              label={tab.label}
-                              isActive={activeTab === tab.key}
-                              onClick={() => onTabClick(index)}
-                            />
-                          </div>
-                        ))}
-                      </ContainerCard>
+              {tabList.map((tab, index) => (
+                <div key={index}>
+                  <TabBtn
+                    label={tab.label}
+                    isActive={activeTab === tab.key}
+                    onClick={() => onTabClick(index)}
+                  />
+                </div>
+              ))}
+            </ContainerCard>
           </div>
 
           {/* Tab Content */}
@@ -172,6 +173,8 @@ export default function ViewPage() {
                   { key: "SAP Code", value: customer?.sap_code || "-" },
                   { key: "Language", value: customer?.language || "-" },
                   { key: "Contact No.", value: customer?.contact_number || "-" },
+                  { key: "Company Type", value: customer?.company_type || "-" },
+                  { key: "Business Type", value: customer?.business_type || "-" },
                 ]}
               />
             </ContainerCard>
@@ -181,17 +184,17 @@ export default function ViewPage() {
               <KeyValueData
                 title="Location Information"
                 data={[
-                  { key: "Region", value: `${customer?.get_region?.region_code} - ${customer?.get_region?.region_name }` || "-" },
-                                       
-                                        { key: "Sub Region ", value: `${customer?.get_area?.area_code} - ${customer?.get_area?.area_name}` || "-" },
-                                        
-                                       
+                  { key: "Region", value: `${customer?.get_region?.region_code} - ${customer?.get_region?.region_name}` || "-" },
+
+                  { key: "Area", value: `${customer?.get_area?.area_code} - ${customer?.get_area?.area_name}` || "-" },
+
+
                   { key: "Town", value: customer?.town || "-" },
                   { key: "Landmark", value: customer?.landmark || "-" },
                   { key: "District", value: customer?.district || "-" },
                 ]}
               />
-              
+
             </ContainerCard>
           )}
           {activeTab === "financial" && (
@@ -199,7 +202,7 @@ export default function ViewPage() {
               <KeyValueData
                 title="Financial Information"
                 data={[
-                  { key: "Payment Type", value:getPaymentType(customer?customer.payment_type:"")|| "-" },
+                  { key: "Payment Type", value: getPaymentType(customer ? customer.payment_type : "") || "-" },
                   { key: "Credit Days", value: customer?.creditday || "-" },
                   { key: "Credit Limit", value: customer?.creditlimit?.toString() || "-" },
                   { key: "Total Credit Limit", value: customer?.totalcreditlimit?.toString() || "-" },

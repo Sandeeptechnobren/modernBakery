@@ -7,14 +7,11 @@ import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import Image from "next/image";
-
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import StatusBtn from "@/app/components/statusBtn2";
 import { getCompanyById } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
-import Address from "./address/page";
 import Overview from "./overview/page";
+import StatusBtn from "@/app/components/statusBtn2";
 
 interface Company {
   id?: string | number;
@@ -30,11 +27,6 @@ export const tabs = [
     url: "overview",
     component: <Overview />,
   },
-  {
-    name: "Address",
-    url: "address",
-    component: <Address />,
-  },
 ];
 
 export default function Page() {
@@ -49,7 +41,7 @@ export default function Page() {
   };
 
   const title = "Company Details";
-  const backBtnUrl = "/settings/company";
+  const backBtnUrl = "/settings/manageCompany/company";
 
   useEffect(() => {
     if (!id) return;

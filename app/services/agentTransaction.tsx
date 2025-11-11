@@ -479,3 +479,13 @@ export const exportExchangeData = async (body: string) => {
     return handleError(error);
   }
 };
+
+
+export const exportInvoice = async (params: Params ) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/invoices/exportall`, {params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

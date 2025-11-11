@@ -1,21 +1,21 @@
 "use client";
 
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
-import * as Yup from "yup";
-import InputFields from "@/app/components/inputFields";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { addRoles, getRoleById, editRoles, menuList, submenuList, assignPermissionsToRole } from "@/app/services/allApi";
-import { useLoading } from "@/app/services/loadingContext";
-import RolesPermissionTable, { MenuItem } from "./table2";
 import ContainerCard from "@/app/components/containerCard";
-import TabBtn from "@/app/components/tabBtn";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import usePermissionManager from "@/app/components/contexts/usePermission";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import InputFields from "@/app/components/inputFields";
+import TabBtn from "@/app/components/tabBtn";
+import { addRoles, assignPermissionsToRole, editRoles, getRoleById, menuList, submenuList } from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { Icon } from "@iconify-icon/react";
+import { Form, Formik, type FormikHelpers } from "formik";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import * as Yup from "yup";
+import RolesPermissionTable, { MenuItem } from "./table2";
 
 interface Permission {
   permission_id: number;
@@ -84,13 +84,13 @@ export default function AddEditRole() {
           const menusFromRes = Array.isArray(roleData?.menus) ? roleData.menus : [];
 
           // extract menus and submenus from their APIs
-          if(menuRes.error){
+          if (menuRes.error) {
             showSnackbar(menuRes?.data?.message || "Failed to fetch menu data", "error");
             return;
           }
           const menusFromApi = menuRes?.data || [];
 
-          if(submenuRes.error){
+          if (submenuRes.error) {
             showSnackbar(submenuRes?.data?.message || "Failed to fetch submenu data", "error");
             return;
           }
@@ -125,7 +125,7 @@ export default function AddEditRole() {
             };
           });
 
-// Simple deterministic merge: map role menus -> submenu permissions by id, then apply to baseRows
+          // Simple deterministic merge: map role menus -> submenu permissions by id, then apply to baseRows
           const roleMenusById = new Map<number, Map<number, Permission[]>>();
           (menusFromRes || []).forEach((rm: any) => {
             const menuId = Number(rm.id ?? rm.menu?.id ?? rm.menu_id);
@@ -155,12 +155,12 @@ export default function AddEditRole() {
           // populate Formik initial values from roleData so form fields autofill
           setInitialValues({
             name: String(roleData?.name ?? ""),
-            labels: Array.isArray(roleData?.labels) ? roleData.labels.map((obj: {id: number}) => String(obj.id)) : [],
+            labels: Array.isArray(roleData?.labels) ? roleData.labels.map((obj: { id: number }) => String(obj.id)) : [],
             status: String(roleData?.status ?? "1"),
           });
           // compute permission ids from merged structure and store
           const permIdSet = new Set<number>();
-           merged.forEach((m: any) => {
+          merged.forEach((m: any) => {
             (m.submenu || []).forEach((s: any) => {
               (s.permissions || []).forEach((p: any) => {
                 const id = Number(p.permission_id ?? p.id);
@@ -332,21 +332,22 @@ export default function AddEditRole() {
                       onBlur={() => setFieldTouched && setFieldTouched('labels', true)}
                       error={touched.labels ? (Array.isArray(errors.labels) ? (errors.labels as string[]).join(", ") : (errors.labels as string)) : undefined}
                     />
+                    
                   </div>
                   <div>
                     <InputFields
-                        required
-                        label="Status"
-                        name="status"
-                        type="radio"
-                        value={values.status}
-                        onChange={(e) => setFieldValue("status", e.target.value)}
-                        options={[
-                          { value: "1", label: "Active" },
-                          { value: "0", label: "Inactive" },
-                        ]}
-                        error={touched.status && errors.status}
-                      />
+                      required
+                      label="Status"
+                      name="status"
+                      type="radio"
+                      value={values.status}
+                      onChange={(e) => setFieldValue("status", e.target.value)}
+                      options={[
+                        { value: "1", label: "Active" },
+                        { value: "0", label: "Inactive" },
+                      ]}
+                      error={touched.status && errors.status}
+                    />
                   </div>
                 </div>
 
@@ -355,10 +356,10 @@ export default function AddEditRole() {
                 {isEditMode && <div className="py-6">
 
                   <ContainerCard
-                      className="w-full flex gap-[4px] overflow-x-auto"
-                      padding="5px"
+                    className="w-full flex gap-[4px] overflow-x-auto"
+                    padding="5px"
                   >
-                      {roleTableData.map((tab, index) => {
+                    {roleTableData.map((tab, index) => {
                       const label = tab.name || "Menu";
                       return (
                         <div key={index}>
@@ -387,7 +388,7 @@ export default function AddEditRole() {
                         console.log("Updated permission IDs from table:", permissionIds);
                       }, 0);
                     }}
-                   />}
+                  />}
                 </div>}
               </ContainerCard>
             </div>

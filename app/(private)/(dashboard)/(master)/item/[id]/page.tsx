@@ -140,6 +140,7 @@ export default function AddEditItem() {
     itemCategoryOptions,
     itemSubCategoryOptions,
     fetchItemSubCategoryOptions,
+    uomOptions,
   } = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
   const [prefix, setPrefix] = useState("");
@@ -873,21 +874,18 @@ export default function AddEditItem() {
           <div className="flex flex-col md:flex-row gap-6 bg-white rounded-2xl shadow ">
             {/* Left: Add UOM Form */}
             <ContainerCard className="h-[100%] w-1/4" margin="0" >
-              <div >
-                <h2 className="text-xl font-bold mb-4">Add UOM</h2>
-                {/* Use 2 columns in grid here */}
-                <div className="grid grid-cols-2 gap-4">
-                  <InputFields
-                    required
-                    label="UOM"
-                    name="uom"
-                    value={uomData.uom}
-                    options={[
-                      { label: "Pieces", value: "pieces" },
-                      { label: "Cartoon", value: "cartoon" },
-                    ]}
-                    onChange={handleUomChange}
-                    error={touched.uom && errors.uom}
+               <div >
+              <h2 className="text-xl font-bold mb-4">Add UOM</h2>
+              {/* Use 2 columns in grid here */}
+              <div className="grid grid-cols-2 gap-4">
+                <InputFields
+                  required
+                  label="UOM"
+                  name="uom"
+                  value={uomData.uom}
+                  options={uomOptions}
+                  onChange={handleUomChange}
+                  error={touched.uom && errors.uom}
                   // Make full width inside grid cell
                   />
                   <InputFields

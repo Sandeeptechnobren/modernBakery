@@ -33,6 +33,7 @@ import {
   roleList,
   projectList,
   companyTypeList,
+  uomList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -65,6 +66,7 @@ interface DropdownDataContextType {
   roles: Role[];
   projectList: Project[];
   companyTypeList: CompanyType[];
+  uomList: UOM[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -97,6 +99,7 @@ interface DropdownDataContextType {
   submenuOptions: { value: string; label: string }[];
   projectOptions: { value: string; label: string}[];
   companyTypeOptions: { value: string; label: string}[];
+  uomOptions: { value: string; label: string}[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   refreshDropdown: (name: string, params?: any) => Promise<void>;
@@ -157,6 +160,12 @@ interface SurveyItem {
 }
 
 interface Project {
+  id?: number | string;
+  osa_code?: string;
+  name?: string;
+}
+
+interface UOM {
   id?: number | string;
   osa_code?: string;
   name?: string;
@@ -376,6 +385,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [roles, setRoles] = useState<Role[]>([]);
   const [project, setProject] = useState<Project[]>([]);
   const [companyType, setComapanyType] = useState<CompanyType[]>([]);
+  const [uom, setUom] = useState<UOM[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -492,6 +502,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }));
 
   const projectOptions = (Array.isArray(project) ? project : []).map((c: Project) => ({
+    value: String(c.id ?? ''),
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+  }))
+
+  const uomOptions = (Array.isArray(uom) ? uom : []).map((c: UOM) => ({
     value: String(c.id ?? ''),
     label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
   }))
@@ -884,6 +899,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         roleList(),
         projectList({}),
         companyTypeList(),
+        uomList(),
       ]);
 
 
@@ -929,6 +945,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setRoles(normalize(res[29]) as Role[]);
       setProject(normalize(res[30]) as Project[]);
       setComapanyType(normalize(res[31]) as CompanyType[]);
+      setUom(normalize(res[32]) as UOM[]);
 
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -965,6 +982,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setRoles([]);
       setProject([]);
       setComapanyType([]);
+      setUom([]);
     } finally {
       setLoading(false);
     }
@@ -1147,6 +1165,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
           setComapanyType(normalizeResponse(res) as CompanyType[]);
           break;
         }
+        case 'uom': {
+          const res = await uomList(params ?? {});
+          setUom(normalizeResponse(res) as UOM[]);
+          break;
+        }
         default: {
           console.warn('refreshDropdown: unknown dropdown name', name);
           break;
@@ -1192,6 +1215,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         roles: roles,
         projectList: project,
         companyTypeList: companyType,
+        uomList: uom,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
@@ -1242,6 +1266,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         companyTypeOptions,
         getItemUoms,
         getPrimaryUom,
+        uomOptions,
         loading
       }}
     >

@@ -1,8 +1,7 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
 import Skeleton from '@mui/material/Skeleton';
-import 'react-phone-input-2/lib/style.css';
-import LoaderCircle from "./loaderCircle";
+import React, { useEffect, useRef, useState } from "react";
+// import 'react-phone-input-2/lib/style.css';
 import DateRangePicker from "./DateRangePicker";
 
 export type Option = {
@@ -246,7 +245,7 @@ export default function InputFields({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]); // Only depend on search text, not the callback function
 
-useEffect(() => {
+  useEffect(() => {
     const dropdown = dropdownRef.current;
     if (dropdown) {
       const { width, top, left, height } = dropdown.getBoundingClientRect();
@@ -360,7 +359,7 @@ useEffect(() => {
       const input = e.currentTarget as HTMLInputElement;
       if (input && input.value && input.value.length > 0) {
         e.preventDefault();
-        try { safeOnChange({ target: { value: '', name } } as any); } catch (err) {}
+        try { safeOnChange({ target: { value: '', name } } as any); } catch (err) { }
         // update DOM immediately
         input.value = '';
       }
@@ -374,18 +373,18 @@ useEffect(() => {
 
   return (
     <div className={`flex flex-col gap-[6px] w-full ${width} relative`}>
-        {showSkeleton && <div className="absolute h-[90px] w-full rounded-[5px] bg-white z-40 flex flex-col gap-[5px]">
-          {label && <Skeleton variant="rounded" width={"50%"} height={"20%"} />}
-          <Skeleton variant="rounded" width={"100%"} height={"60%"} />
-          {error && <Skeleton variant="rounded" width={"100%"} height={"20%"} />}
-        </div>}
-        <label
-          htmlFor={id ?? name}
-          className="text-sm font-medium text-gray-700"
-        >
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
+      {showSkeleton && <div className="absolute h-[90px] w-full rounded-[5px] bg-white z-40 flex flex-col gap-[5px]">
+        {label && <Skeleton variant="rounded" width={"50%"} height={"20%"} />}
+        <Skeleton variant="rounded" width={"100%"} height={"60%"} />
+        {error && <Skeleton variant="rounded" width={"100%"} height={"20%"} />}
+      </div>}
+      <label
+        htmlFor={id ?? name}
+        className="text-sm font-medium text-gray-700"
+      >
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
       <div className="relative">
         {type === "radio" && options && options.length > 0 ? (
           loading ? (

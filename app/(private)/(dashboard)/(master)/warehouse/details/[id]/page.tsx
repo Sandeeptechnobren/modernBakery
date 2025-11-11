@@ -245,7 +245,7 @@ export default function ViewPage() {
             key: "status",
             label: "Status",
             render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status && row.status.toString() === "1" ? true : false} />
+                <StatusBtn isActive={row.status && row.status.toString() === "0" ? false : true} />
             ),
             showByDefault: true,
             isSortable: true
@@ -827,7 +827,7 @@ function getRandomNumber(count:number) {
                                         data={[
                                             {
                                                 key: "Warehouse Type",
-                                                value: item?.warehouse_type,
+                                                value: item?.warehouse_type || "Not available"
                                             },
                                             { key: "TIN No.", value: item?.tin_no || '-' },
                                             {
@@ -835,12 +835,8 @@ function getRandomNumber(count:number) {
                                                 value: item?.owner_name || "-",
                                             },
                                             {
-                                                key: "Comapny Code",
-                                                value: item?.get_company?.company_code || "-",
-                                            },
-                                            {
-                                                key: "Company Name",
-                                                value: item?.get_company?.company_name || "-",
+                                                key: "Company",
+                                                value: `${item?.get_company?.company_code || "-"} - ${item?.get_company?.company_name || "-"}`
                                             },
                                             { key: "Warehouse Manager Name", value: item?.warehouse_manager || '-' },
 
@@ -861,12 +857,13 @@ function getRandomNumber(count:number) {
                                                 <span>{item?.owner_number} <br/>{item?.warehouse_manager_contact}</span></>:""}
                                             </div>
                                             <div className="flex items-center gap-[8px] text-[16px]">
-                                               {item?.owner_email? <><Icon
+                                               {item?.owner_email? <>
+                                               <Icon
                                                     icon="ic:outline-email"
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                <span>{item?.owner_email}</span></>:""}
+                                                <span>{item?.owner_email}</span></>:"Email not Available"}
                                             </div>
 
                                         </div>

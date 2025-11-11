@@ -129,19 +129,19 @@ const SalesmanPage = () => {
     ): Promise<listReturnType> => {
       try {
         setLoading(true);
-        const res = await SalesmanListGlobalSearch({ query: query.toString(), page: page.toString() });
+        const res = await SalesmanListGlobalSearch({ query: query, per_page: pageSize.toString() });
         setLoading(false);
         console.log({
           data: res.data || [],
           total: res.pagination.totalPages || 1,
           currentPage: res.pagination.page || 1,
           pageSize: res.pagination.limit || pageSize,
-        })
+        }, "responses")
 
         return {
           data: res.data || [],
-          total: res.pagination.totalPages || 1,
-          currentPage: res.pagination.page || 1,
+          total: res.pagination.totalPages || 2,
+          currentPage: res.pagination.page || 50,
           pageSize: res.pagination.limit || pageSize,
         };
       } catch (error) {

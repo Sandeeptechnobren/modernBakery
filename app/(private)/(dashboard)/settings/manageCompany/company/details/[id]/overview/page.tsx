@@ -1,20 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { useParams } from "next/navigation";
-import { Icon } from "@iconify-icon/react";
+import { useEffect, useState } from "react";
 
-import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
-import StatusBtn from "@/app/components/statusBtn2";
-import Toggle from "@/app/components/toggle";
-import SummaryCard from "@/app/components/summaryCard";
+import KeyValueData from "@/app/components/keyValueData";
 
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { useLoading } from "@/app/services/loadingContext";
 import { getCompanyById } from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface Company {
   id?: string | number;
@@ -46,10 +40,8 @@ interface Company {
   primary_contact?: string;
   website?: string;
   module_access?: string;
-  district?: string;
-  town?: string;
-  street?: string;
-  landmark?: string;
+  city?: string;
+  address?: string;
   service_type?: string;
   logo?: string | null;
 }
@@ -99,7 +91,7 @@ export default function ViewPage() {
 
       <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
         {/* Left Section */}
-       
+
         {/* Right Section */}
         <div className="w-full flex flex-col gap-y-[20px]">
           {/* Company Information */}
@@ -118,12 +110,29 @@ export default function ViewPage() {
                 { key: "Module Access", value: company?.module_access || "-" },
                 { key: "Service Type", value: company?.service_type || "-" },
                 { key: "VAT", value: company?.vat || "-" },
+                { key: "City", value: company?.city || "-" },
+                { key: "Address", value: company?.address || "-" },
+                { key: "Country", value: company?.country?.country_name || "-" },
+                {
+                  key: "Selling Currency",
+                  value:
+                    company?.selling_currency ||
+                    company?.country?.selling_currency ||
+                    "-",
+                },
+                {
+                  key: "Purchase Currency",
+                  value:
+                    company?.purchase_currency ||
+                    company?.country?.purchase_currency ||
+                    "-",
+                },
               ]}
             />
           </ContainerCard>
-             
-            </div>
-          </div>
+
+        </div>
+      </div>
     </>
   );
 }
