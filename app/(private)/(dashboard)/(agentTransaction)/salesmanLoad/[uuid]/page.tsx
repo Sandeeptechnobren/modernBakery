@@ -114,7 +114,7 @@ export default function AddEditSalesmanLoad() {
             cse_qty: "",
             pcs_qty: "",
             status: 1,
-            uom: item.uom,
+            uom: item.item_uoms,
             warehouse_stocks: item.warehouse_stocks || [],
           }));
           setItemData(data);
@@ -572,4 +572,3 @@ export default function AddEditSalesmanLoad() {
     </div>
   );
 }
-

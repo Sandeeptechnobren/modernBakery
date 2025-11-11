@@ -3,6 +3,7 @@
 import ContainerCard from "@/app/components/containerCard";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import Table from "@/app/components/customTable";
 import CustomTable, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
@@ -12,6 +13,7 @@ import {
   createCapsCollection,
   updateCapsCollection,
 } from "@/app/services/agentTransaction";
+import { itemList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -86,7 +88,15 @@ export default function AddEditCapsCollection() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [customerContactNo, setCustomerContactNo] = useState("");
-
+  const [itemErrors, setItemErrors] = useState<Record<number, Record<string, string>>>({});
+ const [skeleton, setSkeleton] = useState({
+    route: false,
+    customer: false,
+    item: false,
+  });
+    const [orderData, setOrderData] = useState<FormData[]>([]);
+    const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
+  
   const [rowUomOptions, setRowUomOptions] = useState<
     Record<string, { value: string; label: string; price?: string }[]>
   >({});
@@ -277,6 +287,75 @@ const handleItemSearch = async (searchText: string) => {
     if (tableData.length <= 1) return;
     setTableData((prev) => prev.filter((row) => row.id !== id));
   };
+
+  const fetchItem = async (searchTerm: string) => {
+      const res = await itemList({  name: searchTerm });
+      if (res.error) {
+        showSnackbar(res.data?.message || "Failed to fetch items", "error");
+        setSkeleton({ ...skeleton, item: false });
+        return;
+      }
+      const data = res?.data || [];
+      setOrderData(data);
+      const options = data.map((item: { id: number; name: string; }) => ({
+        value: String(item.id),
+        label: item.name
+      }));
+      setItemsOptions(options);
+      setSkeleton({ ...skeleton, item: false });
+      return options;
+    };
+
+
+
+    // const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
+    //     const newData = [...itemData];
+    //     const item: ItemData = newData[index];
+    //     (item as any)[field] = value;
+    
+    //     // If user selects an item, update UI immediately and show skeletons while fetching price/UOM
+    //     if (field === "item_id") {
+    //       // keep item id and name aligned for existing logic
+    //       item.item_id = value;
+    //       item.UOM = [];
+    //       item.Price = "-";
+    //       setItemData(newData);
+    //       setItemLoading((prev) => ({ ...prev, [index]: { uom: true } }));
+    //       item.UOM = orderData.find((order: FormData) => order.id.toString() === item.item_id)?.uom?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
+    //       setItemLoading((prev) => ({ ...prev, [index]: { uom: false } }));
+    //     }
+    
+    //     // Ensure numeric calculations use the latest values
+    //     const qty = Number(item.Quantity) || 0;
+    //     const price = Number(item.Price) || 0;
+    //     const total = qty * price;
+    //     const vat = total - total / 1.18;
+    //     const net = total - vat;
+    //     const excise = 0; // Calculate excise based on your business logic
+    //     const discount = 0; // Calculate discount based on your business logic
+    //     const gross = total;
+    
+    //     // Persist any value changes for qty/uom/price
+    //     if (field === "Quantity") item.Quantity = value;
+    //     if (field === "uom_id") item.uom_id = value;
+    
+    //     item.Total = total.toFixed(2);
+    //     item.Vat = vat.toFixed(2);
+    //     item.Net = net.toFixed(2);
+    //     item.Excise = excise.toFixed(2);
+    //     item.Discount = discount.toFixed(2);
+    //     item.gross = gross.toFixed(2);
+    
+    //     setItemData(newData);
+    //     // validate this row after updating; if we just changed the item selection, skip UOM required check
+    //     if (field === "item_id") {
+    //       validateRow(index, newData[index], { skipUom: true });
+    //     } else {
+    //       validateRow(index, newData[index]);
+    //     }
+    //   };
+
+
 
   // 🚀 Submit
   const handleSubmit = async () => {
@@ -541,6 +620,144 @@ const handleItemSearch = async (searchText: string) => {
             footer: { pagination: false },
           }}
         />
+
+
+        {/* <div>
+           <Table
+                            data={tableData.map((row, idx) => ({
+                              ...row,
+                              idx: idx.toString(),
+                              UOM: Array.isArray(row.UOM) ? JSON.stringify(row.UOM) : "[]",
+                              item_id: String(row.item_id ?? ""),
+                              Quantity: String(row.Quantity ?? ""),
+                            }))}
+                            config={{
+                              columns: [
+                                {
+                                  key: "item_id",
+                                  label: "Item Name",
+                                  width: 300,
+                                  render: (row) => {
+                                    const idx = Number(row.idx);
+                                    const err = itemErrors[idx]?.item_id;
+                                    // Filter out items that are already selected in other rows
+                                    const selectedIds = tableData.map((r, i) => (i === idx ? null : r.item_id)).filter(Boolean) as string[];
+                                    const filteredOptions = itemsOptions.filter(opt => (
+                                      opt.value === row.item_id || !selectedIds.includes(opt.value)
+                                    ));
+                                    return (
+                                      <div>
+                                        <AutoSuggestion
+                                          label=""
+                                          name={`item_id_${row.idx}`}
+                                          placeholder="Search item"
+                                          onSearch={(q) => fetchItem(q)}
+                                          initialValue={
+                                            itemsOptions.find(o => o.value === row.item_id)?.label
+                                            || orderData.find(o => String(o.id) === row.item_id)?.name || ""
+                                          }
+                                          onSelect={(opt) => {
+                                            if (opt.value !== row.item_id) {
+                                              recalculateItem(Number(row.idx), "item_id", opt.value);
+                                              // setFieldValue("uom_id", "");
+                                            } else {
+                                              recalculateItem(Number(row.idx), "item_id", opt.value);
+                                            }
+                                          }}
+                                          onClear={() => {
+                                            recalculateItem(Number(row.idx), "item_id", "");
+                                            // setFieldValue("uom_id", "");
+                                          }}
+                                          disabled={!values.customer}
+                                          error={err && err}
+                                          className="w-full"
+                                        />
+                                      </div>
+                                    );
+                                  },
+                                },
+                                {
+                                  key: "uom_id",
+                                  label: "UOM",
+                                  width: 150,
+                                  render: (row) => {
+                                    const idx = Number(row.idx);
+                                    const err = itemErrors[idx]?.uom_id;
+                                    const options = JSON.parse(row.UOM ?? "[]");
+                                    return (
+                                      <div>
+                                        <InputFields
+                                          label=""
+                                          name="UOM"
+                                          value={row.uom_id}
+                                          placeholder="Select UOM"
+                                          options={options}
+                                          disabled={options.length === 0 && !values.customer}
+                                          showSkeleton={Boolean(itemLoading[idx]?.uom)}
+                                          onChange={(e) => {
+                                            recalculateItem(Number(row.idx), "uom_id", e.target.value)
+                                            const price = options.find((uom: { value: string }) => String(uom.value) === e.target.value)?.price || "0.00";
+                                            recalculateItem(Number(row.idx), "Price", price);
+                                          }}
+                                          error={err && err}
+                                        />
+                                      </div>
+                                    );
+                                  },
+                                },
+                                {
+                                  key: "Quantity",
+                                  label: "Qty",
+                                  width: 150,
+                                  render: (row) => {
+                                    const idx = Number(row.idx);
+                                    const err = itemErrors[idx]?.Quantity;
+                                    return (
+                                      <div>
+                                        <InputFields
+                                          label=""
+                                          type="number"
+                                          name="Quantity"
+                                          // integerOnly={true}
+                                          placeholder="Enter Qty"
+                                          value={row.Quantity}
+                                          disabled={!values.customer}
+                                          onChange={(e) => {
+                                            const raw = (e.target as HTMLInputElement).value;
+                                            const intPart = raw.split('.')[0];
+                                            const sanitized = intPart === '' ? '' : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                            recalculateItem(Number(row.idx), "Quantity", sanitized);
+                                          }}
+                                          // numberMin={0}
+                                          error={err && err}
+                                        />
+                                      </div>
+                                    );
+                                  },
+                                },
+                                {
+                                  key: "action",
+                                  label: "Action",
+                                  render: (row) => (
+                                    <button
+                                      type="button"
+                                      className={`${itemData.length <= 1
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : ""
+                                        } text-red-500 flex items-center`}
+                                      onClick={() =>
+                                        itemData.length > 1 && handleRemoveItem(Number(row.idx))
+                                      }
+                                    >
+                                      <Icon icon="hugeicons:delete-02" width={20} />
+                                    </button>
+                                  ),
+                                },
+                              ],
+                              showNestedLoading: false,
+                            }}
+                          />
+        </div> */}
 
         <div className="mt-4">
           <button

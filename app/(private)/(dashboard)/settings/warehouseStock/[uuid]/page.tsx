@@ -39,6 +39,7 @@ export default function AddWarehouseStockPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const codeGeneratedRef = useRef(false);
   const { warehouseOptions, itemOptions } = useAllDropdownListData();
 
@@ -124,7 +125,7 @@ export default function AddWarehouseStockPage() {
               warehouse_stock_code: res.data.osa_code || "",
               warehouse_id: res.data.warehouse?.id?.toString() || "",
               item_id: res.data.item?.id?.toString() || "",
-              qty: res.data.qty || "",
+              qty: res.data.qty.toString() || "",
               name: res.data.item?.name || "",
               status: res.data.status === 1 ? "active" : "inactive",
             });
@@ -254,19 +255,37 @@ export default function AddWarehouseStockPage() {
           {/* Footer Actions */}
           <div className="flex justify-end gap-3 mt-6">
             <button
-              className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
-              type="button"
-              onClick={() => formik.resetForm()}
-            >
-              Cancel
-            </button>
+          type="button"
+          className={`px-6 py-2 rounded-lg border text-gray-700 hover:bg-gray-100 ${
+            submitting
+              ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
+              : "border-gray-300"
+          }`}
+          onClick={() => router.push("/settings/warehouseStock")}
+          disabled={submitting}
+           // disable while submitting
+        >
+          Cancel
+        </button>
 
             <SidebarBtn
-              label="Submit"
-              isActive={true}
-              leadingIcon="mdi:check"
-              type="submit"
-            />
+                      label={
+                        submitting
+                          ? isEditMode
+                            ? "Updating..."
+                            : "Submitting..."
+                          : isEditMode
+                          ? "Update"
+                          : "Submit"
+                      }
+                      isActive={!submitting}
+                      leadingIcon="mdi:check"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        formik.handleSubmit();
+                      }}
+                      disabled={submitting}
+                    />
           </div>
         </form>
       )}
