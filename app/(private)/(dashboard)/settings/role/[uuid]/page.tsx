@@ -65,6 +65,7 @@ export default function AddEditRole() {
   const [tablePermissionIds, setTablePermissionIds] = useState<number[]>([]);
 
   useEffect(() => {
+    console.log(labelOptions,"labelOptions")
     if (params?.uuid && params.uuid !== "add") {
       setIsEditMode(true);
       setLoading(true);

@@ -271,6 +271,8 @@ export default function AddEditSalesman({
         setLoading(false);
       }
     })();
+    console.log(salesmanTypeOptions,"salesmanTypeOptions")
+
   }, [isEditMode, salesmanId]);
 
   const handleNext = async (

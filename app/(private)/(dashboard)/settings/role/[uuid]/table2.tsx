@@ -231,6 +231,7 @@ export default function RolesPermissionTable({
                     align: "center",
                     render: (row: TableDataType) => {
                         const r = row as unknown as Submenu;
+                        console.log(permissions,"permissions")
                         const permList = Array.isArray(permissions)
                             ? permissions.map((p: any) => String(p.name ?? "").toLowerCase()).filter(Boolean)
                             : DEFAULT_PERMS;

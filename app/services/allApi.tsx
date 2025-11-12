@@ -1467,7 +1467,7 @@ export const salesmanTypeList = async (params: Params) => {
     const res = await API.get("/api/settings/salesman_type/list", {
       params: params,
     });
-
+    console.log(res,"salesmenType");
     return res.data;
   } catch (error) {
     console.error("User List failed ❌", error);
