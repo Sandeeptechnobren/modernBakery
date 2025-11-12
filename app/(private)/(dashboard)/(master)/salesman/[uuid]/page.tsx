@@ -33,6 +33,7 @@ import {
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { label } from "framer-motion/client";
 
 interface SalesmanFormValues {
   osa_code: string;
@@ -202,12 +203,13 @@ export default function AddEditSalesman({
       return;
     }
     const options = filteredOptions?.data || [];
-    setFilteredRouteOptions(
-      options.map((route: { id: number; route_name: string }) => ({
-        value: String(route.id),
-        label: route.route_name,
-      }))
-    );
+
+    const newroutesOptions:{value:string,label:string}[] = []
+    options.map((route: { id: number; route_name: string }) => {
+      newroutesOptions.push({ value: route.id.toString(), label: route.route_name})
+
+    })
+    setFilteredRouteOptions(newroutesOptions );
   };
 
   // ✅ Fetch data
@@ -218,16 +220,25 @@ export default function AddEditSalesman({
           const res = await getSalesmanById(salesmanId as string);
           if (res && !res.error && res.data) {
             const d = res.data;
+            console.log(d,"data")
+            const idsWareHouses = []
+            d.warehouses.map((dta:any)=>{
+              console.log(dta.id,"warehouse id")
+              idsWareHouses.push({
+                value: dta.id.toString(),
+                label: dta.warehouse_name,
+              });
+            })
             setInitialValues({
               osa_code: d.osa_code || "",
               name: d.name || "",
               type: d.salesman_type?.id?.toString() || "",
-              sub_type: d.sub_type?.id?.toString() || "",
+              sub_type: d.project_type?.id?.toString() || "",
               designation: d.designation || "",
               route_id: d.route?.id?.toString() || "",
               password: d.password, // password is not returned from API → leave empty
               contact_no: d.contact_no || "",
-              warehouse_id: d.warehouse?.id?.toString() || "",
+              warehouse_id: d.warehouses[0]?.id?.toString() || "",
               is_block: d.is_block?.toString() || "0",
               forceful_login: d.forceful_login?.toString() || "1",
               status: d.status?.toString() || "1",

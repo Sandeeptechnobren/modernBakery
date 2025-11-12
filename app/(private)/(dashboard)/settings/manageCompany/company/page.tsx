@@ -34,12 +34,12 @@ interface Company {
         selling_currency?: string;
         purchase_currency?: string;
     };
-    region?: { id?: number; region_name?: string; region_code?: string };
-    sub_region?: {
-        id?: number;
-        subregion_name?: string;
-        subregion_code?: string;
-    };
+    // region?: { id?: number; region_name?: string; region_code?: string };
+    // sub_region?: {
+    //     id?: number;
+    //     subregion_name?: string;
+    //     subregion_code?: string;
+    // };
     selling_currency?: string;
     purchase_currency?: string;
     toll_free_no?: string;
@@ -50,7 +50,7 @@ interface Company {
     town?: string;
     street?: string;
     landmark?: string;
-    service_type?: string;
+    // service_type?: string;
     status?: string | number;
 }
 
@@ -62,41 +62,12 @@ const dropdownDataList = [
 
 // 🔹 Table columns
 const columns = [
-    { key: "company_code", label: "Company Code"},
-    { key: "company_name", label: "Company Name"},
+    { key: "company_name", label: "Company Name", render: (row: TableDataType) => row.company_code + " - " + row.company_name || "-" },
     { key: "company_type", label: "Company Type"},
-    { key: "email", label: "Email"},
     { key: "website", label: "Website"},
+    { key: "email", label: "Email"},
     { key: "toll_free_no", label: "Toll Free No"},
     { key: "primary_contact", label: "Primary Contact"},
-    {
-        key: 'region_name',
-        label: 'Region',
-        render: (data: TableDataType) => {
-                const warehouseObj = typeof data.region === "string"
-                    ? JSON.parse(data.region)
-                    : data.region;
-                return warehouseObj?.region_name || "-";
-            }, filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.region_name}</div>);
-        }
-    } },
-    {
-        key: 'subregion_name',
-        label: 'Area',
-        render: (row: TableDataType) => {
-                const warehouseObj = typeof row.sub_region === "string"
-                    ? JSON.parse(row.sub_region)
-                    : row.sub_region;
-                return warehouseObj?.subregion_name || "-";
-            }, filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.subregion_name}</div>);
-        }
-    } },
     { key: "address", label: "Address"},
     {
         key: 'country_name',
@@ -124,7 +95,6 @@ const columns = [
     { key: "selling_currency", label: "Selling Currency"},
     { key: "vat", label: "VAT"},
     { key: "module_access", label: "Module Access"},
-    { key: "service_type", label: "Service Type"},
     {
         key: "status",
         label: "Status",

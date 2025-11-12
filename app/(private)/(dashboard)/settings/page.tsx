@@ -1,4 +1,4 @@
-import UserRole from "./theme/page";
+import UserRole from "./manageCompany/theme/page";
 
 export default function Page() { 
     return(

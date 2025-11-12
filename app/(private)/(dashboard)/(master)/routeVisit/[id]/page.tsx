@@ -1,32 +1,30 @@
 "use client";
 
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import * as yup from "yup";
 import InputFields from "@/app/components/inputFields";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import Loading from "@/app/components/Loading";
+import StepperForm, {
+  StepperStep,
+  useStepperForm,
+} from "@/app/components/stepperForm";
 import {
-  regionList,
-  getArea,
-  warehouseList,
-  routeList,
-  saveRouteVisit,
-  updateRouteVisitDetails,
-  getRouteVisitDetails,
-  subRegionList,
+  agentCustomerFilteredList,
   agentCustomerList,
   companyList,
-  agentCustomerFilteredList,
+  getRouteVisitDetails,
+  regionList,
+  routeList,
+  saveRouteVisit,
+  subRegionList,
+  updateRouteVisitDetails,
+  warehouseList
 } from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { Icon } from "@iconify-icon/react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import * as yup from "yup";
 import Table from "./toggleTable";
-import StepperForm, {
-  useStepperForm,
-  StepperStep,
-} from "@/app/components/stepperForm";
 
 // Types for API responses
 type Company = {
@@ -118,7 +116,7 @@ export default function AddEditRouteVisit() {
   const visitId = params?.id as string | undefined;
   const isEditMode = !!(visitId && visitId !== "add");
 
-  const [loading, setLoading] = useState(false);
+  const { setLoading } = useLoading();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -679,7 +677,29 @@ export default function AddEditRouteVisit() {
                   error={errors.to_date}
                 />
               </div>
-
+ {/* {!isEditMode && ( */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Salesman Type */}
+                  <div>
+                    <InputFields
+                      required
+                      label="Salesman Type"
+                      value={form.salesman_type}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          salesman_type: e.target.value,
+                        }))
+                      }
+                      options={[
+                        { value: "1", label: "Agent Customer" },
+                        { value: "2", label: "Merchandiser" },
+                      ]}
+                      error={errors.salesman_type}
+                    />
+                  </div>
+                </div>
+              {/* )} */}
               {/* Company - Multi Select */}
               <div>
                 <InputFields
@@ -803,29 +823,7 @@ export default function AddEditRouteVisit() {
         return (
           <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
             <div className="p-6">
-              {!isEditMode && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {/* Salesman Type */}
-                  <div>
-                    <InputFields
-                      required
-                      label="Salesman Type"
-                      value={form.salesman_type}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          salesman_type: e.target.value,
-                        }))
-                      }
-                      options={[
-                        { value: "1", label: "Agent Customer" },
-                        { value: "2", label: "Merchandiser" },
-                      ]}
-                      error={errors.salesman_type}
-                    />
-                  </div>
-                </div>
-              )}
+             
 
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Customer Schedule
@@ -841,7 +839,6 @@ export default function AddEditRouteVisit() {
                       .map(([day]) => day),
                   })
                 )}
-                loading={loading}
                 editMode={isEditMode}
                 visitUuid={visitId} // Pass the visit ID when in edit mode
               />
@@ -852,14 +849,6 @@ export default function AddEditRouteVisit() {
         return null;
     }
   };
-
-  if (loading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <Loading />
-      </div>
-    );
-  }
 
   return (
     <div className="pb-5">

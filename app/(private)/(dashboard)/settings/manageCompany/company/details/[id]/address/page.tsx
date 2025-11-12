@@ -125,7 +125,7 @@ export default function Address() {
       <KeyValueData
         title="Address Information"
         data={[
-          { key: "Country", value: company?.country?.country_name || "-" },
+          
           { key: "Region", value: company?.region?.region_name || "-" },
           {
             key: "Area",

@@ -13,7 +13,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { deliveryList } from "@/app/services/agentTransaction";
+import { deliveryList,exchangeList } from "@/app/services/agentTransaction";
 import StatusBtn from "@/app/components/statusBtn2";
 import BorderIconButton from "@/app/components/borderIconButton";
 
@@ -144,11 +144,11 @@ export default function CustomerInvoicePage() {
     // 🔹 Fetch Invoices
     const fetchInvoices = useCallback(async (
         page: number = 1,
-        pageSize: number = 10
+        pageSize: number = 50
     ): Promise<listReturnType> => {
         try {
             setLoading(true);
-            const result = await deliveryList({
+            const result = await exchangeList({
                 page: page.toString(),
                 per_page: pageSize.toString(),
             });
@@ -180,7 +180,7 @@ export default function CustomerInvoicePage() {
             return {
                 data: [],
                 currentPage: 1,
-                pageSize: 10,
+                pageSize: 50,
                 total: 0,
             };
         } finally {

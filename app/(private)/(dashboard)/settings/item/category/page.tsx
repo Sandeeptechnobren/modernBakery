@@ -34,7 +34,7 @@ export type categoryType = {
     id: number;
     category_name: string;
     status: string;
-    item_category_code?: string;
+    category_code?: string;
 };
 
 export default function Category() {
@@ -147,7 +147,6 @@ export default function Category() {
                                         key={0}
                                         href="#"
                                         isActive={true}
-                                        buttonTw="px-3 h-9"
                                         leadingIcon="lucide:plus"
                                         label="Add"
                                         labelTw="hidden lg:block"
@@ -167,18 +166,10 @@ export default function Category() {
                                         setShowUpdatePopup(true);
                                         setUpdateItemCategoryData({
                                             id: parseInt(data.id),
+                                            category_code: data.category_code,
                                             category_name: data.category_name,
                                             status: data.status,
                                         });
-                                    },
-                                },
-                                {
-                                    icon: "lucide:trash-2",
-                                    onClick: (data: Record<string, string>) => {
-                                        setShowDeletePopup(true);
-                                        setDeleteItemCategoryId(
-                                            parseInt(data.id)
-                                        );
                                     },
                                 },
                             ],

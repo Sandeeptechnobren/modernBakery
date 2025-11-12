@@ -1,8 +1,5 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Icon } from "@iconify-icon/react";
-import { useRouter } from "next/navigation";
 import Table, {
   listReturnType,
   searchReturnType,
@@ -10,8 +7,10 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { getRouteVisitList } from "@/app/services/allApi"; // Adjust import path
-import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 const columns = [
   { key: "from_date", label: "From Date" },
@@ -168,7 +167,7 @@ export default function RouteVisits() {
                   href="/routeVisit/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Route Visit"
+                  label="Add"
                   labelTw="hidden sm:block"
                 />,
               ],

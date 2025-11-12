@@ -90,7 +90,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     }}
                     options={[
                         { value: "Agent Warehouse", label: "Agent Warehouse" },
-                        { value: "Company Outlet", label: "Company Outlet" },
+                        { value: "Company Outlet", label: "Company Outlet" },
                     ]}
                 />
                 {errors?.warehouse_type && touched?.warehouse_type && (
@@ -105,6 +105,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     name="agent_customer"
                     value={values.agent_customer}
                     options={companyCustomersOptions}
+                    
                     onChange={async(e) => {
                         const val = (e.target as HTMLSelectElement).value;
                         await getCompanyCustomerById(val).then((res) => {
@@ -171,19 +172,13 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
-                    required
-                    name="owner_number"
+                    name="tin_no"
                     label="TIN NO."
                     value={values.tin_no}
                     onChange={(e) => setFieldValue('tin_no', e.target.value)}
                     placeholder="Enter TIN No."
-                    error={errors?.tin_no && touched?.tin_no ? errors.tin_no : false}
                 />
-                {errors?.tin_no && touched?.tin_no && (
-                    <div className="text-xs text-red-500 mt-1">
-                        {/* {errors.tin_no} */}
-                        </div>
-                )}
+               
             </div>
             
             

@@ -8,7 +8,7 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { deliveryByUuid } from "@/app/services/agentTransaction";
+import { deliveryByUuid,exchangeByUUID } from "@/app/services/agentTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
@@ -114,7 +114,7 @@ export default function OrderDetailPage() {
       (async () => {
         try {
           setLoading(true);
-          const response = await deliveryByUuid(uuid);
+          const response = await exchangeByUUID(uuid);
           const data = response?.data ?? response;
           setDeliveryData(data);
           
@@ -166,7 +166,7 @@ export default function OrderDetailPage() {
             className="cursor-pointer"
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[4px]">
-            Delivery Details
+            Exchange Details
           </h1>
         </div>
 

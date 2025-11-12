@@ -23,7 +23,7 @@ interface DeliveryDetail {
     code: string;
     name: string;
   };
-  uom: number | string;
+  uom_name?: string;
   quantity: number;
   item_price: string;
   excise?: string;
@@ -36,12 +36,17 @@ interface DeliveryDetail {
 interface DeliveryData {
   delivery_code?: string;
   delivery_date?: string;
+  comment?: string;
   customer?: {
     name?: string;
     code?: string;
     address?: string;
     phone?: string;
+    contact_no?: string;
     email?: string;
+    town?: string;
+    landmark?: string;
+    district?: string;
   };
   route?: {
     code?: string;
@@ -54,11 +59,15 @@ interface DeliveryData {
   warehouse?: {
     code?: string;
     name?: string;
+    address?: string;
+    owner_number?: string;
+    owner_email?: string;
   };
   details?: DeliveryDetail[];
   gross_total?: string;
   discount?: string;
   net_total?: string;
+  net_amount?: string;
   excise?: string;
   vat?: string;
   delivery_charges?: string;
@@ -69,7 +78,7 @@ interface TableRow {
   id: string;
   itemCode: string;
   itemName: string;
-  UOM: string;
+  name: string;
   Quantity: string;
   Price: string;
   Excise: string;
@@ -82,14 +91,13 @@ interface TableRow {
 
 const dropdownDataList = [
   { icon: "humbleicons:radio", label: "Mark as Pending", iconWidth: 20 },
-  // { icon: "hugeicons:delete-02", label: "Delete Delivery", iconWidth: 20 },
 ];
 
 const columns = [
   { key: "id", label: "#", width: 60 },
   { key: "itemCode", label: "Product Code" },
   { key: "itemName", label: "Product Name", width: 250 },
-  { key: "UOM", label: "UOM" },
+  { key: "name", label: "UOM" },
   { key: "Quantity", label: "Quantity" },
   { key: "Price", label: "Price" },
   { key: "Excise", label: "Excise" },
@@ -126,7 +134,7 @@ export default function OrderDetailPage() {
               id: (index + 1).toString(),
               itemCode: detail.item?.code || "-",
               itemName: detail.item?.name || "-",
-              UOM: detail.uom ? (typeof detail.uom === 'string' ? detail.uom : detail.uom.toString()) : "-",
+              name: detail.uom_name || "-", // Fixed: use uom_name from API
               Quantity: detail.quantity?.toString() || "0",
               Price: detail.item_price || "0",
               Excise: detail.excise || "0",
@@ -147,14 +155,26 @@ export default function OrderDetailPage() {
     }
   }, [uuid, setLoading, showSnackbar]);
 
+  // Helper function to check if value exists and is not null/empty
+  const hasValue = (value: any) => {
+    return value !== null && value !== undefined && value !== "" && value !== "0" && value !== "0.00";
+  };
+
+  // Build key-value data dynamically based on available values
   const keyValueData = [
-    { key: "Gross Total", value: `AED ${deliveryData?.gross_total || "0.00"}` },
-    { key: "Discount", value: `AED ${deliveryData?.discount || "0.00"}` },
-    { key: "Net Total", value: `AED ${deliveryData?.net_total || "0.00"}` },
-    { key: "Excise", value: `AED ${deliveryData?.excise || "0.00"}` },
-    { key: "Vat", value: `AED ${deliveryData?.vat || "0.00"}` },
-    { key: "Delivery Charges", value: `AED ${deliveryData?.delivery_charges || "0.00"}` },
-  ];
+    hasValue(deliveryData?.gross_total) && { key: "Gross Total", value: `AED ${deliveryData?.gross_total}` },
+    // hasValue(deliveryData?.discount) && { key: "Discount", value: `AED ${deliveryData?.discount}` },
+    hasValue(deliveryData?.net_total || deliveryData?.net_amount) && { 
+      key: "Net Total", 
+      value: `AED ${deliveryData?.net_total || deliveryData?.net_amount || "0.00"}` 
+    },
+    // hasValue(deliveryData?.excise) && { key: "Excise", value: `AED ${deliveryData?.excise}` },
+    hasValue(deliveryData?.vat) && { key: "Vat", value: `AED ${deliveryData?.vat}` },
+    hasValue(deliveryData?.delivery_charges) && { 
+      key: "Delivery Charges", 
+      value: `AED ${deliveryData?.delivery_charges}` 
+    },
+  ].filter(Boolean); // Remove null/false entries
 
   const exportFile = async () => {
     try {
@@ -191,30 +211,7 @@ export default function OrderDetailPage() {
 
         {/* Action Buttons */}
         <div className="flex gap-[12px] relative">
-          {/* <div className="gap-[12px] hidden sm:flex">
-            <BorderIconButton 
-              icon="lucide:edit-2" 
-              onClick={() => router.push(`/agentCustomerDelivery/${uuid}`)}
-            />
-            <BorderIconButton icon="lucide:printer" />
-            <BorderIconButton icon="lucide:mail" />
-            <BorderIconButton icon="mdi:message-outline" />
-            <DismissibleDropdown
-              isOpen={showDropdown}
-              setIsOpen={setShowDropdown}
-              button={
-                <BorderIconButton
-                  icon="ic:sharp-more-vert"
-                  onClick={() => setShowDropdown(!showDropdown)}
-                />
-              }
-              dropdown={
-                <div className="w-[160px] absolute top-[40px] right-0 z-30">
-                  <CustomDropdown data={dropdownDataList} />
-                </div>
-              }
-            />
-          </div> */}
+          {/* Uncomment if needed */}
         </div>
       </div>
 
@@ -224,70 +221,117 @@ export default function OrderDetailPage() {
           <div className="flex justify-between flex-wrap gap-[20px]">
             <div className="flex flex-col gap-[10px]">
               <Logo type="full" />
-              <span className="text-primary font-normal text-[16px]">
-                Hariss Trading Co., Dubai - UAE
-              </span>
             </div>
 
-            <div className="flex flex-col items-end">
-              <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-                DELIVERY
-              </span>
-              <span className="text-primary text-[14px] tracking-[10px] mb-3">
-                #{deliveryData?.delivery_code || ""}
-              </span>
-
-            </div>
+          <div className="flex flex-col items-end">
+            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
+              DELIVERY
+            </span>
+            <span className="text-primary text-[14px] tracking-[10px] mb-3">
+              #{deliveryData?.delivery_code || ""}
+            </span>
           </div>
+        </div>
 
           <hr className="text-[#D5D7DA]" />
 
-          {/* ---------- Order Details Section (three equal columns) ---------- */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8 items-start">
-            {/* From (Seller) */}
-            <div>
-              <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-                <span>From (Seller)</span>
-                <div className="flex flex-col space-y-[10px]">
-                  <span className="font-semibold">Hariss Store</span>
-                  <span>Business Bay, Dubai - UAE</span>
+        {/* ---------- Order Details Section (three equal columns) ---------- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8 items-start">
+          {/* From (Seller) */}
+          <div>
+            <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
+              <span>From (Seller)</span>
+              <div className="flex flex-col space-y-[10px]">
+                <span className="font-semibold">
+                  {deliveryData?.warehouse?.code && deliveryData?.warehouse?.name
+                    ? `${deliveryData?.warehouse?.code} - ${deliveryData?.warehouse?.name}`
+                    : "-"}
+                </span>
+                {hasValue(deliveryData?.warehouse?.address) && (
+                  <span>Address: {deliveryData?.warehouse?.address}</span>
+                )}
+                {(hasValue(deliveryData?.warehouse?.owner_number) || hasValue(deliveryData?.warehouse?.owner_email)) && (
                   <span>
-                    Phone: +971 123456789 <br /> Email: support@hariss.com
+                    {hasValue(deliveryData?.warehouse?.owner_number) && (
+                      <>Phone: {deliveryData?.warehouse?.owner_number}</>
+                    )}
+                    {hasValue(deliveryData?.warehouse?.owner_number) && hasValue(deliveryData?.warehouse?.owner_email) && <br />}
+                    {hasValue(deliveryData?.warehouse?.owner_email) && (
+                      <>Email: {deliveryData?.warehouse?.owner_email}</>
+                    )}
                   </span>
-                </div>
-              </div>
-            </div>
-
-            {/* To (Customer) */}
-            <div>
-              <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>To (Customer)</span>
-                <div className="flex flex-col space-y-[10px]">
-                  <span className="font-semibold">{deliveryData?.customer?.name || "-"}</span>
-                  <span>{deliveryData?.customer?.address || "-"}</span>
-                  <span>
-                    Phone: {deliveryData?.customer?.phone || "-"} <br />
-                    Email: {deliveryData?.customer?.email || "-"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Dates / meta - right column */}
-            <div className="flex md:justify-end">
-              <div className="text-primary-bold text-[14px] md:text-right">
-                <div>
-                  Delivery Date: <span className="font-bold">{deliveryData?.delivery_date ? new Date(deliveryData.delivery_date).toLocaleDateString('en-GB') : "-"}</span>
-                </div>
-                <div className="mt-2">
-                  Route: <span className="font-bold">{deliveryData?.route?.code || "-"} - {deliveryData?.route?.name || "-"}</span>
-                </div>
-                <div className="mt-2">
-                  Salesman: <span className="font-bold">{deliveryData?.salesman?.code || "-"} - {deliveryData?.salesman?.name || "-"}</span>
-                </div>
+                )}
               </div>
             </div>
           </div>
+
+          {/* To (Customer) */}
+          <div>
+            <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
+              <span>To (Customer)</span>
+              <div className="flex flex-col space-y-[10px]">
+                <span className="font-semibold">
+                  {deliveryData?.customer?.code ? deliveryData?.customer?.code : ""}
+                  {deliveryData?.customer?.code && deliveryData?.customer?.name ? " - " : ""}
+                  {deliveryData?.customer?.name ? `${deliveryData?.customer?.name}` : ""}
+                </span>
+                {hasValue(deliveryData?.customer?.town) && (
+                  <span>Town: {deliveryData?.customer?.town}</span>
+                )}
+                {hasValue(deliveryData?.customer?.landmark) && (
+                  <span>Landmark: {deliveryData?.customer?.landmark}</span>
+                )}
+                {hasValue(deliveryData?.customer?.district) && (
+                  <span>District: {deliveryData?.customer?.district}</span>
+                )}
+                {
+                  <span>
+                    {deliveryData?.customer?.contact_no && (
+                      <>Phone: {deliveryData?.customer?.contact_no}</>
+                    )}
+                    {deliveryData?.customer?.email && (
+                      <>Phone: {deliveryData?.customer?.email}</>
+                    )}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          {/* Dates / meta - right column */}
+          <div className="flex md:justify-end">
+            <div className="text-primary-bold text-[14px] md:text-right">
+              {hasValue(deliveryData?.delivery_date) && deliveryData?.delivery_date && (
+                <div>
+                  Delivery Date:{" "}
+                  <span className="font-bold">
+                    {new Date(deliveryData.delivery_date).toLocaleDateString('en-GB')}
+                  </span>
+                </div>
+              )}
+              {(hasValue(deliveryData?.route?.code) || hasValue(deliveryData?.route?.name)) && (
+                <div className="mt-2">
+                  Route:{" "}
+                  <span className="font-bold">
+                    {deliveryData?.route?.code && deliveryData?.route?.name
+                      ? `${deliveryData.route.code} - ${deliveryData.route.name}`
+                      : deliveryData?.route?.code || deliveryData?.route?.name}
+                  </span>
+                </div>
+              )}
+              {(hasValue(deliveryData?.salesman?.code) || hasValue(deliveryData?.salesman?.name)) && (
+                <div className="mt-2">
+                  Salesman:{" "}
+                  <span className="font-bold">
+                    {deliveryData?.salesman?.code && deliveryData?.salesman?.name
+                      ? `${deliveryData.salesman.code} - ${deliveryData.salesman.name}`
+                      : deliveryData?.salesman?.code || deliveryData?.salesman?.name}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
           {/* ---------- Order Table ---------- */}
           <Table
@@ -318,7 +362,7 @@ export default function OrderDetailPage() {
 
               {/* Totals */}
               <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
-                {keyValueData.map((kv) => (
+                {keyValueData.map((kv: any) => (
                   <div key={kv.key} className="w-full">
                     <div className="flex justify-between py-2">
                       <span className="text-sm text-[#6B6F76]">{kv.key}</span>
@@ -336,12 +380,12 @@ export default function OrderDetailPage() {
 
               {/* Notes (Mobile) */}
               <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px]">
-                <div className="flex flex-col space-y-[10px]">
+                {deliveryData?.comment && <div className="flex flex-col space-y-[10px]">
                   <div className="font-semibold text-[#181D27]">Customer Note</div>
                   <div>
-                    Please deliver between 10 AM to 1 PM. Contact before delivery.
+                    {deliveryData?.comment || ""}
                   </div>
-                </div>
+                </div>}
                 <div className="flex flex-col space-y-[10px]">
                   <div className="font-semibold text-[#181D27]">
                     Payment Method

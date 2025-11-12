@@ -139,7 +139,7 @@ export default function ViewPage() {
               { key: "Vehicle Type", value: vehicleTypeLabel(vehicle?.vehicle_type) },
               { key: "Capacity", value: vehicle?.capacity || "-" },
               { key: "Fuel Reading", value: vehicle?.fuel_reading || "-" },
-              { key: "Owner Type", value: ownerTypeLabel(vehicle?.owner_type) },
+              { key: "Owner Type", value: vehicle?.owner_type || "-" },
               { key: "Warehouse", value: vehicle?.warehouse?.warehouse_name || "-" },
               { key: "Valid From", value: vehicle?.valid_from || "-" },
               { key: "Valid To", value: vehicle?.valid_to || "-" },

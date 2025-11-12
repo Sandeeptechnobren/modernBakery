@@ -72,22 +72,7 @@ export default function CustomerSubCategoryPage() {
   }, [showSnackbar]);
 
   // ✅ Delete handler
-  const handleDelete = async () => {
-    if (!selectedSubCategory?.id) return;
-    try {
-      await deleteCustomerSubCategory(selectedSubCategory.id);
-      showSnackbar("Customer Sub-Category deleted ✅", "success");
-      setSubCategories((prev) =>
-        prev.filter((s) => s.id !== selectedSubCategory.id)
-      );
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Failed to delete sub-category ❌", "error");
-    } finally {
-      setShowDeletePopup(false);
-      setSelectedSubCategory(null);
-    }
-  };
+ 
 
   
   const tableData: TableDataType[] = subCategories.map((c) => ({
@@ -205,31 +190,13 @@ export default function CustomerSubCategoryPage() {
                   );
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  const subCategory =
-                    subCategories.find((s) => s.id === Number(r.id)) || null; // ✅ fix: compare number
-                  setSelectedSubCategory(subCategory);
-                  setShowDeletePopup(true);
-                },
-              },
+              
             ],
           }}
         />
       </div>
 
-      {/* Delete Popup */}
-      {showDeletePopup && selectedSubCategory && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title={`Delete Sub-Category "${selectedSubCategory.customer_sub_category_name}"?`}
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleDelete}
-          />
-        </div>
-      )}
+      
     </>
   );
 }

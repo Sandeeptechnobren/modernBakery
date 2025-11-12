@@ -161,7 +161,7 @@ export default function Expensetype() {
               actions: [
                 <SidebarBtn
                   key={0}
-                  href="/settings/expenseType/add"
+                  href="/settings/manageCompany/expenseType/add"
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add"
@@ -179,7 +179,7 @@ export default function Expensetype() {
                 onClick: (data: object) => {
                   const row = data as TableRow;
                 router.push(
-                    `/settings/expenseType/${row.uuid}`
+                    `/settings/manageCompany/expenseType/${row.uuid}`
                   );
               },
                 },

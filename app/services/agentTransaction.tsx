@@ -180,9 +180,20 @@ export const salesmanUnloadHeaderUpdate = async (uuid: string, body: object) => 
   }
 };
 
-export const capsCollectionList = async (params: Params) => {
+// Collections and Caps Collections both are different APIs
+export const collectionList = async (params: Params) => {
   try {
     const res = await API.get("/api/agent_transaction/collections/list", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+// Collections and Caps Collections both are different APIs
+export const capsCollectionList = async (params: Params) => {
+  try {
+    const res = await API.get("/api/agent_transaction/capscollection/list", { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

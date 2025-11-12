@@ -29,29 +29,29 @@ interface Item {
   has_excies?: boolean;
   item_weight?: string;
   volume?: number;
-  category?: {
+  item_category?: {
+    id?: number;
+    category_name?: string;
+    code?: string;
+  };
+  item_sub_category?: {
     id?: number;
     name?: string;
     code?: string;
   };
-  itemSubCategory?: {
-    id?: number;
-    name?: string;
-    code?: string;
-  };
-  uom: {
-    "id": number,
-                "item_id": number,
-                "name": string,
-                "uom_type": string,
-                "upc": string,
-                "price": string,
-                "is_stock_keeping": boolean,
-                "enable_for": string,
-                "status": string,
-              
-                "keeping_quantity": number,
-                "uom_id": number
+  item_uoms: {
+    id: number,
+    item_id: number,
+    name: string,
+    uom_type: string,
+    upc: string,
+    uom_price: string,
+    is_stock_keeping: boolean,
+    enable_for: string,
+    status: string,
+
+    keeping_quantity: number,
+    uom_id: number
   }[]
 }
 
@@ -102,7 +102,7 @@ export default function Page() {
         setLoading(true);
         const res = await itemById(id.toString());
         setLoading(false);
-        console.log(res,"res")
+        console.log(res, "res")
 
         if (res.error) {
           showSnackbar(res.data?.message || "Unable to fetch item details", "error");
@@ -192,14 +192,14 @@ export default function Page() {
                       { key: "Brand", value: item?.brand || "-" },
                       {
                         key: "Category",
-                        value: item?.category?.name
-                          ? `${item.category.code} - ${item.category.name}`
+                        value: item?.item_category?.category_name
+                          ? `${item.item_category.category_name}`
                           : "-",
                       },
                       {
                         key: "Sub Category",
-                        value: item?.itemSubCategory?.name
-                          ? `${item.itemSubCategory.code} - ${item.itemSubCategory.name}`
+                        value: item?.item_sub_category?.name
+                          ? `${item.item_sub_category.name}`
                           : "-",
                       },
                       { key: "Shelf Life", value: item?.shelf_life || "-" },
@@ -222,39 +222,39 @@ export default function Page() {
             </div>
           )}
           {activeTab === "uom" && (
-            item?.uom.map((singleItem,index)=>{
+            item?.item_uoms.map((singleItem, index) => {
 
 
-              return(<ContainerCard key={index} className="w-full p-5">
+              return (<ContainerCard key={index} className="w-full p-5">
 
 
 
-              <h3 className="text-md font-semibold text-gray-800 mb-2">
-                {singleItem?.uom_type || "UOM"}
-              </h3>
+                <h3 className="text-md font-semibold text-gray-800 mb-2">
+                  {singleItem?.uom_type || "UOM"}
+                </h3>
 
-              <div className="space-y-1 text-gray-700 text-sm">
-                <p>
-                  <strong>Name:</strong> {singleItem?.name || "-"}
-                </p>
-                <p>
-                  <strong>Price:</strong> ₹{singleItem?.price || "0.00"}
-                </p>
-                <p>
-                  <strong>UPC:</strong> {singleItem?.upc || "N/A"}
-                </p>
-                <p>
-                  <strong>Enable For:</strong> {singleItem?.enable_for || "-"}
-                </p>
-                <p>
-                  <strong>Stock Keeping Unit:</strong>{" "}
-                  {singleItem?.keeping_quantity}
-                </p>
-              </div>
-            </ContainerCard>)
+                <div className="space-y-1 text-gray-700 text-sm">
+                  <p>
+                    <strong>Name:</strong> {singleItem?.name || "-"}
+                  </p>
+                  <p>
+                    <strong>Price:</strong> ₹{singleItem?.uom_price || "0.00"}
+                  </p>
+                  <p>
+                    <strong>UPC:</strong> {singleItem?.upc || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Enable For:</strong> {singleItem?.enable_for || "-"}
+                  </p>
+                  <p>
+                    <strong>Stock Keeping Unit:</strong>{" "}
+                    {singleItem?.is_stock_keeping ? "Yes" : "No"}
+                  </p>
+                </div>
+              </ContainerCard>)
 
             })
-            
+
 
 
 

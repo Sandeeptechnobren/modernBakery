@@ -33,7 +33,7 @@ export default function ImagePreviewModal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black bg-opacity-100 flex items-center justify-center z-50 bg-black/20 px-4 backdrop-blur-[24px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -53,16 +53,16 @@ export default function ImagePreviewModal({
             {/* Close Button (top-right) */}
             <button
               onClick={onClose}
-              className="absolute bg-red-500 rounded-full p-1 top-3 right-3 text-white hover:text-gray-900 transition"
+              className="absolute flex items-center bg-gray-200 rounded-bl-full p-5 pt-3 pr-3 top-0 right-0 text-black hover:border-red-500 hover:bg-red-500 hover:text-white hover:cursor-pointer transition"
             >
-              <Icon icon="mdi:close" width={28} />
+              <Icon icon="mdi:close" width={30} />
             </button>
 
             {/* Image */}
             <motion.img
               key={currentIndex}
               src={
-                images[currentIndex].startsWith("http")
+                images[currentIndex].startsWith("http") || images[currentIndex].startsWith("blob:")
                   ? images[currentIndex]
                   : `/uploads/${images[currentIndex]}`
               }

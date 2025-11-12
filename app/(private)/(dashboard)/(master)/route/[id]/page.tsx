@@ -110,9 +110,7 @@ export default function AddEditRoute() {
             vehicleType: data?.vehicle?.id ? String(data?.vehicle.id) : "",
             warehouse: data?.warehouse?.id ? String(data?.warehouse.id) : "",
             status:
-              data?.status !== undefined && data?.status !== null
-                ? String(data.status)
-                : "1",
+              data?.status>0? "1" : "0",
           });
 
           // Fetch vehicles for the warehouse in edit mode

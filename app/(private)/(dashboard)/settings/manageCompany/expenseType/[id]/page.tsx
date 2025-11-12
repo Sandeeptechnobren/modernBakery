@@ -37,96 +37,96 @@ export default function AddEditExpenseType() {
     status: "true",
   });
   const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
   const [prefix, setPrefix] = useState('');
   const [code, setCode] = useState("");
   const codeGeneratedRef = useRef(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
-useEffect(() => {
-  if (params?.id && params.id !== "add") {
-    setIsEditMode(true);
-    setLoading(true);
-    (async () => {
-      try {
-        const res = await getExpenseTypeByUUID(String(params.id));
-       if (res?.data) {
-  setInitialValues({
-    osa_code: res.data.osa_code || "",
-    name: res.data.name || "",
-    status:
-      res.data.status === true ||
-      res.data.status === 1 ||
-      res.data.status === "1"
-        ? "true"
-        : "false",
-        
-  });
-  setCode(res.data.osa_code || "");
-}
+  useEffect(() => {
+    if (params?.id && params.id !== "add") {
+      setIsEditMode(true);
+      setLoading(true);
+      (async () => {
+        try {
+          const res = await getExpenseTypeByUUID(String(params.id));
+          if (res?.data) {
+            setInitialValues({
+              osa_code: res.data.osa_code || "",
+              name: res.data.name || "",
+              status:
+                res.data.status === true ||
+                  res.data.status === 1 ||
+                  res.data.status === "1"
+                  ? "true"
+                  : "false",
 
-      } catch (error) {
-        console.error("Failed to fetch expense type", error);
-      } finally {
-        setLoading(false);
+            });
+            setCode(res.data.osa_code || "");
+          }
+
+        } catch (error) {
+          console.error("Failed to fetch expense type", error);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    } else if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "expense_type" });
+        if (res?.code) {
+          setCode(res.code);
+          setInitialValues((prev) => ({ ...prev, osa_code: res.code }));
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        }
+      })();
+
+
+    }
+  }, [params?.id]);
+
+
+  const handleSubmit = async (
+    values: ExpenseTypeFormValues,
+    { setSubmitting }: FormikHelpers<ExpenseTypeFormValues>
+  ) => {
+    const payload = {
+      osa_code: values.osa_code,
+      name: values.name,
+      status: values.status === "true" ? 1 : 0, // ✅ correct conversion
+    };
+
+    try {
+      let res;
+      if (isEditMode && params?.id !== "add") {
+        res = await updateExpenseType(String(params.id), payload);
+      } else {
+        res = await addExpenseType(payload);
+        try {
+          await saveFinalCode({ reserved_code: values.osa_code, model_name: "expense_type" });
+        } catch (e) { }
       }
-    })();
-  } else if (!codeGeneratedRef.current) {
-    codeGeneratedRef.current = true;
-    (async () => {
-      const res = await genearateCode({ model_name: "expense_type" });
-      if (res?.code) {
-        setCode(res.code);
-        setInitialValues((prev) => ({ ...prev, osa_code: res.code }));
+
+      if (res?.error) {
+        showSnackbar(res.data?.message || "Failed to submit form", "error");
+      } else {
+        showSnackbar(
+          res.message || (isEditMode ? "Expense Type Updated Successfully" : "Expense Type Created Successfully"),
+          "success"
+        );
+        router.push("/settings/manageCompany/expenseType");
       }
-      if (res?.prefix) {
-        setPrefix(res.prefix);
-      }
-    })();
-
-
-  }
-}, [params?.id]);
-
-
-const handleSubmit = async (
-  values: ExpenseTypeFormValues,
-  { setSubmitting }: FormikHelpers<ExpenseTypeFormValues>
-) => {
-  const payload = {
-    osa_code: values.osa_code,
-    name: values.name,
-    status: values.status === "true" ? 1 : 0, // ✅ correct conversion
+    } catch (err) {
+      showSnackbar("Failed to submit form", "error");
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
-
-  try {
-    let res;
-    if (isEditMode && params?.id !== "add") {
-      res = await updateExpenseType(String(params.id), payload);
-    } else {
-      res = await addExpenseType(payload);
-      try {
-        await saveFinalCode({ reserved_code: values.osa_code, model_name: "expense_type" });
-      } catch (e) {}
-    }
-
-    if (res?.error) {
-      showSnackbar(res.data?.message || "Failed to submit form", "error");
-    } else {
-      showSnackbar(
-        res.message || (isEditMode ? "Expense Type Updated Successfully" : "Expense Type Created Successfully"),
-        "success"
-      );
-      router.push("/settings/expenseType");
-    }
-  } catch (err) {
-    showSnackbar("Failed to submit form", "error");
-    console.error(err);
-  } finally {
-    setSubmitting(false);
-  }
-};
 
 
   if (isEditMode && loading) {
@@ -141,7 +141,7 @@ const handleSubmit = async (
     <div className="w-full h-full overflow-x-hidden p-4">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/settings/expenseType">
+          <Link href="/settings/manageCompany/expenseType">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
@@ -178,7 +178,7 @@ const handleSubmit = async (
                       <>
                         <IconButton
                           bgClass="white"
-                           className="  cursor-pointer text-[#252B37] pt-12"
+                          className="  cursor-pointer text-[#252B37] pt-12"
                           icon="mi:settings"
                           onClick={() => setIsOpen(true)}
                         />
@@ -224,12 +224,12 @@ const handleSubmit = async (
                       name="status"
                       value={values.status}
                       options={[
-  { value: "true", label: "Active" },
-  { value: "false", label: "Inactive" },
-]}
-onChange={(e) => setFieldValue("status", e.target.value)}
+                        { value: "true", label: "Active" },
+                        { value: "false", label: "Inactive" },
+                      ]}
+                      onChange={(e) => setFieldValue("status", e.target.value)}
                       type="radio"
-                      // error={errors?.status && touched?.status ? errors.status : false}
+                    // error={errors?.status && touched?.status ? errors.status : false}
                     />
                     <ErrorMessage
                       name="status"

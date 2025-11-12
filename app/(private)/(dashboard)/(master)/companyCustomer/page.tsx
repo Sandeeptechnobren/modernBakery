@@ -11,6 +11,8 @@ import {
   deleteCompanyCustomer,
   exportCompanyCustomerData,
   companyCustomerStatusUpdate,
+  companyCustomersGlobalSearch,
+  downloadFile,
 } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import StatusBtn from "@/app/components/statusBtn2";
@@ -55,27 +57,27 @@ export default function CompanyCustomers() {
   const { showSnackbar } = useSnackbar();
 
   const fetchCompanyCustomers = async (pageNo: number = 1, pageSize: number = 50): Promise<listReturnType> => {
-      setLoading(true);
-      const res = await getCompanyCustomers({ page: pageNo.toString(), pageSize: pageSize.toString() });
-      setLoading(false);
-      if(res.error) {
-        showSnackbar(res.data.message || "Failed to fetch Company Customers", "error");
-        throw new Error(res.data.message);
-      }
-      return {
-        data: res.data || [],
-        pageSize: res?.pagination?.per_page || pageSize,
-        total: res?.pagination?.last_page || 1,
-        currentPage: res?.pagination?.current_page || 1,
-      }
+    setLoading(true);
+    const res = await getCompanyCustomers({ page: pageNo.toString(), pageSize: pageSize.toString() });
+    setLoading(false);
+    if (res.error) {
+      showSnackbar(res.data.message || "Failed to fetch Company Customers", "error");
+      throw new Error(res.data.message);
+    }
+    return {
+      data: res.data || [],
+      pageSize: res?.pagination?.per_page || pageSize,
+      total: res?.pagination?.last_page || 1,
+      currentPage: res?.pagination?.current_page || 1,
+    }
   };
 
-  const search = async ( searchQuery: string, pageSize: number, columnName?: string ): Promise<searchReturnType> => {
-    if (!columnName) throw new Error("Column name is required for search");
+  const search = async (searchQuery: string, pageSize: number, columnName?: string): Promise<searchReturnType> => {
+    // if (!columnName) throw new Error("Column name is required for search");
     setLoading(true);
-    const res = await getCompanyCustomers({ search: searchQuery, pageSize: pageSize.toString() });
+    const res = await companyCustomersGlobalSearch({ search: searchQuery, pageSize: pageSize.toString() });
     setLoading(false);
-    if(res.error) {
+    if (res.error) {
       showSnackbar(res.data.message || "Failed to fetch search results", "error");
       throw new Error(res.data.message);
     }
@@ -87,107 +89,101 @@ export default function CompanyCustomers() {
     }
   };
 
-  const handleConfirmDelete = async () => {
-    if (!selectedRow) return;
+  // const handleConfirmDelete = async () => {
+  //   if (!selectedRow) return;
 
-    // Optimistically remove row first
-    setCustomers((prev) => prev.filter((c) => c.id !== selectedRow.id));
-    setShowDeletePopup(false);
+  //   // Optimistically remove row first
+  //   setCustomers((prev) => prev.filter((c) => c.id !== selectedRow.id));
+  //   setShowDeletePopup(false);
 
-    setLoading(true);
-    try {
-      await deleteCompanyCustomer(selectedRow.id.toString());
-      showSnackbar("Company Customer deleted successfully ✅", "success");
-    } catch (error) {
-      setCustomers((prev) => [...prev, selectedRow]);
-      showSnackbar("Failed to delete Customer ❌", "error");
-    } finally {
-      setSelectedRow(null);
-    }
-    setLoading(false);
-  };
+  //   setLoading(true);
+  //   try {
+  //     await deleteCompanyCustomer(selectedRow.id.toString());
+  //     showSnackbar("Company Customer deleted successfully ✅", "success");
+  //   } catch (error) {
+  //     setCustomers((prev) => [...prev, selectedRow]);
+  //     showSnackbar("Failed to delete Customer ❌", "error");
+  //   } finally {
+  //     setSelectedRow(null);
+  //   }
+  //   setLoading(false);
+  // };
 
 
   /* ---------- Column Configuration ---------- */
   const columns = [
-    { key: "osa_code", label: "Customer Code", showByDefault: true, render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.osa_code}
-            </span>
-        ) },
-    { key: "sap_code", label: "SAP Code", showByDefault: true, render: (row: TableDataType) => (
+    {
+      key: "osa_code", label: "Customer Code", showByDefault: true, render: (row: TableDataType) => (
         <span className="font-semibold text-[#181D27] text-[14px]">
-            {row.sap_code}
+          {row.osa_code}
         </span>
-    ),},
+      )
+    },
+    {
+      key: "sap_code", label: "SAP Code", showByDefault: true, render: (row: TableDataType) => (
+        <span className="font-semibold text-[#181D27] text-[14px]">
+          {row.sap_code}
+        </span>
+      ),
+    },
     { key: "business_name", label: "Business Name" },
     { key: "district", label: "District", showByDefault: true },
     { key: "creditlimit", label: "Credit Limit" },
     { key: "totalcreditlimit", label: "Total Credit Limit" },
-    { key: "payment_type", label: "Payment Type",
-       render: (row: TableDataType) => {
-      const value = (row as unknown as CustomerItem).payment_type;
-      const strValue = value != null ? String(value) : "";
-      if (strValue === "0") return "Cash";
-      if (strValue === "1") return "Credit";
-      if (strValue === "2") return "Bill to Bill";
-      return strValue || "-";
-    }, 
-     },
+    {
+      key: "payment_type", label: "Payment Type",
+      render: (row: TableDataType) => {
+        const value = (row as unknown as CustomerItem).payment_type;
+        const strValue = value != null ? String(value) : "";
+        if (strValue === "0") return "Cash";
+        if (strValue === "1") return "Credit";
+        if (strValue === "2") return "Bill to Bill";
+        return strValue || "-";
+      },
+    },
     { key: "language", label: "Language" },
     {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => {
-            const isActive =
-                String(row.status) === "1" ||
-                (typeof row.status === "string" &&
-                    row.status.toLowerCase() === "active");
-            return <StatusBtn isActive={isActive} />;
-        },
-        showByDefault: true,
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => {
+        const isActive =
+          String(row.status) === "1" ||
+          (typeof row.status === "string" &&
+            row.status.toLowerCase() === "active");
+        return <StatusBtn isActive={isActive} />;
+      },
+      showByDefault: true,
     },
   ];
 
-  const exportFile = async (ids: string[] | undefined) => {
-    if(!ids) return;
+  const exportFile = async (format: string) => {
     try {
-      const response = await exportCompanyCustomerData({ids}); 
-      let fileUrl = response;
+      const response = await exportCompanyCustomerData({ format });
       if (response && typeof response === 'object' && response.url) {
-        fileUrl = response.url;
-      }
-      if (fileUrl) {
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = '';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        await downloadFile(response.url);
         showSnackbar("File downloaded successfully ", "success");
       } else {
         showSnackbar("Failed to get download URL", "error");
       }
     } catch (error) {
       showSnackbar("Failed to download warehouse data", "error");
-    } finally {
     }
   }
 
   const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {
-      if (!ids || ids.length === 0) return;
-      const res = await companyCustomerStatusUpdate({
-          ids: ids,
-          status: Number(status)
-      });
+    if (!ids || ids.length === 0) return;
+    const res = await companyCustomerStatusUpdate({
+      ids: ids,
+      status: Number(status)
+    });
 
-      if (res.error) {
-          showSnackbar(res.data.message || "Failed to update status", "error");
-          throw new Error(res.data.message);
-      }
-      setRefreshKey(refreshKey + 1);
-      showSnackbar("Status updated successfully", "success");
-      return res;
+    if (res.error) {
+      showSnackbar(res.data.message || "Failed to update status", "error");
+      throw new Error(res.data.message);
+    }
+    setRefreshKey(refreshKey + 1);
+    showSnackbar("Status updated successfully", "success");
+    return res;
   }
 
   return (
@@ -209,9 +205,9 @@ export default function CompanyCustomers() {
                   label: "Export CSV",
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
                     const ids = selectedRow?.map((id) => {
-                        return data[id].id;
+                      return data[id].id;
                     })
-                    exportFile(ids || [])
+                    exportFile("csv")
                   },
                 },
                 {
@@ -219,9 +215,9 @@ export default function CompanyCustomers() {
                   label: "Export Excel",
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
                     const ids = selectedRow?.map((id) => {
-                        return data[id].id;
+                      return data[id].id;
                     })
-                    exportFile(ids || [])
+                    exportFile("xlsx")
                   },
                 },
                 {
@@ -229,45 +225,45 @@ export default function CompanyCustomers() {
                   label: "Inactive",
                   // showOnSelect: true,
                   showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                      if(!selectedRow || selectedRow.length === 0) return false;
-                      const status = selectedRow?.map((id) => data[id].status).map(String);
-                      console.log(status, "status");
-                      return status?.includes("1") || false;
+                    if (!selectedRow || selectedRow.length === 0) return false;
+                    const status = selectedRow?.map((id) => data[id].status).map(String);
+                    console.log(status, "status");
+                    return status?.includes("1") || false;
                   },
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                      const status: string[] = [];
-                      const ids = selectedRow?.map((id) => {
-                          const currentStatus = data[id].status;
-                          if(!status.includes(currentStatus)){
-                              status.push(currentStatus);
-                          }
-                          return data[id].id;
-                      })
-                      handleStatusChange(ids, Number(0));
+                    const status: string[] = [];
+                    const ids = selectedRow?.map((id) => {
+                      const currentStatus = data[id].status;
+                      if (!status.includes(currentStatus)) {
+                        status.push(currentStatus);
+                      }
+                      return data[id].id;
+                    })
+                    handleStatusChange(ids, Number(0));
                   },
-              },
-              {
+                },
+                {
                   icon: "lucide:radio",
                   label: "Active",
                   // showOnSelect: true,
                   showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                      if(!selectedRow || selectedRow.length === 0) return false;
-                      const status = selectedRow?.map((id) => data[id].status).map(String);
-                      console.log(status, "status");
-                      return status?.includes("0") || false;
+                    if (!selectedRow || selectedRow.length === 0) return false;
+                    const status = selectedRow?.map((id) => data[id].status).map(String);
+                    console.log(status, "status");
+                    return status?.includes("0") || false;
                   },
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                      const status: string[] = [];
-                      const ids = selectedRow?.map((id) => {
-                          const currentStatus = data[id].status;
-                          if(!status.includes(currentStatus)){
-                              status.push(currentStatus);
-                          }
-                          return data[id].id;
-                      })
-                      handleStatusChange(ids, Number(1));
+                    const status: string[] = [];
+                    const ids = selectedRow?.map((id) => {
+                      const currentStatus = data[id].status;
+                      if (!status.includes(currentStatus)) {
+                        status.push(currentStatus);
+                      }
+                      return data[id].id;
+                    })
+                    handleStatusChange(ids, Number(1));
                   },
-              },
+                },
               ],
               searchBar: true,
               columnFilter: true,
@@ -321,7 +317,7 @@ export default function CompanyCustomers() {
       </div>
 
       {/* Delete Popup */}
-      {showDeletePopup && (
+      {/* {showDeletePopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <DeleteConfirmPopup
             title="Company Customer"
@@ -329,7 +325,7 @@ export default function CompanyCustomers() {
             onConfirm={handleConfirmDelete}
           />
         </div>
-      )}
+      )} */}
     </>
   );
 }

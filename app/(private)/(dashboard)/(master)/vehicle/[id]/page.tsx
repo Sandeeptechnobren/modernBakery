@@ -168,7 +168,7 @@ export default function AddEditVehicleWithStepper() {
               description: vehicle.description || "",
               vehicleType: vehicle.vehicle_type || "",
               ownerType: vehicle.owner_type || "",
-              warehouseId: String(vehicle.warehouse_id) || "",
+              warehouseId: vehicle.warehouse?.id?.toString() || "",
               odoMeter: vehicle.opening_odometer || "",
               capacity: vehicle.capacity || "",
               fuel_reading: vehicle.fuel_reading || "",

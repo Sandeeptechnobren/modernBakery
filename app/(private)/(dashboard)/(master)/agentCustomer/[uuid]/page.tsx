@@ -65,9 +65,9 @@ interface AgentCustomerFormValues {
 interface contactCountry { name: string; code?: string; flag?: string; }
 
 const paymentTypeOptions = [
-    { value: "1", stringValue: "cash", label: "Cash" },
-    { value: "2", stringValue: "credit", label: "Credit" },
-    { value: "3", stringValue: "billTobill", label: "Bill To Bill" },
+    { value: "1", label: "Cash" },
+    { value: "2", label: "Cheque" },
+    { value: "3", label: "Transfer" },
 ];
 
 export default function AddEditAgentCustomer() {
@@ -223,7 +223,7 @@ export default function AddEditAgentCustomer() {
                         owner_name: String(data.owner_name ?? ""),
                         warehouse:
                             data.get_warehouse != null
-                                ? String(data.get_warehouse?.id)
+                                ? data.get_warehouse?.id?.toString()
                                 : "",
                         customer_type:
                             data.customertype != null
@@ -521,7 +521,7 @@ export default function AddEditAgentCustomer() {
                 payment_type:
                     paymentTypeOptions.find(
                         (option) => option.value === String(values.payment_type)
-                    )?.stringValue || "",
+                    )?.value || "",
                 outlet_channel_id: Number(values.outlet_channel_id),
                 category_id: Number(values.category_id),
                 subcategory_id: Number(values.subcategory_id),

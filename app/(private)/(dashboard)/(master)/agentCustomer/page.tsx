@@ -14,6 +14,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import InputFields from "@/app/components/inputFields";
+import { getPaymentType } from "../companyCustomer/details/[id]/page";
 
 export default function AgentCustomer() {
     const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
@@ -82,27 +83,27 @@ export default function AgentCustomer() {
 
             showByDefault: true,
         },
-        {
-            key: "subcategory",
-            label: "Customer Sub Category",
-            render: (row: TableDataType) =>
-                typeof row.subcategory === "object" &&
-                    row.subcategory !== null &&
-                    "customer_sub_category_name" in row.subcategory
-                    ? (row.subcategory as { customer_sub_category_name?: string })
-                        .customer_sub_category_name || "-"
-                    : "-",
-            filter: {
-                isFilterable: true,
-                width: 320,
-                options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [], // [{ value, label }]
-                onSelect: (selected) => {
-                    setSelectedSubCategoryId((prev) => prev === selected ? "" : (selected as string));
-                },
-                selectedValue: selectedSubCategoryId,
-            },
+        // {
+        //     key: "subcategory",
+        //     label: "Customer Sub Category",
+        //     render: (row: TableDataType) =>
+        //         typeof row.subcategory === "object" &&
+        //             row.subcategory !== null &&
+        //             "customer_sub_category_name" in row.subcategory
+        //             ? (row.subcategory as { customer_sub_category_name?: string })
+        //                 .customer_sub_category_name || "-"
+        //             : "-",
+        //     filter: {
+        //         isFilterable: true,
+        //         width: 320,
+        //         options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [], // [{ value, label }]
+        //         onSelect: (selected) => {
+        //             setSelectedSubCategoryId((prev) => prev === selected ? "" : (selected as string));
+        //         },
+        //         selectedValue: selectedSubCategoryId,
+        //     },
 
-        },
+        // },
         { key: "landmark", label: "Landmark" },
         { key: "district", label: "District" },
         { key: "street", label: "Street" },
@@ -157,7 +158,7 @@ export default function AgentCustomer() {
         { key: "contact_no", label: "Contact No." },
         { key: "whatsapp_no", label: "Whatsapp No." },
         { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
-        { key: "payment_type", label: "Payment Type" },
+        { key: "payment_type", label: "Payment Type", render: (row: TableDataType) => getPaymentType(String(row.payment_type)) },
         {
             key: "status",
             label: "Status",
@@ -236,8 +237,7 @@ export default function AgentCustomer() {
             }
         } catch (error) {
             showSnackbar("Failed to download warehouse data", "error");
-        } finally {
-        }
+        } 
     }
 
     const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {
@@ -278,22 +278,20 @@ export default function AgentCustomer() {
             }
             setLoading(false);
             if (result.error) throw new Error(result.data.message);
-            else {
-                if (columnName) {
-                    return {
-                        data: result.data || [],
-                        total: result.pagination.pagination.totalPages || 0,
-                        currentPage: result.pagination.pagination.current_page || 0,
-                        pageSize: result.pagination.pagination.limit || pageSize,
-                    };
-                }
-                return {
-                    data: result.data || [],
-                    total: result.pagination.pagination.totalPages || 0,
-                    currentPage: result.pagination.pagination.current_page || 0,
-                    pageSize: result.pagination.pagination.limit || pageSize,
-                };
-            }
+            // if (columnName) {
+            //     return {
+            //         data: result.data || [],
+            //         total: result.pagination.pagination.totalPages || 0,
+            //         currentPage: result.pagination.pagination.current_page || 0,
+            //         pageSize: result.pagination.pagination.limit || pageSize,
+            //     };
+            // }
+            return {
+                data: result.data || [],
+                total: result.pagination?.last_page || 0,
+                currentPage: result.pagination?.current_page || 0,
+                pageSize: result.pagination?.per_page || pageSize,
+            };
         },
         []
     );
@@ -393,6 +391,7 @@ export default function AgentCustomer() {
                         },
                         localStorageKey: "agentCustomer-table",
                         footer: { nextPrevBtn: true, pagination: true },
+                        dragableColumn: true,
                         columns,
                         rowSelection: true,
                         rowActions: [

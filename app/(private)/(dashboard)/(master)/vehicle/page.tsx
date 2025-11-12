@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Table, { TableDataType, listReturnType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { vehicleListData, deleteVehicle, vehicleGlobalSearch ,exportVehicleData,vehicleStatusUpdate, downloadFile} from "@/app/services/allApi";
+import { vehicleListData, deleteVehicle, vehicleGlobalSearch, exportVehicleData, vehicleStatusUpdate, downloadFile } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -78,17 +78,30 @@ const columns = [
     },
   },
   {
-    key: "depotLocation", label: "Warehouse", render: (data: TableDataType) => {
-      const warehouseObj = typeof data.warehouse === "string"
-        ? JSON.parse(data.warehouse)
-        : data.warehouse;
-      return warehouseObj?.warehouse_name || "-";
-    }, filter: {
-        isFilterable: true,
-        render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.warehouse_name}</div>);
+    key: "warehouse", label: "Warehouse",render: (row: TableDataType) => {
+        const wh = row.warehouse;
+        let code = "-";
+        let name = "-";
+        if (wh && typeof wh === "object" && wh !== null) {
+          const w = wh as { warehouse_code?: string; warehouse_name?: string };
+          code = w.warehouse_code ?? "-";
+          name = w.warehouse_name ?? "-";
+        } else if (typeof wh === "string") {
+          name = wh;
         }
-    } },
+        return `${code}${code && name ? " - " : ""}${name}`;
+      },
+       filter: {
+      isFilterable: true,
+      render: (data: TableDataType[]) => {
+        return data.map((item, index) => {
+          const wh: any = item.warehouse;
+          const display = (wh && typeof wh === "object") ? (wh.warehouse_name || "-") : (typeof wh === "string" ? wh : "-");
+          return <div key={String(item.id) + index} className="w-full text-left p-2">{display}</div>;
+        });
+      }
+    }
+  },
   // { key: "ownerReference", label: "Owner Reference" },
   // { key: "vehicleRoute", label: "Vehicle Route" },
   { key: "description", label: "Description", render: (row: TableDataType) => row.description || "-" },
@@ -113,26 +126,6 @@ export default function VehiclePage() {
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-
-  // ✅ Map vehicles → TableDataType safely
-  const tableData: TableDataType[] = vehicles.map((v) => ({
-    id: String(v.id ?? ""),
-    vehicle_code: v.vehicle_code ?? "-",
-    vehicle_brand: v.vehicle_brand !== undefined ? String(v.vehicle_brand) : "-",
-    number_plat: v.number_plat ?? "-",
-    vehicle_chesis_no: v.vehicle_chesis_no ?? "-",
-    opening_odometer: v.opening_odometer ?? "-",
-    vehicle_type: v.vehicle_type ?? "-",
-    capacity: v.capacity ?? "-",
-    owner_type: v.owner_type ?? "-",
-    warehouse: v.warehouse?.warehouse_name ?? "-",
-    ownerReference: v.owner_reference ?? "-",
-    vehicleRoute: v.vehicle_route ?? "-",
-    description: v.description ?? "-",
-    valid_from: v.valid_from !== undefined ? String(v.valid_from) : "-",
-    valid_to: v.valid_to !== undefined ? String(v.valid_to) : "-",
-    status: v.status === 1 ? "Active" : "Inactive",
-  }));
 
 
   const fetchVehicles = useCallback(
@@ -184,62 +177,62 @@ export default function VehiclePage() {
     []
   );
 
-           const exportFile = async () => {
-           try {
-             const response = await exportVehicleData({ format: "xlsx"}); 
-             if (response && typeof response === 'object' && response.url) {
-             await downloadFile(response.url);
-               showSnackbar("File downloaded successfully ", "success");
-             } else {
-               showSnackbar("Failed to get download URL", "error");
-             }
-           } catch (error) {
-             showSnackbar("Failed to download warehouse data", "error");
-           } finally {
-           }
-         };
-
-                const statusUpdate = async (ids?: (string | number)[], status: number = 0) => {
-                        try {
-                          if (!ids || ids.length === 0) {
-                            showSnackbar("No warehouses selected", "error");
-                            return;
-                          }
-                          const selectedRowsData: number[] = ids.map((id) => Number(id)).filter((n) => !Number.isNaN(n));
-                          console.log("selectedRowsData", selectedRowsData);
-                          if (selectedRowsData.length === 0) {
-                            showSnackbar("No warehouses selected", "error");
-                            return;
-                          }
-                          await vehicleStatusUpdate({ vehicle_ids: selectedRowsData, status });
-                          setRefreshKey((k) => k + 1);
-                          showSnackbar("Vehicle status updated successfully", "success");
-                        } catch (error) {
-                          showSnackbar("Failed to update vehicle status", "error");
-                        }
-                      };
-                
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
-
-    const res = await deleteVehicle(String(selectedRow.id));
-    if (res.error) {
-      showSnackbar(res.data.message || "Failed to delete vehicle ❌", "error");
-    } else {
-      showSnackbar(res.message || "Vehicle deleted successfully ✅", "success");
-      setRefreshKey(prev => prev+1);
-      setLoading(false);
+  const exportFile = async (format: string) => {
+    try {
+      const response = await exportVehicleData({ format });
+      if (response && typeof response === 'object' && response.url) {
+        await downloadFile(response.url);
+        showSnackbar("File downloaded successfully ", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
+      }
+    } catch (error) {
+      showSnackbar("Failed to download warehouse data", "error");
+    } finally {
     }
-    setShowDeletePopup(false);
-    setSelectedRow(null);
   };
-  useEffect(() => {
-    setLoading(true);
-  }, []);
+
+  const statusUpdate = async (ids?: (string | number)[], status: number = 0) => {
+    try {
+      if (!ids || ids.length === 0) {
+        showSnackbar("No vehicle selected", "error");
+        return;
+      }
+      const selectedRowsData: number[] = ids.map((id) => Number(id)).filter((n) => !Number.isNaN(n));
+      console.log("selectedRowsData", selectedRowsData);
+      if (selectedRowsData.length === 0) {
+        showSnackbar("No vehicle selected", "error");
+        return;
+      }
+      await vehicleStatusUpdate({ vehicle_ids: selectedRowsData, status });
+      setRefreshKey((k) => k + 1);
+      showSnackbar("Vehicle status updated successfully", "success");
+    } catch (error) {
+      showSnackbar("Failed to update vehicle status", "error");
+    }
+  };
+
+  // const handleConfirmDelete = async () => {
+  //   if (!selectedRow?.id) return;
+
+  //   const res = await deleteVehicle(String(selectedRow.id));
+  //   if (res.error) {
+  //     showSnackbar(res.data.message || "Failed to delete vehicle", "error");
+  //   } else {
+  //     showSnackbar(res.message || "Vehicle deleted successfully", "success");
+  //     setRefreshKey(prev => prev + 1);
+  //     setLoading(false);
+  //   }
+  //   setShowDeletePopup(false);
+  //   setSelectedRow(null);
+  // };
+  // useEffect(() => {
+  //   setLoading(true);
+  // }, []);
 
   return (
     <>
-    
+
       <div className="flex flex-col h-full">
         <Table
           refreshKey={refreshKey}
@@ -249,66 +242,66 @@ export default function VehiclePage() {
               search: searchVehicle,
             },
             header: {
-               threeDot: [
+              threeDot: [
                 {
                   icon: "gala:file-document",
                   label: "Export CSV",
                   labelTw: "text-[12px] hidden sm:block",
-                  onClick: exportFile,
+                  onClick: () => exportFile("csv"),
                 },
                 {
                   icon: "gala:file-document",
                   label: "Export Excel",
                   labelTw: "text-[12px] hidden sm:block",
-                  onClick: exportFile,
+                  onClick: () => exportFile("xlsx"),
                   // You can add onClick for Excel if needed
                 },
                 {
-                                    icon: "lucide:radio",
-                                    label: "Inactive",
-                                    // showOnSelect: true,
-                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
-                                        const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        return status?.includes("1") || false;
-                                    },
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const status: string[] = [];
-                                        const ids = selectedRow?.map((id) => {
-                                            const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
-                                                status.push(currentStatus);
-                                            }
-                                            return data[id].id;
-                                        })
-                                        statusUpdate(ids, Number(0));
-                                    },
-                                },
-                                {
-                                    icon: "lucide:radio",
-                                    label: "Active",
-                                    // showOnSelect: true,
-                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
-                                        const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        return status?.includes("0") || false;
-                                    },
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const status: string[] = [];
-                                        const ids = selectedRow?.map((id) => {
-                                            const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
-                                                status.push(currentStatus);
-                                            }
-                                            return data[id].id;
-                                        })
-                                        statusUpdate(ids, Number(1));
-                                    },
-                                },
+                  icon: "lucide:radio",
+                  label: "Inactive",
+                  // showOnSelect: true,
+                  showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (!selectedRow || selectedRow.length === 0) return false;
+                    const status = selectedRow?.map((id) => data[id].status).map(String);
+                    return status?.includes("1") || false;
+                  },
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    const status: string[] = [];
+                    const ids = selectedRow?.map((id) => {
+                      const currentStatus = data[id].status;
+                      if (!status.includes(currentStatus)) {
+                        status.push(currentStatus);
+                      }
+                      return data[id].id;
+                    })
+                    statusUpdate(ids, Number(0));
+                  },
+                },
+                {
+                  icon: "lucide:radio",
+                  label: "Active",
+                  // showOnSelect: true,
+                  showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (!selectedRow || selectedRow.length === 0) return false;
+                    const status = selectedRow?.map((id) => data[id].status).map(String);
+                    return status?.includes("0") || false;
+                  },
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    const status: string[] = [];
+                    const ids = selectedRow?.map((id) => {
+                      const currentStatus = data[id].status;
+                      if (!status.includes(currentStatus)) {
+                        status.push(currentStatus);
+                      }
+                      return data[id].id;
+                    })
+                    statusUpdate(ids, Number(1));
+                  },
+                },
               ],
               title: "Vehicle",
-              
-             
+
+
               searchBar: true,
               columnFilter: true,
               actions: [
@@ -327,7 +320,7 @@ export default function VehiclePage() {
             columns,
             rowSelection: true,
             rowActions: [
-               {
+              {
                 icon: "lucide:eye",
                 onClick: (data: TableDataType) => {
                   router.push(`/vehicle/details/${data.id}`);
@@ -357,7 +350,7 @@ export default function VehiclePage() {
       </div>
 
       {/* Delete Popup */}
-      {showDeletePopup && (
+      {/* {showDeletePopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <DeleteConfirmPopup
             title="Delete Vehicle"
@@ -365,7 +358,7 @@ export default function VehiclePage() {
             onConfirm={handleConfirmDelete}
           />
         </div>
-      )}
+      )} */}
     </>
   );
 }

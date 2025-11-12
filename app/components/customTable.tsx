@@ -180,6 +180,7 @@ export default function Table({ refreshKey = 0, data, config  }: TableProps) {
                 data={data}
                 config={{
                     showNestedLoading: true,
+                    dragableColumn: true,
                     ...config
                 }}
             />
@@ -213,7 +214,7 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
 function TableContainer({ refreshKey, data, config }: TableProps) {
     const { setSelectedColumns } = useContext(ColumnFilterConfig);
     const { setConfig } = useContext(Config);
-    const { tableDetails, setTableDetails } = useContext(TableDetails);
+    const { setTableDetails } = useContext(TableDetails);
     const { selectedRow, setSelectedRow } = useContext(SelectedRow);
     const [showDropdown, setShowDropdown] = useState(false);
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
@@ -360,8 +361,9 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
 
 function TableHeader() {
     const { config } = useContext(Config);
-    const { setTableDetails } = useContext(TableDetails);
+    const { tableDetails, setTableDetails } = useContext(TableDetails);
     const [searchBarValue, setSearchBarValue] = useState("");
+    console.log("Table Details in Header:", tableDetails);
 
     async function handleSearch() {
         if (!config.api?.search) return;
@@ -370,12 +372,13 @@ function TableHeader() {
             config.pageSize || defaultPageSize
         );
         const resolvedResult =
-            result instanceof Promise ? await result : result;
-        const { data, pageSize } = resolvedResult;
+            result instanceof Promise ? await result : result;  
+        const { data, pageSize, total, currentPage } = resolvedResult;
+        console.log(resolvedResult);
         setTableDetails({
             data,
-            total: 0,
-            currentPage: 0,
+            total: total || 0,
+            currentPage:    currentPage - 1 || 0,
             pageSize: pageSize || defaultPageSize,
         });
     }
@@ -643,7 +646,7 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
                         <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
                             {/* checkbox */}
                             {rowSelection && selectedColumns.length > 0 && (
-                                <th className="sm:sticky left-0 bg-[#FAFAFA] w-fit px-[10px] py-[12px] font-[500]">
+                                <th className="z-10 sm:sticky left-0 bg-[#FAFAFA] w-fit px-[10px] py-[12px] font-[500]">
                                     <div className="flex items-center gap-[12px] whitespace-nowrap">
                                         <CustomCheckbox
                                             id="selectAll"
@@ -699,14 +702,7 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
                                                     });
                                                     dragIndex.current = null;
                                                 }}
-                                                className={`w-[${col.width
-                                                    }px] ${col.sticky ? "z-10 md:sticky" : ""} ${col.sticky === "left"
-                                                        ? "left-0"
-                                                        : ""
-                                                    } ${col.sticky === "right"
-                                                        ? "right-0"
-                                                        : ""
-                                                    } px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap ${config.dragableColumn ? 'cursor-move' : ''}`}
+                                                className={`${col.width ? `w-[${col.width}px]` : ""} ${col.sticky ? "z-20 md:sticky" : ""} ${col.sticky === "left" ? "left-0" : ""} ${col.sticky === "right" ? "right-0" : ""} px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap ${config.dragableColumn ? '' : ''}`}
                                                 key={col.key}
                                             >
                                             <div className="flex items-center gap-[4px] capitalize">

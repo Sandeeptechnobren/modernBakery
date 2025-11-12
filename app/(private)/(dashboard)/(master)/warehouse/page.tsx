@@ -9,10 +9,6 @@ import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
-const dropdownDataList = [
-  { icon: "gala:file-document", label: "Export CSV", iconWidth: 20 },
-  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-];
 
 type WarehouseRow = TableDataType & {
   id?:string;
@@ -53,9 +49,9 @@ type WarehouseRow = TableDataType & {
 };
 
 const columns = [
-  { key: "warehouse_code", label: "Warehouse Code", showByDefault: true, render: (row: WarehouseRow) =>(<span className="font-semibold text-[#181D27] text-[14px]">{ row.warehouse_code || "-"}</span>) },
+  // { key: "warehouse_code", label: "Warehouse Code", showByDefault: true, render: (row: WarehouseRow) =>(<span className="font-semibold text-[#181D27] text-[14px]">{ row.warehouse_code || "-"}</span>) },
   // { key: "registation_no", label: "Registration No.", render: (row: WarehouseRow) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.registation_no || "-" }</span>)},
-  { key: "warehouse_name", label: "Warehouse Name", showByDefault: true, render: (row: WarehouseRow) => row.warehouse_name || "-" },
+  { key: "warehouse_name", label: "Warehouse Name", showByDefault: true, render: (row: WarehouseRow) => row.warehouse_code + " " + row.warehouse_name || "-" },
   { key: "owner_name", label: "Owner Name", render: (row: WarehouseRow) => row.owner_name || "-" },
   { key: "owner_number", label: "Owner Contact No.", render: (row: WarehouseRow) => row.owner_number || "-" },
   // { key: "owner_email", label: "Owner Email", render: (row: WarehouseRow) => row.owner_email || "-" },
@@ -83,21 +79,22 @@ const columns = [
   //     return strValue || "-";
   //   }, },
   // { key: "region_id", label: "Region"},
+  { key: "tin_no", label: "TIN No.", showByDefault: true, render: (row: WarehouseRow) => row.tin_no || "-" },
   {
     label: 'Region',
     showByDefault: true,
     key: 'region',
     render: (row: WarehouseRow) => row.region?.name || '-',
   },
-  // {
-  //   label: 'Area',
-  //   showByDefault: true,
-  //   key: 'area',
-  //   render: (row: WarehouseRow) => row.area?.name || '-',
-  // },
+  {
+    label: 'Area',
+    showByDefault: true,
+    key: 'area',
+    render: (row: WarehouseRow) => row.area?.name || '-',
+  },
   // { key: "sub_region_id", label: "Sub Region"},
-  { key: "city", label: "City", render: (row: WarehouseRow) => row.city || "-" },
-  // { key: "location", label: "Location", showByDefault: true, render: (row: WarehouseRow) => row.location || "-" },
+  { key: "city", label: "City", render: (row: WarehouseRow) => row.city || "-",showByDefault: true, },
+  { key: "location", label: "Location", showByDefault: true, render: (row: WarehouseRow) => row.location || "-" },
   // { key: "town_village", label: "Town", render: (row: WarehouseRow) => row.town_village || "-" },
   // { key: "street", label: "Street", render: (row: WarehouseRow) => row.street || "-" },
   // { key: "landmark", label: "Landmark", render: (row: WarehouseRow) => row.landmark || "-" },
@@ -239,11 +236,11 @@ export default function Warehouse() {
          );
  
 
-         const exportFile = async () => {
+         const exportFile = async (format: string) => {
          try {
-           const response = await exportWarehouseData({}); 
-           if (response && typeof response === 'object' && response.url) {
-            await downloadFile(response.url);
+           const response = await exportWarehouseData({ format }); 
+           if (response && typeof response === 'object' && response.download_url) {
+            await downloadFile(response.download_url);
              showSnackbar("File downloaded successfully ", "success");
            } else {
              showSnackbar("Failed to get download URL", "error");
@@ -254,57 +251,75 @@ export default function Warehouse() {
          }
        };
 
-           const statusUpdate = async (
-             dataOrIds: WarehouseRow[] | (string | number)[] | undefined,
-             selectedRowOrStatus?: number[] | number
-           ) => {
+          //  const statusUpdate = async (
+          //    dataOrIds: WarehouseRow[] | (string | number)[] | undefined,
+          //    selectedRowOrStatus?: number[] | number
+          //  ) => {
+          //    try {
+          //      // normalize to an array of numeric ids and determine status
+          //      if (!dataOrIds || dataOrIds.length === 0) {
+          //        showSnackbar("No warehouses selected", "error");
+          //        return;
+          //      }
+       
+          //      let selectedRowsData: number[] = [];
+          //      let status: number | undefined;
+       
+          //      const first = dataOrIds[0];
+          //      // if first element is an object, treat dataOrIds as WarehouseRow[] and selectedRowOrStatus as selected indexes
+          //      if (typeof first === "object") {
+          //        const data = dataOrIds as WarehouseRow[];
+          //        const selectedRow = selectedRowOrStatus as number[] | undefined;
+          //        if (!selectedRow || selectedRow.length === 0) {
+          //          showSnackbar("No warehouses selected", "error");
+          //          return;
+          //        }
+          //        selectedRowsData = data
+          //          .filter((row: WarehouseRow, index) => selectedRow.includes(index))
+          //          .map((row: WarehouseRow) => Number(row.id));
+          //        status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
+          //      } else {
+          //        // otherwise treat dataOrIds as an array of ids
+          //        const ids = dataOrIds as (string | number)[];
+          //        if (ids.length === 0) {
+          //          showSnackbar("No warehouses selected", "error");
+          //          return;
+          //        }
+          //        selectedRowsData = ids.map((id) => Number(id));
+          //        status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
+          //      }
+       
+          //      if (selectedRowsData.length === 0) {
+          //        showSnackbar("No warehouses selected", "error");
+          //        return;
+          //      }
+       
+          //      await warehouseStatusUpdate({ warehouse_ids: selectedRowsData, status: status ?? 0 });
+          //      setRefreshKey((k) => k + 1);
+          //      showSnackbar("Warehouse status updated successfully", "success");
+          //    } catch (error) {
+          //      showSnackbar("Failed to update warehouse status", "error");
+          //    }
+          //  };
+           const statusUpdate = async (ids?: (string | number)[], status: number = 0) => {
              try {
-               // normalize to an array of numeric ids and determine status
-               if (!dataOrIds || dataOrIds.length === 0) {
-                 showSnackbar("No warehouses selected", "error");
+               if (!ids || ids.length === 0) {
+                 showSnackbar("No warehouse selected", "error");
                  return;
                }
-       
-               let selectedRowsData: number[] = [];
-               let status: number | undefined;
-       
-               const first = dataOrIds[0];
-               // if first element is an object, treat dataOrIds as WarehouseRow[] and selectedRowOrStatus as selected indexes
-               if (typeof first === "object") {
-                 const data = dataOrIds as WarehouseRow[];
-                 const selectedRow = selectedRowOrStatus as number[] | undefined;
-                 if (!selectedRow || selectedRow.length === 0) {
-                   showSnackbar("No warehouses selected", "error");
-                   return;
-                 }
-                 selectedRowsData = data
-                   .filter((row: WarehouseRow, index) => selectedRow.includes(index))
-                   .map((row: WarehouseRow) => Number(row.id));
-                 status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
-               } else {
-                 // otherwise treat dataOrIds as an array of ids
-                 const ids = dataOrIds as (string | number)[];
-                 if (ids.length === 0) {
-                   showSnackbar("No warehouses selected", "error");
-                   return;
-                 }
-                 selectedRowsData = ids.map((id) => Number(id));
-                 status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
-               }
-       
+               const selectedRowsData: number[] = ids.map((id) => Number(id)).filter((n) => !Number.isNaN(n));
+               console.log("selectedRowsData", selectedRowsData);
                if (selectedRowsData.length === 0) {
-                 showSnackbar("No warehouses selected", "error");
+                 showSnackbar("No warehouse selected", "error");
                  return;
                }
-       
-               await warehouseStatusUpdate({ warehouse_ids: selectedRowsData, status: status ?? 0 });
+               await warehouseStatusUpdate({ warehouse_ids: selectedRowsData, status });
                setRefreshKey((k) => k + 1);
                showSnackbar("Warehouse status updated successfully", "success");
              } catch (error) {
                showSnackbar("Failed to update warehouse status", "error");
              }
            };
-         
 
         
     const handleConfirmDelete = async () => {
@@ -346,67 +361,57 @@ export default function Warehouse() {
                   icon: "gala:file-document",
                   label: "Export CSV",
                   labelTw: "text-[12px] hidden sm:block",
-                  onClick: exportFile,
+                  onClick: () => exportFile("csv"),
                 },
                 {
                   icon: "gala:file-document",
                   label: "Export Excel",
                   labelTw: "text-[12px] hidden sm:block",
-                  onClick: exportFile,
+                  onClick: () => exportFile("xlsx"),
 
                 },
-                // {
-                //   icon: "lucide:radio",
-                //   label: "Inactive",
-                //   labelTw: "text-[12px] hidden sm:block",
-                //   showOnSelect: true,
-                //   onClick: (data: WarehouseRow[], selectedRow?: number[]) => {
-                //     statusUpdate(data, selectedRow);
-                // },
-                //   // onClick: statusUpdate,
-                // },
                  {
-                                    icon: "lucide:radio",
-                                    label: "Inactive",
-                                    // showOnSelect: true,
-                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
-                                        const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        return status?.includes("1") || false;
-                                    },
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const status: string[] = [];
-                                        const ids = selectedRow?.map((id) => {
-                                            const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
-                                                status.push(currentStatus);
-                                            }
-                                            return data[id].id;
-                                        })
-                                        statusUpdate(ids, Number(0));
-                                    },
-                                },
-                                {
-                                    icon: "lucide:radio",
-                                    label: "Active",
-                                    // showOnSelect: true,
-                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
-                                        const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        return status?.includes("0") || false;
-                                    },
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const status: string[] = [];
-                                        const ids = selectedRow?.map((id) => {
-                                            const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
-                                                status.push(currentStatus);
-                                            }
-                                            return data[id].id;
-                                        })
-                                        statusUpdate(ids, Number(1));
-                                    },
-                                },
+                  icon: "lucide:radio",
+                  label: "Inactive",
+                  // showOnSelect: true,
+                  showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (!selectedRow || selectedRow.length === 0) return false;
+                    const status = selectedRow?.map((id) => data[id].status).map(String);
+                    return status?.includes("1") || false;
+                  },
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    const status: string[] = [];
+                    const ids = selectedRow?.map((id) => {
+                      const currentStatus = data[id].status;
+                      if (!status.includes(currentStatus)) {
+                        status.push(currentStatus);
+                      }
+                      return data[id].id;
+                    })
+                    statusUpdate(ids, Number(0));
+                  },
+                },
+                {
+                  icon: "lucide:radio",
+                  label: "Active",
+                  // showOnSelect: true,
+                  showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (!selectedRow || selectedRow.length === 0) return false;
+                    const status = selectedRow?.map((id) => data[id].status).map(String);
+                    return status?.includes("0") || false;
+                  },
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    const status: string[] = [];
+                    const ids = selectedRow?.map((id) => {
+                      const currentStatus = data[id].status;
+                      if (!status.includes(currentStatus)) {
+                        status.push(currentStatus);
+                      }
+                      return data[id].id;
+                    })
+                    statusUpdate(ids, Number(1));
+                  },
+                },
               ],
               title: "Warehouse",
                

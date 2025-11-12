@@ -10,7 +10,7 @@ import { getRouteVisitDetails } from "@/app/services/allApi";
 const transformCustomerList = (apiResponse: any[]) => {
   return apiResponse.map((item) => ({
     id: item.id,
-    name: `${item.osa_code} - ${item.owner_name}`,
+    name: `${item.osa_code} - ${item.name.toUpperCase()}`,
   }));
 };
 
@@ -435,7 +435,7 @@ export default function Table({
                           onChange={() => handleRowSelect(row.id)}
                         />
                         <span
-                          className="truncate max-w-[160px]"
+                          className="truncate max-w-[100%]"
                           title={row.name}
                         >
                           {row.name}

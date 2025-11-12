@@ -12,8 +12,6 @@ import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { updateSalesmanType, addSalesmanType, getSalesmanTypeById, genearateCode, saveFinalCode } from "@/app/services/allApi";
 import { useRef } from "react";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
 
 import { useSnackbar } from "@/app/services/snackbarContext";
 
@@ -87,7 +85,7 @@ export default function AddOrEditSalesmanType() {
                 : "Salesman Type Created Successfully"),
             "success"
           );
-          router.push("/settings/salesman-type");
+          router.push("/settings/manageCompany/salesman-type");
         }
       } catch (error) {
         showSnackbar("Something went wrong", "error");
@@ -150,7 +148,7 @@ export default function AddOrEditSalesmanType() {
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
         <div className="flex items-center gap-[16px]">
-          <Link href="/settings/salesman-type">
+          <Link href="/settings/manageCompany/salesman-type">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">

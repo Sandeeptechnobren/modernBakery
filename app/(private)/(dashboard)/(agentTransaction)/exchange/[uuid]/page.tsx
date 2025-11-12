@@ -10,13 +10,14 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch, countryList, routeList } from "@/app/services/allApi";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData ccc";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
-import { addExchange } from "@/app/services/agentTransaction";
+import { addExchange, invoiceList } from "@/app/services/agentTransaction";
 
 interface FormData {
   id: number,
@@ -85,7 +86,10 @@ export default function ExchangeAddEditPage() {
 
   const validationSchema = Yup.object({
     warehouse: Yup.string().required("Warehouse is required"),
+    route: Yup.string().required("Route is required"),
     customer: Yup.string().required("Customer is required"),
+    currency: Yup.string().required("Currency is required"),
+    country: Yup.string().required("Country is required"),
     delivery_date: Yup.string()
       .required("Delivery date is required")
       .test("is-date", "Delivery date must be a valid date", (val) => {
@@ -98,6 +102,68 @@ export default function ExchangeAddEditPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
+  // useAllDropdownListData throws when not wrapped in provider; fall back to empty options when provider missing
+  let onlyCountryOptionsFromCtx: { value: string; label: string }[] = [];
+  let routeOptionsFromCtx: { value: string; label: string }[] = [];
+  try {
+    const ctx = useAllDropdownListData();
+    onlyCountryOptionsFromCtx = ctx?.onlyCountryOptions || [];
+    routeOptionsFromCtx = ctx?.routeOptions || [];
+  } catch (err) {
+    // provider not present in this render tree - use empty list as fallback
+    onlyCountryOptionsFromCtx = [];
+    routeOptionsFromCtx = [];
+  }
+
+  // local state for country and route options: prefer provider options but fall back to fetching from API
+  const [countryOptionsLocal, setCountryOptionsLocal] = useState<{ value: string; label: string }[]>(onlyCountryOptionsFromCtx);
+  const [routeOptionsLocal, setRouteOptionsLocal] = useState<{ value: string; label: string }[]>(routeOptionsFromCtx);
+
+  // If provider didn't supply countries or routes, fetch directly from API so the selects still work
+  useEffect(() => {
+    const fetchCountries = async () => {
+      if (countryOptionsLocal && countryOptionsLocal.length > 0) return;
+      try {
+        const res = await countryList();
+        if (res && !res.error && Array.isArray(res.data)) {
+          const opts = res.data.map((c: any) => ({ value: String(c.id), label: c.country_name }));
+          setCountryOptionsLocal(opts);
+        }
+      } catch (e) {
+        // ignore - we'll just show an empty list
+      }
+    };
+
+    const fetchRoutes = async () => {
+      if (routeOptionsLocal && routeOptionsLocal.length > 0) return;
+      try {
+        // try to fetch routes; include warehouse filter if available in form
+        const res = await routeList({ warehouse_id: form.warehouse, search: "", per_page: "50" });
+        if (res && !res.error && Array.isArray(res.data)) {
+          const opts = res.data.map((r: any) => ({ value: String(r.id), label: `${r.route_code ?? ""}${r.route_code ? ' - ' : ''}${r.route_name ?? ""}` }));
+          setRouteOptionsLocal(opts);
+        }
+      } catch (e) {
+        // ignore - we'll just show an empty list
+      }
+    };
+
+    fetchCountries();
+    fetchRoutes();
+  }, []);
+  
+  // 🔹 Fetch invoices (for AutoSuggestion multi-select)
+  const fetchInvoices = async (searchText: string) => {
+    try {
+      const res = await invoiceList({ search: searchText || "", per_page: "50" });
+      if (res && !res.error && Array.isArray(res.data)) {
+        return res.data.map((inv: any) => ({ value: String(inv.id), label: `${inv.invoice_code ?? ''}${inv.invoice_code ? ' - ' : ''}${inv.customer_name ?? ''}` }));
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  };
   const [skeleton, setSkeleton] = useState({
     route: false,
     customer: false,
@@ -109,7 +175,10 @@ export default function ExchangeAddEditPage() {
     warehouse: "",
     route: "",
     customer: "",
+    invoices: [] as string[],
     note: "",
+    currency: "USD",
+    country: "1",
     delivery_date: new Date().toISOString().slice(0, 10),
   };
 
@@ -384,8 +453,22 @@ export default function ExchangeAddEditPage() {
   const finalTotal = grossTotal + totalVat;
 
   const generatePayload = (values?: FormikValues) => {
+    const selectedCountryId = values?.country ?? form.country;
+    const selectedCountry = (countryOptionsLocal || []).find((c: { value: string; label: string }) => String(c.value) === String(selectedCountryId));
+    const countryName = selectedCountry?.label ?? null;
+
+    const selectedRouteId = values?.route ?? form.route;
+    const selectedRoute = (routeOptionsLocal || []).find((r: { value: string; label: string }) => String(r.value) === String(selectedRouteId));
+    const routeName = selectedRoute?.label ?? null;
+
     return {
       exchange_code: code,
+      currency: values?.currency || form.currency,
+      country_id: Number(selectedCountryId) || null,
+      country: countryName,
+      route_id: Number(selectedRouteId) || null,
+      route: routeName,
+      invoices: values?.invoices ? (Array.isArray(values.invoices) ? values.invoices.map((v: any) => Number(v)) : []) : (form.invoices || []).map((v: any) => Number(v)),
       warehouse_id: Number(values?.warehouse) || null,
       customer_id: Number(values?.customer) || null,
       delivery_date: values?.delivery_date || form.delivery_date,
@@ -563,7 +646,7 @@ export default function ExchangeAddEditPage() {
 
             return (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mt-6 mb-10">
                   <div>
                     <AutoSuggestion
                       required
@@ -619,6 +702,17 @@ export default function ExchangeAddEditPage() {
                   <div>
                     <InputFields
                       required
+                      label="Route"
+                      name="route"
+                      options={routeOptionsLocal}
+                      value={values.route}
+                      onChange={handleChange}
+                      searchable={true}
+                    />
+                  </div>
+                  <div>
+                    <InputFields
+                      required
                       label="Delivery Date"
                       type="date"
                       name="delivery_date"
@@ -627,6 +721,49 @@ export default function ExchangeAddEditPage() {
                       onChange={handleChange}
                     />
                   </div>
+                  <div>
+                    <InputFields
+                      required
+                      label="Currency"
+                      name="currency"
+                      options={[{ label: "USD", value: "USD" }, { label: "AED", value: "AED" }]}
+                      value={values.currency}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div>
+                    <InputFields
+                      required
+                      label="Country"
+                      name="country"
+                      options={countryOptionsLocal}
+                      value={values.country}
+                      onChange={handleChange}
+                      searchable={true}
+                    />
+                  </div>
+                </div>
+
+                {/* --- Invoices multi-select --- */}
+                <div className="mt-4 mb-6">
+                  <AutoSuggestion
+                    label="Invoices"
+                    name="invoices"
+                    placeholder="Search invoices"
+                    onSearch={(q) => fetchInvoices(q)}
+                    onSelect={() => {}}
+                    multiple={true}
+                    initialSelected={[]}
+                    onChangeSelected={(selected) => {
+                      try {
+                        // set Formik field to array of selected ids
+                        setFieldValue && setFieldValue("invoices", selected.map(s => s.value));
+                      } catch (e) {
+                        // ignore
+                      }
+                    }}
+                    noOptionsMessage={"No invoices found"}
+                  />
                 </div>
 
                 <div className="mt-6 mb-6">
@@ -871,7 +1008,7 @@ export default function ExchangeAddEditPage() {
                       ))}
                       <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                         <span>Total</span>
-                        <span>AED {toInternationalNumber(finalTotal)}</span>
+                        <span>{values.currency || 'AED'} {toInternationalNumber(finalTotal)}</span>
                       </div>
                     </div>
                   </div>

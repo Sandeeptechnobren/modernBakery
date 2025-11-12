@@ -50,7 +50,7 @@ export type subCategoryType = {
     category_id: number;
     sub_category_name: string;
     status: string;
-    item_sub_category_code?: string;
+    sub_category_code?: string;
 };
 
 export default function SubCategory() {
@@ -183,7 +183,6 @@ export default function SubCategory() {
                                     key={0}
                                     href="#"
                                     isActive={true}
-                                    buttonTw="px-3 h-9"
                                     leadingIcon="lucide:plus"
                                     label="Add"
                                     labelTw="hidden lg:block"
@@ -204,8 +203,8 @@ export default function SubCategory() {
                                     setUpdateItemCategoryData({
                                         id: parseInt(data.id),
                                         category_id: parseInt(data.category_id),
-                                        sub_category_name:
-                                            data.sub_category_name,
+                                        sub_category_code: data.sub_category_code,
+                                        sub_category_name: data.sub_category_name,
                                         status: data.status,
                                     });
                                 },

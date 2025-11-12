@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Params } from "next/dist/server/request/params";
 import { APIFormData } from "./merchandiserApi";
+import { useRouter } from "next/navigation";
 
 
 export const API = axios.create({
@@ -24,8 +25,14 @@ API.interceptors.request.use(
 );
 
 export function handleError(error: unknown) {
+  // const router = useRouter()
+
   if (axios.isAxiosError(error) && error.response) {
-    console?.error("API Error:", error?.response.data);
+    console?.error("API Error:",error, error?.response.data);
+    if(error.status === 401){
+      // router.push('/login')
+      window.location.reload();
+    }
     return { error: true, data: error.response.data };
   } else if (error instanceof Error) {
     console.error("Request Error:", error.message);
@@ -40,7 +47,7 @@ export const downloadFile = (fileurl: string, type?: string): void => {
   const n = fileurl.lastIndexOf("/");
   const final_url = fileurl.substring(n + 1);
   const link = document.createElement("a");
-  link.setAttribute("target", "_blank");
+  link.setAttribute("target", "");
   link.setAttribute("href", fileurl);
   link.setAttribute("download", final_url);
   document.body.appendChild(link);
@@ -109,7 +116,7 @@ export const companyById = async (id: string) => {
 
 export const updateCompany = async (id: string, data: object) => {
   try {
-    const res = await API.put(`/api/master/company/company/${id}`, data);
+    const res = await APIFormData.put(`/api/master/company/company/${id}`, data);
 
     return res.data;
   } catch (error: unknown) {
@@ -147,7 +154,7 @@ export const logout = async () => {
 
 export const addCompany = async (data: FormData | Record<string, string>) => {
   try {
-    const res = await API.post("/api/master/company/add_company", data);
+    const res = await APIFormData.post("/api/master/company/add_company", data);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -175,6 +182,18 @@ export const SalesmanListGlobalSearch = async (params: Params) => {
 export const countryList = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/country/list_country", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const uomList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/settings/uom/list", {
       params: params,
     });
     return res.data;
@@ -509,6 +528,26 @@ export const warehouseListGlobalSearch = async (params?: Params) => {
     return handleError(error);
   }
 };
+export const warehouseReturn = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/master/warehouse/returns`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const warehouseSales = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/master/warehouse/invoices`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 export const warehouseList = async (params?: Params) => {
   try {
@@ -646,6 +685,18 @@ export const getCompanyCustomers = async (params?: Params) => {
   }
 };
 
+export const companyCustomersGlobalSearch = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/companycustomer/global-search", {
+      params: params,
+    });
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const addCompanyCustomers = async (body: object) => {
   try {
     const res = await API.post("/api/master/companycustomer/create", body);
@@ -658,7 +709,7 @@ export const addCompanyCustomers = async (body: object) => {
 
 export const getCompanyCustomerById = async (id: string) => {
   try {
-    const res = await API.get(`/api/master/companycustomer/${id}`);
+    const res = await API.get(`/api/master/companycustomer/show/${id}`);
 
     return res.data;
   } catch (error: unknown) {
@@ -1696,6 +1747,16 @@ export const getSalesmanById = async (uuid: string) => {
     return handleError(error);
   }
 };
+
+export const getSalesmanBySalesId = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/master/salesmen/salespersalesman/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const updateSalesman = async (uuid: string, body: object) => {
   try {
     const res = await API.put(`/api/master/salesmen/update/${uuid}`, body);
@@ -1904,6 +1965,15 @@ export const itemList = async (params?: Params) => {
 export const itemGlobalSearch = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/items/global-search", { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const itemExport = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/items/export", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -2654,16 +2724,10 @@ export const submenuGenerateCode = async (params?: Params) => {
   }
 };
 
-export const exportRoutesCSV = async (
-  params?: Params
-): Promise<Blob | null> => {
+export const exportRoutes = async (params?: Params) => {
   try {
-    const res = await API.post(
-      `/api/master/route/export`,
-      { params }, // 👈 send your params inside a body object
-      { responseType: "blob" } // 👈 ensures file is returned as Blob
-    );
-    return res.data; // this will be a Blob
+    const res = await API.get(`/api/master/route/export`, { params });
+    return res.data; 
   } catch (error: unknown) {
     handleError(error);
     return null;

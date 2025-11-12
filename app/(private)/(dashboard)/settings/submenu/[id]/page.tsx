@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -64,6 +64,7 @@ export default function AddShelfDisplay() {
   }
 
   const { submenuOptions, menuOptions } = useAllDropdownListData();
+  console.log(useAllDropdownListData());
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [menu, setMenu] = useState<submenuIncomingType | null>(null);

@@ -58,7 +58,7 @@ export default function CreateUpdate({
             category_id: updateItemCategoryData?.category_id?.toString() || "",
             sub_category_name: updateItemCategoryData?.sub_category_name || "",
             status: updateItemCategoryData?.status || 0,
-            item_sub_category_code: updateItemCategoryData?.item_sub_category_code || "",
+            sub_category_code: updateItemCategoryData?.sub_category_code || "",
         },
         validationSchema: Yup.object({
             category_id: Yup.number()
@@ -71,7 +71,7 @@ export default function CreateUpdate({
             status: Yup.number()
                 .oneOf([0, 1], "Status must be either Active or Inactive")
                 .required("Status is required"),
-            item_sub_category_code: Yup.string().required("Code is required"),
+            sub_category_code: Yup.string().required("Code is required"),
         }),
         onSubmit: async (values) => {
             let res;
@@ -82,7 +82,7 @@ export default function CreateUpdate({
                     values.status === "1" ? 1 : 0
                 );
                 if (!res.error) {
-                    await saveFinalCode({ reserved_code: values.item_sub_category_code, model_name: "item_sub_categories" });
+                    await saveFinalCode({ reserved_code: values.sub_category_code, model_name: "item_sub_categories" });
                 }
             }
             if (type === "update") {
@@ -110,7 +110,7 @@ export default function CreateUpdate({
                 const res = await genearateCode({ model_name: "item_sub_categories" });
                 if (res?.code) {
                     setCode(res.code);
-                    formik.setFieldValue("item_sub_category_code", res.code);
+                    formik.setFieldValue("sub_category_code", res.code);
                 }
                 if (res?.prefix) {
                     setPrefix(res.prefix);
@@ -139,13 +139,13 @@ export default function CreateUpdate({
                 <div className="flex items-start gap-2 max-w-[406px]">
                     <InputFields
                         label="Item Sub Category Code"
-                        name="item_sub_category_code"
-                        value={formik.values.item_sub_category_code}
+                        name="sub_category_code"
+                        value={formik.values.sub_category_code}
                         onChange={formik.handleChange}
                         disabled={codeMode === 'auto'}
-                        error={formik.touched?.item_sub_category_code && formik.errors?.item_sub_category_code}
+                        error={formik.touched?.sub_category_code && formik.errors?.sub_category_code}
                     />
-                    <IconButton
+                    {/* <IconButton
                         bgClass="white"
                          className="  cursor-pointer text-[#252B37] pt-12"
                         icon="mi:settings"
@@ -160,12 +160,12 @@ export default function CreateUpdate({
                         onSave={(mode, code) => {
                             setCodeMode(mode);
                             if (mode === 'auto' && code) {
-                                formik.setFieldValue('item_sub_category_code', code);
+                                formik.setFieldValue('sub_category_code', code);
                             } else if (mode === 'manual') {
-                                formik.setFieldValue('item_sub_category_code', '');
+                                formik.setFieldValue('sub_category_code', '');
                             }
                         }}
-                    />
+                    /> */}
                 </div>
 
                 <InputDropdown

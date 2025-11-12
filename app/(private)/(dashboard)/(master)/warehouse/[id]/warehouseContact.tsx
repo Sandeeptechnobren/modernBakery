@@ -70,23 +70,13 @@ export default function WarehouseContactDetails({
     }));
   };
 
-  // ======== EFFECT TO VALIDATE ON LOAD ========
-  useEffect(() => {
-    setLocalErrors((prev) => ({
-      ...prev,
-      owner_number: validateContact(values.owner_number || ""),
-      warehouse_manager_contact: validateContact(values.warehouse_manager_contact || ""),
-
-    }));
-  }, [values.owner_number, values.warehouse_manager_contact, values.owner_email]);
-
+ 
   // ======== RENDER ========
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
       {/* Owner Contact */}
       <div className="flex flex-col gap-2">
         <InputFields
-          required
           type="contact"
           label="Owner Contact Number"
           name="owner_number"
@@ -97,16 +87,11 @@ export default function WarehouseContactDetails({
           value={values.owner_number || ""}
           onChange={(e) => handleContactChange(e, "owner_number")}
         />
-        {localErrors.owner_number && touched?.owner_number && (
-          <span className="text-xs text-red-500 mt-1">
-            {localErrors.owner_number}
-          </span>
-        )}
+        
       </div>
       {/* Manager Contact */}
       <div className="flex flex-col gap-2">
         <InputFields
-          required
           type="contact"
           label="Manager Contact Number"
           name="warehouse_manager_contact"
@@ -117,11 +102,7 @@ export default function WarehouseContactDetails({
           value={values.warehouse_manager_contact || ""}
           onChange={(e) => handleContactChange(e, "warehouse_manager_contact")}
         />
-        {localErrors.warehouse_manager_contact && touched?.warehouse_manager_contact && (
-          <span className="text-xs text-red-500 mt-1">
-            {localErrors.warehouse_manager_contact}
-          </span>
-        )}
+        
       </div>
       {/* Owner Email */}
       <div className="flex flex-col gap-2">

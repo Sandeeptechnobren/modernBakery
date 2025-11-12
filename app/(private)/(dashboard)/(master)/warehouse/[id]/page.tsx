@@ -21,7 +21,6 @@ import StepperForm, {
   useStepperForm,
 } from "@/app/components/stepperForm";
 import { useEffect, useState, useRef } from "react";
-import Loading from "@/app/components/Loading";
 import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
 import { useLoading } from "@/app/services/loadingContext";
 
@@ -60,7 +59,6 @@ type FormValues = {
 // IMPROVED VALIDATION SCHEMA
 const validationSchema = Yup.object({
     warehouse_code: Yup.string().required('Warehouse Code is required'),
-    tin_no: Yup.number().required('TIN No. is required'),
     warehouse_type: Yup.string().required('Warehouse Type is required'),
     warehouse_name: Yup.string().required('Warehouse Name is required'),
     owner_name: Yup.string().required('Owner Name is required'),
@@ -73,14 +71,8 @@ const validationSchema = Yup.object({
     // }),
     agent_customer:Yup.string().required('Agent Customer is required'),
     warehouse_manager: Yup.string().required('Warehouse Manager is required'),
-    owner_number: Yup.string()
-        .required('Owner Contact is required')
-        .matches(/^[\d]+$/, 'Contact must be numeric')
-        .min(7, 'Contact must be at least 7 digits'),
-    warehouse_manager_contact: Yup.string()
-        .required('Manager Contact is required')
-        .matches(/^[\d]+$/, 'Contact must be numeric')
-        .min(7, 'Contact must be at least 7 digits'),
+    owner_number: Yup.string(),
+    warehouse_manager_contact: Yup.string(),
     owner_email: Yup.string(),
     location: Yup.string().required('Location is required'),
     city: Yup.string().required('City is required'),
@@ -105,7 +97,6 @@ const validationSchema = Yup.object({
 const stepSchemas = [
     Yup.object().shape({
         warehouse_code: validationSchema.fields.warehouse_code,
-        tin_no: validationSchema.fields.tin_no,
         warehouse_type: validationSchema.fields.warehouse_type,
         warehouse_name: validationSchema.fields.warehouse_name,
         owner_name: validationSchema.fields.owner_name,
@@ -113,11 +104,7 @@ const stepSchemas = [
         agent_customer: validationSchema.fields.agent_customer,
         warehouse_manager: validationSchema.fields.warehouse_manager,
     }),
-    Yup.object().shape({
-        owner_number: validationSchema.fields.owner_number,
-        warehouse_manager_contact: validationSchema.fields.warehouse_manager_contact,
-        owner_email: validationSchema.fields.owner_email,
-    }),
+    
     Yup.object().shape({
         location: validationSchema.fields.location,
         city: validationSchema.fields.city,
@@ -203,7 +190,7 @@ export default function AddEditWarehouse() {
                 if (res && !res.error && data) {
                     setInitialValues({
                         warehouse_code: data?.warehouse_code || '',
-                        warehouse_type: String(data?.warehouse_type || ''),
+                        warehouse_type: data?.warehouse_type || '',
                         warehouse_name: data?.warehouse_name || '',
                         owner_name: data?.owner_name || '',
                         company: String(data?.get_company?.id || ''),
