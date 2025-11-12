@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import StatusBtn from "@/app/components/statusBtn2";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
     configType,
     listReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData, downloadFile, agentCustomerGlobalSearch } from "@/app/services/allApi";
-import { useSnackbar } from "@/app/services/snackbarContext";
+import StatusBtn from "@/app/components/statusBtn2";
+import { agentCustomerGlobalSearch, agentCustomerList, agentCustomerStatusUpdate, downloadFile, exportAgentCustomerData } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import InputFields from "@/app/components/inputFields";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { getPaymentType } from "../companyCustomer/details/[id]/page";
 
 export default function AgentCustomer() {
@@ -24,16 +23,15 @@ export default function AgentCustomer() {
     const [routeId, setRouteId] = useState<string>("");
     const columns: configType["columns"] = [
         {
-            key: "osa_code",
-            label: "Outlet Code",
+            key: "osa_code, name",
+            label: "Outlet",
             render: (row: TableDataType) => (
                 <span className="font-semibold text-[#181D27] text-[14px]">
-                    {row.osa_code || "-"}
+                    {`${row.osa_code || ""} - ${row.name || ""}` || "-"}
                 </span>
             ),
             showByDefault: true,
         },
-        { key: "outlet_name", label: "Outlet Name", showByDefault: true },
         { key: "owner_name", label: "Owner Name" },
         {
             key: "customer_type",
@@ -162,6 +160,7 @@ export default function AgentCustomer() {
         {
             key: "status",
             label: "Status",
+            isSortable: true,
             render: (row: TableDataType) => {
                 // Treat status 1 or 'active' (case-insensitive) as active
                 const isActive =
@@ -237,7 +236,7 @@ export default function AgentCustomer() {
             }
         } catch (error) {
             showSnackbar("Failed to download warehouse data", "error");
-        } 
+        }
     }
 
     const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {

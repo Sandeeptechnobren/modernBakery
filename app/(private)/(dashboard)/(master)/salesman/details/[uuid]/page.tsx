@@ -123,14 +123,6 @@ export default function Page() {
       },
     },
     { key: "total_amount", label: "Invoice Total", render: (row: TableDataType) => toInternationalNumber(row.total_amount) },
-    // {
-    //   key: "download", label: "Download", render: (row: TableDataType) => <>
-
-    //     <Icon icon={"materival-symbols:download"} width={24} onClick={() => {
-    //       exportFile(row.uuid, "csv");
-    //     }} />
-    //   </>
-    // },
 
   ];
 

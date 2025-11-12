@@ -2762,7 +2762,7 @@ export const submenuGenerateCode = async (params?: Params) => {
 
 export const exportRoutes = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/master/route/export`, { params });
+    const res = await API.post(`/api/master/route/export`, { params });
     return res.data; 
   } catch (error: unknown) {
     handleError(error);
@@ -3061,6 +3061,7 @@ export const deletePromotionDetail = async (uuid: string) => {
 export const labelList = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/labels/list`, { params });
+    console.log(res, "Labels")
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3319,6 +3320,26 @@ export const getWarehouseStockById = async (uuid: string) => {
   try {
     const res = await API.get(`/api/settings/warehouse-stocks/${uuid}`);
 
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const userEmailVerification = async (query: string) => {
+  try {
+    const res = await API.get(`/api/master/auth/checkEmail?query=${query}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const userListGlobalSearch = async (params: Params) => {
+  try {
+    const res = await API.get("/api/settings/user/global-search", { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

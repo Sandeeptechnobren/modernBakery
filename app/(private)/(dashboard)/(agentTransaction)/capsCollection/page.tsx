@@ -37,13 +37,7 @@ export default function SalemanLoad() {
         const name = row.salesman_name || "-";
         return `${code}${code && name ? " - " : ""}${name}`;
       }  },
-        {
-            key: "status",
-            label: "Status",
-            render: (row: TableDataType) => {
-                return row.status ? "Confirmed" : "Waiting";
-            },
-        }
+        
     ];
 
     const { setLoading } = useLoading();
@@ -84,8 +78,8 @@ export default function SalemanLoad() {
     const exportFile = async () => {
              try {
                const response = await exportCapsCollection(); 
-               if (response && typeof response === 'object' && response.url) {
-                await downloadFile(response.url);
+               if (response && typeof response === 'object' && response.download_url) {
+                await downloadFile(response.download_url);
                  showSnackbar("File downloaded successfully ", "success");
                } else {
                  showSnackbar("Failed to get download URL", "error");

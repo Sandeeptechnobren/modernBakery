@@ -1,19 +1,21 @@
 "use client";
 
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import ContainerCard from "@/app/components/containerCard";
+import Table, { configType, listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import StatusBtn from "@/app/components/statusBtn2";
+import TabBtn from "@/app/components/tabBtn";
+import { agentCustomerReturnExport, exportInvoice, getAgentCustomerByReturnId, getAgentCustomerBySalesId, invoiceList } from "@/app/services/agentTransaction";
+import { agentCustomerById, downloadFile } from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
-import Overview from "./overview";
+import { useCallback, useEffect, useState } from "react";
 import Additional from "./additional";
-import Location from "./location";
-import TabBtn from "@/app/components/tabBtn";
-import { useEffect, useState } from "react";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { useLoading } from "@/app/services/loadingContext";
-import { agentCustomerById } from "@/app/services/allApi";
 import Financial from "./financial";
-import Table from "@/app/components/customTable";
+import Location from "./location";
+import Overview from "./overview";
 
 export interface AgentCustomerDetails {
     id: string;
@@ -36,7 +38,7 @@ export interface AgentCustomerDetails {
     creditday: string;
     payment_type: string;
     buyertype: string;
-    credit_limit:string;
+    credit_limit: string;
     outlet_channel: {
         outlet_channel: string;
         outlet_channel_code: string;
@@ -55,7 +57,7 @@ export interface AgentCustomerDetails {
     status: number | string;
 }
 
-const tabs = ["Overview","Sales","Return"];
+const tabs = ["Overview", "Sales", "Return"];
 
 export default function CustomerDetails() {
     const router = useRouter();
@@ -90,7 +92,7 @@ export default function CustomerDetails() {
                 if (res?.error) {
                     showSnackbar(
                         res?.data?.message ||
-                            "Unable to fetch Agent Customer Details",
+                        "Unable to fetch Agent Customer Details",
                         "error"
                     );
                     return;
@@ -108,12 +110,194 @@ export default function CustomerDetails() {
                 if (mounted) setLoading(false);
             }
         };
-
         fetchPlanogramImageDetails();
         return () => {
             mounted = false;
         };
     }, []);
+
+    const columns: configType["columns"] = [
+        { key: "invoice_date", label: "Data", render: (row: TableDataType) => row.invoice_date.split("T")[0] },
+        { key: "invoice_time", label: "Time" },
+        {
+            key: "invoice_code",
+            label: "Invoice Number"
+        },
+        {
+            key: "salesman_name",
+            label: "Salesman"
+        },
+        {
+            key: "warehouse_name",
+            label: "Warehouse"
+        },
+        {
+            key: "route_name",
+            label: "Route"
+        },
+        { key: "total_amount", label: "Invoice Total", render: (row: TableDataType) => toInternationalNumber(row.total_amount) },
+
+
+    ];
+
+    const returnColumns: configType["columns"] = [
+        { key: "osa_code", label: "Code", showByDefault: true },
+        { key: "order_code", label: "Order Code", showByDefault: true },
+        { key: "delivery_code", label: "Delivery Code", showByDefault: true },
+        {
+            key: "warehouse_code", label: "Warehouse", showByDefault: true, render: (row: TableDataType) => {
+                const code = row.warehouse_code || "";
+                const name = row.warehouse_name || "";
+                return `${code}${code && name ? " - " : ""}${name}`;
+            }
+        },
+        {
+            key: "route_code", label: "Route", showByDefault: true, render: (row: TableDataType) => {
+                const code = row.route_code || "";
+                const name = row.route_name || "";
+                return `${code}${code && name ? " - " : ""}${name}`;
+            }
+        },
+        {
+            key: "customer_code", label: "Customer", showByDefault: true, render: (row: TableDataType) => {
+                const code = row.customer_code || "";
+                const name = row.customer_name || "";
+                return `${code}${code && name ? " - " : ""}${name}`;
+            }
+        },
+        {
+            key: "salesman_code", label: "Salesman", showByDefault: true, render: (row: TableDataType) => {
+                const code = row.salesman_code || "";
+                const name = row.salesman_name || "";
+                return `${code}${code && name ? " - " : ""}${name}`;
+            }
+        },
+        { key: "total", label: "Amount", showByDefault: true },
+
+
+    ];
+
+    const returnByAgentCustomer = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 50
+        ): Promise<searchReturnType> => {
+            const result = await getAgentCustomerByReturnId(uuid);
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.page || 1,
+                pageSize: result?.pagination?.limit || pageSize,
+                total: result?.pagination?.totalPages || 1,
+            };
+        },
+        []
+    );
+
+    const filterBy = useCallback(
+                async (
+                    payload: Record<string, string | number | null>,
+                    pageSize: number
+                ): Promise<listReturnType> => {
+                    let result;
+                    setLoading(true);
+                    try {
+                        const params: Record<string, string> = { };
+                        Object.keys(payload || {}).forEach((k) => {
+                            const v = payload[k as keyof typeof payload];
+                            if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                                params[k] = String(v);
+                            }
+                        });
+                        result = await invoiceList(params);
+                    } finally {
+                        setLoading(false);
+                    }
+        
+                    if (result?.error) throw new Error(result.data?.message || "Filter failed");
+                    else {
+                        const pagination = result.pagination?.pagination || result.pagination || {};
+                        return {
+                            data: result.data || [],
+                            total: pagination.totalPages || result.pagination?.totalPages || 0,
+                            totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                            currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                            pageSize: pagination.limit || pageSize,
+                        };
+                    }
+                },
+                [setLoading]
+            );
+
+            const searchInvoices = useCallback(async (): Promise<searchReturnType> => {
+        try {
+            setLoading(true);
+            return {
+                data: [],
+                currentPage: 1,
+                pageSize: 10,
+                total: 0,
+            };
+        } finally {
+            setLoading(false);
+        }
+    }, [setLoading]);
+
+    const salesByAgentCustomer = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 50
+        ): Promise<searchReturnType> => {
+            const result = await getAgentCustomerBySalesId(uuid);
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.page || 1,
+                pageSize: result?.pagination?.limit || pageSize,
+                total: result?.pagination?.totalPages || 1,
+            };
+        },
+        []
+    );
+
+    const exportReturnFile = async (uuid: string, format: string) => {
+        try {
+            console.log(uuid, "uuid")
+            const response = await agentCustomerReturnExport({ uuid, format }); // send proper body object
+
+            if (response && typeof response === "object" && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+        } catch (error) {
+            console.error(error);
+            showSnackbar("Failed to download data", "error");
+        }
+    };
+
+    const exportFile = async (uuid: string, format: string) => {
+        try {
+            const response = await exportInvoice({ uuid, format }); // send proper body object
+
+            if (response && typeof response === "object" && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+        } catch (error) {
+            console.error(error);
+            showSnackbar("Failed to download data", "error");
+        }
+    };
 
     return (
         <>
@@ -146,15 +330,15 @@ export default function CustomerDetails() {
                             {item?.osa_code || ""} - {item?.name || "Customer Name"}
                         </h2>
                         <span className="flex items-center text-[#414651] text-[16px]">
-                                <Icon
-                                    icon="mdi:location"
-                                    width={16}
-                                    className="text-[#EA0A2A] mr-[5px]"
-                                />
-                                <span>
-                                    {item?.district}
-                                </span>
-                                {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
+                            <Icon
+                                icon="mdi:location"
+                                width={16}
+                                className="text-[#EA0A2A] mr-[5px]"
+                            />
+                            <span>
+                                {item?.district}
+                            </span>
+                            {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                                     <StatusBtn status="active" />
                                 </span> */}
                         </span>
@@ -187,10 +371,10 @@ export default function CustomerDetails() {
             </ContainerCard>
             {activeTab === "Overview" ? (
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[10px]">
-                <Overview data={item} />
-                <Financial data={item} />
-                <Additional data={item} />
-                <Location data={item} />
+                    <Overview data={item} />
+                    <Financial data={item} />
+                    <Additional data={item} />
+                    <Location data={item} />
                 </div>
             ) : activeTab === "Location" ? (
                 <Location data={item} />
@@ -198,23 +382,90 @@ export default function CustomerDetails() {
                 <Financial data={item} />
             ) : activeTab === "Additional" ? (
                 <Additional data={item} />
-            ) : activeTab === "Sales"?(<div>  <Table
-                                              data={[]}
-                                            config={{
-                                               
-                                                columns: [],
-                                                rowSelection: false,
-                                                pageSize: 50,
-                                            }}
-                                        /></div>):activeTab === "Return"?(<div> <Table
-                                              data={[]}
-                                            config={{
-                                               
-                                                columns: [],
-                                                rowSelection: false,
-                                                pageSize: 50,
-                                            }}
-                                        /></div>):""}
+            ) : activeTab === "Sales" ? (
+                <ContainerCard >
+
+                    <div className="flex flex-col h-full">
+                        <Table
+                            config={{
+                                api: {
+                                    // search: searchCustomerById,
+                                    list: salesByAgentCustomer, search: searchInvoices,filterBy: filterBy,
+                                },
+                                header: {
+                                    filterByFields: [
+                                        {
+                                            key: "date_change",
+                                            label: "Date Range",
+                                            type: "dateChange"
+                                        },
+
+                                    ],
+                                    searchBar: true,
+                                },
+                                showNestedLoading: true,
+                                footer: { nextPrevBtn: true, pagination: true },
+                                columns: columns,
+                                table: {
+                                    height: 500,
+                                },
+                                rowSelection: false,
+                                rowActions: [
+                                    {
+                                        icon: "material-symbols:download",
+                                        onClick: (data: TableDataType) => {
+                                            exportFile(data.uuid, "csv"); // or "excel", "csv" etc.
+                                        },
+                                    }
+                                ],
+                                pageSize: 50,
+                            }}
+                        />
+                    </div>
+
+                </ContainerCard>
+
+            ) : activeTab === "Return" ? (<ContainerCard >
+
+                <div className="flex flex-col h-full">
+                    <Table
+                        config={{
+                            api: {
+                                // search: searchCustomerById,
+                                list: returnByAgentCustomer
+                            },
+                            header: {
+                                filterByFields: [
+                                        {
+                                            key: "date_change",
+                                            label: "Date Range",
+                                            type: "dateChange"
+                                        },
+
+                                    ],
+                                    searchBar: true,
+                            },
+                            showNestedLoading: true,
+                            footer: { nextPrevBtn: true, pagination: true },
+                            columns: returnColumns,
+                            table: {
+                                height: 500,
+                            },
+                            rowSelection: false,
+                            rowActions: [
+                                {
+                                    icon: "material-symbols:download",
+                                    onClick: (data: TableDataType) => {
+                                        exportReturnFile(uuid, "excel"); // or "excel", "csv" etc.
+                                    },
+                                }
+                            ],
+                            pageSize: 50,
+                        }}
+                    />
+                </div>
+
+            </ContainerCard>) : ""}
         </>
     );
 }

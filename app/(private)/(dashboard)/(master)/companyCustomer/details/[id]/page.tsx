@@ -19,7 +19,7 @@ interface CustomerItem {
   sap_code: string;
   osa_code: string;
   business_name: string;
-  company_type: string;
+  company_type: { id: number; code: string; name: string; }
   language: string;
   contact_number?: string;
   business_type: string;
@@ -173,8 +173,16 @@ export default function ViewPage() {
                   { key: "SAP Code", value: customer?.sap_code || "-" },
                   { key: "Language", value: customer?.language || "-" },
                   { key: "Contact No.", value: customer?.contact_number || "-" },
-                  { key: "Company Type", value: customer?.company_type || "-" },
-                  { key: "Business Type", value: customer?.business_type || "-" },
+                  { key: "Company Type", value: `${customer?.company_type?.code} - ${customer?.company_type?.name}` || "-" },
+                  {
+                    key: "Business Type",
+                    value:
+                      Number(customer?.business_type) === 0
+                        ? "Buyer"
+                        : "Seller",
+                  }
+
+
                 ]}
               />
             </ContainerCard>

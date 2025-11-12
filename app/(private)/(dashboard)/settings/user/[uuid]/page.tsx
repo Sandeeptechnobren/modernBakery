@@ -1,22 +1,23 @@
 "use client";
 
-import { Icon } from "@iconify-icon/react";
-import React, { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import InputFields from "@/app/components/inputFields";
-import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import {
-  updateAuthUser,
-  registerAuthUser,
-  getRoleById,
-  getUserByUuid
-} from "@/app/services/allApi";
-import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { Form, Formik, FormikHelpers, FormikErrors, FormikTouched } from "formik";
-import { useLoading } from "@/app/services/loadingContext";
 import CustomPasswordInput from "@/app/components/customPasswordInput";
+import InputFields from "@/app/components/inputFields";
+import StepperForm, { StepperStep, useStepperForm } from "@/app/components/stepperForm";
+import {
+  getRoleById,
+  getUserByUuid,
+  registerAuthUser,
+  updateAuthUser,
+  userEmailVerification
+} from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { Icon } from "@iconify-icon/react";
+import { Form, Formik, FormikErrors, FormikHelpers, FormikTouched } from "formik";
+import { useParams, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import * as Yup from "yup";
 
 interface User {
   name: string;
@@ -41,12 +42,16 @@ interface ContactCountry {
 }
 
 export default function UserAddEdit() {
+  const [isValidEmail, setIsValidEmail] = useState<boolean>(false)
+  const [isValidUser, setIsValidUser] = useState<boolean>(false)
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const router = useRouter();
   const params = useParams();
   const userUUID = params?.uuid as string | undefined;
   const isEditMode = userUUID !== undefined && userUUID !== "add";
+  const actionsRef = React.useRef<FormikHelpers<User> | null>(null);
+
 
   const {
     roleOptions,
@@ -62,19 +67,57 @@ export default function UserAddEdit() {
     fetchRouteOptions,
     refreshDropdown
   } = useAllDropdownListData();
-  
+
+
+
+  const checkEmail = async (
+    type: "email" | "username",
+    value: string,
+    setFieldError: (field: string, message: string) => void
+  ) => {
+    if (!value) return;
+
+    try {
+      const res = await userEmailVerification(value);
+      console.log(res, "81")
+      setIsValidEmail(res?.exists)
+    } catch {
+      setFieldError(type, `Error verifying ${type}`);
+    }
+  };
+
+  const checkUsername = async (
+    type: "email" | "username",
+    value: string,
+    setFieldError: (field: string, message: string) => void
+  ) => {
+    if (!value) return;
+
+    try {
+      const res = await userEmailVerification(value);
+      console.log(res, "81")
+      setIsValidUser(res?.exists)
+    } catch {
+      setFieldError(type, `Error verifying ${type}`);
+    }
+  };
+
+
+
+
   useEffect(() => {
     (async () => {
       try {
-      const res = await Promise.all([
-        refreshDropdown("roles"),
-        refreshDropdown("company"),
-        refreshDropdown("region"),
-        refreshDropdown("area"),
-        refreshDropdown("warehouse"),
-        refreshDropdown("route"),
-        refreshDropdown("salesman")
-      ])} catch(e) {}
+        const res = await Promise.all([
+          refreshDropdown("roles"),
+          refreshDropdown("company"),
+          refreshDropdown("region"),
+          refreshDropdown("area"),
+          refreshDropdown("warehouse"),
+          refreshDropdown("route"),
+          refreshDropdown("salesman")
+        ])
+      } catch (e) { }
     })();
   }, []);
 
@@ -226,8 +269,8 @@ export default function UserAddEdit() {
       const labelsArr = Array.isArray(data?.labels)
         ? data.labels
         : Array.isArray(data?.label)
-        ? data.label
-        : [];
+          ? data.label
+          : [];
       const labelNames = labelsArr.map((l: unknown) => String(((l as Record<string, unknown>)?.name) ?? "").toLowerCase());
       setVisibleLabels(labelNames);
     } catch (err) {
@@ -256,19 +299,19 @@ export default function UserAddEdit() {
   };
   const passwordField = isEditMode
     ? Yup.string().notRequired()
-  : Yup.string()
-    .required("Password is required")
-    .min(12, "Password must be at least 12 characters")
-    .matches(/(?=.*[a-z])/, "Password must contain a lowercase letter")
-    .matches(/(?=.*[A-Z])/, "Password must contain an uppercase letter")
-    .matches(/(?=.*\d)/, "Password must contain a number")
-    .matches(/(?=.*[^A-Za-z0-9\s])/, "Password must contain a special character");
+    : Yup.string()
+      .required("Password is required")
+      .min(12, "Password must be at least 12 characters")
+      .matches(/(?=.*[a-z])/, "Password must contain a lowercase letter")
+      .matches(/(?=.*[A-Z])/, "Password must contain an uppercase letter")
+      .matches(/(?=.*\d)/, "Password must contain a number")
+      .matches(/(?=.*[^A-Za-z0-9\s])/, "Password must contain a special character");
 
   const passwordConfirmationField = isEditMode
-  ? Yup.string().notRequired()
-  : Yup.string()
-    .oneOf([Yup.ref("password"), undefined], "Passwords must match")
-    .required("Confirm password is required");
+    ? Yup.string().notRequired()
+    : Yup.string()
+      .oneOf([Yup.ref("password"), undefined], "Passwords must match")
+      .required("Confirm password is required");
 
   const baseFields = {
     name: Yup.string().required("Name is required"),
@@ -349,48 +392,48 @@ export default function UserAddEdit() {
         currentStep === 1
           ? Yup.object().shape({ ...baseFields })
           : Yup.object().shape({
-              ...roleField,
-                  ...(visibleLabels.includes("company") && {
-                    company: Yup.mixed().test("company-required", "Company is required", (v) => {
-                      if (Array.isArray(v)) return v.length > 0;
-                      if (typeof v === "string") return v.trim() !== "";
-                      return false;
-                    }),
-                  }),
-                  ...(visibleLabels.includes("region") && {
-                    region: Yup.mixed().test("region-required", "Region is required", (v) => {
-                      if (Array.isArray(v)) return v.length > 0;
-                      if (typeof v === "string") return v.trim() !== "";
-                      return false;
-                    }),
-                  }),
-                  ...(visibleLabels.includes("area") && {
-                    area: Yup.mixed().test("area-required", "Area is required", (v) => {
-                      if (Array.isArray(v)) return v.length > 0;
-                      if (typeof v === "string") return v.trim() !== "";
-                      return false;
-                    }),
-                  }),
-                  ...(visibleLabels.includes("warehouse") && {
-                    warehouse: Yup.mixed().test("warehouse-required", "Warehouse is required", (v) => {
-                      if (Array.isArray(v)) return v.length > 0;
-                      if (typeof v === "string") return v.trim() !== "";
-                      return false;
-                    }),
-                  }),
-                  ...(visibleLabels.includes("route") && {
-                    route: Yup.mixed().test("route-required", "Route is required", (v) => {
-                      if (Array.isArray(v)) return v.length > 0;
-                      if (typeof v === "string") return v.trim() !== "";
-                      return false;
-                    }),
-                  }),
-            });
+            ...roleField,
+            ...(visibleLabels.includes("company") && {
+              company: Yup.mixed().test("company-required", "Company is required", (v) => {
+                if (Array.isArray(v)) return v.length > 0;
+                if (typeof v === "string") return v.trim() !== "";
+                return false;
+              }),
+            }),
+            ...(visibleLabels.includes("region") && {
+              region: Yup.mixed().test("region-required", "Region is required", (v) => {
+                if (Array.isArray(v)) return v.length > 0;
+                if (typeof v === "string") return v.trim() !== "";
+                return false;
+              }),
+            }),
+            ...(visibleLabels.includes("area") && {
+              area: Yup.mixed().test("area-required", "Area is required", (v) => {
+                if (Array.isArray(v)) return v.length > 0;
+                if (typeof v === "string") return v.trim() !== "";
+                return false;
+              }),
+            }),
+            ...(visibleLabels.includes("warehouse") && {
+              warehouse: Yup.mixed().test("warehouse-required", "Warehouse is required", (v) => {
+                if (Array.isArray(v)) return v.length > 0;
+                if (typeof v === "string") return v.trim() !== "";
+                return false;
+              }),
+            }),
+            ...(visibleLabels.includes("route") && {
+              route: Yup.mixed().test("route-required", "Route is required", (v) => {
+                if (Array.isArray(v)) return v.length > 0;
+                if (typeof v === "string") return v.trim() !== "";
+                return false;
+              }),
+            }),
+          });
 
       await stepSchema.validate(normalized, { abortEarly: false });
       markStepCompleted(currentStep);
       nextStep();
-      } catch (err) {
+    } catch (err) {
       if (err instanceof Yup.ValidationError) {
         const errors = err.inner.reduce((acc: Record<string, string>, curr: Yup.ValidationError) => {
           acc[curr.path!] = curr.message;
@@ -418,23 +461,23 @@ export default function UserAddEdit() {
       } as User;
 
       await dynamicSchema.validate(normalized, { abortEarly: false });
-    const payload: Record<string, unknown> = { ...normalized };
-    if (payload.role) payload.role = Number(payload.role as unknown);
+      const payload: Record<string, unknown> = { ...normalized };
+      if (payload.role) payload.role = Number(payload.role as unknown);
 
-    const toArray = <T,>(v?: T | T[]): T[] => (Array.isArray(v) ? v : v ? [v] : []);
-    const companies = toArray(values.company).map((id) => Number(String(id)));
-    const regions = toArray(values.region).map((id) => Number(String(id)));
-    const areas = toArray(values.area).map((id) => Number(String(id)));
-    const warehouses = toArray(values.warehouse).map((id) => Number(String(id)));
-    const routes = toArray(values.route).map((id) => Number(String(id)));
-    const salesmen = toArray(values.salesman).map((id) => Number(String(id)));
-  // Always include these keys as arrays (may be empty) per backend requirement
-  payload.company = companies;
-  payload.region = regions;
-  payload.area = areas;
-  payload.warehouse = warehouses;
-  payload.route = routes;
-  payload.salesman = salesmen;
+      const toArray = <T,>(v?: T | T[]): T[] => (Array.isArray(v) ? v : v ? [v] : []);
+      const companies = toArray(values.company).map((id) => Number(String(id)));
+      const regions = toArray(values.region).map((id) => Number(String(id)));
+      const areas = toArray(values.area).map((id) => Number(String(id)));
+      const warehouses = toArray(values.warehouse).map((id) => Number(String(id)));
+      const routes = toArray(values.route).map((id) => Number(String(id)));
+      const salesmen = toArray(values.salesman).map((id) => Number(String(id)));
+      // Always include these keys as arrays (may be empty) per backend requirement
+      payload.company = companies;
+      payload.region = regions;
+      payload.area = areas;
+      payload.warehouse = warehouses;
+      payload.route = routes;
+      payload.salesman = salesmen;
 
       if (isEditMode) {
         if (Object.prototype.hasOwnProperty.call(payload, "password_confirmation")) delete (payload as Record<string, unknown>)["password_confirmation"];
@@ -456,7 +499,7 @@ export default function UserAddEdit() {
         showSnackbar(isEditMode ? "User updated successfully" : "User added successfully", "success");
         router.push("/settings/user");
       }
-      } catch (err) {
+    } catch (err) {
       if (err instanceof Yup.ValidationError) {
         const errors = err.inner.reduce((acc: Record<string, string>, curr: Yup.ValidationError) => {
           if (curr.path) acc[curr.path] = curr.message;
@@ -493,24 +536,74 @@ export default function UserAddEdit() {
                 onBlur={() => setFieldTouched && setFieldTouched('name', true)}
                 error={touched.name ? (errors.name as string) : undefined}
               />
-              <InputFields
-                required
-                label="Email"
-                name="email"
-                value={values.email}
-                onChange={(e) => setFieldValue("email", e.target.value)}
-                onBlur={() => setFieldTouched && setFieldTouched('email', true)}
-                error={touched.email ? (errors.email as string) : undefined}
-              />
-              <InputFields
-                required
-                label="Username"
-                name="username"
-                value={values.username}
-                onChange={(e) => setFieldValue("username", e.target.value)}
-                onBlur={() => setFieldTouched && setFieldTouched('username', true)}
-                error={touched.username ? (errors.username as string) : undefined}
-              />
+
+              <div>
+  <InputFields
+    required
+    label="Email"
+    name="email"
+    value={values.email}
+    onChange={(e) => {
+      setFieldValue("email", e.target.value);
+      // clear previous error if user starts typing again
+      actionsRef?.current?.setFieldError("email", "");
+      setIsValidEmail(false);
+    }}
+    onBlur={async () => {
+      setFieldTouched && setFieldTouched("email", true);
+      if (values.email && !isEditMode) {
+        await checkEmail("email", values.email, (field, message) => {
+          if (message) {
+            actionsRef?.current?.setFieldError(field, message);
+            setIsValidEmail(true);
+          } else {
+            setIsValidEmail(false);
+          }
+        });
+      }
+    }}
+    error={touched.email ? (errors.email as string) : undefined}
+  />
+
+  {isValidEmail && (
+    <p className="text-red-500 text-sm mt-1">Email already exists</p>
+  )}
+</div>
+
+<div>
+  <InputFields
+    required
+    label="Username"
+    name="username"
+    value={values.username}
+    onChange={(e) => {
+      setFieldValue("username", e.target.value);
+      actionsRef?.current?.setFieldError("username", "");
+      setIsValidUser(false);
+    }}
+    onBlur={async () => {
+      setFieldTouched && setFieldTouched("username", true);
+      if (values.username && !isEditMode) {
+        await checkUsername("username", values.username, (field, message) => {
+          if (message) {
+            actionsRef?.current?.setFieldError(field, message);
+            setIsValidUser(true);
+          } else {
+            setIsValidUser(false);
+          }
+        });
+      }
+    }}
+    error={touched.username ? (errors.username as string) : undefined}
+  />
+
+  {isValidUser && (
+    <p className="text-red-500 text-sm mt-1">Username already exists</p>
+  )}
+</div>
+
+
+
               <InputFields
                 required
                 type="contact"
@@ -583,7 +676,7 @@ export default function UserAddEdit() {
                     const raw = e?.target?.value;
                     // allow CSV of company ids or array
                     const vals = normalizeToArray(raw);
-                    console.log(values.company,"company")
+                    console.log(values.company, "company")
                     setFieldValue("company", vals);
                     setSkeleton((s) => ({ ...s, region: true }));
                     try {
@@ -608,7 +701,7 @@ export default function UserAddEdit() {
                   showSkeleton={skeleton.region}
                 />
               )}
-              {visibleLabels.includes("region") && (regionOptions.length>0?
+              {visibleLabels.includes("region") && (regionOptions.length > 0 ?
                 <InputFields
                   required
                   label="Region"
@@ -639,7 +732,7 @@ export default function UserAddEdit() {
                   onBlur={() => setFieldTouched && setFieldTouched('region', true)}
                   error={touched.region ? (errors.region as string) : undefined}
                   showSkeleton={skeleton.region}
-                />: <InputFields
+                /> : <InputFields
                   required
                   label="Region"
                   name="region"
@@ -673,7 +766,7 @@ export default function UserAddEdit() {
                 />
               )}
               {visibleLabels.includes("area") && (
-                areaOptions.length>0?<InputFields
+                areaOptions.length > 0 ? <InputFields
                   required
                   label="Area"
                   name="area"
@@ -682,7 +775,7 @@ export default function UserAddEdit() {
                   options={areaOptions}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
                     const v = e?.target?.value;
-                    console.log(values.area,"area")
+                    console.log(values.area, "area")
                     setFieldValue("area", v);
 
                     setSkeleton((s) => ({ ...s, warehouse: true }));
@@ -703,7 +796,7 @@ export default function UserAddEdit() {
                   onBlur={() => setFieldTouched && setFieldTouched('area', true)}
                   error={touched.area ? (errors.area as string) : undefined}
                   showSkeleton={skeleton.area}
-                />:<InputFields
+                /> : <InputFields
                   required
                   label="Area"
                   name="area"
@@ -735,7 +828,7 @@ export default function UserAddEdit() {
                 />
               )}
               {visibleLabels.includes("warehouse") && (
-                warehouseOptions.length>0?<InputFields
+                warehouseOptions.length > 0 ? <InputFields
                   required
                   label="Warehouse"
                   name="warehouse"
@@ -764,38 +857,38 @@ export default function UserAddEdit() {
                   error={touched.warehouse ? (errors.warehouse as string) : undefined}
                   showSkeleton={skeleton.warehouse}
                 />
-              :<InputFields
-                  required
-                  label="Warehouse"
-                  name="warehouse"
-                  isSingle={false}
-                  value={values.warehouse}
-                  options={warehouseOptions}
-                  onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-                    const v = e?.target?.value;
-                    setFieldValue("warehouse", v);
-                    setSkeleton((s) => ({ ...s, route: true }));
-                    try {
-                      await fetchRouteOptions(v);
-                    } finally {
-                      setSkeleton((s) => ({ ...s, route: false }));
-                    }
+                  : <InputFields
+                    required
+                    label="Warehouse"
+                    name="warehouse"
+                    isSingle={false}
+                    value={values.warehouse}
+                    options={warehouseOptions}
+                    onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+                      const v = e?.target?.value;
+                      setFieldValue("warehouse", v);
+                      setSkeleton((s) => ({ ...s, route: true }));
+                      try {
+                        await fetchRouteOptions(v);
+                      } finally {
+                        setSkeleton((s) => ({ ...s, route: false }));
+                      }
 
-                    // Clear route if no routes exist or selected route not present
-                    const newRouteOptions = (routeOptions as Array<Record<string, unknown>> | undefined) ?? [];
-                    const curRoute = values.route;
-                    const routeExists = newRouteOptions.some(opt => String(opt?.value ?? "") === String(curRoute ?? ""));
-                    if (newRouteOptions.length === 0 || !routeExists) {
-                      setFieldValue("route", "");
-                    }
-                  }}
-                  onBlur={() => setFieldTouched && setFieldTouched('warehouse', true)}
-                  error={touched.warehouse ? (errors.warehouse as string) : undefined}
-                  showSkeleton={skeleton.warehouse}
-                  disabled
-                />)}
+                      // Clear route if no routes exist or selected route not present
+                      const newRouteOptions = (routeOptions as Array<Record<string, unknown>> | undefined) ?? [];
+                      const curRoute = values.route;
+                      const routeExists = newRouteOptions.some(opt => String(opt?.value ?? "") === String(curRoute ?? ""));
+                      if (newRouteOptions.length === 0 || !routeExists) {
+                        setFieldValue("route", "");
+                      }
+                    }}
+                    onBlur={() => setFieldTouched && setFieldTouched('warehouse', true)}
+                    error={touched.warehouse ? (errors.warehouse as string) : undefined}
+                    showSkeleton={skeleton.warehouse}
+                    disabled
+                  />)}
               {visibleLabels.includes("route") && (
-               routeOptions.length>0? <InputFields
+                routeOptions.length > 0 ? <InputFields
                   required
                   label="Route"
                   name="route"
@@ -807,7 +900,7 @@ export default function UserAddEdit() {
                   error={touched.route ? (errors.route as string) : undefined}
                   showSkeleton={skeleton.route}
 
-                />: <InputFields
+                /> : <InputFields
                   required
                   label="Route"
                   name="route"
@@ -861,9 +954,9 @@ export default function UserAddEdit() {
         enableReinitialize
         onSubmit={handleSubmit}
       >
-      {({ values, setFieldValue, errors, touched, setErrors, setTouched, setFieldTouched, isSubmitting }) => (
-        <Form>
-              <StepperForm
+        {({ values, setFieldValue, errors, touched, setErrors, setTouched, setFieldTouched, isSubmitting }) => (
+          <Form>
+            <StepperForm
               steps={steps.map((step) => ({
                 ...step,
                 isCompleted: isStepCompleted(step.id),

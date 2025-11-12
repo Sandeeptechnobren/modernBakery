@@ -75,7 +75,7 @@ export default function CompanyCustomers() {
   const search = async (searchQuery: string, pageSize: number, columnName?: string): Promise<searchReturnType> => {
     // if (!columnName) throw new Error("Column name is required for search");
     setLoading(true);
-    const res = await companyCustomersGlobalSearch({ search: searchQuery, pageSize: pageSize.toString() });
+    const res = await companyCustomersGlobalSearch({ query: searchQuery, pageSize: pageSize.toString() });
     setLoading(false);
     if (res.error) {
       showSnackbar(res.data.message || "Failed to fetch search results", "error");
@@ -126,7 +126,7 @@ export default function CompanyCustomers() {
         </span>
       ),
     },
-    { key: "business_name", label: "Business Name" },
+    { key: "business_name", label: "Business Name", showByDefault: true },
     { key: "district", label: "District", showByDefault: true },
     { key: "creditlimit", label: "Credit Limit" },
     { key: "totalcreditlimit", label: "Total Credit Limit" },

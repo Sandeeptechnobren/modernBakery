@@ -535,3 +535,31 @@ export const exportExchangeData = async (body: string) => {
     return handleError(error);
   }
 };
+
+export const getAgentCustomerBySalesId = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/invoices/agent-customer/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getAgentCustomerByReturnId = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/returns/agent-customer/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const agentCustomerReturnExport = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/returns/exportcustomer`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

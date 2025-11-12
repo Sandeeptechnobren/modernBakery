@@ -36,21 +36,13 @@ export default function Route() {
 
     const columns = [
     {
-        key: "route_code",
+        key: "route_code, route_name",
         label: "Route Code",
         render: (data: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
-                {" "}
-                {data.route_code ? data.route_code : "-"}{" "}
+                {`${data.route_code || ""} - ${data.route_name || ""}` || "-"}
             </span>
         ),
-    },
-    {
-        key: "route_name",
-        label: "Route Name",
-        isSortable: true,
-        render: (data: TableDataType) =>
-            data.route_name ? data.route_name : "-",
     },
     {
         key: "getrouteType",

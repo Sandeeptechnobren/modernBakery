@@ -134,7 +134,6 @@ export default function AddEditRoute() {
       .required("Route Name is required") ,
      
     routeType: yup.string().required("Route Type is required"),
-    vehicleType: yup.string().required("Vehicle is required"),
     warehouse: yup.string().required("Warehouse is required"),
     status: yup.string().required("Status is required"),
   });
@@ -323,7 +322,6 @@ export default function AddEditRoute() {
             {/* Vehicle */}
             <div className="flex flex-col">
               <InputFields
-                required
                 label="Vehicle"
                 value={form.vehicleType}
                 onChange={(e) => handleChange("vehicleType", e.target.value)}
@@ -332,9 +330,6 @@ export default function AddEditRoute() {
                 disabled={filteredOptions.length === 0}
                 placeholder={form.warehouse ? "Select Vehicle" : "Select warehouse first"}
               />
-              {errors.vehicleType && (
-                <p className="text-red-500 text-sm mt-1">{errors.vehicleType}</p>
-              )}
             </div>
 
             {/* Status */}
