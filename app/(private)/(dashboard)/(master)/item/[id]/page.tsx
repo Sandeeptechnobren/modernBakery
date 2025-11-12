@@ -268,7 +268,7 @@ export default function AddEditItem() {
             excise_duty_code: data.excise_duty_code || "",
             status: data.status === 1 ? "active" : "inactive",
           });
-          let newItems = []
+          const newItems = []
           data.item_uoms.map((item:any)=>{
 
           })
@@ -289,7 +289,7 @@ export default function AddEditItem() {
           // Prefill UOM table
           if (Array.isArray(data.item_uoms)) {
 
-            let uomListData: UomRow[] = [];
+            const uomListData: UomRow[] = [];
 
             data.item_uoms.map((u: any) => {
               console.log(u,"uomitem")
@@ -1013,9 +1013,9 @@ export default function AddEditItem() {
                     
                       
                     
-                    return(<span>{uomOptions.map((uom)=>{
+                    return(<span>{uomOptions.map((uom, index)=>{
                         if(uom.value==row.uom){
-                          return(<span>{uom.label.split("-")[1]}</span>)
+                          return(<span key={index}>{uom.label.split("-")[1]}</span>)
                         }
                       }) }</span>) }},
                     { key: "uomType", label: "UOM Type" },

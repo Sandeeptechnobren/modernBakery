@@ -204,7 +204,7 @@ export default function AddEditSalesman({
     }
     const options = filteredOptions?.data || [];
 
-    let newroutesOptions:{value:string,label:string}[] = []
+    const newroutesOptions:{value:string,label:string}[] = []
     options.map((route: { id: number; route_name: string }) => {
       newroutesOptions.push({ value: route.id.toString(), label: route.route_name})
 
@@ -221,7 +221,7 @@ export default function AddEditSalesman({
           if (res && !res.error && res.data) {
             const d = res.data;
             console.log(d,"data")
-            let idsWareHouses = []
+            const idsWareHouses = []
             d.warehouses.map((dta:any)=>{
               console.log(dta.id,"warehouse id")
               idsWareHouses.push({
