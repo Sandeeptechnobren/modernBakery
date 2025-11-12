@@ -202,9 +202,9 @@ export default function CustomerInvoicePage() {
 
             return {
                 data: Array.isArray(result.data) ? result.data : [],
-                total: result?.pagination?.totalPages || 1,
-                currentPage: result?.pagination?.page || 1,
-                pageSize: result?.pagination?.limit || pageSize,
+                total: result?.pagination?.last_page || 1,
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
             };
         } catch (error) {
             console.error(error);
@@ -340,11 +340,15 @@ export default function CustomerInvoicePage() {
                             columnFilter: true,
                              filterByFields: [
                                 {
-                                    key: "date_change",
-                                    label: "Date Range",
-                                    type: "dateChange"
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date"
                                 },
-                                
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date"
+                                },
                                 {
                                     key: "warehouse",
                                     label: "Warehouse",

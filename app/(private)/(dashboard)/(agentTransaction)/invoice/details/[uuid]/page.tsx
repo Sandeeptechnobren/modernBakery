@@ -246,8 +246,8 @@ export default function OrderDetailPage() {
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
                 <span>From (Seller)</span>
                 <div className="flex flex-col space-y-[10px]">
-                  <span className="font-semibold">{deliveryData?.warehouse_code } - {deliveryData?.warehouse_name}</span>
-                  {/* <span>{deliveryData?.warehouse ?? ""} {deliveryData?.warehouse && ", "}</span> */}
+                  {/* <span className="font-semibold">{deliveryData?.warehouse_code } - {deliveryData?.warehouse_name}</span> */}
+                  <span>{deliveryData?.warehouse_code ?? ""} {deliveryData?.warehouse_name && ", "}</span>
                   <span>
                     {/* {deliveryData?.warehouse_contact && <>Phone: {deliveryData?.warehouse_contact}</>} <br /> {data?.warehouse_email && <>Email: {data?.warehouse_email}</>} */}
                   </span>

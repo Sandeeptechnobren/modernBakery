@@ -78,33 +78,23 @@ const SalesmanSchema = Yup.object().shape({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{12,}$/,
       "Password must include uppercase, lowercase, number, and special character"
     ),
-  warehouse_id: Yup.array().required("Warehouse is required"),
+  warehouse_id: Yup.string().required("Warehouse is required"),
   email: Yup.string().required("Email is required").email("Invalid email"),
 });
 
 // ✅ Step-wise validation
 const stepSchemas = [
-  Yup.object({
-    name: Yup.string().required("Name is required"),
-    type: Yup.string().required("Type is required"),
-    designation: Yup.string().required("Designation is required"),
-    warehouse_id: Yup.array().required("Warehouse is required"),
-  }),
-  Yup.object({
-    contact_no: Yup.string()
-      .required("Contact number is required")
-      .matches(/^[0-9]+$/, "Only numbers are allowed")
-      .min(9, "Must be at least 9 digits")
-      .max(13, "Must be at most 13 digits"),
-    password: Yup.string()
-      .required("Password is required")
-      .min(12, "Password must be at least 12 characters long")
-      .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{12,}$/,
-        "Password must include uppercase, lowercase, number, and special character"
-      ),
-    email: Yup.string().required("Email is required").email("Invalid email"),
-  }),
+  SalesmanSchema.pick([
+    "name",
+    "type",
+    "designation",
+    "warehouse_id",
+  ]),
+  SalesmanSchema.pick([
+    "contact_no",
+    "password",
+    "email"
+  ]),
   Yup.object({
     status: Yup.string().required("Status is required"),
     is_block: Yup.string(),
@@ -129,10 +119,7 @@ type props = {
   setSelectedCountry: { name: string; code?: string; flag?: string };
 };
 
-export default function AddEditSalesman({
-  selectedCountry,
-  setSelectedCountry,
-}: props) {
+export default function AddEditSalesman() {
   const [prefix, setPrefix] = useState("");
   const [loading, setLoading] = useState(true);
   const { showSnackbar } = useSnackbar();
@@ -377,25 +364,18 @@ export default function AddEditSalesman({
                   name="name"
                   value={values.name}
                   onChange={(e) => setFieldValue("name", e.target.value)}
-                // error={touched.name && errors.name}
+                  error={touched.name && errors.name}
                 />
-                {/* <ErrorMessage
-                  name="name"
-                  component="span"
-                  className="text-xs text-red-500"
-                /> */}
               </div>
               <div className="flex flex-col w-full">
                 <InputFields
                   label="Salesman Type"
-                  name="salesman_type"
+                  name="type"
                   value={values.type}
                   options={salesmanTypeOptions}
                   onChange={(e) => setFieldValue("type", e.target.value)}
+                  error={touched.type && errors.type}
                 />
-                {errors.type && (
-                  <p className="text-red-500 text-sm">{errors.type}</p>
-                )}
               </div>
 
               {/* Show Project List only when salesman_type id = 6 */}
@@ -406,6 +386,7 @@ export default function AddEditSalesman({
                     value={values.sub_type}
                     options={projectOptions}
                     onChange={(e) => setFieldValue("sub_type", e.target.value)}
+                    error={touched.sub_type && errors.sub_type}
                   />
                 </div>
               )}
@@ -417,11 +398,7 @@ export default function AddEditSalesman({
                   name="designation"
                   value={values.designation}
                   onChange={(e) => setFieldValue("designation", e.target.value)}
-                />
-                <ErrorMessage
-                  name="designation"
-                  component="span"
-                  className="text-xs text-red-500"
+                  error={touched.designation && errors.designation}
                 />
               </div>
 
@@ -434,18 +411,14 @@ export default function AddEditSalesman({
                   value={values.warehouse_id}
                   options={warehouseOptions}
                   disabled={warehouseOptions.length === 0}
-                  isSingle={!values.sub_type}
+                  // isSingle={!values.sub_type}
                   onChange={(e) => {
                     setFieldValue("warehouse_id", e.target.value);
                     if (values.warehouse_id !== e.target.value) {
                       fetchRoutes(e.target.value);
                     }
                   }}
-                />
-                <ErrorMessage
-                  name="warehouse_id"
-                  component="span"
-                  className="text-xs text-red-500"
+                  error={touched.warehouse_id && errors.warehouse_id}
                 />
               </div>
 
@@ -456,8 +429,8 @@ export default function AddEditSalesman({
                   value={values.route_id?.toString() ?? ""}
                   onChange={(e) => setFieldValue("route_id", e.target.value)}
                   options={filteredRouteOptions}
-                  // 👇 Disable when project is selected
                   disabled={!!values.sub_type}
+                  error={touched.route_id && errors.route_id}
                 />
               </div>
 

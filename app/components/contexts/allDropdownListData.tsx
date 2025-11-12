@@ -872,7 +872,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategory(),
         channelList(),
         getCustomerType(),
-        userTypes(),
+        // userTypes(),
         salesmanTypeList({}),
         vehicleListData(),
         customerCategoryList(),

@@ -180,16 +180,16 @@ const SalesmanPage = () => {
   );
 
   const columns = [
-    {
-      key: "osa_code",
-      label: "Salesman Code",
-      render: (row: TableDataType) => (
-        <span className="font-semibold text-[#181D27] text-[14px]">
-          {row.osa_code}
-        </span>
-      ),
-    },
-    { key: "name", label: "Salesman Name" },
+    // {
+    //   key: "osa_code",
+    //   label: "Salesman Code",
+    //   render: (row: TableDataType) => (
+    //     <span className="font-semibold text-[#181D27] text-[14px]">
+    //       {row.osa_code}
+    //     </span>
+    //   ),
+    // },
+    { key: "name", label: "Salesman Name", render: (row: TableDataType) => row.osa_code + " - " + row.name || "-" },
     {
       key: "salesman_type",
       label: "Salesman Type",
@@ -276,16 +276,12 @@ const SalesmanPage = () => {
                 {
                   icon: "gala:file-document",
                   label: "Export CSV",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    handleExport("csv")
-                  },
+                  onClick: () => handleExport("csv")
                 },
                 {
                   icon: "gala:file-document",
                   label: "Export Excel",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    handleExport("xlsx")
-                  },
+                  onClick: () => handleExport("xlsx")
                 },
                 {
                   icon: "lucide:radio",
@@ -293,40 +289,9 @@ const SalesmanPage = () => {
                   showOnSelect: true,
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
                     handleStatusChange(data, selectedRow, "0");
-                  },
+                  }
                 }
               ],
-
-              // wholeTableActions: [
-              //   <div key={0} className="flex gap-[12px] relative">
-              //     <DismissibleDropdown
-              //       isOpen={showDropdown}
-              //       setIsOpen={setShowDropdown}
-              //       button={<BorderIconButton icon="ic:sharp-more-vert" />}
-              //       dropdown={
-              //         <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-              //           <CustomDropdown>
-              //             {dropdownDataList.map((link, idx) => (
-              //               <div
-              //                 key={idx}
-              //                 className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-              //               >
-              //                 <Icon
-              //                   icon={link.icon}
-              //                   width={link.iconWidth}
-              //                   className="text-[#717680]"
-              //                 />
-              //                 <span className="text-[#181D27] font-[500] text-[16px]">
-              //                   {link.label}
-              //                 </span>
-              //               </div>
-              //             ))}
-              //           </CustomDropdown>
-              //         </div>
-              //       }
-              //     />
-              //   </div>,
-              // ],
               searchBar: true,
               columnFilter: true,
               actions: [

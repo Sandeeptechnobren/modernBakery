@@ -5,13 +5,14 @@ import { useEffect, useState } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { itemById } from "@/app/services/allApi";
+import { itemById, itemReturn, itemSales } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
 import KeyValueData from "@/app/components/keyValueData";
 import Image from "next/image";
 import StatusBtn from "@/app/components/statusBtn2";
 import { useLoading } from "@/app/services/loadingContext";
+import Table, { TableDataType } from "@/app/components/customTable";
 
 interface Item {
   id?: number;
@@ -135,13 +136,14 @@ export default function Page() {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left Side - Image Section */}
         <div className="md:w-[350px] flex-shrink-0">
-          <ContainerCard className="p-[20px] flex flex-col gap-y-[20px]">
-            <Image
-              src={"/no-image.png"}
-              alt="item"
-              width={600}
-              height={400}
+            <ContainerCard className="p-[20px] flex flex-col gap-y-[20px]">
+            <img
+              src={item?.image ? item.image : "/no-image.png"}
+              alt={item?.name || "item"}
               className="w-full h-[200px] object-cover rounded-md border border-[#E4E4E4] bg-[#E9EAEB]"
+              onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = "/no-image.png";
+              }}
             />
             <span className="text-[#181D27] text-[20px] font-semibold text-center">
               {item?.item_code || "-"} - {item?.name}
@@ -149,7 +151,7 @@ export default function Page() {
             <div className="flex justify-center">
               <StatusBtn isActive={item?.status === 1} />
             </div>
-          </ContainerCard>
+            </ContainerCard>
         </div>
 
         {/* Right Side - Description, Tabs, and Tab Content */}
@@ -179,7 +181,6 @@ export default function Page() {
           {/* Tab Content */}
           {activeTab === "overview" && (
             <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
-
 
               {/* Right Section */}
               <div className="w-full flex flex-col gap-y-[15px]">
@@ -238,7 +239,7 @@ export default function Page() {
                     <strong>Name:</strong> {singleItem?.name || "-"}
                   </p>
                   <p>
-                    <strong>Price:</strong> ₹{singleItem?.uom_price || "0.00"}
+                    <strong>Price:</strong>{singleItem?.uom_price || "0.00"}
                   </p>
                   <p>
                     <strong>UPC:</strong> {singleItem?.upc || "N/A"}
@@ -254,26 +255,72 @@ export default function Page() {
               </ContainerCard>)
 
             })
-
-
-
-
           )}
           {activeTab === "sales" && (
-            <ContainerCard >
-
-              <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                No Data Found
-              </div>
-            </ContainerCard>
+              <Table
+                config={{
+                  api: {
+                    list: async (page: number = 1, pageSize: number = 50) => {
+                      const res = await itemSales(String(id), { page: page.toString(), per_page: pageSize.toString() });
+                      if (res.error) {
+                        showSnackbar(res.data?.message || "Unable to fetch sales data", "error");
+                        throw new Error(res.data?.message || "Unable to fetch sales data");
+                      }
+                      return {
+                        data: res.data || [],
+                        total: res.pagination?.totalPages || 0,
+                        currentPage: res.pagination?.currentPage || 1,
+                        pageSize: res.pagination?.pageSize || pageSize,
+                      };
+                    }
+                  },
+                  footer: { nextPrevBtn: true, pagination: true },
+                  table: {
+                    height: "400px"
+                  },
+                  columns: [
+                    { key: "invoice_code", label: "Invoice Code" },
+                    { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</>},
+                    { key: "uom", label: "UOM" },
+                    { key: "quantity", label: "Quantity" },
+                    { key: "itemvalue", label: "Price" }
+                  ],
+                  pageSize: 50
+                }}
+              />
           )}
           {activeTab === "return" && (
-            <ContainerCard >
-
-              <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                No Data Found
-              </div>
-            </ContainerCard>
+              <Table
+                config={{
+                  api: {
+                    list: async (page: number = 1, pageSize: number = 50) => {
+                      const res = await itemReturn(String(id), { page: page.toString(), per_page: pageSize.toString() });
+                      if (res.error) {
+                        showSnackbar(res.data?.message || "Unable to fetch Return data", "error");
+                        throw new Error(res.data?.message || "Unable to fetch Return data");
+                      }
+                      return {
+                        data: res.data || [],
+                        total: res.pagination?.totalPages || 0,
+                        currentPage: res.pagination?.currentPage || 1,
+                        pageSize: res.pagination?.pageSize || pageSize,
+                      };
+                    }
+                  },
+                  footer: { nextPrevBtn: true, pagination: true },
+                  table: {
+                    height: "400px"
+                  },
+                  columns: [
+                    { key: "header_code", label: "Return Code" },
+                    { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</>},
+                    { key: "uom_id", label: "UOM" },
+                    { key: "item_quantity", label: "Quantity" },
+                    { key: "item_price", label: "Price" }
+                  ],
+                  pageSize: 50
+                }}
+              />
           )}
 
         </div>

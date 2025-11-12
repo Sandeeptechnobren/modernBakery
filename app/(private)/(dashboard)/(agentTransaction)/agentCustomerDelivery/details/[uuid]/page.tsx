@@ -92,19 +92,13 @@ interface TableRow {
 
 const columns = [
   { key: "id", label: "#", width: 60 },
-  { key: "itemName", label: "Product Name", width: 250 },
+  { key: "itemName", label: "Product Name", render: (value: any) => <>{value.itemCode ? value.itemCode : ""} {value.itemCode && value.itemName ? " - " : ""} {value.itemName ? value.itemName : ""}</> },
   { key: "name", label: "UOM" },
   { key: "Quantity", label: "Quantity" },
   {
     key: "Price",
     label: "Price",
     render: (value: any) => <>{toInternationalNumber(Number(value.Price || 0)) || "0.00"}</>,
-  },
-  { key: "Excise", label: "Excise" },
-  {
-    key: "Discount",
-    label: "Discount",
-    render: (value: any) => <>{toInternationalNumber(Number(value.Discount || 0)) || "0.00"}</>,
   },
   {
     key: "Net",
@@ -270,115 +264,112 @@ export default function OrderDetailPage() {
               <Logo type="full" />
             </div>
 
-          <div className="flex flex-col items-end">
-            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-              DELIVERY
-            </span>
-            <span className="text-primary text-[14px] tracking-[10px] mb-3">
-              #{deliveryData?.delivery_code || ""}
-            </span>
+            <div className="flex flex-col items-end">
+              <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
+                DELIVERY
+              </span>
+              <span className="text-primary text-[14px] tracking-[10px] mb-3">
+                #{deliveryData?.delivery_code || ""}
+              </span>
+            </div>
           </div>
-        </div>
 
           <hr className="text-[#D5D7DA]" />
 
-        {/* ---------- Order Details Section (three equal columns) ---------- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8 items-start">
-          {/* From (Seller) */}
-          <div>
-            <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-              <span>From (Seller)</span>
-              <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">
-                  {deliveryData?.warehouse?.code && deliveryData?.warehouse?.name
-                    ? `${deliveryData?.warehouse?.code} - ${deliveryData?.warehouse?.name}`
-                    : "-"}
-                </span>
-                {hasValue(deliveryData?.warehouse?.address) && (
-                  <span>Address: {deliveryData?.warehouse?.address}</span>
-                )}
-                {(hasValue(deliveryData?.warehouse?.owner_number) || hasValue(deliveryData?.warehouse?.owner_email)) && (
-                  <span>
-                    {hasValue(deliveryData?.warehouse?.owner_number) && (
-                      <>Phone: {deliveryData?.warehouse?.owner_number}</>
-                    )}
-                    {hasValue(deliveryData?.warehouse?.owner_number) && hasValue(deliveryData?.warehouse?.owner_email) && <br />}
-                    {hasValue(deliveryData?.warehouse?.owner_email) && (
-                      <>Email: {deliveryData?.warehouse?.owner_email}</>
-                    )}
+          {/* ---------- Order Details Section (three equal columns) ---------- */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8 items-start">
+            {/* From (Seller) */}
+            <div>
+              <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
+                <span>From (Seller)</span>
+                <div className="flex flex-col space-y-[10px]">
+                  <span className="font-semibold">
+                    {deliveryData?.warehouse?.code && deliveryData?.warehouse?.name
+                      ? `${deliveryData?.warehouse?.code} - ${deliveryData?.warehouse?.name}`
+                      : "-"}
                   </span>
+                  {hasValue(deliveryData?.warehouse?.address) && (
+                    <span>Address: {deliveryData?.warehouse?.address}</span>
+                  )}
+                  {(hasValue(deliveryData?.warehouse?.owner_number) || hasValue(deliveryData?.warehouse?.owner_email)) && (
+                    <span>
+                      {hasValue(deliveryData?.warehouse?.owner_number) && (
+                        <>Phone: {deliveryData?.warehouse?.owner_number}</>
+                      )}
+                      {hasValue(deliveryData?.warehouse?.owner_number) && hasValue(deliveryData?.warehouse?.owner_email) && <br />}
+                      {hasValue(deliveryData?.warehouse?.owner_email) && (
+                        <>Email: {deliveryData?.warehouse?.owner_email}</>
+                      )}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* To (Customer) */}
+            <div>
+              <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
+                <span>To (Customer)</span>
+                <div className="flex flex-col space-y-[10px]">
+                  <span className="font-semibold">
+                    {deliveryData?.customer?.code ? deliveryData?.customer?.code : ""}
+                    {deliveryData?.customer?.code && deliveryData?.customer?.name ? " - " : ""}
+                    {deliveryData?.customer?.name ? `${deliveryData?.customer?.name}` : ""}
+                  </span>
+                  <span>
+                    {deliveryData?.customer?.town ? deliveryData?.customer?.town : ""}
+                    {deliveryData?.customer?.landmark && deliveryData?.customer?.town ? ", " : ""}
+                    {deliveryData?.customer?.landmark ? deliveryData?.customer?.landmark : ""}
+                    {deliveryData?.customer?.district ? deliveryData?.customer?.district : ""}
+                  </span>
+                  {
+                    <span>
+                      {deliveryData?.customer?.contact_no && (
+                        <>Phone: {deliveryData?.customer?.contact_no}</>
+                      )}
+                      {deliveryData?.customer?.email && (
+                        <>Phone: {deliveryData?.customer?.email}</>
+                      )}
+                    </span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            {/* Dates / meta - right column */}
+            <div className="flex md:justify-end">
+              <div className="text-primary-bold text-[14px] md:text-right">
+                {hasValue(deliveryData?.delivery_date) && deliveryData?.delivery_date && (
+                  <div>
+                    Delivery Date:{" "}
+                    <span className="font-bold">
+                      {new Date(deliveryData.delivery_date).toLocaleDateString('en-GB')}
+                    </span>
+                  </div>
+                )}
+                {(hasValue(deliveryData?.route?.code) || hasValue(deliveryData?.route?.name)) && (
+                  <div className="mt-2">
+                    Route:{" "}
+                    <span className="font-bold">
+                      {deliveryData?.route?.code && deliveryData?.route?.name
+                        ? `${deliveryData.route.code} - ${deliveryData.route.name}`
+                        : deliveryData?.route?.code || deliveryData?.route?.name}
+                    </span>
+                  </div>
+                )}
+                {(hasValue(deliveryData?.salesman?.code) || hasValue(deliveryData?.salesman?.name)) && (
+                  <div className="mt-2">
+                    Salesman:{" "}
+                    <span className="font-bold">
+                      {deliveryData?.salesman?.code && deliveryData?.salesman?.name
+                        ? `${deliveryData.salesman.code} - ${deliveryData.salesman.name}`
+                        : deliveryData?.salesman?.code || deliveryData?.salesman?.name}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
           </div>
-
-          {/* To (Customer) */}
-          <div>
-            <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-              <span>To (Customer)</span>
-              <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">
-                  {deliveryData?.customer?.code ? deliveryData?.customer?.code : ""}
-                  {deliveryData?.customer?.code && deliveryData?.customer?.name ? " - " : ""}
-                  {deliveryData?.customer?.name ? `${deliveryData?.customer?.name}` : ""}
-                </span>
-                {hasValue(deliveryData?.customer?.town) && (
-                  <span>Town: {deliveryData?.customer?.town}</span>
-                )}
-                {hasValue(deliveryData?.customer?.landmark) && (
-                  <span>Landmark: {deliveryData?.customer?.landmark}</span>
-                )}
-                {hasValue(deliveryData?.customer?.district) && (
-                  <span>District: {deliveryData?.customer?.district}</span>
-                )}
-                {
-                  <span>
-                    {deliveryData?.customer?.contact_no && (
-                      <>Phone: {deliveryData?.customer?.contact_no}</>
-                    )}
-                    {deliveryData?.customer?.email && (
-                      <>Phone: {deliveryData?.customer?.email}</>
-                    )}
-                  </span>
-                }
-              </div>
-            </div>
-          </div>
-
-          {/* Dates / meta - right column */}
-          <div className="flex md:justify-end">
-            <div className="text-primary-bold text-[14px] md:text-right">
-              {hasValue(deliveryData?.delivery_date) && deliveryData?.delivery_date && (
-                <div>
-                  Delivery Date:{" "}
-                  <span className="font-bold">
-                    {new Date(deliveryData.delivery_date).toLocaleDateString('en-GB')}
-                  </span>
-                </div>
-              )}
-              {(hasValue(deliveryData?.route?.code) || hasValue(deliveryData?.route?.name)) && (
-                <div className="mt-2">
-                  Route:{" "}
-                  <span className="font-bold">
-                    {deliveryData?.route?.code && deliveryData?.route?.name
-                      ? `${deliveryData.route.code} - ${deliveryData.route.name}`
-                      : deliveryData?.route?.code || deliveryData?.route?.name}
-                  </span>
-                </div>
-              )}
-              {(hasValue(deliveryData?.salesman?.code) || hasValue(deliveryData?.salesman?.name)) && (
-                <div className="mt-2">
-                  Salesman:{" "}
-                  <span className="font-bold">
-                    {deliveryData?.salesman?.code && deliveryData?.salesman?.name
-                      ? `${deliveryData.salesman.code} - ${deliveryData.salesman.name}`
-                      : deliveryData?.salesman?.code || deliveryData?.salesman?.name}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
           {/* ---------- Order Table ---------- */}
           <Table
@@ -407,22 +398,22 @@ export default function OrderDetailPage() {
                 </div>
               </div>
 
-            {/* Totals - Only show rows with values */}
-            <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
-              {keyValueData.map((kv: any) => (
-                <div key={kv.key} className="w-full">
-                  <div className="flex justify-between py-2">
-                    <span className="text-sm text-[#6B6F76]">{kv.key}</span>
-                    <span className="text-sm font-medium">{kv.value}</span>
+              {/* Totals - Only show rows with values */}
+              <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
+                {keyValueData.map((kv: any) => (
+                  <div key={kv.key} className="w-full">
+                    <div className="flex justify-between py-2">
+                      <span className="text-sm text-[#6B6F76]">{kv.key}</span>
+                      <span className="text-sm font-medium">{kv.value}</span>
+                    </div>
+                    <hr className="text-[#D5D7DA]" />
                   </div>
-                  <hr className="text-[#D5D7DA]" />
+                ))}
+                <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
+                  <span>Total</span>
+                  <span>AED {toInternationalNumber(finalTotal)}</span>
                 </div>
-              ))}
-              <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
-                <span>Total</span>
-                <span>AED {toInternationalNumber(finalTotal)}</span>
               </div>
-            </div>
 
               {/* Notes (Mobile) */}
               <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px]">
@@ -442,10 +433,10 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
-          <hr className="text-[#D5D7DA]" />
+          <hr className="text-[#D5D7DA] print:hidden" />
 
           {/* ---------- Footer Buttons ---------- */}
-          <div className="flex flex-wrap justify-end gap-[20px]">
+          <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
             <SidebarBtn
               leadingIcon={"lucide:download"}
               leadingIconSize={20}

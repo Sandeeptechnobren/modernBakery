@@ -53,6 +53,7 @@ type Props = {
   showSkeleton?: boolean;
   maxLength?: number;
   integerOnly?: boolean;
+  step?: string | number;
   min?: string | number;
   max?: string | number;
   setSelectedCountry?: ({ name: string; code?: string; flag?: string });
@@ -90,6 +91,7 @@ export default function InputFields({
   trailingElement,
   showBorder = true,
   maxLength,
+  step,
   min,
   max,
   showSkeleton = false,
@@ -390,7 +392,8 @@ export default function InputFields({
           loading ? (
             <Skeleton variant="rounded" width={210} height={60} />
           ) : (
-            <div className="flex-wrap flex gap-4 mt-2 pl-[5px]">
+            <div className="flex-wrap flex flex-col gap-[10px] mt-2 pl-[5px]">
+              <div className='flex gap-[10px] h-[44px]'>
               {options.map((opt, idx) => (
                 <label key={opt.value + idx} className="inline-flex items-center gap-3 cursor-pointer">
                   <input
@@ -406,6 +409,7 @@ export default function InputFields({
                   <span className="text-lg text-gray-600">{opt.label}</span>
                 </label>
               ))}
+              </div>
               {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
             </div>
           )) : isMulti ? (
@@ -867,7 +871,7 @@ export default function InputFields({
                 onChange={safeOnChange}
                 onKeyDown={handleNumberKeyDown}
                 inputMode={integerOnly ? "numeric" : undefined}
-                step={integerOnly ? 1 : undefined}
+                step={integerOnly ? 1 : step ? step : undefined}
                 disabled={disabled}
                 onBlur={onBlur}
                 className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}

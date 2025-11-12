@@ -19,7 +19,7 @@ import { format } from "path/win32";
 
 const columns = [
   { key: "index", label: "#" },
-  { key: "item_name", label: "Item Name" },
+  { key: "item_name", label: "Item Name", render: (value: TableDataType) => <>{value.item_code ? `${value.item_code}` : ""} {value.item_code && value.item_name ? " - " : ""} {value.item_name ? value.item_name : ""}</> },
   { key: "uom_name", label: "UOM" },
   { key: "quantity", label: "Quantity" },
   { key: "item_price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.item_price) || '0.00'}</> },
@@ -39,7 +39,7 @@ interface OrderData {
   warehouse_code: string,
   warehouse_name: string,
   warehouse_address: string,
-  warehouse_contact: string,
+  warehouse_number: string,
   warehouse_email: string,
   customer_id: number,
   customer_code: string,
@@ -210,11 +210,14 @@ export default function OrderDetailPage() {
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
                 <span>From (Seller)</span>
                 <div className="flex flex-col space-y-[10px]">
-                  <span className="font-semibold">{data?.warehouse_code && data?.warehouse_name
-                    ? `${data?.warehouse_code} - ${data?.warehouse_name} ` : "-"}</span>
-                  <span>{data?.warehouse_address ?? ""} {data?.warehouse_address && ", "}</span>
+                  <span className="font-semibold">
+                    {data?.warehouse_code ? data?.warehouse_code : ""}
+                    {data?.warehouse_code && data?.warehouse_name && ` - `}
+                    {data?.warehouse_name ? data?.warehouse_name : ""}
+                  </span>
+                  <span>{data?.warehouse_address ? data?.warehouse_address : ""}</span>
                   <span>
-                    {data?.warehouse_contact && <>Phone: {data?.warehouse_contact}</>} <br /> {data?.warehouse_email && <>Email: {data?.warehouse_email}</>}
+                    {data?.warehouse_number && <>Phone: {data?.warehouse_number}</>} <br /> {data?.warehouse_email && <>Email: {data?.warehouse_email}</>}
                   </span>
                 </div>
               </div>

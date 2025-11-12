@@ -1971,7 +1971,7 @@ export const updateItemStatus = async (body: object) => {
 
 export const addItem = async (payload: object) => {
   try {
-    const res = await API.post("/api/master/items/add", payload);
+    const res = await APIFormData.post("/api/master/items/add", payload);
 
     return res.data;
   } catch (error: unknown) {
@@ -1991,16 +1991,35 @@ export const itemById = async (id: string) => {
 
 export const editItem = async (id: string, payload: object) => {
   try {
-    const res = await API.put(`/api/master/items/update/${id}`, payload);
+    const res = await APIFormData.put(`/api/master/items/update/${id}`, payload);
 
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
+
 export const deleteItem = async (id: string) => {
   try {
     const res = await API.delete(`/api/master/items/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const itemSales = async (id: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/master/items/item-invoices/${id}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const itemReturn = async (id: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/master/items/item-returns/${id}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
