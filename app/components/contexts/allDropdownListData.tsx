@@ -1,42 +1,40 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import {
-  companyList,
-  countryList,
-  regionList,
-  routeList,
-  warehouseType,
-  routeType,
-  getSubRegion,
-  getCompanyCustomers,
-  getCompanyCustomersType,
-  itemCategory,
-  itemSubCategory,
+  agentCustomerList,
   channelList,
-  userTypes,
-  getCustomerType,
-  salesmanTypeList,
-  vehicleListData,
+  companyList,
+  companyTypeList,
+  countryList,
   customerCategoryList,
   customerSubCategoryList,
-  itemList,
+  getCompanyCustomers,
+  getCompanyCustomersType,
+  getCustomerType,
   getDiscountTypeList,
   menuList as getMenuList,
-  salesmanList,
-  agentCustomerList,
-  submenuList,
-  permissionList,
-  SurveyList,
+  getSubRegion,
   getWarehouse,
-  subRegionList,
+  itemCategory,
+  itemList,
+  itemSubCategory,
   labelList,
-  roleList,
+  permissionList,
   projectList,
-  companyTypeList,
+  regionList,
+  roleList,
+  routeList,
+  routeType,
+  salesmanList,
+  salesmanTypeList,
+  submenuList,
+  subRegionList,
+  SurveyList,
   uomList,
+  vehicleListData
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 interface DropdownDataContextType {
   companyList: CompanyItem[];
@@ -223,11 +221,11 @@ interface CustomerType {
   name?: string;
 }
 
-interface UserTypeItem {
-  id?: number | string;
-  code?: string;
-  name?: string;
-}
+// interface UserTypeItem {
+//   id?: number | string;
+//   code?: string;
+//   name?: string;
+// }
 
 interface SalesmanType {
   id?: number | string;
@@ -863,7 +861,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         regionList(),
         SurveyList(),
         routeList({}),
-        getWarehouse({dropdown:"true"}),
+        getWarehouse({ dropdown: "true" }),
         routeType(),
         getSubRegion(),
         getCompanyCustomers(),
@@ -872,7 +870,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategory(),
         channelList(),
         getCustomerType(),
-        userTypes(),
         salesmanTypeList({}),
         vehicleListData(),
         customerCategoryList(),
@@ -918,7 +915,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setItemSubCategoryData(normalize(res[11]) as ItemSubCategoryItem[]);
       setChannelListData(normalize(res[12]) as ChannelItem[]);
       setCustomerTypeData(normalize(res[13]) as CustomerType[]);
-      // setUserTypesData(normalize(res[14]) as UserTypeItem[]);
       setSalesmanTypesData(normalize(res[14]) as SalesmanType[]);
       setVehicleList(normalize(res[15]) as VehicleListItem[]);
       setCustomerCategory(normalize(res[16]) as CustomerCategory[]);
@@ -932,6 +928,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setShelves(normalize(res[24]) as ShelvesList[]);
       setSubmenu(normalize(res[25]) as submenuList[]);
       setPermissions(normalize(res[26]) as permissionsList[]);
+      console.log(normalize(res[27]), "normalize(res[27]) ")
       setLabels(normalize(res[27]) as LabelItem[]);
       setRoles(normalize(res[28]) as Role[]);
       setProject(normalize(res[29]) as Project[]);
@@ -955,7 +952,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setItemSubCategoryData([]);
       setChannelListData([]);
       setCustomerTypeData([]);
-      // setUserTypesData([]);
       setSalesmanTypesData([]);
       setVehicleList([]);
       setCustomerCategory([]);
@@ -1020,7 +1016,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
           break;
         }
         case 'warehouse': {
-          const res = await getWarehouse({...params,dropdown:"true"});
+          const res = await getWarehouse({ ...params, dropdown: "true" });
           setWarehouseListData(normalizeResponse(res) as WarehouseItem[]);
           break;
         }
