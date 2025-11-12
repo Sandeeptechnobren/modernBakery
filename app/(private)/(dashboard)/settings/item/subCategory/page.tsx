@@ -206,7 +206,6 @@ export default function SubCategory() {
                                         sub_category_code: data.sub_category_code,
                                         sub_category_name: data.sub_category_name,
                                         status: data.status,
-                                        sub_category_code: data.sub_category_code,
                                     });
                                 },
                             },
