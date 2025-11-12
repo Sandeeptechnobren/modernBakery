@@ -180,6 +180,17 @@ export const salesmanUnloadHeaderUpdate = async (uuid: string, body: object) => 
   }
 };
 
+// Collections and Caps Collections both are different APIs
+export const collectionList = async (params: Params) => {
+  try {
+    const res = await API.get("/api/agent_transaction/collections/list", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+// Collections and Caps Collections both are different APIs
 export const capsCollectionList = async (params: Params) => {
   try {
     const res = await API.get("/api/agent_transaction/capscollection/list", { params });
@@ -247,6 +258,33 @@ export const invoiceList = async (params: Params) => {
 export const invoiceByUuid = async (uuid: string) => {
   try {
     const res = await API.get(`/api/agent_transaction/invoices/show/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const exportInvoice = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/invoices/export`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const exportInvoiceWithDetails = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/invoices/exportFull`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const invoiceStatusUpdate = async (body:object) => {
+  try {
+    const res = await API.post(`/api/agent_transaction/invoices/updatestatus`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -474,16 +512,6 @@ export const exchangeUpdateStatus = async (body: string) => {
 export const exportExchangeData = async (body: string) => {
   try {
     const res = await API.post(`/api/agent_transaction/exchanges/export`, body);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-
-export const exportInvoice = async (params: Params ) => {
-  try {
-    const res = await API.get(`/api/agent_transaction/invoices/exportall`, {params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

@@ -10,7 +10,7 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { capsCollectionList, exportCapsCollection, capsCollectionStatusUpdate } from "@/app/services/agentTransaction";
+import { capsCollectionList } from "@/app/services/agentTransaction";
 import { downloadFile } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
@@ -19,15 +19,31 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 export default function SalemanLoad() {
     const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions } = useAllDropdownListData();
     const columns: configType["columns"] = [
-        { key: "code", label: "Code" },
+        { key: "invoice_id", label: "Invoice Code" },
+        { key: "collection_no", label: "Collection No." },
+        { key: "ammount", label: "Amout" },
+        { key: "outstanding", label: "Outstanding" },
         // { key: "date", label: "Collection Date" },
-        { key: "warehouse_code", label: "Warehouse Code" },
-        { key: "warehouse_name", label: "Warehouse Name" },
-        { key: "salesman_code", label: "Salesman Code" },
-        { key: "salesman_name", label: "Salesman Name" },
-        { key: "route_code", label: "Route Code" },
-        { key: "route_name", label: "Route Name" },
-        { key: "customer", label: "Customer" },
+        { key: "warehouse_code", label: "Warehouse Code" , render: (row: TableDataType) => {
+        const code = row.warehouse_code || "-";
+        const name = row.warehouse_name || "-";
+        return `${code}${code && name ? " - " : ""}${name}`;
+    }},
+    { key: "route_code", label: "Route Code", render: (row: TableDataType) => {
+    const code = row.route_code || "-";
+    const name = row.route_name || "-";
+    return `${code}${code && name ? " - " : ""}${name}`;
+  } },
+    { key: "customer_code", label: "Customer", render: (row: TableDataType) => {
+    const code = row.customer_code || "-";
+    const name = row.customer_name || "-";
+    return `${code}${code && name ? " - " : ""}${name}`;
+  } },
+        { key: "salesman_code", label: "Salesman Code", render: (row: TableDataType) => {
+        const code = row.salesman_code || "-";
+        const name = row.salesman_name || "-";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      } },
         {
             key: "status",
             label: "Status",

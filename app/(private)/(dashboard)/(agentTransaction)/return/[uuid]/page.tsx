@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, ChangeEvent, useState, useEffect } from "react";
+import React, { Fragment, ChangeEvent, useState, useEffect, useRef } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -9,12 +9,12 @@ import { useRouter, useParams } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { createReturn,deliveryByUuid,updateDelivery } from "@/app/services/agentTransaction";
+import { createReturn, deliveryByUuid, updateDelivery } from "@/app/services/agentTransaction";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import * as yup from "yup";
-import { warehouseListGlobalSearch, routeList, agentCustomerList, getCompanyCustomers, itemGlobalSearch } from "@/app/services/allApi";
+import { warehouseListGlobalSearch, routeList, agentCustomerList, getCompanyCustomers, itemGlobalSearch, genearateCode, saveFinalCode } from "@/app/services/allApi";
 
 // TypeScript interfaces
 interface Uom {
@@ -30,7 +30,10 @@ interface DeliveryDetail {
     name: string;
   };
   uom_id: number;
+  uom_name?: string;
   quantity: number;
+  item_price?: number | string;
+  item_uoms?: Uom[];
   return_type: string;
   return_reason: string;
 }
@@ -58,27 +61,25 @@ interface DeliveryResponse {
 
 
 export default function OrderAddEditPage() {
-  const { warehouseOptions, agentCustomerOptions, companyCustomersOptions,itemOptions, fetchAgentCustomerOptions ,routeOptions} = useAllDropdownListData();
+  const { warehouseOptions, agentCustomerOptions, companyCustomersOptions, itemOptions, fetchAgentCustomerOptions, routeOptions } = useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const router = useRouter();
   const params = useParams();
-  
+
   const uuid = params?.uuid as string | undefined;
   const isEditMode = uuid !== undefined && uuid !== "add";
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState<{
-    warehouse: string;
-    warehouse_name: string;
-    customer: string;
-    customer_type: string;
-    route: string;
-  }>({
+  const codeGeneratedRef = useRef(false);
+  const [code, setCode] = useState("");
+  const [form, setForm] = useState({
     warehouse: "",
     warehouse_name: "",
     customer: "",
+    customer_name: "",
     customer_type: "",
     route: "",
+    route_name: "",
   });
   // store warehouse display name separately so we can keep id for payload
   // and show name in AutoSuggestion initialValue
@@ -91,11 +92,11 @@ export default function OrderAddEditPage() {
   // @ts-ignore
   form.warehouse_name = form.warehouse_name || "";
   const goodOptions = [{ label: "Near By Expiry", value: "0" },
-                      { label: "Package Issue", value: "1" },
-                      { label: "Not Saleable", value: "2" },];
+  { label: "Package Issue", value: "1" },
+  { label: "Not Saleable", value: "2" },];
   const badOptions = [{ label: "Damage", value: "0" },
-                      { label: "Expiry", value: "1" },
-                      ];
+  { label: "Expiry", value: "1" },
+  ];
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -109,6 +110,7 @@ export default function OrderAddEditPage() {
       itemLabel: "", // Store the display label separately
       UOM: "",
       uom_id: "",
+      Price: "",
       Quantity: "1",
       return_type: "",
       return_reason: "",
@@ -123,62 +125,94 @@ export default function OrderAddEditPage() {
           setLoading(true);
           const response = await deliveryByUuid(uuid);
           const data = (response?.data ?? response) as DeliveryResponse;
-          
-          // Set form data
+
+          // Build display labels defensively (APIs vary in property names)
+          const warehouseObj = data?.warehouse as Record<string, unknown> | undefined;
+          const warehouseCode = warehouseObj && typeof (warehouseObj['code'] ?? warehouseObj['warehouse_code']) === 'string' ? String(warehouseObj['code'] ?? warehouseObj['warehouse_code']) : '';
+          const warehouseName = warehouseObj && typeof (warehouseObj['name'] ?? warehouseObj['warehouse_name']) === 'string' ? String(warehouseObj['name'] ?? warehouseObj['warehouse_name']) : '';
+          const warehouseLabel = `${warehouseCode ? warehouseCode + ' - ' : ''}${warehouseName}`.trim();
+
+          const customerObj = data?.customer as Record<string, unknown> | undefined;
+          const customerLabel = customerObj && typeof (customerObj['name'] ?? customerObj['outlet_name']) === 'string' ? String(customerObj['name'] ?? customerObj['outlet_name']) : '';
+
+          const routeObj = data?.route as Record<string, unknown> | undefined;
+          const routeLabel = routeObj && typeof (routeObj['name'] ?? routeObj['route_name']) === 'string' ? String(routeObj['name'] ?? routeObj['route_name']) : '';
+
+          // Set form data (include display labels so AutoSuggestion shows the label instead of the id)
           setForm({
             warehouse: data?.warehouse?.id ? String(data.warehouse.id) : "",
+            warehouse_name: warehouseLabel,
             customer: data?.customer?.id ? String(data.customer.id) : "",
+            customer_name: customerLabel,
             customer_type: data?.customer_type?.id ? String(data.customer_type?.id) : "",
             route: data?.route?.id ? String(data.route?.id) : "",
-            warehouse_name: data?.warehouse?.name || "",
+            route_name: routeLabel,
           });
-          
+
+          // If the delivery/return response included a reserved code, capture it so we can display/save it
+          try {
+            const dataObj = data as Record<string, unknown>;
+            const maybeCode = String(dataObj['return_code'] ?? dataObj['delivery_code'] ?? dataObj['code'] ?? "");
+            if (maybeCode) setCode(maybeCode);
+          } catch (e) {
+            // ignore
+          }
+
           if (data?.warehouse?.id) {
             await fetchAgentCustomerOptions(String(data.warehouse.id));
           }
-          
+
           if (data?.details && Array.isArray(data.details) && data.details.length > 0) {
             const loadedItemData = data.details.map((detail: DeliveryDetail, index: number) => {
               const itemId = detail.item?.id ? String(detail.item.id) : "";
               const uomId = detail.uom_id ? String(detail.uom_id) : "";
               const rowIdx = index.toString();
-              
+
               const selectedItem = itemOptions.find(item => item.value === itemId);
+              let matchedPrice = "";
               if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
                 const uomOpts = (selectedItem.uoms as Uom[]).map((uom: Uom) => ({
                   value: uom.id || "",
                   label: uom.name || "",
                   price: uom.price || "0"
                 }));
-                
+
+                // set options for this row
                 setRowUomOptions(prev => ({
                   ...prev,
                   [rowIdx]: uomOpts
                 }));
+
+                const matched = uomOpts.find(u => u.value === uomId);
+                matchedPrice = matched ? String(matched.price ?? "") : String(uomOpts[0]?.price ?? "");
+              } else {
+                // try to use item price from delivery detail if available
+                matchedPrice = String(detail.item_price ?? "");
               }
-              
-             
-              
+
+
+
               return {
                 item_id: itemId,
                 itemName: itemId,
                 itemLabel: detail.item?.name || "", // Store the display label
                 UOM: uomId,
                 uom_id: uomId,
+                Price: matchedPrice,
                 Quantity: (detail?.quantity ?? 1).toString(),
-               return_type: detail?.return_type || "",
-               return_reason: detail?.return_reason || "",
+                return_type: detail?.return_type || "",
+                return_reason: detail?.return_reason || "",
               };
             });
-            
+
             setItemData(loadedItemData);
           }
         } catch (error) {
           console.error("Error fetching delivery data:", error);
-          
+
           // Extract error message from API response
           let errorMessage = "Failed to fetch delivery details";
-          
+
           if (error && typeof error === 'object') {
             // Check for error message in response
             if ('response' in error && error.response && typeof error.response === 'object') {
@@ -195,15 +229,36 @@ export default function OrderAddEditPage() {
               errorMessage = error.message;
             }
           }
-          
+
           showSnackbar(errorMessage, "error");
         } finally {
           setLoading(false);
         }
       })();
     }
-    
+
   }, [isEditMode, uuid ?? ""]);
+
+  // Auto-generate return code in add mode only (prevent on edit)
+  useEffect(() => {
+    if (!isEditMode && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        try {
+          setLoading(true);
+          const res = await genearateCode({ model_name: "return" });
+          if (res?.code) {
+            setCode(res.code);
+          }
+        } catch (err) {
+          console.error("Failed to generate return code:", err);
+          showSnackbar("Failed to generate return code", "error");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [isEditMode, setLoading, showSnackbar]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -241,6 +296,7 @@ export default function OrderAddEditPage() {
         itemLabel: "",
         UOM: "",
         uom_id: "",
+        Price: "",
         Quantity: "1",
         return_type: "",
         return_reason: "",
@@ -257,9 +313,10 @@ export default function OrderAddEditPage() {
           itemLabel: "",
           UOM: "",
           uom_id: "",
+          Price: "",
           Quantity: "1",
-            return_type: "",
-            return_reason: "",
+          return_type: "",
+          return_reason: "",
         },
       ]);
       return;
@@ -267,7 +324,7 @@ export default function OrderAddEditPage() {
     setItemData(itemData.filter((_, i) => i !== index));
   };
 
- 
+
 
   // --- Create Payload for API
   const generatePayload = () => {
@@ -281,9 +338,10 @@ export default function OrderAddEditPage() {
         .map((item) => ({
           item_id: Number(item.item_id),
           uom_id: Number(item.uom_id),
-          quantity: Number(item.Quantity) || 0,
-            return_type: item.return_type,
-            return_reason: item.return_reason,
+          item_price: Number(item.Price) || 0,
+          item_quantity: Number(item.Quantity) || 0,
+          return_type: item.return_type,
+          return_reason: item.return_reason,
         })),
     };
   };
@@ -291,7 +349,7 @@ export default function OrderAddEditPage() {
   // --- On Submit
   const handleSubmit = async () => {
     if (isSubmitting) return; // Prevent multiple submissions
-    
+
     try {
       // Validate form using yup schema
       await validationSchema.validate(form, { abortEarly: false });
@@ -306,7 +364,7 @@ export default function OrderAddEditPage() {
 
       setIsSubmitting(true);
       const payload = generatePayload();
-      
+
       let res;
       if (isEditMode && uuid) {
         // Update existing delivery
@@ -315,7 +373,7 @@ export default function OrderAddEditPage() {
         // Create new delivery
         res = await createReturn(payload);
       }
-      
+
       // Check if response contains an error
       if (res?.error) {
         showSnackbar(
@@ -325,12 +383,22 @@ export default function OrderAddEditPage() {
         setIsSubmitting(false);
         return;
       }
-      
+
       // Success
+      // Save the generated code after successful creation (add mode only)
+      if (!isEditMode && code) {
+        try {
+          await saveFinalCode({ reserved_code: code, model_name: "return" });
+        } catch (e) {
+          // Don't block success flow if saving the final code fails
+          console.error("Failed to save final code:", e);
+        }
+      }
+
       showSnackbar(
-        isEditMode 
-          ? "Return updated successfully!" 
-          : "Return created successfully!", 
+        isEditMode
+          ? "Return updated successfully!"
+          : "Return created successfully!",
         "success"
       );
       router.push("/return");
@@ -346,12 +414,12 @@ export default function OrderAddEditPage() {
         setErrors(formErrors);
       } else {
         console.error("Error saving delivery:", error);
-        
+
         // Extract error message from API response (similar to agentCustomer)
-        let errorMessage = isEditMode 
-          ? "Failed to update delivery. Please try again." 
+        let errorMessage = isEditMode
+          ? "Failed to update delivery. Please try again."
           : "Failed to create delivery. Please try again.";
-        
+
         if (error && typeof error === 'object') {
           // Check for error message in response
           if ('response' in error && error.response && typeof error.response === 'object') {
@@ -368,7 +436,7 @@ export default function OrderAddEditPage() {
             errorMessage = error.message;
           }
         }
-        
+
         showSnackbar(errorMessage, "error");
       }
     } finally {
@@ -379,126 +447,125 @@ export default function OrderAddEditPage() {
 
 
   // Search functions for AutoSuggestion components
-const handleWarehouseSearch = async (searchText: string) => {
-  try {
-    const response = await warehouseListGlobalSearch({ query: searchText });
-    const data = Array.isArray(response?.data) ? response.data : [];
-    interface Warehouse {
-      id: number;
-      code?: string;
-      warehouse_code?: string;
-      name?: string;
-      warehouse_name?: string;
-    }
-    return data.map((warehouse: Warehouse) => ({
-      value: String(warehouse.id),
-      label: `${warehouse.code || warehouse.warehouse_code || ""} - ${warehouse.name || warehouse.warehouse_name || ""}`,
-      code: warehouse.code || warehouse.warehouse_code,
-      name: warehouse.name || warehouse.warehouse_name,
-    }));
-  } catch {
-    return [];
-  }
-};
-
-const handleRouteSearch = async (searchText: string) => {
-  if (!form.warehouse) return [];
-  try {
-    const response = await routeList({ warehouse_id: form.warehouse, search: searchText, per_page: "50" });
-    const data = Array.isArray(response?.data) ? response.data : [];
-    interface Route {
-      id: number;
-      route_code?: string;
-      code?: string;
-      route_name?: string;
-      name?: string;
-    }
-    return data.map((route: Route) => ({
-      value: String(route.id),
-      label: `${route.route_code || route.code || ""} - ${route.route_name || route.name || ""}`,
-      code: route.route_code || route.code,
-      name: route.route_name || route.name,
-    }));
-  } catch {
-    return [];
-  }
-};
-
-const handleCustomerSearch = async (searchText: string) => {
-  if (!form.route) return [];
-  try {
-    let response;
-    if (form.customer_type === "1") {
-      response = await getCompanyCustomers({ route_id: form.route, search: searchText, per_page: "50" });
-    } else {
-      response = await agentCustomerList({ route_id: form.route, search: searchText, per_page: "50" });
-    }
-    const data = Array.isArray(response?.data) ? response.data : [];
-    interface CompanyCustomer {
-      id: number;
-      osa_code?: string;
-      business_name?: string;
-    }
-    interface AgentCustomer {
-      id: number;
-      osa_code?: string;
-      outlet_name?: string;
-      customer_name?: string;
-      name?: string;
-    }
-    return data.map((customer: CompanyCustomer | AgentCustomer) => {
-      if (form.customer_type === "1") {
-        // Company customer: show osa_code - business_name
-        const company = customer as CompanyCustomer;
-        return {
-          value: String(company.id),
-          label: `${company.osa_code || ""} - ${company.business_name || ""}`.trim(),
-          name: company.business_name || "",
-        };
-      } else {
-        // Agent customer
-        const agent = customer as AgentCustomer;
-        return {
-          value: String(agent.id),
-          label:  `${agent.osa_code || ""} - ${agent.outlet_name || ""}` ,
-          name: agent.outlet_name || agent.customer_name || agent.name || '',
-        };
+  const handleWarehouseSearch = async (searchText: string) => {
+    try {
+      const response = await warehouseListGlobalSearch({ query: searchText });
+      const data = Array.isArray(response?.data) ? response.data : [];
+      interface Warehouse {
+        id: number;
+        code?: string;
+        warehouse_code?: string;
+        name?: string;
+        warehouse_name?: string;
       }
-    });
-  } catch {
-    return [];
-  }
-};
+      return data.map((warehouse: Warehouse) => ({
+        value: String(warehouse.id),
+        label: `${warehouse.code || warehouse.warehouse_code || ""} - ${warehouse.name || warehouse.warehouse_name || ""}`,
+        code: warehouse.code || warehouse.warehouse_code,
+        name: warehouse.name || warehouse.warehouse_name,
+      }));
+    } catch {
+      return [];
+    }
+  };
 
-const handleItemSearch = async (searchText: string) => {
-  if (!searchText || searchText.trim().length < 1) return [];
-  try {
-    const response = await itemGlobalSearch({ query: searchText });
-    const data = Array.isArray(response?.data) ? response.data : [];
-    interface Item {
-      id: number;
-      item_code?: string;
-      code?: string;
-      name?: string;
-      uom?: Uom[];
-      uoms?: Uom[];
+  const handleRouteSearch = async (searchText: string) => {
+    if (!form.warehouse) return [];
+    try {
+      const response = await routeList({ warehouse_id: form.warehouse, search: searchText, per_page: "50" });
+      const data = Array.isArray(response?.data) ? response.data : [];
+      interface Route {
+        id: number;
+        route_code?: string;
+        code?: string;
+        route_name?: string;
+        name?: string;
+      }
+      return data.map((route: Route) => ({
+        value: String(route.id),
+        label: `${route.route_code || route.code || ""} - ${route.route_name || route.name || ""}`,
+        code: route.route_code || route.code,
+        name: route.route_name || route.name,
+      }));
+    } catch {
+      return [];
     }
-    interface Uom {
-      id: string;
-      name?: string;
-      price?: string;
+  };
+
+  const handleCustomerSearch = async (searchText: string) => {
+    if (!form.route) return [];
+    try {
+      let response;
+      if (form.customer_type === "1") {
+        response = await getCompanyCustomers({ route_id: form.route, search: searchText, per_page: "50" });
+      } else {
+        response = await agentCustomerList({ route_id: form.route, search: searchText, per_page: "50" });
+      }
+      const data = Array.isArray(response?.data) ? response.data : [];
+      interface CompanyCustomer {
+        id: number;
+        osa_code?: string;
+        business_name?: string;
+      }
+      interface AgentCustomer {
+        id: number;
+        osa_code?: string;
+        outlet_name?: string;
+        customer_name?: string;
+        name?: string;
+      }
+      return data.map((customer: CompanyCustomer | AgentCustomer) => {
+        if (form.customer_type === "1") {
+          // Company customer: show osa_code - business_name
+          const company = customer as CompanyCustomer;
+          return {
+            value: String(company.id),
+            label: `${company.osa_code || ""} - ${company.business_name || ""}`.trim(),
+            name: company.business_name || "",
+          };
+        } else {
+          // Agent customer
+          const agent = customer as AgentCustomer;
+          return {
+            value: String(agent.id),
+            label: `${agent.osa_code || ""} - ${agent.outlet_name || ""}`,
+            name: agent.outlet_name || agent.customer_name || agent.name || '',
+          };
+        }
+      });
+    } catch {
+      return [];
     }
-    return data.map((item: Item) => ({
-      value: String(item.id),
-      label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
-      code: item.item_code || item.code,
-      name: item.name,
-      uoms: item.uom || item.uoms || [],
-    }));
-  } catch {
-    return [];
-  }
-};
+  };
+
+  const handleItemSearch = async (searchText: string) => {
+    try {
+      const response = await itemGlobalSearch({ query: searchText });
+      const data = Array.isArray(response?.data) ? response.data : [];
+      interface Item {
+        id: number;
+        item_code?: string;
+        code?: string;
+        name?: string;
+        uom?: Uom[];
+        uoms?: Uom[];
+      }
+      interface Uom {
+        id: string;
+        name?: string;
+        price?: string;
+      }
+      return data.map((item: Item) => ({
+        value: String(item.id),
+        label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
+        code: item.item_code || item.code,
+        name: item.name,
+        uoms: item.uom || item.uoms || [],
+      }));
+    } catch {
+      return [];
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -529,7 +596,7 @@ const handleItemSearch = async (searchText: string) => {
               Return
             </span>
             <span className="text-primary text-[14px] tracking-[10px]">
-              #W1O20933
+              #{code}
             </span>
           </div>
         </div>
@@ -553,9 +620,17 @@ const handleItemSearch = async (searchText: string) => {
             placeholder="Search warehouse..."
             initialValue={form.warehouse_name}
             onSearch={handleWarehouseSearch}
-            onSelect={async (option) => {
-              // option.value is id, option.label is display name
-              setForm(prev => ({ ...prev, warehouse: option.value, warehouse_name: option.label }));
+            onSelect={(option) => {
+              setForm(prev => ({
+                ...prev,
+                warehouse: option.value,
+                warehouse_name: option.label,
+                // clear dependent selections
+                route: "",
+                route_name: "",
+                customer: "",
+                customer_name: "",
+              }));
               if (errors.warehouse) setErrors(prev => ({ ...prev, warehouse: "" }));
               // fetch customers for selected warehouse
               try {
@@ -564,21 +639,21 @@ const handleItemSearch = async (searchText: string) => {
                 // ignore fetch errors here
               }
             }}
-            onClear={() => setForm(prev => ({ ...prev, warehouse: "", warehouse_name: "" }))}
+            onClear={() => setForm(prev => ({ ...prev, warehouse: "", warehouse_name: "", route: "", route_name: "", customer: "", customer_name: "" }))}
             error={errors.warehouse}
           />
-           <AutoSuggestion
+          <AutoSuggestion
             required
             label="Route"
             name="route"
             placeholder="Search route..."
-            initialValue={form.route}
+            initialValue={form.route_name}
             onSearch={handleRouteSearch}
             onSelect={(option) => {
-              setForm(prev => ({ ...prev, route: option.value }));
+              setForm(prev => ({ ...prev, route: option.value, route_name: option.label, customer: "", customer_name: "" }));
               if (errors.route) setErrors(prev => ({ ...prev, route: "" }));
             }}
-            onClear={() => setForm(prev => ({ ...prev, route: "" }))}
+            onClear={() => setForm(prev => ({ ...prev, route: "", route_name: "", customer: "", customer_name: "" }))}
             error={errors.route}
             disabled={!form.warehouse}
             noOptionsMessage={!form.warehouse ? "Please select a warehouse first" : "No routes found"}
@@ -588,18 +663,18 @@ const handleItemSearch = async (searchText: string) => {
             label="Customer"
             name="customer"
             placeholder="Search customer..."
-            initialValue={form.customer}
+            initialValue={form.customer_name}
             onSearch={handleCustomerSearch}
             onSelect={(option) => {
-              setForm(prev => ({ ...prev, customer: option.value }));
+              setForm(prev => ({ ...prev, customer: option.value, customer_name: option.label }));
               if (errors.customer) setErrors(prev => ({ ...prev, customer: "" }));
             }}
-            onClear={() => setForm(prev => ({ ...prev, customer: "" }))}
+            onClear={() => setForm(prev => ({ ...prev, customer: "", customer_name: "" }))}
             error={errors.customer}
             disabled={!form.route}
             noOptionsMessage={!form.route ? "Please select a route first" : "No customers found"}
           />
-         
+
         </div>
         {/* --- Table --- */}
         <Table
@@ -617,27 +692,54 @@ const handleItemSearch = async (searchText: string) => {
                       placeholder="Search item..."
                       initialValue={row.itemLabel}
                       onSearch={handleItemSearch}
-                      onSelect={(option) => {
+                      onSelect={async (option: { value: string; label: string; uoms?: Uom[] }) => {
                         const selectedItemId = option.value;
                         const newData = [...itemData];
                         const index = Number(row.idx);
                         newData[index].item_id = selectedItemId;
                         newData[index].itemName = selectedItemId;
                         newData[index].itemLabel = option.label;
-                        // Find selected item and set UOM options
-                        const selectedItem = option;
-                        if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
-                          const uomOpts = (selectedItem.uoms as Uom[]).map((uom: Uom) => ({
-                            value: uom.id || "",
-                            label: uom.name || "",
-                            price: uom.price || "0"
-                          }));
+
+                        // Try to get UOMs from the selected option first
+                        let uoms: Uom[] | undefined = option.uoms;
+
+                        // If option doesn't include UOMs, fetch item info by searching the id
+                        if ((!uoms || uoms.length === 0) && selectedItemId) {
+                          try {
+                            const resp = await itemGlobalSearch({ query: selectedItemId });
+                            const items = Array.isArray(resp?.data) ? resp.data : (resp ? [resp] : []);
+                            // Find the matching item by id (or value) and extract uoms/uom/item_uoms
+                            const found = (items as unknown[]).find((it) => {
+                              const obj = it as Record<string, unknown>;
+                              const idVal = obj['id'] ?? obj['value'];
+                              return String(idVal ?? '') === String(selectedItemId);
+                            }) as Record<string, unknown> | undefined;
+                            if (found) {
+                              // handle both `item_uoms` and `uom` shapes
+                              const rawUoms = Array.isArray(found['item_uoms']) ? (found['item_uoms'] as unknown[]) : (Array.isArray(found['uom']) ? (found['uom'] as unknown[]) : []);
+                              if (Array.isArray(rawUoms) && rawUoms.length > 0) {
+                                uoms = rawUoms.map((u) => {
+                                  const uu = u as Record<string, unknown>;
+                                  return { id: String(uu['id'] ?? ''), name: String(uu['name'] ?? ''), price: uu['price'] as string | number | undefined } as Uom;
+                                });
+                              }
+                            }
+                          } catch (err) {
+                            // ignore fetch error and continue without UOMs
+                            console.error('Failed to fetch item UOMs for selected item:', err);
+                          }
+                        }
+
+                        if (uoms && uoms.length > 0) {
+                          const uomOpts = uoms.map((uom: Uom) => ({ value: uom.id || "", label: uom.name || "", price: uom.price || "0" }));
                           setRowUomOptions(prev => ({ ...prev, [row.idx]: uomOpts }));
-                          // Auto-select first UOM
+
+                          // Auto-select first UOM and store friendly label for display
                           const firstUom = uomOpts[0];
                           if (firstUom) {
                             newData[index].uom_id = firstUom.value;
-                            newData[index].UOM = firstUom.value;
+                            newData[index].UOM = firstUom.label;
+                            newData[index].Price = String(firstUom.price ?? "");
                           }
                         } else {
                           setRowUomOptions(prev => {
@@ -647,7 +749,9 @@ const handleItemSearch = async (searchText: string) => {
                           });
                           newData[index].uom_id = "";
                           newData[index].UOM = "";
+                          newData[index].Price = "";
                         }
+
                         setItemData(newData);
                         recalculateItem(index, "itemName", selectedItemId);
                       }}
@@ -677,25 +781,26 @@ const handleItemSearch = async (searchText: string) => {
                 render: (row) => {
                   const uomOptions = rowUomOptions[row.idx] || [];
                   return (
-                    <div style={{ minWidth: '120px', maxWidth: '120px' }}>  
-                    <InputFields
-                      label=""
-                      name="UOM"
-                      options={uomOptions}
-                      value={row.uom_id}
-                      disabled={uomOptions.length === 0}
-                      onChange={(e) => {
-                        const selectedUomId = e.target.value;
-                        const selectedUom = uomOptions.find(uom => uom.value === selectedUomId);
-                        const newData = [...itemData];
-                        const index = Number(row.idx);
-                        newData[index].uom_id = selectedUomId;
-                        newData[index].UOM = selectedUomId;
-                        
-                        setItemData(newData);
-                        recalculateItem(index, "UOM", selectedUomId);
-                      }}
-                    />
+                    <div style={{ minWidth: '120px', maxWidth: '120px' }}>
+                      <InputFields
+                        label=""
+                        name="UOM"
+                        options={uomOptions}
+                        value={row.uom_id}
+                        disabled={uomOptions.length === 0}
+                        onChange={(e) => {
+                          const selectedUomId = e.target.value;
+                          const selectedUom = uomOptions.find(uom => uom.value === selectedUomId);
+                          const newData = [...itemData];
+                          const index = Number(row.idx);
+                          newData[index].uom_id = selectedUomId;
+                          newData[index].UOM = selectedUom?.label ?? selectedUomId;
+                          newData[index].Price = String(selectedUom?.price ?? "");
+
+                          setItemData(newData);
+                          recalculateItem(index, "UOM", selectedUomId);
+                        }}
+                      />
                     </div>
                   );
                 },
@@ -705,18 +810,18 @@ const handleItemSearch = async (searchText: string) => {
                 label: "Qty",
                 width: 100,
                 render: (row) => (
-                  <div style={{ minWidth: '100px', maxWidth: '100px' }}>  
-                  <InputFields
-                    label=""
-                    type="number"
-                    name="Quantity"
-                    value={row.Quantity}
-                    integerOnly={true}
-                    min={1}
-                    onChange={(e) => {
-                      recalculateItem(Number(row.idx), "Quantity", e.target.value);
-                    }}
-                  />
+                  <div style={{ minWidth: '100px', maxWidth: '100px' }}>
+                    <InputFields
+                      label=""
+                      type="number"
+                      name="Quantity"
+                      value={row.Quantity}
+                      integerOnly={true}
+                      min={1}
+                      onChange={(e) => {
+                        recalculateItem(Number(row.idx), "Quantity", e.target.value);
+                      }}
+                    />
                   </div>
                 ),
               },
@@ -774,19 +879,18 @@ const handleItemSearch = async (searchText: string) => {
                   );
                 },
               },
-              
-             
+
+
               {
                 key: "action",
                 label: "Action",
                 render: (row) => (
                   <button
                     type="button"
-                    className={`${
-                      itemData.length <= 1
+                    className={`${itemData.length <= 1
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    } text-red-500 flex items-center`}
+                      } text-red-500 flex items-center`}
                     onClick={() =>
                       itemData.length > 1 && handleRemoveItem(Number(row.idx))
                     }
@@ -796,6 +900,7 @@ const handleItemSearch = async (searchText: string) => {
                 ),
               },
             ],
+            showNestedLoading: false,
           }}
         />
 
@@ -811,7 +916,7 @@ const handleItemSearch = async (searchText: string) => {
           </button>
         </div>
 
-       
+
 
         {/* --- Buttons --- */}
         <div className="flex justify-end gap-4 mt-6">
@@ -823,14 +928,14 @@ const handleItemSearch = async (searchText: string) => {
           >
             Cancel
           </button>
-          <SidebarBtn 
-            isActive={!isSubmitting} 
+          <SidebarBtn
+            isActive={!isSubmitting}
             label={
-              isSubmitting 
-                ? (isEditMode ? "Updating Return..." : "Creating Return...") 
+              isSubmitting
+                ? (isEditMode ? "Updating Return..." : "Creating Return...")
                 : (isEditMode ? "Update Return" : "Create Return")
-            } 
-            onClick={handleSubmit} 
+            }
+            onClick={handleSubmit}
           />
         </div>
       </ContainerCard>

@@ -28,6 +28,8 @@ interface ItemUom {
 
 interface FullItem {
     id: string;
+    // Some APIs/key usages call this `code` and some `item_code` – keep both optional to be defensive
+    code?: string;
     item_code?: string;
     name?: string;
     uom: ItemUom[];
@@ -55,10 +57,19 @@ interface CustomerLike {
 }
 
 interface DeliveryDetail {
+    // Some APIs provide nested item object, some provide flat item_id/code/name fields — accept both
     item?: { id?: number | string; code?: string; name?: string };
+    item_id?: number | string;
+    code?: string;
+    item_name?: string;
     uom_id?: number | string;
     uom_name?: string;
     item_price?: number | string;
+    itemvalue?: number | string;
+    excise?: number | string;
+    net?: number | string;
+    vat?: number | string;
+    total?: number | string;
     quantity?: number | string;
     discount?: number | string;
 }
@@ -90,6 +101,19 @@ interface InvoiceItemRow {
     Vat: string;
     Total: string;
 }
+
+// Helper to safely extract UOMs from unknown API shapes (item_uoms or uom)
+const extractUoms = (source: unknown): ItemUom[] => {
+    if (!Array.isArray(source)) return [];
+    return source.map((u) => {
+        const uu = u as Record<string, unknown>;
+        return {
+            id: String(uu.id ?? ''),
+            name: String(uu.name ?? ''),
+            price: (uu.price as string | number | undefined) ?? undefined,
+        } as ItemUom;
+    });
+};
 
 const dropdownDataList = [
     { icon: "humbleicons:radio", label: "Inactive", iconWidth: 20 },
@@ -150,6 +174,8 @@ export default function InvoiceddEditPage() {
     
     // Store full item data for UOM lookup
     const [fullItemsData, setFullItemsData] = useState<Record<string, FullItem>>({});
+    // Maintain a list of item options like the order page so selections persist
+    const [itemsOptions, setItemsOptions] = useState<Option[]>([]);
     
     // Store full delivery data for auto-population
     const [deliveriesById, setDeliveriesById] = useState<Record<string, Delivery>>({});
@@ -159,132 +185,124 @@ export default function InvoiceddEditPage() {
         const [suppressItemSearch, setSuppressItemSearch] = useState(false);
       const codeGeneratedRef = useRef(false);
       const [code, setCode] = useState("");
-      useEffect(() => {
-        setLoading(true);
-        
-        if (isEditMode && uuid) {
-          // Fetch existing invoice data in edit mode
-          (async () => {
-            try {
-              const res = await invoiceByUuid(uuid);
-              const data = res?.data ?? res;
-              
-              if (res && !res.error && data) {
-                // Set form data
-                setForm({
-                  customerType: data.customer_type ? String(data.customer_type) : "",
-                  warehouse: data.warehouse_id ? String(data.warehouse_id) : "",
-                  warehouse_name: data.warehouse_code && data.warehouse_name 
-                    ? `${data.warehouse_code} - ${data.warehouse_name}` 
-                    : (data.warehouse_name || ""),
-                  route: data.route_id ? String(data.route_id) : "",
-                  route_name: data.route_code && data.route_name 
-                    ? `${data.route_code} - ${data.route_name}` 
-                    : (data.route_name || ""),
-                  customer: data.customer_id ? String(data.customer_id) : "",
-                  customer_name: data.customer_name || "",
-                  invoice_type: data.invoice_type !== undefined ? String(data.invoice_type) : "",
-                  invoice_date: data.invoice_date || new Date().toISOString().slice(0, 10),
-                  note: data.comment || "",
-                  transactionType: data.transaction_type ? String(data.transaction_type) : "1",
-                  paymentTerms: data.payment_terms ? String(data.payment_terms) : "1",
-                  paymentTermsUnit: data.payment_terms_unit ? String(data.payment_terms_unit) : "1",
-                });
+            useEffect(() => {
+                setLoading(true);
 
-                // Set invoice code
-                if (data.invoice_code) {
-                  setCode(data.invoice_code);
+                if (isEditMode && uuid) {
+                    (async () => {
+                        try {
+                            const res = await invoiceByUuid(uuid);
+                            const data = res?.data ?? res;
+
+                            if (res && !res.error && data) {
+                                // set form fields
+                                setForm({
+                                    customerType: data.customer_type ? String(data.customer_type) : "",
+                                    warehouse: data.warehouse_id ? String(data.warehouse_id) : "",
+                                    warehouse_name: data.warehouse_code && data.warehouse_name
+                                        ? `${data.warehouse_code} - ${data.warehouse_name}`
+                                        : (data.warehouse_name || ""),
+                                    route: data.route_id ? String(data.route_id) : "",
+                                    route_name: data.route_code && data.route_name
+                                        ? `${data.route_code} - ${data.route_name}`
+                                        : (data.route_name || ""),
+                                    customer: data.customer_id ? String(data.customer_id) : "",
+                                    customer_name: data.customer_name || "",
+                                    invoice_type: data.invoice_type !== undefined ? String(data.invoice_type) : "",
+                                    invoice_date: data.invoice_date || new Date().toISOString().slice(0, 10),
+                                    note: data.comment || "",
+                                    transactionType: data.transaction_type ? String(data.transaction_type) : "1",
+                                    paymentTerms: data.payment_terms ? String(data.payment_terms) : "1",
+                                    paymentTermsUnit: data.payment_terms_unit ? String(data.payment_terms_unit) : "1",
+                                });
+
+                                if (data.invoice_code) {
+                                    setCode(data.invoice_code);
+                                }
+
+                                // populate item rows and UOMs from invoice details
+                                if (data.details && Array.isArray(data.details) && data.details.length > 0) {
+                                    const newRowUomOptions: Record<string, { value: string; label: string; price?: string }[]> = {};
+                                    const newFullItemsData: Record<string, FullItem> = { ...fullItemsData };
+
+                                    const loadedItems: InvoiceItemRow[] = data.details.map((detail: DeliveryDetail, index: number) => {
+                                        const itemId = String(detail.item_id ?? "");
+                                        const uomId = String(detail.uom_id ?? "");
+
+                                        const itemCode = detail.code || "";
+                                        const itemName = detail.item_name || "";
+                                        const itemLabel = itemCode && itemName ? `${itemCode} - ${itemName}` : (itemName || "");
+                                        const uomName = detail.uom_name || "";
+
+                                        if (uomId && uomName) {
+                                            newRowUomOptions[String(index)] = [{
+                                                value: uomId,
+                                                label: uomName,
+                                                price: String(detail.item_price ?? detail.itemvalue ?? "0"),
+                                            }];
+                                        }
+
+                                        if (itemId) {
+                                            newFullItemsData[itemId] = {
+                                                id: itemId,
+                                                code: itemCode || undefined,
+                                                name: itemName || undefined,
+                                                uom: uomId ? [{ id: uomId, name: uomName, price: String(detail.item_price ?? detail.itemvalue ?? "0") }] : [],
+                                            };
+                                        }
+
+                                        return {
+                                            item_id: itemId,
+                                            itemName: itemName,
+                                            itemLabel: itemLabel,
+                                            UOM: uomName,
+                                            uom_id: uomId,
+                                            Quantity: String(detail.quantity ?? "1"),
+                                            Price: String(detail.item_price ?? detail.itemvalue ?? ""),
+                                            Excise: String(detail.excise ?? ""),
+                                            Discount: String(detail.discount ?? ""),
+                                            Net: String(detail.net ?? ""),
+                                            Vat: String(detail.vat ?? ""),
+                                            Total: String(detail.total ?? ""),
+                                        };
+                                    });
+
+                                    setFullItemsData(prev => ({ ...prev, ...newFullItemsData }));
+                                    setRowUomOptions(prev => ({ ...prev, ...newRowUomOptions }));
+                                    setItemData(loadedItems);
+                                }
+                            }
+                        } catch (error) {
+                            console.error(error);
+                            showSnackbar('Failed to load invoice', 'error');
+                        } finally {
+                            setLoading(false);
+                        }
+                    })();
+                } else {
+                    setLoading(false);
                 }
-
-                // Set item data from details
-                if (data.details && Array.isArray(data.details) && data.details.length > 0) {
-                  const newRowUomOptions: Record<string, { value: string; label: string; price?: string }[]> = {};
-                  const newFullItemsData: Record<string, FullItem> = { ...fullItemsData };
-
-                  const loadedItems: InvoiceItemRow[] = data.details.map((detail: any, index: number) => {
-                    const itemId = String(detail.item_id ?? "");
-                    const uomId = String(detail.uom_id ?? "");
-                    
-                    const itemCode = detail.item_code || "";
-                    const itemName = detail.item_name || "";
-                    const itemLabel = itemCode && itemName ? `${itemCode} - ${itemName}` : itemName;
-                    const uomName = detail.uom_name || "";
-                    
-                    // Create UOM option from detail
-                    if (uomId && uomName) {
-                      newRowUomOptions[String(index)] = [{
-                        value: uomId,
-                        label: uomName,
-                        price: String(detail.item_price || detail.itemvalue || "0"),
-                      }];
-                      
-                      // Store item data
-                      if (itemId) {
-                        newFullItemsData[itemId] = {
-                          id: itemId,
-                          item_code: itemCode,
-                          name: itemName,
-                          uom: [{
-                            id: uomId,
-                            name: uomName,
-                            price: detail.item_price || detail.itemvalue,
-                          }],
-                        };
-                      }
-                    }
-
-                    const qty = Number(detail.quantity ?? 0);
-                    const price = Number(detail.item_price || detail.itemvalue || 0);
-                    const discount = Number(detail.discount ?? 0);
-                    const vat = Number(detail.vat ?? 0);
-                    const net = Number(detail.net_total ?? 0);
-                    const total = Number(detail.item_total || detail.gross_total || detail.total || 0);
-
-                    return {
-                      item_id: itemId,
-                      itemName: itemLabel,
-                      UOM: uomId,
-                      uom_id: uomId,
-                      Quantity: String(qty || 1),
-                      Price: price.toFixed(2),
-                      Excise: String(detail.excise || "0.00"),
-                      Discount: discount.toFixed(2),
-                      Net: net.toFixed(2),
-                      Vat: vat.toFixed(2),
-                      Total: total.toFixed(2),
-                    };
-                  });
-
-                  setFullItemsData(newFullItemsData);
-                  setRowUomOptions(newRowUomOptions);
-                  setItemData(loadedItems);
+            }, [isEditMode, uuid, setLoading, showSnackbar]);
+            // Auto-generate invoice code in add mode only (prevent on edit)
+            useEffect(() => {
+                if (!isEditMode && !codeGeneratedRef.current) {
+                    codeGeneratedRef.current = true;
+                    (async () => {
+                        try {
+                            setLoading(true);
+                            const res = await genearateCode({ model_name: "invoice" });
+                            if (res?.code) {
+                                setCode(res.code);
+                            }
+                        } catch (err) {
+                            console.error("Failed to generate invoice code:", err);
+                            showSnackbar("Failed to generate invoice code", "error");
+                        } finally {
+                            setLoading(false);
+                        }
+                    })();
                 }
-              } else {
-                showSnackbar("Failed to load invoice data", "error");
-              }
-            } catch (error) {
-              console.error("Error fetching invoice:", error);
-              showSnackbar("Failed to load invoice data", "error");
-            } finally {
-              setLoading(false);
-            }
-          })();
-        } else if (!isEditMode && !codeGeneratedRef.current) {
-          // Only generate code in add mode, not in edit mode
-          codeGeneratedRef.current = true;
-          (async () => {
-            const res = await genearateCode({
-              model_name: "invoice",
-            });
-            if (res?.code) {
-              setCode(res.code);
-            }
-            setLoading(false);
-          })();
-        } else {
-          setLoading(false);
-        }
-      }, [isEditMode, uuid, setLoading, showSnackbar]);
+            }, [isEditMode, setLoading, showSnackbar]);
     // Search functions for AutoSuggestion components
     const handleWarehouseSearch = useCallback(async (searchText: string) => {
         try {
@@ -378,7 +396,11 @@ export default function InvoiceddEditPage() {
 
     const handleItemSearch = useCallback(async (searchText: string) => {
         // Prevent searches while we're auto-populating items from a delivery selection
-        if (suppressItemSearch) return [];
+        if (suppressItemSearch) {
+            // Reset the flag after blocking one search
+            setSuppressItemSearch(false);
+            return [];
+        }
         // Avoid API calls for empty/very short queries
         const qRaw = (searchText || "").trim();
         if (qRaw.length < 1) return [];
@@ -399,29 +421,30 @@ export default function InvoiceddEditPage() {
         try {
             const response = await itemGlobalSearch({ 
                 query: q,
-                
             });
             const data = Array.isArray(response?.data) ? (response.data as unknown[]) : [];
 
             // Normalize and store full item data for later UOM lookup
             const itemsMap: Record<string, FullItem> = {};
             const options: (Option & { uoms?: ItemUom[] })[] = data.map((raw) => {
-                const item = raw as Partial<FullItem> & { id?: string | number; item_code?: string; name?: string; uom?: ItemUom[] };
+                const rawItem = raw as Record<string, unknown>;
+                const item = rawItem as Partial<FullItem> & { id?: string | number; item_code?: string; code?: string; name?: string; uom?: ItemUom[] };
                 const id = String(item.id ?? '');
-                const uomArr: ItemUom[] = Array.isArray((item as any)?.uom)
-                    ? ((item as any).uom as unknown[]).map((u) => {
-                        const uu = u as Partial<ItemUom> & { id?: string | number; name?: string; price?: string | number };
-                        return {
-                            id: String(uu.id ?? ''),
-                            name: uu.name ?? '',
-                            price: uu.price,
-                        };
-                    })
-                    : [];
+
+                // API may return UOMs as `item_uoms` or `uom`. Prefer `item_uoms` if present.
+                const sourceUomsRaw = Array.isArray(rawItem['item_uoms'] as unknown)
+                    ? rawItem['item_uoms']
+                    : Array.isArray((item as Record<string, unknown>)['uom'] as unknown)
+                        ? (item as Record<string, unknown>)['uom']
+                        : [];
+                const uomArr: ItemUom[] = extractUoms(sourceUomsRaw);
+
+                const itemObj = item as Record<string, unknown>;
+                const codeVal = typeof itemObj.item_code === 'string' ? String(itemObj.item_code) : (typeof itemObj.code === 'string' ? String(itemObj.code) : undefined);
 
                 const normalized: FullItem = {
                     id,
-                    item_code: item.item_code,
+                    item_code: codeVal,
                     name: item.name,
                     uom: uomArr,
                 };
@@ -429,8 +452,8 @@ export default function InvoiceddEditPage() {
 
                 return {
                     value: id,
-                    label: `${item.item_code || ''} - ${item.name || ''}`.trim(),
-                    code: item.item_code,
+                    label: `${codeVal || ''} - ${item.name || ''}`.trim(),
+                    code: codeVal,
                     name: item.name,
                     uoms: uomArr,
                 };
@@ -484,18 +507,80 @@ export default function InvoiceddEditPage() {
         }
     }, [form.warehouse, showSnackbar]);
 
-    // Validation schema
-    const validationSchema = yup.object().shape({
-        invoice_type: yup.string().required("Invoice Type is required"),
-        invoice_date: yup.string().required("Invoice Date is required"),
-        warehouse: yup.string().required("Warehouse is required"),
-        customer: yup.string().required("Customer is required"),
-        customerType: yup.string().required("Customer Type is required"),
-        route: yup.string().required("Route is required"),
-    });
+    // Build validation schema based on invoice type:
+    // - If invoice_type === '0' (Against Delivery): require invoice_type, invoice_date, warehouse, customer (delivery)
+    // - If invoice_type === '1' (Direct Invoice): require invoice_type, invoice_date, warehouse, route, customer, customerType
+    const createValidationSchema = (values: typeof form) => {
+        const base = {
+            invoice_type: yup.string().required("Invoice Type is required"),
+            invoice_date: yup.string().required("Invoice Date is required"),
+            warehouse: yup.string().required("Warehouse is required"),
+        };
+
+        if (String(values.invoice_type) === "0") {
+            return yup.object().shape({
+                ...base,
+                customer: yup.string().required("Delivery is required"),
+            });
+        }
+
+        // Default / Direct Invoice
+        return yup.object().shape({
+            ...base,
+            customerType: yup.string().required("Customer Type is required"),
+            route: yup.string().required("Route is required"),
+            customer: yup.string().required("Customer is required"),
+        });
+    };
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
+
+        // Special handling when invoice type changes
+        if (name === "invoice_type") {
+            // If switching to Direct Invoice, clear delivery/customer and item rows
+            if (value === "1") {
+                setForm((prev) => ({
+                    ...prev,
+                    invoice_type: value,
+                    customer: "",
+                    customer_name: "",
+                }));
+
+                // Clear delivery cache and per-row UOMs
+                setDeliveriesById({});
+                setRowUomOptions({});
+
+                // Reset items to a single empty row
+                setItemData([
+                    {
+                        item_id: "",
+                        itemName: "",
+                        itemLabel: "",
+                        UOM: "",
+                        uom_id: "",
+                        Quantity: "1",
+                        Price: "",
+                        Excise: "",
+                        Discount: "",
+                        Net: "",
+                        Vat: "",
+                        Total: "",
+                    },
+                ]);
+            } else {
+                // For other invoice types just update the value
+                setForm((prev) => ({ ...prev, invoice_type: value }));
+            }
+
+            // Clear any existing invoice_type validation error
+            if (errors.invoice_type) {
+                setErrors((prev) => ({ ...prev, invoice_type: "" }));
+            }
+
+            return;
+        }
+
         setForm({ ...form, [name]: value });
         // Clear error for this field when user starts typing
         if (errors[name]) {
@@ -609,12 +694,14 @@ export default function InvoiceddEditPage() {
         }
 
         const now = new Date();
-        const invoiceTime = now.toTimeString().split(' ')[0]; // Gets "HH:mm:ss"
+        const invoiceTime = now.toTimeString().split(' ')[0];
+    const deliveryId = form.invoice_type === "0" && form.customer ? Number(form.customer) : undefined;
 
         return {
             invoice_type: Number(form.invoice_type),
             warehouse_id: Number(form.warehouse),
             customer_id: customerId,
+            delivery_id: deliveryId,
             customer_type: form.customerType ? Number(form.customerType) : undefined,
             route_id: routeId,
             salesman_id: salesmanId,
@@ -646,17 +733,12 @@ export default function InvoiceddEditPage() {
                 })),
         };
     };
-
-    // Submit handler
     const handleSubmit = async () => {
-        if (isSubmitting) return; // Prevent multiple submissions
-
+        if (isSubmitting) return;
         try {
-            // Validate form using yup schema
-            await validationSchema.validate(form, { abortEarly: false });
+            const schema = createValidationSchema(form);
+            await schema.validate(form, { abortEarly: false });
             setErrors({});
-
-            // Validate that at least one item is added
             const validItems = itemData.filter(item => item.item_id && item.uom_id);
             if (validItems.length === 0) {
                 showSnackbar("Please add at least one item with UOM selected", "error");
@@ -748,15 +830,12 @@ export default function InvoiceddEditPage() {
         }
     };
 
-    // Helper to check if all required fields are filled
-const isFormReadyForItems = [
-  form.customerType,
-  form.route,
-  form.warehouse,
-  form.customer,
-  form.invoice_type,
-  form.invoice_date
-].every(Boolean);
+    const isFormReadyForItems = (() => {
+        if (String(form.invoice_type) === "0") {
+            return [form.warehouse, form.customer, form.invoice_type, form.invoice_date].every(Boolean);
+        }
+        return [form.customerType, form.route, form.warehouse, form.customer, form.invoice_type, form.invoice_date].every(Boolean);
+    })();
 
     return (
         <div className="flex flex-col h-full">
@@ -776,9 +855,6 @@ const isFormReadyForItems = [
                 <div className="flex justify-between flex-wrap gap-[20px]">
                     <div className="flex flex-col gap-[10px]">
                         <Logo type="full" />
-                        {/* <span className="text-primary font-normal text-[16px]">
-                            Emma-Köhler-Allee 4c, Germering - 13907
-                        </span> */}
                     </div>
 
                     <div className="flex flex-col items-end">
@@ -888,39 +964,59 @@ const isFormReadyForItems = [
                                                 price: String(detail.item_price || "0"),
                                             } : null;
 
-                                            // Check if we have more UOM options from itemOptions
-                                            const typedItemOptions = itemOptions as Array<Option & { uoms?: ItemUom[] }>;
-                                            const selectedItem = typedItemOptions.find((it) => it.value === itemId);
-                                            if (selectedItem && Array.isArray(selectedItem.uoms) && selectedItem.uoms.length > 0) {
-                                                const uomOpts = selectedItem.uoms.map((uom: ItemUom) => ({
-                                                    value: String(uom.id || ""),
-                                                    label: uom.name || "",
-                                                    price: (uom.price as string | number | undefined) ? String(uom.price) : "0",
+                                            // Prefer UOMs provided in delivery detail (`item_uoms`) if available
+                                            const detailObj = detail as Record<string, unknown>;
+                                            const detailUomsRaw = Array.isArray(detailObj['item_uoms'] as unknown) ? detailObj['item_uoms'] : [];
+                                            if (Array.isArray(detailUomsRaw) && detailUomsRaw.length > 0) {
+                                                const uomOpts = extractUoms(detailUomsRaw).map(u => ({
+                                                    value: String(u.id ?? ""),
+                                                    label: u.name ?? "",
+                                                    price: u.price !== undefined ? String(u.price) : "0",
                                                 }));
                                                 newRowUomOptions[index.toString()] = uomOpts;
-                                                
+
                                                 // Store full item data for future reference
                                                 newFullItemsData[itemId] = {
                                                     id: itemId,
-                                                    item_code: itemCode,
+                                                    code: itemCode,
                                                     name: itemName,
-                                                    uom: selectedItem.uoms,
+                                                    uom: extractUoms(detailUomsRaw),
                                                 };
-                                            } else if (deliveryUomOption) {
-                                                // If no UOM options from itemOptions, use delivery detail UOM
-                                                newRowUomOptions[index.toString()] = [deliveryUomOption];
-                                                
-                                                // Store minimal item data
-                                                newFullItemsData[itemId] = {
-                                                    id: itemId,
-                                                    item_code: itemCode,
-                                                    name: itemName,
-                                                    uom: [{
-                                                        id: uomId,
-                                                        name: uomName,
-                                                        price: detail.item_price || "0",
-                                                    }],
-                                                };
+                                            } else {
+                                                // Check if we have more UOM options from itemOptions
+                                                const typedItemOptions = itemOptions as Array<Option & { uoms?: ItemUom[] }>;
+                                                const selectedItem = typedItemOptions.find((it) => it.value === itemId);
+                                                if (selectedItem && Array.isArray(selectedItem.uoms) && selectedItem.uoms.length > 0) {
+                                                    const uomOpts = selectedItem.uoms.map((uom: ItemUom) => ({
+                                                        value: String(uom.id || ""),
+                                                        label: uom.name || "",
+                                                        price: (uom.price as string | number | undefined) ? String(uom.price) : "0",
+                                                    }));
+                                                    newRowUomOptions[index.toString()] = uomOpts;
+                                                    
+                                                    // Store full item data for future reference
+                                                    newFullItemsData[itemId] = {
+                                                        id: itemId,
+                                                        code: itemCode,
+                                                        name: itemName,
+                                                        uom: selectedItem.uoms,
+                                                    };
+                                                } else if (deliveryUomOption) {
+                                                    // If no UOM options from itemOptions, use delivery detail UOM
+                                                    newRowUomOptions[index.toString()] = [deliveryUomOption];
+                                                    
+                                                    // Store minimal item data
+                                                    newFullItemsData[itemId] = {
+                                                        id: itemId,
+                                                        code: itemCode,
+                                                        name: itemName,
+                                                        uom: [{
+                                                            id: uomId,
+                                                            name: uomName,
+                                                            price: detail.item_price || "0",
+                                                        }],
+                                                    };
+                                                }
                                             }
 
                                             const qty = Number(detail.quantity ?? 0);
@@ -1145,11 +1241,29 @@ const isFormReadyForItems = [
                                                 newData[index].item_id = selectedItemId;
                                                 newData[index].itemName = selectedItemId;
                                                 newData[index].itemLabel = option.label;
-
-                                                // Get the full item data to access UOMs
+                                                let uomSource: ItemUom[] | undefined = undefined;
                                                 const selectedItem = fullItemsData[selectedItemId];
-                                                if (selectedItem && selectedItem.uom && selectedItem.uom.length > 0) {
-                                                    const uomOpts = selectedItem.uom.map((uom: ItemUom) => ({
+                                                if (selectedItem && Array.isArray(selectedItem.uom) && selectedItem.uom.length > 0) {
+                                                    uomSource = selectedItem.uom;
+                                                } else {
+                                                    const opt = option as Option & { uoms?: ItemUom[] };
+                                                    if (Array.isArray(opt.uoms) && opt.uoms.length > 0) {
+                                                        const uomArray: ItemUom[] = opt.uoms.map((u) => ({ id: String(u.id ?? ""), name: u.name ?? "", price: u.price }));
+                                                        uomSource = uomArray;
+                                                        setFullItemsData(prev => ({
+                                                            ...prev,
+                                                            [selectedItemId]: {
+                                                                id: selectedItemId,
+                                                                item_code: opt.code || undefined,
+                                                                name: opt.name || undefined,
+                                                                uom: uomArray,
+                                                            }
+                                                        }));
+                                                    }
+                                                }
+
+                                                if (uomSource && uomSource.length > 0) {
+                                                    const uomOpts = uomSource.map((uom: ItemUom) => ({
                                                         value: String(uom.id || ""),
                                                         label: uom.name || "",
                                                         price: (uom.price as string | number | undefined) ? String(uom.price) : "0"
@@ -1196,7 +1310,7 @@ const isFormReadyForItems = [
                                                 });
                                                 setItemData(newData);
                                             }}
-                                            disabled={!isFormReadyForItems}
+                                            disabled={!isFormReadyForItems && !row.item_id}
                                         />
                                     </div>
                                 ),
@@ -1214,7 +1328,7 @@ const isFormReadyForItems = [
                                                 name="UOM"
                                                 options={uomOptions}
                                                 value={row.uom_id}
-                                                disabled={uomOptions.length === 0 || !isFormReadyForItems}
+                                                disabled={uomOptions.length === 0}
                                                 onChange={(e) => {
                                                     const selectedUomId = e.target.value;
                                                     const selectedUom = uomOptions.find(uom => uom.value === selectedUomId);

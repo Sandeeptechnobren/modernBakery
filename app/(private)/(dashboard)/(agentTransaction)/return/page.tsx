@@ -281,23 +281,23 @@ export default function CustomerInvoicePage() {
                         columns,
                         rowSelection: true,
                         
-                        localStorageKey: "invoice-table",
-                        rowActions: [
-                            {
-                                icon: "lucide:eye",
-                                onClick: (row: TableDataType) =>
-                                    router.push(
-                                        `/return/details/${row.uuid}`
-                                    ),
-                            },
-                            // {
-                            //     icon: "lucide:edit-2",
-                            //     onClick: (row: TableDataType) =>
-                            //         router.push(
-                            //             `/return/${row.uuid}`
-                            //         ),
-                            // },
-                        ],
+                        localStorageKey: "return-table",
+                        // rowActions: [
+                        //     {
+                        //         icon: "lucide:eye",
+                        //         onClick: (row: TableDataType) =>
+                        //             router.push(
+                        //                 `/return/details/${row.uuid}`
+                        //             ),
+                        //     },
+                        //     // {
+                        //     //     icon: "lucide:edit-2",
+                        //     //     onClick: (row: TableDataType) =>
+                        //     //         router.push(
+                        //     //             `/return/${row.uuid}`
+                        //     //         ),
+                        //     // },
+                        // ],
                         pageSize: 10,
                     }}
                 />

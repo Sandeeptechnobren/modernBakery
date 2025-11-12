@@ -2411,6 +2411,7 @@ export const pricingHeaderList = async (params?: Params) => {
   }
 };
 
+
 export const addPricingHeader = async (payload: object) => {
   try {
     const res = await API.post("/api/master/pricing-headers/add", payload);

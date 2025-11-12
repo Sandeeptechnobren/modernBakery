@@ -617,6 +617,7 @@ const handleItemSearch = async (searchText: string) => {
                 ),
               },
             ],
+            showNestedLoading: false,
             footer: { pagination: false },
           }}
         />

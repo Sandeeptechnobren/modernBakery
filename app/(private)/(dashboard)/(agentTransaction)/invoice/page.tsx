@@ -10,21 +10,12 @@ import Table, {
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import CustomDropdown from "@/app/components/customDropdown";
-import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { invoiceList } from "@/app/services/agentTransaction";
+import { invoiceList,exportInvoice,invoiceStatusUpdate } from "@/app/services/agentTransaction";
+import { downloadFile } from "@/app/services/allApi";
 import StatusBtn from "@/app/components/statusBtn2";
-import BorderIconButton from "@/app/components/borderIconButton";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-const dropdownDataList = [
-    // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-    // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-    // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
-    { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-    { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
+
 
 // 🔹 Table Columns
 const columns = [
@@ -95,6 +86,103 @@ export default function CustomerInvoicePage() {
 
     const [refreshKey, setRefreshKey] = useState(0);
     const [showDropdown, setShowDropdown] = useState(false);
+
+    const exportFile = async (format: 'csv' | 'xlsx' = 'csv') => {
+        try {
+            setLoading(true);
+            // Pass selected format to the export API
+            const response = await exportInvoice({ format });
+            const url = response?.url || response?.data?.url;
+            if (url) {
+                await downloadFile(url);
+                showSnackbar("File downloaded successfully", "success");
+            } else {
+                showSnackbar("Failed to get download file", "error");
+            }
+        } catch (error) {
+            console.error("Export failed:", error);
+            showSnackbar("Failed to download invoices", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const statusUpdate = async (
+        dataOrIds: TableDataType[] | (string | number)[] | undefined,
+        selectedRowOrStatus?: number[] | number
+    ) => {
+        try {
+            if (!dataOrIds || (Array.isArray(dataOrIds) && dataOrIds.length === 0)) {
+                showSnackbar("No invoices selected", "error");
+                return;
+            }
+
+            // Collect selected UUIDs (prefer `uuid` field from table rows). The API expects
+            // invoice_ids to be an array of identifiers (use uuid when available).
+            let selectedRowsData: (string | number)[] = [];
+            let status: number | undefined;
+
+            const first = dataOrIds[0] as any;
+            if (typeof first === "object") {
+                const data = dataOrIds as TableDataType[];
+                const selectedRow = selectedRowOrStatus as number[] | undefined;
+                if (!selectedRow || selectedRow.length === 0) {
+                    showSnackbar("No invoices selected", "error");
+                    return;
+                }
+
+                selectedRowsData = data
+                    .filter((row: TableDataType, index) => selectedRow.includes(index))
+                    .map((row: TableDataType) => {
+                        const r = row as any;
+                        return r.uuid ?? r.id ?? r.invoice_id ?? null;
+                    })
+                    .filter(Boolean) as (string | number)[];
+
+                status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
+            } else {
+                const ids = dataOrIds as (string | number)[];
+                selectedRowsData = ids.filter(Boolean);
+                status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
+            }
+
+            if (selectedRowsData.length === 0) {
+                showSnackbar("No invoices selected", "error");
+                return;
+            }
+
+            await invoiceStatusUpdate({ invoice_ids: selectedRowsData, status: status ?? 0 });
+            setRefreshKey((k) => k + 1);
+            showSnackbar("Invoice status updated successfully", "success");
+        } catch (error:any) {
+            console.error("Status update failed:", error);
+            // Try to extract meaningful message from API response
+            let message = "Failed to update invoice status";
+
+            const respData = error?.response?.data ?? error?.data ?? null;
+            if (respData) {
+                if (typeof respData === "string") {
+                    message = respData;
+                } else if (respData.message) {
+                    message = respData.message;
+                } else if (respData.errors && typeof respData.errors === 'object') {
+                    // Flatten validation errors into a single string
+                    try {
+                        const vals = Object.values(respData.errors).flat();
+                        if (Array.isArray(vals) && vals.length > 0) {
+                            message = vals.join("; ");
+                        }
+                    } catch (e) {
+                        // fallback to default
+                    }
+                }
+            } else if (error?.message) {
+                message = error.message;
+            }
+
+            showSnackbar(String(message), "error");
+        }
+    };
 
     const handleChange = (name: string, value: string) => {
         setFilters((prev) => ({ ...prev, [name]: value }));
@@ -191,6 +279,64 @@ export default function CustomerInvoicePage() {
                         api: { list: fetchInvoices, search: searchInvoices,filterBy: filterBy, },
                         header: {
                             title: "Customer Invoices",
+                             threeDot: [
+                                {
+                                    icon: "gala:file-document",
+                                    label: "Export CSV",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => exportFile('csv'),
+                                },
+                                {
+                                    icon: "gala:file-document",
+                                    label: "Export Excel",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => exportFile('xlsx'),
+
+                                },
+                
+                 {
+                                    icon: "lucide:radio",
+                                    label: "Inactive",
+                                    // showOnSelect: true,
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("1") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if(!status.includes(currentStatus)){
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].uuid;
+                                        })
+                                        statusUpdate(ids, Number(0));
+                                    },
+                                },
+                                {
+                                    icon: "lucide:radio",
+                                    label: "Active",
+                                    // showOnSelect: true,
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("0") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if(!status.includes(currentStatus)){
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].uuid;
+                                        })
+                                        statusUpdate(ids, Number(1));
+                                    },
+                                },
+              ],
                             columnFilter: true,
                              filterByFields: [
                                 {
@@ -231,56 +377,10 @@ export default function CustomerInvoicePage() {
                                 },
                                 
                             ],
-                            wholeTableActions: [
-                              <div key={0} className="flex gap-[12px] relative">
-                                  <DismissibleDropdown
-                                      isOpen={showDropdown}
-                                      setIsOpen={setShowDropdown}
-                                      button={
-                                          <BorderIconButton icon="ic:sharp-more-vert" />
-                                      }
-                                      dropdown={
-                                          <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                                              <CustomDropdown>
-                                                  {dropdownDataList.map(
-                                                      (link, idx) => (
-                                                          <div
-                                                              key={idx}
-                                                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                          >
-                                                              <Icon
-                                                                  icon={
-                                                                      link.icon
-                                                                  }
-                                                                  width={
-                                                                      link.iconWidth
-                                                                  }
-                                                                  className="text-[#717680]"
-                                                              />
-                                                              <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                  {
-                                                                      link.label
-                                                                  }
-                                                              </span>
-                                                          </div>
-                                                      )
-                                                  )}
-                                              </CustomDropdown>
-                                          </div>
-                                      }
-                                  />
-                              </div>
-                            ],
+                           
                             searchBar: false,
                             actions: [
-                            //   <SidebarBtn
-                            //       key={0}
-                            //       href="#"
-                            //       isActive
-                            //       leadingIcon="mdi:download"
-                            //       label="Download"
-                            //       labelTw="hidden lg:block"
-                            //   />,
+                            
                               <SidebarBtn
                                   key={1}
                                   href="/invoice/add"

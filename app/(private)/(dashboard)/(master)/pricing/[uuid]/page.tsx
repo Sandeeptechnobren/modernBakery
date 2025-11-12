@@ -14,6 +14,7 @@ import { itemList, addPricingDetail, pricingDetailById, pricingHeaderById, editP
 import CustomCheckbox from "@/app/components/customCheckbox";
 import InputFields from "@/app/components/inputFields";
 import Table from "@/app/components/customTable";
+import Loading from "@/app/components/Loading";
 import { useRouter } from "next/navigation";
 import * as yup from "yup";
 
@@ -203,7 +204,7 @@ export default function AddPricing() {
   const { showSnackbar } = useSnackbar();
   const params = useParams();
   // support routes that use either [uuid] or [id] as the segment name
-  const rawParam = (params as any)?.uuid ?? (params as any)?.id;
+  const rawParam = (typeof params === "object" && params !== null ? (params as Record<string, unknown>)?.uuid : undefined) ?? (typeof params === "object" && params !== null ? (params as Record<string, unknown>)?.id : undefined);
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
   const isEditMode = id !== undefined && id !== "add" && id !== "";
 
@@ -213,7 +214,10 @@ export default function AddPricing() {
       if (!isEditMode || !id) return;
       setLoading(true);
       try {
-        const res = await pricingHeaderById(id);
+        // Prefer the detailed endpoint for edit-mode population
+        const raw = await pricingHeaderById(id);
+  // API sometimes wraps result under `data` or returns object directly
+  const res = raw && typeof raw === "object" && "data" in raw ? (raw as { data: unknown }).data : raw;
         if (res && typeof res === "object") {
           // populate basic fields if available
           setPromotion((s) => ({
@@ -222,32 +226,118 @@ export default function AddPricing() {
             startDate: res.start_date || s.startDate,
             endDate: res.end_date || s.endDate,
             status: res.status !== undefined ? String(res.status) : s.status,
-            // note: other nested fields (orderItems, keyValue) may require mapping depending on API shape
           }));
 
-          // if API returned item ids, load item details into selectedItemDetails and keyValue
+          // Map description (array of key ids) back to checkbox labels
           try {
-            const itemIds = (res.item_id && typeof res.item_id === 'string') ? res.item_id.split(",") : (res.item || []);
-            if (Array.isArray(itemIds) && itemIds.length > 0) {
-              setKeyValue((kv) => ({ ...kv, Item: itemIds }));
-              // fetch full item details
-              const items = await itemList({ ids: itemIds });
-              if (Array.isArray(items)) setSelectedItemDetails(items as any[]);
-              else if (items && typeof items === 'object' && Array.isArray((items as any).data)) setSelectedItemDetails((items as any).data as any[]);
+            const descArr: number[] = Array.isArray((res as Record<string, unknown>).description)
+              ? ((res as Record<string, unknown>).description as unknown[]).map((d) => Number(d)).filter((n: number) => !Number.isNaN(n))
+              : [];
+
+            const selectedForCombo: { Location: string[]; Customer: string[]; Item: string[] } = {
+              Location: [],
+              Customer: [],
+              Item: [],
+            };
+
+            // initialKeys (top-level) defines the id->label mapping for checkboxes
+            initialKeys.forEach((group) => {
+              group.options.forEach((opt) => {
+                const optId = Number(opt.id);
+                if (!Number.isNaN(optId) && descArr.includes(optId)) {
+                  // push label into the corresponding group
+                  if (group.type === "Location") selectedForCombo.Location.push(opt.label);
+                  else if (group.type === "Customer") selectedForCombo.Customer.push(opt.label);
+                  else if (group.type === "Item") selectedForCombo.Item.push(opt.label);
+                }
+              });
+            });
+            // apply if anything found
+            if (
+              selectedForCombo.Location.length > 0 ||
+              selectedForCombo.Customer.length > 0 ||
+              selectedForCombo.Item.length > 0
+            ) {
+              setKeyCombo(selectedForCombo);
+            }
+
+            // Map API arrays to keyValue entries. Use a defensive mapping between labels and response fields.
+            const labelToField: Record<string, string> = {
+              Company: "company",
+              Region: "region",
+              Warehouse: "warehouse",
+              Area: "area",
+              Route: "route",
+              Channel: "outlet_channel",
+              "Customer Category": "customer_category",
+              Customer: "customer",
+              "Item Category": "item_category",
+              Item: "item",
+            };
+
+            // helper to coerce various server shapes into string id arrays
+            const toIdStrings = (val: unknown): string[] => {
+              if (val == null) return [];
+              if (Array.isArray(val)) {
+                if (val.length === 0) return [];
+                // if elements are objects, try to extract common id fields
+                if (typeof val[0] === "object") {
+                  return val.map((v) => {
+                    if (typeof v === "object" && v !== null) {
+                      const obj = v as Record<string, unknown>;
+                      return String(obj.id ?? obj.item_id ?? obj.code ?? obj.itemCode ?? obj.erp_code ?? obj.value ?? "");
+                    }
+                    return String(v);
+                  }).filter(Boolean);
+                }
+                return val.map((v) => String(v));
+              }
+              if (typeof val === "string") return val.includes(",") ? val.split(",").map((s) => s.trim()) : [val];
+              return [String(val)];
+            };
+
+            // populate keyValue for every mapped label
+            const nextKeyValue: Record<string, string[]> = {};
+            Object.keys(labelToField).forEach((label) => {
+              const field = labelToField[label];
+              const rawVal = (res as Record<string, unknown>)[field];
+              // special handling for `item` which may contain objects
+              nextKeyValue[label] = toIdStrings(rawVal);
+            });
+
+            // set keyValue in one go
+            setKeyValue((kv) => ({ ...kv, ...nextKeyValue }));
+
+            // If API returned full item objects, use them; otherwise fetch details by ids
+            const itemField = (res as Record<string, unknown>).item || nextKeyValue["Item"] || [];
+            const itemArr = (res as Record<string, unknown>).item as ItemDetail[] | undefined;
+            if (Array.isArray(itemArr) && itemArr.length > 0 && typeof itemArr[0] === "object") {
+              setSelectedItemDetails(itemArr);
+            } else if (Array.isArray(nextKeyValue["Item"]) && nextKeyValue["Item"].length > 0) {
+              // try to fetch full item objects when we only have ids
+              try {
+                const items = await itemList({ ids: nextKeyValue["Item"] });
+                if (Array.isArray(items)) setSelectedItemDetails(items as ItemDetail[]);
+                else if (items && typeof items === "object" && Array.isArray((items as Record<string, unknown>).data)) setSelectedItemDetails((items as Record<string, unknown>).data as ItemDetail[]);
+              } catch (innerErr) {
+                console.error("Failed to fetch item details for edit mode", innerErr);
+              }
             }
           } catch (innerErr) {
-            console.error('Failed to fetch item details for edit mode', innerErr);
+            console.error("Failed to map pricing detail for edit mode", innerErr);
           }
         }
       } catch (err) {
-        console.error('Failed to fetch pricing detail for edit mode', err);
-        showSnackbar('Failed to load pricing details for edit', 'error');
+        console.error("Failed to fetch pricing detail for edit mode", err);
+        showSnackbar("Failed to load pricing details for edit", "error");
       }
       setLoading(false);
     }
     fetchEditData();
   }, [isEditMode, id]);
   const [loading, setLoading] = useState(false);
+  // While loading in edit-mode, show a full-page loader until data is ready
+ 
   const validateStep = (step: number) => {
     if (step === 1) {
       return (
@@ -313,25 +403,24 @@ export default function AddPricing() {
         options: [
           { id: "1", label: "Company", isSelected: false },
           { id: "2", label: "Region", isSelected: false },
-          { id: "3", label: "Warehouse", isSelected: false },
           { id: "4", label: "Area", isSelected: false },
+          { id: "3", label: "Warehouse", isSelected: false },
           { id: "5", label: "Route", isSelected: false },
         ],
       },
       {
         type: "Customer",
         options: [
-          { id: "6", label: "Customer Type", isSelected: false },
-          { id: "7", label: "Channel", isSelected: false },
-          { id: "8", label: "Customer Category", isSelected: false },
-          { id: "9", label: "Customer", isSelected: false },
+          { id: "6", label: "Channel", isSelected: false },
+          { id: "7", label: "Customer Category", isSelected: false },
+          { id: "8", label: "Customer", isSelected: false },
         ],
       },
       {
         type: "Item",
         options: [
-          { id: "10", label: "Item Category", isSelected: false },
-          { id: "11", label: "Item", isSelected: false },
+          { id: "9", label: "Item Category", isSelected: false },
+          { id: "10", label: "Item", isSelected: false },
         ],
       },
     ];
@@ -354,25 +443,29 @@ export default function AddPricing() {
 
     // Use selected item ids from keyValue["Item"] for item and pricing
     const selectedItemIds = keyValue["Item"] || [];
+    // Build payload fields that include arrays of selected ids for each key
     const payload = {
       name: promotion.itemName,
       description, // adjust this as needed
       start_date: promotion.startDate,
       end_date: promotion.endDate,
       apply_on: 1, // static/mapped as per requirement
-      warehouse_id: "", // static, change as needed
       status: promotion.status, // or fix to 1 if static
-      company_id: "", // static, change as needed
-      region_id: "", // static, change as needed
-      area_id: "", // static, change as needed
-      route_id: "", // static, change as needed
-      item_category_id: "", // static, change as needed
-      item_id: selectedItemIds.join(","), // comma-separated string of IDs
-      customer_id: "", // static, change as needed
-      customer_category_id: "", // static, change as needed
-      outlet_channel_id: "", // static, change as needed
+      // arrays of selected ids for each key (as requested)
+      company: keyValue["Company"] || [],
+      region: keyValue["Region"] || [],
+      area: keyValue["Area"] || [],
+      warehouse: keyValue["Warehouse"] || [],
+      route: keyValue["Route"] || [],
+      outlet_channel: keyValue["Channel"] || [],
+      customer_category: keyValue["Customer Category"] || [],
+      customer: keyValue["Customer"] || [],
+      item_category: keyValue["Item Category"] || [],
+      item: selectedItemIds,
+      // keep legacy CSV field for compatibility
+      item_id: selectedItemIds.join(","),
       details: selectedItemIds.map((itemId) => {
-        // Find the matching item data
+        // Find the matching item data (same logic as itemsData builder)
         let itemData = selectedItemDetails.find(
           (item) => String(item.code || item.itemCode) === String(itemId)
         );
@@ -381,27 +474,49 @@ export default function AddPricing() {
             (opt) => String(opt.value) === String(itemId)
           );
         }
-        // Determine the item code and name
-        const itemCode = Number(itemId);
+
+        // Recreate the display itemCode string (so matching with promotion.orderItems is consistent)
+        let itemCodeStr = "";
+        if (itemData) {
+          if (itemData.code) itemCodeStr = String(itemData.code);
+          else if (itemData.itemCode) itemCodeStr = String(itemData.itemCode);
+          else if (itemData.label) {
+            const labelParts = String(itemData.label).split(" - ");
+            itemCodeStr = labelParts.length > 1 ? labelParts[0] : String(itemData.label);
+          }
+        } else {
+          itemCodeStr = String(itemId);
+        }
+
         const itemName = itemData?.name || itemData?.label || "";
-        // Find the order item for prices
-        const orderItem = promotion.orderItems.find(
-          (oi) => String(oi.itemCode) === String(itemCode)
-        );
+
+        // Find the order item for prices. Try multiple fallbacks: match by itemCode (string), or by numeric id
+        const orderItem = promotion.orderItems.find((oi) => {
+          return (
+            String(oi.itemCode) === String(itemCodeStr) ||
+            String(oi.itemCode) === String(itemId) ||
+            String((oi as any).item_id) === String(itemId)
+          );
+        });
+
+        // Convert stored price strings to numbers (if present) and fallback sensibly
+        const buom = orderItem?.buom_ctn_price ?? orderItem?.price ?? "";
+        const auom = orderItem?.auom_pc_price ?? "";
+
         return {
           name: itemName,
-          item_id: itemCode,
-          buom_ctn_price: orderItem?.buom_ctn_price ?? orderItem?.price ?? 0,
-          auom_pc_price: orderItem?.auom_pc_price ?? 0, // fallback/defaults as needed
-          status: 1, // static, or dynamic if needed
+          item_id: Number(itemId),
+          buom_ctn_price: buom !== undefined && buom !== null && buom !== "" ? Number(buom) : 0,
+          auom_pc_price: auom !== undefined && auom !== null && auom !== "" ? Number(auom) : 0,
+          status: 1,
         };
       }),
     };
 
     try {
       await pricingValidationSchema.validate(payload, { abortEarly: false });
-      setLoading(true);
-      const res = await addPricingDetail(payload);
+  setLoading(true);
+  const res = isEditMode && id ? await editPricingDetail(id, payload) : await addPricingDetail(payload);
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit pricing", "error");
       } else {
@@ -424,7 +539,7 @@ export default function AddPricing() {
         Array.isArray((err as yup.ValidationError).inner)
       ) {
         const formErrors: Record<string, string> = {};
-        (err as yup.ValidationError).inner.forEach((e: yup.ValidationError) => {
+        (err as yup.ValidationError).inner.forEach((e) => {
           if (e.path) formErrors[e.path] = e.message;
         });
         setErrors(formErrors);
@@ -808,7 +923,13 @@ export default function AddPricing() {
         //     </div>
         //   );
         // };
-
+ if (isEditMode && loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[280px]">
+        <Loading />
+      </div>
+    );
+  }
         return (
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
             <h2 className="text-xl font-semibold mb-6">Pricing</h2>
@@ -890,7 +1011,7 @@ export default function AddPricing() {
                         key: "itemCode",
                         label: "Item Code",
                         render: (row) => (
-                          <span className="text-[14px]">
+                          <span className="font-semibold text-[#181D27] text-[14px]">
                             {row.itemCode || "-"}
                           </span>
                         ),
@@ -898,11 +1019,8 @@ export default function AddPricing() {
                       {
                         key: "itemName",
                         label: "Item Name",
-                        render: (row) => (
-                          <span className="font-semibold text-[#181D27] text-[14px]">
-                            {row.itemName || "-"}
-                          </span>
-                        ),
+                        render: (row) => {return row.itemName || "-";}
+                        
                       },
                       {
                         key: "price",
