@@ -228,6 +228,8 @@ export default function CreateUpdate({
                             label="Cancel"
                             labelTw="px-[20px]"
                             onClick={onClose}
+            //   onClick={() => router.push("/settings/manageCompany/salesman-type")}
+
                         />
                         <Button type="submit" disabled={!formik.isValid}>
                             Save

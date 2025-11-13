@@ -236,6 +236,8 @@ export default function AddEditLocation() {
               <Link href="/settings/location">
                 <button
                   type="button"
+              onClick={() => router.push("/settings/location")}
+                  
                   className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
                   Cancel

@@ -16,7 +16,7 @@ import Loading from "@/app/components/Loading";
 
 // ✅ Yup Schema - Only Code and Name
 const BrandSchema = Yup.object().shape({
-  code: Yup.string().required("Brand Code is required."),
+  osa_code: Yup.string().required("Brand Code is required."),
   name: Yup.string().required("Brand Name is required."),
 });
 
@@ -30,14 +30,14 @@ export default function AddEditBrand() {
   const [code, setCode] = useState("");
   const codeGeneratedRef = useRef(false);
   const [initialValues, setInitialValues] = useState({
-    code: "",
+    osa_code: "",
     name: "",
   });
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
   type BrandFormValues = {
-    code: string;
+    osa_code: string;
     name: string;
   };
 
@@ -53,7 +53,7 @@ export default function AddEditBrand() {
           console.log("Brand fetch response:", res);
           if (res?.data) {
             setInitialValues({
-              code: res.data.code || "",
+              osa_code: res.data.osa_code || "",
               name: res.data.name || "",
             });
           } else {
@@ -78,7 +78,7 @@ export default function AddEditBrand() {
             console.log("Code generation response:", res);
             if (res?.code) {
               setCode(res.code);
-              setInitialValues((prev) => ({ ...prev, code: res.code }));
+              setInitialValues((prev) => ({ ...prev, osa_code: res.code }));
             }
             if (res?.prefix) {
               setPrefix(res.prefix);
@@ -99,7 +99,7 @@ export default function AddEditBrand() {
   ) => {
     try {
       const payload = {
-        code: values.code,
+        osa_code: values.osa_code,
         name: values.name,
       };
 
@@ -111,7 +111,7 @@ export default function AddEditBrand() {
         // Save the final code
         try {
           await saveFinalCode({ 
-            reserved_code: values.code, 
+            reserved_code: values.osa_code, 
             model_name: "brand" 
           });
         } catch (e) {
@@ -179,13 +179,13 @@ export default function AddEditBrand() {
                       <InputFields
                         required
                         label="Brand Code"
-                        value={values.code}
-                        onChange={(e) => setFieldValue("code", e.target.value)}
+                        value={values.osa_code}
+                        onChange={(e) => setFieldValue("osa_code", e.target.value)}
                         disabled={isEditMode || (codeMode === 'auto' && !isEditMode)}
                         placeholder="Enter brand code"
                       />
                       <ErrorMessage
-                        name="code"
+                        name="osa_code"
                         component="span"
                         className="text-xs text-red-500"
                       />
@@ -204,12 +204,12 @@ export default function AddEditBrand() {
                           title="Brand Code"
                           prefix={prefix}
                           setPrefix={setPrefix}
-                          onSave={(mode, code) => {
+                          onSave={(mode, generatedCode) => {
                             setCodeMode(mode);
-                            if (mode === 'auto' && code) {
-                              setFieldValue('code', code);
+                            if (mode === 'auto' && generatedCode) {
+                              setFieldValue('osa_code', generatedCode);
                             } else if (mode === 'manual') {
-                              setFieldValue('code', '');
+                              setFieldValue('osa_code', '');
                             }
                           }}
                         />

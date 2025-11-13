@@ -37,11 +37,11 @@ const dropdownDataList: DropdownItem[] = [
 
 const columns = [
   {
-    key: "code",
+    key: "osa_code",
     label: "Brand Code",
     render: (row: TableDataType) => (
       <span className="font-semibold text-[#181D27] text-[14px]">
-        {row.code}
+        {row.osa_code}
       </span>
     ),
   },
@@ -53,7 +53,7 @@ const columns = [
 export default function Country() {
   interface CountryItem {
     id?: number | string;
-    code?: string;
+    osa_code?: string;
     name?: string;
     // currency?: string;
   }

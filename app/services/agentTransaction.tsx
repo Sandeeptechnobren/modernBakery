@@ -77,6 +77,16 @@ export const newCustomerList = async (params?: Params) => {
   }
 };
 
+export const exportNewCustomer = async () => {
+  try {
+    const res = await API.get(`/api/agent_transaction/new-customer/export`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
 export const addApprovedCustomer = async (body: object) => {
   try {
     const res = await API.post(`/api/agent_transaction/new-customer/add`, body);
@@ -85,14 +95,14 @@ export const addApprovedCustomer = async (body: object) => {
     return handleError(error);
   }
 };
-export const exportNewCustomerData = async (body: object) => {
-  try {
-    const res = await API.post(`/api/agent_transaction/new-customer/export`, body);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
+// export const exportNewCustomerData = async (body: object) => {
+//   try {
+//     const res = await API.post(`/api/agent_transaction/new-customer/export`, body);
+//     return res.data;
+//   } catch (error: unknown) {
+//     return handleError(error);
+//   }
+// };
 
 export const newCustomerStatusUpdate = async (body: object) => {
   try {
@@ -276,6 +286,15 @@ export const invoiceByUuid = async (uuid: string) => {
 export const exportInvoice = async (params?:Params) => {
   try {
     const res = await API.get(`/api/agent_transaction/invoices/export`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const exportOrderInvoice = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/orders/exportall`,{params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

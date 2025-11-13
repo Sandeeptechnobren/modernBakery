@@ -36,52 +36,13 @@ interface CustomerSubCategory {
 }
 
 export default function CustomerSubCategoryPage() {
-  const [subCategories, setSubCategories] = useState<CustomerSubCategory[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState<CustomerSubCategory | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const pageSize = 10;
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-
-  // ✅ Fetch sub-categories
-  useEffect(() => {
-    const fetchSubCategories = async () => {
-      try {
-        const res = await customerSubCategoryList(); // API call
-        const formatted: CustomerSubCategory[] = (res.data || []).map(
-          (s: CustomerSubCategoryAPI) => ({
-            id: s.id,
-            customer_category_name:s.customer_category?.customer_category_name || "N/A",
-            customer_sub_category_code: s.customer_sub_category_code,
-            customer_sub_category_name: s.customer_sub_category_name,
-            status: s.status,
-          })
-        );
-        setSubCategories(formatted);
-      } catch (error) {
-        console.error("Failed to fetch sub-categories ❌", error);
-        showSnackbar("Failed to load customer sub-categories ❌", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSubCategories();
-  }, [showSnackbar]);
-
-  // ✅ Delete handler
- 
-
-  
-  const tableData: TableDataType[] = subCategories.map((c) => ({
-    id: String(c.id), // Table expects string
-    customer_category_name: c.customer_category_name,
-    customer_sub_category_code: c.customer_sub_category_code,
-    customer_sub_category_name: c.customer_sub_category_name,
-    status: c.status === 1 ? "Active" : "Inactive", // Convert to proper string based on number value
-  }));
 
   const columns = [
     { key: "customer_sub_category_code", label: "Sub-Category Code",
@@ -111,8 +72,6 @@ export default function CustomerSubCategoryPage() {
         ),
     },
   ];
-
-  if (loading) return <Loading />;
 
   return (
     <>
@@ -159,7 +118,6 @@ export default function CustomerSubCategoryPage() {
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={tableData}
           config={{
             header: {
               searchBar: false,
@@ -175,7 +133,7 @@ export default function CustomerSubCategoryPage() {
                 />,
               ],
             },
-            pageSize: 5,
+            pageSize: pageSize,
             localStorageKey: "customer-sub-category-table",
             footer: { nextPrevBtn: true, pagination: true },
             columns,
@@ -192,6 +150,48 @@ export default function CustomerSubCategoryPage() {
               },
               
             ],
+            api: {
+              list: async (pageNo: number, pageSize: number) => {
+                try {
+                  const res = await customerSubCategoryList({ page: String(pageNo), limit: String(pageSize) });
+                  const formatted: CustomerSubCategory[] = (res.data || []).map(
+                    (s: CustomerSubCategoryAPI) => ({
+                      id: s.id,
+                      customer_category_name: s.customer_category?.customer_category_name || "N/A",
+                      customer_sub_category_code: s.customer_sub_category_code,
+                      customer_sub_category_name: s.customer_sub_category_name,
+                      status: s.status,
+                    })
+                  );
+                  
+                  const tableData: TableDataType[] = formatted.map((c) => ({
+                    id: String(c.id),
+                    customer_category_name: c.customer_category_name,
+                    customer_sub_category_code: c.customer_sub_category_code,
+                    customer_sub_category_name: c.customer_sub_category_name,
+                    status: c.status === 1 ? "Active" : "Inactive",
+                  }));
+
+                  return {
+                    data: tableData,
+                    currentPage: res.pagination?.page || pageNo,
+                    pageSize: pageSize,
+                    total: res.pagination?.totalPages || 1,
+                    totalRecords: res.pagination?.totalRecords || tableData.length,
+                  };
+                } catch (error) {
+                  console.error("Failed to fetch sub-categories ❌", error);
+                  showSnackbar("Failed to load customer sub-categories ❌", "error");
+                  return {
+                    data: [],
+                    currentPage: 1,
+                    pageSize: pageSize,
+                    total: 0,
+                    totalRecords: 0,
+                  };
+                }
+              },
+            },
           }}
         />
       </div>

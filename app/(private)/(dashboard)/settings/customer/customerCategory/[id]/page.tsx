@@ -42,7 +42,7 @@ export default function AddCustomerCategory() {
   const id = params?.id
     ? (Array.isArray(params.id) ? params.id[0] : (params.id as string))
     : "";
-  const isEditMode = Boolean(id);
+  const isEditMode = Boolean(id && id !== "add");
 
   useEffect(() => {
     const fetchOutletChannels = async () => {
@@ -267,9 +267,9 @@ export default function AddCustomerCategory() {
             Cancel
           </button>
           <SidebarBtn
-            label={isEditMode ? "Update" : "Submit"}
+            label={isEditMode ?(formik.isSubmitting ?"Updating":"Update") : (formik.isSubmitting?"Submitting...":"Submit")}
             isActive={true}
-            leadingIcon={isEditMode ? "mdi:content-save-edit" : "mdi:check"}
+            leadingIcon={ "mdi:check"}
             type="submit"
             disabled={formik.isSubmitting}
           />

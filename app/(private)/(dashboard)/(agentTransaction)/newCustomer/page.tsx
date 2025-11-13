@@ -10,7 +10,7 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import { downloadFile} from "@/app/services/allApi";
-import { newCustomerList,exportNewCustomerData,newCustomerStatusUpdate } from "@/app/services/agentTransaction";
+import { newCustomerList,newCustomerStatusUpdate ,exportNewCustomer} from "@/app/services/agentTransaction";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -274,23 +274,20 @@ export default function NewCustomer() {
         [selectedSubCategoryId, warehouseId, channelId, routeId, approvalStatus, setLoading]
     );
 
-    const exportfile = async (ids: string[] | undefined) => {
-        if(!ids) return;
-        try {
-            const response = await exportNewCustomerData({
-                ids: ids
-            }); 
-            if (response && typeof response === 'object' && response.url) {
-                await downloadFile(response.url);
-                showSnackbar("File downloaded successfully ", "success");
-            } else {
-                showSnackbar("Failed to get download URL", "error");
-            }
-        } catch (error) {
-            showSnackbar("Failed to download warehouse data", "error");
-        } finally {
-        }
-    }
+ const exportFile = async () => {
+              try {
+                const response = await exportNewCustomer(); 
+                if (response && typeof response === 'object' && response.download_url) {
+                 await downloadFile(response.download_url);
+                  showSnackbar("File downloaded successfully ", "success");
+                } else {
+                  showSnackbar("Failed to get download URL", "error");
+                }
+              } catch (error) {
+                showSnackbar("Failed to download warehouse data", "error");
+              } finally {
+              }
+            };
 
     const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {
         if (!ids || ids.length === 0) return;
@@ -362,26 +359,19 @@ export default function NewCustomer() {
                         header: {
                             title: "Approval Customers",
                             threeDot: [
-                                {
-                                    icon: "gala:file-document",
-                                    label: "Export CSV",
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const ids = selectedRow?.map((id) => {
-                                            return data[id].id;
-                                        })
-                                        exportfile(ids);
-                                    }
-                                },
-                                {
-                                    icon: "gala:file-document",
-                                    label: "Export Excel",
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const ids = selectedRow?.map((id) => {
-                                            return data[id].id;
-                                        })
-                                        exportfile(ids);
-                                    }
-                                },
+                               {
+                  icon: "gala:file-document",
+                  label: "Export CSV",
+                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: exportFile,
+                },
+                {
+                  icon: "gala:file-document",
+                  label: "Export Excel",
+                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: exportFile,
+
+                },
                             ],
 
                             searchBar: false,

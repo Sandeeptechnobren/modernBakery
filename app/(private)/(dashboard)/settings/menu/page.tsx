@@ -122,7 +122,7 @@ export default function Page() {
                 <Table
                     refreshKey={refreshKey}
                     config={{
-                        api: { list: fetchData, search: searchList },
+                        api: { list: fetchData, },
                         header: {
                             title: "Menus",
                             wholeTableActions: [
@@ -166,7 +166,7 @@ export default function Page() {
                                     />
                                 </div>,
                             ],
-                            searchBar: true,
+                            searchBar: false,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn

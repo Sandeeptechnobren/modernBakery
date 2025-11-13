@@ -6,79 +6,81 @@ import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
+import Loading from "@/app/components/Loading";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Loading from "@/app/components/Loading";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
-import { updateOutletChannel, addOutletChannel, getOutletChannelById } from "@/app/services/allApi";
-import { genearateCode, saveFinalCode } from "@/app/services/allApi";
-
+import {
+  addCustomerType,
+  getCustomerTypeById,
+  updateCustomerType,
+  genearateCode,
+  saveFinalCode,
+} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
-type OutletChannel = {
-  outlet_channel_code: string;
-  outlet_channel: string;
+interface CustomerTypeFormValues {
+  code: string;
+  name: string;
   status: string; // "active" | "inactive"
-};
+}
 
-  export default function AddEditOutletChannel() {
-
-const { showSnackbar } = useSnackbar();
+export default function AddCustomerTypePage() {
+  const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
-  const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
-  const [prefix, setPrefix] = useState('');
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Prevent double call of genearateCode in add mode
+  const [isOpen, setIsOpen] = useState(false);
   const codeGeneratedRef = useRef(false);
 
   // ✅ Formik setup
-  const formik = useFormik<OutletChannel>({
+  const formik = useFormik<CustomerTypeFormValues>({
     initialValues: {
-      outlet_channel_code: "",
-      outlet_channel: "",
-      status: "active", // default
+      code: "",
+      name: "",
+      status: "active",
     },
     validationSchema: Yup.object({
-      outlet_channel_code: Yup.string().required("Outlet Channel Code is required."),
-      outlet_channel: Yup.string().required("Outlet Channel Name is required."),
-      status: Yup.string().required("Status is required."),
+      code: Yup.string().required("Customer Type Code is required"),
+      name: Yup.string().required("Name is required"),
+      status: Yup.string().required("Status is required"),
     }),
     onSubmit: async (values, { setSubmitting }) => {
       try {
         const payload = {
-          outlet_channel_code: values.outlet_channel_code,
-          outlet_channel: values.outlet_channel,
+          code: values.code,
+          name: values.name,
           status: values.status === "active" ? 1 : 0,
         };
+
         let res;
         if (isEditMode && params?.id && params.id !== "add") {
-          res = await updateOutletChannel(String(params.id), payload);
+          res = await updateCustomerType(String(params.id), payload);
         } else {
-          res = await addOutletChannel(payload);
-          if (!res?.error) {
-            try {
-              await saveFinalCode({ reserved_code: values.outlet_channel_code, model_name: "outlet_channel" });
-            } catch (e) {
-              // Optionally handle error, but don't block success
-            }
-          }
+          res = await addCustomerType(payload);
         }
+
         if (res.error) {
           showSnackbar(res.data?.message || "Failed to submit form", "error");
         } else {
           showSnackbar(
             res.message ||
               (isEditMode
-                ? "Channel Updated Successfully"
-                : "Channel Created Successfully"),
+                ? "Customer Type Updated Successfully"
+                : "Customer Type Created Successfully"),
             "success"
           );
-          router.push("/settings/outlet-channel");
+          // Finalize the reserved code only after successful add
+          if (!isEditMode || params?.id === "add") {
+            try {
+              await saveFinalCode({ reserved_code: values.code, model_name: "customer_types" });
+            } catch (e) {}
+          }
+          router.push("/settings/customer/customerType");
         }
       } catch (error) {
         showSnackbar("Something went wrong", "error");
@@ -95,16 +97,16 @@ const { showSnackbar } = useSnackbar();
       setLoading(true);
       (async () => {
         try {
-          const res = await getOutletChannelById(String(params.id));
+          const res = await getCustomerTypeById(String(params.id));
           if (res?.data) {
             formik.setValues({
-              outlet_channel_code: res.data.outlet_channel_code || "",
-              outlet_channel: res.data.outlet_channel || "",
+              code: res.data.code || "",
+              name: res.data.name || "",
               status: res.data.status === 1 ? "active" : "inactive",
             });
           }
         } catch (error) {
-          console.error("Failed to fetch outlet channel", error);
+          console.error("Failed to fetch customer type", error);
         } finally {
           setLoading(false);
         }
@@ -112,16 +114,9 @@ const { showSnackbar } = useSnackbar();
     } else if (!isEditMode && !codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
       (async () => {
-        const res = await genearateCode({ model_name: "outlet_channel" });
+        const res = await genearateCode({ model_name: "customer_types" });
         if (res?.code) {
-          formik.setFieldValue("outlet_channel_code", res.code);
-        }
-        if (res?.prefix) {
-          setPrefix(res.prefix);
-        } else if (res?.code) {
-          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
-          const match = res.prefix;
-          if (match) setPrefix(prefix);
+          formik.setFieldValue("code", res.code);
         }
       })();
     }
@@ -133,69 +128,56 @@ const { showSnackbar } = useSnackbar();
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
         <div className="flex items-center gap-[16px]">
-          <Link href="/settings/outlet-channel">
+          <Link href="/settings/customer/customerType">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
-            {isEditMode ? "Update Channel" : "Add New Channel"}
+            {isEditMode ? "Update Customer Type" : "Add Customer Type"}
           </h1>
         </div>
       </div>
 
       {/* Form */}
       {loading ? (
-        <Loading />
+        <Loading></Loading>
       ) : (
         <form onSubmit={formik.handleSubmit}>
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">
-              Outlet Channel Details
+              Customer Type Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Outlet Channel Code (pattern-matched UI) */}
+              {/* Customer Type Code (pattern-matched UI) */}
               <div className="flex items-start gap-2 max-w-[406px]">
                 <InputFields
-                  label="Outlet Channel Code"
-                  name="outlet_channel_code"
-                  value={formik.values.outlet_channel_code}
+                  label="Customer Type Code"
+                  name="code"
+                  value={formik.values.code}
                   onChange={formik.handleChange}
-                  disabled={codeMode === 'auto'}
+                  disabled
+                  error={formik.touched.code && formik.errors.code}
                 />
                 {!isEditMode && (
-                  <>
+                  <>    
                     <IconButton
                       bgClass="white"
                        className="  cursor-pointer text-[#252B37] pt-12"
                       icon="mi:settings"
                       onClick={() => setIsOpen(true)}
                     />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Outlet Channel Code"
-                      prefix={prefix}
-                      setPrefix={setPrefix}
-                      onSave={(mode, code) => {
-                        setCodeMode(mode);
-                        if (mode === 'auto' && code) {
-                          formik.setFieldValue('outlet_channel_code', code);
-                        } else if (mode === 'manual') {
-                          formik.setFieldValue('outlet_channel_code', '');
-                        }
-                      }}
-                    />
+                    <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Customer Type Code" />
                   </>
                 )}
               </div>
-              {/* Outlet Channel Name */}
+              {/* Name */}
               <InputFields
                 type="text"
-                name="outlet_channel"
-                label="Outlet Channel Name"
-                value={formik.values.outlet_channel}
+                name="name"
+                label="Customer Name"
+                value={formik.values.name}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                error={formik.touched.outlet_channel && formik.errors.outlet_channel}
+                error={formik.touched.name && formik.errors.name}
               />
               {/* Status */}
               <InputFields
@@ -219,8 +201,7 @@ const { showSnackbar } = useSnackbar();
             <button
               className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
               type="button"
-              // onClick={() => formik.resetForm()}
-              onClick={() => router.push("/settings/outlet-channel")}
+              onClick={() => router.back()}
             >
               Cancel
             </button>

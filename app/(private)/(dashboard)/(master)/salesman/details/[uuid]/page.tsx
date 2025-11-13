@@ -16,7 +16,7 @@ import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import Table, { configType, listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import KeyValueData from "@/app/components/keyValueData";
 import StatusBtn from "@/app/components/statusBtn2";
-import { exportInvoice } from "@/app/services/agentTransaction";
+import { exportInvoice, exportOrderInvoice } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import Popup from "@/app/components/popUp";
 
@@ -28,10 +28,16 @@ interface Salesman {
   osa_code?: string;
   name?: string;
   vehicle_chesis_no?: string;
+
   salesman_type?: {
     id?: number;
     salesman_type_code?: string;
     salesman_type_name?: string;
+  };
+  project_type?: {
+           "id": number,
+            "code": string,
+            "name": string
   };
   designation?: string;
   route?: {
@@ -290,7 +296,21 @@ export default function Page() {
     }
   };
 
+  const exportOrderFile = async (uuid: string, format: string) => {
+    try {
+      const response = await exportOrderInvoice({ uuid, format }); // send proper body object
 
+      if (response && typeof response === "object" && response.download_url) {
+        await downloadFile(response.download_url);
+        showSnackbar("File downloaded successfully", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      showSnackbar("Failed to download data", "error");
+    }
+  };
 
   useEffect(() => {
     if (!uuid) return;
@@ -483,6 +503,10 @@ const filterBy = useCallback(
                 key: "Salesman Type",
                 value: salesman?.salesman_type?.salesman_type_name || "-",
               },
+              {
+                key: "Project Type",
+                value: `${salesman?.project_type?.code} - ${salesman?.project_type?.name}` || "-",
+              },
               { key: "Designation", value: salesman?.designation || "-" },
               { key: "Contact No", value: salesman?.contact_no || "-" },
               {
@@ -623,7 +647,7 @@ const filterBy = useCallback(
                   {
   icon: "material-symbols:download",
   onClick: (data: TableDataType) => {
-    exportFile(data.uuid, "pdf"); // or "excel", "csv" etc.
+    exportOrderFile(data.uuid, "pdf"); // or "excel", "csv" etc.
   },
 }
                 ],

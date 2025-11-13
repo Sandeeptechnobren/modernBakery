@@ -52,7 +52,7 @@ export default function CreateUpdate({
         .required("Status is required"),
       category_code: Yup.string().required("Code is required"),
     }),
-    validateOnChange: false, // ✅ prevent showing errors without interaction
+    validateOnChange: false,
     validateOnBlur: false,
     onSubmit: async (values) => {
       if (type === "create") {
@@ -60,28 +60,23 @@ export default function CreateUpdate({
           values.categoryName,
           values.status as 0 | 1
         );
-
         if (res.error) return showSnackbar(res.data.message, "error");
-        else {
-          await saveFinalCode({
-            reserved_code: values.category_code,
-            model_name: "item_categories",
-          });
-          showSnackbar(
-            res.message || "Item Category Created Successfully",
-            "success"
-          );
-          onClose();
-          onRefresh();
-        }
+        await saveFinalCode({
+          reserved_code: values.category_code,
+          model_name: "item_categories",
+        });
+        showSnackbar(
+          res.message || "Item Category Created Successfully",
+          "success"
+        );
+        onClose();
+        onRefresh();
       }
 
       if (type === "update") {
         const payload: { category_name?: string; status?: 0 | 1 } = {};
 
-        if (
-          values.categoryName !== updateItemCategoryData?.category_name
-        ) {
+        if (values.categoryName !== updateItemCategoryData?.category_name) {
           payload.category_name = values.categoryName;
         }
 
@@ -96,16 +91,13 @@ export default function CreateUpdate({
             values.status as 0 | 1
           );
 
-          if (res.error)
-            return showSnackbar(res.data.message, "error");
-          else {
-            showSnackbar(
-              res.message || "Item Category Updated Successfully",
-              "success"
-            );
-            onClose();
-            onRefresh();
-          }
+          if (res.error) return showSnackbar(res.data.message, "error");
+          showSnackbar(
+            res.message || "Item Category Updated Successfully",
+            "success"
+          );
+          onClose();
+          onRefresh();
         }
       }
     },
@@ -206,26 +198,6 @@ export default function CreateUpdate({
 
                 </div>
 
-                <InputFields
-                    required
-                    label="Status"
-                    name="status"
-                    value={String(formik.values.status)}
-                    options={[
-                        { value: "1", label: "Active" },
-                        { value: "0", label: "Inactive" },
-                    ]}
-                    onChange={(e) => formik.setFieldValue("status", e.target.value)}
-                    type="radio"
-                    error={
-                        formik.touched.status && formik.errors.status
-                            ? formik.errors.status
-                            : false
-                    }
-                />
-                {formik.touched.status && formik.errors.status ? (
-                    <span className="text-xs text-red-500">{formik.errors.status}</span>
-                ) : null}
                 <InputFields
                     required
                     label="Status"

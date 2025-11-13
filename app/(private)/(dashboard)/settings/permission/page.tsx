@@ -10,7 +10,7 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { permissionGlobalSearch, permissionList } from "@/app/services/allApi";
+import { permissionList } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
@@ -70,35 +70,12 @@ export default function Permissions() {
         setLoading(true);
     }, []);
 
-    const searchList = useCallback(
-        async (search: string, pageSize: number = 5): Promise<listReturnType> => {
-            setLoading(true);
-            const listRes = await permissionGlobalSearch({
-                search,
-                per_page: pageSize.toString(),
-            });
-            setLoading(false);
-            if (listRes.error) {
-                showSnackbar(listRes.data.message || "Failed to Search", "error");
-                throw new Error("Failed to Search");
-            } else {
-                return {
-                    data: listRes.data || [],
-                    total: listRes.pagination.totalPages || 1,
-                    currentPage: listRes.pagination.page || 1,
-                    pageSize: listRes.pagination.limit || pageSize,
-                };
-            }
-        },
-        []
-    );
-
     return (
         <>
             <div className="h-[calc(100%-60px)] pb-[22px]">
                 <Table
                     config={{
-                        api: { list: fetchData, search: searchList },
+                        api: { list: fetchData },
                         header: {
                             title: "Permissions",
                             wholeTableActions: [
@@ -142,7 +119,7 @@ export default function Permissions() {
                                     />
                                 </div>,
                             ],
-                            searchBar: true,
+                            searchBar: false,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn
