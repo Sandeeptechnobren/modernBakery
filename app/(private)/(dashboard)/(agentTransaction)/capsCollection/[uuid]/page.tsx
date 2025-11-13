@@ -19,7 +19,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import * as yup from "yup";
 import { warehouseListGlobalSearch, getCompanyCustomers, agentCustomerList, itemGlobalSearch } from "@/app/services/allApi";
 interface Uom {
@@ -62,6 +62,15 @@ interface Item {
   uoms?: Uom[];
 }
 
+// Option type returned by item search
+interface ItemOption {
+  value: string;
+  label: string;
+  code?: string;
+  name?: string;
+  uoms?: Uom[];
+}
+
 
 
 export default function AddEditCapsCollection() {
@@ -94,8 +103,12 @@ export default function AddEditCapsCollection() {
     customer: false,
     item: false,
   });
-    const [orderData, setOrderData] = useState<FormData[]>([]);
-    const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
+  const [orderData, setOrderData] = useState<FormData[]>([]);
+  const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
+  // store full item records returned by search for later UOM lookup
+  const [fullItemsData, setFullItemsData] = useState<Record<string, { id: string; item_code?: string; code?: string; name?: string; uoms?: Uom[] }>>({});
+  const itemSearchCacheRef = useRef<Record<string, { ts: number; options: ItemOption[] }>>({});
+  const lastItemSearchRef = useRef<string>("");
   
   const [rowUomOptions, setRowUomOptions] = useState<
     Record<string, { value: string; label: string; price?: string }[]>
@@ -128,21 +141,27 @@ const handleCustomerSearch = async (searchText: string, warehouseId: string, cus
       response = await agentCustomerList({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
     }
     const data = Array.isArray(response?.data) ? response.data : [];
-    return data.map((customer: any) => {
+    return data.map((customer: Record<string, unknown>) => {
       // Always include contact_no in the returned option
+      const id = String(customer['id'] ?? "");
+      const osa = String(customer['osa_code'] ?? "");
+      const contactNo = String(customer['contact_no'] ?? "");
       if (customerType === "1") {
+        const businessName = String(customer['business_name'] ?? "");
         return {
-          value: String(customer.id),
-          label: `${customer.osa_code || ""} - ${customer.business_name || ""}`.trim(),
-          name: customer.business_name || "",
-          contact_no: customer.contact_no || "",
+          value: id,
+          label: `${osa || ""} - ${businessName || ""}`.trim(),
+          name: businessName,
+          contact_no: contactNo,
         };
       } else {
+        const outletName = String(customer['outlet_name'] ?? "");
+        const customerName = String(customer['customer_name'] ?? customer['name'] ?? "");
         return {
-          value: String(customer.id),
-          label: `${customer.osa_code || ""} - ${customer.outlet_name || ""}`,
-          name: customer.outlet_name || customer.customer_name || customer.name || '',
-          contact_no: customer.contact_no || "",
+          value: id,
+          label: `${osa || ""} - ${outletName || ""}`,
+          name: outletName || customerName,
+          contact_no: contactNo,
         };
       }
     });
@@ -151,22 +170,64 @@ const handleCustomerSearch = async (searchText: string, warehouseId: string, cus
   }
 };
 
-const handleItemSearch = async (searchText: string) => {
-  if (!searchText || searchText.trim().length < 1) return [];
+const handleItemSearch = useCallback(async (searchText: string) => {
+  const qRaw = (searchText || "").trim();
+  if (qRaw.length < 1) return [];
+  const q = qRaw.toLowerCase();
+
+  // Return cached results if available (30s TTL)
+  const cached = itemSearchCacheRef.current[q];
+  const now = Date.now();
+  if (cached && now - cached.ts < 30_000) return cached.options;
+
+  if (lastItemSearchRef.current === q && cached) return cached.options;
+
   try {
-    const response = await itemGlobalSearch({ query: searchText });
+    const response = await itemGlobalSearch({ query: q });
     const data = Array.isArray(response?.data) ? response.data : [];
-    return data.map((item: Item) => ({
-      value: String(item.id),
-      label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
-      code: item.item_code || item.code,
-      name: item.name,
-      uoms: item.uom || item.uoms || [],
-    }));
-  } catch {
+
+    const itemsMap: Record<string, { id: string; code?: string; name?: string; uoms?: Uom[] }> = {};
+    const options: ItemOption[] = data.map((rawItem: unknown) => {
+      const raw = rawItem as Record<string, unknown>;
+      const id = String(raw['id'] ?? "");
+      const code = (raw['item_code'] as string) ?? (raw['code'] as string) ?? undefined;
+      const name = (raw['name'] as string) ?? (raw['item_name'] as string) ?? "";
+
+      // normalize uoms from different shapes
+      const rawUoms = Array.isArray(raw['item_uoms'])
+        ? (raw['item_uoms'] as unknown[])
+        : Array.isArray(raw['uom'])
+        ? (raw['uom'] as unknown[])
+        : Array.isArray(raw['uoms'])
+        ? (raw['uoms'] as unknown[])
+        : [];
+
+      const uoms: Uom[] = Array.isArray(rawUoms)
+        ? rawUoms.map((u) => {
+            const uu = u as Record<string, unknown>;
+            return {
+              id: String(uu['id'] ?? uu['uom_id'] ?? ""),
+              name: String(uu['name'] ?? uu['uom_name'] ?? uu['label'] ?? ""),
+              price: String(uu['price'] ?? uu['uom_price'] ?? uu['unit_price'] ?? "0"),
+            } as Uom;
+          })
+        : [];
+
+      if (id) itemsMap[id] = { id, code, name, uoms };
+
+      return { value: id, label: `${code || ""} - ${name}`.trim(), code, name, uoms };
+    });
+
+    if (Object.keys(itemsMap).length > 0) setFullItemsData((prev) => ({ ...prev, ...itemsMap }));
+
+    itemSearchCacheRef.current[q] = { ts: now, options };
+    lastItemSearchRef.current = q;
+    return options;
+  } catch (e) {
+    console.error("Error searching items:", e);
     return [];
   }
-};
+}, []);
 
   const [tableData, setTableData] = useState<TableDataType[]>([
     {
@@ -205,32 +266,32 @@ const handleItemSearch = async (searchText: string) => {
           }
 
           if (Array.isArray(data?.details)) {
-            const loadedRows = data.details.map((detail: any, idx: number) => {
+            const loadedRows = data.details.map((detail: Record<string, unknown>, idx: number) => {
               const rowId = String(idx + 1);
-              const selectedItem = itemOptions.find(
-                (item) => item.value === String(detail.item_id)
-              );
-              let uomOpts: any[] = [];
-              if (selectedItem?.uoms?.length) {
-                uomOpts = selectedItem.uoms.map((uom: any) => ({
-                  value: uom.id || "",
-                  label: uom.name || "",
-                  price: uom.price || "0",
-                }));
+              const itemId = String(detail['item_id'] ?? "");
+              const selectedItem = itemOptions.find((item) => item.value === itemId);
+              let uomOpts: { value: string; label: string; price?: string }[] = [];
+              if (selectedItem?.uoms && Array.isArray(selectedItem.uoms) && selectedItem.uoms.length) {
+                uomOpts = selectedItem.uoms.map((uom) => {
+                  const uu = uom as Record<string, unknown>;
+                  return {
+                    value: String(uu['id'] ?? ""),
+                    label: String(uu['name'] ?? ""),
+                    price: String(uu['price'] ?? "0"),
+                  };
+                });
                 setRowUomOptions((prev) => ({ ...prev, [rowId]: uomOpts }));
               }
 
-              const selectedUom = uomOpts.find(
-                (u) => u.value === String(detail.uom_id)
-              );
+              const selectedUom = uomOpts.find((u) => u.value === String(detail['uom_id'] ?? ""));
               const price = selectedUom?.price || "0";
-              const qty = String(detail.collected_quantity || 0);
+              const qty = String(detail['collected_quantity'] ?? 0);
               const total = String((parseFloat(price) || 0) * (parseFloat(qty) || 0));
 
               return {
                 id: rowId,
-                item: String(detail.item_id),
-                uom: String(detail.uom_id),
+                item: itemId,
+                uom: String(detail['uom_id'] ?? ""),
                 collectQty: qty,
                 price,
                 total,
@@ -397,7 +458,7 @@ const handleItemSearch = async (searchText: string) => {
         );
         router.push("/capsCollection");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof yup.ValidationError) {
         const formErrors: Record<string, string> = {};
         err.inner.forEach((e) => {
@@ -527,20 +588,74 @@ const handleItemSearch = async (searchText: string) => {
                     placeholder="Search item..."
                     initialValue={row.item}
                     onSearch={handleItemSearch}
-                    onSelect={(option: { value: string; uoms?: Uom[] }) => {
+                    onSelect={async (option: { value: string; uoms?: Uom[] }) => {
                       handleTableChange(row.id, "item", option.value);
-                      if (option.uoms && option.uoms.length > 0) {
-                        const uomOpts = option.uoms.map((u: Uom) => ({
-                          value: u.id || "",
-                          label: u.name || "",
-                          price: u.price || "0",
-                        }));
+
+                      // Prefer uoms included in option
+                      const optUoms = option.uoms && option.uoms.length ? option.uoms : undefined;
+                      if (optUoms) {
+                        const uomOpts = optUoms.map((u: Uom) => ({ value: String(u.id ?? ""), label: String(u.name ?? ""), price: String(u.price ?? "0") }));
                         setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
                         const first = uomOpts[0];
                         if (first) {
                           handleTableChange(row.id, "uom", first.value);
                           handleTableChange(row.id, "price", first.price || "0");
                         }
+                        return;
+                      }
+
+                      // Next try fullItemsData populated by search
+                      const cached = fullItemsData[option.value];
+                      if (cached && Array.isArray(cached.uoms) && cached.uoms.length > 0) {
+                        const uomOpts = cached.uoms.map((u: Uom) => ({ value: String(u.id ?? ""), label: String(u.name ?? ""), price: String(u.price ?? "0") }));
+                        setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
+                        const first = uomOpts[0];
+                        if (first) {
+                          handleTableChange(row.id, "uom", first.value);
+                          handleTableChange(row.id, "price", first.price || "0");
+                        }
+                        return;
+                      }
+
+                      // Fallback: fetch item details from API
+                      try {
+                        setSkeleton((s) => ({ ...s, item: true }));
+                        const res = await itemList({ id: option.value });
+                        const data = res?.data ?? res;
+                        const itemRec = (Array.isArray(data) ? (data[0] as Record<string, unknown>) : (data as Record<string, unknown>)) || {};
+                        const rawUoms = Array.isArray(itemRec['item_uoms'])
+                          ? (itemRec['item_uoms'] as unknown[])
+                          : Array.isArray(itemRec['uom'])
+                          ? (itemRec['uom'] as unknown[])
+                          : Array.isArray(itemRec['uoms'])
+                          ? (itemRec['uoms'] as unknown[])
+                          : [];
+                        const uomOpts = Array.isArray(rawUoms)
+                          ? rawUoms.map((uu) => {
+                              const u = uu as Record<string, unknown>;
+                              return {
+                                value: String(u['id'] ?? u['uom_id'] ?? ""),
+                                label: String(u['name'] ?? u['uom_name'] ?? u['label'] ?? ""),
+                                price: String(u['price'] ?? u['uom_price'] ?? u['unit_price'] ?? "0"),
+                              };
+                            })
+                          : [];
+
+                        if (uomOpts.length > 0) {
+                          setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
+                          const first = uomOpts[0];
+                          if (first) {
+                            handleTableChange(row.id, "uom", first.value);
+                            handleTableChange(row.id, "price", first.price || "0");
+                          }
+                        } else {
+                          setRowUomOptions((prev) => ({ ...prev, [row.id]: [] }));
+                        }
+                      } catch (e) {
+                        console.error("Failed to fetch item details for UOMs", e);
+                        setRowUomOptions((prev) => ({ ...prev, [row.id]: [] }));
+                      } finally {
+                        setSkeleton((s) => ({ ...s, item: false }));
                       }
                     }}
                     onClear={() => {
