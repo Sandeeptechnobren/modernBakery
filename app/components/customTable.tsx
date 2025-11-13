@@ -36,7 +36,8 @@ export type configType = {
         search?: (
             search: string,
             pageSize: number,
-            columnName?: string
+            columnName?: string,
+            pageNo?: number,
         ) => Promise<listReturnType> | listReturnType;
         list: (
             pageNo: number,
@@ -115,7 +116,8 @@ export type configType = {
                 search?: (
                     search: string,
                     pageSize: number,
-                    columnName?: string
+                    columnName?: string,
+                    pageNo?: number,
                 ) => Promise<listReturnType> | listReturnType
             ) => React.ReactNode;
         };
@@ -371,16 +373,25 @@ function TableHeader() {
             searchBarValue,
             config.pageSize || defaultPageSize
         );
-        const resolvedResult =
-            result instanceof Promise ? await result : result;  
+        const resolvedResult = result instanceof Promise ? await result : result;  
         const { data, pageSize, total, currentPage } = resolvedResult;
         console.log(resolvedResult);
         setTableDetails({
             data,
             total: total || 0,
-            currentPage:    currentPage - 1 || 0,
-            pageSize: pageSize || defaultPageSize,
+            currentPage: currentPage - 1 || 0,
+            pageSize: pageSize || defaultPageSize
         });
+        // persist global search state so pagination can reuse it
+        try {
+            if (searchBarValue && String(searchBarValue).trim().length > 0) {
+                (window as any).__customTableSearch = { applied: true, term: searchBarValue };
+            } else {
+                (window as any).__customTableSearch = { applied: false, term: "" };
+            }
+        } catch (err) {
+            // ignore in non-browser environments
+        }
     }
 
     return (
@@ -1060,6 +1071,52 @@ function TableFooter() {
         } catch (err) {
             // ignore if event dispatch fails in unusual environments
         }
+        // If a global search is active, prefer search-based paging
+        try {
+            const globalSearch = (typeof window !== 'undefined') ? (window as any).__customTableSearch : undefined;
+            if (globalSearch && globalSearch.applied && api?.search) {
+                const term = globalSearch.term ?? "";
+                const res = await api.search(term, pageSize, undefined, pageNo + 1);
+                const resolvedResult = res instanceof Promise ? await res : res;
+                const { data, total, currentPage } = resolvedResult;
+                setTableDetails({
+                    ...tableDetails,
+                    data,
+                    currentPage: currentPage - 1,
+                    total,
+                    pageSize,
+                });
+                return;
+            }
+        } catch (err) {
+            console.warn('Search-based pagination failed', err);
+        }
+
+        // If filters are applied (persisted globally) and filter API exists, call filter API for the page
+        try {
+            const globalFilter = (typeof window !== 'undefined') ? (window as any).__customTableFilter : undefined;
+            if (globalFilter && globalFilter.applied && api?.filterBy) {
+                // reuse payload and request the requested page; add page if backend expects it
+                const payload = { ...(globalFilter.payload || {}) } as Record<string, any>;
+                // include page param (1-based) so backend can return correct page
+                payload.page = pageNo + 1;
+                const res = await api.filterBy(payload, pageSize);
+                const resolvedResult = res instanceof Promise ? await res : res;
+                const { data, total, currentPage } = resolvedResult;
+                setTableDetails({
+                    ...tableDetails,
+                    data,
+                    currentPage: currentPage - 1,
+                    total,
+                    pageSize,
+                });
+                return;
+            }
+        } catch (err) {
+            // if filter-based paging fails, fall back to list or client-side
+            console.warn('Filter-based pagination failed', err);
+        }
+
         if (api?.list) {
             const result = await api.list(pageNo + 1, pageSize);
             const resolvedResult =
@@ -1262,6 +1319,13 @@ function FilterBy() {
                     }
                 });
 
+                // persist applied filter payload globally so pagination can reuse it
+                try {
+                    (window as any).__customTableFilter = { applied: true, payload: payloadForApi };
+                } catch (err) {
+                    // ignore environments without window
+                }
+
                 const res = await config.api.filterBy(payloadForApi, config.pageSize || defaultPageSize);
                 const resolved = res instanceof Promise ? await res : res;
                 // prefer totalRecords when provided by API
@@ -1327,6 +1391,9 @@ function FilterBy() {
                         payloadForApi[k] = v as string;
                     }
                 });
+                // clear global applied filter flag
+                try { (window as any).__customTableFilter = { applied: false, payload: {} }; } catch (err) { }
+
                 const res = await config.api.filterBy(payloadForApi, config.pageSize || defaultPageSize);
                 const resolved = res instanceof Promise ? await res : res;
                 setTableDetails({

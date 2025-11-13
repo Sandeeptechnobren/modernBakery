@@ -24,6 +24,7 @@ interface DropdownItem {
 
 interface LocalTableDataType {
   id?: number | string;
+  uuid?: string;
   erp_code?: string;
   code?: string;
   name?: string;
@@ -80,6 +81,8 @@ const columns = [
   {
     key: "status",
     label: "Status",
+    isSortable: true,
+    showByDefault: true,
     render: (row: LocalTableDataType) => {
       const isActive =
         String(row.status) === "1" ||
@@ -134,9 +137,9 @@ export default function Item() {
   const searchItems = useCallback(
     async (
       query: string,
-      page: number = 1,
+      pageSize: number = 50,
       columnName?: string,
-      pageSize: number = 50
+      page: number = 1,
     ): Promise<listReturnType> => {
       try {
         setLoading(true);
@@ -147,10 +150,10 @@ export default function Item() {
         }));
 
         return {
-          data,
-          total: res.pagination.last_page,
-          currentPage: res.pagination.current_page,
-          pageSize: res.pagination.per_page,
+          data: data || [],
+          total: res.pagination.last_page || 1,
+          currentPage: res.pagination.current_page || page,
+          pageSize: res.pagination.per_page || pageSize,
         };
       } catch (error) {
         setLoading(false);
@@ -280,12 +283,12 @@ export default function Item() {
               {
                 icon: "lucide:eye",
                 onClick: (row: LocalTableDataType) =>
-                  router.push(`/item/details/${row.id}`),
+                  router.push(`/item/details/${row.uuid}`),
               },
               {
                 icon: "lucide:edit-2",
                 onClick: (row: LocalTableDataType) =>
-                  router.push(`/item/${row.id}`),
+                  router.push(`/item/${row.uuid}`),
               },
             ],
             pageSize: 50,

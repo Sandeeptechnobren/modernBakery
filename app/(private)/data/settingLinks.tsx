@@ -40,27 +40,27 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "mdi:account-tie",
             iconColor: "text-green-500",
           },
-          {
-            isActive: false,
-            href: "/settings/permission",
-            label: "Permissions",
-            leadingIcon: "mdi:lock-check",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
-            href: "/settings/menu",
-            label: "Menus",
-            leadingIcon: "duo-icons:menu",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
-            href: "/settings/submenu",
-            label: "Sub Menus",
-            leadingIcon: "ci:arrow-sub-down-right",
-            iconColor: "text-green-500",
-          }
+          // {
+          //   isActive: false,
+          //   href: "/settings/permission",
+          //   label: "Permissions",
+          //   leadingIcon: "mdi:lock-check",
+          //   iconColor: "text-green-500",
+          // },
+          // {
+          //   isActive: false,
+          //   href: "/settings/menu",
+          //   label: "Menus",
+          //   leadingIcon: "duo-icons:menu",
+          //   iconColor: "text-green-500",
+          // },
+          // {
+          //   isActive: false,
+          //   href: "/settings/submenu",
+          //   label: "Sub Menus",
+          //   leadingIcon: "ci:arrow-sub-down-right",
+          //   iconColor: "text-green-500",
+          // }
         ],
       },
       {

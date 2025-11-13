@@ -74,9 +74,6 @@ export const tabList = [
 ];
 
 export default function Page() {
-  const params = useParams();
-
-
   const [uomList, setUomList] = useState<Item[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const { id, tabName } = useParams();
@@ -261,7 +258,7 @@ export default function Page() {
                 config={{
                   api: {
                     list: async (page: number = 1, pageSize: number = 50) => {
-                      const res = await itemSales(String(id), { page: page.toString(), per_page: pageSize.toString() });
+                      const res = await itemSales(String(item?.id), { page: page.toString(), per_page: pageSize.toString() });
                       if (res.error) {
                         showSnackbar(res.data?.message || "Unable to fetch sales data", "error");
                         throw new Error(res.data?.message || "Unable to fetch sales data");
@@ -294,7 +291,7 @@ export default function Page() {
                 config={{
                   api: {
                     list: async (page: number = 1, pageSize: number = 50) => {
-                      const res = await itemReturn(String(id), { page: page.toString(), per_page: pageSize.toString() });
+                      const res = await itemReturn(String(item?.id), { page: page.toString(), per_page: pageSize.toString() });
                       if (res.error) {
                         showSnackbar(res.data?.message || "Unable to fetch Return data", "error");
                         throw new Error(res.data?.message || "Unable to fetch Return data");
