@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import Logo from "@/app/components/logo";
 import ContainerCard from "@/app/components/containerCard";
+import ImagePreviewModal from "@/app/components/ImagePreviewModal";
 
 interface PaymentData {
   osa_code: string;
@@ -29,7 +30,7 @@ const PaymentDetails = () => {
   const [data, setData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const API_BASE_URL = "https://api.coreexl.com/osa_productionV2/public";
 
   useEffect(() => {
@@ -162,39 +163,32 @@ const PaymentDetails = () => {
           <Section title="Receipt Information">
             <Grid>
               <Field label="Receipt Number" value={data.recipt_no || "N/A"} />
-              <Field label="Receipt Date" value={formatDate(data.recipt_date)} />
-              {data.recipt_image && !imageError && (
-              <button
-                onClick={() => setShowImageModal(true)}
-                className="px-4 py-2 m-3 rounded-lg cursor-pointer underline hover:text-red-500 transition"
-              >
-                Recipt Image
-              </button>
-          )}
+              <Field
+                label="Receipt Date"
+                value={formatDate(data.recipt_date)}
+              />
+              <div className="flex items-center justify-start">
+                <button
+                  type="button"
+                  onClick={() => setIsImageModalOpen(true)}
+                  className="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50"
+                  aria-label="View receipt image"
+                >
+                  <span className="text-sm font-medium">View Image</span>
+                  <Icon icon="mdi:eye" width={18} />
+                </button>
+              </div>
             </Grid>
           </Section>
         </div>
       </div>
 
-      {/* Image Popup Modal */}
-      {showImageModal && data.recipt_image && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="relative bg-white p-4 rounded-2xl shadow-lg max-w-lg w-full">
-            <button
-              onClick={() => setShowImageModal(false)}
-              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
-            >
-              <Icon icon="lucide:x" width={24} />
-            </button>
-            <img
-              src={data.recipt_image}
-              alt="Receipt"
-              onError={() => setImageError(true)}
-              className="w-full h-100 rounded-xl object-contain"
-            />
-          </div>
-        </div>
-      )}
+      <ImagePreviewModal
+        images={data?.recipt_image ? [data.recipt_image] : []}
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+      />
+
     </>
   );
 };
@@ -227,3 +221,5 @@ const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <p className="mt-1 text-base font-medium text-gray-900">{value}</p>
   </div>
 );
+
+// Add modal outside helpers so it renders at top level of the component

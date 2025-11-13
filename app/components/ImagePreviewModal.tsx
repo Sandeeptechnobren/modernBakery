@@ -53,7 +53,7 @@ export default function ImagePreviewModal({
             {/* Close Button (top-right) */}
             <button
               onClick={onClose}
-              className="absolute flex items-center bg-gray-200 rounded-bl-full p-5 pt-3 pr-3 top-0 right-0 text-black hover:border-red-500 hover:bg-red-500 hover:text-white hover:cursor-pointer transition"
+              className="absolute flex items-center rounded-full p-5 pt-3 pr-3 top-0 right-0 text-black hover:border-red-500 hover:text-red-500 hover:cursor-pointer transition"
             >
               <Icon icon="mdi:close" width={30} />
             </button>

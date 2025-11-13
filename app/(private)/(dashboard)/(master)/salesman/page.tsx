@@ -108,7 +108,7 @@ const SalesmanPage = () => {
       document.body.removeChild(link);
 
       showSnackbar(
-        `Download started for ${fileType.toUpperCase()} file`,
+        `File Downloaded Successfully`,
         "success"
       );
     } catch (error) {
