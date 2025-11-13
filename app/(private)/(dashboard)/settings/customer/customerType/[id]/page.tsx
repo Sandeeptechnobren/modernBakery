@@ -207,10 +207,11 @@ export default function AddCustomerTypePage() {
             </button>
 
             <SidebarBtn
-              label="Submit"
+              label={isEditMode ? (formik.isSubmitting ? "Updating..." : "Update") : (formik.isSubmitting ? "Submitting..." : "Submit")}
               isActive={true}
               leadingIcon="mdi:check"
               type="submit"
+              disabled={formik.isSubmitting}
             />
           </div>
         </form>

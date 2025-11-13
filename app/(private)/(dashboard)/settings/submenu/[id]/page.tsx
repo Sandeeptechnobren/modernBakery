@@ -285,15 +285,18 @@ export default function AddShelfDisplay() {
 
             <div className="flex justify-end gap-4 mt-6">
               <button
-                type="reset"
-                onClick={() => router.back()}
+                // type="reset"
+                 type="button"
+                // onClick={() => router.back()}
+              onClick={() => router.push("/settings/submenu")}
+
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Cancel
               </button>
               <SidebarBtn
                 type="submit"
-                label={isSubmitting ? "Submitting..." : (isEditMode ? "Update" : "Submit")}
+                label={ isEditMode ? (isSubmitting?"Updating...":"Update" ): (isSubmitting?"Submitting...":"Submit")}
                 isActive
                 leadingIcon="mdi:check"
                 disabled={isSubmitting}

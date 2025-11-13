@@ -245,7 +245,9 @@ export default function AddEditRegion() {
             </div>
             <div className="flex justify-end gap-4 mt-6">
               <button
-                type="reset"
+              onClick={() => router.push("/settings/region")}
+ type="button"
+                // type="reset"
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Cancel

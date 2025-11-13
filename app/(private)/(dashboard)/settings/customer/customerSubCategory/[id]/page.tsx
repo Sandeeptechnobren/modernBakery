@@ -318,13 +318,15 @@ export default function AddEditCustomerSubCategory() {
             <div className="flex justify-end gap-4 mt-6 pr-0">
               <button
                 type="button"
-                onClick={() => router.back()}
+                // onClick={() => router.back()}
+              onClick={() => router.push("/settings/customer/customerSubCategory")}
+
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Cancel
               </button>
               <SidebarBtn
-                label={isEditMode ? (isSubmitting ? "Updating..." : "Update") : (isSubmitting ? "Submitting..." : "Submit")}
+                label={isEditMode ? (isSubmitting ? (isSubmitting?"Updating..." :"Update" ): (isSubmitting?"Submiting...":"Submit")) : (isSubmitting ? "Submitting..." : "Submit")}
                 isActive={true}
                 leadingIcon="mdi:check"
                 type="submit"

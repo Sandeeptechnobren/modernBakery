@@ -108,7 +108,7 @@ export default function Roles() {
                     },
                     header: {
                         title: "Roles",
-                        searchBar: true,
+                        searchBar: false,
                         columnFilter: true,
                         actions: [
                             <SidebarBtn
