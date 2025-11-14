@@ -239,7 +239,7 @@ const OverallPerformance: React.FC = () => {
         {/* CARDS (dynamic from array) */}
         <div className="mt-6 grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 items-center md:gap-2.5 gap-4">
           {cards.map((card, index) => (
-            <div className="flex items-center rounded-lg bg-white text-gray-700 shadow-md border border-gray-200 p-2" >
+            <div key={index} className="flex items-center rounded-lg bg-white text-gray-700 shadow-md border border-gray-200 p-2" >
               <div style={{ background: card.color }} className="p-2 rounded-lg"> <Icon icon={card.icon} width="48" height="48" /> </div>
 
               <div
