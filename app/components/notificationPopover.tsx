@@ -61,7 +61,7 @@ export default function NotificationPopover({
 
             return (
               <div className={`absolute z-60 ${dropdownClassName} ${positionClass}`}>
-                <CustomDropdown>
+                <CustomDropdown mode="dark">
                   <div className={`${bgClassName} p-2`}> 
                     <h4 className="font-semibold mb-2">Notifications</h4>
                     <div className="flex flex-col gap-2 max-h-64 overflow-auto">
@@ -71,7 +71,7 @@ export default function NotificationPopover({
                       {items.map((it) => (
                         <div
                           key={it.id || it.title}
-                          className="px-2 py-2 border rounded hover:bg-gray-50 cursor-pointer"
+                          className="px-2 py-2 bg-gray-100 rounded cursor-pointer"
                           onClick={() => {
                             it.onClick && it.onClick();
                             setOpen(false);

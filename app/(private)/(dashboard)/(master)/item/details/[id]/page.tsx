@@ -88,7 +88,7 @@ export default function Page() {
     setActiveTab(tabList[idx].key);
   };
 
-  const title = "Product Details";
+  const title = "Item Details";
   const backBtnUrl = "/item";
 
   useEffect(() => {
@@ -260,7 +260,7 @@ export default function Page() {
                     list: async (page: number = 1, pageSize: number = 50) => {
                       const res = await itemSales(String(item?.id), { page: page.toString(), per_page: pageSize.toString() });
                       if (res.error) {
-                        showSnackbar(res.data?.message || "Unable to fetch sales data", "error");
+                        // showSnackbar(res.data?.message || "Unable to fetch sales data", "error");
                         throw new Error(res.data?.message || "Unable to fetch sales data");
                       }
                       return {
@@ -293,7 +293,7 @@ export default function Page() {
                     list: async (page: number = 1, pageSize: number = 50) => {
                       const res = await itemReturn(String(item?.id), { page: page.toString(), per_page: pageSize.toString() });
                       if (res.error) {
-                        showSnackbar(res.data?.message || "Unable to fetch Return data", "error");
+                        // showSnackbar(res.data?.message || "Unable to fetch Return data", "error");
                         throw new Error(res.data?.message || "Unable to fetch Return data");
                       }
                       return {

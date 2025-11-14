@@ -131,7 +131,7 @@ export default function TopBar({
                                 />
                             }
                             dropdown={
-                                <div className="absolute w-[200px] top-[40px] right-0 z-60">
+                                <div className="absolute w-[250px] top-[40px] right-0 z-60">
                                     <CustomDropdown
                                         data={[
                                             {

@@ -10,15 +10,15 @@ import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import * as Yup from "yup";
 import {
-  addWarehouse,
-  getWarehouseById,
-  updateWarehouse,
-  genearateCode,
-  saveFinalCode,
+    addWarehouse,
+    getWarehouseById,
+    updateWarehouse,
+    genearateCode,
+    saveFinalCode,
 } from "@/app/services/allApi";
 import StepperForm, {
-  StepperStep,
-  useStepperForm,
+    StepperStep,
+    useStepperForm,
 } from "@/app/components/stepperForm";
 import { useEffect, useState, useRef } from "react";
 import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
@@ -63,20 +63,14 @@ const validationSchema = Yup.object({
     warehouse_name: Yup.string().required('Warehouse Name is required'),
     owner_name: Yup.string().required('Owner Name is required'),
     company: Yup.string().required('Company is required'),
-    agreed_stock_capital: Yup.string(),
-    // agent_customer: Yup.string().when('warehouse_type', {
-    //     is: (val: any) => String(val) === 'company_outlet',
-    //     then: (schema: any) => schema.required('Agent Customer is required'),
-    //     otherwise: (schema: any) => schema.notRequired(),
-    // }),
-    agent_customer:Yup.string().required('Agent Customer is required'),
+    agreed_stock_capital: Yup.string().required('Agreed Stock Capital is required'),
+    agent_customer: Yup.string().required('Agent Customer is required'),
     warehouse_manager: Yup.string().required('Warehouse Manager is required'),
     owner_number: Yup.string(),
     warehouse_manager_contact: Yup.string(),
     owner_email: Yup.string(),
     location: Yup.string().required('Location is required'),
     city: Yup.string().required('City is required'),
-
     town_village: Yup.string(),
     street: Yup.string(),
     landmark: Yup.string(),
@@ -104,7 +98,7 @@ const stepSchemas = [
         agent_customer: validationSchema.fields.agent_customer,
         warehouse_manager: validationSchema.fields.warehouse_manager,
     }),
-    
+
     Yup.object().shape({
         location: validationSchema.fields.location,
         city: validationSchema.fields.city,
@@ -130,7 +124,7 @@ export default function AddEditWarehouse() {
         { id: 4, label: "EFRIS Information" }
     ];
 
-    const [selectedCountry, setSelectedCountry] = useState<{code: string; flag: string; name: string;}>({
+    const [selectedCountry, setSelectedCountry] = useState<{ code: string; flag: string; name: string; }>({
         name: "Uganda",
         code: "+256",
         flag: "🇺🇬"
@@ -196,7 +190,7 @@ export default function AddEditWarehouse() {
                         company: String(data?.get_company?.id || ''),
                         agreed_stock_capital: String(data?.agreed_stock_capital || ''),
                         tin_no: String(data?.tin_no || ''),
-                        agent_customer: String(data?.get_company_customer?.id )|| '',
+                        agent_customer: String(data?.get_company_customer?.id) || '',
                         warehouse_manager: data?.warehouse_manager || '',
                         ownerContactCountry: data?.ownerContactCountry || '',
                         owner_number: data?.owner_number || '',
@@ -216,7 +210,7 @@ export default function AddEditWarehouse() {
                         password: data?.password || '',
                         is_efris: String(data?.is_efris || ''),
                         is_branch: String(data?.is_branch || ''),
-                        status:"1"
+                        status: "1"
                     });
                 }
             } else if (!isEditMode && !codeGeneratedRef.current) {
@@ -272,8 +266,8 @@ export default function AddEditWarehouse() {
                 is_branch: isBranchPayload,
             } as Record<string, unknown>;
 
-      const p12 = values.p12_file;
-      let res;
+            const p12 = values.p12_file;
+            let res;
 
             if (p12 instanceof File) {
                 const form = new FormData();
@@ -293,7 +287,7 @@ export default function AddEditWarehouse() {
                 } else {
                     res = await addWarehouse(form as unknown as object);
                     if (!res?.error) {
-                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) {}
+                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) { }
                     }
                 }
             } else {
@@ -303,7 +297,7 @@ export default function AddEditWarehouse() {
                 } else {
                     res = await addWarehouse(jsonPayload);
                     if (!res?.error) {
-                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) {}
+                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) { }
                     }
                 }
             }
@@ -389,68 +383,67 @@ export default function AddEditWarehouse() {
         }
     };
 
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-2">
-          <Link href="/warehouse">
-            <Icon icon="lucide:arrow-left" width={24} />
-          </Link>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Warehouse" : "Add Warehouse"}
-          </h1>
-        </div>
-      </div>
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-        enableReinitialize
-      >
-        {({
-          values,
-          setFieldValue,
-          errors,
-          touched,
-          handleSubmit: formikSubmit,
-          setErrors,
-          setTouched,
-          isSubmitting,
-        }) => (
-          <Form>
-            <StepperForm
-              steps={steps.map((step) => ({
-                ...step,
-                isCompleted: isStepCompleted(step.id),
-              }))}
-              currentStep={currentStep}
-              onStepClick={() => {}}
-              onBack={prevStep}
-              onNext={() =>
-                handleNext(values, {
-                  setErrors,
-                  setTouched,
-                } as unknown as FormikHelpers<FormValues>)
-              }
-              onSubmit={() => formikSubmit()}
-              showSubmitButton={isLastStep}
-              showNextButton={!isLastStep}
-              nextButtonText="Save & Next"
-              
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2">
+                    <Link href="/warehouse">
+                        <Icon icon="lucide:arrow-left" width={24} />
+                    </Link>
+                    <h1 className="text-xl font-semibold text-gray-900">
+                        {isEditMode ? "Update Warehouse" : "Add Warehouse"}
+                    </h1>
+                </div>
+            </div>
+            <Formik
+                initialValues={initialValues}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}
+                enableReinitialize
+            >
+                {({
+                    values,
+                    setFieldValue,
+                    errors,
+                    touched,
+                    handleSubmit: formikSubmit,
+                    setErrors,
+                    setTouched,
+                    isSubmitting,
+                }) => (
+                    <Form>
+                        <StepperForm
+                            steps={steps.map((step) => ({
+                                ...step,
+                                isCompleted: isStepCompleted(step.id),
+                            }))}
+                            currentStep={currentStep}
+                            onStepClick={() => { }}
+                            onBack={prevStep}
+                            onNext={() =>
+                                handleNext(values, {
+                                    setErrors,
+                                    setTouched,
+                                } as unknown as FormikHelpers<FormValues>)
+                            }
+                            onSubmit={() => formikSubmit()}
+                            showSubmitButton={isLastStep}
+                            showNextButton={!isLastStep}
+                            nextButtonText="Save & Next"
                             submitButtonText={
                                 isSubmitting
                                     ? (isEditMode ? "Updating..." : "Submitting...")
                                     : isEditMode
-                                    ? "Update"
-                                    : "Submit"
+                                        ? "Update"
+                                        : "Submit"
                             }
-                            
-            >
-              {renderStepContent(values, setFieldValue, errors, touched)}
-            </StepperForm>
-          </Form>
-        )}
-      </Formik>
-    </div>
-  );
+
+                        >
+                            {renderStepContent(values, setFieldValue, errors, touched)}
+                        </StepperForm>
+                    </Form>
+                )}
+            </Formik>
+        </div>
+    );
 }

@@ -63,7 +63,6 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
             <Main horizontalSidebar={horizontalSidebar} isOpen={isOpen}>
                 <AllDropdownListDataProvider>
                     <LoadingProvider >
-
                         {children}
                     </LoadingProvider>
                 </AllDropdownListDataProvider>

@@ -100,7 +100,7 @@ export default function Snackbar({ message, type, open, onClose }: SnackbarProps
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className={`fixed top-6 left-1/2 transform -translate-x-1/2 px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 ${colors[type]} z-50`}
+          className={`fixed top-6 right-6 transform px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 ${colors[type]} z-50`}
         >
           <Icon icon={icons[type]} width={24} height={24} />
           <span className="font-medium">{message}</span>
