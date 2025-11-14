@@ -212,7 +212,7 @@ export default function AddEditCustomerSubCategory() {
           <Form onSubmit={handleSubmit}>
             <ContainerCard>
               <h2 className="text-lg font-medium text-gray-800 mb-4">
-                Customer Sub Category Details
+                Customer Sub Category 
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -326,7 +326,7 @@ export default function AddEditCustomerSubCategory() {
                 Cancel
               </button>
               <SidebarBtn
-                label={isEditMode ? (isSubmitting ? (isSubmitting?"Updating..." :"Update" ): (isSubmitting?"Submiting...":"Submit")) : (isSubmitting ? "Submitting..." : "Submit")}
+                label={isEditMode ? (isSubmitting?"Updating..." :"Update" ): (isSubmitting?"Submiting...":"Submit")}
                 isActive={true}
                 leadingIcon="mdi:check"
                 type="submit"

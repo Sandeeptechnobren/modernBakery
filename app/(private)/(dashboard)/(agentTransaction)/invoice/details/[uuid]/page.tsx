@@ -289,7 +289,12 @@ const hasValue = (value: any) => {
               <div className="text-primary-bold text-[14px] md:text-right">
                 {hasValue(deliveryData?.invoice_date) && deliveryData?.invoice_date && (
                   <div>
-                    Invoice Date: <span className="font-bold">{new Date(deliveryData.invoice_date).toLocaleDateString()}</span>
+                    Invoice Date: <span className="font-bold">
+                      {(() => {
+                        const date = new Date(deliveryData.invoice_date);
+                        return !isNaN(date.getTime()) ? date.toLocaleDateString('en-GB') : deliveryData.invoice_date;
+                      })()}
+                    </span>
                   </div>
                 )}
                 {(hasValue(deliveryData?.route_code) || hasValue(deliveryData?.route_name)) && (

@@ -231,8 +231,8 @@ export default function CreateUpdate({
             //   onClick={() => router.push("/settings/manageCompany/salesman-type")}
 
                         />
-                        <Button type="submit" disabled={!formik.isValid}>
-                            Save
+                        <Button type="submit" disabled={!formik.isValid || formik.isSubmitting}>
+                            {type === "update" ? (formik.isSubmitting ? "Updating..." : "Update") : (formik.isSubmitting ? "Submitting..." : "Submit")}
                         </Button>
                     </div>
                 </div>

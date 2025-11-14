@@ -274,7 +274,7 @@ export default function AddBankPage() {
             </button>
 
             <SidebarBtn
-              label={formik.isSubmitting ? (formik.isSubmitting?"Updating...":"Update") : (formik.isSubmitting?"Submitting":"Submit")}
+              label={isEditMode ? (formik.isSubmitting?"Updating...":"Update") : (formik.isSubmitting?"Submitting":"Submit")}
               isActive={!formik.isSubmitting}
               leadingIcon="mdi:check"
               type="submit"

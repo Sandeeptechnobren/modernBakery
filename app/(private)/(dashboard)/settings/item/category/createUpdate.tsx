@@ -129,21 +129,12 @@ export default function CreateUpdate({
                 {type === "create"
                     ? "Create Item Category"
                     : "Update Item Category"}
-            </h1>
+            </h1> 
             <form
                 onSubmit={formik.handleSubmit}
                 className="mt-[20px] space-y-5"
             >
-                {type === "update" && (
-                    <>
-                        <InputFields
-                            value={updateItemCategoryData?.id?.toString() || ""}
-                            label="Category Id"
-                            disabled={true}
-                            onChange={() => { }}
-                        />
-                    </>
-                )}
+               
 
                 {/* Item Category Code (auto-generated, disabled, with settings icon/popup) */}
                 <div className="flex items-start gap-2 max-w-[406px]">
@@ -234,8 +225,8 @@ export default function CreateUpdate({
               isActive={true}
               buttonTw="h-10"
               type="submit"
-              disabled={!formik.isValid}
-              label="Submit"
+              disabled={!formik.isValid || formik.isSubmitting}
+              label={type === "update" ? (formik.isSubmitting ? "Updating..." : "Update") : (formik.isSubmitting ? "Submitting..." : "Submit")}
               labelTw="px-[20px]"
             />
           </div>

@@ -165,7 +165,7 @@ export default function AddCustomerCategory() {
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
-            {isEditMode ? "Edit Customer Category" : "Add Customer Category"}
+            {isEditMode ? "Update  Customer Category" : "Add Customer Category"}
           </h1>
         </div>
       </div>
@@ -173,7 +173,7 @@ export default function AddCustomerCategory() {
       <form onSubmit={formik.handleSubmit}>
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">
-            {isEditMode ? "Edit Customer Category" : "Customer Category Details"}
+            {isEditMode ? " Customer Category" : "Customer Category"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Customer Category Code (auto-generated, disabled, with settings icon/popup) */}

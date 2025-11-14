@@ -503,8 +503,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
     value: String(c.id ?? ""),
     label:
-      c.item_code && c.name
-        ? `${c.item_code} - ${c.name}`
+      (c.item_code || (c as any).code) && c.name
+        ? `${c.item_code || (c as any).code} - ${c.name}`
         : c.name ?? "",
     uom: Array.isArray((c as any).uom)
       ? (c as any).uom.map((u: any) => ({

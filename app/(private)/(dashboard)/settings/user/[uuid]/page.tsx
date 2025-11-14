@@ -18,7 +18,7 @@ import { Form, Formik, FormikErrors, FormikHelpers, FormikTouched } from "formik
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import * as Yup from "yup";
-import { CustomTableSkelton } from "../../../(master)/warehouse/details/[id]/page";
+// import { CustomTableSkelton } from "@/app/components/customSkeleton";
 import Skeleton from "@mui/material/Skeleton";
 
 interface User {
@@ -71,6 +71,7 @@ export default function UserAddEdit() {
     fetchAreaOptions,
     fetchWarehouseOptions,
     fetchRouteOptions,
+    fetchItemOptions,
     refreshDropdown
   } = useAllDropdownListData();
 
@@ -198,6 +199,9 @@ export default function UserAddEdit() {
             ? user.item.map((s: unknown) => String(((s as Record<string, unknown>)?.id) ?? s))
             : (user?.item ? [String(user.item)] : []);
 
+          console.log("✅ Raw item data from API:", user?.item);
+          console.log("✅ Item IDs extracted:", itemIds);
+
           setInitialValues({
             name: String(user?.name ?? ""),
             email: String(user?.email ?? ""),
@@ -214,6 +218,8 @@ export default function UserAddEdit() {
             salesman: salesmanVals.length ? salesmanVals : [],
             item: itemIds.length ? itemIds : [],
           });
+          
+          console.log("✅ Initial values set - item field:", itemIds.length ? itemIds : []);
           setOriginalUser(user);
 
           try {
@@ -259,6 +265,15 @@ export default function UserAddEdit() {
                 await fetchRouteOptions(firstWarehouse);
               } finally {
                 setSkeleton((s) => ({ ...s, route: false }));
+              }
+            }
+            if (itemIds.length > 0) {
+              const firstItem = itemIds.join(",");
+              setSkeleton((s) => ({ ...s, item: true }));
+              try {
+                await fetchItemOptions(firstItem);
+              } finally {
+                setSkeleton((s) => ({ ...s, item: false }));
               }
             }
           } catch (err) {
@@ -969,19 +984,28 @@ setIsNestedDropdownValue(false);
                   error={touched.salesman ? (errors.salesman as string) : undefined}
                 />
               )}
-              {visibleLabels.includes("item") && (
-                <InputFields
-                  required
-                  label="Item"
-                  name="item"
-                  isSingle={false}
-                  value={values.item}
-                  options={itemOptions}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setFieldValue("item", e?.target?.value)}
-                  onBlur={() => setFieldTouched && setFieldTouched('item', true)}
-                  error={touched.item ? (errors.item as string) : undefined}
-                />
-              )}
+              {visibleLabels.includes("item") && (() => {
+                console.log("🔵 Rendering Item field - current value:", values.item);
+                console.log("🔵 Item options available:", itemOptions?.length || 0, "options");
+                console.log("🔵 First 3 item options:", itemOptions?.slice(0, 3));
+                console.log("🔵 Looking for item with id 66:", itemOptions?.find(opt => String(opt.value) === "66"));
+                return (
+                  <InputFields
+                    required
+                    label="Item"
+                    name="item"
+                    isSingle={false}
+                    value={values.item || []}
+                    options={itemOptions}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+                      console.log("🔵 Item onChange - new value:", e?.target?.value);
+                      setFieldValue("item", e?.target?.value);
+                    }}
+                    onBlur={() => setFieldTouched && setFieldTouched('item', true)}
+                    error={touched.item ? (errors.item as string) : undefined}
+                  />
+                );
+              })()}
           </>:<div style={{display:"flex",flexDirection:"column", justifyContent:"center"}}> <Skeleton height={12}/><Skeleton height={12}/><Skeleton height={12}/><Skeleton height={12}/></div>}
             </div>
           </div>
