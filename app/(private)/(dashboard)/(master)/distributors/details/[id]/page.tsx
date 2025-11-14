@@ -3,7 +3,7 @@
 import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import { useLoading } from "@/app/services/loadingContext";
-import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse, getStockOfWarehouse,warehouseReturn,warehouseSales } from "@/app/services/allApi";
+import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse, getStockOfWarehouse, warehouseReturn, warehouseSales } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import StatusBtn from "@/app/components/statusBtn2";
 import TabBtn from "@/app/components/tabBtn";
 import Map from "@/app/components/map";
-import Table, { configType, searchReturnType, TableDataType } from "@/app/components/customTable";
+import Table, { configType, listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 interface Item {
@@ -61,11 +61,6 @@ interface Item {
 const title = "Distributors Details";
 const backBtnUrl = "/distributors";
 
-
-
-
-
-
 export default function ViewPage() {
     const { customerSubCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
@@ -88,12 +83,6 @@ export default function ViewPage() {
             id = params.id as string;
         }
     }
-
-
-
-
-
-
 
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
@@ -246,6 +235,7 @@ export default function ViewPage() {
             isSortable: true
         },
     ];
+
     const salesColumns: configType["columns"] = [
         {
             key: "invoice_code",
@@ -286,42 +276,42 @@ export default function ViewPage() {
         {
             key: "route_code",
             label: "Route",
-             render: (row: TableDataType) => {
-            const code = row.route_code || "-";
-            const name = row.route_name || "-";
-            return `${code}${code && name ? " - " : "-"}${name}`;
-      },
-            
+            render: (row: TableDataType) => {
+                const code = row.route_code || "-";
+                const name = row.route_name || "-";
+                return `${code}${code && name ? " - " : "-"}${name}`;
+            },
+
             showByDefault: true,
         },
         {
             key: "customer_code",
             label: "Customer",
-             render: (row: TableDataType) => {
-            const code = row.customer_code || "-";
-            const name = row.customer_name || "-";
-            return `${code}${code && name ? " - " : "-"}${name}`;
-      },
+            render: (row: TableDataType) => {
+                const code = row.customer_code || "-";
+                const name = row.customer_name || "-";
+                return `${code}${code && name ? " - " : "-"}${name}`;
+            },
             showByDefault: true,
         },
         {
             key: "salesman_code",
             label: "Sales Team",
-             render: (row: TableDataType) => {
-            const code = row.salesman_code || "-";
-            const name = row.salesman_name || "-";
-            return `${code}${code && name ? " - " : "-"}${name}`;
-      },
+            render: (row: TableDataType) => {
+                const code = row.salesman_code || "-";
+                const name = row.salesman_name || "-";
+                return `${code}${code && name ? " - " : "-"}${name}`;
+            },
             showByDefault: true,
         },
         {
             key: "total_amount",
             label: "Amount",
             render: (data: TableDataType) => (data.total_amount ? data.total_amount : "-"),
-            
+
             showByDefault: true,
         },
-       
+
         {
             key: "status",
             label: "Status",
@@ -343,7 +333,7 @@ export default function ViewPage() {
             ),
             showByDefault: true,
         },
-         {
+        {
             key: "return_date",
             label: "Return Date",
             isSortable: true,
@@ -370,45 +360,45 @@ export default function ViewPage() {
             ),
             showByDefault: true,
         },
-       
-       {
+
+        {
             key: "route_code",
             label: "Route",
-             render: (row: TableDataType) => {
-            const code = row.route_code || "-";
-            const name = row.route_name || "-";
-            return `${code}${code && name ? " - " : "-"}${name}`;
-      },
+            render: (row: TableDataType) => {
+                const code = row.route_code || "-";
+                const name = row.route_name || "-";
+                return `${code}${code && name ? " - " : "-"}${name}`;
+            },
             showByDefault: true,
         },
         {
             key: "customer_code",
             label: "Customer",
-             render: (row: TableDataType) => {
-            const code = row.customer_code || "-";
-            const name = row.customer_name || "-";
-            return `${code}${code && name ? " - " : "-"}${name}`;
-      },
+            render: (row: TableDataType) => {
+                const code = row.customer_code || "-";
+                const name = row.customer_name || "-";
+                return `${code}${code && name ? " - " : "-"}${name}`;
+            },
             showByDefault: true,
         },
         {
             key: "salesman_code",
             label: "Sales Team",
-             render: (row: TableDataType) => {
-            const code = row.salesman_code || "-";
-            const name = row.salesman_name || "-";
-            return `${code}${code && name ? " - " : "-"}${name}`;
-      },
+            render: (row: TableDataType) => {
+                const code = row.salesman_code || "-";
+                const name = row.salesman_name || "-";
+                return `${code}${code && name ? " - " : "-"}${name}`;
+            },
             showByDefault: true,
         },
         {
             key: "total",
             label: "Amount",
             render: (data: TableDataType) => (data.total_amount ? data.total_amount : "-"),
-            
+
             showByDefault: true,
         },
-       
+
         {
             key: "status",
             label: "Status",
@@ -469,12 +459,12 @@ export default function ViewPage() {
             label: "Sales Team",
             render: (row: TableDataType) => (
                 <span className="font-semibold text-[#181D27] text-[14px]">
-                    {row.osa_code} - {row.name }
+                    {row.osa_code} - {row.name}
                 </span>
             ),
             showByDefault: true,
         },
-         {
+        {
             key: "salesman_type",
             label: "Sales Team Type",
             render: (row: TableDataType) => {
@@ -512,7 +502,7 @@ export default function ViewPage() {
             },
             showByDefault: true,
         },
-        { key: "contact_no", label: "Contact No",showByDefault: true, },
+        { key: "contact_no", label: "Contact No", showByDefault: true, },
 
         {
             key: "status",
@@ -526,133 +516,133 @@ export default function ViewPage() {
     ];
 
     const stockColumns: configType["columns"] = [
-    {
-        key: "osa_code",
-        label: "OSA Code",
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.osa_code || "-"}
-            </span>
-        ),
-        // showByDefault: true,
-    },
-    {
-        key: "item",
-        label: "Item",
-        render: (row: TableDataType) => {
-            if (
-                typeof row.item === "object" &&
-                row.item !== null &&
-                "name" in row.item
-            ) {
-                const item = row.item as { name?: string; code?: string };
-                return (
-                    <div>
-                        <div className="font-medium text-[#181D27] text-[14px]">
-                         {item.code} - {item.name || "-"}
-                        </div>
-                        {/* <div className="text-xs text-gray-500">{item.code || ""}</div> */}
-                    </div>
-                );
-            }
-            return typeof row.item === "string" ? row.item : "-";
+        {
+            key: "osa_code",
+            label: "OSA Code",
+            render: (row: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {row.osa_code || "-"}
+                </span>
+            ),
+            // showByDefault: true,
         },
-        showByDefault: true,
-    },
-    {
-        key: "qty",
-        label: `Current Qty 
+        {
+            key: "item",
+            label: "Item",
+            render: (row: TableDataType) => {
+                if (
+                    typeof row.item === "object" &&
+                    row.item !== null &&
+                    "name" in row.item
+                ) {
+                    const item = row.item as { name?: string; code?: string };
+                    return (
+                        <div>
+                            <div className="font-medium text-[#181D27] text-[14px]">
+                                {item.code} - {item.name || "-"}
+                            </div>
+                            {/* <div className="text-xs text-gray-500">{item.code || ""}</div> */}
+                        </div>
+                    );
+                }
+                return typeof row.item === "string" ? row.item : "-";
+            },
+            showByDefault: true,
+        },
+        {
+            key: "qty",
+            label: `Current Qty 
         (2000)`,
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.qty ?? "-"}
-            </span>
-        ),
-        showByDefault: true,
-        isSortable: true,
-    },
-    {
-        key: "incoming",
-        label: "Incoming",
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {getRandomNumber(100) ?? "-"}
-            </span>
-        ),
-        showByDefault: true,
-        isSortable: true,
-    },
-    {
-        key: "usage",
-        label: "Usage",
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {getRandomNumber(30) ?? "-"}
-            </span>
-        ),
-        showByDefault: true,
-        isSortable: true,
-    },
-    
-     {
-        key: "ordersBy",
-        label: "Orders By",
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {getRandomDateFromLastMonth() ?? "-"}
-            </span>
-        ),
-        showByDefault: true,
-        isSortable: true,
+            render: (row: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {row.qty ?? "-"}
+                </span>
+            ),
+            showByDefault: true,
+            isSortable: true,
+        },
+        {
+            key: "incoming",
+            label: "Incoming",
+            render: (row: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {getRandomNumber(100) ?? "-"}
+                </span>
+            ),
+            showByDefault: true,
+            isSortable: true,
+        },
+        {
+            key: "usage",
+            label: "Usage",
+            render: (row: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {getRandomNumber(30) ?? "-"}
+                </span>
+            ),
+            showByDefault: true,
+            isSortable: true,
+        },
+
+        {
+            key: "ordersBy",
+            label: "Orders By",
+            render: (row: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {getRandomDateFromLastMonth() ?? "-"}
+                </span>
+            ),
+            showByDefault: true,
+            isSortable: true,
+        }
+    ];
+
+    function getRandomDateFromLastMonth(): string {
+        const now = new Date();
+
+        // Go to previous month
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+        // Total days in last month
+        const daysInLastMonth = new Date(
+            lastMonth.getFullYear(),
+            lastMonth.getMonth() + 1,
+            0
+        ).getDate();
+
+        // Generate random day
+        const randomDay: number = Math.floor(Math.random() * daysInLastMonth) + 1;
+
+        // Create random date
+        const randomDate: Date = new Date(
+            lastMonth.getFullYear(),
+            lastMonth.getMonth(),
+            randomDay
+        );
+
+        // Format like "11 Oct 2025"
+        const options: Intl.DateTimeFormatOptions = {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        };
+
+        const formattedDate: string = randomDate
+            .toLocaleDateString("en-GB", options)
+            .replace(",", "");
+
+        // Extract individual parts
+        const day: number = randomDate.getDate();
+        const month: string = randomDate.toLocaleString("en-GB", { month: "short" });
+        const year: number = randomDate.getFullYear();
+
+        // Return everything in a single formatted string
+        return `${formattedDate} `;
     }
-];
 
-function getRandomDateFromLastMonth(): string {
-  const now = new Date();
-
-  // Go to previous month
-  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-  // Total days in last month
-  const daysInLastMonth = new Date(
-    lastMonth.getFullYear(),
-    lastMonth.getMonth() + 1,
-    0
-  ).getDate();
-
-  // Generate random day
-  const randomDay: number = Math.floor(Math.random() * daysInLastMonth) + 1;
-
-  // Create random date
-  const randomDate: Date = new Date(
-    lastMonth.getFullYear(),
-    lastMonth.getMonth(),
-    randomDay
-  );
-
-  // Format like "11 Oct 2025"
-  const options: Intl.DateTimeFormatOptions = {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  };
-
-  const formattedDate: string = randomDate
-    .toLocaleDateString("en-GB", options)
-    .replace(",", "");
-
-  // Extract individual parts
-  const day: number = randomDate.getDate();
-  const month: string = randomDate.toLocaleString("en-GB", { month: "short" });
-  const year: number = randomDate.getFullYear();
-
-  // Return everything in a single formatted string
-  return `${formattedDate} `;
-}
-
-function getRandomNumber(count:number) {
-  return Math.floor(Math.random() * count) + 1;
-}
+    function getRandomNumber(count: number) {
+        return Math.floor(Math.random() * count) + 1;
+    }
 
     const columns: configType["columns"] = [
         {
@@ -665,7 +655,7 @@ function getRandomNumber(count:number) {
             ),
             showByDefault: true,
         },
-        { key: "outlet_name", label: "Outlet Name", showByDefault: true },
+        { key: "owner_name", label: "Owner Name", showByDefault: true },
         { key: "owner_name", label: "Owner Name" },
         {
             key: "customer_type",
@@ -682,7 +672,7 @@ function getRandomNumber(count:number) {
             },
             //   showByDefault: true,
         },
-         {
+        {
             key: "outlet_channel",
             label: "Outlet Channel",
             render: (row: TableDataType) =>
@@ -692,7 +682,7 @@ function getRandomNumber(count:number) {
                     ? (row.outlet_channel as { outlet_channel?: string })
                         .outlet_channel || "-"
                     : "-",
-            isSortable:true,
+            isSortable: true,
 
             showByDefault: true,
         },
@@ -709,7 +699,7 @@ function getRandomNumber(count:number) {
             showByDefault: true,
 
         },
-       
+
         { key: "landmark", label: "Landmark" },
         { key: "district", label: "District" },
         { key: "street", label: "Street" },
@@ -727,11 +717,11 @@ function getRandomNumber(count:number) {
                 }
                 return typeof row.route === 'string' ? row.route : "-";
             },
-           isSortable:true,
+            isSortable: true,
 
             showByDefault: true,
         },
-        { key: "contact_no", label: "Contact No.",showByDefault: true, },
+        { key: "contact_no", label: "Contact No.", showByDefault: true, },
         { key: "whatsapp_no", label: "Whatsapp No." },
         { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
         { key: "payment_type", label: "Payment Type" },
@@ -747,291 +737,364 @@ function getRandomNumber(count:number) {
                 return <StatusBtn isActive={isActive} />;
             },
             showByDefault: true,
-            isSortable:true,
+            isSortable: true,
         },
     ];
-  const searchCustomerById= useCallback(
-            async (
-                searchQuery: string,
-                pageSize: number = 5,
-                columnName?: string
-            ): Promise<searchReturnType> => {
-                const result = await getCustomerInWarehouse(id,{
-                    query: searchQuery,
-                    pageSize: pageSize.toString()
-                });
-    
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-    
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
 
-  const listCustomerById = useCallback(
-            async (
-                pageNo: number = 1,
-                pageSize: number = 50
-            ): Promise<searchReturnType> => {
-                const result = await getCustomerInWarehouse(id,{
-                    page: pageNo.toString(),
-                    pageSize: pageSize.toString()
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
                 });
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-    
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
+                result = await warehouseSales(id, params);
+            } finally {
+                setLoading(false);
+            }
 
-  const searchRouteByWarehouse = useCallback(
-            async (
-                searchQuery: string,
-                pageSize: number = 5,
-                columnName?: string
-            ): Promise<searchReturnType> => {
-                const result = await getRouteInWarehouse(id,{
-                    query: searchQuery,
-                });
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-                
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
                 return {
                     data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
                 };
-            },
-            []
-        );
+            }
+        },
+        [setLoading]
+    );
 
-  const listRouteByWarehouse = useCallback(
-            async (
-                pageNo: number = 1,
-                pageSize: number = 5,
-            ): Promise<searchReturnType> => {
-                const result = await getRouteInWarehouse(id,{
-                    page: pageNo.toString(),
-                    pageSize: pageSize.toString()
+    const filterByListReturn = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
                 });
-    
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-                
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
-  const listReturnByWarehouse = useCallback(
-            async (
-                pageNo: number = 1,
-                pageSize: number = 50,
-            ): Promise<searchReturnType> => {
-                const result = await warehouseReturn({
-                    warehouse_id: id,
-                    per_page: pageSize.toString()
-                });
-    
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-                
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
-  const listSalesByWarehouse = useCallback(
-            async (
-                pageNo: number = 1,
-                pageSize: number = 50,
-            ): Promise<searchReturnType> => {
-                const result = await warehouseSales({
-                    warehouse_id : id,
-                    per_page: pageSize.toString()
-                });
-    
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-                
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
+                result = await warehouseReturn(id, params);
+            } finally {
+                setLoading(false);
+            }
 
-          const listStockByWarehouse = useCallback(
-            async (
-                pageNo: number = 1,
-                pageSize: number = 50,
-            ): Promise<searchReturnType> => {
-                const result = await getStockOfWarehouse(id,{
-                    page: pageNo.toString(),
-                    pageSize: pageSize.toString()
-                });
-    
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-                
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
                 return {
                     data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
                 };
-            },
-            []
-        );
+            }
+        },
+        [setLoading]
+    );
 
-  const searchSalesmanByWarehouse = useCallback(
-            async (
-                searchQuery: string,
-                pageSize: number = 5,
-                columnName?: string
-            ): Promise<searchReturnType> => {
-                const result = await getSalesmanInWarehouse(id,{
-                    query: searchQuery,
-                });
-                
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-    
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
-  const searchReturnByWarehouse = useCallback(
-            async (
-                searchQuery: string,
-                pageSize: number = 5,
-                columnName?: string
-            ): Promise<searchReturnType> => {
-                const result = await warehouseReturn({warehouse_id:id,
-                    query: searchQuery,
-                });
-                
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-    
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
-  const searchSalesByWarehouse = useCallback(
-            async (
-                searchQuery: string,
-                pageSize: number = 5,
-                columnName?: string
-            ): Promise<searchReturnType> => {
-                const result = await warehouseSales({warehouse_id:id,
-                    query: searchQuery,
-                });
-                
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-    
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
+    const searchCustomerById = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number = 5,
+            columnName?: string
+        ): Promise<searchReturnType> => {
+            const result = await getCustomerInWarehouse(id, {
+                query: searchQuery,
+                pageSize: pageSize.toString()
+            });
 
-  const searchStockByWarehouse = useCallback(
-            async (
-                searchQuery: string,
-                pageSize: number = 5,
-                columnName?: string
-            ): Promise<searchReturnType> => {
-                const result = await getStockOfWarehouse(id,{
-                    query: searchQuery,
-                });
-                
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-    
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
 
-  const listSalesmanByWarehouse = useCallback(
-            async (
-                pageNo: number = 1,
-                pageSize: number = 5,
-            ): Promise<searchReturnType> => {
-                const result = await getSalesmanInWarehouse(id,{
-                    page: pageNo.toString(),
-                    pageSize: pageSize.toString()
-                });
-                
-                if (result.error) {
-                    throw new Error(result.data?.message || "Search failed");
-                }
-    
-                return {
-                    data: result.data || [],
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                    total: result?.pagination?.last_page || 1,
-                };
-            },
-            []
-        );
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+
+    const listCustomerById = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 50
+        ): Promise<searchReturnType> => {
+            const result = await getCustomerInWarehouse(id, {
+                page: pageNo.toString(),
+                pageSize: pageSize.toString()
+            });
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+
+    const searchRouteByWarehouse = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number = 5,
+            columnName?: string
+        ): Promise<searchReturnType> => {
+            const result = await getRouteInWarehouse(id, {
+                query: searchQuery,
+            });
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+
+    const listRouteByWarehouse = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 5,
+        ): Promise<searchReturnType> => {
+            const result = await getRouteInWarehouse(id, {
+                page: pageNo.toString(),
+                pageSize: pageSize.toString()
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+    const listReturnByWarehouse = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 50,
+        ): Promise<searchReturnType> => {
+            const result = await warehouseReturn(id, {
+                warehouse_id: id,
+                per_page: pageSize.toString()
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+    const listSalesByWarehouse = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 50,
+        ): Promise<searchReturnType> => {
+            const result = await warehouseSales(id, {
+                warehouse_id: id,
+                per_page: pageSize.toString()
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+
+    const listStockByWarehouse = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 50,
+        ): Promise<searchReturnType> => {
+            const result = await getStockOfWarehouse(id, {
+                page: pageNo.toString(),
+                pageSize: pageSize.toString()
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+
+    const searchSalesmanByWarehouse = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number = 5,
+            columnName?: string
+        ): Promise<searchReturnType> => {
+            const result = await getSalesmanInWarehouse(id, {
+                query: searchQuery,
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+    const searchReturnByWarehouse = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number = 5,
+            columnName?: string
+        ): Promise<searchReturnType> => {
+            const result = await warehouseReturn(id, {
+                warehouse_id: id,
+                query: searchQuery,
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+    const searchSalesByWarehouse = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number = 5,
+            columnName?: string
+        ): Promise<searchReturnType> => {
+            const result = await warehouseSales(id, {
+                warehouse_id: id,
+                query: searchQuery,
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+
+    const searchStockByWarehouse = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number = 5,
+            columnName?: string
+        ): Promise<searchReturnType> => {
+            const result = await getStockOfWarehouse(id, {
+                query: searchQuery,
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
+
+    const listSalesmanByWarehouse = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 5,
+        ): Promise<searchReturnType> => {
+            const result = await getSalesmanInWarehouse(id, {
+                page: pageNo.toString(),
+                pageSize: pageSize.toString()
+            });
+
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.current_page || 1,
+                pageSize: result?.pagination?.per_page || pageSize,
+                total: result?.pagination?.last_page || 1,
+            };
+        },
+        []
+    );
 
     return (
         <>
@@ -1055,15 +1118,15 @@ function getRandomNumber(count:number) {
                             {item?.warehouse_code || "-"} - {item?.warehouse_name}
                         </h2>
                         <span className="flex items-center text-[#414651] text-[16px]">
-                                <Icon
-                                    icon="mdi:location"
-                                    width={16}
-                                    className="text-[#EA0A2A] mr-[5px]"
-                                />
-                                <span>
-                                    {item?.location || "-"}
-                                </span>
-                                {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
+                            <Icon
+                                icon="mdi:location"
+                                width={16}
+                                className="text-[#EA0A2A] mr-[5px]"
+                            />
+                            <span>
+                                {item?.location || "-"}
+                            </span>
+                            {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                                     <StatusBtn status="active" />
                                 </span> */}
                         </span>
@@ -1120,21 +1183,21 @@ function getRandomNumber(count:number) {
                                         </div>
                                         <div className="flex flex-col gap-[20px] text-[#414651]">
                                             <div className="flex items-center gap-[8px] text-[16px]">
-                                                {item?.owner_number?<><Icon
+                                                {item?.owner_number ? <><Icon
                                                     icon="lucide:phone-call"
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                <span>{item?.owner_number} <br/>{item?.warehouse_manager_contact}</span></>:""}
+                                                    <span>{item?.owner_number} <br />{item?.warehouse_manager_contact}</span></> : ""}
                                             </div>
                                             <div className="flex items-center gap-[8px] text-[16px]">
-                                               {item?.owner_email? <>
-                                               <Icon
-                                                    icon="ic:outline-email"
-                                                    width={16}
-                                                    className="text-[#EA0A2A]"
-                                                />
-                                                <span>{item?.owner_email}</span></>:""}
+                                                {item?.owner_email ? <>
+                                                    <Icon
+                                                        icon="ic:outline-email"
+                                                        width={16}
+                                                        className="text-[#EA0A2A]"
+                                                    />
+                                                    <span>{item?.owner_email}</span></> : ""}
                                             </div>
 
                                         </div>
@@ -1208,146 +1271,170 @@ function getRandomNumber(count:number) {
 
             {activeTab === "warehouseCustomer" && (
                 <ContainerCard >
-                 
-                        <div className="flex flex-col h-full">
-                            <Table
-                                config={{
-                                    api:{
-                                        search: searchCustomerById,
-                                        list: listCustomerById
-                                    },
-                                    header:{
-                                        searchBar:true
-                                    },
-                                    showNestedLoading:true,
-                                    footer: { nextPrevBtn: true, pagination: true },
-                                    columns: columns,
-                                    rowSelection: false,
-                                    pageSize: 50,
-                                }}
-                            />
-                        </div>
-                    
+
+                    <div className="flex flex-col h-full">
+                        <Table
+                            config={{
+                                api: {
+                                    search: searchCustomerById,
+                                    list: listCustomerById
+                                },
+                                header: {
+                                    searchBar: true
+                                },
+                                showNestedLoading: true,
+                                footer: { nextPrevBtn: true, pagination: true },
+                                columns: columns,
+                                rowSelection: false,
+                                pageSize: 50,
+                            }}
+                        />
+                    </div>
+
                 </ContainerCard>
             )}
             {activeTab === "warehouseStock" && (
-                  <ContainerCard >
-                   
-                        <div className="flex flex-col h-full">
-                            <Table
-                                config={{
-                                    api: {
-                                        search: searchStockByWarehouse,
-                                        list: listStockByWarehouse
-                                    },
-                                    header: {
-                                        searchBar: true
-                                    },
-                                    footer: { nextPrevBtn: true, pagination: true },
-                                    columns: stockColumns,
-                                    showNestedLoading:true,
-                                    rowSelection: false,
-                                    pageSize: 50,
-                                }}
-                            />
-                        </div>
-                   
+                <ContainerCard >
+
+                    <div className="flex flex-col h-full">
+                        <Table
+                            config={{
+                                api: {
+                                    search: searchStockByWarehouse,
+                                    list: listStockByWarehouse
+                                },
+                                header: {
+                                    searchBar: true
+                                },
+                                footer: { nextPrevBtn: true, pagination: true },
+                                columns: stockColumns,
+                                showNestedLoading: true,
+                                rowSelection: false,
+                                pageSize: 50,
+                            }}
+                        />
+                    </div>
+
                 </ContainerCard>
             )}
             {activeTab === "route" && (
                 <ContainerCard >
-                    
-                        <div className="flex flex-col h-full">
-                            <Table
-                                config={{
-                                    api: {
-                                        search: searchRouteByWarehouse,
-                                        list: listRouteByWarehouse
-                                    },
-                                    header: {
-                                        searchBar: true,
-                                    },
-                                    footer: { nextPrevBtn: true, pagination: true },
-                                    columns: routeColumns,
-                                    showNestedLoading:true,
-                                    rowSelection: false,
-                                    pageSize: 50,
-                                }}
-                            />
-                        </div>
-                    
+
+                    <div className="flex flex-col h-full">
+                        <Table
+                            config={{
+                                api: {
+                                    search: searchRouteByWarehouse,
+                                    list: listRouteByWarehouse
+                                },
+                                header: {
+                                    searchBar: true,
+                                },
+                                footer: { nextPrevBtn: true, pagination: true },
+                                columns: routeColumns,
+                                showNestedLoading: true,
+                                rowSelection: false,
+                                pageSize: 50,
+                            }}
+                        />
+                    </div>
+
                 </ContainerCard>
             )}
             {activeTab === "salesman" && (
                 <ContainerCard >
-                   
-                        <div className="flex flex-col h-full">
-                            <Table
-                                config={{
-                                    api: {
-                                        search: searchSalesmanByWarehouse,
-                                        list: listSalesmanByWarehouse
-                                    },
-                                    header: {
-                                        searchBar: true
-                                    },
-                                    footer: { nextPrevBtn: true, pagination: true },
-                                    columns: salesmanColumns,
-                                    rowSelection: false,
-                                    showNestedLoading:true,
-                                    pageSize: 50,
-                                }}
-                            />
-                        </div>
-                   
+
+                    <div className="flex flex-col h-full">
+                        <Table
+                            config={{
+                                api: {
+                                    search: searchSalesmanByWarehouse,
+                                    list: listSalesmanByWarehouse
+                                },
+                                header: {
+                                    searchBar: true
+                                },
+                                footer: { nextPrevBtn: true, pagination: true },
+                                columns: salesmanColumns,
+                                rowSelection: false,
+                                showNestedLoading: true,
+                                pageSize: 50,
+                            }}
+                        />
+                    </div>
+
                 </ContainerCard>
             )}
             {activeTab === "sales" && (
                 <ContainerCard >
-                    
-                        <div className="flex flex-col h-full">
-                            <Table
-                                config={{
-                                    api: {
-                                        search: searchSalesByWarehouse,
-                                        list: listSalesByWarehouse
-                                    },
-                                    header: {
-                                        searchBar: true,
-                                    },
-                                    footer: { nextPrevBtn: true, pagination: true },
-                                    columns: salesColumns,
-                                    showNestedLoading:true,
-                                    rowSelection: false,
-                                    pageSize: 50,
-                                }}
-                            />
-                        </div>
-                    
+
+                    <div className="flex flex-col h-full">
+                        <Table
+                            config={{
+                                api: {
+                                    search: searchSalesByWarehouse,
+                                    list: listSalesByWarehouse,
+                                    filterBy: filterBy
+                                },
+                                header: {
+                                    filterByFields: [
+                                        {
+                                            key: "start_date",
+                                            label: "Start Date",
+                                            type: "date"
+                                        },
+                                        {
+                                            key: "end_date",
+                                            label: "End Date",
+                                            type: "date"
+                                        },
+                                    ],
+                                },
+                                footer: { nextPrevBtn: true, pagination: true },
+                                columns: salesColumns,
+                                showNestedLoading: true,
+                                rowSelection: false,
+                                pageSize: 50,
+                            }}
+                        />
+                    </div>
+
                 </ContainerCard>
             )}
             {activeTab === "return" && (
                 <ContainerCard >
-                    
-                        <div className="flex flex-col h-full">
-                            <Table
-                                config={{
-                                    api: {
-                                        search: searchReturnByWarehouse,
-                                        list: listReturnByWarehouse
-                                    },
-                                    header: {
-                                        searchBar: true,
-                                    },
-                                    footer: { nextPrevBtn: true, pagination: true },
-                                    columns: returnColumns,
-                                    showNestedLoading:true,
-                                    rowSelection: false,
-                                    pageSize: 50,
-                                }}
-                            />
-                        </div>
-                    
+
+                    <div className="flex flex-col h-full">
+                        <Table
+                            config={{
+                                api: {
+                                    search: searchReturnByWarehouse,
+                                    list: listReturnByWarehouse,
+                                    filterBy: filterByListReturn
+                                },
+                                header: {
+                                    filterByFields: [
+                                        {
+                                            key: "start_date",
+                                            label: "Start Date",
+                                            type: "date"
+                                        },
+                                        {
+                                            key: "end_date",
+                                            label: "End Date",
+                                            type: "date"
+                                        },
+                                    ]
+                                },
+                                footer: { nextPrevBtn: true, pagination: true },
+                                columns: returnColumns,
+                                showNestedLoading: true,
+                                rowSelection: false,
+                                pageSize: 50,
+                            }}
+                        />
+                    </div>
+
                 </ContainerCard>
             )}
         </>
