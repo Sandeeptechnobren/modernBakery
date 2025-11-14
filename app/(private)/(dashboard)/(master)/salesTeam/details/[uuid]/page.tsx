@@ -507,7 +507,7 @@ export default function Page() {
         <ContainerCard className="w-full h-fit">
           <KeyValueData
             title="Sales Team Information"
-            data={salesman?.is_block === 1?[
+            data={salesman?.invoice_block === 1?salesman?.is_block === 1?[
               {
                 key: "Sales Team Type",
                 value: salesman?.salesman_type?.salesman_type_name || "-",
@@ -552,7 +552,7 @@ export default function Page() {
                 key: "Invoice Block",
                 value:
 
-                  salesman?.invoice_block === "1"
+                  salesman?.invoice_block === 1
                     ? "Yes"
                     : "No",
               },
@@ -604,7 +604,7 @@ export default function Page() {
                 key: "Invoice Block",
                 value:
 
-                  salesman?.invoice_block === "1"
+                  salesman?.invoice_block === 1
                     ? "Yes"
                     : "No",
               },
@@ -613,6 +613,102 @@ export default function Page() {
                 key: "Reason",
                 value: salesman?.reason || "-",
               },
+            ]:salesman?.is_block === 1?[
+              {
+                key: "Sales Team Type",
+                value: salesman?.salesman_type?.salesman_type_name || "-",
+              },
+              {
+                key: "Project Type",
+                value: salesman?.project_type
+                  ? `${salesman.project_type.code ?? "-"} - ${salesman.project_type.name ?? "-"}`
+                  : "-"
+              },
+              { key: "Designation", value: salesman?.designation || "-" },
+              { key: "Contact No", value: salesman?.contact_no || "-" },
+              {
+                key: "Distributor",
+                value: <span className="hover:text-red-500 cursor-pointer">View Distributors</span>,
+                onClick: viewPopuop
+              },
+              {
+                key: "Route",
+                value: salesman?.route?.route_name || "-",
+              },
+              { key: "User Name", value: salesman?.osa_code || "-" },
+              {
+                key: "Forcefull Login",
+                value:
+
+                  salesman?.forceful_login === "1"
+                    ? "Yes"
+                    : "No",
+              },
+              {
+                key: "Is Block",
+                value:
+                  salesman?.is_block === 1
+                    ? "Yes"
+                    : "No",
+              },
+              { key: "Block Date From", value:salesman?.block_date_from? formatDate(salesman?.block_date_from):"-" },
+              { key: "Block Date To", value: salesman?.block_date_to?formatDate(salesman?.block_date_to):"-" },
+              { key: "cashier Description Block", value: salesman?.cashier_description_block == "1" ? "Yes" : "No" },
+              {
+                key: "Invoice Block",
+                value:
+
+                  salesman?.invoice_block === 1
+                    ? "Yes"
+                    : "No",
+              }
+            ]:[
+              {
+                key: "Sales Team Type",
+                value: salesman?.salesman_type?.salesman_type_name || "-",
+              },
+              {
+                key: "Project Type",
+                value: salesman?.project_type
+                  ? `${salesman.project_type.code ?? "-"} - ${salesman.project_type.name ?? "-"}`
+                  : "-"
+              },
+              { key: "Designation", value: salesman?.designation || "-" },
+              { key: "Contact No", value: salesman?.contact_no || "-" },
+              {
+                key: "Distributor",
+                value: <span className="hover:text-red-500 cursor-pointer">View Distributors</span>,
+                onClick: viewPopuop
+              },
+              {
+                key: "Route",
+                value: salesman?.route?.route_name || "-",
+              },
+              { key: "User Name", value: salesman?.osa_code || "-" },
+              {
+                key: "Forcefull Login",
+                value:
+
+                  salesman?.forceful_login === "1"
+                    ? "Yes"
+                    : "No",
+              },
+              {
+                key: "Is Block",
+                value:
+                  salesman?.is_block === 1
+                    ? "Yes"
+                    : "No",
+              },
+              { key: "cashier Description Block", value: salesman?.cashier_description_block == "1" ? "Yes" : "No" },
+              {
+                key: "Invoice Block",
+                value:
+
+                  salesman?.invoice_block === 1
+                    ? "Yes"
+                    : "No",
+              }
             ]}
           />
         </ContainerCard>

@@ -673,7 +673,7 @@ export default function AddEditSalesman() {
                       label="Block Date From"
                       type="date"
                       name="block_date_from"
-                      value={ new Date(values.block_date_from).toISOString().slice(0, 10)|| ""}
+                      value={ values.block_date_from?new Date(values.block_date_from).toISOString().slice(0, 10):values.block_date_from}
                       onChange={(e) =>
                         setFieldValue("block_date_from", e.target.value)
                       }
@@ -684,7 +684,7 @@ export default function AddEditSalesman() {
                       label="Block Date To"
                       type="date"
                       name="block_date_to"
-                      value={new Date(values.block_date_to).toISOString().slice(0, 10)|| ""}
+                      value={values.block_date_to?new Date(values.block_date_to).toISOString().slice(0, 10):values.block_date_to}
                       onChange={(e) =>
                         setFieldValue("block_date_to", e.target.value)
                       }
