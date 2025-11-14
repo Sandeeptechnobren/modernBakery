@@ -563,9 +563,9 @@ export const routeVisitGlobalSearch = async (params?: Params) => {
     return handleError(error);
   }
 };
-export const warehouseReturn = async (params?: Params) => {
+export const warehouseReturn = async (id: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/master/warehouse/returns`, {
+    const res = await API.get(`/api/master/warehouse/${id}/returns`, {
       params: params,
     });
     return res.data;
@@ -573,9 +573,9 @@ export const warehouseReturn = async (params?: Params) => {
     return handleError(error);
   }
 };
-export const warehouseSales = async (params?: Params) => {
+export const warehouseSales = async (id: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/master/warehouse/invoices`, {
+    const res = await API.get(`/api/master/warehouse/${id}/invoices`, {
       params: params,
     });
     return res.data;
@@ -2033,8 +2033,12 @@ export const updateItemStatus = async (body: object) => {
   }
 };
 
-export const addItem = async (payload: object) => {
+export const addItem = async (payload: object, type: "json" | "form-data" = "json") => {
   try {
+    if(type === "json") {
+      const res = await API.post("/api/master/items/add", payload);
+      return res.data;
+    }
     const res = await APIFormData.post("/api/master/items/add", payload);
 
     return res.data;
@@ -2053,10 +2057,13 @@ export const itemById = async (id: string) => {
   }
 };
 
-export const editItem = async (id: string, payload: object) => {
+export const editItem = async (id: string, payload: object, type: "json" | "form-data" = "json") => {
   try {
+    if(type === "json") {
+      const res = await API.put(`/api/master/items/update/${id}`, payload);
+      return res.data;
+    }
     const res = await APIFormData.put(`/api/master/items/update/${id}`, payload);
-
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

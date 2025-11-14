@@ -63,6 +63,9 @@ export default function ViewPage() {
           );
           return;
         }
+        if (!res.status) {
+          res.status = 0;
+        }
         setVehicle(res.data);
       } catch (err) {
         setLoading(false);
@@ -115,7 +118,7 @@ export default function ViewPage() {
           />
 
           <div className="flex justify-center">
-            <StatusBtn isActive={vehicle?.status === 1} />
+            <StatusBtn isActive={(vehicle?.status ?? 0) > 0} />
           </div>
 
           <hr className="text-[#D5D7DA]" />

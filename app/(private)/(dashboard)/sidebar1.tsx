@@ -267,7 +267,7 @@ export default function Sidebar({
                                     </Link>
                                 }
                                 dropdown={
-                                    <div className="absolute w-[200px] bottom-0 left-[40px] z-60">
+                                    <div className="absolute w-[250px] bottom-0 left-[40px] z-60">
                                         <CustomDropdown
                                             mode="dark"
                                             data={[

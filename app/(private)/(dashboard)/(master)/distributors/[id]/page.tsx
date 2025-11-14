@@ -10,15 +10,15 @@ import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import * as Yup from "yup";
 import {
-  addWarehouse,
-  getWarehouseById,
-  updateWarehouse,
-  genearateCode,
-  saveFinalCode,
+    addWarehouse,
+    getWarehouseById,
+    updateWarehouse,
+    genearateCode,
+    saveFinalCode,
 } from "@/app/services/allApi";
 import StepperForm, {
-  StepperStep,
-  useStepperForm,
+    StepperStep,
+    useStepperForm,
 } from "@/app/components/stepperForm";
 import { useEffect, useState, useRef } from "react";
 import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
@@ -63,17 +63,11 @@ const validationSchema = Yup.object({
     warehouse_name: Yup.string().required('Warehouse Name is required'),
     owner_name: Yup.string().required('Owner Name is required'),
     company: Yup.string().required('Company is required'),
-    agreed_stock_capital: Yup.string(),
-    // agent_customer: Yup.string().when('warehouse_type', {
-    //     is: (val: any) => String(val) === 'company_outlet',
-    //     then: (schema: any) => schema.required('Agent Customer is required'),
-    //     otherwise: (schema: any) => schema.notRequired(),
-    // }),
-    agent_customer:Yup.string().required('Agent Customer is required'),
+    agreed_stock_capital: Yup.number().required('Agreed Stock Capital is required'),
+    agent_customer: Yup.string().required('Agent Customer is required'),
     warehouse_manager: Yup.string().required('Warehouse Manager is required'),
     location: Yup.string().required('Location is required'),
     city: Yup.string().required('City is required'),
-
     town_village: Yup.string(),
     street: Yup.string(),
     landmark: Yup.string(),
@@ -101,6 +95,7 @@ const stepSchemas = [
         company: validationSchema.fields.company,
         agent_customer: validationSchema.fields.agent_customer,
         warehouse_manager: validationSchema.fields.warehouse_manager,
+        agreed_stock_capital: validationSchema.fields.agreed_stock_capital,
     }),
 
     // Step 2: Warehouse Contact (no required validations here so user can proceed)
@@ -128,13 +123,13 @@ export default function AddEditWarehouse() {
     const warehouseId = params.id as string | undefined;
     const isEditMode = warehouseId !== undefined && warehouseId !== "add";
     const steps: StepperStep[] = [
-        { id: 1, label: "Warehouse Details" },
-        { id: 2, label: "Warehouse Contact" },
+        { id: 1, label: "Distributor Details" },
+        { id: 2, label: "Distributor Contact" },
         { id: 3, label: "Location Information" },
         { id: 4, label: "EFRIS Information" }
     ];
 
-    const [selectedCountry, setSelectedCountry] = useState<{code: string; flag: string; name: string;}>({
+    const [selectedCountry, setSelectedCountry] = useState<{ code: string; flag: string; name: string; }>({
         name: "Uganda",
         code: "+256",
         flag: "🇺🇬"
@@ -200,7 +195,7 @@ export default function AddEditWarehouse() {
                         company: String(data?.get_company?.id || ''),
                         agreed_stock_capital: String(data?.agreed_stock_capital || ''),
                         tin_no: String(data?.tin_no || ''),
-                        agent_customer: String(data?.get_company_customer?.id )|| '',
+                        agent_customer: String(data?.get_company_customer?.id) || '',
                         warehouse_manager: data?.warehouse_manager || '',
                         ownerContactCountry: data?.ownerContactCountry || '',
                         owner_number: data?.owner_number || '',
@@ -220,7 +215,7 @@ export default function AddEditWarehouse() {
                         password: data?.password || '',
                         is_efris: String(data?.is_efris || ''),
                         is_branch: String(data?.is_branch || ''),
-                        status:"1"
+                        status: "1"
                     });
                 }
             } else if (!isEditMode && !codeGeneratedRef.current) {
@@ -273,11 +268,12 @@ export default function AddEditWarehouse() {
             const base = {
                 ...values,
                 warehouse_type: values.warehouse_type,
+                agreed_stock_capital: Number(values.agreed_stock_capital),
                 is_branch: isBranchPayload,
             } as Record<string, unknown>;
 
-      const p12 = values.p12_file;
-      let res;
+            const p12 = values.p12_file;
+            let res;
 
             if (p12 instanceof File) {
                 const form = new FormData();
@@ -297,7 +293,7 @@ export default function AddEditWarehouse() {
                 } else {
                     res = await addWarehouse(form as unknown as object);
                     if (!res?.error) {
-                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) {}
+                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) { }
                     }
                 }
             } else {
@@ -307,18 +303,20 @@ export default function AddEditWarehouse() {
                 } else {
                     res = await addWarehouse(jsonPayload);
                     if (!res?.error) {
-                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) {}
+                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) { }
                     }
                 }
             }
             if (res.error) {
                 showSnackbar(res.data?.message || "Failed to submit form", "error");
             } else {
-                showSnackbar(res.message || (isEditMode ? "Warehouse updated successfully" : "Warehouse added successfully"), "success");
-                router.push("/warehouse");
+                showSnackbar(res.message || (isEditMode ? "Distributor updated successfully" : "Distributor added successfully"), "success");
+                router.push("/distributors");
+                showSnackbar(res.message || (isEditMode ? "Distributor updated successfully" : "Distributor added successfully"), "success");
+                router.push("/distributors");
             }
         } catch {
-            showSnackbar("Add/Update Warehouse failed ❌", "error");
+            showSnackbar("Add/Update Distributor failed ❌", "error");
         }
     };
 
@@ -397,11 +395,11 @@ export default function AddEditWarehouse() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
-          <Link href="/warehouse">
+          <Link href="/distributors">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Warehouse" : "Add Warehouse"}
+            {isEditMode ? "Update Distributor" : "Add Distributor"}
           </h1>
         </div>
       </div>
@@ -445,16 +443,16 @@ export default function AddEditWarehouse() {
                                 isSubmitting
                                     ? (isEditMode ? "Updating..." : "Submitting...")
                                     : isEditMode
-                                    ? "Update"
-                                    : "Submit"
+                                        ? "Update"
+                                        : "Submit"
                             }
-                            
-            >
-              {renderStepContent(values, setFieldValue, errors, touched)}
-            </StepperForm>
-          </Form>
-        )}
-      </Formik>
-    </div>
-  );
+
+                        >
+                            {renderStepContent(values, setFieldValue, errors, touched)}
+                        </StepperForm>
+                    </Form>
+                )}
+            </Formik>
+        </div>
+    );
 }

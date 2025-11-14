@@ -133,9 +133,9 @@ export default function CustomerInvoicePage() {
         [setLoading]
     );
 
-    const exportFile = async () => {
+    const exportFile = async (format: "csv" | "xlsx" = "csv") => {
         try {
-            const response = await agentOrderExport({ format: "xlsx" });
+            const response = await agentOrderExport({ format });
             if (response && typeof response === 'object' && response.download_url) {
                 await downloadFile(response.download_url);
                 showSnackbar("File downloaded successfully ", "success");
@@ -164,6 +164,21 @@ export default function CustomerInvoicePage() {
                             title: "Customer Orders",
                             searchBar: false,
                             columnFilter: true,
+                            threeDot: [
+                                {
+                                    icon: "gala:file-document",
+                                    label: "Export CSV",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => exportFile('csv'),
+                                },
+                                {
+                                    icon: "gala:file-document",
+                                    label: "Export Excel",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => exportFile('xlsx'),
+
+                                }
+                            ],
                             filterByFields: [
                                 {
                                     key: "start_date",
@@ -206,15 +221,15 @@ export default function CustomerInvoicePage() {
                                 }
                             ],
                             actions: [
-                                <SidebarBtn
-                                    key={0}
-                                    href="#"
-                                    isActive
-                                    leadingIcon="mdi:download"
-                                    label="Download"
-                                    labelTw="hidden lg:block"
-                                    onClick={exportFile}
-                                />,
+                                // <SidebarBtn
+                                //     key={0}
+                                //     href="#"
+                                //     isActive
+                                //     leadingIcon="mdi:download"
+                                //     label="Download"
+                                //     labelTw="hidden lg:block"
+                                //     onClick={() => exportFile("csv")}
+                                // />,
                                 <SidebarBtn
                                     key={1}
                                     href="/agentOrder/add"

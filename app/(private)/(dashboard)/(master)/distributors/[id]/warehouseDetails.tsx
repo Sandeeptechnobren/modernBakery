@@ -33,12 +33,12 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             <div className="flex items-start gap-2 max-w-[406px]">
                 <InputFields
                     required
-                    label="Warehouse Code"
+                    label="Distributor Code"
                     name="warehouse_code"
                     value={values.warehouse_code}
                     onChange={handleChange}
-                    error={errors?.warehouse_code && touched?.warehouse_code ? errors.warehouse_code : false}
                     disabled={codeMode === 'auto'}
+                    error={errors?.warehouse_code && touched?.warehouse_code ? errors.warehouse_code : false}
                 />
                 
                 {/* {!isEditMode && (
@@ -73,7 +73,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
-                    label="Warehouse Type"
+                    label="Distributor Type"
                     name="warehouse_type"
                     value={values.warehouse_type}
                     onChange={(e) => {
@@ -89,15 +89,12 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                         }
                     }}
                     options={[
-                        { value: "Agent Warehouse", label: "Agent Warehouse" },
+                        { value: "Agent Distributor", label: "Agent Distributor" },
                         { value: "Company Outlet", label: "Company Outlet" },
                     ]}
+                    error={errors?.warehouse_type && touched?.warehouse_type ? errors.warehouse_type : false}
                 />
-                {errors?.warehouse_type && touched?.warehouse_type && (
-                    <div className="text-xs text-red-500 mt-1">{errors.warehouse_type}</div>
-                )}
             </div>
-            {/* {values.warehouse_type === 'company_outlet' && ( */}
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
@@ -105,7 +102,6 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     name="agent_customer"
                     value={values.agent_customer}
                     options={companyCustomersOptions}
-                    
                     onChange={async(e) => {
                         const val = (e.target as HTMLSelectElement).value;
                         handleChange(e);
@@ -118,41 +114,29 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                             }
                         });
                     }}
+                    error={errors?.agent_customer && touched?.agent_customer ? errors.agent_customer : false}
                 />
-                {errors?.agent_customer && touched?.agent_customer && (
-                    <div className="text-xs text-red-500 mt-1">{errors.agent_customer}</div>
-                )}
             </div>
             {/* )} */}
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
-                    label="Warehouse Name"
+                    label="Distributor Name"
                     name="warehouse_name"
                     value={values.warehouse_name}
                     onChange={handleChange}
                     error={errors?.warehouse_name && touched?.warehouse_name ? errors.warehouse_name : false}
                 />
-                {errors?.warehouse_name && touched?.warehouse_name && (
-                    <div className="text-xs text-red-500 mt-1">
-                        {/* {errors.warehouse_name} */}
-                        </div>
-                )}
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
-                    label="Warehouse Owner Name"
+                    label="Distributor Owner Name"
                     name="owner_name"
                     value={values.owner_name}
                     onChange={handleChange}
                     error={errors?.owner_name && touched?.owner_name ? errors.owner_name : false}
                 />
-                {errors?.owner_name && touched?.owner_name && (
-                    <div className="text-xs text-red-500 mt-1">
-                        {/* {errors.owner_name} */}
-                        </div>
-                )}
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
@@ -164,11 +148,6 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={handleChange}
                     error={errors?.company && touched?.company ? errors.company : false}
                 />
-                {errors?.company && touched?.company && (
-                    <div className="text-xs text-red-500 mt-1">
-                        {/* {errors.company} */}
-                        </div>
-                )}
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
@@ -178,33 +157,36 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={(e) => setFieldValue('tin_no', e.target.value)}
                     placeholder="Enter TIN No."
                 />
-               
             </div>
-            
-            
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
-                    label="Warehouse Manager"
+                    label="Distributor Manager"
                     name="warehouse_manager"
                     value={values.warehouse_manager}
                     onChange={handleChange}
                     error={errors?.warehouse_manager && touched?.warehouse_manager ? errors.warehouse_manager : false}
                 />
-                {errors?.warehouse_manager && touched?.warehouse_manager && (
-                    <div className="text-xs text-red-500 mt-1">
-                        {/* {errors.warehouse_manager} */}
-                        </div>
-                )}
             </div>
             <div className="flex flex-col gap-2">
-                <CustomSecurityCode
+                {/* <CustomSecurityCode
                     label="Agreed Stock Capital"
                     value={values.agreed_stock_capital}
                     onChange={(e) => setFieldValue('agreed_stock_capital', e.target.value)}
                     placeholder="Enter Stock Capital"
                     // error={errors?.warehouse_manager && touched?.warehouse_manager ? errors.warehouse_manager : false}
-
+                /> */}
+                <InputFields
+                    required
+                    type="number"
+                    min={0}
+                    integerOnly={true}
+                    label="Agreed Stock Capital"
+                    name="agreed_stock_capital"
+                    value={values.agreed_stock_capital}
+                    placeholder="Enter Stock Capital"
+                    onChange={handleChange}
+                    error={errors?.agreed_stock_capital && touched?.agreed_stock_capital ? errors.agreed_stock_capital : false}
                 />
             </div>
         </div>

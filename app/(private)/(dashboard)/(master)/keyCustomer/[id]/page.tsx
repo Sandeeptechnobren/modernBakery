@@ -411,8 +411,8 @@ export default function AddCompanyCustomer() {
         showSnackbar(
           res.message ||
             (isEditMode
-              ? "Company Customer Updated Successfully"
-              : "Company Customer Created Successfully"),
+              ? "Key Customer Updated Successfully"
+              : "Key Customer Created Successfully"),
           "success"
         );
 
@@ -427,7 +427,7 @@ export default function AddCompanyCustomer() {
           }
         }
 
-        router.push("/companyCustomer");
+        router.push("/keyCustomer");
       }
     } catch (error: unknown) {
       if (error instanceof Yup.ValidationError) {
@@ -447,7 +447,7 @@ export default function AddCompanyCustomer() {
         );
       } else {
         showSnackbar(
-          `Failed to ${isEditMode ? "update" : "add"} Company Customer `,
+          `Failed to ${isEditMode ? "update" : "add"} Key Customer `,
           "error"
         );
       }
@@ -493,7 +493,7 @@ export default function AddCompanyCustomer() {
                     <SettingPopUp
                       isOpen={isOpen}
                       onClose={() => setIsOpen(false)}
-                      title="Company Customer Code"
+                      title="Key Customer Code"
                       prefix={prefix}
                       setPrefix={setPrefix}
                       onSave={(mode, code) => {
@@ -853,7 +853,7 @@ export default function AddCompanyCustomer() {
           <Icon icon="lucide:arrow-left" width={24} />
         </div>
         <h1 className="text-xl font-semibold text-gray-900">
-          {isEditMode ? "Update" : "Add"} Company Customer
+          {isEditMode ? "Update" : "Add"} Key Customer
         </h1>
       </div>
 

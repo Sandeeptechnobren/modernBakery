@@ -131,7 +131,7 @@ export default function Route() {
         pageNo: number = 1,
         pageSize: number = 10
     ): Promise<listReturnType> => {
-        setLoading(true);
+        // setLoading(true);
         try {
             const params: any = {
                 page: pageNo.toString(),
@@ -142,16 +142,16 @@ export default function Route() {
             }
             const listRes = await routeList(params);
             return {
-                data: listRes.data || [],
-                currentPage: listRes.pagination.page || pageNo,
-                pageSize: listRes.pagination.limit || pageSize,
-                total: listRes?.pagination.totalPages ?? 0,
+                data: listRes?.data || [],
+                currentPage: listRes?.pagination?.page || pageNo,
+                pageSize: listRes?.pagination?.limit || pageSize,
+                total: listRes?.pagination?.totalPages || 1,
             };
         } catch (error) {
             console.error("API Error:", error);
             throw error;
         } finally {
-            setLoading(false);
+            // setLoading(false);
         }
     };
 
@@ -159,29 +159,32 @@ export default function Route() {
         async (
             searchQuery: string,
             pageSize: number = 10,
-            columnName?: string
+            columnName?: string,
+            page: number = 1
         ): Promise<searchReturnType> => {
-            setLoading(true);
+            // setLoading(true);
             let result;
             if (columnName && columnName !== "") {
                 result = await routeList({
                     per_page: pageSize.toString(),
                     [columnName]: searchQuery,
+                    page: page.toString(),
                 });
             } else {
                 result = await routeGlobalSearch({
                     search: searchQuery,
                     per_page: pageSize.toString(),
+                    page: page.toString(),
                 });
             }
-            setLoading(false);
+            // setLoading(false);
             if (result.error) throw new Error(result.data.message);
-            const pagination = result.pagination || {};
+            const pagination = result?.pagination || result?.pagination?.pagination || {};
             return {
                 data: result.data || [],
-                total: pagination.totalPages || 1,
-                currentPage: pagination.page || 1,
-                pageSize: pagination.limit || 50,
+                total: pagination?.totalPages || 1,
+                currentPage: pagination?.page || 1,
+                pageSize: pagination?.limit || 1,
             };
         },
         []
@@ -205,9 +208,9 @@ export default function Route() {
         return res;
     }
 
-    useEffect(() => {
-        setLoading(true);
-    }, []);
+    // useEffect(() => {
+    //     setLoading(true);
+    // }, []);
 
     const handleConfirmDelete = async () => {
         if (!selectedRowId) return;

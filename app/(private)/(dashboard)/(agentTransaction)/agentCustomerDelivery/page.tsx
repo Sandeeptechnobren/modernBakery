@@ -112,8 +112,7 @@ export default function CustomerInvoicePage() {
     const [refreshKey, setRefreshKey] = useState<number>(0);
     const { customerSubCategoryOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
 
-    // 🔹 Fetch Invoices
-    const fetchInvoices = useCallback(async (
+    const fetchDelivery = useCallback(async (
         page: number = 1,
         pageSize: number = 10
     ): Promise<listReturnType> => {
@@ -143,21 +142,6 @@ export default function CustomerInvoicePage() {
             setLoading(false);
         }
     }, [setLoading, showSnackbar]);
-
-    // 🔹 Search Invoices (Mock)
-    const searchInvoices = useCallback(async (): Promise<searchReturnType> => {
-        try {
-            setLoading(true);
-            return {
-                data: [],
-                currentPage: 1,
-                pageSize: 10,
-                total: 0,
-            };
-        } finally {
-            setLoading(false);
-        }
-    }, [setLoading]);
 
     const filterBy = useCallback(
         async (
@@ -194,9 +178,9 @@ export default function CustomerInvoicePage() {
         [setLoading]
     );
 
-    const exportFile = async () => {
+    const exportFile = async (format: "csv" | "xlsx" = "csv") => {
         try {
-            const response = await agentDeliveryExport({ format: "xlsx" });
+            const response = await agentDeliveryExport({ format });
             if (response && typeof response === 'object' && response.download_url) {
                 await downloadFile(response.download_url);
                 showSnackbar("File downloaded successfully ", "success");
@@ -219,21 +203,36 @@ export default function CustomerInvoicePage() {
             <Table
                 refreshKey={refreshKey}
                 config={{
-                    api: { list: fetchInvoices, search: searchInvoices, filterBy: filterBy },
+                    api: { list: fetchDelivery, filterBy: filterBy },
                     header: {
                         title: "Customer Delivery",
                         columnFilter: true,
                         searchBar: false,
+                        threeDot: [
+                            {
+                                icon: "gala:file-document",
+                                label: "Export CSV",
+                                labelTw: "text-[12px] hidden sm:block",
+                                onClick: () => exportFile('csv'),
+                            },
+                            {
+                                icon: "gala:file-document",
+                                label: "Export Excel",
+                                labelTw: "text-[12px] hidden sm:block",
+                                onClick: () => exportFile('xlsx'),
+
+                            }
+                        ],
                         actions: [
-                            <SidebarBtn
-                                key={0}
-                                href="#"
-                                isActive
-                                leadingIcon="mdi:download"
-                                label="Download"
-                                labelTw="hidden lg:block"
-                                onClick={exportFile}
-                            />,
+                            // <SidebarBtn
+                            //     key={0}
+                            //     href="#"
+                            //     isActive
+                            //     leadingIcon="mdi:download"
+                            //     label="Download"
+                            //     labelTw="hidden lg:block"
+                            //     onClick={exportFile}
+                            // />,
                             <SidebarBtn
                                 key={1}
                                 href="/agentCustomerDelivery/add"

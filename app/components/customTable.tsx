@@ -163,6 +163,14 @@ type tableDetailsContextType = {
     setTableDetails: React.Dispatch<React.SetStateAction<listReturnType>>;
     nestedLoading: boolean;
     setNestedLoading: React.Dispatch<React.SetStateAction<boolean>>;
+    // initial data snapshot so components can restore original list
+    initialTableData?: listReturnType | null;
+    setInitialTableData: React.Dispatch<React.SetStateAction<listReturnType | null>>;
+    // search and filter state to avoid using window globals
+    searchState: { applied: boolean; term: string };
+    setSearchState: React.Dispatch<React.SetStateAction<{ applied: boolean; term: string }>>;
+    filterState: { applied: boolean; payload: Record<string, any> };
+    setFilterState: React.Dispatch<React.SetStateAction<{ applied: boolean; payload: Record<string, any> }>>;
 };
 const TableDetails = createContext<tableDetailsContextType>(
     {} as tableDetailsContextType
@@ -176,7 +184,7 @@ interface TableProps {
 
 const defaultPageSize = 50;
 
-export default function Table({ refreshKey = 0, data, config  }: TableProps) {
+export default function Table({ refreshKey = 0, data, config }: TableProps) {
     return (
         <ContextProvider>
             <TableContainer
@@ -197,6 +205,9 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
     const [selectedRow, setSelectedRow] = useState([] as number[]);
     const [tableDetails, setTableDetails] = useState({} as listReturnType);
     const [nestedLoading, setNestedLoading] = useState(false);
+    const [initialTableData, setInitialTableData] = useState<listReturnType | null>(null);
+    const [searchState, setSearchState] = useState<{ applied: boolean; term: string }>({ applied: false, term: "" });
+    const [filterState, setFilterState] = useState<{ applied: boolean; payload: Record<string, any> }>({ applied: false, payload: {} });
     const [config, setConfig] = useState({} as configType);
 
     return (
@@ -206,7 +217,7 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
             >
                 <SelectedRow.Provider value={{ selectedRow, setSelectedRow }}>
                     <TableDetails.Provider
-                        value={{ tableDetails, setTableDetails, nestedLoading, setNestedLoading }}
+                        value={{ tableDetails, setTableDetails, nestedLoading, setNestedLoading, initialTableData, setInitialTableData, searchState, setSearchState, filterState, setFilterState }}
                     >
                         {children}
                     </TableDetails.Provider>
@@ -219,7 +230,7 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
 function TableContainer({ refreshKey, data, config }: TableProps) {
     const { setSelectedColumns } = useContext(ColumnFilterConfig);
     const { setConfig } = useContext(Config);
-    const { setTableDetails, setNestedLoading } = useContext(TableDetails);
+    const { setTableDetails, setNestedLoading, setInitialTableData } = useContext(TableDetails);
     const { selectedRow, setSelectedRow } = useContext(SelectedRow);
     const [showDropdown, setShowDropdown] = useState(false);
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
@@ -240,10 +251,24 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                 pageSize: config.pageSize || defaultPageSize,
             });
             setDisplayedData(data);
+            try {
+                setInitialTableData({
+                    data,
+                    total: Math.ceil(
+                        data.length / (config.pageSize || defaultPageSize)
+                    ),
+                    currentPage: 0,
+                    pageSize: config.pageSize || defaultPageSize,
+                });
+            } catch (err) {
+                /* ignore */
+            }
         }
 
         // if api is passed, use default values
         else if (config.api?.list) {
+            const MIN_LOADING_MS = 1000; // ensure nested loading lasts at least 1s
+            const start = Date.now();
             try {
                 setNestedLoading(true);
                 const result = await config.api.list(
@@ -253,14 +278,26 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                 const resolvedResult =
                     result instanceof Promise ? await result : result;
                 const { data, total, currentPage } = resolvedResult;
-                setTableDetails({
+                const tableInit = {
                     data,
                     total,
                     currentPage: currentPage - 1,
                     pageSize: config.pageSize || defaultPageSize,
-                });
+                };
+                setTableDetails(tableInit);
                 setDisplayedData(data);
+                try {
+                    setInitialTableData(tableInit);
+                } catch (err) {
+                    /* ignore */
+                }
             } finally {
+                // guarantee minimum display time for nested loading
+                const elapsed = Date.now() - start;
+                const wait = Math.max(0, MIN_LOADING_MS - elapsed);
+                if (wait > 0) {
+                    await new Promise((res) => setTimeout(res, wait));
+                }
                 setNestedLoading(false);
             }
         }
@@ -371,9 +408,8 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
 
 function TableHeader() {
     const { config } = useContext(Config);
-    const { tableDetails, setTableDetails, setNestedLoading } = useContext(TableDetails);
+    const { tableDetails, setTableDetails, setNestedLoading, setSearchState, searchState, initialTableData } = useContext(TableDetails);
     const [searchBarValue, setSearchBarValue] = useState("");
-    console.log("Table Details in Header:", tableDetails);
 
     async function handleSearch() {
         if (!config.api?.search) return;
@@ -383,21 +419,21 @@ function TableHeader() {
                 searchBarValue,
                 config.pageSize || defaultPageSize
             );
-            const resolvedResult = result instanceof Promise ? await result : result;  
+            const resolvedResult = result instanceof Promise ? await result : result;
             const { data, pageSize, total, currentPage } = resolvedResult;
-            console.log(resolvedResult);
+            // console.log(resolvedResult);
             setTableDetails({
                 data,
                 total: total || 0,
                 currentPage: currentPage - 1 || 0,
                 pageSize: pageSize || defaultPageSize
             });
-            // persist global search state so pagination can reuse it
+            // persist global search state so pagination can reuse it (via context)
             try {
                 if (searchBarValue && String(searchBarValue).trim().length > 0) {
-                    (window as any).__customTableSearch = { applied: true, term: searchBarValue };
+                    setSearchState({ applied: true, term: searchBarValue });
                 } else {
-                    (window as any).__customTableSearch = { applied: false, term: "" };
+                    setSearchState({ applied: false, term: "" });
                 }
             } catch (err) {
                 // ignore in non-browser environments
@@ -421,6 +457,42 @@ function TableHeader() {
                                     ) => setSearchBarValue(e.target.value)}
                                     onEnterPress={handleSearch}
                                 />
+                            )}
+
+                            {/* show results summary for global search (from context) */}
+                            {searchState && searchState.applied && (
+                                <div className="ml-3 flex items-center gap-2 text-sm text-gray-600">
+                                    {/* <span className="font-medium">
+                                        {(tableDetails?.totalRecords ?? tableDetails?.data?.length ?? 0)} Results Found
+                                    </span> */}
+                                    {/* <button
+                                        type="button"
+                                        onClick={async () => {
+                                            try {
+                                                setNestedLoading(true);
+                                                setSearchState({ applied: false, term: "" });
+                                                if (config.api?.list) {
+                                                    const res = await config.api.list(1, config.pageSize || defaultPageSize);
+                                                    const resolved = res instanceof Promise ? await res : res;
+                                                    const { data, total, currentPage, pageSize } = resolved as any;
+                                                    setTableDetails({
+                                                        data: data || [],
+                                                        total: total || 1,
+                                                        currentPage: currentPage - 1 || 0,
+                                                        pageSize: pageSize || config.pageSize || defaultPageSize,
+                                                    });
+                                                } else if (initialTableData) {
+                                                    setTableDetails(initialTableData);
+                                                }
+                                            } finally {
+                                                setNestedLoading(false);
+                                            }
+                                        }}
+                                        className="ml-2 underline text-gray-600"
+                                    >
+                                        Clear Search
+                                    </button> */}
+                                </div>
                             )}
 
                             {/* header filter panel button (shows configurable fields) */}
@@ -587,7 +659,7 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
     const [tableOrder, setTableOrder] = useState<{
         column: string;
         order: "asc" | "desc";
-    }>({ column: "", order: "asc" });
+    }>({ column: "", order: "desc" });
 
     const startIndex = tableDetails.currentPage * pageSize;
     const endIndex = startIndex + pageSize;
@@ -602,15 +674,29 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
     const isIndeterminate = selectedRow.length > 0 && !isAllSelected;
 
     useEffect(() => {
-        setNestedLoading(true);
+        // Update displayedData whenever tableDetails changes. Do not
+        // toggle nestedLoading here — TableContainer owns nestedLoading for
+        // API-driven loads. This prevents premature hiding of the loader.
         if (!api?.list) {
             setDisplayedData(tableData.slice(startIndex, endIndex));
-            setTimeout(() => setNestedLoading(false), 2000);
         } else {
             setDisplayedData(tableData);
-            setTimeout(() => setNestedLoading(false), 2000);
         }
     }, [tableDetails]);
+
+    // If no sort column is set yet, initialize tableOrder to the first sortable column
+    // and apply sorting once data is available.
+    useEffect(() => {
+        if (displayedData.length === 0) return;
+        if (tableOrder && tableOrder.column) return;
+        const firstSortable = columns.find((c: any) => c.isSortable);
+        if (firstSortable) {
+            const colKey = firstSortable.key;
+            const defaultOrder: "asc" | "desc" = tableOrder.order || "desc";
+            setTableOrder({ column: colKey, order: defaultOrder });
+            setDisplayedData(naturalSort(displayedData, defaultOrder, colKey));
+        }
+    }, [displayedData, columns]);
 
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
@@ -629,15 +715,17 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
     };
 
     const handleSort = (column: string) => {
+        // compute next order first (avoid using stale state after setState)
+        let nextOrder: "asc" | "desc";
         if (tableOrder.column === column) {
-            setTableOrder({
-                column,
-                order: tableOrder.order === "asc" ? "desc" : "asc",
-            });
+            nextOrder = tableOrder.order === "asc" ? "desc" : "asc";
         } else {
-            setTableOrder({ column, order: "desc" });
+            // default order when switching to a new column
+            nextOrder = "desc";
         }
-        setDisplayedData(naturalSort(displayedData, tableOrder.order, column));
+        setTableOrder({ column, order: nextOrder });
+        // apply sorting using the computed order immediately
+        setDisplayedData(naturalSort(displayedData, nextOrder, column));
     };
 
     return (
@@ -680,45 +768,45 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
                                     const originalIndex = config.columns?.findIndex((c) => c.key === col.key);
                                     if (!selectedColumns.includes(originalIndex)) return null;
                                     return (
-                                            <th
-                                                // enable native drag only when config.dragableColumn is true
-                                                draggable={!!config.dragableColumn}
-                                                onDragStart={(e) => {
-                                                    if (!config.dragableColumn) return;
-                                                    dragIndex.current = orderIdx;
-                                                    try {
-                                                        e.dataTransfer?.setData('text/plain', String(orderIdx));
-                                                        e.dataTransfer!.effectAllowed = 'move';
-                                                    } catch (err) {
-                                                        /* ignore */
-                                                    }
-                                                }}
-                                                onDragOver={(e) => {
-                                                    if (!config.dragableColumn) return;
-                                                    e.preventDefault();
-                                                    try { e.dataTransfer!.dropEffect = 'move'; } catch (err) { }
-                                                }}
-                                                onDrop={(e) => {
-                                                    if (!config.dragableColumn) return;
-                                                    e.preventDefault();
-                                                    const from = dragIndex.current;
-                                                    const to = orderIdx;
-                                                    if (from == null) return;
-                                                    if (from === to) {
-                                                        dragIndex.current = null;
-                                                        return;
-                                                    }
-                                                    setColumnOrder((prev) => {
-                                                        const next = [...prev];
-                                                        const item = next.splice(from, 1)[0];
-                                                        next.splice(to, 0, item);
-                                                        return next;
-                                                    });
+                                        <th
+                                            // enable native drag only when config.dragableColumn is true
+                                            draggable={!!config.dragableColumn}
+                                            onDragStart={(e) => {
+                                                if (!config.dragableColumn) return;
+                                                dragIndex.current = orderIdx;
+                                                try {
+                                                    e.dataTransfer?.setData('text/plain', String(orderIdx));
+                                                    e.dataTransfer!.effectAllowed = 'move';
+                                                } catch (err) {
+                                                    /* ignore */
+                                                }
+                                            }}
+                                            onDragOver={(e) => {
+                                                if (!config.dragableColumn) return;
+                                                e.preventDefault();
+                                                try { e.dataTransfer!.dropEffect = 'move'; } catch (err) { }
+                                            }}
+                                            onDrop={(e) => {
+                                                if (!config.dragableColumn) return;
+                                                e.preventDefault();
+                                                const from = dragIndex.current;
+                                                const to = orderIdx;
+                                                if (from == null) return;
+                                                if (from === to) {
                                                     dragIndex.current = null;
-                                                }}
-                                                className={`${col.width ? `w-[${col.width}px]` : ""} ${col.sticky ? "z-20 md:sticky" : ""} ${col.sticky === "left" ? "left-0" : ""} ${col.sticky === "right" ? "right-0" : ""} px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap ${config.dragableColumn ? '' : ''}`}
-                                                key={col.key}
-                                            >
+                                                    return;
+                                                }
+                                                setColumnOrder((prev) => {
+                                                    const next = [...prev];
+                                                    const item = next.splice(from, 1)[0];
+                                                    next.splice(to, 0, item);
+                                                    return next;
+                                                });
+                                                dragIndex.current = null;
+                                            }}
+                                            className={`${col.width ? `w-[${col.width}px]` : ""} ${col.sticky ? "z-20 md:sticky" : ""} ${col.sticky === "left" ? "left-0" : ""} ${col.sticky === "right" ? "right-0" : ""} px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap ${config.dragableColumn ? '' : ''}`}
+                                            key={col.key}
+                                        >
                                             <div className="flex items-center gap-[4px] capitalize">
                                                 {col.label}{" "}
                                                 {col.filter && (
@@ -813,10 +901,10 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
                                                 className={`px-[24px] py-[12px] bg-white ${col.sticky ? "z-10 md:sticky" : ""} ${col.sticky === "left"
                                                     ? "left-0"
                                                     : ""
-                                                } ${col.sticky === "right"
-                                                    ? "right-0"
-                                                    : ""
-                                                }`}
+                                                    } ${col.sticky === "right"
+                                                        ? "right-0"
+                                                        : ""
+                                                    }`}
                                             >
                                                 {col.render ? (
                                                     col.render(row)
@@ -1060,7 +1148,7 @@ function FilterTableHeader({
 function TableFooter() {
     const { config } = useContext(Config);
     const { api, footer, pageSize = defaultPageSize } = config;
-    const { tableDetails, setTableDetails, setNestedLoading } = useContext(TableDetails);
+    const { tableDetails, setTableDetails, setNestedLoading, searchState, filterState } = useContext(TableDetails);
     const cPage = tableDetails.currentPage || 0;
     const totalPages = tableDetails.total || 1;
 
@@ -1074,13 +1162,62 @@ function TableFooter() {
         } catch (err) {
             // ignore if event dispatch fails in unusual environments
         }
-        // If a global search is active, prefer search-based paging
+
+        const MIN_LOADING_MS = 1000;
+        const start = Date.now();
         try {
-            const globalSearch = (typeof window !== 'undefined') ? (window as any).__customTableSearch : undefined;
-            if (globalSearch && globalSearch.applied && api?.search) {
-                const term = globalSearch.term ?? "";
-                const res = await api.search(term, pageSize, undefined, pageNo + 1);
-                const resolvedResult = res instanceof Promise ? await res : res;
+            setNestedLoading(true);
+
+            // If a global search is active, prefer search-based paging
+            try {
+                const globalSearch = searchState;
+                if (globalSearch && globalSearch.applied && api?.search) {
+                    const term = globalSearch.term ?? "";
+                    const res = await api.search(term, pageSize, undefined, pageNo + 1);
+                    const resolvedResult = res instanceof Promise ? await res : res;
+                    const { data, total, currentPage } = resolvedResult;
+                    setTableDetails({
+                        ...tableDetails,
+                        data,
+                        currentPage: currentPage - 1,
+                        total,
+                        pageSize,
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.warn('Search-based pagination failed', err);
+            }
+
+            // If filters are applied (persisted globally) and filter API exists, call filter API for the page
+            try {
+                const globalFilter = filterState;
+                if (globalFilter && globalFilter.applied && api?.filterBy) {
+                    // reuse payload and request the requested page; add page if backend expects it
+                    const payload = { ...(globalFilter.payload || {}) } as Record<string, any>;
+                    // include page param (1-based) so backend can return correct page
+                    payload.page = pageNo + 1;
+                    const res = await api.filterBy(payload, pageSize);
+                    const resolvedResult = res instanceof Promise ? await res : res;
+                    const { data, total, currentPage } = resolvedResult;
+                    setTableDetails({
+                        ...tableDetails,
+                        data,
+                        currentPage: currentPage - 1,
+                        total,
+                        pageSize,
+                    });
+                    return;
+                }
+            } catch (err) {
+                // if filter-based paging fails, fall back to list or client-side
+                console.warn('Filter-based pagination failed', err);
+            }
+
+            if (api?.list) {
+                const result = await api.list(pageNo + 1, pageSize);
+                const resolvedResult =
+                    result instanceof Promise ? await result : result;
                 const { data, total, currentPage } = resolvedResult;
                 setTableDetails({
                     ...tableDetails,
@@ -1089,51 +1226,16 @@ function TableFooter() {
                     total,
                     pageSize,
                 });
-                return;
+            } else {
+                setTableDetails({ ...tableDetails, currentPage: pageNo });
             }
-        } catch (err) {
-            console.warn('Search-based pagination failed', err);
-        }
-
-        // If filters are applied (persisted globally) and filter API exists, call filter API for the page
-        try {
-            const globalFilter = (typeof window !== 'undefined') ? (window as any).__customTableFilter : undefined;
-            if (globalFilter && globalFilter.applied && api?.filterBy) {
-                // reuse payload and request the requested page; add page if backend expects it
-                const payload = { ...(globalFilter.payload || {}) } as Record<string, any>;
-                // include page param (1-based) so backend can return correct page
-                payload.page = pageNo + 1;
-                const res = await api.filterBy(payload, pageSize);
-                const resolvedResult = res instanceof Promise ? await res : res;
-                const { data, total, currentPage } = resolvedResult;
-                setTableDetails({
-                    ...tableDetails,
-                    data,
-                    currentPage: currentPage - 1,
-                    total,
-                    pageSize,
-                });
-                return;
+        } finally {
+            const elapsed = Date.now() - start;
+            const wait = Math.max(0, MIN_LOADING_MS - elapsed);
+            if (wait > 0) {
+                await new Promise((res) => setTimeout(res, wait));
             }
-        } catch (err) {
-            // if filter-based paging fails, fall back to list or client-side
-            console.warn('Filter-based pagination failed', err);
-        }
-
-        if (api?.list) {
-            const result = await api.list(pageNo + 1, pageSize);
-            const resolvedResult =
-                result instanceof Promise ? await result : result;
-            const { data, total, currentPage } = resolvedResult;
-            setTableDetails({
-                ...tableDetails,
-                data,
-                currentPage: currentPage - 1,
-                total,
-                pageSize,
-            });
-        } else {
-            setTableDetails({ ...tableDetails, currentPage: pageNo });
+            setNestedLoading(false);
         }
     }
 
@@ -1284,7 +1386,7 @@ export function FilterOptionList({
 
 function FilterBy() {
     const { config } = useContext(Config);
-    const { tableDetails, setTableDetails, setNestedLoading } = useContext(TableDetails);
+    const { tableDetails, setTableDetails, setNestedLoading, setFilterState } = useContext(TableDetails);
     const [showDropdown, setShowDropdown] = useState(false);
     const buttonRef = useRef<HTMLDivElement | null>(null);
     const [searchBarValue, setSearchBarValue] = useState("");
@@ -1323,24 +1425,24 @@ function FilterBy() {
                     }
                 });
 
-                // persist applied filter payload globally so pagination can reuse it
+                // persist applied filter payload via context so pagination can reuse it
                 try {
-                    (window as any).__customTableFilter = { applied: true, payload: payloadForApi };
+                    setFilterState({ applied: true, payload: payloadForApi });
                 } catch (err) {
                     // ignore environments without window
                 }
 
                 const res = await config.api.filterBy(payloadForApi, config.pageSize || defaultPageSize);
-                const resolved = res instanceof Promise ? await res : res;
+                const { currentPage, totalRecords, pageSize, total, data } = res instanceof Promise ? await res : res;
                 // prefer totalRecords when provided by API
-                const totalRecords = (resolved as any).totalRecords ?? (resolved as any).total ?? 0;
-                const pageSize = resolved.pageSize || config.pageSize || defaultPageSize;
-                const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(totalRecords / pageSize)) : (resolved.total ?? 1);
+                const totalRecordsValue = totalRecords ?? total ?? 0;
+                const pageSizeValue = pageSize || config.pageSize || defaultPageSize;
+                const totalPages = pageSizeValue > 0 ? Math.max(1, Math.ceil(totalRecordsValue / pageSizeValue)) : (total ?? 1);
                 setTableDetails({
-                    data: resolved.data || [],
+                    data: data || [],
                     total: totalPages,
                     totalRecords: totalRecords,
-                    currentPage: resolved.currentPage ?? 0,
+                    currentPage: currentPage - 1 || 0,
                     pageSize: pageSize,
                 });
                 setAppliedFilters(true);
@@ -1398,8 +1500,8 @@ function FilterBy() {
                         payloadForApi[k] = v as string;
                     }
                 });
-                // clear global applied filter flag
-                try { (window as any).__customTableFilter = { applied: false, payload: {} }; } catch (err) { }
+                // clear global applied filter flag via context
+                try { setFilterState({ applied: false, payload: {} }); } catch (err) { }
 
                 const res = await config.api.filterBy(payloadForApi, config.pageSize || defaultPageSize);
                 const resolved = res instanceof Promise ? await res : res;

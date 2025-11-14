@@ -91,18 +91,19 @@ export default function StepperForm({
     }
   };
 
-  const handleSubmit = async () => { 
-    setIsSubmitting(true); 
-    setLoading(true); 
-    if(onSubmit) 
-      {await onSubmit();
- setLoading(false); 
+  const handleSubmit = async () => {
+    onNext && onNext();
+    setIsSubmitting(true);
+    setLoading(true);
+    if (onSubmit) {
+      await onSubmit();
+      setLoading(false);
 
-  setTimeout(()=>{
-    setIsSubmitting(false); 
-    },2000)
-      }
-   
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 2000)
+    }
+
   }
 
   return (
@@ -164,7 +165,7 @@ export default function StepperForm({
           className="px-4 py-2 h-10 rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors w-full sm:w-auto"
           type="button"
         >
-          { currentStep === 1 ? cancelButtonText : backButtonText}
+          {currentStep === 1 ? cancelButtonText : backButtonText}
         </button>
 
         {showNextButton && !isLastStep && (
@@ -180,17 +181,17 @@ export default function StepperForm({
 
         {showSubmitButton && isLastStep && (
           <div className="w-full sm:w-auto">
-           {isSubmitting? <SidebarBtn
+            {isSubmitting ? <SidebarBtn
               label={isSubmitting ? "Submitting..." : submitButtonText}
               // disabled={isSubmitting}
               disabled
               isActive={true}
               leadingIcon="mdi:check"
               onClick={handleSubmit}
-            />:<SidebarBtn
+            /> : <SidebarBtn
               label={isSubmitting ? "Submitting..." : submitButtonText}
               // disabled={isSubmitting}
-              
+
               isActive={true}
               leadingIcon="mdi:check"
               onClick={handleSubmit}

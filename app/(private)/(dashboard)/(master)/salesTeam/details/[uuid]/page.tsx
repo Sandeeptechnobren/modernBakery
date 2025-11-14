@@ -36,9 +36,9 @@ interface Salesman {
     salesman_type_name?: string;
   };
   project_type?: {
-           "id": number,
-            "code": string,
-            "name": string
+    "id": number,
+    "code": string,
+    "name": string
   };
   designation?: string;
   route?: {
@@ -90,8 +90,8 @@ export default function Page() {
   const [salesman, setSalesman] = useState<Salesman | null>(null);
 
 
-  const title = "Salesman Details";
-  const backBtnUrl = "/salesman";
+  const title = "Sales Team Details";
+  const backBtnUrl = "/salesTeam";
 
 
   const columns: configType["columns"] = [
@@ -114,7 +114,7 @@ export default function Page() {
     },
     {
       key: "warehouse_id",
-      label: "Warehouse",
+      label: "Distributor",
       render: (row: TableDataType) =>
         typeof row.warehouse_id === "object" &&
           row.warehouse_id !== null &&
@@ -140,104 +140,104 @@ export default function Page() {
     { key: "total_amount", label: "Invoice Total", render: (row: TableDataType) => toInternationalNumber(row.total_amount) },
 
   ];
- const warehouseColumns: configType["columns"] = [
-  {
-    key: "warehouse_code",
-    label: "Warehouses",
-    render: (row: TableDataType) => `${row.warehouse_code}-${row.warehouse_name}` || "-",
-  }]
- 
- const orderColumns: configType["columns"] = [
-  {
-    key: "delivery_date",
-    label: "Delivery Date",
-    render: (row: TableDataType) => row.delivery_date?.split("T")[0] || "-",
-  },
-  {
-    key: "order_code",
-    label: "Order Code",
-    render: (row: TableDataType) => row.order_code || "-",
-  },
-  {
-    key: "warehouse_id",
-    label: "Warehouse",
-    render: (row: TableDataType | any) =>
-      typeof row.warehouse_id === "object" &&
-      row.warehouse_id !== null &&
-      "warehouse_name" in row.warehouse_id
-        ? (row.warehouse_id as { warehouse_name?: string }).warehouse_name || "-"
-        : row.warehouse?.warehouse_name || "-",
-  },
-  {
-    key: "customer_id",
-    label: "Customer",
-    render: (row: TableDataType | any) =>
-      typeof row.customer_id === "object" &&
-      row.customer_id !== null &&
-      "name" in row.customer_id
-        ? (row.customer_id as { name?: string }).name || "-"
-        : row.customer?.name || "-",
-  },
-  {
-    key: "salesman_id",
-    label: "Salesman",
-    render: (row: TableDataType | any) =>
-      typeof row.salesman_id === "object" &&
-      row.salesman_id !== null &&
-      "name" in row.salesman_id
-        ? (row.salesman_id as { name?: string }).name || "-"
-        : row.salesman?.name || "-",
-  },
-  {
-    key: "route_id",
-    label: "Route",
-    render: (row: TableDataType) => {
-      if (
-        typeof row.route_id === "object" &&
-        row.route_id !== null &&
-        "route_name" in row.route_id
-      ) {
-        return (row.route_id as { route_name?: string }).route_name || "-";
-      }
-      return typeof row.route_id === "string" ? row.route_id : "-";
+  const warehouseColumns: configType["columns"] = [
+    {
+      key: "warehouse_code",
+      label: "Distributors",
+      render: (row: TableDataType) => `${row.warehouse_code}-${row.warehouse_name}` || "-",
+    }]
+
+  const orderColumns: configType["columns"] = [
+    {
+      key: "delivery_date",
+      label: "Delivery Date",
+      render: (row: TableDataType) => row.delivery_date?.split("T")[0] || "-",
     },
-  },
-  {
-    key: "gross_total",
-    label: "Gross Total",
-    render: (row: TableDataType) =>
-      toInternationalNumber ? toInternationalNumber(row.gross_total) : row.gross_total,
-  },
-  {
-    key: "net_amount",
-    label: "Net Amount",
-    render: (row: TableDataType) =>
-      toInternationalNumber ? toInternationalNumber(row.net_amount) : row.net_amount,
-  },
-  {
-    key: "status",
-    label: "Status",
-    render: (row: TableDataType) =>
-      row.status === "1" ? (
-        <span className="text-green-600 font-semibold">Active</span>
-      ) : (
-        <span className="text-red-600 font-semibold">Inactive</span>
-      ),
-  },
-  // Optional: download icon column
-  // {
-  //   key: "download",
-  //   label: "Download",
-  //   render: (row: TableDataType) => (
-  //     <Icon
-  //       icon="material-symbols:download"
-  //       width={24}
-  //       onClick={() => exportFile(row.uuid, "csv")}
-  //       className="cursor-pointer text-blue-600 hover:text-blue-800"
-  //     />
-  //   ),
-  // },
-];
+    {
+      key: "order_code",
+      label: "Order Code",
+      render: (row: TableDataType) => row.order_code || "-",
+    },
+    {
+      key: "warehouse_id",
+      label: "Distributor",
+      render: (row: TableDataType | any) =>
+        typeof row.warehouse_id === "object" &&
+          row.warehouse_id !== null &&
+          "warehouse_name" in row.warehouse_id
+          ? (row.warehouse_id as { warehouse_name?: string }).warehouse_name || "-"
+          : row.warehouse?.warehouse_name || "-",
+    },
+    {
+      key: "customer_id",
+      label: "Customer",
+      render: (row: TableDataType | any) =>
+        typeof row.customer_id === "object" &&
+          row.customer_id !== null &&
+          "name" in row.customer_id
+          ? (row.customer_id as { name?: string }).name || "-"
+          : row.customer?.name || "-",
+    },
+    {
+      key: "salesman_id",
+      label: "Sales Team",
+      render: (row: TableDataType | any) =>
+        typeof row.salesman_id === "object" &&
+          row.salesman_id !== null &&
+          "name" in row.salesman_id
+          ? (row.salesman_id as { name?: string }).name || "-"
+          : row.salesman?.name || "-",
+    },
+    {
+      key: "route_id",
+      label: "Route",
+      render: (row: TableDataType) => {
+        if (
+          typeof row.route_id === "object" &&
+          row.route_id !== null &&
+          "route_name" in row.route_id
+        ) {
+          return (row.route_id as { route_name?: string }).route_name || "-";
+        }
+        return typeof row.route_id === "string" ? row.route_id : "-";
+      },
+    },
+    {
+      key: "gross_total",
+      label: "Gross Total",
+      render: (row: TableDataType) =>
+        toInternationalNumber ? toInternationalNumber(row.gross_total) : row.gross_total,
+    },
+    {
+      key: "net_amount",
+      label: "Net Amount",
+      render: (row: TableDataType) =>
+        toInternationalNumber ? toInternationalNumber(row.net_amount) : row.net_amount,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) =>
+        row.status === "1" ? (
+          <span className="text-green-600 font-semibold">Active</span>
+        ) : (
+          <span className="text-red-600 font-semibold">Inactive</span>
+        ),
+    },
+    // Optional: download icon column
+    // {
+    //   key: "download",
+    //   label: "Download",
+    //   render: (row: TableDataType) => (
+    //     <Icon
+    //       icon="material-symbols:download"
+    //       width={24}
+    //       onClick={() => exportFile(row.uuid, "csv")}
+    //       className="cursor-pointer text-blue-600 hover:text-blue-800"
+    //     />
+    //   ),
+    // },
+  ];
 
 
 
@@ -246,8 +246,8 @@ export default function Page() {
       pageNo: number = 1,
       pageSize: number = 50
     ): Promise<searchReturnType> => {
-      
-      const result = await getSalesmanBySalesId(uuid,{from:"",to:""});
+
+      const result = await getSalesmanBySalesId(uuid, { from: "", to: "" });
       if (result.error) {
         throw new Error(result.data?.message || "Search failed");
       }
@@ -266,7 +266,7 @@ export default function Page() {
       pageNo: number = 1,
       pageSize: number = 50
     ): Promise<searchReturnType> => {
-      const result = await getOrderOfSalesmen(uuid,{from:"",to:""});
+      const result = await getOrderOfSalesmen(uuid, { from: "", to: "" });
       if (result.error) {
         throw new Error(result.data?.message || "Search failed");
       }
@@ -323,7 +323,7 @@ export default function Page() {
         const res = await getSalesmanById(uuid);
         if (res.error) {
           showSnackbar(
-            res.data?.message || "Unable to fetch Salesman Details",
+            res.data?.message || "Unable to fetch Sales Team Details",
             "error"
           );
           return;
@@ -332,7 +332,7 @@ export default function Page() {
 
         setGlobalLoading(false);
       } catch (error) {
-        showSnackbar("Unable to fetch Salesman Details", "error");
+        showSnackbar("Unable to fetch Sales Team Details", "error");
       } finally {
         setLoading(false);
       }
@@ -357,75 +357,75 @@ export default function Page() {
     { key: "order", label: "Order" },
   ];
 
-const filterBy = useCallback(
-        async (
-            payload: Record<string, string | number | null>,
-            pageSize: number
-        ): Promise<listReturnType> => {
-            let result;
-            setLoading(true);
-            try {
-                const params: Record<string, string> = { per_page: pageSize.toString() };
-                Object.keys(payload || {}).forEach((k) => {
-                    const v = payload[k as keyof typeof payload];
-                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                        params[k] = String(v);
-                    }
-                });
-                result = await getOrderOfSalesmen(uuid,{from:params.start_date,to:params.end_date});
-            } finally {
-                setLoading(false);
-            }
+  const filterBy = useCallback(
+    async (
+      payload: Record<string, string | number | null>,
+      pageSize: number
+    ): Promise<listReturnType> => {
+      let result;
+      setLoading(true);
+      try {
+        const params: Record<string, string> = { per_page: pageSize.toString() };
+        Object.keys(payload || {}).forEach((k) => {
+          const v = payload[k as keyof typeof payload];
+          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+            params[k] = String(v);
+          }
+        });
+        result = await getOrderOfSalesmen(uuid, { from: params.start_date, to: params.end_date });
+      } finally {
+        setLoading(false);
+      }
 
-            if (result?.error) throw new Error(result.data?.message || "Filter failed");
-            else {
-                const pagination = result.pagination?.pagination || result.pagination || {};
-                return {
-                    data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 0,
-                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.page || result.pagination?.page || 0,
-                    pageSize: pagination.limit || pageSize,
-                };
-            }
-        },
-        [setLoading]
-    );
+      if (result?.error) throw new Error(result.data?.message || "Filter failed");
+      else {
+        const pagination = result.pagination?.pagination || result.pagination || {};
+        return {
+          data: result.data || [],
+          total: pagination.totalPages || result.pagination?.totalPages || 0,
+          totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+          currentPage: pagination.page || result.pagination?.page || 0,
+          pageSize: pagination.limit || pageSize,
+        };
+      }
+    },
+    [setLoading]
+  );
 
-    const filterBySalesmen = useCallback(
-        async (
-            payload: Record<string, string | number | null>,
-            pageSize: number
-        ): Promise<listReturnType> => {
-            let result;
-            setLoading(true);
-            try {
-                const params: Record<string, string> = { per_page: pageSize.toString() };
-                Object.keys(payload || {}).forEach((k) => {
-                    const v = payload[k as keyof typeof payload];
-                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                        params[k] = String(v);
-                    }
-                });
-                result = await getSalesmanBySalesId(uuid,{from:params.start_date,to:params.end_date});
-            } finally {
-                setLoading(false);
-            }
+  const filterBySalesmen = useCallback(
+    async (
+      payload: Record<string, string | number | null>,
+      pageSize: number
+    ): Promise<listReturnType> => {
+      let result;
+      setLoading(true);
+      try {
+        const params: Record<string, string> = { per_page: pageSize.toString() };
+        Object.keys(payload || {}).forEach((k) => {
+          const v = payload[k as keyof typeof payload];
+          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+            params[k] = String(v);
+          }
+        });
+        result = await getSalesmanBySalesId(uuid, { from: params.start_date, to: params.end_date });
+      } finally {
+        setLoading(false);
+      }
 
-            if (result?.error) throw new Error(result.data?.message || "Filter failed");
-            else {
-                const pagination = result.pagination?.pagination || result.pagination || {};
-                return {
-                    data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 0,
-                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.page || result.pagination?.currentPage || 0,
-                    pageSize: pagination.limit || pageSize,
-                };
-            }
-        },
-        [setLoading]
-    );
+      if (result?.error) throw new Error(result.data?.message || "Filter failed");
+      else {
+        const pagination = result.pagination?.pagination || result.pagination || {};
+        return {
+          data: result.data || [],
+          total: pagination.totalPages || result.pagination?.totalPages || 0,
+          totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+          currentPage: pagination.page || result.pagination?.currentPage || 0,
+          pageSize: pagination.limit || pageSize,
+        };
+      }
+    },
+    [setLoading]
+  );
   // useEffect(() => {
   //   if (!tabName) {
   //     setActiveTab(0); // default tab
@@ -498,21 +498,23 @@ const filterBy = useCallback(
       {activeTab === "overview" && (
         <ContainerCard className="w-full h-fit">
           <KeyValueData
-            title="Salesman Information"
+            title="Sales Team Information"
             data={[
               {
-                key: "Salesman Type",
+                key: "Sales Team Type",
                 value: salesman?.salesman_type?.salesman_type_name || "-",
               },
               {
                 key: "Project Type",
-                value: `${salesman?.project_type?.code} - ${salesman?.project_type?.name}` || "-",
+                value: salesman?.project_type
+                  ? `${salesman.project_type.code ?? "-"} - ${salesman.project_type.name ?? "-"}`
+                  : "-"
               },
               { key: "Designation", value: salesman?.designation || "-" },
               { key: "Contact No", value: salesman?.contact_no || "-" },
               {
-                key: "Warehouse",
-                value: <span className="hover:text-red-500 cursor-pointer">View Warehouses</span>,
+                key: "Distributor",
+                value: <span className="hover:text-red-500 cursor-pointer">View Distributors</span>,
                 onClick: viewPopuop
               },
               {
@@ -523,8 +525,8 @@ const filterBy = useCallback(
               {
                 key: "Forcefull Login",
                 value:
-                 
-                    salesman?.forceful_login === "1"
+
+                  salesman?.forceful_login === "1"
                     ? "Yes"
                     : "No",
               },
@@ -537,12 +539,12 @@ const filterBy = useCallback(
               },
               { key: "Block Date From", value: salesman?.block_date_from || "-" },
               { key: "Block Date To", value: salesman?.block_date_to || "-" },
-              { key: "cashier Description Block", value: salesman?.cashier_description_block == "1"?"Yes":"No"},
+              { key: "cashier Description Block", value: salesman?.cashier_description_block == "1" ? "Yes" : "No" },
               {
                 key: "Invoice Block",
                 value:
-                
-                    salesman?.invoice_block === "1"
+
+                  salesman?.invoice_block === "1"
                     ? "Yes"
                     : "No",
               },
@@ -571,22 +573,22 @@ const filterBy = useCallback(
                 api: {
                   // search: searchCustomerById,
                   list: salesBySalesman,
-                 filterBy:filterBySalesmen
+                  filterBy: filterBySalesmen
                 },
                 header: {
                   searchBar: false,
                   filterByFields: [
-                                {
-                                    key: "start_date",
-                                    label: "Start Date",
-                                    type: "date"
-                                },
-                                {
-                                    key: "end_date",
-                                    label: "End Date",
-                                    type: "date"
-                                }
-                            ]
+                    {
+                      key: "start_date",
+                      label: "Start Date",
+                      type: "date"
+                    },
+                    {
+                      key: "end_date",
+                      label: "End Date",
+                      type: "date"
+                    }
+                  ]
                 },
                 showNestedLoading: true,
                 footer: { nextPrevBtn: true, pagination: true },
@@ -597,11 +599,11 @@ const filterBy = useCallback(
                 rowSelection: false,
                 rowActions: [
                   {
-  icon: "material-symbols:download",
-  onClick: (data: TableDataType) => {
-    exportFile(data.uuid, "pdf"); // or "excel", "csv" etc.
-  },
-}
+                    icon: "material-symbols:download",
+                    onClick: (data: TableDataType) => {
+                      exportFile(data.uuid, "pdf"); // or "excel", "csv" etc.
+                    },
+                  }
                 ],
                 pageSize: 50,
               }}
@@ -620,22 +622,22 @@ const filterBy = useCallback(
                 api: {
                   // search: searchCustomerById,
                   list: orderBySalesman,
-                  filterBy:filterBy
+                  filterBy: filterBy
                 },
                 header: {
                   searchBar: false,
                   filterByFields: [
-                                {
-                                    key: "start_date",
-                                    label: "Start Date",
-                                    type: "date"
-                                },
-                                {
-                                    key: "end_date",
-                                    label: "End Date",
-                                    type: "date"
-                                }
-                            ]
+                    {
+                      key: "start_date",
+                      label: "Start Date",
+                      type: "date"
+                    },
+                    {
+                      key: "end_date",
+                      label: "End Date",
+                      type: "date"
+                    }
+                  ]
                 },
                 showNestedLoading: true,
                 footer: { nextPrevBtn: true, pagination: true },
@@ -646,11 +648,11 @@ const filterBy = useCallback(
                 rowSelection: false,
                 rowActions: [
                   {
-  icon: "material-symbols:download",
-  onClick: (data: TableDataType) => {
-    exportOrderFile(data.uuid, "pdf"); // or "excel", "csv" etc.
-  },
-}
+                    icon: "material-symbols:download",
+                    onClick: (data: TableDataType) => {
+                      exportOrderFile(data.uuid, "pdf"); // or "excel", "csv" etc.
+                    },
+                  }
                 ],
                 pageSize: 50,
               }}
@@ -660,24 +662,24 @@ const filterBy = useCallback(
         </ContainerCard>
       )}
 
-      <Popup isOpen={openPopup}  onClose={() => {setOpenPopup(false);}} >
-      <div className="flex flex-col h-full">
-            <Table
-                data={salesman?.warehouses || []}
+      <Popup isOpen={openPopup} onClose={() => { setOpenPopup(false); }} >
+        <div className="flex flex-col h-full">
+          <Table
+            data={salesman?.warehouses || []}
 
-              config={{
-                showNestedLoading: true,
-                footer: { nextPrevBtn: true, pagination: true },
-                columns: warehouseColumns,
-                table: {
-                  height: 500,
-                },
-                rowSelection: false,
-               
-                pageSize: 50,
-              }}
-            />
-          </div>
+            config={{
+              showNestedLoading: true,
+              footer: { nextPrevBtn: true, pagination: true },
+              columns: warehouseColumns,
+              table: {
+                height: 500,
+              },
+              rowSelection: false,
+
+              pageSize: 50,
+            }}
+          />
+        </div>
       </Popup>
     </>
   );

@@ -47,15 +47,15 @@ const columns = [
     render: (row: LocalTableDataType) => row.item_category?.category_name || "-",
   },
   {
-    key: "item_uoms",
+    key: "base_uom",
     label: "Base UOM",
     render: (row: LocalTableDataType) => {
       if (!row.item_uoms || row.item_uoms.length === 0) return "-";
-      return row.item_uoms[0]?.name ?? "-"; // ✔️ Base UOM
+      return row.item_uoms[0]?.name ?? "-";
     },
   },
   {
-    key: "item_uoms",
+    key: "base_uom_price",
     label: "Base UOM Price",
     render: (row: LocalTableDataType) => {
       if (!row.item_uoms || row.item_uoms.length === 0) return "-";
@@ -63,7 +63,7 @@ const columns = [
     },
   },
   {
-    key: "item_uoms",
+    key: "secondary_uom",
     label: "Secondary UOM",
     render: (row: LocalTableDataType) => {
       if (!row.item_uoms || row.item_uoms.length < 2) return "-";
@@ -71,7 +71,7 @@ const columns = [
     },
   },
   {
-    key: "item_uoms",
+    key: "secondary_uom_price",
     label: "Secondary UOM Price",
     render: (row: LocalTableDataType) => {
       if (!row.item_uoms || row.item_uoms.length < 2) return "-";
@@ -96,11 +96,9 @@ const columns = [
 
 export default function Item() {
   const { setLoading } = useLoading();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<LocalTableDataType | null>(
-    null
-  );
+  // const [showDropdown, setShowDropdown] = useState(false);
+  // const [showDeletePopup, setShowDeletePopup] = useState(false);
+  // const [selectedRow, setSelectedRow] = useState<LocalTableDataType | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -111,9 +109,9 @@ export default function Item() {
       pageSize: number = 50
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
-        const res = await itemList({ page: page.toString() });
-        setLoading(false);
+        // setLoading(true);
+        const res = await itemList({ page: page.toString(), per_page: pageSize.toString() });
+        // setLoading(false);
         const data = res.data.map((item: LocalTableDataType) => ({
           ...item,
         }));
@@ -142,9 +140,9 @@ export default function Item() {
       page: number = 1,
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
-        const res = await itemGlobalSearch({ query: query, perPage: page.toString() });
-        setLoading(false);
+        // setLoading(true);
+        const res = await itemGlobalSearch({ query: query, page: page.toString(), per_page: pageSize.toString() });
+        // setLoading(false);
         const data = res.data.map((item: LocalTableDataType) => ({
           ...item,
         }));
@@ -174,16 +172,16 @@ export default function Item() {
       return;
     }
 
-    const selectedItem = data.filter((_, index) =>
-      selectedRow.includes(index)
-    );
+    // const selectedItem = data.filter((_, index) =>
+    //   selectedRow.includes(index)
+    // );
     // console.log(data, selectedRow)
 
     const failedUpdates: string[] = [];
 
     const selectedRowsData: string[] = data.filter((value, index) => selectedRow?.includes(index)).map((item) => item.id);
     try {
-      setLoading(true);
+      // setLoading(true);
 
       const res = await updateItemStatus({ item_ids: selectedRowsData, status });
 
@@ -202,8 +200,8 @@ export default function Item() {
       console.error("Status update error:", error);
       showSnackbar("An error occurred while updating status", "error");
     } finally {
-      setLoading(false);
-      setShowDropdown(false);
+      // setLoading(false);
+      // setShowDropdown(false);
     }
   };
 
@@ -221,9 +219,9 @@ export default function Item() {
     }
   }
 
-  useEffect(() => {
-    setLoading(true);
-  }, []);
+  // useEffect(() => {
+  //   setLoading(true);
+  // }, []);
 
   return (
     <>

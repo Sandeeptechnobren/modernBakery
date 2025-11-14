@@ -1,28 +1,26 @@
 "use client";
 
-import { Icon } from "@iconify-icon/react";
-import { useEffect, useState, useRef, ChangeEvent } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import IconButton from "@/app/components/iconButton";
 import InputFields from "@/app/components/inputFields";
 import SettingPopUp from "@/app/components/settingPopUp";
-import IconButton from "@/app/components/iconButton";
 import StepperForm, {
-    useStepperForm,
     StepperStep,
+    useStepperForm,
 } from "@/app/components/stepperForm";
-import { useSnackbar } from "@/app/services/snackbarContext";
 import {
+    addAgentCustomer,
     agentCustomerById,
+    customerCategoryList,
+    customerSubCategoryList,
     editAgentCustomer,
     genearateCode,
-    addAgentCustomer,
-    saveFinalCode,
     routeList,
-    customerSubCategoryList,
-    customerCategoryList,
+    saveFinalCode,
 } from "@/app/services/allApi";
-import * as Yup from "yup";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { Icon } from "@iconify-icon/react";
 import {
     Form,
     Formik,
@@ -30,7 +28,9 @@ import {
     FormikHelpers,
     FormikTouched,
 } from "formik";
-import { useLoading } from "@/app/services/loadingContext";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import * as Yup from "yup";
 
 interface AgentCustomerFormValues {
     osa_code: string;
@@ -93,7 +93,7 @@ export default function AddEditAgentCustomer() {
     });
     const [filteredRouteOptions, setFilteredRouteOptions] = useState([] as { label: string; value: string }[]);
     const [filteredCustomerCategoryOptions, setFilteredCustomerCategoryOptions] = useState([] as { label: string; value: string }[]);
-    const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState([] as  { label: string; value: string }[]);
+    const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState([] as { label: string; value: string }[]);
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -140,7 +140,7 @@ export default function AddEditAgentCustomer() {
             enable_promotion: "0",
             creditday: "",
             credit_limit: "",
-            status: "1", 
+            status: "1",
             is_cash: "1",
             vat_no: null,
             latitude: null,
@@ -150,7 +150,7 @@ export default function AddEditAgentCustomer() {
     );
 
     useEffect(() => {
-        if(loading) setLoading(true);
+        if (loading) setLoading(true);
         else setLoading(false);
     }, [loading, setLoading]);
 
@@ -160,7 +160,7 @@ export default function AddEditAgentCustomer() {
             warehouse_id: value,
             per_page: "10",
         });
-        if(filteredOptions.error) {
+        if (filteredOptions.error) {
             showSnackbar(filteredOptions.data?.message || "Failed to fetch routes", "error");
             return;
         }
@@ -178,7 +178,7 @@ export default function AddEditAgentCustomer() {
             outlet_channel_id: value,
             per_page: "10",
         });
-        if(filteredOptions.error) {
+        if (filteredOptions.error) {
             showSnackbar(filteredOptions.data?.message || "Failed to fetch Customer Categories", "error");
             return;
         }
@@ -196,7 +196,7 @@ export default function AddEditAgentCustomer() {
             customer_category_id: value,
             per_page: "10",
         });
-        if(filteredOptions.error) {
+        if (filteredOptions.error) {
             showSnackbar(filteredOptions.data?.message || "Failed to fetch Customer Sub Categories", "error");
             return;
         }
@@ -274,7 +274,7 @@ export default function AddEditAgentCustomer() {
                                 : "",
                         // categories
                         category_id:
-                            data.category.id != null
+                            data?.category?.id != null
                                 ? String(data.category?.id)
                                 : String(data.category?.id ?? ""),
                         subcategory_id:
@@ -294,9 +294,9 @@ export default function AddEditAgentCustomer() {
                         qr_code:
                             data.qr_code != null ? String(data.qr_code) : "",
                     });
-                    fetchRoutes(data.get_warehouse != null? String(data.get_warehouse?.id): "");
-                    fetchCategories(data.outlet_channel.id != null? String(data.outlet_channel?.id): "");
-                    fetchSubCategories(data.category.id != null? String(data.category?.id): String(data.category?.id ?? ""));
+                    fetchRoutes(data.get_warehouse != null ? String(data.get_warehouse?.id) : "");
+                    fetchCategories(data.outlet_channel.id != null ? String(data.outlet_channel?.id) : "");
+                    fetchSubCategories(data?.category?.id != null ? String(data?.category?.id) : String(data?.category?.id ?? ""));
                 }
                 setLoading(false);
             })();
@@ -334,7 +334,7 @@ export default function AddEditAgentCustomer() {
         name: Yup.string().required("Name is required").max(255),
         owner_name: Yup.string().required("Owner Name is required").max(255),
         customer_type: Yup.string().required("Customer type is required"), // validate existence server-side
-        warehouse: Yup.string().required("Warehouse is required"),
+        warehouse: Yup.string().required("Distributor is required"),
         route_id: Yup.string().required("Route is required"),
         outlet_channel_id: Yup.string().required("Outlet channel is required"),
 
@@ -350,7 +350,7 @@ export default function AddEditAgentCustomer() {
             .transform(emptyToNull)
             .min(9, "Must be at least 9 digits")
             .max(10, "Must be at most 10 digits"),
-       
+
         contact_no: Yup.string()
             .required("Contact number is required")
             .matches(/^[0-9]+$/, "Only numbers are allowed")
@@ -361,8 +361,8 @@ export default function AddEditAgentCustomer() {
             .required("Contact number 2 is required")
             .matches(/^[0-9]+$/, "Only numbers are allowed")
             .min(9, "Must be at least 9 digits")
-            .max(10, "Must be at most 10 digits"),  
-    
+            .max(10, "Must be at most 10 digits"),
+
         // financial
         buyertype: Yup.mixed()
             .oneOf([0, 1, "0", "1"], "Invalid buyer type")
@@ -557,7 +557,7 @@ export default function AddEditAgentCustomer() {
                         : "Field Customer added successfully",
                     "success"
                 );
-                router.push("/agentCustomer");
+                router.push("/fieldCustomer");
             }
         } catch (err) {
             if (err instanceof Yup.ValidationError) {
@@ -728,7 +728,7 @@ export default function AddEditAgentCustomer() {
                                 <div>
                                     <InputFields
                                         required
-                                        label="Warehouse"
+                                        label="Distributor"
                                         name="warehouse"
                                         value={values?.warehouse || ""}
                                         options={warehouseOptions}
@@ -752,9 +752,9 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Route"
                                         name="route_id"
-                                        value={filteredRouteOptions.length === 0 ? "" : values.route_id?.toString() }
+                                        value={filteredRouteOptions.length === 0 ? "" : values.route_id?.toString()}
                                         onChange={(e) =>
-                                            setFieldValue("route_id",e.target.value)
+                                            setFieldValue("route_id", e.target.value)
                                         }
                                         disabled={filteredRouteOptions.length === 0}
                                         showSkeleton={skeleton.route}
@@ -957,104 +957,104 @@ export default function AddEditAgentCustomer() {
                 );
 
             case 4:
-            return (
-                <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-                    <div className="p-6">
-                        <h2 className="text-lg font-medium text-gray-800 mb-4">
-                            Financial
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <InputFields
-                                    required
-                                    type="radio"
-                                    label="Buyer Type"
-                                    name="buyertype"
-                                    value={
-                                        values.buyertype?.toString() ?? ""
-                                    }
-                                    onChange={(e) =>
-                                        setFieldValue(
-                                            "buyertype",
-                                            e.target.value
-                                        )
-                                    }
-                                    error={
-                                        touched.buyertype &&
-                                        errors.buyertype
-                                    }
-                                    options={[
-                                        { value: "1", label: "B2C" },
-                                        { value: "0", label: "B2B" }
-                                    ]}
-                                />
-                            </div>
-
-                            <div>
-                                <InputFields
-                                    label="VAT No"
-                                    name="vat_no"
-                                    value={values.vat_no?.toString()}
-                                    onChange={(e) =>
-                                        setFieldValue("vat_no", e.target.value)
-                                    }
-                                    error={touched.vat_no && errors.vat_no}
-                                />
-                            </div>
-
-                            <div>
-                                <InputFields
-                                    required
-                                    label="Payment Type"
-                                    name="payment_type"
-                                    value={values.payment_type?.toString() ??""}
-                                    onChange={(e) =>{
-                                        setFieldValue("payment_type",e.target.value)
-                                        setFieldValue("is_cash", (e.target.value === "1") ? "1" : "0")
-                                    }}
-                                    error={
-                                        touched.payment_type &&
-                                        errors.payment_type
-                                    }
-                                    options={paymentTypeOptions}
-                                />
-                            </div>
-
-                            { values.is_cash === "0" && 
-                            <>
+                return (
+                    <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+                        <div className="p-6">
+                            <h2 className="text-lg font-medium text-gray-800 mb-4">
+                                Financial
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <InputFields
-                                        label="Credit Day"
-                                        name="creditday"
-                                        value={values.creditday}
-                                        onChange={(e) =>
-                                            setFieldValue("creditday", e.target.value)
+                                        required
+                                        type="radio"
+                                        label="Buyer Type"
+                                        name="buyertype"
+                                        value={
+                                            values.buyertype?.toString() ?? ""
                                         }
-                                        error={touched.creditday && errors.creditday}
+                                        onChange={(e) =>
+                                            setFieldValue(
+                                                "buyertype",
+                                                e.target.value
+                                            )
+                                        }
+                                        error={
+                                            touched.buyertype &&
+                                            errors.buyertype
+                                        }
+                                        options={[
+                                            { value: "1", label: "B2C" },
+                                            { value: "0", label: "B2B" }
+                                        ]}
                                     />
                                 </div>
 
                                 <div>
                                     <InputFields
-                                        label="Credit Limit"
-                                        name="credit_limit"
-                                        value={values.credit_limit}
+                                        label="VAT No"
+                                        name="vat_no"
+                                        value={values.vat_no?.toString()}
                                         onChange={(e) =>
-                                            setFieldValue("credit_limit", e.target.value)
+                                            setFieldValue("vat_no", e.target.value)
                                         }
-                                        error={touched.credit_limit && errors.credit_limit}
+                                        error={touched.vat_no && errors.vat_no}
                                     />
                                 </div>
-                            </>
-                            }
 
+                                <div>
+                                    <InputFields
+                                        required
+                                        label="Payment Type"
+                                        name="payment_type"
+                                        value={values.payment_type?.toString() ?? ""}
+                                        onChange={(e) => {
+                                            setFieldValue("payment_type", e.target.value)
+                                            setFieldValue("is_cash", (e.target.value === "1") ? "1" : "0")
+                                        }}
+                                        error={
+                                            touched.payment_type &&
+                                            errors.payment_type
+                                        }
+                                        options={paymentTypeOptions}
+                                    />
+                                </div>
+
+                                {values.is_cash === "0" &&
+                                    <>
+                                        <div>
+                                            <InputFields
+                                                label="Credit Day"
+                                                name="creditday"
+                                                value={values.creditday}
+                                                onChange={(e) =>
+                                                    setFieldValue("creditday", e.target.value)
+                                                }
+                                                error={touched.creditday && errors.creditday}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <InputFields
+                                                label="Credit Limit"
+                                                name="credit_limit"
+                                                value={values.credit_limit}
+                                                onChange={(e) =>
+                                                    setFieldValue("credit_limit", e.target.value)
+                                                }
+                                                error={touched.credit_limit && errors.credit_limit}
+                                            />
+                                        </div>
+                                    </>
+                                }
+
+                            </div>
                         </div>
                     </div>
-                </div>
-            );
-            
-            case 5: 
-                return(
+                );
+
+            case 5:
+                return (
                     <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
                         <div className="p-6">
                             <h2 className="text-lg font-medium text-gray-800 mb-4">
@@ -1176,7 +1176,7 @@ export default function AddEditAgentCustomer() {
                                 </div>
 
                             </div>
-                            </div>
+                        </div>
                     </div>
                 )
         }
@@ -1207,16 +1207,16 @@ export default function AddEditAgentCustomer() {
                 onSubmit={handleSubmit}
             >
                 {({
-                        values,
-                        setFieldValue,
-                        errors,
-                        touched,
-                        handleSubmit: formikSubmit,
-                        setErrors,
-                        setTouched,
-                        setFieldError,
-                        isSubmitting: issubmitting,
-                    }) => (
+                    values,
+                    setFieldValue,
+                    errors,
+                    touched,
+                    handleSubmit: formikSubmit,
+                    setErrors,
+                    setTouched,
+                    setFieldError,
+                    isSubmitting: issubmitting,
+                }) => (
                     <Form>
                         <StepperForm
                             steps={steps.map((step) => ({
@@ -1224,7 +1224,7 @@ export default function AddEditAgentCustomer() {
                                 isCompleted: isStepCompleted(step.id),
                             }))}
                             currentStep={currentStep}
-                            onStepClick={() => {}}
+                            onStepClick={() => { }}
                             onBack={prevStep}
                             onNext={() =>
                                 handleNext(values, {
@@ -1240,8 +1240,8 @@ export default function AddEditAgentCustomer() {
                                 issubmitting
                                     ? (isEditMode ? "Updating..." : "Submitting...")
                                     : isEditMode
-                                    ? "Update"
-                                    : "Submit"
+                                        ? "Update"
+                                        : "Submit"
                             }
                         >
                             {renderStepContent(

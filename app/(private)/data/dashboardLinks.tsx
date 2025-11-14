@@ -16,19 +16,6 @@ export type LinkDataType = {
 };
 
 export const initialLinkData: SidebarDataType[] = [
-  // {
-  //     name: "Main Menu",
-  //     data: [
-  //         {
-  //             isActive: true,
-  //             href: "/",
-  //             label: "",
-  //             leadingIcon: "hugeicons:home-01",
-  //             iconColor: "text-blue-500"
-  //         },
-  //
-  //     ],
-  // },
   {
     data: [
       {
@@ -76,8 +63,8 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/keyAccountCustomer",
-            label: "Account Customers",
+            href: "/keyCustomer",
+            label: "Key Customers",
             leadingIcon: "lucide:user",
             iconColor: "text-green-500",
           },
@@ -369,14 +356,14 @@ export const initialLinkData: SidebarDataType[] = [
             isActive: false,
             href: "/capsCollection",
             label: "CAPS Master Collection",
-            leadingIcon: "hugeicons:collection",
+            leadingIcon: "game-icons:bottle-cap",
             iconColor: "text-cyan-500"
           },
           {
             isActive: false,
             href: "/collection",
             label: "Collection",
-            leadingIcon: "hugeicons:collection",
+            leadingIcon: "heroicons-outline:collection",
             iconColor: "text-cyan-500"
           },
           {

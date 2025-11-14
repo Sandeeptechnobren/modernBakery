@@ -43,8 +43,8 @@ interface CustomerItem {
   status: string;
 }
 
-const title = "Company Customer Details";
-const backBtnUrl = "/companyCustomer";
+const title = "Key Customer Details";
+const backBtnUrl = "/keyCustomer";
 export function getPaymentType(value: string): string {
   switch (value) {
     case "1":
@@ -84,7 +84,7 @@ export default function ViewPage() {
         const res = await getCompanyCustomerById(id);
         if (res.error) {
           showSnackbar(
-            res.data?.message || "Unable to fetch company customer details",
+            res.data?.message || "Unable to fetch key customer details",
             "error"
           );
           return;
@@ -92,7 +92,7 @@ export default function ViewPage() {
         console.log(res)
         setCustomer(res.data);
       } catch {
-        showSnackbar("Unable to fetch company customer details", "error");
+        showSnackbar("Unable to fetch key customer details", "error");
       } finally {
         setLoading(false);
       }
@@ -108,7 +108,6 @@ export default function ViewPage() {
     { key: "address", label: "Location Info" },
     { key: "financial", label: "Financial Info" },
     { key: "guarantee", label: "Guarantee Info" },
-    { key: "additional", label: "Additional Info" },
     { key: "return", label: "Return" },
     { key: "purchase", label: "Purchase" },
   ];
@@ -215,6 +214,21 @@ export default function ViewPage() {
                   { key: "Credit Limit", value: customer?.creditlimit?.toString() || "-" },
                   { key: "Total Credit Limit", value: customer?.totalcreditlimit?.toString() || "-" },
                   { key: "Credit Limit Validity", value: customer?.credit_limit_validity || "-" },
+                  { key: "TIN No", value: customer?.tin_no || "-" },
+                  {
+                        key: "Distribution Channel ID",
+                        value: customer?.distribution_channel_id?.toString() || "-",
+                      },
+                      {
+                        key: "Promotional Access",
+                        value: "",
+                        component: (
+                          <Toggle
+                            isChecked={isChecked}
+                            onChange={() => setIsChecked(!isChecked)}
+                          />
+                        ),
+                      },
                 ]}
               />
             </ContainerCard>
@@ -232,55 +246,7 @@ export default function ViewPage() {
               />
             </ContainerCard>
           )}
-          {activeTab === "additional" && (
-            <div className="flex flex-wrap gap-x-[20px] mt-[20px]">
-              <div className="flex flex-col md:flex-row gap-6 w-full">
-                <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                  <KeyValueData
-                    title="Tax & Accuracy"
-                    data={[
-                      { key: "TIN No", value: customer?.tin_no || "-" },
-                    ]}
-                  />
-                </ContainerCard>
-
-                {/* Extra */}
-                <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                  <div className="text-[18px] font-semibold mb-[25px]">
-                    Customer Info
-                  </div>
-                  <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
-                    <SummaryCard
-                      icon="prime:barcode"
-                      iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
-                      iconWidth={30}
-                      // title={customer?.customer_code || "CUST-1234"}
-                      description={"Customer Code"}
-                    />
-                  </ContainerCard>
-
-                  <KeyValueData
-                    data={[
-                      {
-                        key: "Promotional Access",
-                        value: "",
-                        component: (
-                          <Toggle
-                            isChecked={isChecked}
-                            onChange={() => setIsChecked(!isChecked)}
-                          />
-                        ),
-                      },
-                      {
-                        key: "Distribution Channel ID",
-                        value: customer?.distribution_channel_id?.toString() || "-",
-                      },
-                    ]}
-                  />
-                </ContainerCard>
-              </div>
-            </div>
-          )}
+          
         </div>
       </div>
     </>

@@ -446,8 +446,6 @@ export default function AddEditItem() {
     values: ItemFormValues,
     { setSubmitting, setErrors, setTouched, setFieldValue }: FormikHelpers<ItemFormValues>
   ) => {
-    setLoading(true);
-
     const mappedUoms = uomList.map((u) => ({
       "uom": u.uom,
       "uom_type": u.uomType || "primary",
@@ -483,9 +481,11 @@ export default function AddEditItem() {
 
       const itemId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
 
+      const reqType: "json" | "form-data" = values.itemImage instanceof File ? "form-data" : "json";
+      console.log("Submitting payload with request type:", reqType);
       const res = isEditMode
-        ? await editItem(itemId, payload)
-        : await addItem(payload);
+        ? await editItem(itemId, payload, reqType)
+        : await addItem(payload, reqType);
       if (res?.status === "success" || res?.success) {
         showSnackbar(
           isEditMode ? "Item updated successfully!" : "Item created successfully!",
@@ -504,8 +504,6 @@ export default function AddEditItem() {
       } else {
         showSnackbar("Failed to submit form", "error");
       }
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -13,7 +13,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { getPaymentType } from "../keyAccountCustomer/details/[id]/page";
+import { getPaymentType } from "../keyCustomer/details/[id]/page";
 
 export default function AgentCustomer() {
     const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
@@ -108,7 +108,7 @@ export default function AgentCustomer() {
         { key: "town", label: "Town" },
         {
             key: "getWarehouse",
-            label: "Warehouse",
+            label: "Distributor",
             render: (row: TableDataType) =>
                 typeof row.getWarehouse === "object" &&
                     row.getWarehouse !== null &&
@@ -185,7 +185,7 @@ export default function AgentCustomer() {
             pageSize: number = 5
         ): Promise<listReturnType> => {
             try {
-                setLoading(true);
+                // setLoading(true);
                 const params: Record<string, string> = {
                     page: page.toString(),
                 };
@@ -202,7 +202,7 @@ export default function AgentCustomer() {
                     params.route_id = String(routeId);
                 }
                 const listRes = await agentCustomerList(params);
-                setLoading(false);
+                // setLoading(false);
                 return {
                     data: Array.isArray(listRes.data) ? listRes.data : [],
                     total: listRes?.pagination?.totalPages || 1,
@@ -210,7 +210,7 @@ export default function AgentCustomer() {
                     pageSize: listRes?.pagination?.limit || pageSize,
                 };
             } catch (error: unknown) {
-                setLoading(false);
+                // setLoading(false);
                 return {
                     data: [],
                     total: 1,
@@ -235,7 +235,7 @@ export default function AgentCustomer() {
                 showSnackbar("Failed to get download URL", "error");
             }
         } catch (error) {
-            showSnackbar("Failed to download warehouse data", "error");
+            showSnackbar("Failed to download Field Customer data", "error");
         }
     }
 
@@ -259,29 +259,32 @@ export default function AgentCustomer() {
         async (
             searchQuery: string,
             pageSize: number,
-            columnName?: string
+            columnName?: string,
+            page: number = 1
         ): Promise<listReturnType> => {
             let result;
-            setLoading(true);
+            // setLoading(true);
             if (columnName) {
                 result = await agentCustomerList({
                     per_page: pageSize.toString(),
-                    [columnName]: searchQuery
+                    [columnName]: searchQuery,
+                    page: page.toString(),
                 });
             }
             else {
                 result = await agentCustomerGlobalSearch({
                     per_page: pageSize.toString(),
-                    query: searchQuery
+                    query: searchQuery,
+                    page: page.toString(),
                 });
             }
-            setLoading(false);
+            // setLoading(false);
             if (result.error) throw new Error(result.data.message);
             return {
-                data: result.data || [],
-                total: result.pagination?.totalPages || 1,
-                currentPage: result.pagination?.page || 1,
-                pageSize: result.pagination?.limit || pageSize,
+                data: result?.data || [],
+                total: result?.pagination?.totalPages || 1,
+                currentPage: result?.pagination?.page || 1,
+                pageSize: result?.pagination?.limit || pageSize,
             };
         },
         []
@@ -372,7 +375,7 @@ export default function AgentCustomer() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/agentCustomer/new"
+                                    href="/fieldCustomer/new"
                                     isActive
                                     leadingIcon="lucide:plus"
                                     label="Add"
@@ -390,7 +393,7 @@ export default function AgentCustomer() {
                                 icon: "lucide:eye",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    router.push(`/agentCustomer/details/${row.uuid}`);
+                                    router.push(`/fieldCustomer/details/${row.uuid}`);
                                 },
                             },
                             {
@@ -398,7 +401,7 @@ export default function AgentCustomer() {
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
                                     router.push(
-                                        `/agentCustomer/${row.uuid}`
+                                        `/fieldCustomer/${row.uuid}`
                                     );
                                 },
                             },

@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import * as Yup from "yup";
 
 import ContainerCard from "@/app/components/containerCard";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import CustomPasswordInput from "@/app/components/customPasswordInput";
 import InputFields from "@/app/components/inputFields";
@@ -32,8 +33,6 @@ import {
   updateSalesman,
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { label } from "framer-motion/client";
 
 interface SalesmanFormValues {
   osa_code: string;
@@ -113,74 +112,19 @@ export default function AddEditSalesman() {
   });
 
   const steps: StepperStep[] = [
-    { id: 1, label: "Salesman Details" },
+    { id: 1, label: "Sales Team Details" },
     { id: 2, label: "Contact & Login" },
     { id: 3, label: "Additional Info" },
   ];
   const SalesmanSchema = Yup.object().shape({
-  name: Yup.string().required("Name is required"),
-  type: Yup.string().required("Type is required"),
-  designation: Yup.string().required("Designation is required"),
-  contact_no: Yup.string()
-    .required("Owner Contact number is required")
-    .matches(/^[0-9]+$/, "Only numbers are allowed")
-    .min(9, "Must be at least 9 digits")
-    .max(10, "Must be at most 10 digits"),
-  password: Yup.string()
-      .when([], {
-        is: () => !isEditMode, // ❗ only require password if NOT editing
-        then: (schema) =>
-          schema
-            .required("Password is required")
-            .min(12, "Password must be at least 12 characters long")
-            .matches(
-              /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{12,}$/,
-              "Password must include uppercase, lowercase, number, and special character"
-            ),
-        otherwise: (schema) => schema.notRequired(), // ❗ skip validation on edit
-      }),
-  warehouse_id: Yup.mixed()
-    .required("Warehouse is required")
-    .test("warehouse-type", "Invalid warehouse format", function (value) {
-      const { type } = this.parent;
-
-      // ✅ When Project type (6), must be array with at least one item
-      if (type === "6") {
-        return Array.isArray(value) && value.length > 0;
-      }
-
-      // ✅ For other types, must be a non-empty string
-      return typeof value === "string" && value.trim() !== "";
-    }),
-  email: Yup.string().required("Email is required").email("Invalid email"),
-});
-
-// ✅ Step-wise validation
-const stepSchemas = [
-  Yup.object({
     name: Yup.string().required("Name is required"),
     type: Yup.string().required("Type is required"),
     designation: Yup.string().required("Designation is required"),
-     warehouse_id: Yup.mixed()
-    .required("Warehouse is required")
-    .test("warehouse-type", "Invalid warehouse format", function (value) {
-      const { type } = this.parent;
-
-      // ✅ When Project type (6), must be array with at least one item
-      if (type === "6") {
-        return Array.isArray(value) && value.length > 0;
-      }
-
-      // ✅ For other types, must be a non-empty string
-      return typeof value === "string" && value.trim() !== "";
-    }),
-  }),
-  Yup.object({
     contact_no: Yup.string()
-      .required("Contact number is required")
+      .required("Owner Contact number is required")
       .matches(/^[0-9]+$/, "Only numbers are allowed")
       .min(9, "Must be at least 9 digits")
-      .max(13, "Must be at most 13 digits"),
+      .max(10, "Must be at most 10 digits"),
     password: Yup.string()
       .when([], {
         is: () => !isEditMode, // ❗ only require password if NOT editing
@@ -194,26 +138,81 @@ const stepSchemas = [
             ),
         otherwise: (schema) => schema.notRequired(), // ❗ skip validation on edit
       }),
+    warehouse_id: Yup.mixed()
+      .required("Distributor is required")
+      .test("warehouse-type", "Invalid distributor format", function (value) {
+        const { type } = this.parent;
+
+        // ✅ When Project type (6), must be array with at least one item
+        if (type === "6") {
+          return Array.isArray(value) && value.length > 0;
+        }
+
+        // ✅ For other types, must be a non-empty string
+        return typeof value === "string" && value.trim() !== "";
+      }),
     email: Yup.string().required("Email is required").email("Invalid email"),
-  }),
-  Yup.object({
-    status: Yup.string().required("Status is required"),
-    is_block: Yup.string(),
-    cashier_description_block: Yup.string(),
-    invoice_block: Yup.string(),
-  }).test(
-    "only-one-block",
-    "Select only one: Is Block, Cashier Description Block, or Invoice Block",
-    (values) => {
-      const selected = [
-        values.is_block,
-        values.cashier_description_block,
-        values.invoice_block,
-      ].filter((v) => v === "1");
-      return selected.length <= 1;
-    }
-  ),
-];
+  });
+
+  // ✅ Step-wise validation
+  const stepSchemas = [
+    Yup.object({
+      name: Yup.string().required("Name is required"),
+      type: Yup.string().required("Type is required"),
+      designation: Yup.string().required("Designation is required"),
+      warehouse_id: Yup.mixed()
+        .required("Distributor is required")
+        .test("warehouse-type", "Invalid distributor format", function (value) {
+          const { type } = this.parent;
+
+          // ✅ When Project type (6), must be array with at least one item
+          if (type === "6") {
+            return Array.isArray(value) && value.length > 0;
+          }
+
+          // ✅ For other types, must be a non-empty string
+          return typeof value === "string" && value.trim() !== "";
+        }),
+    }),
+    Yup.object({
+      contact_no: Yup.string()
+        .required("Contact number is required")
+        .matches(/^[0-9]+$/, "Only numbers are allowed")
+        .min(9, "Must be at least 9 digits")
+        .max(13, "Must be at most 13 digits"),
+      password: Yup.string()
+        .when([], {
+          is: () => !isEditMode, // ❗ only require password if NOT editing
+          then: (schema) =>
+            schema
+              .required("Password is required")
+              .min(12, "Password must be at least 12 characters long")
+              .matches(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{12,}$/,
+                "Password must include uppercase, lowercase, number, and special character"
+              ),
+          otherwise: (schema) => schema.notRequired(), // ❗ skip validation on edit
+        }),
+      email: Yup.string().required("Email is required").email("Invalid email"),
+    }),
+    Yup.object({
+      status: Yup.string().required("Status is required"),
+      is_block: Yup.string(),
+      cashier_description_block: Yup.string(),
+      invoice_block: Yup.string(),
+    }).test(
+      "only-one-block",
+      "Select only one: Is Block, Cashier Description Block, or Invoice Block",
+      (values) => {
+        const selected = [
+          values.is_block,
+          values.cashier_description_block,
+          values.invoice_block,
+        ].filter((v) => v === "1");
+        return selected.length <= 1;
+      }
+    ),
+  ];
 
   const {
     currentStep,
@@ -238,12 +237,12 @@ const stepSchemas = [
     }
     const options = filteredOptions?.data || [];
 
-    const newroutesOptions:{value:string,label:string}[] = []
+    const newroutesOptions: { value: string, label: string }[] = []
     options.map((route: { id: number; route_name: string }) => {
-      newroutesOptions.push({ value: route.id.toString(), label: route.route_name})
+      newroutesOptions.push({ value: route.id.toString(), label: route.route_name })
 
     })
-    setFilteredRouteOptions(newroutesOptions );
+    setFilteredRouteOptions(newroutesOptions);
   };
 
   // ✅ Fetch data
@@ -254,13 +253,13 @@ const stepSchemas = [
           const res = await getSalesmanById(salesmanId as string);
           if (res && !res.error && res.data) {
             const d = res.data;
-            console.log(d,"data")
-            const idsWareHouses:string[] = []
-            d.warehouses.map((dta:any)=>{
-              console.log(dta.id,"warehouse id")
+            console.log(d, "data")
+            const idsWareHouses: string[] = []
+            d.warehouses?.map((dta: any) => {
+              console.log(dta.id, "warehouse id")
               idsWareHouses.push(dta.id.toString());
             })
-            console.log(d.salesman_type?.id?.toString(),"project type id")
+            console.log(d.salesman_type?.id?.toString(), "project type id")
             setInitialValues({
               osa_code: d.osa_code || "",
               name: d.name || "",
@@ -270,7 +269,7 @@ const stepSchemas = [
               route_id: d.route?.id?.toString() || "",
               password: "", // password is not returned from API → leave empty
               contact_no: d.contact_no || "",
-              warehouse_id:d.salesman_type?.id?.toString() ==="6" ? idsWareHouses: d.warehouses?.[0]?.id?.toString() ,
+              warehouse_id: d.salesman_type?.id?.toString() === "6" ? idsWareHouses : d.warehouses?.[0]?.id?.toString(),
               is_block: d.is_block?.toString() || "0",
               forceful_login: d.forceful_login?.toString() || "1",
               status: d.status?.toString() || "1",
@@ -284,13 +283,13 @@ const stepSchemas = [
             });
           }
         } catch (e) {
-          console.error("Failed to fetch salesman:", e);
+          console.error("Failed to fetch sales team:", e);
         }
         setLoading(false);
       } else if (!codeGeneratedRef.current) {
         codeGeneratedRef.current = true;
         try {
-          const res = await genearateCode({ model_name: "salesman" });
+          const res = await genearateCode({ model_name: "sales team" });
           if (res?.code) {
             setInitialValues((prev) => ({ ...prev, osa_code: res.code }));
           }
@@ -303,7 +302,7 @@ const stepSchemas = [
         setLoading(false);
       }
     })();
-    console.log(salesmanTypeOptions,"salesmanTypeOptions")
+    console.log(salesmanTypeOptions, "salesmanTypeOptions")
 
   }, [isEditMode, salesmanId]);
 
@@ -354,19 +353,19 @@ const stepSchemas = [
     try {
       await SalesmanSchema.validate(values, { abortEarly: false });
       const formData = new FormData();
-    (Object.keys(values) as (keyof SalesmanFormValues)[]).forEach((key) => {
-  const val = values[key];
+      (Object.keys(values) as (keyof SalesmanFormValues)[]).forEach((key) => {
+        const val = values[key];
 
-  if (Array.isArray(val)) {
-    // For arrays (like warehouse_id when multiple selected)
-    val.forEach((v) => formData.append(`${key}[]`, v));
-  } else if (val !== undefined && val !== null) {
-    // Normal string or single value
-    formData.append(key, val.toString());
-  } else {
-    formData.append(key, "");
-  }
-});
+        if (Array.isArray(val)) {
+          // For arrays (like warehouse_id when multiple selected)
+          val.forEach((v) => formData.append(`${key}[]`, v));
+        } else if (val !== undefined && val !== null) {
+          // Normal string or single value
+          formData.append(key, val.toString());
+        } else {
+          formData.append(key, "");
+        }
+      });
 
       let res;
       if (isEditMode) {
@@ -380,11 +379,11 @@ const stepSchemas = [
       } else {
         showSnackbar(
           isEditMode
-            ? "Salesman Updated Successfully"
-            : "Salesman Created Successfully",
+            ? "Sales Team Updated Successfully"
+            : "Sales Team Created Successfully",
           "success"
         );
-        router.push("/salesman");
+        router.push("/salesTeam");
         try {
           await saveFinalCode({
             reserved_code: values.osa_code,
@@ -437,7 +436,7 @@ const stepSchemas = [
               </div>
               <div className="flex flex-col w-full">
                 <InputFields
-                  label="Salesman Type"
+                  label="Sales Team Type"
                   name="type"
                   value={values.type}
                   options={salesmanTypeOptions}
@@ -473,11 +472,11 @@ const stepSchemas = [
                   className="text-xs text-red-500"
                 />
               </div>
-               
-               {values.type === "6"?<div>
-               <InputFields
+
+              {values.type === "6" ? <div>
+                <InputFields
                   required
-                  label="Warehouse"
+                  label="Distributor"
                   type="select"
                   name="warehouse_id"
                   value={values.warehouse_id}
@@ -485,7 +484,7 @@ const stepSchemas = [
                   disabled={warehouseOptions.length === 0}
                   isSingle={false}
                   onChange={(e) => {
-                    console.log(values.warehouse_id,e.target.value,"selected warehouse")
+                    console.log(values.warehouse_id, e.target.value, "selected warehouse")
                     setFieldValue("warehouse_id", e.target.value);
                     if (values.warehouse_id !== e.target.value) {
                       fetchRoutes(e.target.value);
@@ -497,10 +496,10 @@ const stepSchemas = [
                   component="span"
                   className="text-xs text-red-500"
                 />
-              </div>:<div>
-               <InputFields
+              </div> : <div>
+                <InputFields
                   required
-                  label="Warehouse"
+                  label="Distributor"
                   type="select"
                   name="warehouse_id"
                   value={values.warehouse_id}
@@ -737,11 +736,11 @@ const stepSchemas = [
     <div>
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/salesman">
+          <Link href="/salesTeam">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Salesman" : "Add New Salesman"}
+            {isEditMode ? "Update Sales Team" : "Add New Sales Team"}
           </h1>
         </div>
       </div>
@@ -763,7 +762,7 @@ const stepSchemas = [
           isSubmitting: isSubmitting,
         }) => (
           <Form>
-           
+            <>{console.log(values, "lk")}</>
             <StepperForm
               steps={steps.map((step) => ({
                 ...step,

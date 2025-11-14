@@ -112,17 +112,13 @@ const columns = [
     label: "Status",
     isSortable: true,
     render: (row: TableDataType) => (
-      <StatusBtn isActive={String(row.status) === "1"} />
+      <StatusBtn isActive={String(row.status) > "0"} />
     ),
   },
 ];
 
 export default function VehiclePage() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const { setLoading } = useLoading();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<Vehicle | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const { showSnackbar } = useSnackbar();
@@ -135,12 +131,12 @@ export default function VehiclePage() {
       pageSize: number = 50
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
+        // setLoading(true);
         const listRes = await vehicleListData({
           limit: pageSize.toString(),
           page: page.toString(),
         });
-        setLoading(false);
+        // setLoading(false);
         return {
           data: listRes.data || [],
           total: listRes.pagination.totalPages,
@@ -156,44 +152,43 @@ export default function VehiclePage() {
     []
   );
 
-         const searchVehicle = useCallback(
-             async (
-                 search: string,
-                 pageSize: number = 50
-             ): Promise<listReturnType> => {
-                 try {
-                   setLoading(true);
-                     const listRes = await vehicleGlobalSearch({
-                         search,
-                         per_page: pageSize.toString()
-                     });
-                     setLoading(false);
-                     return {
-                         data: listRes.data || [],
-                         total: listRes.pagination.totalPages ,
-                         currentPage: listRes.pagination.page ,
-                         pageSize: listRes.pagination.limit ,
-                     };
-                 } catch (error: unknown) {
-                     console.error("API Error:", error);
-                     setLoading(false);
-                     throw error;
-                 }
-             },
-             []
-         );
+  const searchVehicle = useCallback(
+    async (
+      searchQuery: string,
+      pageSize: number = 10,
+      columnName?: string,
+      page: number = 1
+    ): Promise<searchReturnType> => {
+      // setLoading(true);
+      const result = await vehicleGlobalSearch({
+        search: searchQuery,
+        per_page: pageSize.toString(),
+        page: page.toString(),
+      });
+      // setLoading(false);
+      if (result.error) throw new Error(result.data.message);
+      const pagination = result.pagination || result.pagination.pagination || {};
+      return {
+        data: result.data || [],
+        total: pagination.totalPages || 1,
+        currentPage: pagination.current_page || 1,
+        pageSize: pagination.limit || 1,
+      };
+    },
+    []
+  );
 
   const exportFile = async (format: string) => {
     try {
       const response = await exportVehicleData({ format });
       if (response && typeof response === 'object' && response.url) {
         await downloadFile(response.url);
-        showSnackbar("File downloaded successfully ", "success");
+        showSnackbar("File downloaded successfully", "success");
       } else {
         showSnackbar("Failed to get download URL", "error");
       }
     } catch (error) {
-      showSnackbar("Failed to download warehouse data", "error");
+      showSnackbar("Failed to download vehicle data", "error");
     } finally {
     }
   };

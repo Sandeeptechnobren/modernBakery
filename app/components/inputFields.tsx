@@ -71,7 +71,7 @@ export default function InputFields({
   value,
   onChange,
   options,
-  type = "text",
+  type,
   width = "max-w-[406px]",
   error,
   disabled,
@@ -115,8 +115,6 @@ export default function InputFields({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pointerDownRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isMulti = (options && options.length > 0 && typeof isSingle !== 'undefined' && isSingle === false) || (loading && isSingle === false);
-  const isSingleSelect = (options && options.length > 0 && isSingle !== false) || (loading && isSingle !== false);
   const selectedValues: string[] = Array.isArray(value) ? value : [];
   const isSearchable = searchable === true || searchable === 'true' || searchable === '1';
   // const defaultCountry: { code: string; name: string; flag?: string } = { code: "+256", name: "Uganda", flag: "🇺🇬" };
@@ -373,370 +371,36 @@ export default function InputFields({
     }
   };
 
-  return (
-    <div className={`flex flex-col gap-[6px] w-full ${width} relative`}>
-      {showSkeleton && <div className="absolute h-[90px] w-full rounded-[5px] bg-white z-40 flex flex-col gap-[5px]">
-        {label && <Skeleton variant="rounded" width={"50%"} height={"20%"} />}
-        <Skeleton variant="rounded" width={"100%"} height={"60%"} />
-        {error && <Skeleton variant="rounded" width={"100%"} height={"20%"} />}
-      </div>}
-      <label
-        htmlFor={id ?? name}
-        className="text-sm font-medium text-gray-700"
-      >
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      <div className="relative">
-        {type === "radio" && options && options.length > 0 ? (
-          loading ? (
-            <Skeleton variant="rounded" width={210} height={60} />
-          ) : (
-            <div className="flex-wrap flex flex-col gap-[10px] mt-2 pl-[5px]">
-              <div className='flex gap-[10px] h-[44px]'>
-              {options.map((opt, idx) => (
-                <label key={opt.value + idx} className="inline-flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={name}
-                    value={opt.value}
-                    checked={value === opt.value}
-                    onChange={() => safeOnChange(createSingleSelectEvent(opt.value))}
-                    disabled={disabled}
-                    className={`w-4 h-4 accent-gray-600 border-2 border-gray-600 focus:ring-2 focus:ring-red-400 appearance-none rounded-full checked:bg-red-500 checked:w-3 checked:h-3 checked:border-red-600 ${error ? "border-red-500" : "border-gray-300"}`}
-                    style={{ boxShadow: value === opt.value ? '0 0 0 2px #fff, 0 0 0 4px #252b37' : undefined }}
-                  />
-                  <span className="text-lg text-gray-600">{opt.label}</span>
-                </label>
-              ))}
-              </div>
-              {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
-            </div>
-          )) : isMulti ? (
-            loading ? (
-              <Skeleton variant="rounded" width={210} height={60} />
-            ) : (
-              <div className="relative select-none" ref={dropdownRef}>
-                <div
-                  tabIndex={0}
-                  onMouseDown={() => { pointerDownRef.current = true; }}
-                  onMouseUp={() => { pointerDownRef.current = false; }}
-                  onFocus={() => { if (!pointerDownRef.current && !disabled) { computeDropdownProps(); setDropdownOpen(true); } }}
-                  className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer w-full ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-100" : "bg-white"}`}
-                  onClick={() => { if (!loading && !isSearchable) { computeDropdownProps(); setDropdownOpen(v => !v); } }}
-                >
-                  {isSearchable ? (
-                    (() => {
-                      const selected = options?.filter(opt => selectedValues.includes(opt.value)).map(o => ({ value: o.value, label: o.label })) || [];
-                      const displayValue = search || (selected.length > 0 ? selected.slice(0, 2).map(s => s.label).join(', ') : '');
-                      const hasSelection = !search && selected.length > 0;
-                      // If multiSelectChips is enabled, render chips before the input
-                      if (multiSelectChips) {
-                        return (
-                          <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
-                            {selected.length === 0 && (
-                              <span className="text-gray-400">{`Search ${label}`}</span>
-                            )}
-                            {selected.map((s, idx) => {
-                              if (idx >= 2) return null;
-                              return (
-                                <span key={s.value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate">
-                                  <span className="truncate block max-w-[100px]">{s.label}</span>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); if (!disabled) handleCheckbox(s.value); }}
-                                    className="ml-2 text-gray-500 hover:text-gray-700"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              );
-                            })}
-                            {selected.length > 2 && <span className="text-sm text-gray-700 ml-1">+{selected.length - 2}</span>}
-                            <input
-                              type="text"
-                              placeholder={selected.length === 0 ? `Search ${label}` : undefined}
-                              value={displayValue}
-                              onChange={e => {
-                                const v = (e.target as HTMLInputElement).value;
-                                console.log("Search input changed:", v);
-                                setSearch(v);
-                                // onSearch(v);
-                                if (!dropdownOpen) setDropdownOpen(true);
-                                if (v === '') {
-                                  // user cleared the input -> clear selected values for multi-select
-                                  safeOnChange(createMultiSelectEvent([]));
-                                }
-                              }}
-                              onFocus={() => setDropdownOpen(true)}
-                              className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
-                              style={hasSelection ? { color: '#111827' } : undefined}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  if (!loading && filteredOptions.length > 0) {
-                                    // select first match for searchable Enter
-                                    handleCheckbox(filteredOptions[0].value);
-                                  }
-                                }
-                              }}
-                            />
-                          </div>
-                        );
-                      }
-                      return (
-                        <input
-                          type="text"
-                          placeholder={selected.length === 0 ? `Search ${label}` : undefined}
-                          value={displayValue}
-                          onChange={e => {
-                            const v = (e.target as HTMLInputElement).value;
-                            setSearch(v);
-                            onSearch(v);
-                            // console.log("Search input changed:", v);
-                            if (!dropdownOpen) setDropdownOpen(true);
-                            if (v === '') {
-                              // user cleared the input -> clear selected values for multi-select
-                              safeOnChange(createMultiSelectEvent([]));
-                            }
-                          }}
-                          onFocus={() => setDropdownOpen(true)}
-                          className={`flex-1 truncate text-sm outline-none border-none ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
-                          style={hasSelection ? { color: '#111827' } : undefined}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              if (!loading && filteredOptions.length > 0) {
-                                // select first match for searchable Enter
-                                handleCheckbox(filteredOptions[0].value);
-                              }
-                            }
-                          }}
-                        />
-                      );
-                    })()
-                  ) : (
-                    (() => {
-                      const selected = options?.filter(opt => selectedValues.includes(opt.value)).map(o => ({ value: o.value, label: o.label })) || [];
-                      if (multiSelectChips) {
-                        return (
-                          <div className="flex-1 flex items-center gap-2 flex-nowrap overflow-hidden min-w-0">
-                            {selected.length === 0 && <span className="text-gray-400">{`Select ${label}`}</span>}
-                            {selected.map((s, idx) => {
-                              if (idx >= 2) return null;
-                              return (
-                                <span key={s.value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate">
-                                  <span className="truncate block max-w-[100px]">{s.label}</span>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); if (!disabled) handleCheckbox(s.value); }}
-                                    className="ml-2 text-gray-500 hover:text-gray-700"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              );
-                            })}
-                            {selected.length > 2 && <span className="text-sm text-gray-700 ml-1">+{selected.length - 2}</span>}
-                          </div>
-                        );
-                      }
-                      return (
-                        <span className={`truncate flex-1 ${selected.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
-                          {(() => {
-                            if (selected.length === 0) return `Select ${label}`;
-                            if (selected.length <= 2) return selected.map(s => s.label).join(', ');
-                            return selected.slice(0, 2).map(s => s.label).join(', ');
-                          })()}
-                        </span>
-                      );
-                    })()
-                  )}
-                  {/* Show down arrow only if not disabled and not searchable */}
-                  {!isSearchable && !disabled && (
-                    <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  )}
-                </div>
-                {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
-                  <>
-                    <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white rounded-md shadow-lg overflow-auto" >
-                      {!isSearchable && (
-                        <div className="px-3 py-2 flex items-center">
-                          <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-                          <input
-                            type="text"
-                            placeholder="Search"
-                            value={search}
-                            onChange={e => { setSearch(e.target.value); onSearch(e.target.value); /*console.log("Search input changed:", e.target.value);*/ }}
-                            className="w-full border-none outline-none text-sm"
-                            disabled={disabled}
-                          />
-                        </div>
-                      )}
-                      <div
-                        className="flex items-center px-3 py-2 cursor-pointer"
-                        onClick={() => { if (!disabled) handleSelectAll(); }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedValues.length === filteredOptions.length && filteredOptions.length > 0}
-                          onChange={e => {
-                            e.stopPropagation();
-                            if (!disabled) handleSelectAll();
-                          }}
-                          className="mr-2 cursor-pointer"
-                          style={selectedValues.length === filteredOptions.length && filteredOptions.length > 0 ? { accentColor: '#EA0A2A' } : {}}
-                          disabled={disabled}
-                        />
-                        <span className="text-sm select-none">Select All</span>
-                      </div>
-                      <div>
-                        {filteredOptions.length === 0 ? (
-                          <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
-                        ) : filteredOptions.map((opt, idx) => (
-                          <div
-                            key={opt.value + idx}
-                            className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={e => {
-                              e.preventDefault();
-                              if (!disabled) handleCheckbox(opt.value);
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedValues.includes(opt.value)}
-                              onChange={e => {
-                                e.stopPropagation();
-                                if (!disabled) handleCheckbox(opt.value);
-                              }}
-                              className="mr-2 cursor-pointer"
-                              style={selectedValues.includes(opt.value) ? { accentColor: '#EA0A2A' } : {}}
-                              disabled={disabled}
-                            />
-                            <label
-                              className="text-sm select-none cursor-pointer text-gray-800"
-                            >
-                              {opt.label}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )
-          ) : isSingleSelect ? (
-            loading ? (
-              <Skeleton variant="rounded" width={210} height={60} />
-            ) : (
-              <div className={`relative select-none`} ref={dropdownRef}>
-                <div
-                  tabIndex={0}
-                  onMouseDown={() => { pointerDownRef.current = true; }}
-                  onMouseUp={() => { pointerDownRef.current = false; }}
-                  onFocus={() => { if (!pointerDownRef.current && !disabled) { computeDropdownProps(); setDropdownOpen(true); } }}
-                  className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
-                  onClick={() => { if (!loading && !isSearchable && !disabled) { computeDropdownProps(); setDropdownOpen(v => !v); } }}
-                >
-                  {isSearchable ? (
-                    (() => {
-                      const selectedLabel = options?.find(opt => opt.value === value as string)?.label || '';
-                      const displayValue = search || selectedLabel;
-                      const hasSelection = !search && !!selectedLabel;
-                      return (
-                        <input
-                          type="text"
-                          placeholder={!value ? `Search ${label}` : undefined}
-                          value={displayValue}
-                          onChange={e => {
-                            if (disabled) return;
-                            const v = (e.target as HTMLInputElement).value;
-                            setSearch(v);
-                            onSearch(v);
-                            console.log("Search input changed:", v);
-                            if (!dropdownOpen) setDropdownOpen(true);
-                            if (v === '') {
-                              // user cleared the input -> clear selected value for single-select
-                              safeOnChange(createSingleSelectEvent(''));
-                            }
-                          }}
-                          onFocus={() => setDropdownOpen(true)}
-                          className={`flex-1 truncate text-sm outline-none border-none ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
-                          style={hasSelection ? { color: '#111827' } : undefined}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              if (!loading && filteredOptions.length > 0) {
-                                safeOnChange(createSingleSelectEvent(filteredOptions[0].value));
-                                setDropdownOpen(false);
-                                setSearch("");
-                                onSearch("");
-                              }
-                            }
-                          }}
-                        />
-                      );
-                    })()
-                  ) : (
-                    <span className={`truncate flex-1 ${!value ? "text-gray-400" : "text-gray-900"}`}>
-                      {(!value ? `Select ${label}` : options?.find(opt => opt.value === value)?.label)
-                      }
-                    </span>
-                  )}
-                  {/* Show down arrow only if not disabled and not searchable */}
-                  {!isSearchable && !disabled && (
-                    <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  )}
-                </div>
-                {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
-                  <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl overflow-auto">
-                    {!isSearchable && (
-                      <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
-                        <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-                        <input
-                          type="text"
-                          placeholder="Search"
-                          value={search}
-                          onChange={e => { setSearch(e.target.value); onSearch(e.target.value); }}
-                          className="w-full border-none outline-none text-sm"
-                          autoFocus
-                        />
-                      </div>
-                    )}
-                    <div>
-                      {filteredOptions.length === 0 ? (
-                        <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
-                      ) : filteredOptions.map((opt, idx) => (
-                        <div
-                          key={opt.value + idx}
-                          className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${value === opt.value ? "bg-gray-50" : ""}`}
-                          onClick={() => {
-                            safeOnChange(createSingleSelectEvent(opt.value));
-                            setDropdownOpen(false);
-                            setSearch("");
-                          }}
-                        >
-                          <div className="text-sm text-gray-800">{opt.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          ) : type === "file" ? (
-            <input
-              id={id ?? name}
-              name={name}
-              type="file"
-              onChange={safeOnChange}
-              onBlur={onBlur}
-              autoComplete="off"
-              className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 py-1 mt-0 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
-                }`}
-            />
-          ) : type === "text" ? (
+  function renderField() {
+    switch (type) {
+      case "radio":
+        return (<div className="flex-wrap flex flex-col gap-[10px] mt-2 pl-[5px]">
+          <div className='flex gap-[10px] h-[44px]'>
+            {options && options.map((opt, idx) => (
+              <label key={opt.value + idx} className="inline-flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name={name}
+                  value={opt.value}
+                  checked={value === opt.value}
+                  onChange={() => safeOnChange(createSingleSelectEvent(opt.value))}
+                  disabled={disabled}
+                  className={`w-4 h-4 accent-gray-600 border-2 border-gray-600 focus:ring-2 focus:ring-red-400 appearance-none rounded-full checked:bg-red-500 checked:w-3 checked:h-3 checked:border-red-600 ${error ? "border-red-500" : "border-gray-300"}`}
+                  style={{ boxShadow: value === opt.value ? '0 0 0 2px #fff, 0 0 0 4px #252b37' : undefined }}
+                />
+                <span className="text-lg text-gray-600">{opt.label}</span>
+              </label>
+            ))}
+          </div>
+          {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
+        </div>);
+
+      case "text":
+      case "select":
+      case null:
+      case undefined:
+        if (options === undefined || options === null) {
+          return (
             <div className="w-full relative">
               <input
                 id={id ?? name}
@@ -765,142 +429,490 @@ export default function InputFields({
                 </div>
               )}
             </div>
-          ) : type === "contact" ? (
-            <div className="relative mt-0 w-full">
-              {/* Custom Phone Input with Country Dropdown */}
-              {(() => {
-                // include flag on defaultCountry so selectedCountry.flag is always available
-
-
-                return (
-                  <div className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"} rounded-md`} ref={dropdownRef}>
-                    <div className="flex items-center relative">
-                      {/* Dropdown Button */}
-                      <button
-                        type="button"
-                        onClick={() => setDropdownOpen(!dropdownOpen)}
-                        className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none"
-                      >
-                        {selectedCountry?.flag}{" "}
-                        {selectedCountry?.code}
-                      </button>
-                      {/* Dropdown List */}
-                      {dropdownOpen && (
-                        <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75 mt-[6px]">
-                          <ul className="py-2 text-sm text-gray-700">
-                            {countries.map((country: { name?: string; code?: string; flag?: string } | undefined, index) => (
-                              <li key={index}>
+          );
+        } else {
+          return isSingle === false ? (
+            <div className="relative select-none" ref={dropdownRef}>
+              <div
+                tabIndex={0}
+                onMouseDown={() => { pointerDownRef.current = true; }}
+                onMouseUp={() => { pointerDownRef.current = false; }}
+                onFocus={() => { if (!pointerDownRef.current && !disabled) { computeDropdownProps(); setDropdownOpen(true); } }}
+                className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer w-full ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-100" : "bg-white"}`}
+                onClick={() => { if (!loading && !isSearchable) { computeDropdownProps(); setDropdownOpen(v => !v); } }}
+              >
+                {isSearchable ? (
+                  (() => {
+                    const selected = options?.filter(opt => selectedValues.includes(opt.value)).map(o => ({ value: o.value, label: o.label })) || [];
+                    const displayValue = search || (selected.length > 0 ? selected.slice(0, 2).map(s => s.label).join(', ') : '');
+                    const hasSelection = !search && selected.length > 0;
+                    // If multiSelectChips is enabled, render chips before the input
+                    if (multiSelectChips) {
+                      return (
+                        <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
+                          {selected.length === 0 && (
+                            <span className="text-gray-400">{`Search ${label}`}</span>
+                          )}
+                          {selected.map((s, idx) => {
+                            if (idx >= 2) return null;
+                            return (
+                              <span key={s.value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate">
+                                <span className="truncate block max-w-[100px]">{s.label}</span>
                                 <button
                                   type="button"
-                                  onClick={() => handleSelect(country)}
-                                  className="inline-flex w-full px-4 py-2 text-sm"
+                                  onClick={(e) => { e.stopPropagation(); if (!disabled) handleCheckbox(s.value); }}
+                                  className="ml-2 text-gray-500 hover:text-gray-700"
                                 >
-                                  <span className="inline-flex items-center">
-                                    {country?.flag} {" "} {country?.name} ({country?.code})
-                                  </span>
+                                  ×
                                 </button>
-                              </li>
-                            ))}
-                          </ul>
+                              </span>
+                            );
+                          })}
+                          {selected.length > 2 && <span className="text-sm text-gray-700 ml-1">+{selected.length - 2}</span>}
+                          <input
+                            type="text"
+                            placeholder={selected.length === 0 ? `Search ${label}` : undefined}
+                            value={displayValue}
+                            onChange={e => {
+                              const v = (e.target as HTMLInputElement).value;
+                              console.log("Search input changed:", v);
+                              setSearch(v);
+                              // onSearch(v);
+                              if (!dropdownOpen) setDropdownOpen(true);
+                              if (v === '') {
+                                // user cleared the input -> clear selected values for multi-select
+                                safeOnChange(createMultiSelectEvent([]));
+                              }
+                            }}
+                            onFocus={() => setDropdownOpen(true)}
+                            className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                            style={hasSelection ? { color: '#111827' } : undefined}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (!loading && filteredOptions.length > 0) {
+                                  // select first match for searchable Enter
+                                  handleCheckbox(filteredOptions[0].value);
+                                }
+                              }
+                            }}
+                          />
                         </div>
-                      )}
-                      {/* Input Field */}
-                      <label
-                        htmlFor="phone-input"
-                        className="mb-2 text-sm font-medium text-gray-900 sr-only"
-                      >
-                        Phone number:
-                      </label>
-                      <div className="relative w-full">
+                      );
+                    }
+                    return (
+                      <input
+                        type="text"
+                        placeholder={selected.length === 0 ? `Search ${label}` : undefined}
+                        value={displayValue}
+                        onChange={e => {
+                          const v = (e.target as HTMLInputElement).value;
+                          setSearch(v);
+                          onSearch(v);
+                          // console.log("Search input changed:", v);
+                          if (!dropdownOpen) setDropdownOpen(true);
+                          if (v === '') {
+                            // user cleared the input -> clear selected values for multi-select
+                            safeOnChange(createMultiSelectEvent([]));
+                          }
+                        }}
+                        onFocus={() => setDropdownOpen(true)}
+                        className={`flex-1 truncate text-sm outline-none border-none ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                        style={hasSelection ? { color: '#111827' } : undefined}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (!loading && filteredOptions.length > 0) {
+                              // select first match for searchable Enter
+                              handleCheckbox(filteredOptions[0].value);
+                            }
+                          }
+                        }}
+                      />
+                    );
+                  })()
+                ) : (
+                  (() => {
+                    const selected = options?.filter(opt => selectedValues.includes(opt.value)).map(o => ({ value: o.value, label: o.label })) || [];
+                    if (multiSelectChips) {
+                      return (
+                        <div className="flex-1 flex items-center gap-2 flex-nowrap overflow-hidden min-w-0">
+                          {selected.length === 0 && <span className="text-gray-400">{`Select ${label}`}</span>}
+                          {selected.map((s, idx) => {
+                            if (idx >= 2) return null;
+                            return (
+                              <span key={s.value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate">
+                                <span className="truncate block max-w-[100px]">{s.label}</span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); if (!disabled) handleCheckbox(s.value); }}
+                                  className="ml-2 text-gray-500 hover:text-gray-700"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            );
+                          })}
+                          {selected.length > 2 && <span className="text-sm text-gray-700 ml-1">+{selected.length - 2}</span>}
+                        </div>
+                      );
+                    }
+                    return (
+                      <span className={`truncate flex-1 ${selected.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
+                        {(() => {
+                          if (selected.length === 0) return `Select ${label}`;
+                          if (selected.length <= 2) return selected.map(s => s.label).join(', ');
+                          return selected.slice(0, 2).map(s => s.label).join(', ');
+                        })()}
+                      </span>
+                    );
+                  })()
+                )}
+                {/* Show down arrow only if not disabled and not searchable */}
+                {!isSearchable && !disabled && (
+                  <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                )}
+              </div>
+              {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
+                <>
+                  <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white rounded-md shadow-lg overflow-auto" >
+                    {!isSearchable && (
+                      <div className="px-3 py-2 flex items-center">
+                        <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
                         <input
-                          type="tel"
-                          id="phone-input"
-                          placeholder={placeholder || "Enter phone number"}
-                          className="block p-2.5 w-full z-20  h-[44px] text-sm text-gray-900 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
-                          value={phone}
-                          onChange={handlePhoneChange}
+                          type="text"
+                          placeholder="Search"
+                          value={search}
+                          onChange={e => { setSearch(e.target.value); onSearch(e.target.value); /*console.log("Search input changed:", e.target.value);*/ }}
+                          className="w-full border-none outline-none text-sm"
                           disabled={disabled}
-                          required={required}
-                          onBlur={onBlur}
-                          minLength={9}
-                          maxLength={10}
                         />
                       </div>
+                    )}
+                    <div
+                      className="flex items-center px-3 py-2 cursor-pointer"
+                      onClick={() => { if (!disabled) handleSelectAll(); }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedValues.length === filteredOptions.length && filteredOptions.length > 0}
+                        onChange={e => {
+                          e.stopPropagation();
+                          if (!disabled) handleSelectAll();
+                        }}
+                        className="mr-2 cursor-pointer"
+                        style={selectedValues.length === filteredOptions.length && filteredOptions.length > 0 ? { accentColor: '#EA0A2A' } : {}}
+                        disabled={disabled}
+                      />
+                      <span className="text-sm select-none">Select All</span>
+                    </div>
+                    <div>
+                      {filteredOptions.length === 0 ? (
+                        <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
+                      ) : filteredOptions.map((opt, idx) => (
+                        <div
+                          key={opt.value + idx}
+                          className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={e => {
+                            e.preventDefault();
+                            if (!disabled) handleCheckbox(opt.value);
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedValues.includes(opt.value)}
+                            onChange={e => {
+                              e.stopPropagation();
+                              if (!disabled) handleCheckbox(opt.value);
+                            }}
+                            className="mr-2 cursor-pointer"
+                            style={selectedValues.includes(opt.value) ? { accentColor: '#EA0A2A' } : {}}
+                            disabled={disabled}
+                          />
+                          <label
+                            className="text-sm select-none cursor-pointer text-gray-800"
+                          >
+                            {opt.label}
+                          </label>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                );
-              })()}
+                </>
+              )}
             </div>
-          ) : type === "dateChange" ? (
-            <DateRangePicker
-              value={typeof value === 'string' ? value : String(value ?? '')}
-              name={name}
-              id={id}
-              disabled={disabled}
-              error={error}
-              placeholder={placeholder}
-              showBorder={showBorder}
-              onChange={(e) => {
-                // DateRangePicker emits { target: { value, name } }
-                safeOnChange(e as any);
-              }}
-            />
-          ) : type === "date" ? (
-            <input
-              id={id ?? name}
-              name={name}
-              type="date"
-              value={value ?? ""}
-              onChange={safeOnChange}
-              disabled={disabled}
-              onBlur={onBlur}
-              min={min as any}
-              max={max as any}
-              className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
-              placeholder={`Enter ${label}`}
-            />
-          ) : type === "number" ? (
-            loading ? (
-              <Skeleton variant="rounded" width={210} height={60} />
-            ) : (
-              <input
-                id={id ?? name}
-                name={name}
-                type="number"
-                value={value ?? ""}
-                onChange={safeOnChange}
-                onKeyDown={handleNumberKeyDown}
-                inputMode={integerOnly ? "numeric" : undefined}
-                step={integerOnly ? 1 : step ? step : undefined}
-                disabled={disabled}
-                onBlur={onBlur}
-                className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
-                placeholder={`Enter ${label}`}
-                maxLength={maxLength}
-                min={min}
-                max={max}
-              />
-            )
-          ) : type === "textarea" ? (
-            <textarea
-              id={id ?? name}
-              name={name}
-              value={value ?? ""}
-              onChange={safeOnChange}
-              disabled={disabled}
-              className={`border w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-[14px] py-[10px] mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
-              placeholder={placeholder || `Enter ${label}`}
-              cols={textareaCols}
-              rows={textareaRows}
-              style={textareaResize === false ? { resize: 'none' } : {}}
-            />
-          ) : null}
-        {/* show validation message for non-radio types (radio shows its own message) */}
-        {type !== 'radio' && error && (
-          <div className="mt-1">
-            <span className="text-xs text-red-500">{error}</span>
+          ) : (
+            <div className={`relative select-none`} ref={dropdownRef}>
+              <div
+                tabIndex={0}
+                onMouseDown={() => { pointerDownRef.current = true; }}
+                onMouseUp={() => { pointerDownRef.current = false; }}
+                onFocus={() => { if (!pointerDownRef.current && !disabled) { computeDropdownProps(); setDropdownOpen(true); } }}
+                className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
+                onClick={() => { if (!loading && !isSearchable && !disabled) { computeDropdownProps(); setDropdownOpen(v => !v); } }}
+              >
+                {isSearchable ? (
+                  (() => {
+                    const selectedLabel = options?.find(opt => opt.value === value as string)?.label || '';
+                    const displayValue = search || selectedLabel;
+                    const hasSelection = !search && !!selectedLabel;
+                    return (
+                      <input
+                        type="text"
+                        placeholder={!value ? `Search ${label}` : undefined}
+                        value={displayValue}
+                        onChange={e => {
+                          if (disabled) return;
+                          const v = (e.target as HTMLInputElement).value;
+                          setSearch(v);
+                          onSearch(v);
+                          console.log("Search input changed:", v);
+                          if (!dropdownOpen) setDropdownOpen(true);
+                          if (v === '') {
+                            // user cleared the input -> clear selected value for single-select
+                            safeOnChange(createSingleSelectEvent(''));
+                          }
+                        }}
+                        onFocus={() => setDropdownOpen(true)}
+                        className={`flex-1 truncate text-sm outline-none border-none ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                        style={hasSelection ? { color: '#111827' } : undefined}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (!loading && filteredOptions.length > 0) {
+                              safeOnChange(createSingleSelectEvent(filteredOptions[0].value));
+                              setDropdownOpen(false);
+                              setSearch("");
+                              onSearch("");
+                            }
+                          }
+                        }}
+                      />
+                    );
+                  })()
+                ) : (
+                  <span className={`truncate flex-1 ${!value ? "text-gray-400" : "text-gray-900"}`}>
+                    {(!value ? `Select ${label}` : options?.find(opt => opt.value === value)?.label)
+                    }
+                  </span>
+                )}
+                {/* Show down arrow only if not disabled and not searchable */}
+                {!isSearchable && !disabled && (
+                  <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                )}
+              </div>
+              {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
+                <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl overflow-auto">
+                  {!isSearchable && (
+                    <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
+                      <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+                      <input
+                        type="text"
+                        placeholder="Search"
+                        value={search}
+                        onChange={e => { setSearch(e.target.value); onSearch(e.target.value); }}
+                        className="w-full border-none outline-none text-sm"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                  <div>
+                    {filteredOptions.length === 0 ? (
+                      <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
+                    ) : filteredOptions.map((opt, idx) => (
+                      <div
+                        key={opt.value + idx}
+                        className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${value === opt.value ? "bg-gray-50" : ""}`}
+                        onClick={() => {
+                          safeOnChange(createSingleSelectEvent(opt.value));
+                          setDropdownOpen(false);
+                          setSearch("");
+                        }}
+                      >
+                        <div className="text-sm text-gray-800">{opt.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+      case "file":
+        return (
+          <input
+            id={id ?? name}
+            name={name}
+            type="file"
+            onChange={safeOnChange}
+            onBlur={onBlur}
+            autoComplete="off"
+            className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 py-1 mt-0 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
+              }`}
+          />
+        );
+
+      case "contact":
+        return (
+          <div className="relative mt-0 w-full">
+            {(() => {
+              return (
+                <div className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"} rounded-md`} ref={dropdownRef}>
+                  <div className="flex items-center relative">
+                    {/* Dropdown Button */}
+                    <button
+                      type="button"
+                      onClick={() => setDropdownOpen(!dropdownOpen)}
+                      className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none"
+                    >
+                      {selectedCountry?.flag}{" "}
+                      {selectedCountry?.code}
+                    </button>
+                    {/* Dropdown List */}
+                    {dropdownOpen && (
+                      <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75 mt-[6px]">
+                        <ul className="py-2 text-sm text-gray-700">
+                          {countries.map((country: { name?: string; code?: string; flag?: string } | undefined, index) => (
+                            <li key={index}>
+                              <button
+                                type="button"
+                                onClick={() => handleSelect(country)}
+                                className="inline-flex w-full px-4 py-2 text-sm"
+                              >
+                                <span className="inline-flex items-center">
+                                  {country?.flag} {" "} {country?.name} ({country?.code})
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {/* Input Field */}
+                    <label
+                      htmlFor="phone-input"
+                      className="mb-2 text-sm font-medium text-gray-900 sr-only"
+                    >
+                      Phone number:
+                    </label>
+                    <div className="relative w-full">
+                      <input
+                        type="tel"
+                        id="phone-input"
+                        placeholder={placeholder || "Enter phone number"}
+                        className="block p-2.5 w-full z-20  h-[44px] text-sm text-gray-900 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
+                        value={phone}
+                        onChange={handlePhoneChange}
+                        disabled={disabled}
+                        required={required}
+                        onBlur={onBlur}
+                        minLength={9}
+                        maxLength={10}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-        )}
+        );
+
+      case "dateChange":
+        return (
+          <DateRangePicker
+            value={typeof value === 'string' ? value : String(value ?? '')}
+            name={name}
+            id={id}
+            disabled={disabled}
+            error={error}
+            placeholder={placeholder}
+            showBorder={showBorder}
+            onChange={(e) => {
+              // DateRangePicker emits { target: { value, name } }
+              safeOnChange(e as any);
+            }}
+          />
+        );
+
+      case "date":
+        return (
+          <input
+            id={id ?? name}
+            name={name}
+            type="date"
+            value={value ?? ""}
+            onChange={safeOnChange}
+            disabled={disabled}
+            onBlur={onBlur}
+            min={min as any}
+            max={max as any}
+            className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+            placeholder={`Enter ${label}`}
+          />
+        );
+
+      case "number":
+        return (
+          <input
+            id={id ?? name}
+            name={name}
+            type="number"
+            value={value ?? ""}
+            onChange={safeOnChange}
+            onKeyDown={handleNumberKeyDown}
+            inputMode={integerOnly ? "numeric" : undefined}
+            step={integerOnly ? 1 : step ? step : undefined}
+            disabled={disabled}
+            onBlur={onBlur}
+            className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+            placeholder={`Enter ${label}`}
+            maxLength={maxLength}
+            min={min}
+            max={max}
+          />
+        );
+
+      case "textarea":
+        return (
+          <textarea
+            id={id ?? name}
+            name={name}
+            value={value ?? ""}
+            onChange={safeOnChange}
+            disabled={disabled}
+            className={`border w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-[14px] py-[10px] mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+            placeholder={placeholder || `Enter ${label}`}
+            cols={textareaCols}
+            rows={textareaRows}
+            style={textareaResize === false ? { resize: 'none' } : {}}
+          />
+        );
+
+      default:
+        return null;
+    }
+  }
+
+  return (
+    <div className={`flex flex-col gap-[6px] w-full ${width} relative`}>
+      {showSkeleton && <div className="absolute h-[90px] w-full rounded-[5px] bg-white z-40 flex flex-col gap-[5px]">
+        {label && <Skeleton variant="rounded" width={"50%"} height={"20%"} />}
+        <Skeleton variant="rounded" width={"100%"} height={"60%"} />
+        {error && <Skeleton variant="rounded" width={"100%"} height={"20%"} />}
+      </div>}
+      <label
+        htmlFor={id ?? name}
+        className="text-sm font-medium text-gray-700"
+      >
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      <div className="relative">
+        {renderField()}
+        {type !== 'radio' && error && <div className="mt-1">
+          <span className="text-xs text-red-500">{error}</span>
+        </div>}
       </div>
     </div>
   );
