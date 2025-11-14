@@ -110,7 +110,7 @@ export default function Item() {
     ): Promise<listReturnType> => {
       try {
         // setLoading(true);
-        const res = await itemList({ page: page.toString() });
+        const res = await itemList({ page: page.toString(), per_page: pageSize.toString() });
         // setLoading(false);
         const data = res.data.map((item: LocalTableDataType) => ({
           ...item,
@@ -141,7 +141,7 @@ export default function Item() {
     ): Promise<listReturnType> => {
       try {
         // setLoading(true);
-        const res = await itemGlobalSearch({ query: query, page: page.toString() });
+        const res = await itemGlobalSearch({ query: query, page: page.toString(), per_page: pageSize.toString() });
         // setLoading(false);
         const data = res.data.map((item: LocalTableDataType) => ({
           ...item,

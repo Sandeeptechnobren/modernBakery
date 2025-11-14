@@ -351,14 +351,14 @@ export const initialLinkData: SidebarDataType[] = [
             isActive: false,
             href: "/capsCollection",
             label: "CAPS Master Collection",
-            leadingIcon: "hugeicons:collection",
+            leadingIcon: "game-icons:bottle-cap",
             iconColor: "text-cyan-500"
           },
           {
             isActive: false,
             href: "/collection",
             label: "Collection",
-            leadingIcon: "hugeicons:collection",
+            leadingIcon: "heroicons-outline:collection",
             iconColor: "text-cyan-500"
           },
           {

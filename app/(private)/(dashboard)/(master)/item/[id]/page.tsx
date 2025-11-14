@@ -481,7 +481,7 @@ export default function AddEditItem() {
 
       const itemId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
 
-      let reqType: "json" | "form-data" = values.itemImage instanceof File ? "form-data" : "json";
+      const reqType: "json" | "form-data" = values.itemImage instanceof File ? "form-data" : "json";
       console.log("Submitting payload with request type:", reqType);
       const res = isEditMode
         ? await editItem(itemId, payload, reqType)

@@ -266,7 +266,7 @@ export default function Page() {
                       return {
                         data: res.data || [],
                         total: res.pagination?.totalPages || 1,
-                        currentPage: res.pagination?.currentPage || 1,
+                        currentPage: res.pagination?.page || 1,
                         pageSize: res.pagination?.pageSize || pageSize,
                       };
                     }
@@ -299,7 +299,7 @@ export default function Page() {
                       return {
                         data: res.data || [],
                         total: res.pagination?.totalPages || 1,
-                        currentPage: res.pagination?.currentPage || 1,
+                        currentPage: res.pagination?.page || 1,
                         pageSize: res.pagination?.pageSize || pageSize,
                       };
                     }
@@ -311,7 +311,8 @@ export default function Page() {
                   columns: [
                     { key: "header_code", label: "Return Code" },
                     { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</>},
-                    { key: "uom_id", label: "UOM", render: (row: TableDataType) => <>{ (typeof row?.uom_id === "object" && (row?.uom_id as {name: string})?.name) ?? row?.uom ?? row.uom_id}</>},
+                    // { key: "uom_id", label: "UOM", render: (row: TableDataType) => <>{ (typeof row?.uom_id === "object" && (row?.uom_id as {name: string})?.name) ?? row?.uom ?? row.uom_id}</>},
+                    { key: "name", label: "UOM"},
                     { key: "item_quantity", label: "Quantity" },
                     { key: "item_price", label: "Price" }
                   ],
