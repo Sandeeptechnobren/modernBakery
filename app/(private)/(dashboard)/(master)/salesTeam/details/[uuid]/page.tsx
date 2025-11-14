@@ -507,7 +507,7 @@ export default function Page() {
         <ContainerCard className="w-full h-fit">
           <KeyValueData
             title="Sales Team Information"
-            data={salesman?.is_block === "1"?[
+            data={salesman?.is_block === 1?[
               {
                 key: "Sales Team Type",
                 value: salesman?.salesman_type?.salesman_type_name || "-",
@@ -541,7 +541,7 @@ export default function Page() {
               {
                 key: "Is Block",
                 value:
-                  salesman?.is_block === "1"
+                  salesman?.is_block === 1
                     ? "Yes"
                     : "No",
               },
@@ -595,7 +595,7 @@ export default function Page() {
               {
                 key: "Is Block",
                 value:
-                  salesman?.is_block === "1"
+                  salesman?.is_block === 1
                     ? "Yes"
                     : "No",
               },
