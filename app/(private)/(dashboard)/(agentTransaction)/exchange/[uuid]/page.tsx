@@ -1,60 +1,65 @@
 "use client";
 
-import React, { Fragment, useState, useEffect, useRef } from "react";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
+import AutoSuggestion from "@/app/components/autoSuggestion";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
-import Logo from "@/app/components/logo";
-import { Icon } from "@iconify-icon/react";
-import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
-import AutoSuggestion from "@/app/components/autoSuggestion";
-import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch, countryList, routeList } from "@/app/services/allApi";
-import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
-import * as Yup from "yup";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { useLoading } from "@/app/services/loadingContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData ccc";
-import toInternationalNumber from "@/app/(private)/utils/formatNumber";
+import KeyValueData from "@/app/components/keyValueData";
+import Logo from "@/app/components/logo";
 import { addExchange, invoiceList } from "@/app/services/agentTransaction";
+import {
+  agentCustomerGlobalSearch,
+  genearateCode,
+  itemGlobalSearch,
+  saveFinalCode,
+  warehouseListGlobalSearch
+} from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { Icon } from "@iconify-icon/react";
+import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
+import { useRouter } from "next/navigation";
+import { Fragment, useEffect, useRef, useState } from "react";
+import * as Yup from "yup";
 
 interface FormData {
-  id: number,
-  erp_code: string,
-  item_code: string,
-  name: string,
-  description: string,
+  id: number;
+  erp_code: string;
+  item_code: string;
+  name: string;
+  description: string;
   item_uoms: {
-    id: number,
-    item_id: number,
-    uom_type: string,
-    name: string,
-    price: string,
-    is_stock_keeping: boolean,
-    upc: string,
-    enable_for: string
-  }[],
-  brand: string,
-  image: string,
+    id: number;
+    item_id: number;
+    uom_type: string;
+    name: string;
+    price: string;
+    is_stock_keeping: boolean;
+    upc: string;
+    enable_for: string;
+  }[];
+  brand: string;
+  image: string;
   category: {
-    id: number,
-    name: string,
-    code: string
-  },
+    id: number;
+    name: string;
+    code: string;
+  };
   itemSubCategory: {
-    id: number,
-    name: string,
-    code: string
-  },
-  shelf_life: string,
-  commodity_goods_code: string,
-  excise_duty_code: string,
-  status: number,
-  is_taxable: boolean,
-  has_excies: boolean,
-  item_weight: string,
-  volume: number
+    id: number;
+    name: string;
+    code: string;
+  };
+  shelf_life: string;
+  commodity_goods_code: string;
+  excise_duty_code: string;
+  status: number;
+  is_taxable: boolean;
+  has_excies: boolean;
+  item_weight: string;
+  volume: number;
 }
 
 interface ItemData {
@@ -62,16 +67,15 @@ interface ItemData {
   item_name: string;
   // stored human-readable label for a selected item (used when server results don't include it)
   item_label?: string;
-  UOM: { label: string; value: string }[];
+  UOM: { label: string; value: string; price?: string }[];
   uom_id?: string;
   Quantity: string;
   Price: string;
-  Excise: string;
-  Discount: string;
-  Net: string;
-  Vat: string;
   Total: string;
-  [key: string]: string | { label: string; value: string }[] | undefined;
+  return_type?: string;
+  region?: string;
+  Vat?: string | number;
+  [key: string]: any;
 }
 
 export default function ExchangeAddEditPage() {
@@ -86,84 +90,31 @@ export default function ExchangeAddEditPage() {
 
   const validationSchema = Yup.object({
     warehouse: Yup.string().required("Warehouse is required"),
-    route: Yup.string().required("Route is required"),
     customer: Yup.string().required("Customer is required"),
-    currency: Yup.string().required("Currency is required"),
-    country: Yup.string().required("Country is required"),
-    delivery_date: Yup.string()
-      .required("Delivery date is required")
-      .test("is-date", "Delivery date must be a valid date", (val) => {
-        return Boolean(val && !Number.isNaN(new Date(val).getTime()));
-      }),
-    note: Yup.string().max(1000, "Note is too long"),
+    comment: Yup.string().max(1000, "comment is too long"),
     items: Yup.array().of(itemRowSchema),
   });
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
-  // useAllDropdownListData throws when not wrapped in provider; fall back to empty options when provider missing
-  let onlyCountryOptionsFromCtx: { value: string; label: string }[] = [];
-  let routeOptionsFromCtx: { value: string; label: string }[] = [];
-  try {
-    const ctx = useAllDropdownListData();
-    onlyCountryOptionsFromCtx = ctx?.onlyCountryOptions || [];
-    routeOptionsFromCtx = ctx?.routeOptions || [];
-  } catch (err) {
-    // provider not present in this render tree - use empty list as fallback
-    onlyCountryOptionsFromCtx = [];
-    routeOptionsFromCtx = [];
-  }
 
-  // local state for country and route options: prefer provider options but fall back to fetching from API
-  const [countryOptionsLocal, setCountryOptionsLocal] = useState<{ value: string; label: string }[]>(onlyCountryOptionsFromCtx);
-  const [routeOptionsLocal, setRouteOptionsLocal] = useState<{ value: string; label: string }[]>(routeOptionsFromCtx);
-
-  // If provider didn't supply countries or routes, fetch directly from API so the selects still work
-  useEffect(() => {
-    const fetchCountries = async () => {
-      if (countryOptionsLocal && countryOptionsLocal.length > 0) return;
-      try {
-        const res = await countryList();
-        if (res && !res.error && Array.isArray(res.data)) {
-          const opts = res.data.map((c: any) => ({ value: String(c.id), label: c.country_name }));
-          setCountryOptionsLocal(opts);
-        }
-      } catch (e) {
-        // ignore - we'll just show an empty list
-      }
-    };
-
-    const fetchRoutes = async () => {
-      if (routeOptionsLocal && routeOptionsLocal.length > 0) return;
-      try {
-        // try to fetch routes; include warehouse filter if available in form
-        const res = await routeList({ warehouse_id: form.warehouse, search: "", per_page: "50" });
-        if (res && !res.error && Array.isArray(res.data)) {
-          const opts = res.data.map((r: any) => ({ value: String(r.id), label: `${r.route_code ?? ""}${r.route_code ? ' - ' : ''}${r.route_name ?? ""}` }));
-          setRouteOptionsLocal(opts);
-        }
-      } catch (e) {
-        // ignore - we'll just show an empty list
-      }
-    };
-
-    fetchCountries();
-    fetchRoutes();
-  }, []);
-  
   // 🔹 Fetch invoices (for AutoSuggestion multi-select)
   const fetchInvoices = async (searchText: string) => {
     try {
       const res = await invoiceList({ search: searchText || "", per_page: "50" });
       if (res && !res.error && Array.isArray(res.data)) {
-        return res.data.map((inv: any) => ({ value: String(inv.id), label: `${inv.invoice_code ?? ''}${inv.invoice_code ? ' - ' : ''}${inv.customer_name ?? ''}` }));
+        return res.data.map((inv: any) => ({
+          value: String(inv.id),
+          label: `${inv.invoice_code ?? ""}${inv.invoice_code ? " - " : ""}${inv.customer_name ?? ""}`,
+        }));
       }
       return [];
     } catch (e) {
       return [];
     }
   };
+
   const [skeleton, setSkeleton] = useState({
     route: false,
     customer: false,
@@ -173,13 +124,9 @@ export default function ExchangeAddEditPage() {
   const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
   const form = {
     warehouse: "",
-    route: "",
     customer: "",
-    invoices: [] as string[],
-    note: "",
-    currency: "USD",
-    country: "1",
-    delivery_date: new Date().toISOString().slice(0, 10),
+    comment: "",
+    currency: "AED",
   };
 
   const [exchangeData, setExchangeData] = useState<FormData[]>([]);
@@ -190,13 +137,13 @@ export default function ExchangeAddEditPage() {
       item_name: "",
       item_label: "",
       UOM: [],
+      uom_id: "",
       Quantity: "1",
       Price: "",
-      Excise: "",
-      Discount: "",
-      Net: "",
-      Vat: "",
-      Total: "",
+      Total: "0.00",
+      return_type: "",
+      region: "",
+      Vat: "0",
     },
   ]);
 
@@ -205,6 +152,7 @@ export default function ExchangeAddEditPage() {
 
   // per-row loading (for UOM / price) so UI can show skeletons while fetching
   const [itemLoading, setItemLoading] = useState<Record<number, { uom?: boolean; price?: boolean }>>({});
+
   const validateRow = async (index: number, row?: ItemData, options?: { skipUom?: boolean }) => {
     const rowData = row ?? itemData[index];
     if (!rowData) return;
@@ -214,10 +162,12 @@ export default function ExchangeAddEditPage() {
       uom_id: String(rowData.uom_id ?? ""),
       Quantity: Number(rowData.Quantity) || 0,
       Price: Number(rowData.Price) || 0,
+      return_type: String(rowData.return_type ?? ""),
+      region: rowData.region ?? "",
     };
     try {
       if (options?.skipUom) {
-        // validate only item_id and Quantity to avoid showing UOM required immediately after selecting item
+        // validate only item_id and Quantity
         const partialErrors: Record<string, string> = {};
         try {
           await itemRowSchema.validateAt("item_id", toValidate);
@@ -230,7 +180,6 @@ export default function ExchangeAddEditPage() {
           if (e?.message) partialErrors["Quantity"] = e.message;
         }
         if (Object.keys(partialErrors).length === 0) {
-          // clear errors for this row
           setItemErrors((prev) => {
             const copy = { ...prev };
             delete copy[index];
@@ -241,7 +190,6 @@ export default function ExchangeAddEditPage() {
         }
       } else {
         await itemRowSchema.validate(toValidate, { abortEarly: false });
-        // clear errors for this row
         setItemErrors((prev) => {
           const copy = { ...prev };
           delete copy[index];
@@ -263,46 +211,53 @@ export default function ExchangeAddEditPage() {
 
   // Function for fetching Item
   const fetchItem = async (searchTerm: string) => {
+    setSkeleton((prev) => ({ ...prev, item: true }));
     const res = await itemGlobalSearch({ perPage: "10", query: searchTerm });
-    if (res.error) {
+    if (res?.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
-      setSkeleton({ ...skeleton, item: false });
-      return;
+      setSkeleton((prev) => ({ ...prev, item: false }));
+      return [];
     }
     const data = res?.data || [];
     setExchangeData(data);
-      const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
-        value: String(item.id),
-        label: (item.code ?? item.item_code ?? item.erp_code ?? "") + " - " + (item.name ?? "")
-      }));
-      // Merge newly fetched options with existing ones so previously selected items remain available
-      setItemsOptions((prev: { label: string; value: string }[] = []) => {
-        const map = new Map<string, { label: string; value: string }>();
-        prev.forEach((o) => map.set(o.value, o));
-        options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
-        return Array.from(map.values());
-      });
-    setSkeleton({ ...skeleton, item: false });
+    const options = data.map((item: any) => ({
+      value: String(item.id),
+      label: (item.code ?? item.item_code ?? item.erp_code ?? "") + (item.name ? " - " + item.name : ""),
+    }));
+    // Merge newly fetched options with existing ones so previously selected items remain available
+    setItemsOptions((prev: { label: string; value: string }[] = []) => {
+      const map = new Map<string, { label: string; value: string }>();
+      prev.forEach((o) => map.set(o.value, o));
+      options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+      return Array.from(map.values());
+    });
+    setSkeleton((prev) => ({ ...prev, item: false }));
     return options;
   };
 
   const codeGeneratedRef = useRef(false);
   const [code, setCode] = useState("");
   useEffect(() => {
-    // generate code
+    // generate code once on mount
     if (!codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
       (async () => {
-        const res = await genearateCode({
-          model_name: "exchange",
-        });
-        if (res?.code) {
-          setCode(res.code);
+        try {
+          setLoading(true);
+          const res = await genearateCode({
+            model_name: "exchange",
+          });
+          if (res?.code) {
+            setCode(res.code);
+          }
+        } catch (e) {
+          // ignore generate code failure gracefully
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       })();
     }
-  }, []);
+  }, [setLoading]);
 
   const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
     const newData = [...itemData];
@@ -320,54 +275,50 @@ export default function ExchangeAddEditPage() {
         item.uom_id = "";
         item.Price = "";
         item.Quantity = "1";
+        item.region = "";
+        item.return_type = "";
         item.item_label = "";
+        item.Vat = "0";
       } else {
         const selectedExchange = exchangeData.find((exchange: FormData) => exchange.id.toString() === value);
         item.item_id = selectedExchange ? String(selectedExchange.id || value) : value;
         item.item_name = selectedExchange?.name ?? "";
-        item.UOM = selectedExchange?.item_uoms?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
+        item.UOM =
+          selectedExchange?.item_uoms?.map((uom) => ({ label: uom.name, value: String(uom.id), price: String(uom.price ?? "") })) || [];
         item.uom_id = selectedExchange?.item_uoms?.[0]?.id ? String(selectedExchange.item_uoms[0].id) : "";
         item.Price = selectedExchange?.item_uoms?.[0]?.price ? String(selectedExchange.item_uoms[0].price) : "";
         item.Quantity = "1";
         // persist a readable label
-        const computedLabel = selectedExchange ? `${selectedExchange.item_code ?? selectedExchange.erp_code ?? ''}${selectedExchange.item_code || selectedExchange.erp_code ? ' - ' : ''}${selectedExchange.name ?? ''}` : "";
+        const computedLabel = selectedExchange
+          ? `${selectedExchange.item_code ?? selectedExchange.erp_code ?? ""}${selectedExchange.item_code || selectedExchange.erp_code ? " - " : ""}${selectedExchange.name ?? ""}`
+          : "";
         item.item_label = computedLabel;
         // ensure the selected item is available in itemsOptions
         if (item.item_label) {
           setItemsOptions((prev: { label: string; value: string }[] = []) => {
-            if (prev.some(o => o.value === item.item_id)) return prev;
+            if (prev.some((o) => o.value === item.item_id)) return prev;
             return [...prev, { value: item.item_id, label: item.item_label as string }];
           });
         }
       }
     }
+
     const qty = Number(item.Quantity) || 0;
     const price = Number(item.Price) || 0;
     const total = qty * price;
-    const vat = total - total / 1.18;
-    const preVat = total - vat;
-    const net = total - vat;
-    // const excise = 0;
-    // const discount = 0;
-    // const gross = total;
-
-    item.Total = total.toFixed(2);
-    item.Vat = vat.toFixed(2);
-    item.Net = net.toFixed(2);
-    item.preVat = preVat.toFixed(2);
-    // item.Excise = excise.toFixed(2);
-    // item.Discount = discount.toFixed(2);
-    // item.gross = gross.toFixed(2);
+    item.Total = isFinite(total) ? total.toFixed(2) : "0.00";
 
     if (field !== "item_id") {
-      validateRow(index, newData[index]);
+      // When changing uom_id quickly after selecting item, skip immediate uom-required error
+      const skipUom = field === "uom_id" && (!item.uom_id || item.uom_id === "");
+      await validateRow(index, newData[index], { skipUom: skipUom });
     }
     setItemData(newData);
   };
 
   const handleAddNewItem = () => {
-    setItemData([
-      ...itemData,
+    setItemData((prev) => [
+      ...prev,
       {
         item_id: "",
         item_name: "",
@@ -376,11 +327,10 @@ export default function ExchangeAddEditPage() {
         uom_id: "",
         Quantity: "1",
         Price: "",
-        Excise: "0.00",
-        Discount: "0.00",
-        Net: "0.00",
-        Vat: "0.00",
         Total: "0.00",
+        region: "",
+        return_type: "",
+        Vat: "0",
       },
     ]);
   };
@@ -390,21 +340,20 @@ export default function ExchangeAddEditPage() {
     const newRow: ItemData = {
       item_id: String(exchange.id ?? ""),
       item_name: exchange.name ?? "",
-      item_label: `${exchange.item_code ?? exchange.erp_code ?? ""}${exchange.item_code || exchange.erp_code ? ' - ' : ''}${exchange.name ?? ''}`,
-      UOM: exchange.item_uoms?.map(uom => ({ label: uom.name, value: String(uom.id), price: uom.price })) || [],
+      item_label: `${exchange.item_code ?? exchange.erp_code ?? ""}${exchange.item_code || exchange.erp_code ? " - " : ""}${exchange.name ?? ""}`,
+      UOM: exchange.item_uoms?.map((uom) => ({ label: uom.name, value: String(uom.id), price: String(uom.price ?? "") })) || [],
       uom_id: exchange.item_uoms?.[0]?.id ? String(exchange.item_uoms[0].id) : "",
       Quantity: "1",
       Price: exchange.item_uoms?.[0]?.price ? String(exchange.item_uoms[0].price) : "",
-      Excise: "0.00",
-      Discount: "0.00",
-      Net: "0.00",
-      Vat: "0.00",
       Total: "0.00",
+      region: "",
+      return_type: "",
+      Vat: "0",
     };
     setItemData((prev) => [...prev, newRow]);
     // ensure itemsOptions contains this selection so AutoSuggestion can show it
     setItemsOptions((prev: { label: string; value: string }[] = []) => {
-      if (prev.some(o => o.value === String(exchange.id))) return prev;
+      if (prev.some((o) => o.value === String(exchange.id))) return prev;
       return [...prev, { value: String(exchange.id), label: newRow.item_label as string }];
     });
   };
@@ -420,11 +369,10 @@ export default function ExchangeAddEditPage() {
           uom_id: "",
           Quantity: "1",
           Price: "",
-          Excise: "",
-          Discount: "",
-          Net: "",
-          Vat: "",
-          Total: "",
+          Total: "0.00",
+          region: "",
+          return_type: "",
+          Vat: "0",
         },
       ]);
       return;
@@ -432,64 +380,29 @@ export default function ExchangeAddEditPage() {
     setItemData(itemData.filter((_, i) => i !== index));
   };
 
+
   // --- Compute totals for summary
-  const grossTotal = itemData.reduce(
-    (sum, item) => sum + Number(item.Total || 0),
-    0
-  );
-  const totalVat = itemData.reduce(
-    (sum, item) => sum + Number(item.Vat || 0),
-    0
-  );
-  const netAmount = itemData.reduce(
-    (sum, item) => sum + Number(item.Net || 0),
-    0
-  );
-  const preVat = totalVat ? grossTotal - totalVat : grossTotal;
-  const discount = itemData.reduce(
-    (sum, item) => sum + Number(item.Discount || 0),
-    0
-  );
+  const grossTotal = itemData.reduce((sum, item) => sum + Number(item.Total || 0), 0);
+  const totalVat = itemData.reduce((sum, item) => sum + Number(item.Vat || 0), 0);
+
   const finalTotal = grossTotal + totalVat;
 
   const generatePayload = (values?: FormikValues) => {
-    const selectedCountryId = values?.country ?? form.country;
-    const selectedCountry = (countryOptionsLocal || []).find((c: { value: string; label: string }) => String(c.value) === String(selectedCountryId));
-    const countryName = selectedCountry?.label ?? null;
-
-    const selectedRouteId = values?.route ?? form.route;
-    const selectedRoute = (routeOptionsLocal || []).find((r: { value: string; label: string }) => String(r.value) === String(selectedRouteId));
-    const routeName = selectedRoute?.label ?? null;
-
     return {
       exchange_code: code,
-      currency: values?.currency || form.currency,
-      country_id: Number(selectedCountryId) || null,
-      country: countryName,
-      route_id: Number(selectedRouteId) || null,
-      route: routeName,
-      invoices: values?.invoices ? (Array.isArray(values.invoices) ? values.invoices.map((v: any) => Number(v)) : []) : (form.invoices || []).map((v: any) => Number(v)),
       warehouse_id: Number(values?.warehouse) || null,
       customer_id: Number(values?.customer) || null,
-      delivery_date: values?.delivery_date || form.delivery_date,
-      gross_total: Number(grossTotal.toFixed(2)),
-      vat: Number(totalVat.toFixed(2)),
-      net_amount: Number(netAmount.toFixed(2)),
       total: Number(finalTotal.toFixed(2)),
-      discount: Number(discount.toFixed(2)),
-      comment: values?.note || "",
+      comment: values?.comment || "",
       status: 1,
-      details: itemData.map((item, i) => ({
+      details: itemData.map((item) => ({
         item_id: Number(item.item_id) || null,
         item_price: Number(item.Price) || null,
         quantity: Number(item.Quantity) || null,
-        vat: Number(item.Vat) || null,
         uom_id: Number(item.uom_id) || null,
-        // discount: Number(item.Discount) || null,
-        // discount_id: 0,
-        // gross_total: Number(item.Total) || null,
-        net_total: Number(item.Net) || null,
         total: Number(item.Total) || null,
+        region: String(item.region) || null,
+        return_type: String(item.return_type) || null,
       })),
     };
   };
@@ -503,7 +416,9 @@ export default function ExchangeAddEditPage() {
       } catch (itemErr: any) {
         // log detailed item validation errors and surface a friendly message
         console.error("Item validation errors:", itemErr.inner || itemErr);
-        showSnackbar(itemErr.inner.map((err: any) => err.message).join(", "), "error");
+        const msg =
+          (Array.isArray(itemErr.inner) && itemErr.inner.map((err: any) => err.message).join(", ")) || itemErr.message || "Item validation failed";
+        showSnackbar(msg, "error");
         // set a top-level form error to prevent submission
         formikHelpers.setErrors({ items: "Item rows validation failed" } as any);
         return;
@@ -514,16 +429,16 @@ export default function ExchangeAddEditPage() {
       console.log("Submitting payload:", payload);
       const res = await addExchange(payload);
       if (res.error) {
-        showSnackbar(res.data.message || "Failed to create Exchange", "error");
+        showSnackbar(res.data?.message || "Failed to create Exchange", "error");
         console.error("Create exchange error:", res);
       } else {
         try {
           await saveFinalCode({
-              reserved_code: code,
-              model_name: "exchange",
+            reserved_code: code,
+            model_name: "exchange",
           });
         } catch (e) {
-            // Optionally handle error, but don't block success
+          // Optionally handle error, but don't block success
         }
         showSnackbar("Exchange created successfully", "success");
         router.push("/exchange");
@@ -538,79 +453,54 @@ export default function ExchangeAddEditPage() {
     }
   };
 
-  const keyValueData = [
-    // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
-    // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
-    { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
-    { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
-    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
-    // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
-  ];
-
   const fetchAgentCustomers = async (values: FormikValues, search: string) => {
     const res = await agentCustomerGlobalSearch({
       warehouse_id: values.warehouse,
       query: search || "",
-      per_page: "10"
+      per_page: "10",
     });
-    if (res.error) {
+    if (res?.error) {
       showSnackbar(res.data?.message || "Failed to fetch customers", "error");
-      setSkeleton({ ...skeleton, customer: false });
-      return;
+      setSkeleton((prev) => ({ ...prev, customer: false }));
+      return [];
     }
     const data = res?.data || [];
-    const options = data.map((customer: { id: number; osa_code: string; name: string }) => ({
+    const options = data.map((customer: any) => ({
       value: String(customer.id),
-      label: customer.osa_code + " - " + customer.name
+      label: `${customer.osa_code ?? ""} - ${customer.name ?? ""}`,
     }));
     setFilteredCustomerOptions(options);
-    setSkeleton({ ...skeleton, customer: false });
+    setSkeleton((prev) => ({ ...prev, customer: false }));
     return options;
-  }
+  };
 
   const fetchWarehouse = async (searchQuery?: string) => {
     const res = await warehouseListGlobalSearch({
       query: searchQuery || "",
       dropdown: "1",
-      per_page: "50"
+      per_page: "50",
     });
 
-    if (res.error) {
+    if (res?.error) {
       showSnackbar(res.data?.message || "Failed to fetch customers", "error");
-      return;
+      return [];
     }
     const data = res?.data || [];
-    const options = data.map((warehouse: { id: number; warehouse_code: string; warehouse_name: string }) => ({
+    const options = data.map((warehouse: any) => ({
       value: String(warehouse.id),
-      label:  warehouse.warehouse_code + " - " + warehouse.warehouse_name
+      label: `${warehouse.warehouse_code ?? ""} - ${warehouse.warehouse_name ?? ""}`,
     }));
     setFilteredWarehouseOptions(options);
     return options;
-  }
+  };
 
-  // const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
-  //   const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
-  //   if (res.error) {
-  //     showSnackbar(res.data?.message || "Failed to fetch items", "error");
-  //     setSkeleton({ ...skeleton, item: false });
-  //     return;
-  //   }
-  //   const data = res?.data || [];
-  //   return data;
-  // };
 
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center mb-[20px]">
         <div className="flex items-center gap-[16px]">
-          <Icon
-            icon="lucide:arrow-left"
-            width={24}
-            onClick={() => router.back()}
-          />
-          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
-            Add Exchange
-          </h1>
+          <Icon icon="lucide:arrow-left" width={24} onClick={() => router.back()} />
+          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">Add Exchange</h1>
         </div>
       </div>
 
@@ -627,22 +517,10 @@ export default function ExchangeAddEditPage() {
         </div>
         <hr className="w-full text-[#D5D7DA]" />
 
-        <Formik<FormikValues>
-          initialValues={form}
-          onSubmit={handleSubmit}
-          validationSchema={validationSchema}
-          enableReinitialize={true}
-        >
+        <Formik<FormikValues> initialValues={form} onSubmit={handleSubmit} validationSchema={validationSchema} enableReinitialize={true}>
           {({ values, touched, errors, setFieldValue, handleChange, submitForm, isSubmitting }: FormikProps<FormikValues>) => {
-            // // Log Formik validation errors to console for easier debugging
-            // useEffect(() => {
-            //   if (errors && Object.keys(errors).length > 0) {
-            //     console.warn("Formik validation errors:", errors);
-            //   }
-            //   console.log("Current Formik errors:", errors);
-            //   console.log("Current Formik errors:", touched.comment);
-            //   console.log(values, "values")
-            // }, [errors]);
+            // key/value summary data (use values.currency)
+            
 
             return (
               <>
@@ -654,12 +532,13 @@ export default function ExchangeAddEditPage() {
                       name="warehouse"
                       placeholder="Search warehouse"
                       onSearch={(q) => fetchWarehouse(q)}
-                      initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
+                      initialValue={filteredWarehouseOptions.find((o) => o.value === String(values?.warehouse))?.label || ""}
                       onSelect={(opt) => {
                         if (values.warehouse !== opt.value) {
                           setFieldValue("warehouse", opt.value);
                           setSkeleton((prev) => ({ ...prev, customer: true }));
                           setFieldValue("customer", "");
+                          setFilteredCustomerOptions([]);
                         } else {
                           setFieldValue("warehouse", opt.value);
                         }
@@ -670,10 +549,7 @@ export default function ExchangeAddEditPage() {
                         setFilteredCustomerOptions([]);
                         setSkeleton((prev) => ({ ...prev, customer: false }));
                       }}
-                      error={
-                        touched.warehouse &&
-                        (errors.warehouse as string)
-                      }
+                      error={touched.warehouse && (errors.warehouse as string)}
                     />
                   </div>
                   <div>
@@ -682,275 +558,281 @@ export default function ExchangeAddEditPage() {
                       label="Customer"
                       name="customer"
                       placeholder="Search customer"
-                      onSearch={(q) => {console.log("Searching customer:", q); return fetchAgentCustomers(values, q)}}
-                      initialValue={filteredCustomerOptions.find(o => o.value === String(values?.customer))?.label || ""}
+                      onSearch={(q) => {
+                        return fetchAgentCustomers(values, q);
+                      }}
+                      initialValue={filteredCustomerOptions.find((o) => o.value === String(values?.customer))?.label || ""}
                       onSelect={(opt) => {
-                        if (values.customer !== opt.value) {
-                          setFieldValue("customer", opt.value);
-                        } else {
-                          setFieldValue("customer", opt.value);
-                        }
+                        setFieldValue("customer", opt.value);
                       }}
                       onClear={() => {
                         setFieldValue("customer", "");
                       }}
-                      disabled={values.warehouse === ""}
+                      disabled={!values.warehouse}
                       error={touched.customer && (errors.customer as string)}
                       className="w-full"
                     />
                   </div>
-                  <div>
-                    <InputFields
-                      required
-                      label="Route"
-                      name="route"
-                      options={routeOptionsLocal}
-                      value={values.route}
-                      onChange={handleChange}
-                      searchable={true}
-                    />
-                  </div>
-                  <div>
-                    <InputFields
-                      required
-                      label="Delivery Date"
-                      type="date"
-                      name="delivery_date"
-                      value={values.delivery_date}
-                      min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-                    <InputFields
-                      required
-                      label="Currency"
-                      name="currency"
-                      options={[{ label: "USD", value: "USD" }, { label: "AED", value: "AED" }]}
-                      value={values.currency}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-                    <InputFields
-                      required
-                      label="Country"
-                      name="country"
-                      options={countryOptionsLocal}
-                      value={values.country}
-                      onChange={handleChange}
-                      searchable={true}
-                    />
-                  </div>
-                </div>
 
-                {/* --- Invoices multi-select --- */}
-                <div className="mt-4 mb-6">
-                  <AutoSuggestion
-                    label="Invoices"
-                    name="invoices"
-                    placeholder="Search invoices"
-                    onSearch={(q) => fetchInvoices(q)}
-                    onSelect={() => {}}
-                    multiple={true}
-                    initialSelected={[]}
-                    onChangeSelected={(selected) => {
-                      try {
-                        // set Formik field to array of selected ids
-                        setFieldValue && setFieldValue("invoices", selected.map(s => s.value));
-                      } catch (e) {
-                        // ignore
-                      }
-                    }}
-                    noOptionsMessage={"No invoices found"}
-                  />
+                  {/* spacer columns for grid alignment */}
+                  <div className="lg:col-span-4" />
+
                 </div>
 
                 <div className="mt-6 mb-6">
-                <h3 className="text-[16px] font-semibold mb-2">Return</h3>
-                <Table
-                  data={itemData.map((row, idx) => ({
-                    ...row,
-                    idx: idx.toString(),
-                    UOM: Array.isArray(row.UOM) ? JSON.stringify(row.UOM) : "[]",
-                    item_id: String(row.item_id ?? ""),
-                    Quantity: String(row.Quantity ?? ""),
-                    Price: String(row.Price ?? ""),
-                    Excise: String(row.Excise ?? ""),
-                    Discount: String(row.Discount ?? ""),
-                    Net: String(row.Net ?? ""),
-                    Vat: String(row.Vat ?? ""),
-                    Total: String(row.Total ?? ""),
-                    PreVat: String(row.PreVat ?? ""),
-                  }))}
-                  config={{
-                    showNestedLoading: false,
-                    columns: [
-                      {
-                        key: "item_id",
-                        label: "Item Name",
-                        width: 300,
-                        render: (row) => {
-                          const idx = Number(row.idx);
-                          const err = itemErrors[idx]?.item_id;
-                          // Optimized: avoid mapping+filtering arrays on every render.
-                          // Find the option for the current row (if still present) and fall back to stored label
-                          // so the selection remains visible even when the option isn't returned by a search.
-                          const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
-                          const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
-                          console.log(row);
-                          return (
-                            <div>
-                              <AutoSuggestion
-                                label=""
-                                name={`item_id_${row.idx}`}
-                                placeholder="Search item"
-                                onSearch={(q) => fetchItem(q)}
-                                initialValue={initialLabel}
-                                onSelect={(opt) => {
-                                  if (opt.value !== row.item_id) {
-                                    recalculateItem(Number(row.idx), "item_id", opt.value);
-                                  }
-                                }}
-                                onClear={() => {
-                                  recalculateItem(Number(row.idx), "item_id", "");
-                                }}
-                                disabled={!values.customer}
-                                error={err && err}
-                                className="w-full"
-                              />
-                            </div>
-                          );
-                        },
-                      },
-                      {
-                        key: "uom_id",
-                        label: "UOM",
-                        width: 150,
-                        render: (row) => {
-                          const idx = Number(row.idx);
-                          const err = itemErrors[idx]?.uom_id;
-                          const options = JSON.parse(row.UOM ?? "[]");
-                          return (
-                            <div>
-                              <InputFields
-                                label=""
-                                value={row.uom_id}
-                                placeholder="Select UOM"
-                                width="max-w-[150px]"
-                                options={options}
-                                searchable={true}
-                                disabled={options.length === 0 || !values.customer}
-                                showSkeleton={Boolean(itemLoading[idx]?.uom)}
-                                onChange={(e) => {
-                                  recalculateItem(Number(row.idx), "uom_id", e.target.value)
-                                  const price = options.find((uom: { value: string }) => String(uom.value) === e.target.value)?.price || "0.00";
-                                  recalculateItem(Number(row.idx), "Price", price);
-                                }}
-                                error={err && err}
-                              />
-                            </div>
-                          );
-                        },
-                      },
-                      {
-                        key: "Quantity",
-                        label: "Qty",
-                        width: 150,
-                        render: (row) => {
-                          const idx = Number(row.idx);
-                          const err = itemErrors[idx]?.Quantity;
-                          return (
-                            <div>
-                              <InputFields
-                                label=""
-                                type="number"
-                                name="Quantity"
-                                // integerOnly={true}
-                                placeholder="Enter Qty"
-                                value={row.Quantity}
-                                disabled={ !row.uom_id || !values.customer}
-                                onChange={(e) => {
-                                  const raw = (e.target as HTMLInputElement).value;
-                                  const intPart = raw.split('.')[0];
-                                  const sanitized = intPart === '' ? '' : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                  recalculateItem(Number(row.idx), "Quantity", sanitized);
-                                }}
-                                min={1}
-                                integerOnly={true}
-                                error={err && err}
-                              />
-                            </div>
-                          );
-                        },
-                      },
-                      {
-                        key: "Price",
-                        label: "Price",
-                        render: (row) => {
-                          const idx = Number(row.idx);
-                          const loading = Boolean(itemLoading[idx]?.price);
-                          const price = String(row.Price ?? "");
-                          if (loading) {
-                            return <span className="text-gray-400 animate-pulse">Loading...</span>;
-                          }
-                          if (!price || price === "" || price === "0" || price === "-") {
-                            return <span className="text-gray-400">-</span>;
-                          }
-                          return <span>{price}</span>;
-                        }
-                      },
-                      // { key: "excise", label: "Excise", render: (row) => <span>{toInternationalNumber(row.Excise) || "0.00"}</span> },
-                      // { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
-                      { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
-                      { key: "Vat", label: "VAT", render: (row) => <span>{toInternationalNumber(row.Vat) || "0.00"}</span> },
-                      { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
-                      // { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
-                      { key: "Total", label: "Total", render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span> },
-                      {
-                        key: "action",
-                        label: "Action",
-                        render: (row) => (
-                          <button
-                            type="button"
-                            className={`${itemData.length <= 1
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                              } text-red-500 flex items-center`}
-                            onClick={() =>
-                              itemData.length > 1 && handleRemoveItem(Number(row.idx))
-                            }
-                          >
-                            <Icon icon="hugeicons:delete-02" width={20} />
-                          </button>
-                        ),
-                      },
-                    ],
-                  }}
-                />
-                </div>
-
-                {/* --- Available items list (table) --- */}
-                <div className="mt-6 mb-6">
-                  <h3 className="text-[16px] font-semibold mb-2">Collect</h3>
+                  <h3 className="text-[16px] font-semibold mb-2">Return</h3>
                   <Table
-                    data={(exchangeData || []).map((it: any) => ({
-                      id: String(it.id ?? ""),
-                      code: it.item_code ?? it.erp_code ?? "",
-                      name: it.name ?? "",
-                      brand: it.brand ?? "",
-                      uom_count: Array.isArray(it.item_uoms) ? it.item_uoms.length : 0,
-                      price: it.item_uoms && it.item_uoms[0] ? String(it.item_uoms[0].price) : "",
-                      raw: it,
+                    data={itemData.map((row, idx) => ({
+                      ...row,
+                      idx: String(idx),
+                      UOM: Array.isArray(row.UOM) ? JSON.stringify(row.UOM) : "[]",
+                      item_id: String(row.item_id ?? ""),
+                      Quantity: String(row.Quantity ?? ""),
+                      Price: String(row.Price ?? ""),
+                      Total: String(row.Total ?? ""),
+                      Vat: row.Vat !== undefined ? String(row.Vat) : "0",
                     }))}
+
                     config={{
                       showNestedLoading: false,
                       columns: [
-                        { key: "code", label: "Code", width: 150, render: (r) => <span>{r.code}</span> },
-                        { key: "name", label: "Name", width: 300, render: (r) => <span>{r.name}</span> },
-                        { key: "brand", label: "Brand", render: (r) => <span>{r.brand}</span> },
+                        {
+                          key: "item_id",
+                          label: "Item Name",
+                          width: 300,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.item_id;
+                            const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
+                            const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
+                            return (
+                              <div>
+                                <AutoSuggestion
+                                  label=""
+                                  name={`item_id_${row.idx}`}
+                                  placeholder="Search item"
+                                  onSearch={(q) => fetchItem(q)}
+                                  initialValue={initialLabel}
+                                  onSelect={(opt) => {
+                                    if (opt.value !== row.item_id) {
+                                      recalculateItem(Number(row.idx), "item_id", opt.value);
+                                    }
+                                  }}
+                                  onClear={() => {
+                                    recalculateItem(Number(row.idx), "item_id", "");
+                                  }}
+                                  disabled={!values.customer}
+                                  error={err && err}
+                                  className="w-full"
+                                />
+                              </div>
+                            );
+                          },
+                        },
+                        {
+                          key: "uom_id",
+                          label: "UOM",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.uom_id;
+                            const options = JSON.parse(row.UOM ?? "[]");
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  value={row.uom_id}
+                                  placeholder="Select UOM"
+                                  width="max-w-[150px]"
+                                  options={options}
+                                  searchable={true}
+                                  disabled={options.length === 0 || !values.customer}
+                                  showSkeleton={Boolean(itemLoading[idx]?.uom)}
+                                  onChange={(e) => {
+                                    const chosen = (e.target as HTMLInputElement).value;
+                                    recalculateItem(Number(row.idx), "uom_id", chosen);
+                                    // find price in options (they include 'price' if provided earlier)
+                                    const found = options.find((uom: any) => String(uom.value) === chosen);
+                                    const price = found?.price ?? found?.price ?? "0.00";
+                                    if (price !== undefined) {
+                                      recalculateItem(Number(row.idx), "Price", String(price));
+                                    }
+                                  }}
+                                  error={err && err}
+                                />
+                              </div>
+                            );
+                          },
+                        },
+                        {
+                          key: "Quantity",
+                          label: "Qty",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.Quantity;
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  type="number"
+                                  name="Quantity"
+                                  placeholder="Enter Qty"
+                                  value={row.Quantity}
+                                  disabled={!row.uom_id || !values.customer}
+                                  onChange={(e) => {
+                                    const raw = (e.target as HTMLInputElement).value;
+                                    const intPart = raw.split(".")[0];
+                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                    recalculateItem(Number(row.idx), "Quantity", sanitized);
+                                  }}
+                                  min={1}
+                                  integerOnly={true}
+                                  error={err && err}
+                                />
+                              </div>
+                            );
+                          },
+                        },
+                        {
+                          key: "Price",
+                          label: "Price",
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const loading = Boolean(itemLoading[idx]?.price);
+                            const price = String(row.Price ?? "");
+                            if (loading) {
+                              return <span className="text-gray-400 animate-pulse">Loading...</span>;
+                            }
+                            if (!price || price === "" || price === "0" || price === "-") {
+                              return <span className="text-gray-400">-</span>;
+                            }
+                            return <span>{price}</span>;
+                          },
+                        },
+                        {
+                          key: "region",
+                          label: "Region",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.Quantity;
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  name="region"
+                                  placeholder="Enter Region"
+                                  value={row.region}
+                                  disabled={!row.uom_id || !values.customer}
+                                  onChange={(e) => {
+                                    const raw = (e.target as HTMLInputElement).value;
+                                    const intPart = raw.split(".")[0];
+                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                    recalculateItem(Number(row.idx), "region", sanitized);
+                                  }}
+                                  min={1}
+                                  integerOnly={true}
+                                  error={err && err}
+                                />
+                              </div>
+                            );
+                          },
+                        },
+                        {
+                          key: "return_type",
+                          label: "Return Type",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.return_type;
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  name="return_type"
+                                  placeholder="select Return type"
+                                  value={row.return_type}
+                                  disabled={!row.uom_id || !values.customer}
+                                  onChange={(e) => {
+                                    const raw = (e.target as HTMLInputElement).value;
+                                    const intPart = raw.split(".")[0];
+                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                    recalculateItem(Number(row.idx), "return_type", sanitized);
+                                  }}
+                                  min={1}
+                                  integerOnly={true}
+                                  error={err && err}
+                                />
+                              </div>
+                            );
+                          },
+                        },
+                        {
+                          key: "Total",
+                          label: "Total",
+                          render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span>,
+                        },
+                        {
+                          key: "action",
+                          label: "Action",
+                          render: (row) => (
+                            <button
+                              type="button"
+                              className={`${itemData.length <= 1 ? "opacity-50 cursor-not-allowed" : ""} text-red-500 flex items-center`}
+                              onClick={() => itemData.length > 1 && handleRemoveItem(Number(row.idx))}
+                            >
+                              <Icon icon="hugeicons:delete-02" width={20} />
+                            </button>
+                          ),
+                        },
+                      ],
+                    }}
+                  />
+                </div>
+
+                {/* --- Collect table: SHOW ONLY SELECTED ITEMS (driven by itemData) --- */}
+                <div className="mt-6 mb-6">
+                  <h3 className="text-[16px] font-semibold mb-2">Collect</h3>
+                  <Table
+                    data={itemData
+                      .filter((row) => row.item_id) // only selected items
+                      .map((row) => {
+                        const original = exchangeData.find((it) => String(it.id) === String(row.item_id));
+
+                        return {
+                          id: String(row.item_id ?? ""),
+                          code: String(original?.item_code ?? original?.erp_code ?? ""),
+                          name: String(original?.name ?? row.item_name ?? ""),
+                          uom_count: String(
+                            Array.isArray(original?.item_uoms) ? original.item_uoms.length : 0
+                          ),
+                          price: String(
+                            original?.item_uoms?.[0]?.price
+                              ? original.item_uoms[0].price
+                              : row.Price ?? "0"
+                          ),
+                          // raw removed! (cannot be used in table rows)
+                        };
+                      })}
+
+                    config={{
+                      showNestedLoading: false,
+                      columns: [
+                        {
+                          key: "code_name",
+                          label: "Item",
+                          width: 300,
+                          render: (r) => (
+                            <span>
+                              {r.code ? `${r.code} - ${r.name}` : r.name}
+                            </span>
+                          ),
+                        },
                         { key: "uom_count", label: "UOMs", align: "center", render: (r) => <span>{r.uom_count}</span> },
-                        { key: "price", label: "Price", align: "right", render: (r) => <span>{r.price || '-'}</span> },
+                        { key: "Quantity", label: "Quantity", align: "center", render: (r) => <span>{r.Quantity}</span> },
+                        { key: "price", label: "Price", align: "right", render: (r) => <span>{r.price || "-"}</span> },
+                        { key: "total", label: "Total", align: "right", render: (r) => <span>{r.total || "-"}</span> },
                         {
                           key: "action",
                           label: "",
@@ -977,50 +859,23 @@ export default function ExchangeAddEditPage() {
                   <div className="flex justify-between flex-wrap w-full mt-[20px]">
                     <div className="flex flex-col justify-between gap-[20px] w-full lg:w-auto">
                       <div className="">
-                        <button
-                          type="button"
-                          className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-                          onClick={handleAddNewItem}
-                        >
+                        <button type="button" className="text-[#E53935] font-medium text-[16px] flex items-center gap-2" onClick={handleAddNewItem}>
                           <Icon icon="material-symbols:add-circle-outline" width={20} />
                           Add New Item
                         </button>
                       </div>
                       <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
-                        <InputFields
-                          label="Note"
-                          type="textarea"
-                          name="note"
-                          placeholder="Enter Note"
-                          value={values.note}
-                          onChange={handleChange}
-                          error={touched.note && (errors.note as string)}
-                        />
+                        <InputFields label="comment" type="textarea" name="comment" placeholder="Enter comment" value={values.comment} onChange={handleChange} error={touched.comment && (errors.comment as string)} />
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-[10px] w-full lg:w-[350px]">
-                      {keyValueData.map((item) => (
-                        <Fragment key={item.key}>
-                          <KeyValueData data={[item]} />
-                          <hr className="text-[#D5D7DA]" />
-                        </Fragment>
-                      ))}
-                      <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
-                        <span>Total</span>
-                        <span>{values.currency || 'AED'} {toInternationalNumber(finalTotal)}</span>
-                      </div>
-                    </div>
+                    
                   </div>
                 </div>
 
                 {/* --- Buttons --- */}
                 <div className="flex justify-end gap-4 mt-6">
-                  <button
-                    type="button"
-                    className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-                    onClick={() => router.push("/exchange")}
-                  >
+                  <button type="button" className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100" onClick={() => router.push("/exchange")}>
                     Cancel
                   </button>
                   <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Exchange..." : "Create Exchange"} disabled={isSubmitting} onClick={() => submitForm()} />

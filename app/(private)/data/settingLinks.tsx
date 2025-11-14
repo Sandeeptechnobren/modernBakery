@@ -225,8 +225,8 @@ export const initialLinkData: SidebarDataType[] = [
       },
       {
         isActive: false,
-        href: "/settings/warehouseStock",
-        label: "Warehouse Stock",
+        href: "/settings/distributorsStock",
+        label: "Distributors Stock",
         leadingIcon: "tabler:building-warehouse",
         iconColor: "text-green-500",
       },

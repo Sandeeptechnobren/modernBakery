@@ -18,7 +18,7 @@ import { Form, Formik, FormikErrors, FormikHelpers, FormikTouched } from "formik
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import * as Yup from "yup";
-import { CustomTableSkelton } from "../../../(master)/warehouse/details/[id]/page";
+import { CustomTableSkelton } from "@/app/components/customSkeleton";
 import Skeleton from "@mui/material/Skeleton";
 
 interface User {

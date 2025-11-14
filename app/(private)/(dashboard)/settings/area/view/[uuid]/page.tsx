@@ -1,6 +1,6 @@
 "use client";
 
-import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
+import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import StatusBtn from "@/app/components/statusBtn2";
 import { subRegionByID } from "@/app/services/allApi";

@@ -11,7 +11,7 @@ import SidebarBtn from "./dashboardSidebarBtn";
 import CustomCheckbox from "./customCheckbox";
 import DismissibleDropdown from "./dismissibleDropdown";
 import { naturalSort } from "../(private)/utils/naturalSort";
-import { CustomTableSkelton } from "../(private)/(dashboard)/(master)/warehouse/details/[id]/page";
+import { CustomTableSkelton } from "./customSkeleton";
 
 export type listReturnType = {
     data: TableDataType[];

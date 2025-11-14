@@ -8,7 +8,7 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import KeyValueData from "../(master)/customer/[customerId]/keyValueData";
+import KeyValueData from "@/app/components/keyValueData";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 
