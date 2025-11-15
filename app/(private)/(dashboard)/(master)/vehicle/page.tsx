@@ -53,7 +53,10 @@ export default function VehiclePage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const { warehouseOptions } = useAllDropdownListData();
-
+  const [threeDotLoading, setThreeDotLoading] = useState({
+    csv: false,
+    xlsx: false,
+  });
 
 
 
@@ -91,30 +94,43 @@ export default function VehiclePage() {
       },
     },
     {
-      key: "warehouse", label: "Warehouse", render: (row: TableDataType) => {
+      key: "warehouse",
+      label: "Distributor",
+
+      render: (row: TableDataType) => {
         const wh = row.warehouse;
-        let code = "-";
-        let name = "-";
-        if (wh && typeof wh === "object" && wh !== null) {
+
+        let code = "";
+        let name = "";
+
+        if (wh && typeof wh === "object") {
           const w = wh as { warehouse_code?: string; warehouse_name?: string };
-          code = w.warehouse_code ?? "-";
-          name = w.warehouse_name ?? "-";
+          code = w.warehouse_code ?? "";
+          name = w.warehouse_name ?? "";
         } else if (typeof wh === "string") {
           name = wh;
         }
-        return `${code}${code && name ? " - " : ""}${name}`;
+
+        // Build final text
+        let display = "";
+
+        if (code && name) display = `${code} - ${name}`;
+        else if (code) display = code;
+        else if (name) display = name;
+
+        // If nothing available → return single dash
+        return display || "-";
       },
+
       filter: {
         isFilterable: true,
         width: 320,
         options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
         onSelect: (selected: string | string[]) => {
-          setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+          setWarehouseId((prev) => (prev === selected ? "" : (selected as string)));
         },
       },
     },
-    // { key: "ownerReference", label: "Owner Reference" },
-    // { key: "vehicleRoute", label: "Vehicle Route" },
     { key: "description", label: "Description", render: (row: TableDataType) => row.description || "-" },
     { key: "valid_from", label: "Valid From", render: (row: TableDataType) => row.valid_from || "-" },
     { key: "valid_to", label: "Valid To", render: (row: TableDataType) => row.valid_to || "-" },
@@ -184,15 +200,18 @@ export default function VehiclePage() {
 
   const exportFile = async (format: string) => {
     try {
+      setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
       const response = await exportVehicleData({ format });
       if (response && typeof response === 'object' && response.url) {
         await downloadFile(response.url);
         showSnackbar("File downloaded successfully", "success");
       } else {
         showSnackbar("Failed to get download URL", "error");
+        setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
       }
     } catch (error) {
       showSnackbar("Failed to download vehicle data", "error");
+      setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
     } finally {
     }
   };
@@ -216,25 +235,6 @@ export default function VehiclePage() {
       showSnackbar("Failed to update vehicle status", "error");
     }
   };
-
-  // const handleConfirmDelete = async () => {
-  //   if (!selectedRow?.id) return;
-
-  //   const res = await deleteVehicle(String(selectedRow.id));
-  //   if (res.error) {
-  //     showSnackbar(res.data.message || "Failed to delete vehicle", "error");
-  //   } else {
-  //     showSnackbar(res.message || "Vehicle deleted successfully", "success");
-  //     setRefreshKey(prev => prev + 1);
-  //     setLoading(false);
-  //   }
-  //   setShowDeletePopup(false);
-  //   setSelectedRow(null);
-  // };
-  // useEffect(() => {
-  //   setLoading(true);
-  // }, []);
-
   return (
     <>
 
@@ -249,17 +249,16 @@ export default function VehiclePage() {
             header: {
               threeDot: [
                 {
-                  icon: "gala:file-document",
+                  icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
                   label: "Export CSV",
                   labelTw: "text-[12px] hidden sm:block",
-                  onClick: () => exportFile("csv"),
+                  onClick: () => !threeDotLoading.csv && exportFile("csv"),
                 },
                 {
-                  icon: "gala:file-document",
+                  icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
                   label: "Export Excel",
                   labelTw: "text-[12px] hidden sm:block",
-                  onClick: () => exportFile("xlsx"),
-                  // You can add onClick for Excel if needed
+                  onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
                 },
                 {
                   icon: "lucide:radio",

@@ -32,6 +32,10 @@ export default function Route() {
     const { setLoading } = useLoading();
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
+    const [threeDotLoading, setThreeDotLoading] = useState({
+        csv: false,
+        xlsx: false,
+    });
 
     const columns = [
         {
@@ -52,33 +56,6 @@ export default function Route() {
                     : null;
                 return typeObj?.name ? typeObj.name : "-";
             },
-            // filter: {
-            //     isFilterable: true,
-            //     render: (data: TableDataType[]) => (
-            //         <>
-            //             {" "}
-            //             {data.map((row, index) => {
-            //                 const typeObj = row.route_Type
-            //                     ? JSON.parse(JSON.stringify(row.route_Type))
-            //                     : null;
-            //                 return (
-            //                     <div
-            //                         key={index}
-            //                         className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-            //                     >
-            //                         {" "}
-            //                         <span className="font-[500] text-[#181D27]">
-            //                             {" "}
-            //                             {typeObj?.route_type_name
-            //                                 ? typeObj.route_type_name
-            //                                 : "-"}{" "}
-            //                         </span>{" "}
-            //                     </div>
-            //                 );
-            //             })}{" "}
-            //         </>
-            //     ),
-            // },
             width: 218,
         },
         {
@@ -116,7 +93,7 @@ export default function Route() {
             render: (row: TableDataType) => (
                 <StatusBtn
                     isActive={
-                        row.status && row.status.toString() === "0" ? false : true
+                        row.status && row.status.toString() === "1" ? true : false
                     }
                 />
             ),
@@ -131,7 +108,6 @@ export default function Route() {
         pageNo: number = 1,
         pageSize: number = 10
     ): Promise<listReturnType> => {
-        // setLoading(true);
         try {
             const params: any = {
                 page: pageNo.toString(),
@@ -229,6 +205,7 @@ export default function Route() {
 
     const exportFile = async (format: string) => {
         try {
+            setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
             const response = await exportRoutes({ format });
             if (response && typeof response === 'object' && response.url) {
                 await downloadFile(response.url);
@@ -236,8 +213,10 @@ export default function Route() {
             } else {
                 showSnackbar("Failed to get download URL", "error");
             }
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
         } catch (error) {
             showSnackbar("Failed to download warehouse data", "error");
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
         }
     };
 
@@ -255,14 +234,16 @@ export default function Route() {
                             title: "Routes",
                             threeDot: [
                                 {
-                                    icon: "gala:file-document",
+                                    icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
                                     label: "Export CSV",
-                                    onClick: () => exportFile("csv")
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => !threeDotLoading.csv && exportFile("csv"),
                                 },
                                 {
-                                    icon: "gala:file-document",
+                                    icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
                                     label: "Export Excel",
-                                    onClick: () => exportFile("xlsx")
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
                                 },
                                 {
                                     icon: "lucide:radio",

@@ -1,21 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Table, { listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
+import StatusBtn from "@/app/components/statusBtn2";
 import {
-  getCompanyCustomers,
-  deleteCompanyCustomer,
-  exportCompanyCustomerData,
-  companyCustomerStatusUpdate,
   companyCustomersGlobalSearch,
+  companyCustomerStatusUpdate,
   downloadFile,
+  exportCompanyCustomerData,
+  getCompanyCustomers
 } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
-import StatusBtn from "@/app/components/statusBtn2";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface CustomerItem {
   id: number;
@@ -52,6 +50,10 @@ export default function CompanyCustomers() {
   const { setLoading } = useLoading();
   // const [showDeletePopup, setShowDeletePopup] = useState(false);
   // const [selectedRow, setSelectedRow] = useState<CustomerItem | null>(null);
+  const [threeDotLoading, setThreeDotLoading] = useState({
+        csv: false,
+        xlsx: false,
+    });
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -134,15 +136,20 @@ export default function CompanyCustomers() {
 
   const exportFile = async (format: string) => {
     try {
+            setThreeDotLoading((prev) => ({ ...prev, [format]: true }))
       const response = await exportCompanyCustomerData({ format });
       if (response && typeof response === 'object' && response.url) {
         await downloadFile(response.url);
         showSnackbar("File downloaded successfully ", "success");
       } else {
         showSnackbar("Failed to get download URL", "error");
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }))
+
       }
     } catch (error) {
       showSnackbar("Failed to download distributor data", "error");
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }))
+
     }
   }
 
@@ -177,24 +184,16 @@ export default function CompanyCustomers() {
               title: "Key Customer",
               threeDot: [
                 {
-                  icon: "gala:file-document",
+                  icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
                   label: "Export CSV",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    const ids = selectedRow?.map((id) => {
-                      return data[id].id;
-                    })
-                    exportFile("csv")
-                  },
+                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: () => !threeDotLoading.csv && exportFile("csv"),
                 },
                 {
-                  icon: "gala:file-document",
+                  icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
                   label: "Export Excel",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    const ids = selectedRow?.map((id) => {
-                      return data[id].id;
-                    })
-                    exportFile("xlsx")
-                  },
+                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
                 },
                 {
                   icon: "lucide:radio",

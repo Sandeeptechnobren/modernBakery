@@ -59,19 +59,19 @@ export default function AgentCustomer() {
                 return "-";
             },
             filter: {
-            isFilterable: true,
-            width: 320,
-            options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-            onSelect: (selected) => {
-                setWarehouseId((prev) => (prev === selected ? "" : (selected as string)));
+                isFilterable: true,
+                width: 320,
+                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                onSelect: (selected) => {
+                    setWarehouseId((prev) => (prev === selected ? "" : (selected as string)));
+                },
+                selectedValue: warehouseId,
             },
-            selectedValue: warehouseId,
+            showByDefault: true,
         },
-        showByDefault: true,
-        },
-{
-    key: "route",
-        label: "Route",
+        {
+            key: "route",
+            label: "Route",
             render: (row: TableDataType) => {
                 if (
                     typeof row.route === "object" &&
@@ -82,21 +82,21 @@ export default function AgentCustomer() {
                 }
                 return typeof row.route === 'string' ? row.route : "-";
             },
-                filter: {
-        isFilterable: true,
-            width: 320,
+            filter: {
+                isFilterable: true,
+                width: 320,
                 options: Array.isArray(routeOptions) ? routeOptions : [],
-                    onSelect: (selected) => {
-                        setRouteId((prev) => prev === selected ? "" : (selected as string));
-                    },
-                        selectedValue: routeId,
+                onSelect: (selected) => {
+                    setRouteId((prev) => prev === selected ? "" : (selected as string));
+                },
+                selectedValue: routeId,
             },
 
-    showByDefault: true,
+            showByDefault: true,
         },
-{
-    key: "outlet_channel",
-        label: "Outlet Channel",
+        {
+            key: "outlet_channel",
+            label: "Outlet Channel",
             render: (row: TableDataType) =>
                 typeof row.outlet_channel === "object" &&
                     row.outlet_channel !== null &&
@@ -104,21 +104,21 @@ export default function AgentCustomer() {
                     ? (row.outlet_channel as { outlet_channel?: string })
                         .outlet_channel || "-"
                     : "-",
-                filter: {
-        isFilterable: true,
-            width: 320,
+            filter: {
+                isFilterable: true,
+                width: 320,
                 options: Array.isArray(channelOptions) ? channelOptions : [], // [{ value, label }]
-                    onSelect: (selected) => {
-                        setChannelId((prev) => prev === selected ? "" : (selected as string));
-                    },
-                        selectedValue: channelId,
+                onSelect: (selected) => {
+                    setChannelId((prev) => prev === selected ? "" : (selected as string));
+                },
+                selectedValue: channelId,
             },
 
-    showByDefault: true,
+            showByDefault: true,
         },
-{
-    key: "category",
-        label: "Customer Category",
+        {
+            key: "category",
+            label: "Customer Category",
             render: (row: TableDataType) =>
                 typeof row.category === "object" &&
                     row.category !== null &&
@@ -126,11 +126,11 @@ export default function AgentCustomer() {
                     ? (row.category as { customer_category_name?: string })
                         .customer_category_name || "-"
                     : "-",
-                showByDefault: true
-},
-{
-    key: "customer_type",
-        label: "Customer Type",
+            showByDefault: true
+        },
+        {
+            key: "customer_type",
+            label: "Customer Type",
             render: (row: TableDataType) => {
                 if (
                     typeof row.customer_type === "object" &&
@@ -142,267 +142,265 @@ export default function AgentCustomer() {
                 return row.customer_type || "-";
             },
         },
-{ key: "landmark", label: "Landmark" },
-{ key: "district", label: "District" },
-{ key: "street", label: "Street" },
-{ key: "town", label: "Town" },
-{ key: "contact_no", label: "Contact No." },
-{ key: "whatsapp_no", label: "Whatsapp No." },
-{ key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
-{ key: "payment_type", label: "Payment Type", render: (row: TableDataType) => getPaymentType(String(row.payment_type)) },
-{
-    key: "status",
-        label: "Status",
+        { key: "landmark", label: "Landmark" },
+        { key: "district", label: "District" },
+        { key: "street", label: "Street" },
+        { key: "town", label: "Town" },
+        { key: "contact_no", label: "Contact No." },
+        { key: "whatsapp_no", label: "Whatsapp No." },
+        { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
+        { key: "payment_type", label: "Payment Type", render: (row: TableDataType) => getPaymentType(String(row.payment_type)) },
+        {
+            key: "status",
+            label: "Status",
             isSortable: true,
-                render: (row: TableDataType) => {
-                    // Treat status 1 or 'active' (case-insensitive) as active
-                    const isActive =
-                        String(row.status) === "1" ||
-                        (typeof row.status === "string" &&
-                            row.status.toLowerCase() === "active");
-                    return <StatusBtn isActive={isActive} />;
-                },
-                    showByDefault: true,
+            render: (row: TableDataType) => {
+                // Treat status 1 or 'active' (case-insensitive) as active
+                const isActive =
+                    String(row.status) === "1" ||
+                    (typeof row.status === "string" &&
+                        row.status.toLowerCase() === "active");
+                return <StatusBtn isActive={isActive} />;
+            },
+            showByDefault: true,
         },
     ];
 
-const { setLoading } = useLoading();
-const [refreshKey, setRefreshKey] = useState(0);
-const router = useRouter();
-const { showSnackbar } = useSnackbar();
-type TableRow = TableDataType & { id?: string };
-
-const fetchAgentCustomers = useCallback(
-    async (
-        page: number = 1,
-        pageSize: number = 5
-    ): Promise<listReturnType> => {
-        try {
-            // setLoading(true);
-            const params: Record<string, string> = {
-                page: page.toString(),
-            };
-            if (selectedSubCategoryId) {
-                params.subcategory_id = String(selectedSubCategoryId);
-            }
-            if (warehouseId) {
-                params.warehouse = String(warehouseId);
-            }
-            if (channelId) {
-                params.outlet_channel_id = String(channelId);
-            }
-            if (routeId) {
-                params.route_id = String(routeId);
-            }
-            const listRes = await agentCustomerList(params);
-            // setLoading(false);
-            return {
-                data: Array.isArray(listRes.data) ? listRes.data : [],
-                total: listRes?.pagination?.totalPages || 1,
-                currentPage: listRes?.pagination?.page || 1,
-                pageSize: listRes?.pagination?.limit || pageSize,
-            };
-        } catch (error: unknown) {
-            // setLoading(false);
-            return {
-                data: [],
-                total: 1,
-                currentPage: 1,
-                pageSize: 5,
-            };
-        }
-    },
-    [selectedSubCategoryId, warehouseId, channelId, routeId, setLoading]
-);
-
-const exportfile = async (ids: string[] | undefined) => {
-    if (!ids) return;
-    try {
-        const response = await exportAgentCustomerData({
-            ids: ids
-        });
-        if (response && typeof response === 'object' && response.url) {
-            await downloadFile(response.url);
-            showSnackbar("File downloaded successfully ", "success");
-        } else {
-            showSnackbar("Failed to get download URL", "error");
-        }
-    } catch (error) {
-        showSnackbar("Failed to download Field Customer data", "error");
-    }
-}
-
-const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {
-    if (!ids || ids.length === 0) return;
-    const res = await agentCustomerStatusUpdate({
-        ids: ids,
-        status: Number(status)
+    const { setLoading } = useLoading();
+    const [refreshKey, setRefreshKey] = useState(0);
+    const router = useRouter();
+    const { showSnackbar } = useSnackbar();
+    type TableRow = TableDataType & { id?: string };
+    const [threeDotLoading, setThreeDotLoading] = useState({
+        csv: false,
+        xlsx: false,
     });
 
-    if (res.error) {
-        showSnackbar(res.data.message || "Failed to update status", "error");
-        throw new Error(res.data.message);
+    const fetchAgentCustomers = useCallback(
+        async (
+            page: number = 1,
+            pageSize: number = 5
+        ): Promise<listReturnType> => {
+            try {
+                // setLoading(true);
+                const params: Record<string, string> = {
+                    page: page.toString(),
+                };
+                if (selectedSubCategoryId) {
+                    params.subcategory_id = String(selectedSubCategoryId);
+                }
+                if (warehouseId) {
+                    params.warehouse = String(warehouseId);
+                }
+                if (channelId) {
+                    params.outlet_channel_id = String(channelId);
+                }
+                if (routeId) {
+                    params.route_id = String(routeId);
+                }
+                const listRes = await agentCustomerList(params);
+                // setLoading(false);
+                return {
+                    data: Array.isArray(listRes.data) ? listRes.data : [],
+                    total: listRes?.pagination?.totalPages || 1,
+                    currentPage: listRes?.pagination?.page || 1,
+                    pageSize: listRes?.pagination?.limit || pageSize,
+                };
+            } catch (error: unknown) {
+                // setLoading(false);
+                return {
+                    data: [],
+                    total: 1,
+                    currentPage: 1,
+                    pageSize: 5,
+                };
+            }
+        },
+        [selectedSubCategoryId, warehouseId, channelId, routeId, setLoading]
+    );
+
+    const exportfile = async (format: string) => {
+        try {
+            setThreeDotLoading((prev) => ({ ...prev, [format]: true }))
+            const response = await exportAgentCustomerData({
+            });
+            if (response && typeof response === 'object' && response.url) {
+                await downloadFile(response.url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+                setThreeDotLoading((prev) => ({ ...prev, [format]: false }))
+            }
+        } catch (error) {
+            showSnackbar("Failed to download Field Customer data", "error");
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }))
+
+        }
     }
-    setRefreshKey(refreshKey + 1);
-    showSnackbar("Status updated successfully", "success");
-    return res;
-}
 
-const search = useCallback(
-    async (
-        searchQuery: string,
-        pageSize: number,
-        columnName?: string,
-        page: number = 1
-    ): Promise<listReturnType> => {
-        let result;
-        // setLoading(true);
-        if (columnName) {
-            result = await agentCustomerList({
-                per_page: pageSize.toString(),
-                [columnName]: searchQuery,
-                page: page.toString(),
-            });
+    const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {
+        if (!ids || ids.length === 0) return;
+        const res = await agentCustomerStatusUpdate({
+            ids: ids,
+            status: Number(status)
+        });
+
+        if (res.error) {
+            showSnackbar(res.data.message || "Failed to update status", "error");
+            throw new Error(res.data.message);
         }
-        else {
-            result = await agentCustomerGlobalSearch({
-                per_page: pageSize.toString(),
-                query: searchQuery,
-                page: page.toString(),
-            });
-        }
-        // setLoading(false);
-        if (result.error) throw new Error(result.data.message);
-        return {
-            data: result?.data || [],
-            total: result?.pagination?.totalPages || 1,
-            currentPage: result?.pagination?.page || 1,
-            pageSize: result?.pagination?.limit || pageSize,
-        };
-    },
-    []
-);
+        setRefreshKey(refreshKey + 1);
+        showSnackbar("Status updated successfully", "success");
+        return res;
+    }
 
-useEffect(() => {
-    setRefreshKey((k) => k + 1);
-}, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions, selectedSubCategoryId, warehouseId, channelId, routeId]);
+    const search = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number,
+            columnName?: string,
+            page: number = 1
+        ): Promise<listReturnType> => {
+            let result;
+            // setLoading(true);
+            if (columnName) {
+                result = await agentCustomerList({
+                    per_page: pageSize.toString(),
+                    [columnName]: searchQuery,
+                    page: page.toString(),
+                });
+            }
+            else {
+                result = await agentCustomerGlobalSearch({
+                    per_page: pageSize.toString(),
+                    query: searchQuery,
+                    page: page.toString(),
+                });
+            }
+            // setLoading(false);
+            if (result.error) throw new Error(result.data.message);
+            return {
+                data: result?.data || [],
+                total: result?.pagination?.totalPages || 1,
+                currentPage: result?.pagination?.page || 1,
+                pageSize: result?.pagination?.limit || pageSize,
+            };
+        },
+        []
+    );
 
-return (
-    <>
-        <div className="flex flex-col h-full">
-            <Table
-                refreshKey={refreshKey}
-                config={{
-                    api: {
-                        list: fetchAgentCustomers,
-                        search: search
-                    },
-                    header: {
-                        title: "Field Customers",
-                        threeDot: [
+    useEffect(() => {
+        setRefreshKey((k) => k + 1);
+    }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions, selectedSubCategoryId, warehouseId, channelId, routeId]);
+
+    return (
+        <>
+            <div className="flex flex-col h-full">
+                <Table
+                    refreshKey={refreshKey}
+                    config={{
+                        api: {
+                            list: fetchAgentCustomers,
+                            search: search
+                        },
+                        header: {
+                            title: "Field Customers",
+                            threeDot: [
+                                {
+                                    icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
+                                    label: "Export CSV",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => !threeDotLoading.csv && exportfile("csv"),
+                                },
+                                {
+                                    icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
+                                    label: "Export Excel",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => !threeDotLoading.xlsx && exportfile("xlsx"),
+                                },
+                                {
+                                    icon: "lucide:radio",
+                                    label: "Inactive",
+                                    // showOnSelect: true,
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if (!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("1") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if (!status.includes(currentStatus)) {
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].id;
+                                        })
+                                        handleStatusChange(ids, Number(0));
+                                    },
+                                },
+                                {
+                                    icon: "lucide:radio",
+                                    label: "Active",
+                                    // showOnSelect: true,
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if (!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("0") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if (!status.includes(currentStatus)) {
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].id;
+                                        })
+                                        handleStatusChange(ids, Number(1));
+                                    },
+                                },
+                            ],
+                            searchBar: true,
+                            columnFilter: true,
+                            actions: [
+                                <SidebarBtn
+                                    key={0}
+                                    href="/fieldCustomer/new"
+                                    isActive
+                                    leadingIcon="lucide:plus"
+                                    label="Add"
+                                    labelTw="hidden sm:block"
+                                />,
+                            ],
+                        },
+                        localStorageKey: "agentCustomer-table",
+                        footer: { nextPrevBtn: true, pagination: true },
+                        dragableColumn: true,
+                        columns,
+                        rowSelection: true,
+                        rowActions: [
                             {
-                                icon: "gala:file-document",
-                                label: "Export CSV",
-                                onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                    const ids = selectedRow?.map((id) => {
-                                        return data[id].id;
-                                    })
-                                    exportfile(ids);
-                                }
+                                icon: "lucide:eye",
+                                onClick: (data: object) => {
+                                    const row = data as TableRow;
+                                    router.push(`/fieldCustomer/details/${row.uuid}`);
+                                },
                             },
                             {
-                                icon: "gala:file-document",
-                                label: "Export Excel",
-                                onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                    const ids = selectedRow?.map((id) => {
-                                        return data[id].id;
-                                    })
-                                    exportfile(ids);
-                                }
-                            },
-                            {
-                                icon: "lucide:radio",
-                                label: "Inactive",
-                                // showOnSelect: true,
-                                showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                    if (!selectedRow || selectedRow.length === 0) return false;
-                                    const status = selectedRow?.map((id) => data[id].status).map(String);
-                                    return status?.includes("1") || false;
-                                },
-                                onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                    const status: string[] = [];
-                                    const ids = selectedRow?.map((id) => {
-                                        const currentStatus = data[id].status;
-                                        if (!status.includes(currentStatus)) {
-                                            status.push(currentStatus);
-                                        }
-                                        return data[id].id;
-                                    })
-                                    handleStatusChange(ids, Number(0));
-                                },
-                            },
-                            {
-                                icon: "lucide:radio",
-                                label: "Active",
-                                // showOnSelect: true,
-                                showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                    if (!selectedRow || selectedRow.length === 0) return false;
-                                    const status = selectedRow?.map((id) => data[id].status).map(String);
-                                    return status?.includes("0") || false;
-                                },
-                                onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                    const status: string[] = [];
-                                    const ids = selectedRow?.map((id) => {
-                                        const currentStatus = data[id].status;
-                                        if (!status.includes(currentStatus)) {
-                                            status.push(currentStatus);
-                                        }
-                                        return data[id].id;
-                                    })
-                                    handleStatusChange(ids, Number(1));
+                                icon: "lucide:edit-2",
+                                onClick: (data: object) => {
+                                    const row = data as TableRow;
+                                    router.push(
+                                        `/fieldCustomer/${row.uuid}`
+                                    );
                                 },
                             },
                         ],
-                        searchBar: true,
-                        columnFilter: true,
-                        actions: [
-                            <SidebarBtn
-                                key={0}
-                                href="/fieldCustomer/new"
-                                isActive
-                                leadingIcon="lucide:plus"
-                                label="Add"
-                                labelTw="hidden sm:block"
-                            />,
-                        ],
-                    },
-                    localStorageKey: "agentCustomer-table",
-                    footer: { nextPrevBtn: true, pagination: true },
-                    dragableColumn: true,
-                    columns,
-                    rowSelection: true,
-                    rowActions: [
-                        {
-                            icon: "lucide:eye",
-                            onClick: (data: object) => {
-                                const row = data as TableRow;
-                                router.push(`/fieldCustomer/details/${row.uuid}`);
-                            },
-                        },
-                        {
-                            icon: "lucide:edit-2",
-                            onClick: (data: object) => {
-                                const row = data as TableRow;
-                                router.push(
-                                    `/fieldCustomer/${row.uuid}`
-                                );
-                            },
-                        },
-                    ],
-                    pageSize: 50,
-                }}
-            />
-        </div>
-    </>
-);
+                        pageSize: 50,
+                    }}
+                />
+            </div>
+        </>
+    );
 }

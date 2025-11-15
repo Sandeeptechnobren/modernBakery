@@ -1,29 +1,27 @@
 "use client";
 
-import StepperForm, {
-  useStepperForm,
-  StepperStep,
-} from "@/app/components/stepperForm";
 import ContainerCard from "@/app/components/containerCard";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import InputFields from "@/app/components/inputFields";
+import Loading from "@/app/components/Loading";
+import StepperForm, {
+  StepperStep,
+  useStepperForm,
+} from "@/app/components/stepperForm";
 import {
-  warehouseList,
-  getVehicleById,
   addVehicle,
-  updateVehicle,
   genearateCode,
+  getVehicleById,
   saveFinalCode,
+  updateVehicle,
+  warehouseList,
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useParams, useRouter } from "next/navigation";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
-import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import * as Yup from "yup";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import Loading from "@/app/components/Loading";
 
 interface Warehouse {
   id: number;
@@ -188,24 +186,24 @@ export default function AddEditVehicleWithStepper() {
     }
   }, [isEditMode, id, showSnackbar]);
 
- const handleChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  const { name, value } = e.target;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
 
-  setForm((prev) => ({ ...prev, [name]: value }));
-  setTouched((prev) => ({ ...prev, [name]: true }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
 
-  // ✅ Remove error if user has typed something
-  setErrors((prev) => {
-    if (prev[name as keyof VehicleFormValues]) {
-      const newErrors = { ...prev };
-      delete newErrors[name as keyof VehicleFormValues];
-      return newErrors;
-    }
-    return prev;
-  });
-};
+    // ✅ Remove error if user has typed something
+    setErrors((prev) => {
+      if (prev[name as keyof VehicleFormValues]) {
+        const newErrors = { ...prev };
+        delete newErrors[name as keyof VehicleFormValues];
+        return newErrors;
+      }
+      return prev;
+    });
+  };
 
 
   const setFieldValue = (field: string, value: string) => {
@@ -220,12 +218,12 @@ export default function AddEditVehicleWithStepper() {
         "vehicleBrand",
         "numberPlate",
         "chassisNumber",
-        
+
         "vehicleType",
       ];
     if (step === 2) fields = ["ownerType", "warehouseId"];
     if (step === 3)
-      fields = ["odoMeter", "capacity", "status", "validFrom", "validTo","description"];
+      fields = ["odoMeter", "capacity", "status", "validFrom", "validTo", "description"];
     try {
       await VehicleSchema.validate(form, { abortEarly: false });
       setErrors({});
@@ -268,60 +266,74 @@ export default function AddEditVehicleWithStepper() {
   };
 
   const handleSubmit = async () => {
-    const valid = await validateCurrentStep(currentStep);
-    if (!valid) {
-      showSnackbar(
-        "Please fill in all required fields before submitting.",
-        "error"
-      );
-      return;
-    }
-    try {
-      const payload = {
-        vehicle_code: form.vehicle_code,
-        number_plat: form.numberPlate,
-        vehicle_chesis_no: form.chassisNumber,
-        description: form.description,
-        vehicle_brand: form.vehicleBrand,
-        capacity: form.capacity,
-        fuel_reading: form.fuel_reading,
-        vehicle_type: form.vehicleType,
-        owner_type: form.ownerType,
-        warehouse_id: form.warehouseId,
-        opening_odometer: form.odoMeter,
-        status: form.status === "active" ? "1" : "0",
-        valid_from: form.validFrom,
-        valid_to: form.validTo,
-      };
-      let res;
-      if (isEditMode && id) {
-        res = await updateVehicle(id, payload);
-      } else {
-        res = await addVehicle(payload);
-        if (!res?.error) {
-          try {
-            await saveFinalCode({
-              reserved_code: form.vehicle_code,
-              model_name: "vehicle",
-            });
-          } catch (e) {
-            // Optionally handle error, but don't block success
-          }
+  const valid = await validateCurrentStep(currentStep);
+  if (!valid) {
+    showSnackbar(
+      "Please fill in all required fields before submitting.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    
+    const finalWarehouseId =
+      form.ownerType === "company" ? "" : form.warehouseId;
+    const payload = {
+      vehicle_code: form.vehicle_code,
+      number_plat: form.numberPlate,
+      vehicle_chesis_no: form.chassisNumber,
+      description: form.description,
+      vehicle_brand: form.vehicleBrand,
+      capacity: form.capacity,
+      fuel_reading: form.fuel_reading,
+      vehicle_type: form.vehicleType,
+      owner_type: form.ownerType,
+      warehouse_id: finalWarehouseId, // ← updated
+      opening_odometer: form.odoMeter,
+      status: form.status === "active" ? "1" : "0",
+      valid_from: form.validFrom,
+      valid_to: form.validTo,
+    };
+
+    let res;
+
+    if (isEditMode && id) {
+      res = await updateVehicle(id, payload);
+    } else {
+      res = await addVehicle(payload);
+
+      if (!res?.error) {
+        try {
+          await saveFinalCode({
+            reserved_code: form.vehicle_code,
+            model_name: "vehicle",
+          });
+        } catch (e) {
+          // optional
         }
       }
-      if (res?.error) {
-        showSnackbar(res.data?.message || "Failed to submit form", "error");
-      } else {
-        showSnackbar(isEditMode ? "Vehicle updated successfully ✅" : "Vehicle added successfully ✅", "success");
-        router.push("/vehicle");
-      }
-    } catch (err) {
-      showSnackbar(
-        isEditMode ? "Update vehicle failed ❌" : "Add vehicle failed ❌",
-        "error"
-      );
     }
-  };
+
+    if (res?.error) {
+      showSnackbar(res.data?.message || "Failed to submit form", "error");
+    } else {
+      showSnackbar(
+        isEditMode
+          ? "Vehicle updated successfully ✅"
+          : "Vehicle added successfully ✅",
+        "success"
+      );
+      router.push("/vehicle");
+    }
+  } catch (err) {
+    showSnackbar(
+      isEditMode ? "Update vehicle failed ❌" : "Add vehicle failed ❌",
+      "error"
+    );
+  }
+};
+
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -373,7 +385,7 @@ export default function AddEditVehicleWithStepper() {
                   name="vehicleBrand"
                   error={touched.vehicleBrand && errors.vehicleBrand}
                 />
-               
+
               </div>
 
               <div>
@@ -385,7 +397,7 @@ export default function AddEditVehicleWithStepper() {
                   name="numberPlate"
                   error={touched.numberPlate && errors.numberPlate}
                 />
-                
+
               </div>
               <div>
                 <InputFields
@@ -396,7 +408,7 @@ export default function AddEditVehicleWithStepper() {
                   name="chassisNumber"
                   error={touched.chassisNumber && errors.chassisNumber}
                 />
-               
+
               </div>
 
               <div>
@@ -414,7 +426,7 @@ export default function AddEditVehicleWithStepper() {
                     { value: "tuktuk", label: "Tuktuk" },
                   ]}
                 />
-                
+
               </div>
             </div>
           </ContainerCard>
@@ -437,18 +449,20 @@ export default function AddEditVehicleWithStepper() {
                     { value: "agent", label: "Agent" },
                   ]}
                 />
-                
               </div>
-              <div>
-                <InputFields
-                  label="Warehouse"
-                  value={form.warehouseId}
-                  onChange={handleChange}
-                  name="warehouseId"
-                  options={warehouseOptions}
-                  disabled={form.ownerType === "company"}
-                />
-              </div>
+
+              {form.ownerType !== "company" && (
+                <div>
+                  <InputFields
+                    label="Warehouse"
+                    value={form.warehouseId}
+                    onChange={handleChange}
+                    name="warehouseId"
+                    options={warehouseOptions}
+                  />
+                </div>
+              )}
+
             </div>
           </ContainerCard>
         );
@@ -468,7 +482,7 @@ export default function AddEditVehicleWithStepper() {
                   name="odoMeter"
                   error={touched.odoMeter && errors.odoMeter}
                 />
-               
+
               </div>
               <div>
                 <InputFields
@@ -479,9 +493,9 @@ export default function AddEditVehicleWithStepper() {
                   name="capacity"
                   error={touched.capacity && errors.capacity}
                 />
-               
+
               </div>
-              
+
               <div>
                 <InputFields
                   required
@@ -506,7 +520,7 @@ export default function AddEditVehicleWithStepper() {
                   onChange={handleChange}
                   name="description"
                 />
-                    {/* {touched.description && errors.description && (
+                {/* {touched.description && errors.description && (
                   <div className="text-red-500 text-xs mt-1">
                     {/* {errors.description} */}
               </div>
@@ -577,14 +591,14 @@ export default function AddEditVehicleWithStepper() {
 
   return (
     <>
-        <div className="flex items-center gap-2">
-          <Link href="/vehicle">
-            <Icon icon="lucide:arrow-left" width={24} />
-          </Link>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Vehicle" : "Add Vehicle"}
-          </h1>
-        </div>
+      <div className="flex items-center gap-2">
+        <Link href="/vehicle">
+          <Icon icon="lucide:arrow-left" width={24} />
+        </Link>
+        <h1 className="text-xl font-semibold text-gray-900">
+          {isEditMode ? "Update Vehicle" : "Add Vehicle"}
+        </h1>
+      </div>
       <div className="flex justify-between items-center mb-6">
         <StepperForm
           steps={steps.map((step) => ({
@@ -592,7 +606,7 @@ export default function AddEditVehicleWithStepper() {
             isCompleted: isStepCompleted(step.id),
           }))}
           currentStep={currentStep}
-          onStepClick={() => {}}
+          onStepClick={() => { }}
           onBack={prevStep}
           onNext={handleNext}
           onSubmit={handleSubmit}

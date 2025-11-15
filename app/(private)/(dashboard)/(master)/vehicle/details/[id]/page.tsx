@@ -145,7 +145,7 @@ export default function ViewPage() {
               { key: "Capacity", value: vehicle?.capacity || "-" },
               { key: "Fuel Reading", value: vehicle?.fuel_reading || "-" },
               { key: "Owner Type", value: vehicle?.owner_type || "-" },
-              { key: "Warehouse", value: vehicle?.warehouse?.warehouse_name || "-" },
+              { key: "Disttributor", value: vehicle?.warehouse?.warehouse_name || "-" },
               { key: "Valid From", value: vehicle?.valid_from ? formatDate(vehicle?.valid_from as string) : "-" },
               { key: "Valid To", value: vehicle?.valid_to ? formatDate(vehicle?.valid_to as string) : "-" },
               { key: "Opening Odometer", value: vehicle?.opening_odometer || "-" },
