@@ -15,25 +15,26 @@ export default function Additional({
                 title="Additional Information"
                 data={[
                     {
+                        key: "Distributor",
+                        value:  data?.get_warehouse?.warehouse_code + " - " + data?.get_warehouse?.warehouse_name || "-",
+                    },
+                    {
                         key: "Route",
                         value: data?.route?.route_code + " - " +  data?.route?.route_name || "-",
                     },
                     {
+                        key: "Outlet Channel",
+                        value:data?.outlet_channel?.outlet_channel  || "-",
+                    },
+                    {
                         key: "Category",
-                        value: data?.category?.customer_category_code + " - " +data?.category?.customer_category_name   || "-",
+                        value:data?.category?.customer_category_name   || "-",
                     },
                     {
                         key: "Sub Category",
-                        value:data?.subcategory?.customer_sub_category_code ? data?.subcategory?.customer_sub_category_code + " - " + data?.subcategory?.customer_sub_category_name  : "-",
+                        value:data?.subcategory?.customer_sub_category_name  || "-",
                     },
-                    {
-                        key: "Outlet Channel",
-                        value:data?.outlet_channel?.outlet_channel_code  + " - " +data?.outlet_channel?.outlet_channel  || "-",
-                    },
-                    {
-                        key: "Warehouse",
-                        value:  data?.get_warehouse?.warehouse_code + " - " + data?.get_warehouse?.warehouse_name || "-",
-                    },
+                    
                 ]}
             />
         </ContainerCard>

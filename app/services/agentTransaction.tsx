@@ -573,18 +573,29 @@ export const exportExchangeData = async (body: string) => {
   }
 };
 
-export const getAgentCustomerBySalesId = async (uuid: string) => {
+export const getAgentCustomerBySalesId = async (uuid: string, params: Params) => {
   try {
+    if(params.from_date)
+    {
+    const res = await API.get(`/api/agent_transaction/invoices/agent-customer/${uuid}?from_date=${params.to_date}&to_date=${params.from_date}`,);
+    return res.data;
+   
+  }
+    else
+    {
     const res = await API.get(`/api/agent_transaction/invoices/agent-customer/${uuid}`);
     return res.data;
+
+
+    }
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const getAgentCustomerByReturnId = async (uuid: string) => {
+export const getAgentCustomerByReturnId = async (uuid:string,params: Params) => {
   try {
-    const res = await API.get(`/api/agent_transaction/returns/agent-customer/${uuid}`);
+    const res = await API.get(`/api/agent_transaction/returns/agent-customer/${uuid}?from_date=${params.to_date}&to_date=${params.from_date}`,);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

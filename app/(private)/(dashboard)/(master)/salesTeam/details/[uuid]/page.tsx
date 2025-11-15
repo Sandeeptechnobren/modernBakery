@@ -70,7 +70,15 @@ interface Salesman {
   forceful_login?: string | number;
 }
 
+export function formatDate(dateString:string) {
+  const date = new Date(dateString);
 
+  const day = date.getUTCDate();
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const year = date.getUTCFullYear();
+
+  return `${day} ${month} ${year}`;
+}
 
 export default function Page() {
   const { id, tabName } = useParams();
@@ -95,7 +103,7 @@ export default function Page() {
 
 
   const columns: configType["columns"] = [
-    { key: "invoice_date", label: "Data", render: (row: TableDataType) => row.invoice_date.split("T")[0] },
+    { key: "invoice_date", label: "Data", render: (row: TableDataType) => row.invoice_date?formatDate(row.invoice_date):"-" },
     { key: "invoice_time", label: "Time" },
     {
       key: "invoice_number",
@@ -151,7 +159,7 @@ export default function Page() {
     {
       key: "delivery_date",
       label: "Delivery Date",
-      render: (row: TableDataType) => row.delivery_date?.split("T")[0] || "-",
+      render: (row: TableDataType) =>row.delivery_date? formatDate(row.delivery_date) :"-",
     },
     {
       key: "order_code",
@@ -354,7 +362,7 @@ export default function Page() {
     { key: "overview", label: "Overview" },
     { key: "attendence", label: "Attendence" },
     { key: "sales", label: "Sales" },
-    { key: "order", label: "Order" },
+    { key: "order", label: "Purchase Order" },
   ];
 
   const filterBy = useCallback(
@@ -499,7 +507,7 @@ export default function Page() {
         <ContainerCard className="w-full h-fit">
           <KeyValueData
             title="Sales Team Information"
-            data={[
+            data={salesman?.invoice_block === 1?salesman?.is_block === 1?[
               {
                 key: "Sales Team Type",
                 value: salesman?.salesman_type?.salesman_type_name || "-",
@@ -533,26 +541,174 @@ export default function Page() {
               {
                 key: "Is Block",
                 value:
-                  salesman?.is_block === "1"
+                  salesman?.is_block === 1
                     ? "Yes"
                     : "No",
               },
-              { key: "Block Date From", value: salesman?.block_date_from || "-" },
-              { key: "Block Date To", value: salesman?.block_date_to || "-" },
+              { key: "Block Date From", value:salesman?.block_date_from? formatDate(salesman?.block_date_from):"-" },
+              { key: "Block Date To", value: salesman?.block_date_to?formatDate(salesman?.block_date_to):"-" },
               { key: "cashier Description Block", value: salesman?.cashier_description_block == "1" ? "Yes" : "No" },
               {
                 key: "Invoice Block",
                 value:
 
-                  salesman?.invoice_block === "1"
+                  salesman?.invoice_block === 1
                     ? "Yes"
                     : "No",
               },
 
               {
-                key: "Is Block Reason",
+                key: "Reason",
                 value: salesman?.reason || "-",
               },
+            ]:[
+              {
+                key: "Sales Team Type",
+                value: salesman?.salesman_type?.salesman_type_name || "-",
+              },
+              {
+                key: "Project Type",
+                value: salesman?.project_type
+                  ? `${salesman.project_type.code ?? "-"} - ${salesman.project_type.name ?? "-"}`
+                  : "-"
+              },
+              { key: "Designation", value: salesman?.designation || "-" },
+              { key: "Contact No", value: salesman?.contact_no || "-" },
+              {
+                key: "Distributor",
+                value: <span className="hover:text-red-500 cursor-pointer">View Distributors</span>,
+                onClick: viewPopuop
+              },
+              {
+                key: "Route",
+                value: salesman?.route?.route_name || "-",
+              },
+              { key: "User Name", value: salesman?.osa_code || "-" },
+              {
+                key: "Forcefull Login",
+                value:
+
+                  salesman?.forceful_login === "1"
+                    ? "Yes"
+                    : "No",
+              },
+              {
+                key: "Is Block",
+                value:
+                  salesman?.is_block === 1
+                    ? "Yes"
+                    : "No",
+              },
+              { key: "cashier Description Block", value: salesman?.cashier_description_block == "1" ? "Yes" : "No" },
+              {
+                key: "Invoice Block",
+                value:
+
+                  salesman?.invoice_block === 1
+                    ? "Yes"
+                    : "No",
+              },
+
+              {
+                key: "Reason",
+                value: salesman?.reason || "-",
+              },
+            ]:salesman?.is_block === 1?[
+              {
+                key: "Sales Team Type",
+                value: salesman?.salesman_type?.salesman_type_name || "-",
+              },
+              {
+                key: "Project Type",
+                value: salesman?.project_type
+                  ? `${salesman.project_type.code ?? "-"} - ${salesman.project_type.name ?? "-"}`
+                  : "-"
+              },
+              { key: "Designation", value: salesman?.designation || "-" },
+              { key: "Contact No", value: salesman?.contact_no || "-" },
+              {
+                key: "Distributor",
+                value: <span className="hover:text-red-500 cursor-pointer">View Distributors</span>,
+                onClick: viewPopuop
+              },
+              {
+                key: "Route",
+                value: salesman?.route?.route_name || "-",
+              },
+              { key: "User Name", value: salesman?.osa_code || "-" },
+              {
+                key: "Forcefull Login",
+                value:
+
+                  salesman?.forceful_login === "1"
+                    ? "Yes"
+                    : "No",
+              },
+              {
+                key: "Is Block",
+                value:
+                  salesman?.is_block === 1
+                    ? "Yes"
+                    : "No",
+              },
+                { key: "Block Date From", value:salesman?.block_date_from? formatDate(salesman?.block_date_from):"-" },
+              { key: "Block Date To", value: salesman?.block_date_to?formatDate(salesman?.block_date_to):"-" },
+              { key: "cashier Description Block", value: salesman?.cashier_description_block == "1" ? "Yes" : "No" },
+              {
+                key: "Invoice Block",
+                value:
+
+                  salesman?.invoice_block === 1
+                    ? "Yes"
+                    : "No",
+              }
+            ]:[
+              {
+                key: "Sales Team Type",
+                value: salesman?.salesman_type?.salesman_type_name || "-",
+              },
+              {
+                key: "Project Type",
+                value: salesman?.project_type
+                  ? `${salesman.project_type.code ?? "-"} - ${salesman.project_type.name ?? "-"}`
+                  : "-"
+              },
+              { key: "Designation", value: salesman?.designation || "-" },
+              { key: "Contact No", value: salesman?.contact_no || "-" },
+              {
+                key: "Distributor",
+                value: <span className="hover:text-red-500 cursor-pointer">View Distributors</span>,
+                onClick: viewPopuop
+              },
+              {
+                key: "Route",
+                value: salesman?.route?.route_name || "-",
+              },
+              { key: "User Name", value: salesman?.osa_code || "-" },
+              {
+                key: "Forcefull Login",
+                value:
+
+                  salesman?.forceful_login === "1"
+                    ? "Yes"
+                    : "No",
+              },
+              {
+                key: "Is Block",
+                value:
+                  salesman?.is_block === 1
+                    ? "Yes"
+                    : "No",
+              },
+              { key: "cashier Description Block", value: salesman?.cashier_description_block == "1" ? "Yes" : "No" },
+              {
+                key: "Invoice Block",
+                value:
+
+                  salesman?.invoice_block === 1
+                    ? "Yes"
+                    : "No",
+              }
             ]}
           />
         </ContainerCard>
@@ -681,6 +837,7 @@ export default function Page() {
           />
         </div>
       </Popup>
+      <br/>
     </>
   );
 }

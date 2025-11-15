@@ -12,11 +12,12 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import StatusBtn from "@/app/components/statusBtn2";
 import { useCallback, useEffect, useState } from "react";
+import { formatDate } from "../salesTeam/details/[uuid]/page";
 
 const columns = [
   { key: "osa_code", label: "Code" },
-  { key: "from_date", label: "From Date", render: (row: TableDataType) => row.from_date ? row.from_date.split("T")[0] : "" },
-  { key: "to_date", label: "To Date", render: (row: TableDataType) => row.to_date ? row.to_date.split("T")[0] : "" },
+  { key: "from_date", label: "From Date", render: (row: TableDataType) => row.from_date ? formatDate(row.from_date) : "" },
+  { key: "to_date", label: "To Date", render: (row: TableDataType) => row.to_date ? formatDate(row.to_date) : "" },
   {
     key: "customer_type",
     label: "Customer Type",

@@ -11,6 +11,8 @@ import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatDate } from "../../../salesTeam/details/[uuid]/page";
+import { TableDataType } from "@/app/components/customTable";
 
 type Vehicle = {
   id: number;
@@ -144,8 +146,8 @@ export default function ViewPage() {
               { key: "Fuel Reading", value: vehicle?.fuel_reading || "-" },
               { key: "Owner Type", value: vehicle?.owner_type || "-" },
               { key: "Warehouse", value: vehicle?.warehouse?.warehouse_name || "-" },
-              { key: "Valid From", value: vehicle?.valid_from || "-" },
-              { key: "Valid To", value: vehicle?.valid_to || "-" },
+              { key: "Valid From", value: vehicle?.valid_from ? formatDate(vehicle?.valid_from as string) : "-" },
+              { key: "Valid To", value: vehicle?.valid_to ? formatDate(vehicle?.valid_to as string) : "-" },
               { key: "Opening Odometer", value: vehicle?.opening_odometer || "-" },
               { key: "Description", value: vehicle?.description || "-" },
             ]}

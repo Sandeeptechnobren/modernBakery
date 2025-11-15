@@ -116,6 +116,24 @@ export const initialLinkData: SidebarDataType[] = [
           // },
         ],
       },
+       {
+        isActive: false,
+        href: "#",
+        label: "Distributors",
+        leadingIcon: "mdi:account-cash-outline",
+        iconColor: "text-green-500",
+        trailingIcon: "mdi-light:chevron-right",
+        children: [
+          {
+            isActive: false,
+            href: "/distributorsStock",
+            label: "Distributors Stock",
+            leadingIcon: "carbon:delivery-parcel",
+            iconColor: "text-cyan-500"
+          }
+         
+        ]
+      },
       {
         isActive: false,
         href: "#",

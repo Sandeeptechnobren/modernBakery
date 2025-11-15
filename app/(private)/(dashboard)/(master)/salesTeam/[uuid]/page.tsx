@@ -125,19 +125,7 @@ export default function AddEditSalesman() {
       .matches(/^[0-9]+$/, "Only numbers are allowed")
       .min(9, "Must be at least 9 digits")
       .max(10, "Must be at most 10 digits"),
-    password: Yup.string()
-      .when([], {
-        is: () => !isEditMode, // ❗ only require password if NOT editing
-        then: (schema) =>
-          schema
-            .required("Password is required")
-            .min(12, "Password must be at least 12 characters long")
-            .matches(
-              /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{12,}$/,
-              "Password must include uppercase, lowercase, number, and special character"
-            ),
-        otherwise: (schema) => schema.notRequired(), // ❗ skip validation on edit
-      }),
+    password: Yup.string(),
     warehouse_id: Yup.mixed()
       .required("Distributor is required")
       .test("warehouse-type", "Invalid distributor format", function (value) {
@@ -151,7 +139,7 @@ export default function AddEditSalesman() {
         // ✅ For other types, must be a non-empty string
         return typeof value === "string" && value.trim() !== "";
       }),
-    email: Yup.string().required("Email is required").email("Invalid email"),
+    email: Yup.string(),
   });
 
   // ✅ Step-wise validation
@@ -180,20 +168,8 @@ export default function AddEditSalesman() {
         .matches(/^[0-9]+$/, "Only numbers are allowed")
         .min(9, "Must be at least 9 digits")
         .max(13, "Must be at most 13 digits"),
-      password: Yup.string()
-        .when([], {
-          is: () => !isEditMode, // ❗ only require password if NOT editing
-          then: (schema) =>
-            schema
-              .required("Password is required")
-              .min(12, "Password must be at least 12 characters long")
-              .matches(
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{12,}$/,
-                "Password must include uppercase, lowercase, number, and special character"
-              ),
-          otherwise: (schema) => schema.notRequired(), // ❗ skip validation on edit
-        }),
-      email: Yup.string().required("Email is required").email("Invalid email"),
+      password: Yup.string(),
+      email: Yup.string(),
     }),
     Yup.object({
       status: Yup.string().required("Status is required"),
@@ -289,7 +265,7 @@ export default function AddEditSalesman() {
       } else if (!codeGeneratedRef.current) {
         codeGeneratedRef.current = true;
         try {
-          const res = await genearateCode({ model_name: "sales team" });
+          const res = await genearateCode({ model_name: "salesman" });
           if (res?.code) {
             setInitialValues((prev) => ({ ...prev, osa_code: res.code }));
           }
@@ -351,21 +327,32 @@ export default function AddEditSalesman() {
     { setSubmitting }: FormikHelpers<SalesmanFormValues>
   ) => {
     try {
+      console.log("Submitting form data: 1");
+
       await SalesmanSchema.validate(values, { abortEarly: false });
+
       const formData = new FormData();
-      (Object.keys(values) as (keyof SalesmanFormValues)[]).forEach((key) => {
+      (Object.keys({...values,warehouse_id:[values.warehouse_id]}) as (keyof SalesmanFormValues)[]).forEach((key) => {
         const val = values[key];
 
         if (Array.isArray(val)) {
+      console.log("Submitting form data: 2", Array.from(formData.entries()));
+
           // For arrays (like warehouse_id when multiple selected)
           val.forEach((v) => formData.append(`${key}[]`, v));
         } else if (val !== undefined && val !== null) {
+      console.log("Submitting form data: 3", Array.from(formData.entries()));
+
           // Normal string or single value
           formData.append(key, val.toString());
         } else {
+      console.log("Submitting form data: 4", Array.from(formData.entries()));
+
           formData.append(key, "");
         }
       });
+      console.log("Submitting form data: 5", formData);
+
 
       let res;
       if (isEditMode) {
@@ -516,7 +503,7 @@ export default function AddEditSalesman() {
                 />
               </div>}
 
-              <div>
+             {values.type !== "6"? <div>
                 <InputFields
                   label="Route"
                   name="route_id"
@@ -526,7 +513,7 @@ export default function AddEditSalesman() {
                   disabled={!!values.sub_type}
                   error={touched.route_id && errors.route_id}
                 />
-              </div>
+              </div>:""}
 
             </div>
           </ContainerCard>
@@ -560,30 +547,22 @@ export default function AddEditSalesman() {
 
               <div>
                 <InputFields
-                  required
+                
                   label="Email"
                   name="email"
                   value={values.email}
                   onChange={(e) => setFieldValue("email", e.target.value)}
                 />
-                <ErrorMessage
-                  name="email"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+              
               </div>
               <div>
                 <CustomPasswordInput
-                  required={!isEditMode}
+                 
                   label="Password"
                   value={values.password}
                   onChange={(e) => setFieldValue("password", e.target.value)}
                 />
-                <ErrorMessage
-                  name="password"
-                  component="span"
-                  className="text-xs text-red-500"
-                />
+             
               </div>
 
               <div></div>
@@ -636,7 +615,7 @@ export default function AddEditSalesman() {
               </div>
               <div className="col-span-3">
                 <div className="font-medium mb-2"></div>
-                <div className="flex gap-93">
+                <div className="flex gap-10">
                   <CustomCheckbox
                     id="is_block"
                     label="Is Block"
@@ -688,12 +667,13 @@ export default function AddEditSalesman() {
               </div>
               {values.is_block === "1" && (
                 <>
+                {console.log(values.block_date_from,"values.block_date_from")}
                   <div>
                     <InputFields
                       label="Block Date From"
                       type="date"
                       name="block_date_from"
-                      value={values.block_date_from || ""}
+                      value={ values.block_date_from?new Date(values.block_date_from).toISOString().slice(0, 10):values.block_date_from}
                       onChange={(e) =>
                         setFieldValue("block_date_from", e.target.value)
                       }
@@ -704,7 +684,7 @@ export default function AddEditSalesman() {
                       label="Block Date To"
                       type="date"
                       name="block_date_to"
-                      value={values.block_date_to || ""}
+                      value={values.block_date_to?new Date(values.block_date_to).toISOString().slice(0, 10):values.block_date_to}
                       onChange={(e) =>
                         setFieldValue("block_date_to", e.target.value)
                       }
@@ -762,7 +742,7 @@ export default function AddEditSalesman() {
           isSubmitting: isSubmitting,
         }) => (
           <Form>
-            <>{console.log(values, "lk")}</>
+            {/* <>{console.log(values, "lk")}</> */}
             <StepperForm
               steps={steps.map((step) => ({
                 ...step,

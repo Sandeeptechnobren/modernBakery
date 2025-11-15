@@ -16,6 +16,7 @@ import Additional from "./additional";
 import Financial from "./financial";
 import Location from "./location";
 import Overview from "./overview";
+import { formatDate } from "../../../salesTeam/details/[uuid]/page";
 
 export interface AgentCustomerDetails {
     id: string;
@@ -116,8 +117,17 @@ export default function CustomerDetails() {
         };
     }, []);
 
+    function convertDate(input:string) {
+  const [dd, mm, yy] = input.split("-");
+
+  // If year is two-digit, convert to 20xx or 19xx as needed
+  const fullYear = yy.length === 2 ? "20" + yy : yy;
+
+  return `${fullYear}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+}
+
     const columns: configType["columns"] = [
-        { key: "invoice_date", label: "Data", render: (row: TableDataType) => row.invoice_date.split("T")[0] },
+        { key: "invoice_date", label: "Data", render: (row: TableDataType) => formatDate(convertDate(row.invoice_date)) },
         { key: "invoice_time", label: "Time" },
         {
             key: "invoice_code",
@@ -182,7 +192,9 @@ export default function CustomerDetails() {
             pageNo: number = 1,
             pageSize: number = 50
         ): Promise<searchReturnType> => {
-            const result = await getAgentCustomerByReturnId(uuid);
+            console.log("api")
+
+            const result = await getAgentCustomerByReturnId(uuid, { from_date: "", to_date: "" });
             if (result.error) {
                 throw new Error(result.data?.message || "Search failed");
             }
@@ -198,41 +210,41 @@ export default function CustomerDetails() {
     );
 
     const filterBy = useCallback(
-                async (
-                    payload: Record<string, string | number | null>,
-                    pageSize: number
-                ): Promise<listReturnType> => {
-                    let result;
-                    setLoading(true);
-                    try {
-                        const params: Record<string, string> = { };
-                        Object.keys(payload || {}).forEach((k) => {
-                            const v = payload[k as keyof typeof payload];
-                            if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                                params[k] = String(v);
-                            }
-                        });
-                        result = await invoiceList(params);
-                    } finally {
-                        setLoading(false);
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = {};
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
                     }
-        
-                    if (result?.error) throw new Error(result.data?.message || "Filter failed");
-                    else {
-                        const pagination = result.pagination?.pagination || result.pagination || {};
-                        return {
-                            data: result.data || [],
-                            total: pagination.totalPages || result.pagination?.totalPages || 0,
-                            totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                            currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-                            pageSize: pagination.limit || pageSize,
-                        };
-                    }
-                },
-                [setLoading]
-            );
+                });
+                result = await  getAgentCustomerByReturnId(uuid, { from_date: "", to_date: "" });
+            } finally {
+                setLoading(false);
+            }
 
-            const searchInvoices = useCallback(async (): Promise<searchReturnType> => {
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
+
+    const searchInvoices = useCallback(async (): Promise<searchReturnType> => {
         try {
             setLoading(true);
             return {
@@ -251,7 +263,7 @@ export default function CustomerDetails() {
             pageNo: number = 1,
             pageSize: number = 50
         ): Promise<searchReturnType> => {
-            const result = await getAgentCustomerBySalesId(uuid);
+            const result = await getAgentCustomerBySalesId(uuid, { from_date: "", to_date: "" });
             if (result.error) {
                 throw new Error(result.data?.message || "Search failed");
             }
@@ -299,6 +311,75 @@ export default function CustomerDetails() {
         }
     };
 
+    const filterBySales = useCallback(
+    async (
+      payload: Record<string, string | number | null>,
+      pageSize: number
+    ): Promise<listReturnType> => {
+      let result;
+      setLoading(true);
+      try {
+        const params: Record<string, string> = { per_page: pageSize.toString() };
+        Object.keys(payload || {}).forEach((k) => {
+          const v = payload[k as keyof typeof payload];
+          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+            params[k] = String(v);
+          }
+        });
+        result = await getAgentCustomerBySalesId(uuid, { from_date: params.start_date, to_date: params.end_date });
+      } finally {
+        setLoading(false);
+      }
+
+      if (result?.error) throw new Error(result.data?.message || "Filter failed");
+      else {
+        const pagination = result.pagination?.pagination || result.pagination || {};
+        return {
+          data: result.data || [],
+          total: pagination.totalPages || result.pagination?.totalPages || 0,
+          totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+          currentPage: pagination.page || result.pagination?.currentPage || 0,
+          pageSize: pagination.limit || pageSize,
+        };
+      }
+    },
+    [setLoading]
+  );
+
+const filterByReturn = useCallback(
+    async (
+      payload: Record<string, string | number | null>,
+      pageSize: number
+    ): Promise<listReturnType> => {
+      let result;
+      setLoading(true);
+      try {
+        const params: Record<string, string> = { per_page: pageSize.toString() };
+        Object.keys(payload || {}).forEach((k) => {
+          const v = payload[k as keyof typeof payload];
+          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+            params[k] = String(v);
+          }
+        });
+        result = await getAgentCustomerByReturnId(uuid, { from_date: params.start_date, to_date: params.end_date });
+      } finally {
+        setLoading(false);
+      }
+
+      if (result?.error) throw new Error(result.data?.message || "Filter failed");
+      else {
+        const pagination = result.pagination?.pagination || result.pagination || {};
+        return {
+          data: result.data || [],
+          total: pagination.totalPages || result.pagination?.totalPages || 0,
+          totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+          currentPage: pagination.page || result.pagination?.currentPage || 0,
+          pageSize: pagination.limit || pageSize,
+        };
+      }
+    },
+    [setLoading]
+  );
     return (
         <>
             {/* header */}
@@ -389,19 +470,25 @@ export default function CustomerDetails() {
                         <Table
                             config={{
                                 api: {
-                                    // search: searchCustomerById,
-                                    list: salesByAgentCustomer, search: searchInvoices,filterBy: filterBy,
+
+                                    list: salesByAgentCustomer,
+                                    filterBy:filterBySales
                                 },
                                 header: {
                                     filterByFields: [
                                         {
-                                            key: "date_change",
-                                            label: "Date Range",
-                                            type: "dateChange"
+                                            key: "start_date",
+                                            label: "Start Date",
+                                            type: "date"
+                                        },
+                                        {
+                                            key: "end_date",
+                                            label: "End Date",
+                                            type: "date"
                                         },
 
                                     ],
-                                    searchBar: true,
+
                                 },
                                 showNestedLoading: true,
                                 footer: { nextPrevBtn: true, pagination: true },
@@ -425,25 +512,36 @@ export default function CustomerDetails() {
 
                 </ContainerCard>
 
-            ) : activeTab === "Market Return" ? (<ContainerCard >
+            ) :""}
+            
+            
+            {activeTab === "Market Return" ? (<ContainerCard >
 
                 <div className="flex flex-col h-full">
                     <Table
                         config={{
                             api: {
-                                // search: searchCustomerById,
-                                list: returnByAgentCustomer
+
+                                list: returnByAgentCustomer,
+                                filterBy:filterByReturn
+                                
                             },
                             header: {
                                 filterByFields: [
-                                        {
-                                            key: "date_change",
-                                            label: "Date Range",
-                                            type: "dateChange"
-                                        },
+                                    {
+                                        key: "start_date",
+                                        label: "Start Date",
+                                        type: "date"
+                                    },
+                                    {
+                                        key: "end_date",
+                                        label: "End Date",
+                                        type: "date"
+                                    },
 
-                                    ],
-                                    searchBar: true,
+
+                                ],
+
                             },
                             showNestedLoading: true,
                             footer: { nextPrevBtn: true, pagination: true },

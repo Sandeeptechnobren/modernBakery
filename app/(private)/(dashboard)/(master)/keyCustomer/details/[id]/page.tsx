@@ -1,9 +1,9 @@
 "use client";
 
-import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
+import Table, { configType, TableDataType } from "@/app/components/customTable";
+import KeyValueData from "@/app/components/keyValueData";
 import StatusBtn from "@/app/components/statusBtn2";
-import SummaryCard from "@/app/components/summaryCard";
 import TabBtn from "@/app/components/tabBtn";
 import Toggle from "@/app/components/toggle";
 import { getCompanyCustomerById } from "@/app/services/allApi";
@@ -101,6 +101,41 @@ export default function ViewPage() {
     fetchCompanyCustomerDetails();
   }, [id, setLoading, showSnackbar]);
 
+  const Columns: configType["columns"] = [
+    { key: "osa_code", label: "Code", showByDefault: true },
+    { key: "order_code", label: "Order Code", showByDefault: true },
+    { key: "delivery_code", label: "Delivery Code", showByDefault: true },
+    {
+      key: "warehouse_code", label: "Distributor", showByDefault: true, render: (row: TableDataType) => {
+        const code = row.warehouse_code || "";
+        const name = row.warehouse_name || "";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }
+    },
+    {
+      key: "route_code", label: "Route", showByDefault: true, render: (row: TableDataType) => {
+        const code = row.route_code || "";
+        const name = row.route_name || "";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }
+    },
+    {
+      key: "customer_code", label: "Customer", showByDefault: true, render: (row: TableDataType) => {
+        const code = row.customer_code || "";
+        const name = row.customer_name || "";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }
+    },
+    {
+      key: "salesman_code", label: "Sales Team", showByDefault: true, render: (row: TableDataType) => {
+        const code = row.salesman_code || "";
+        const name = row.salesman_name || "";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }
+    },
+    { key: "total", label: "Amount", showByDefault: true },
+  ];
+
   // Tab logic
   const [activeTab, setActiveTab] = useState("overview");
   const tabList = [
@@ -108,8 +143,8 @@ export default function ViewPage() {
     { key: "address", label: "Location Info" },
     { key: "financial", label: "Financial Info" },
     { key: "guarantee", label: "Guarantee Info" },
-    { key: "return", label: "Return" },
     { key: "purchase", label: "Purchase" },
+    { key: "creditNote", label: "Credit Note" },
   ];
 
   return (
@@ -216,19 +251,9 @@ export default function ViewPage() {
                   { key: "Credit Limit Validity", value: customer?.credit_limit_validity || "-" },
                   { key: "TIN No", value: customer?.tin_no || "-" },
                   {
-                        key: "Distribution Channel ID",
-                        value: customer?.distribution_channel_id?.toString() || "-",
-                      },
-                      {
-                        key: "Promotional Access",
-                        value: "",
-                        component: (
-                          <Toggle
-                            isChecked={isChecked}
-                            onChange={() => setIsChecked(!isChecked)}
-                          />
-                        ),
-                      },
+                    key: "Distribution Channel ID",
+                    value: customer?.distribution_channel_id?.toString() || "-",
+                  },
                 ]}
               />
             </ContainerCard>
@@ -246,7 +271,94 @@ export default function ViewPage() {
               />
             </ContainerCard>
           )}
-          
+          {activeTab === "purchase" && (
+            <ContainerCard >
+
+              <div className="flex flex-col h-full">
+                <Table
+                  config={{
+                    header: {
+                      filterByFields: [
+                        {
+                          key: "start_date",
+                          label: "Start Date",
+                          type: "dateChange"
+                        },
+                        {
+                          key: "end_date",
+                          label: "End Date",
+                          type: "dateChange"
+                        },
+
+                      ],
+                      searchBar: false,
+                    },
+                    showNestedLoading: true,
+                    footer: { nextPrevBtn: true, pagination: true },
+                    table: {
+                      height: 500,
+                    },
+                    columns: Columns,
+                    rowSelection: false,
+                    rowActions: [
+                      // {
+                      //     icon: "material-symbols:download",
+                      //     onClick: (data: TableDataType) => {
+                      //         exportFile(data.uuid, "csv"); // or "excel", "csv" etc.
+                      //     },
+                      // }
+                    ],
+                    pageSize: 50,
+                  }}
+                />
+              </div>
+
+            </ContainerCard>
+          )}
+          {activeTab === "creditNote" && (
+            <ContainerCard >
+
+              <div className="flex flex-col h-full">
+                <Table
+                  config={{
+                    header: {
+                      filterByFields: [
+                        {
+                          key: "start_date",
+                          label: "Start Date",
+                          type: "dateChange"
+                        },
+                        {
+                          key: "end_date",
+                          label: "End Date",
+                          type: "dateChange"
+                        },
+
+                      ],
+                      searchBar: false,
+                    },
+                    showNestedLoading: true,
+                    footer: { nextPrevBtn: true, pagination: true },
+                    table: {
+                      height: 500,
+                    },
+                    columns: Columns,
+                    rowSelection: false,
+                    rowActions: [
+                      // {
+                      //     icon: "material-symbols:download",
+                      //     onClick: (data: TableDataType) => {
+                      //         exportFile(data.uuid, "csv"); // or "excel", "csv" etc.
+                      //     },
+                      // }
+                    ],
+                    pageSize: 50,
+                  }}
+                />
+              </div>
+
+            </ContainerCard>
+          )}
         </div>
       </div>
     </>
