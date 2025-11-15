@@ -1393,20 +1393,20 @@ export default function InvoiceddEditPage() {
                                 label: "Price",
                                 render: (row) => toInternationalNumber(row.Price) || "0.00"
                             },
+                            // {
+                            //     key: "preVat",
+                            //     label: "Pre VAT",
+                            //     render: (row) => toInternationalNumber(Number(row.Total) - Number(row.Vat)) || "0.00"
+                            // },
                             {
-                                key: "preVat",
-                                label: "Pre VAT",
-                                render: (row) => toInternationalNumber(Number(row.Total) - Number(row.Vat)) || "0.00"
+                                key: "Net",
+                                label: "Net",
+                                render: (row) => toInternationalNumber(row.Net) || "0.00"
                             },
                             {
                                 key: "Vat",
                                 label: "VAT",
                                 render: (row) => toInternationalNumber(row.Vat) || "0.00"
-                            },
-                            {
-                                key: "Net",
-                                label: "Net",
-                                render: (row) => toInternationalNumber(row.Net) || "0.00"
                             },
                             {
                                 key: "Total",

@@ -8,7 +8,7 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, RefObject, Fragment } from "react";
-import { deliveryByUuid, invoiceByUuid } from "@/app/services/agentTransaction";
+import { deliveryByUuid, exportInvoiceWithDetails, invoiceByUuid } from "@/app/services/agentTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
@@ -18,6 +18,7 @@ import PrintButton from "@/app/components/printButton";
 import KeyValueData from "@/app/components/keyValueData";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import { isValidDate } from "@/app/utils/formatDate";
+import { downloadFile } from "@/app/services/allApi";
 
 interface DeliveryDetail {
   id: number;
@@ -70,6 +71,8 @@ interface InvoiceData {
   total_amount: number,
   status: number,
   uuid: string,
+  previous_uuid?: string,
+  next_uuid?: string,
   details: {
     item_code: string,
     item_name: string,
@@ -103,10 +106,10 @@ const columns = [
   { key: "UOM", label: "UOM" },
   { key: "Quantity", label: "Quantity" },
   { key: "Price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.Price) || '0.00'}</> },
-  { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.Vat) || '0.00'}</> },
-  { key: "preVat", label: "Pre VAT", render: (value: TableDataType) => <>{toInternationalNumber(Number(value.preVat)) || '0.00'}</> },
-  // { key: "discount", label: "Discount", render: (value: TableDataType) => <>{toInternationalNumber(value.discount) || '0.00'}</> },
   { key: "Net", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.Net) || '0.00'}</> },
+  { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.Vat) || '0.00'}</> },
+  // { key: "preVat", label: "Pre VAT", render: (value: TableDataType) => <>{toInternationalNumber(Number(value.preVat)) || '0.00'}</> },
+  // { key: "discount", label: "Discount", render: (value: TableDataType) => <>{toInternationalNumber(value.discount) || '0.00'}</> },
   // { key: "total_gross", label: "Gross", render: (value: TableDataType) => <>{toInternationalNumber(value.total_gross) || '0.00'}</> },
   { key: "Total", label: "Total", render: (value: TableDataType) => <>{toInternationalNumber(value.Total) || '0.00'}</> },
 ];
@@ -118,8 +121,10 @@ export default function OrderDetailPage() {
   // const [showDropdown, setShowDropdown] = useState(false);
   const [deliveryData, setDeliveryData] = useState<InvoiceData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
+  const [loading, setLoadingState] = useState<boolean>(false);
   const uuid = params?.uuid as string;
   const CURRENCY = localStorage.getItem("country") || "";
+  const PATH = "/invoice/details/";
 
   useEffect(() => {
     if (uuid) {
@@ -158,13 +163,30 @@ export default function OrderDetailPage() {
     }
   }, [uuid, setLoading, showSnackbar]);
 
+  const exportFile = async () => {
+      try {
+        setLoadingState(true);
+        const response = await exportInvoiceWithDetails({ uuid: uuid, format: "csv" });
+        if (response && typeof response === 'object' && response.download_url) {
+          await downloadFile(response.download_url);
+          showSnackbar("File downloaded successfully ", "success");
+        } else {
+          showSnackbar("Failed to get download URL", "error");
+        }
+      } catch (error) {
+        showSnackbar("Failed to download warehouse data", "error");
+      } finally {
+        setLoadingState(false);
+      }
+    };
+
   const keyValueData = [
     // { key: "Gross Total", value: `AED ${deliveryData?.gross_total || "0.00"}` },
     // { key: "Discount", value: `AED ${deliveryData?.discount || "0.00"}` },
     { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.gross_total || 0)) || "0.00"}` },
     // { key: "Excise", value: `AED ${deliveryData?.excise || "0.00"}` },
     { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.vat || 0)) || "0.00"}` },
-    { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.pre_vat || 0)) || "0.00"}` },
+    // { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.pre_vat || 0)) || "0.00"}` },
     // { key: "Delivery Charges", value: `AED ${deliveryData?.delivery_charges || "0.00"}` },
   ];
   const targetRef = useRef<HTMLDivElement | null>(null);
@@ -183,8 +205,8 @@ export default function OrderDetailPage() {
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
             Invoice Details
           </h1>
-          <BorderIconButton icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
-          <BorderIconButton trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
+          <BorderIconButton disabled={!deliveryData?.previous_uuid} onClick={deliveryData?.previous_uuid ? () => router.push(`${PATH}${deliveryData.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
+          <BorderIconButton disabled={!deliveryData?.next_uuid} onClick={deliveryData?.next_uuid ? () => router.push(`${PATH}${deliveryData.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
         </div>
 
         {/* Action Buttons */}
@@ -355,9 +377,10 @@ export default function OrderDetailPage() {
           {/* ---------- Footer Buttons ---------- */}
           <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
             <SidebarBtn
-              leadingIcon={"lucide:download"}
+              leadingIcon={loading ? "eos-icons:three-dots-loading" : "lucide:download"}
               leadingIconSize={20}
               label="Download"
+              onClick={exportFile}
             />
             <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
           </div>

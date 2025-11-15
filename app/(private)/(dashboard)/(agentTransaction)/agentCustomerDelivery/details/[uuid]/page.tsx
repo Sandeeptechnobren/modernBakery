@@ -199,11 +199,11 @@ export default function OrderDetailPage() {
   const keyValueData = [
     { key: "Gross Total", value: `${CURRENCY} ${toInternationalNumber(grossTotal)}` },
     { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(vatTotal)}` },
-    { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(computedPreVat)}` },
-    (deliveryData?.delivery_charges) && {
-      key: "Delivery Charges",
-      value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.delivery_charges ?? 0))}`,
-    },
+    // { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(computedPreVat)}` },
+    // (deliveryData?.delivery_charges) && {
+    //   key: "Delivery Charges",
+    //   value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.delivery_charges ?? 0))}`,
+    // },
   ].filter(Boolean) as Array<{ key: string; value: string }>;
 
   const exportFile = async () => {
@@ -304,33 +304,26 @@ export default function OrderDetailPage() {
                 <span>Customer</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">
-                    {hasValue(deliveryData?.customer?.code) && hasValue(deliveryData?.customer?.name)
-                      ? `${deliveryData?.customer?.code} - ${deliveryData?.customer?.name}`
-                      : hasValue(deliveryData?.customer?.code)
-                      ? deliveryData?.customer?.code
-                      : hasValue(deliveryData?.customer?.name)
-                      ? deliveryData?.customer?.name
-                      : "-"}
+                    {deliveryData?.customer?.code ? deliveryData?.customer?.code : ""}
+                    {deliveryData?.customer?.code && deliveryData?.customer?.name ? " - " : ""}
+                    {deliveryData?.customer?.name ? `${deliveryData?.customer?.name}` : ""}
                   </span>
-                  {(hasValue(deliveryData?.customer?.town) || hasValue(deliveryData?.customer?.landmark) || hasValue(deliveryData?.customer?.district)) && (
+                  <span>
+                    {deliveryData?.customer?.town ? deliveryData?.customer?.town : ""}
+                    {deliveryData?.customer?.landmark && deliveryData?.customer?.town ? ", " : ""}
+                    {deliveryData?.customer?.landmark ? deliveryData?.customer?.landmark : ""}
+                    {deliveryData?.customer?.district ? deliveryData?.customer?.district : ""}
+                  </span>
+                  {
                     <span>
-                      {hasValue(deliveryData?.customer?.town) && deliveryData?.customer?.town}
-                      {hasValue(deliveryData?.customer?.town) && hasValue(deliveryData?.customer?.landmark) && ", "}
-                      {hasValue(deliveryData?.customer?.landmark) && deliveryData?.customer?.landmark}
-                      {(hasValue(deliveryData?.customer?.town) || hasValue(deliveryData?.customer?.landmark)) && hasValue(deliveryData?.customer?.district) && ", "}
-                      {hasValue(deliveryData?.customer?.district) && deliveryData?.customer?.district}
-                    </span>
-                  )}
-                  {(hasValue(deliveryData?.customer?.contact_no) || hasValue(deliveryData?.customer?.email)) && (
-                    <span>
-                      {hasValue(deliveryData?.customer?.contact_no) && (
+                      {deliveryData?.customer?.contact_no && (
                         <>Phone: {deliveryData?.customer?.contact_no}</>
                       )}
                       {deliveryData?.customer?.email && (
                         <>Email: {deliveryData?.customer?.email}</>
                       )}
                     </span>
-                  )}
+                  }
                 </div>
               </div>
             </div>

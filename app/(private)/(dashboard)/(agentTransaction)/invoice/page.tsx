@@ -100,8 +100,7 @@ export default function CustomerInvoicePage() {
         csv: false,
         xlsx: false,
     });
-    const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions } = useAllDropdownListData();
-
+    const { companyOptions, warehouseAllOptions, regionOptions, areaOptions, routeOptions, salesmanOptions } = useAllDropdownListData();
     const [filters, setFilters] = useState({
         fromDate: new Date().toISOString().split("T")[0],
         toDate: new Date().toISOString().split("T")[0],
@@ -356,18 +355,32 @@ export default function CustomerInvoicePage() {
                                 type: "date"
                             },
                             {
-                                key: "warehouse",
+                                key: "company_id",
+                                label: "Company",
+                                isSingle: false,
+                                multiSelectChips: true,
+                                options: Array.isArray(companyOptions) ? companyOptions : [],
+                            },
+                            {
+                                key: "warehouse_id",
                                 label: "Warehouse",
                                 isSingle: false,
                                 multiSelectChips: true,
-                                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
                             },
                             {
-                                key: "salesman",
-                                label: "Salesman",
+                                key: "region_id",
+                                label: "Region",
                                 isSingle: false,
                                 multiSelectChips: true,
-                                options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                options: Array.isArray(regionOptions) ? regionOptions : [],
+                            },
+                            {
+                                key: "sub_region_id",
+                                label: "Sub Region",
+                                isSingle: false,
+                                multiSelectChips: true,
+                                options: Array.isArray(areaOptions) ? areaOptions : [],
                             },
                             {
                                 key: "route_id",
@@ -376,15 +389,13 @@ export default function CustomerInvoicePage() {
                                 multiSelectChips: true,
                                 options: Array.isArray(routeOptions) ? routeOptions : [],
                             },
-
-
                             {
-                                key: "customer",
-                                label: "Customer",
+                                key: "salesman_id",
+                                label: "Salesman",
                                 isSingle: false,
                                 multiSelectChips: true,
-                                options: Array.isArray(agentCustomerOptions) ? agentCustomerOptions : [],
-                            },
+                                options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                            }
 
                         ],
                         searchBar: false,

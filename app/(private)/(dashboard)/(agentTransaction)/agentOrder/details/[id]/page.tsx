@@ -23,10 +23,10 @@ const columns = [
   { key: "uom_name", label: "UOM" },
   { key: "quantity", label: "Quantity" },
   { key: "item_price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.item_price) || '0.00'}</> },
-  { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.vat) || '0.00'}</> },
-  { key: "preVat", label: "Pre VAT", render: (value: TableDataType) => <>{toInternationalNumber(Number(value.total) - Number(value.vat)) || '0.00'}</> },
-  // { key: "discount", label: "Discount", render: (value: TableDataType) => <>{toInternationalNumber(value.discount) || '0.00'}</> },
   { key: "net_total", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.net_total) || '0.00'}</> },
+  { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.vat) || '0.00'}</> },
+  // { key: "preVat", label: "Pre VAT", render: (value: TableDataType) => <>{toInternationalNumber(Number(value.total) - Number(value.vat)) || '0.00'}</> },
+  // { key: "discount", label: "Discount", render: (value: TableDataType) => <>{toInternationalNumber(value.discount) || '0.00'}</> },
   // { key: "total_gross", label: "Gross", render: (value: TableDataType) => <>{toInternationalNumber(value.total_gross) || '0.00'}</> },
   { key: "total", label: "Total", render: (value: TableDataType) => <>{toInternationalNumber(value.total) || '0.00'}</> },
 ];
@@ -126,12 +126,12 @@ export default function OrderDetailPage() {
   const finalTotal = grossTotal + totalVat;
 
   const keyValueData = [
-    { key: "Net Total", value: "AED " + toInternationalNumber(netAmount ?? 0) },
+    { key: "Net Total", value: CURRENCY + " " + toInternationalNumber(netAmount ?? 0) },
     // { key: "Gross Total", value: "AED "+toInternationalNumber( grossTotal ?? 0 ) },
     // { key: "Discount", value: "AED "+toInternationalNumber( discount ?? 0 ) },
     // { key: "Excise", value: "AED 0.00" },
-    { key: "Vat", value: "AED " + toInternationalNumber(totalVat ?? 0) },
-    { key: "Pre VAT", value: "AED " + toInternationalNumber(preVat ?? 0) },
+    { key: "Vat", value: CURRENCY + " " + toInternationalNumber(totalVat ?? 0) },
+    // { key: "Pre VAT", value: CURRENCY + " " + toInternationalNumber(preVat ?? 0) },
     // { key: "Delivery Charges", value: "AED 0.00" },
   ];
 

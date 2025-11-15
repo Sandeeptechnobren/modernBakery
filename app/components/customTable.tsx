@@ -1668,7 +1668,7 @@ function FilterBy() {
                                 onClick={() => clearAll()}
                                 label="Clear All"
                                 buttonTw="px-3 py-2 h-9"
-                                disabled={activeFilterCount === 0}
+                                disabled={appliedFilters === false}
                                 className="text-sm"
                             />
                             <SidebarBtn
