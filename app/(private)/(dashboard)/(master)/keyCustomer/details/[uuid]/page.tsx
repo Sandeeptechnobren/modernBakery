@@ -5,7 +5,6 @@ import Table, { configType, TableDataType } from "@/app/components/customTable";
 import KeyValueData from "@/app/components/keyValueData";
 import StatusBtn from "@/app/components/statusBtn2";
 import TabBtn from "@/app/components/tabBtn";
-import Toggle from "@/app/components/toggle";
 import { getCompanyCustomerById } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -59,9 +58,9 @@ export function getPaymentType(value: string): string {
 }
 export default function ViewPage() {
   const params = useParams();
-  const id = Array.isArray(params.id)
-    ? params.id[0] || ""
-    : (params.id as string) || "";
+  const uuid = Array.isArray(params.uuid)
+    ? params.uuid[0] || ""
+    : (params.uuid as string) || "";
 
   const [customer, setCustomer] = useState<CustomerItem | null>(null);
   const [isChecked, setIsChecked] = useState(false);
@@ -76,12 +75,12 @@ export default function ViewPage() {
   };
 
   useEffect(() => {
-    if (!id) return;
+    if (!uuid) return;
 
     const fetchCompanyCustomerDetails = async () => {
       setLoading(true);
       try {
-        const res = await getCompanyCustomerById(id);
+        const res = await getCompanyCustomerById(uuid);
         if (res.error) {
           showSnackbar(
             res.data?.message || "Unable to fetch key customer details",
@@ -99,7 +98,7 @@ export default function ViewPage() {
     };
 
     fetchCompanyCustomerDetails();
-  }, [id, setLoading, showSnackbar]);
+  }, [uuid, setLoading, showSnackbar]);
 
   const Columns: configType["columns"] = [
     { key: "osa_code", label: "Code", showByDefault: true },
@@ -207,7 +206,7 @@ export default function ViewPage() {
                   { key: "SAP Code", value: customer?.sap_code || "-" },
                   { key: "Language", value: customer?.language || "-" },
                   { key: "Contact No.", value: customer?.contact_number || "-" },
-                  { key: "Company Type", value: `${customer?.company_type?.code} - ${customer?.company_type?.name}` || "-" },
+                  { key: "Company Type", value: customer?.company_type?.code ? `${customer?.company_type?.code} - ${customer?.company_type?.name}` : "-" },
                   {
                     key: "Business Type",
                     value:

@@ -26,7 +26,7 @@ export default function AddEditRoute() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const params = useParams();
-  const routeId = params?.id as string | undefined;
+  const routeId = params?.uuid as string | undefined;
   const isEditMode = routeId !== undefined && routeId !== "add";
 
   const [isOpen, setIsOpen] = useState(false);

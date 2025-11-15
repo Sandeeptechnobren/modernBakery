@@ -42,10 +42,10 @@ const title = "Vehicle Details";
 
 export default function ViewPage() {
   const params = useParams();
-  const id =
-    Array.isArray(params.id) && params.id.length > 0
-      ? params.id[0]
-      : (params.id as string);
+  const uuid =
+    Array.isArray(params.uuid) && params.uuid.length > 0
+      ? params.uuid[0]
+      : (params.uuid as string);
 
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
@@ -55,7 +55,7 @@ export default function ViewPage() {
     const fetchVehicleDetails = async () => {
       try {
         setLoading(true);
-        const res = await getVehicleById(id);
+        const res = await getVehicleById(uuid);
         setLoading(false);
 
         if (res.error) {
@@ -75,7 +75,7 @@ export default function ViewPage() {
       }
     };
     fetchVehicleDetails();
-  }, [id, setLoading, showSnackbar]);
+  }, [uuid, setLoading, showSnackbar]);
 
   const ownerTypeLabel = (ownerType?: string) => {
     if (ownerType === "0") return "Company Owned";

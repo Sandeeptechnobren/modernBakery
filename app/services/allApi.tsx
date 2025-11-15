@@ -456,18 +456,18 @@ export const addRoutes = async (body: object) => {
   }
 };
 
-export const getRouteById = async (id: string) => {
+export const getRouteById = async (uuid: string) => {
   try {
-    const res = await API.get(`/api/master/route/routes/${id}`);
+    const res = await API.get(`/api/master/route/routes/${uuid}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const updateRoute = async (id: string, body: object) => {
+export const updateRoute = async (uuid: string, body: object) => {
   try {
-    const res = await API.put(`/api/master/route/routes/${id}`, body);
+    const res = await API.put(`/api/master/route/routes/${uuid}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -742,9 +742,9 @@ export const addCompanyCustomers = async (body: object) => {
   }
 };
 
-export const getCompanyCustomerById = async (id: string) => {
+export const getCompanyCustomerById = async (uuid: string) => {
   try {
-    const res = await API.get(`/api/master/companycustomer/show/${id}`);
+    const res = await API.get(`/api/master/companycustomer/show/${uuid}`);
 
     return res.data;
   } catch (error: unknown) {
@@ -752,9 +752,9 @@ export const getCompanyCustomerById = async (id: string) => {
   }
 };
 
-export const updateCompanyCustomer = async (id: string, body: object) => {
+export const updateCompanyCustomer = async (uuid: string, body: object) => {
   try {
-    const res = await API.put(`/api/master/companycustomer/${id}/update`, body);
+    const res = await API.put(`/api/master/companycustomer/${uuid}/update`, body);
 
     return res.data;
   } catch (error: unknown) {
@@ -1638,11 +1638,11 @@ export const addVehicle = async (data: object) => {
 };
 
 export const updateVehicle = async (
-  id: string,
+  uuid: string,
   data: FormData | Record<string, string>
 ) => {
   try {
-    const res = await API.put(`/api/master/vehicle/${id}/update`, data);
+    const res = await API.put(`/api/master/vehicle/${uuid}/update`, data);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1658,9 +1658,9 @@ export const deleteVehicle = async (id: string) => {
   }
 };
 
-export const getVehicleById = async (id: string) => {
+export const getVehicleById = async (uuid: string) => {
   try {
-    const res = await API.get(`/api/master/vehicle/${id}`);
+    const res = await API.get(`/api/master/vehicle/${uuid}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

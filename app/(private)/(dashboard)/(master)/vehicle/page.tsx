@@ -329,7 +329,7 @@ export default function VehiclePage() {
               {
                 icon: "lucide:eye",
                 onClick: (data: TableDataType) => {
-                  router.push(`/vehicle/details/${data.id}`);
+                  router.push(`/vehicle/details/${data.uuid}`);
                 },
               },
               {
@@ -337,7 +337,7 @@ export default function VehiclePage() {
                 onClick: (row: object) => {
                   const r = row as TableDataType;
                   router.push(
-                    `/vehicle/${r.id}`
+                    `/vehicle/${r.uuid}`
                   );
                 },
               },

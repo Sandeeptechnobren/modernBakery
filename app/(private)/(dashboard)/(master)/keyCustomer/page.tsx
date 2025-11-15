@@ -261,7 +261,7 @@ export default function CompanyCustomers() {
               {
                 icon: "lucide:eye",
                 onClick: (data: TableDataType) => {
-                  router.push(`/keyCustomer/details/${data.id}`);
+                  router.push(`/keyCustomer/details/${data.uuid}`);
                 },
               },
               {
@@ -269,7 +269,7 @@ export default function CompanyCustomers() {
                 onClick: (row: TableDataType) => {
                   console.log(row)
                   router.push(
-                    `/keyCustomer/${row.id}`
+                    `/keyCustomer/${row.uuid}`
                   )
                 }
               },

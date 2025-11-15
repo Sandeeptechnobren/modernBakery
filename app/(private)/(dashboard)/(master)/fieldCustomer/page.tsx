@@ -13,7 +13,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { getPaymentType } from "../keyCustomer/details/[id]/page";
+import { getPaymentType } from "../keyCustomer/details/[uuid]/page";
 
 export default function AgentCustomer() {
     const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();

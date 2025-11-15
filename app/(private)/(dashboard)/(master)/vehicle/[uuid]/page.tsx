@@ -86,8 +86,8 @@ export default function AddEditVehicleWithStepper() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
-  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
-  const isEditMode = id !== undefined && id !== "add";
+  const uuid = Array.isArray(params?.uuid) ? params.uuid[0] : params?.uuid;
+  const isEditMode = uuid !== undefined && uuid !== "add";
   const { warehouseOptions } = useAllDropdownListData();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -151,11 +151,11 @@ export default function AddEditVehicleWithStepper() {
   }, [showSnackbar]);
 
   useEffect(() => {
-    if (isEditMode && id) {
+    if (isEditMode && uuid) {
       setLoading(true);
       (async () => {
         try {
-          const res = await getVehicleById(id);
+          const res = await getVehicleById(uuid);
           if (res?.data) {
             const vehicle = res.data;
             setForm({
@@ -184,7 +184,7 @@ export default function AddEditVehicleWithStepper() {
         }
       })();
     }
-  }, [isEditMode, id, showSnackbar]);
+  }, [isEditMode, uuid, showSnackbar]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -298,8 +298,8 @@ export default function AddEditVehicleWithStepper() {
 
     let res;
 
-    if (isEditMode && id) {
-      res = await updateVehicle(id, payload);
+    if (isEditMode && uuid) {
+      res = await updateVehicle(uuid, payload);
     } else {
       res = await addVehicle(payload);
 

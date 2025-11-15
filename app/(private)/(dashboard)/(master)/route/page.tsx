@@ -186,21 +186,7 @@ export default function Route() {
     //     setLoading(true);
     // }, []);
 
-    const handleConfirmDelete = async () => {
-        if (!selectedRowId) return;
-        try {
-            await deleteRoute(String(selectedRowId));
-            showSnackbar("Route deleted successfully ✅", "success");
-            await fetchRoutes();
-        } catch (error) {
-            console.error("Delete failed ❌:", error);
-            showSnackbar("Failed to delete Route ❌", "error");
-        } finally {
-            setShowDeletePopup(false);
-            setSelectedRowId(undefined);
-        }
-    };
-
+    
     const exportFile = async (format: string) => {
         try {
             setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
@@ -315,7 +301,7 @@ export default function Route() {
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {
-                                    router.push(`/route/${data.id}`);
+                                    router.push(`/route/${data.uuid}`);
                                 },
                             },
                         ],
@@ -324,15 +310,7 @@ export default function Route() {
                 />
             </div>
 
-            {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Route"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )}
+           
         </>
     );
 }
