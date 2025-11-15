@@ -13,6 +13,7 @@ import Image from "next/image";
 import StatusBtn from "@/app/components/statusBtn2";
 import { useLoading } from "@/app/services/loadingContext";
 import Table, { TableDataType } from "@/app/components/customTable";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 interface Item {
   id?: number;
@@ -259,7 +260,7 @@ export default function Page() {
                     <strong>Name:</strong> {singleItem?.name || "-"}
                   </p>
                   <p>
-                    <strong>Price:</strong>{singleItem?.uom_price || "0.00"}
+                    <strong>Price:</strong> {toInternationalNumber(singleItem?.uom_price) || "0.00"}
                   </p>
                   <p>
                     <strong>UPC:</strong> {singleItem?.upc || "N/A"}
@@ -337,7 +338,7 @@ export default function Page() {
                   // { key: "uom_id", label: "UOM", render: (row: TableDataType) => <>{ (typeof row?.uom_id === "object" && (row?.uom_id as {name: string})?.name) ?? row?.uom ?? row.uom_id}</>},
                   { key: "name", label: "UOM" },
                   { key: "item_quantity", label: "Quantity" },
-                  { key: "item_price", label: "Price" }
+                  { key: "item_price", label: "Price", render: (row: TableDataType) => <>{toInternationalNumber(row.item_price)}</> }
                 ],
                 pageSize: 50
               }}

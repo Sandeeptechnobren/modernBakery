@@ -106,10 +106,10 @@ const columns = [
   { key: "UOM", label: "UOM" },
   { key: "Quantity", label: "Quantity" },
   { key: "Price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.Price) || '0.00'}</> },
+  { key: "Net", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.Net) || '0.00'}</> },
   { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.Vat) || '0.00'}</> },
   // { key: "preVat", label: "Pre VAT", render: (value: TableDataType) => <>{toInternationalNumber(Number(value.preVat)) || '0.00'}</> },
   // { key: "discount", label: "Discount", render: (value: TableDataType) => <>{toInternationalNumber(value.discount) || '0.00'}</> },
-  { key: "Net", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.Net) || '0.00'}</> },
   // { key: "total_gross", label: "Gross", render: (value: TableDataType) => <>{toInternationalNumber(value.total_gross) || '0.00'}</> },
   { key: "Total", label: "Total", render: (value: TableDataType) => <>{toInternationalNumber(value.Total) || '0.00'}</> },
 ];
