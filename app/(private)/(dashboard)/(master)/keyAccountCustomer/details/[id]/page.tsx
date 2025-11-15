@@ -6,7 +6,7 @@ import StatusBtn from "@/app/components/statusBtn2";
 import SummaryCard from "@/app/components/summaryCard";
 import TabBtn from "@/app/components/tabBtn";
 import Toggle from "@/app/components/toggle";
-import { getRouteVisitDetails } from "@/app/services/allApi";
+import { getCompanyCustomerById } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -15,12 +15,11 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface CustomerItem {
-  uuid: string;
   id: number;
   sap_code: string;
   osa_code: string;
   business_name: string;
-  company_type: string;
+  company_type: { id: number; code: string; name: string; }
   language: string;
   contact_number?: string;
   business_type: string;
@@ -44,8 +43,8 @@ interface CustomerItem {
   status: string;
 }
 
-const title = "Route Visit Details";
-const backBtnUrl = "/routeVisit";
+const title = "Company Customer Details";
+const backBtnUrl = "/companyCustomer";
 export function getPaymentType(value: string): string {
   switch (value) {
     case "1":
@@ -60,9 +59,9 @@ export function getPaymentType(value: string): string {
 }
 export default function ViewPage() {
   const params = useParams();
-  const uuid = Array.isArray(params.uuid)
-    ? params.uuid[0] || ""
-    : (params.uuid as string) || "";
+  const id = Array.isArray(params.id)
+    ? params.id[0] || ""
+    : (params.id as string) || "";
 
   const [customer, setCustomer] = useState<CustomerItem | null>(null);
   const [isChecked, setIsChecked] = useState(false);
@@ -77,12 +76,12 @@ export default function ViewPage() {
   };
 
   useEffect(() => {
-    if (!uuid) return;
+    if (!id) return;
 
     const fetchCompanyCustomerDetails = async () => {
       setLoading(true);
       try {
-        const res = await getRouteVisitDetails(uuid);
+        const res = await getCompanyCustomerById(id);
         if (res.error) {
           showSnackbar(
             res.data?.message || "Unable to fetch company customer details",
@@ -100,7 +99,7 @@ export default function ViewPage() {
     };
 
     fetchCompanyCustomerDetails();
-  }, [uuid, setLoading, showSnackbar]);
+  }, [id, setLoading, showSnackbar]);
 
   // Tab logic
   const [activeTab, setActiveTab] = useState("overview");
@@ -174,8 +173,16 @@ export default function ViewPage() {
                   { key: "SAP Code", value: customer?.sap_code || "-" },
                   { key: "Language", value: customer?.language || "-" },
                   { key: "Contact No.", value: customer?.contact_number || "-" },
-                  { key: "Company Type", value: customer?.company_type || "-" },
-                  { key: "Business Type", value: customer?.business_type || "-" },
+                  { key: "Company Type", value: `${customer?.company_type?.code} - ${customer?.company_type?.name}` || "-" },
+                  {
+                    key: "Business Type",
+                    value:
+                      Number(customer?.business_type) === 0
+                        ? "Buyer"
+                        : "Seller",
+                  }
+
+
                 ]}
               />
             </ContainerCard>
@@ -233,7 +240,6 @@ export default function ViewPage() {
                     title="Tax & Accuracy"
                     data={[
                       { key: "TIN No", value: customer?.tin_no || "-" },
-                      { key: "VAT No", value: customer?.tin_no || "-" },
                     ]}
                   />
                 </ContainerCard>

@@ -47,20 +47,20 @@ export const initialLinkData: SidebarDataType[] = [
           //   leadingIcon: "mdi:lock-check",
           //   iconColor: "text-green-500",
           // },
-          // {
-          //   isActive: false,
-          //   href: "/settings/menu",
-          //   label: "Menus",
-          //   leadingIcon: "duo-icons:menu",
-          //   iconColor: "text-green-500",
-          // },
-          // {
-          //   isActive: false,
-          //   href: "/settings/submenu",
-          //   label: "Sub Menus",
-          //   leadingIcon: "ci:arrow-sub-down-right",
-          //   iconColor: "text-green-500",
-          // }
+          {
+            isActive: false,
+            href: "/settings/menu",
+            label: "Menus",
+            leadingIcon: "duo-icons:menu",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/submenu",
+            label: "Sub Menus",
+            leadingIcon: "ci:arrow-sub-down-right",
+            iconColor: "text-green-500",
+          }
         ],
       },
       {
@@ -224,8 +224,8 @@ export const initialLinkData: SidebarDataType[] = [
       },
       {
         isActive: false,
-        href: "/settings/warehouseStock",
-        label: "Warehouse Stock",
+        href: "/settings/distributorsStock",
+        label: "Distributors Stock",
         leadingIcon: "tabler:building-warehouse",
         iconColor: "text-green-500",
       },

@@ -19,7 +19,7 @@ export default function Home() {
                 showSnackbar(res.data.message, "error");
                 setIsLoading(false);
             }
-            if(res.code === 200) router.push("/warehouse");
+            if(res.code === 200) router.push("/distributors");
         }
         if (localStorage.getItem("token")) verifyUser();
         else setIsLoading(false);

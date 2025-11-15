@@ -1,6 +1,6 @@
 "use client";
 
-import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
+import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import { chillerRequestByUUID } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";

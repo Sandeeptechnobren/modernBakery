@@ -105,7 +105,7 @@ export default function AddEditRoute() {
             routeCode: data?.route_code || "",
             routeName: data?.route_name || "",
             routeType: data?.getrouteType?.id?.toString(),
-            vehicleType: data?.vehicle?.id ? String(data?.vehicle.id) : "",
+            vehicleType: data?.vehicle?.id.toString() ? String(data?.vehicle.id) : "",
             warehouse: data?.warehouse?.id ? String(data?.warehouse.id) : "",
             status:
               data?.status > 0 ? "1" : "0",

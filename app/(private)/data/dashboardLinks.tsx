@@ -41,8 +41,8 @@ export const initialLinkData: SidebarDataType[] = [
         children: [
           {
             isActive: false,
-            href: "/warehouse",
-            label: "Warehouse",
+            href: "/distributors",
+            label: "Distributors",
             leadingIcon: "tabler:building-warehouse",
             iconColor: "text-violet-500",
           },
@@ -69,22 +69,22 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/agentCustomer",
-            label: "Agent Customer",
+            href: "/fieldCustomer",
+            label: "Field Customers",
             leadingIcon: "carbon:customer",
             iconColor: "text-cyan-500",
           },
           {
             isActive: false,
-            href: "/companyCustomer",
-            label: "Company Customer",
+            href: "/keyAccountCustomer",
+            label: "Account Customers",
             leadingIcon: "lucide:user",
             iconColor: "text-green-500",
           },
           {
             isActive: false,
-            href: "/salesman",
-            label: "Salesman",
+            href: "/salesTeam",
+            label: "Sales Team",
             leadingIcon: "carbon:sales-ops",
             iconColor: "text-cyan-500",
           },
@@ -335,15 +335,15 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/salesmanLoad",
-            label: "Salesman Load",
+            href: "/salesTeamLoad",
+            label: "Sales Team Load",
             leadingIcon: "mdi:tanker-truck",
             iconColor: "text-cyan-500"
           },
           {
             isActive: false,
-            href: "/salesmanUnload",
-            label: "Salesman Unload",
+            href: "/salesTeamUnload",
+            label: "Sales Team Unload",
             leadingIcon: "mdi:truck-remove-outline",
             iconColor: "text-cyan-500"
           },
