@@ -1,5 +1,6 @@
 "use client";
 
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
   configType,
   listReturnType,
@@ -37,6 +38,8 @@ interface Payment {
 
 export default function PaymentListPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>("");
+      const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions } = useAllDropdownListData();
+  
   const columns: configType["columns"] = [
     { key: "osa_code", label: "OSA Code", showByDefault: true },
     { key: "payment_type_text", label: "Payment Type", showByDefault: true },
@@ -181,6 +184,10 @@ export default function PaymentListPage() {
     }
   }
 
+      useEffect(() => {
+        setRefreshKey(k => k+1);
+    }, [companyOptions, regionOptions, areaOptions, warehouseOptions, routeOptions, salesmanOptions]);
+
   return (
     <>
       <div className="flex flex-col h-full">
@@ -190,6 +197,61 @@ export default function PaymentListPage() {
             api: { list: fetchPayments },
             header: {
               title: "Advance Payments",
+              filterByFields: [
+                                {
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "company",
+                                    label: "Company",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(companyOptions) ? companyOptions : [],
+                                },
+                                {
+                                    key: "region",
+                                    label: "Region",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(regionOptions) ? regionOptions : [],
+                                },
+                                {
+                                    key: "area",
+                                    label: "Area",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(areaOptions) ? areaOptions : [],
+                                },
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+                                 {
+                                    key: "salesman",
+                                    label: "Salesman",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                },
+                                
+                            ],
               threeDot: [
                 {
                   icon: "gala:file-document",

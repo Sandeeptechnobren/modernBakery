@@ -17,7 +17,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function SalemanLoad() {
-    const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions } = useAllDropdownListData();
+    const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions } = useAllDropdownListData();
     const columns: configType["columns"] = [
         { key: "code", label: "Code" },
         // { key: "date", label: "Collection Date" },
@@ -26,17 +26,7 @@ export default function SalemanLoad() {
         const name = row.warehouse_name || "-";
         return `${code}${code && name ? " - " : ""}${name}`;
       } },
-      { key: "route_code", label: "Route Code",  render: (row: TableDataType) => {
-      const code = row.route_code || "-";
-      const name = row.route_name || "-";
-      return `${code}${code && name ? " - " : ""}${name}`;
-    }  },
     { key: "customer", label: "Customer" },
-        { key: "salesman_code", label: "Salesman Code",  render: (row: TableDataType) => {
-        const code = row.salesman_code || "-";
-        const name = row.salesman_name || "-";
-        return `${code}${code && name ? " - " : ""}${name}`;
-      }  },
         
     ];
 
@@ -201,8 +191,8 @@ export default function SalemanLoad() {
     );
 
     useEffect(() => {
-        setLoading(true);
-    }, []);
+        setRefreshKey(k => k+1);
+    }, [companyOptions, regionOptions, areaOptions, warehouseOptions, routeOptions, salesmanOptions]);
 
     return (
         <>
@@ -217,24 +207,42 @@ export default function SalemanLoad() {
                         header: {
                              filterByFields: [
                                 {
-                                    key: "date_change",
-                                    label: "Date Range",
-                                    type: "dateChange"
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date"
                                 },
-                                
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "company",
+                                    label: "Company",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(companyOptions) ? companyOptions : [],
+                                },
+                                {
+                                    key: "region",
+                                    label: "Region",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(regionOptions) ? regionOptions : [],
+                                },
+                                {
+                                    key: "area",
+                                    label: "Area",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(areaOptions) ? areaOptions : [],
+                                },
                                 {
                                     key: "warehouse",
                                     label: "Warehouse",
                                     isSingle: false,
                                     multiSelectChips: true,
                                     options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                                },
-                                 {
-                                    key: "salesman",
-                                    label: "Salesman",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
                                 },
                                 {
                                     key: "route_id",
@@ -243,14 +251,12 @@ export default function SalemanLoad() {
                                     multiSelectChips: true,
                                     options: Array.isArray(routeOptions) ? routeOptions : [],
                                 },
-
-                               
-                                {
-                                    key: "customer",
-                                    label: "Customer",
+                                 {
+                                    key: "salesman",
+                                    label: "Salesman",
                                     isSingle: false,
                                     multiSelectChips: true,
-                                    options: Array.isArray(agentCustomerOptions) ? agentCustomerOptions : [],
+                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
                                 },
                                 
                             ],

@@ -315,22 +315,15 @@ export default function CustomerInvoicePage() {
                         // rowSelection: true,
                         
                         localStorageKey: "return-table",
-                        // rowActions: [
-                        //     {
-                        //         icon: "lucide:eye",
-                        //         onClick: (row: TableDataType) =>
-                        //             router.push(
-                        //                 `/return/details/${row.uuid}`
-                        //             ),
-                        //     },
-                        //     // {
-                        //     //     icon: "lucide:edit-2",
-                        //     //     onClick: (row: TableDataType) =>
-                        //     //         router.push(
-                        //     //             `/return/${row.uuid}`
-                        //     //         ),
-                        //     // },
-                        // ],
+                        rowActions: [
+                            {
+                                icon: "lucide:eye",
+                                onClick: (row: TableDataType) =>
+                                    router.push(
+                                        `/return/details/${row.uuid}`
+                                    ),
+                            },
+                        ],
                         pageSize: 10,
                     }}
                 />

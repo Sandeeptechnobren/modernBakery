@@ -12,7 +12,7 @@ import {
   createCapsCollection,
   updateCapsCollection,
 } from "@/app/services/agentTransaction";
-import { agentCustomerList, getCompanyCustomers, itemGlobalSearch, itemList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerList, genearateCode, getCompanyCustomers, itemGlobalSearch, itemList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -365,6 +365,24 @@ const handleItemSearch = useCallback(async (searchText: string) => {
     return options;
   };
 
+   const codeGeneratedRef = useRef(false);
+    const [code, setCode] = useState("");
+    useEffect(() => {
+      // generate code
+      if (!codeGeneratedRef.current) {
+        codeGeneratedRef.current = true;
+        (async () => {
+          const res = await genearateCode({
+            model_name: "caps_collections",
+          });
+          if (res?.code) {
+            setCode(res.code);
+          }
+          setLoading(false);
+        })();
+      }
+    }, []);
+
 
   // 🚀 Submit
   const handleSubmit = async () => {
@@ -445,7 +463,7 @@ const handleItemSearch = useCallback(async (searchText: string) => {
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
               CAPS COLLECTION
             </span>
-            <span className="text-primary text-[14px] tracking-[10px]">#L0201</span>
+            <span className="text-primary text-[14px] tracking-[10px]">#{code}</span>
           </div>
         </div>
 
@@ -506,18 +524,6 @@ const handleItemSearch = useCallback(async (searchText: string) => {
             disabled
             onChange={() => { }}
           />
-
-          {/* <InputFields
-            type="radio"
-            label="Status"
-            name="status"
-            value={form.status}
-            onChange={(e) => handleChange("status", e.target.value)}
-            options={[
-              { value: "1", label: "Active" },
-              { value: "0", label: "Inactive" },
-            ]}
-          /> */}
         </div>
 
         <hr className="my-6 w-full text-[#D5D7DA]" />
@@ -686,145 +692,6 @@ const handleItemSearch = useCallback(async (searchText: string) => {
             footer: { pagination: false },
           }}
         />
-
-
-        {/* <div>
-           <Table
-                            data={tableData.map((row, idx) => ({
-                              ...row,
-                              idx: idx.toString(),
-                              UOM: Array.isArray(row.UOM) ? JSON.stringify(row.UOM) : "[]",
-                              item_id: String(row.item_id ?? ""),
-                              Quantity: String(row.Quantity ?? ""),
-                            }))}
-                            config={{
-                              columns: [
-                                {
-                                  key: "item_id",
-                                  label: "Item Name",
-                                  width: 300,
-                                  render: (row) => {
-                                    const idx = Number(row.idx);
-                                    const err = itemErrors[idx]?.item_id;
-                                    // Filter out items that are already selected in other rows
-                                    const selectedIds = tableData.map((r, i) => (i === idx ? null : r.item_id)).filter(Boolean) as string[];
-                                    const filteredOptions = itemsOptions.filter(opt => (
-                                      opt.value === row.item_id || !selectedIds.includes(opt.value)
-                                    ));
-                                    return (
-                                      <div>
-                                        <AutoSuggestion
-                                          label=""
-                                          name={`item_id_${row.idx}`}
-                                          placeholder="Search item"
-                                          onSearch={(q) => fetchItem(q)}
-                                          initialValue={
-                                            itemsOptions.find(o => o.value === row.item_id)?.label
-                                            || orderData.find(o => String(o.id) === row.item_id)?.name || ""
-                                          }
-                                          onSelect={(opt) => {
-                                            if (opt.value !== row.item_id) {
-                                              recalculateItem(Number(row.idx), "item_id", opt.value);
-                                              // setFieldValue("uom_id", "");
-                                            } else {
-                                              recalculateItem(Number(row.idx), "item_id", opt.value);
-                                            }
-                                          }}
-                                          onClear={() => {
-                                            recalculateItem(Number(row.idx), "item_id", "");
-                                            // setFieldValue("uom_id", "");
-                                          }}
-                                          disabled={!values.customer}
-                                          error={err && err}
-                                          className="w-full"
-                                        />
-                                      </div>
-                                    );
-                                  },
-                                },
-                                {
-                                  key: "uom_id",
-                                  label: "UOM",
-                                  width: 150,
-                                  render: (row) => {
-                                    const idx = Number(row.idx);
-                                    const err = itemErrors[idx]?.uom_id;
-                                    const options = JSON.parse(row.UOM ?? "[]");
-                                    return (
-                                      <div>
-                                        <InputFields
-                                          label=""
-                                          name="UOM"
-                                          value={row.uom_id}
-                                          placeholder="Select UOM"
-                                          options={options}
-                                          disabled={options.length === 0 && !values.customer}
-                                          showSkeleton={Boolean(itemLoading[idx]?.uom)}
-                                          onChange={(e) => {
-                                            recalculateItem(Number(row.idx), "uom_id", e.target.value)
-                                            const price = options.find((uom: { value: string }) => String(uom.value) === e.target.value)?.price || "0.00";
-                                            recalculateItem(Number(row.idx), "Price", price);
-                                          }}
-                                          error={err && err}
-                                        />
-                                      </div>
-                                    );
-                                  },
-                                },
-                                {
-                                  key: "Quantity",
-                                  label: "Qty",
-                                  width: 150,
-                                  render: (row) => {
-                                    const idx = Number(row.idx);
-                                    const err = itemErrors[idx]?.Quantity;
-                                    return (
-                                      <div>
-                                        <InputFields
-                                          label=""
-                                          type="number"
-                                          name="Quantity"
-                                          // integerOnly={true}
-                                          placeholder="Enter Qty"
-                                          value={row.Quantity}
-                                          disabled={!values.customer}
-                                          onChange={(e) => {
-                                            const raw = (e.target as HTMLInputElement).value;
-                                            const intPart = raw.split('.')[0];
-                                            const sanitized = intPart === '' ? '' : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                            recalculateItem(Number(row.idx), "Quantity", sanitized);
-                                          }}
-                                          // numberMin={0}
-                                          error={err && err}
-                                        />
-                                      </div>
-                                    );
-                                  },
-                                },
-                                {
-                                  key: "action",
-                                  label: "Action",
-                                  render: (row) => (
-                                    <button
-                                      type="button"
-                                      className={`${itemData.length <= 1
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : ""
-                                        } text-red-500 flex items-center`}
-                                      onClick={() =>
-                                        itemData.length > 1 && handleRemoveItem(Number(row.idx))
-                                      }
-                                    >
-                                      <Icon icon="hugeicons:delete-02" width={20} />
-                                    </button>
-                                  ),
-                                },
-                              ],
-                              showNestedLoading: false,
-                            }}
-                          />
-        </div> */}
-
         <div className="mt-4">
           <button
             type="button"
