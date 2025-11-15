@@ -15,7 +15,7 @@ import Map from "@/app/components/map";
 import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/utils/formatNumber";
 import Table, { configType, listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-
+import { formatDate } from "../../../salesTeam/details/[uuid]/page";
 interface Item {
     id: string;
     sap_id: string;
@@ -250,7 +250,7 @@ export default function ViewPage() {
             key: "invoice_date",
             label: "Invoice Date",
             isSortable: true,
-            render: (data: TableDataType) => (data.invoice_date ? data.invoice_date : "-"),
+            render: (data: TableDataType) => data.invoice_date ? formatDate(data.invoice_date.toString() ):"-",
             showByDefault: true,
         },
         {
@@ -258,18 +258,6 @@ export default function ViewPage() {
             label: "Invoice Time",
             isSortable: true,
             render: (data: TableDataType) => (data.invoice_time ? data.invoice_time : "-"),
-            showByDefault: true,
-        },
-        {
-            key: "order_number",
-            label: "Order No.",
-            render: (data: TableDataType) => (data.order_number ? data.order_number : "-"),
-            showByDefault: true,
-        },
-        {
-            key: "delivery_number",
-            label: "Delivery No.",
-            render: (data: TableDataType) => (data.delivery_number ? data.delivery_number : "-"),
             showByDefault: true,
         },
         {
@@ -317,14 +305,7 @@ export default function ViewPage() {
             showByDefault: true,
         },
 
-        {
-            key: "status",
-            label: "Status",
-            render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status && row.status.toString() === "0" ? false : true} />
-            ),
-            showByDefault: true,
-        },
+       
     ];
     const returnColumns: configType["columns"] = [
         {
@@ -344,26 +325,26 @@ export default function ViewPage() {
             render: (data: TableDataType) => (data.return_date ? data.return_date : "-"),
             showByDefault: true,
         },
-        {
-            key: "order_code",
-            label: "Order Code",
-            render: (data: TableDataType) => (
-                <span className="font-semibold text-[#181D27] text-[14px]">
-                    {data.order_code ? data.order_code : "-"}
-                </span>
-            ),
-            showByDefault: true,
-        },
-        {
-            key: "delivery_code",
-            label: "Delivery Code",
-            render: (data: TableDataType) => (
-                <span className="font-semibold text-[#181D27] text-[14px]">
-                    {data.delivery_code ? data.delivery_code : "-"}
-                </span>
-            ),
-            showByDefault: true,
-        },
+        // {
+        //     key: "order_code",
+        //     label: "Order Code",
+        //     render: (data: TableDataType) => (
+        //         <span className="font-semibold text-[#181D27] text-[14px]">
+        //             {data.order_code ? data.order_code : "-"}
+        //         </span>
+        //     ),
+        //     showByDefault: true,
+        // },
+        // {
+        //     key: "delivery_code",
+        //     label: "Delivery Code",
+        //     render: (data: TableDataType) => (
+        //         <span className="font-semibold text-[#181D27] text-[14px]">
+        //             {data.delivery_code ? data.delivery_code : "-"}
+        //         </span>
+        //     ),
+        //     showByDefault: true,
+        // },
 
         {
             key: "route_code",
@@ -773,40 +754,40 @@ export default function ViewPage() {
         [setLoading, warehouseId]
     );
 
-    const filterByListReturn = useCallback(
-        async (
-            payload: Record<string, string | number | null>,
-            pageSize: number
-        ): Promise<listReturnType> => {
-            let result;
-            setLoading(true);
-            try {
-                const params: Record<string, string> = { per_page: pageSize.toString() };
-                Object.keys(payload || {}).forEach((k) => {
-                    const v = payload[k as keyof typeof payload];
-                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                        params[k] = String(v);
-                    }
-                });
-                result = await warehouseReturn(warehouseId, params);
-            } finally {
-                setLoading(false);
-            }
+    // const filterByListReturn = useCallback(
+    //     async (
+    //         payload: Record<string, string | number | null>,
+    //         pageSize: number
+    //     ): Promise<listReturnType> => {
+    //         let result;
+    //         setLoading(true);
+    //         try {
+    //             const params: Record<string, string> = { per_page: pageSize.toString() };
+    //             Object.keys(payload || {}).forEach((k) => {
+    //                 const v = payload[k as keyof typeof payload];
+    //                 if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+    //                     params[k] = String(v);
+    //                 }
+    //             });
+    //             // result = await warehouseReturn(warehouseId, params);
+    //         } finally {
+    //             setLoading(false);
+    //         }
 
-            if (result?.error) throw new Error(result.data?.message || "Filter failed");
-            else {
-                const pagination = result.pagination?.pagination || result.pagination || {};
-                return {
-                    data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 0,
-                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-                    pageSize: pagination.limit || pageSize,
-                };
-            }
-        },
-        [setLoading, warehouseId]
-    );
+    //         // if (result?.error) throw new Error(result.data?.message || "Filter failed");
+    //         // else {
+    //         //     const pagination = result.pagination?.pagination || result.pagination || {};
+    //         //     return {
+    //         //         data: result.data || [],
+    //         //         total: pagination.totalPages || result.pagination?.totalPages || 0,
+    //         //         totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+    //         //         currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+    //         //         pageSize: pagination.limit || pageSize,
+    //         //     };
+    //         // }
+    //     },
+    //     [setLoading, warehouseId]
+    // );
 
     const searchCustomerById = useCallback(
         async (
@@ -902,28 +883,28 @@ export default function ViewPage() {
         },
         [warehouseId]
     );
-    const listReturnByWarehouse = useCallback(
-        async (
-            pageNo: number = 1,
-            pageSize: number = 50,
-        ): Promise<searchReturnType> => {
-            const result = await warehouseReturn(warehouseId, {
-                per_page: pageSize.toString()
-            });
+    // const listReturnByWarehouse = useCallback(
+    //     async (
+    //         pageNo: number = 1,
+    //         pageSize: number = 50,
+    //     ): Promise<searchReturnType> => {
+    //         const result = await warehouseReturn(warehouseId, {
+    //             per_page: pageSize.toString()
+    //         });
 
-            if (result.error) {
-                throw new Error(result.data?.message || "Search failed");
-            }
+    //         if (result.error) {
+    //             throw new Error(result.data?.message || "Search failed");
+    //         }
 
-            return {
-                data: result.data || [],
-                currentPage: result?.pagination?.current_page || 1,
-                pageSize: result?.pagination?.per_page || pageSize,
-                total: result?.pagination?.last_page || 1,
-            };
-        },
-        [warehouseId]
-    );
+    //         return {
+    //             data: result.data || [],
+    //             currentPage: result?.pagination?.current_page || 1,
+    //             pageSize: result?.pagination?.per_page || pageSize,
+    //             total: result?.pagination?.last_page || 1,
+    //         };
+    //     },
+    //     [warehouseId]
+    // );
     const listSalesByWarehouse = useCallback(
         async (
             pageNo: number = 1,
@@ -994,30 +975,30 @@ export default function ViewPage() {
         },
         [warehouseId]
     );
-    const searchReturnByWarehouse = useCallback(
-        async (
-            searchQuery: string,
-            pageSize: number = 5,
-            columnName?: string
-        ): Promise<searchReturnType> => {
-            const result = await warehouseReturn(warehouseId, {
-                warehouse_id: warehouseId,
-                query: searchQuery,
-            });
+    // const searchReturnByWarehouse = useCallback(
+    //     async (
+    //         searchQuery: string,
+    //         pageSize: number = 5,
+    //         columnName?: string
+    //     ): Promise<searchReturnType> => {
+    //         const result = await warehouseReturn(warehouseId, {
+    //             warehouse_id: warehouseId,
+    //             query: searchQuery,
+    //         });
 
-            if (result.error) {
-                throw new Error(result.data?.message || "Search failed");
-            }
+    //         if (result.error) {
+    //             throw new Error(result.data?.message || "Search failed");
+    //         }
 
-            return {
-                data: result.data || [],
-                currentPage: result?.pagination?.current_page || 1,
-                pageSize: result?.pagination?.per_page || pageSize,
-                total: result?.pagination?.last_page || 1,
-            };
-        },
-        [warehouseId]
-    );
+    //         return {
+    //             data: result.data || [],
+    //             currentPage: result?.pagination?.current_page || 1,
+    //             pageSize: result?.pagination?.per_page || pageSize,
+    //             total: result?.pagination?.last_page || 1,
+    //         };
+    //     },
+    //     [warehouseId]
+    // );
     const searchSalesByWarehouse = useCallback(
         async (
             searchQuery: string,
@@ -1402,11 +1383,11 @@ export default function ViewPage() {
                     <div className="flex flex-col h-full">
                         <Table
                             config={{
-                                api: {
-                                    search: searchReturnByWarehouse,
-                                    list: listReturnByWarehouse,
-                                    filterBy: filterByListReturn
-                                },
+                                // api: {
+                                //     // search: searchReturnByWarehouse,
+                                //     // list: listReturnByWarehouse,
+                                //     // filterBy: filterByListReturn
+                                // },
                                 header: {
                                     filterByFields: [
                                         {
@@ -1427,6 +1408,7 @@ export default function ViewPage() {
                                 rowSelection: false,
                                 pageSize: 50,
                             }}
+                            data={[]}
                         />
                     </div>
 
