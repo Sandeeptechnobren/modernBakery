@@ -54,7 +54,7 @@ export default function Item() {
 
   const columns = [
   // { key: "erp_code", label: "ERP Code", render: (row: LocalTableDataType) => row.erp_code || "-" },
-  { key: "name", label: "Name", render: (row: LocalTableDataType) =>{ return <div className="cursor-pointer text-[#EA0A2A]" onClick={()=>{
+  { key: "name", label: "Name", render: (row: LocalTableDataType) =>{ return <div className="cursor-pointer hover:text-[#EA0A2A]" onClick={()=>{
     console.log("clicked",row.uuid)
     setSelectedId(row?.uuid || "")
   setOpen(true);

@@ -124,7 +124,7 @@ const [ loading,setLoading ] = useState(false);
 
 
   return (
-    <>
+    <div className=" w-[500px]">
       {/* Header Section */}
       {/* <div className="flex items-center gap-4 mb-6 pt-5">
         <Link href={backBtnUrl}>
@@ -134,7 +134,7 @@ const [ loading,setLoading ] = useState(false);
       </div> */}
 
       {/* Main Layout */}
-      {loading ? <div className="p-[10px] w-[350px]"><CustomTableSkelton /></div> :
+      {loading ? <div className="p-[10px] w-full"><CustomTableSkelton /></div> :
       <>
       <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
         <div className="flex flex-col sm:flex-row items-center gap-[20px]">
@@ -356,7 +356,7 @@ const [ loading,setLoading ] = useState(false);
       </div>
         </>
 }
-    </>
+    </div>
   );
 }
 
