@@ -103,49 +103,68 @@ export default function Page() {
 
 
   const columns: configType["columns"] = [
-    { key: "invoice_date", label: "Data", render: (row: TableDataType) => row.invoice_date?formatDate(row.invoice_date):"-" },
+    { key: "invoice_date", label: "Date", render: (row: TableDataType) => row.invoice_date ? formatDate(row.invoice_date) : "-" },
     { key: "invoice_time", label: "Time" },
     {
-      key: "invoice_number",
-      label: "Invoice Number"
+      key: "invoice_code",
+      label: "Invoice Number",
+      // render: (row: TableDataType) => (row as any).invoice_number || (row as any).invoice_code || "-"
     },
     {
-      key: "customer_id",
+      key: "customer_id", 
       label: "Customer",
-      render: (row: TableDataType) =>
-        typeof row.customer_id === "object" &&
-          row.customer_id !== null &&
-          "customer_id" in row.customer_id
-          ? (row.customer_id as { customer_id?: string })
-            .customer_id || "-"
-          : "-",
+       
+   render: (row: TableDataType | any) => {
+    const customerObj = typeof row.customer_id === "object" && 
+      row.customer_id !== null && 
+      "warehouse_name" in row.customer_id
+      ? row.customer_id
+      : row.customer;
+    
+    if (customerObj?.osa_code && customerObj?.name) {
+      return `${customerObj.osa_code} - ${customerObj.name}`;
+    }
+    return customerObj?.name || "-";
+  },
+  
+      // API provides numeric customer_id plus nested customer object { id, osa_code, name }
+      // render: (row: TableDataType | any) => row.customer?.osa_code || row.customer?.name || "-",
     },
-    {
-      key: "warehouse_id",
-      label: "Distributor",
-      render: (row: TableDataType) =>
-        typeof row.warehouse_id === "object" &&
-          row.warehouse_id !== null &&
-          "warehouse_name" in row.warehouse_id
-          ? (row.warehouse_id as { warehouse_name?: string })
-            .warehouse_name || "-"
-          : "-",
-    },
+   {
+  key: "warehouse_id",
+  label: "Distributor",
+  // API provides numeric warehouse_id plus nested warehouse object { id, warehouse_code, warehouse_name }
+  render: (row: TableDataType | any) => {
+    const warehouseObj = typeof row.warehouse_id === "object" && 
+      row.warehouse_id !== null && 
+      "osa_code" in row.warehouse_id
+      ? row.warehouse_id
+      : row.warehouse;
+    
+    if (warehouseObj?.warehouse_code && warehouseObj?.warehouse_name) {
+      return `${warehouseObj.warehouse_code} - ${warehouseObj.warehouse_name}`;
+    }
+    return warehouseObj?.warehouse_name || "-";
+  },
+   },
     {
       key: "route_id",
       label: "Route",
-      render: (row: TableDataType) => {
-        if (
-          typeof row.route_id === "object" &&
-          row.route_id !== null &&
-          "route_name" in row.route_id
-        ) {
-          return (row.route_id as { route_name?: string }).route_name || "-";
-        }
-        return typeof row.route_id === 'string' ? row.route_id : "-";
-      },
+      // API provides numeric route_id plus nested route object { id, route_code, route_name }
+    render: (row: TableDataType | any) => {
+    const routeObj = typeof row.route_id === "object" && 
+      row.route_id !== null && 
+      "warehouse_name" in row.route_id
+      ? row.route_id
+      : row.route;
+    
+    if (routeObj?.route_code && routeObj?.route_name) {
+      return `${routeObj.route_code} - ${routeObj.route_name}`;
+    }
+    return routeObj?.route_name || "-";
+  },
     },
-    { key: "total_amount", label: "Invoice Total", render: (row: TableDataType) => toInternationalNumber(row.total_amount) },
+    { key: "total_amount", label: "Invoice Total", render: (row: TableDataType | any) => toInternationalNumber(row.total_amount) },
 
   ];
   const warehouseColumns: configType["columns"] = [

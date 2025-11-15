@@ -94,6 +94,7 @@ export default function PaymentListPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const [isExporting, setIsExporting] = useState(false);
   type TableRow = TableDataType & { uuid?: string };
 
   const fetchPayments = useCallback(
@@ -160,18 +161,25 @@ export default function PaymentListPage() {
   };
 
   const exportfile = async (format: string) => {
-          try {
-              const response = await advancePaymentExport({ format });
-              if (response && typeof response === 'object' && response.download_url) {
-                  await downloadFile(response.download_url);
-                  showSnackbar("File downloaded successfully ", "success");
-              } else {
-                  showSnackbar("Failed to get download URL", "error");
-              }
-          } catch (error) {
-              showSnackbar("Failed to download warehouse data", "error");
-          }
+    if (isExporting) return; // Prevent multiple clicks
+    
+    setIsExporting(true);
+    setLoading(true);
+    try {
+      const response = await advancePaymentExport({ format });
+      if (response && typeof response === 'object' && response.download_url) {
+        await downloadFile(response.download_url);
+        showSnackbar("File downloaded successfully", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
       }
+    } catch (error) {
+      showSnackbar("Failed to download payment data", "error");
+    } finally {
+      setIsExporting(false);
+      setLoading(false);
+    }
+  }
 
   return (
     <>
@@ -185,8 +193,9 @@ export default function PaymentListPage() {
               threeDot: [
                 {
                   icon: "gala:file-document",
-                  label: "Export CSV",
+                  label: isExporting ? "Exporting..." : "Export CSV",
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (isExporting) return;
                     const ids = selectedRow?.map((id) => {
                       return data[id].id;
                     })
@@ -195,8 +204,9 @@ export default function PaymentListPage() {
                 },
                 {
                   icon: "gala:file-document",
-                  label: "Export Excel",
+                  label: isExporting ? "Exporting..." : "Export Excel",
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (isExporting) return;
                     const ids = selectedRow?.map((id) => {
                       return data[id].id;
                     })
