@@ -165,7 +165,6 @@ export default function PaymentListPage() {
 
   const exportfile = async (format: string) => {
     if (isExporting) return; // Prevent multiple clicks
-    
     setIsExporting(true);
     setLoading(true);
     try {

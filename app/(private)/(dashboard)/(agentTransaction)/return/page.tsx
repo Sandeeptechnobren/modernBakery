@@ -80,7 +80,7 @@ export default function CustomerInvoicePage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
-
+    const [isExporting, setIsExporting] = useState(false);
     const [filters, setFilters] = useState({
         fromDate: new Date().toISOString().split("T")[0],
         toDate: new Date().toISOString().split("T")[0],
@@ -178,7 +178,10 @@ export default function CustomerInvoicePage() {
             );
 
                        const exportFile = async (format: string) => {
-                       try {
+                          if (isExporting) return; // Prevent multiple clicks
+                        setIsExporting(true);
+                        setLoading(true);
+                       try { 
                          const response = await agentReturnExport({ format }); 
                          if (response && typeof response === 'object' && response.download_url) {
                           await downloadFile(response.download_url);
@@ -189,9 +192,30 @@ export default function CustomerInvoicePage() {
                        } catch (error) {
                          showSnackbar("Failed to download warehouse data", "error");
                        } finally {
+                        setIsExporting(false);
+                         setLoading(false);
                        }
                      };
 
+                    //  const exportfile = async (format: string) => {
+                    //     if (isExporting) return; // Prevent multiple clicks
+                    //     setIsExporting(true);
+                    //     setLoading(true);
+                    //     try {
+                    //       const response = await advancePaymentExport({ format });
+                    //       if (response && typeof response === 'object' && response.download_url) {
+                    //         await downloadFile(response.download_url);
+                    //         showSnackbar("File downloaded successfully", "success");
+                    //       } else {
+                    //         showSnackbar("Failed to get download URL", "error");
+                    //       }
+                    //     } catch (error) {
+                    //       showSnackbar("Failed to download payment data", "error");
+                    //     } finally {
+                    //       setIsExporting(false);
+                    //       setLoading(false);
+                    //     }
+                    //   }
     return (
         <div className="flex flex-col h-full">
                 {/* 🔹 Table Section */}
@@ -203,18 +227,41 @@ export default function CustomerInvoicePage() {
                             title: "Return",
                             columnFilter: true,
                              threeDot: [
-                {
+            //     {
+            //       icon: "gala:file-document",
+            //       label:isExporting? "Exporting..." : "Export CSV",
+            //       labelTw: "text-[12px] hidden sm:block",
+            //       onClick: (data: TableDataType[], selectedRow? : number[]) => {
+            //         if (isExporting) return;
+            //         const ids = selectedRow?.map((id) => {
+            //           return data[id].id;
+            //         })
+            //        exportFile("csv"),
+            //     }
+            //  },
+                  {
                   icon: "gala:file-document",
-                  label: "Export CSV",
-                  labelTw: "text-[12px] hidden sm:block",
-                  onClick: () => exportFile("csv"),
+                  label: isExporting ? "Exporting..." : "Export CSV",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (isExporting) return;
+                    const ids = selectedRow?.map((id) => {
+                      return data[id].id;
+                    })
+                    exportFile("csv");
+                  }
                 },
+                // {
+                 
                 {
                   icon: "gala:file-document",
-                  label: "Export Excel",
-                  labelTw: "text-[12px] hidden sm:block",
-                  onClick: () => exportFile("xlsx"),
-
+                  label: isExporting ? "Exporting..." : "Export Excel",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (isExporting) return;
+                    const ids = selectedRow?.map((id) => {
+                      return data[id].id;
+                    })
+                    exportFile("csv");
+                  }
                 },
             ],
                             filterByFields: [
