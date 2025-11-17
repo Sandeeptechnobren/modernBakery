@@ -648,7 +648,7 @@ export default function InputFields({
                 onMouseDown={() => { pointerDownRef.current = true; }}
                 onMouseUp={() => { pointerDownRef.current = false; }}
                 onFocus={() => { if (!pointerDownRef.current && !disabled) { computeDropdownProps(); setDropdownOpen(true); } }}
-                className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
+                className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
                 onClick={() => { if (!loading && !isSearchable && !disabled) { computeDropdownProps(); setDropdownOpen(v => !v); } }}
               >
                 {isSearchable ? (
@@ -674,7 +674,7 @@ export default function InputFields({
                           }
                         }}
                         onFocus={() => setDropdownOpen(true)}
-                        className={`flex-1 truncate text-sm outline-none border-none ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                        className={`flex-1 truncate text-sm outline-none border-none px-3 h-full ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
                         style={hasSelection ? { color: '#111827' } : undefined}
                         onKeyDown={e => {
                           if (e.key === 'Enter') {

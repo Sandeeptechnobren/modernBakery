@@ -351,6 +351,7 @@ export default function AutoSuggestion({
               name={name}
               ref={inputRef}
               type="text"
+              autoComplete="off"
               disabled={disabled}
               className="flex-1 truncate text-sm outline-none border-none min-w-0 bg-transparent"
               placeholder={selectedOptions.length === 0 ? placeholder : undefined}
@@ -366,6 +367,7 @@ export default function AutoSuggestion({
           id={id ?? name}
           name={name}
           type="text"
+          autoComplete="off"
           disabled={disabled}
           ref={inputRef}
           className={`box-border border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"} ${!label ? "mt-[6px]" : ""}`}
@@ -382,9 +384,6 @@ export default function AutoSuggestion({
           }}
           onFocus={() => { if (options.length > 0) setOpen(true); }}
           onKeyDown={handleKeyDown}
-          aria-autocomplete="list"
-          aria-expanded={open}
-          aria-haspopup="listbox"
         />
       )}
 

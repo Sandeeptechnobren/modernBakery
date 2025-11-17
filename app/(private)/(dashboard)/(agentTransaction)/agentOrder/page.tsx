@@ -29,7 +29,7 @@ const columns = [
             return `${code}${code && name ? " - " : ""}${name}`;
         },
     },
-    
+
     {
         key: "customer_name",
         label: "Customer Name",
@@ -128,9 +128,9 @@ export default function CustomerInvoicePage() {
                 const pagination = result.pagination?.pagination || result.pagination || {};
                 return {
                     data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    total: pagination.totalPages || result.pagination?.totalPages || 1,
                     totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    currentPage: pagination.page || result.pagination?.page || 1,
                     pageSize: pagination.limit || pageSize,
                 };
             }
@@ -189,12 +189,14 @@ export default function CustomerInvoicePage() {
                                 {
                                     key: "start_date",
                                     label: "Start Date",
-                                    type: "date"
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
                                 },
                                 {
                                     key: "end_date",
                                     label: "End Date",
-                                    type: "date"
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
                                 },
                                 {
                                     key: "company_id",

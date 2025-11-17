@@ -95,6 +95,9 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         async function verifyUser(){
+            if(!localStorage.getItem("token")){
+                return router.push("/");
+            }
             const res = await isVerify();
             if(res.error) {
                 localStorage.removeItem("token");
