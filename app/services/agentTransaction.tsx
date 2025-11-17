@@ -310,6 +310,15 @@ export const exportInvoiceWithDetails = async (params?:Params) => {
   }
 };
 
+export const exportInvoiceDetails = async (id?:string) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/invoices/${id}/exportheader`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const invoiceStatusUpdate = async (body:object) => {
   try {
     const res = await API.post(`/api/agent_transaction/invoices/updatestatus`, body);

@@ -344,16 +344,18 @@ export default function CustomerInvoicePage() {
                         ],
                         columnFilter: true,
                         filterByFields: [
-                            {
-                                key: "start_date",
-                                label: "Start Date",
-                                type: "date"
-                            },
-                            {
-                                key: "end_date",
-                                label: "End Date",
-                                type: "date"
-                            },
+                           {
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
+                                },
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
+                                },
                             {
                                 key: "company_id",
                                 label: "Company",

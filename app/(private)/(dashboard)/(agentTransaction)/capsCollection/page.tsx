@@ -209,12 +209,14 @@ export default function SalemanLoad() {
                                 {
                                     key: "start_date",
                                     label: "Start Date",
-                                    type: "date"
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
                                 },
                                 {
                                     key: "end_date",
                                     label: "End Date",
-                                    type: "date"
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
                                 },
                                 {
                                     key: "company",

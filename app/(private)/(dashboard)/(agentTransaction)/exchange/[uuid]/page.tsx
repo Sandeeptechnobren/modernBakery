@@ -6,9 +6,8 @@ import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
-import KeyValueData from "@/app/components/keyValueData";
 import Logo from "@/app/components/logo";
-import { addExchange, invoiceList } from "@/app/services/agentTransaction";
+import { addExchange, invoiceList,returnType ,reasonList } from "@/app/services/agentTransaction";
 import {
   agentCustomerGlobalSearch,
   genearateCode,
@@ -21,12 +20,13 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useRef, useState } from "react";
+import {  useEffect, useRef, useState } from "react";
 import * as Yup from "yup";
 
 interface FormData {
   id: number;
   erp_code: string;
+  code: string;
   item_code: string;
   name: string;
   description: string;
@@ -62,6 +62,14 @@ interface FormData {
   volume: number;
 }
 
+interface Reason {
+  id?: number | string;
+  reson?: string;
+  return_reason?: string;
+  return_type?: string;
+  reason?: string;
+}
+
 interface ItemData {
   item_id: string;
   item_name: string;
@@ -95,7 +103,17 @@ export default function ExchangeAddEditPage() {
     items: Yup.array().of(itemRowSchema),
   });
 
+   const goodOptions = [{ label: "Near By Expiry", value: "0" },
+  { label: "Package Issue", value: "1" },
+  { label: "Not Saleable", value: "2" },];
+  const badOptions = [{ label: "Damage", value: "0" },
+  { label: "Expiry", value: "1" },
+  ];
   const router = useRouter();
+  const [returnTypeOptions, setReturnTypeOptions] = useState<{ label: string; value: string }[]>([]);
+  const [goodReasonOptions, setGoodReasonOptions] = useState<{ label: string; value: string }[]>([]);
+   const [rowUomOptions, setRowUomOptions] = useState<Record<string, { value: string; label: string; price?: string }[]>>({});
+    const [rowReasonOptions, setRowReasonOptions] = useState<Record<string, { label: string; value: string }[]>>({});
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
 
@@ -104,7 +122,7 @@ export default function ExchangeAddEditPage() {
     try {
       const res = await invoiceList({ search: searchText || "", per_page: "50" });
       if (res && !res.error && Array.isArray(res.data)) {
-        return res.data.map((inv: any) => ({
+        return res.data.map((inv: { id: number | string; invoice_code?: string; customer_name?: string }) => ({
           value: String(inv.id),
           label: `${inv.invoice_code ?? ""}${inv.invoice_code ? " - " : ""}${inv.customer_name ?? ""}`,
         }));
@@ -171,13 +189,15 @@ export default function ExchangeAddEditPage() {
         const partialErrors: Record<string, string> = {};
         try {
           await itemRowSchema.validateAt("item_id", toValidate);
-        } catch (e: any) {
-          if (e?.message) partialErrors["item_id"] = e.message;
+        } catch (e: unknown) {
+          const msg = typeof e === "object" && e !== null && "message" in e ? (e as any).message : undefined;
+          if (msg) partialErrors["item_id"] = String(msg);
         }
         try {
           await itemRowSchema.validateAt("Quantity", toValidate);
-        } catch (e: any) {
-          if (e?.message) partialErrors["Quantity"] = e.message;
+        } catch (e: unknown) {
+          const msg = typeof e === "object" && e !== null && "message" in e ? (e as any).message : undefined;
+          if (msg) partialErrors["Quantity"] = String(msg);
         }
         if (Object.keys(partialErrors).length === 0) {
           setItemErrors((prev) => {
@@ -196,14 +216,15 @@ export default function ExchangeAddEditPage() {
           return copy;
         });
       }
-    } catch (err: any) {
+    } catch (err:unknown) {
       const validationErrors: Record<string, string> = {};
-      if (err && err.inner && Array.isArray(err.inner)) {
-        err.inner.forEach((e: any) => {
-          if (e.path) validationErrors[e.path] = e.message;
+      const anyErr = err as any;
+      if (anyErr && typeof anyErr === "object" && Array.isArray(anyErr.inner)) {
+        anyErr.inner.forEach((e: any) => {
+          if (e && e.path) validationErrors[e.path] = String(e.message);
         });
-      } else if (err && err.path) {
-        validationErrors[err.path] = err.message;
+      } else if (anyErr && typeof anyErr === "object" && anyErr.path) {
+        validationErrors[anyErr.path] = String(anyErr.message);
       }
       setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
     }
@@ -220,9 +241,9 @@ export default function ExchangeAddEditPage() {
     }
     const data = res?.data || [];
     setExchangeData(data);
-    const options = data.map((item: any) => ({
+    const options = data.map((item: FormData) => ({
       value: String(item.id),
-      label: (item.code ?? item.item_code ?? item.erp_code ?? "") + (item.name ? " - " + item.name : ""),
+      label: (item?.erp_code ? item?.erp_code : item?.code) + (item.name ? " - " + item.name : ""),
     }));
     // Merge newly fetched options with existing ones so previously selected items remain available
     setItemsOptions((prev: { label: string; value: string }[] = []) => {
@@ -235,6 +256,48 @@ export default function ExchangeAddEditPage() {
     return options;
   };
 
+  useEffect(() => {
+      // Fetch reason list on component mount
+      (async () => {
+        try {
+          setLoading(true);
+          const res = await returnType();
+          if (res && Array.isArray(res.data)) {
+            const list = res.data as Reason[];
+            const options = list.map((reason: Reason) => ({
+                  label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+              value: String(reason.id),
+            }));
+            setReturnTypeOptions(options);
+          }
+        } catch (error) {
+          console.error("Failed to fetch reason list:", error);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, []);
+  useEffect(() => {
+      // Fetch reason list on component mount
+      (async () => {
+        try {
+          setLoading(true);
+          const res = await reasonList();
+          if (res && Array.isArray(res.data)) {
+            const list = res.data as Reason[];
+            const options = list.map((reason: Reason) => ({
+                  label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+              value: String(reason.id),
+            }));
+            setGoodReasonOptions(options);
+          }
+        } catch (error) {
+          console.error("Failed to fetch reason list:", error);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, []);
   const codeGeneratedRef = useRef(false);
   const [code, setCode] = useState("");
   useEffect(() => {
@@ -266,10 +329,8 @@ export default function ExchangeAddEditPage() {
 
     // If user selects an item, update UI immediately and persist a label so selection survives searches
     if (field === "item_id") {
-      // set item_id to the chosen value
       item.item_id = value;
       if (!value) {
-        // cleared selection
         item.item_name = "";
         item.UOM = [];
         item.uom_id = "";
@@ -283,17 +344,26 @@ export default function ExchangeAddEditPage() {
         const selectedExchange = exchangeData.find((exchange: FormData) => exchange.id.toString() === value);
         item.item_id = selectedExchange ? String(selectedExchange.id || value) : value;
         item.item_name = selectedExchange?.name ?? "";
+        // Map UOMs to support both 'uom_price' and 'price'
         item.UOM =
-          selectedExchange?.item_uoms?.map((uom) => ({ label: uom.name, value: String(uom.id), price: String(uom.price ?? "") })) || [];
+          selectedExchange?.item_uoms?.map((uom) => {
+            // Support both 'uom_price' and 'price' if present
+            const price = 'uom_price' in uom ? (uom as any).uom_price : uom.price;
+            return {
+              label: uom.name,
+              value: String(uom.id),
+              price: String(price ?? "")
+            };
+          }) || [];
         item.uom_id = selectedExchange?.item_uoms?.[0]?.id ? String(selectedExchange.item_uoms[0].id) : "";
-        item.Price = selectedExchange?.item_uoms?.[0]?.price ? String(selectedExchange.item_uoms[0].price) : "";
+        // Use type guard for price
+        const firstUom = selectedExchange?.item_uoms?.[0];
+        item.Price = firstUom ? ('uom_price' in firstUom ? String((firstUom as any).uom_price) : String(firstUom.price ?? "")) : "";
         item.Quantity = "1";
-        // persist a readable label
         const computedLabel = selectedExchange
           ? `${selectedExchange.item_code ?? selectedExchange.erp_code ?? ""}${selectedExchange.item_code || selectedExchange.erp_code ? " - " : ""}${selectedExchange.name ?? ""}`
           : "";
         item.item_label = computedLabel;
-        // ensure the selected item is available in itemsOptions
         if (item.item_label) {
           setItemsOptions((prev: { label: string; value: string }[] = []) => {
             if (prev.some((o) => o.value === item.item_id)) return prev;
@@ -341,10 +411,20 @@ export default function ExchangeAddEditPage() {
       item_id: String(exchange.id ?? ""),
       item_name: exchange.name ?? "",
       item_label: `${exchange.item_code ?? exchange.erp_code ?? ""}${exchange.item_code || exchange.erp_code ? " - " : ""}${exchange.name ?? ""}`,
-      UOM: exchange.item_uoms?.map((uom) => ({ label: uom.name, value: String(uom.id), price: String(uom.price ?? "") })) || [],
+      UOM: exchange.item_uoms?.map((uom) => {
+        const price = 'uom_price' in uom ? (uom as any).uom_price : uom.price;
+        return {
+          label: uom.name,
+          value: String(uom.id),
+          price: String(price ?? "")
+        };
+      }) || [],
       uom_id: exchange.item_uoms?.[0]?.id ? String(exchange.item_uoms[0].id) : "",
       Quantity: "1",
-      Price: exchange.item_uoms?.[0]?.price ? String(exchange.item_uoms[0].price) : "",
+      Price: (() => {
+        const firstUom = exchange.item_uoms?.[0];
+        return firstUom ? ('uom_price' in firstUom ? String((firstUom as any).uom_price) : String(firstUom.price ?? "")) : "";
+      })(),
       Total: "0.00",
       region: "",
       return_type: "",
@@ -388,6 +468,29 @@ export default function ExchangeAddEditPage() {
   const finalTotal = grossTotal + totalVat;
 
   const generatePayload = (values?: FormikValues) => {
+    // Invoices: all rows from the return table (itemData)
+    const invoices = itemData.map((item) => ({
+      item_id: Number(item.item_id) || null,
+      item_price: Number(item.Price) || null,
+      item_quantity: Number(item.Quantity) || null,
+      uom_id: Number(item.uom_id) || null,
+      total: Number(item.Total) || null,
+      region: item.return_reason ? String(item.return_reason) : null,
+      return_type: String(item.return_type) || null,
+    }));
+
+    // Returns: only selected items from the collect table (item_id present)
+    const returns = itemData
+      .filter((item) => item.item_id)
+      .map((item) => ({
+        item_id: Number(item.item_id) || null,
+        item_price: Number(item.Price) || null,
+        item_quantity: Number(item.Quantity) || null,
+        uom_id: Number(item.uom_id) || null,
+        total: Number(item.Total) || null,
+        status: 1,
+      }));
+
     return {
       exchange_code: code,
       warehouse_id: Number(values?.warehouse) || null,
@@ -395,15 +498,8 @@ export default function ExchangeAddEditPage() {
       total: Number(finalTotal.toFixed(2)),
       comment: values?.comment || "",
       status: 1,
-      details: itemData.map((item) => ({
-        item_id: Number(item.item_id) || null,
-        item_price: Number(item.Price) || null,
-        quantity: Number(item.Quantity) || null,
-        uom_id: Number(item.uom_id) || null,
-        total: Number(item.Total) || null,
-        region: String(item.region) || null,
-        return_type: String(item.return_type) || null,
-      })),
+      invoices,
+      returns,
     };
   };
 
@@ -413,11 +509,18 @@ export default function ExchangeAddEditPage() {
       const itemsSchema = Yup.array().of(itemRowSchema);
       try {
         await itemsSchema.validate(itemData, { abortEarly: false });
-      } catch (itemErr: any) {
-        // log detailed item validation errors and surface a friendly message
-        console.error("Item validation errors:", itemErr.inner || itemErr);
+      } catch (itemErr: unknown) {
+        // log detailed item validation errors and surface a friendly message (safely access unknown)
+        const anyErr = itemErr as any;
+        if (anyErr && typeof anyErr === "object" && Array.isArray(anyErr.inner)) {
+          console.error("Item validation errors:", anyErr.inner);
+        } else {
+          console.error("Item validation errors:", anyErr);
+        }
         const msg =
-          (Array.isArray(itemErr.inner) && itemErr.inner.map((err: any) => err.message).join(", ")) || itemErr.message || "Item validation failed";
+          (anyErr && typeof anyErr === "object" && Array.isArray(anyErr.inner) && anyErr.inner.map((err: any) => String(err.message)).join(", ")) ||
+          (anyErr && typeof anyErr === "object" && "message" in anyErr ? String(anyErr.message) : undefined) ||
+          "Item validation failed";
         showSnackbar(msg, "error");
         // set a top-level form error to prevent submission
         formikHelpers.setErrors({ items: "Item rows validation failed" } as any);
@@ -465,7 +568,7 @@ export default function ExchangeAddEditPage() {
       return [];
     }
     const data = res?.data || [];
-    const options = data.map((customer: any) => ({
+    const options = data.map((customer: { id: number | string; osa_code?: string; name?: string }) => ({
       value: String(customer.id),
       label: `${customer.osa_code ?? ""} - ${customer.name ?? ""}`,
     }));
@@ -486,7 +589,7 @@ export default function ExchangeAddEditPage() {
       return [];
     }
     const data = res?.data || [];
-    const options = data.map((warehouse: any) => ({
+    const options = data.map((warehouse: { id: number | string; warehouse_code?: string; warehouse_name?: string }) => ({
       value: String(warehouse.id),
       label: `${warehouse.warehouse_code ?? ""} - ${warehouse.warehouse_name ?? ""}`,
     }));
@@ -596,199 +699,216 @@ export default function ExchangeAddEditPage() {
                     config={{
                       showNestedLoading: false,
                       columns: [
-                        {
-                          key: "item_id",
-                          label: "Item Name",
-                          width: 300,
-                          render: (row) => {
-                            const idx = Number(row.idx);
-                            const err = itemErrors[idx]?.item_id;
-                            const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
-                            const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
-                            return (
-                              <div>
-                                <AutoSuggestion
-                                  label=""
-                                  name={`item_id_${row.idx}`}
-                                  placeholder="Search item"
-                                  onSearch={(q) => fetchItem(q)}
-                                  initialValue={initialLabel}
-                                  onSelect={(opt) => {
-                                    if (opt.value !== row.item_id) {
-                                      recalculateItem(Number(row.idx), "item_id", opt.value);
-                                    }
-                                  }}
-                                  onClear={() => {
-                                    recalculateItem(Number(row.idx), "item_id", "");
-                                  }}
-                                  disabled={!values.customer}
-                                  error={err && err}
-                                  className="w-full"
-                                />
-                              </div>
-                            );
+                          {
+                            key: "item_id",
+                            label: "Item Name",
+                            width: 390,
+                            render: (row) => {
+                              const idx = Number(row.idx);
+                              const err = itemErrors[idx]?.item_id;
+                              const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
+                              const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
+                              return (
+                                <div>
+                                  <AutoSuggestion
+                                    label=""
+                                    name={`item_id_${row.idx}`}
+                                    placeholder="Search item"
+                                    onSearch={(q) => fetchItem(q)}
+                                    initialValue={initialLabel}
+                                    onSelect={(opt) => {
+                                      if (opt.value !== row.item_id) {
+                                        recalculateItem(Number(row.idx), "item_id", opt.value);
+                                      }
+                                    }}
+                                    onClear={() => {
+                                      recalculateItem(Number(row.idx), "item_id", "");
+                                    }}
+                                    disabled={!values.customer}
+                                    error={err && err}
+                                    className="w-full"
+                                  />
+                                </div>
+                              );
+                            },
                           },
-                        },
-                        {
-                          key: "uom_id",
-                          label: "UOM",
-                          width: 150,
-                          render: (row) => {
-                            const idx = Number(row.idx);
-                            const err = itemErrors[idx]?.uom_id;
-                            const options = JSON.parse(row.UOM ?? "[]");
-                            return (
-                              <div>
-                                <InputFields
-                                  label=""
-                                  value={row.uom_id}
-                                  placeholder="Select UOM"
-                                  width="max-w-[150px]"
-                                  options={options}
-                                  searchable={true}
-                                  disabled={options.length === 0 || !values.customer}
-                                  showSkeleton={Boolean(itemLoading[idx]?.uom)}
-                                  onChange={(e) => {
-                                    const chosen = (e.target as HTMLInputElement).value;
-                                    recalculateItem(Number(row.idx), "uom_id", chosen);
-                                    // find price in options (they include 'price' if provided earlier)
-                                    const found = options.find((uom: any) => String(uom.value) === chosen);
-                                    const price = found?.price ?? found?.price ?? "0.00";
-                                    if (price !== undefined) {
-                                      recalculateItem(Number(row.idx), "Price", String(price));
-                                    }
-                                  }}
-                                  error={err && err}
-                                />
-                              </div>
-                            );
+                          {
+                            key: "uom_id",
+                            label: "UOM",
+                            width: 120,
+                            render: (row) => {
+                              const idx = Number(row.idx);
+                              const err = itemErrors[idx]?.uom_id;
+                              const options = JSON.parse(row.UOM ?? "[]");
+                              return (
+                                <div>
+                                  <InputFields
+                                    label=""
+                                    value={row.uom_id}
+                                    placeholder="Select UOM"
+                                    width="max-w-[120px]"
+                                    options={options}
+                                    searchable={true}
+                                    disabled={options.length === 0 || !values.customer}
+                                    showSkeleton={Boolean(itemLoading[idx]?.uom)}
+                                    onChange={(e) => {
+                                      const chosen = (e.target as HTMLInputElement).value;
+                                      recalculateItem(Number(row.idx), "uom_id", chosen);
+                                      const found = options.find((uom: { value: string; label: string; price?: string }) => String(uom.value) === chosen);
+                                      const price = found?.uom_price ?? "0.00";
+                                      if (price !== undefined) {
+                                        recalculateItem(Number(row.idx), "Price", String(price));
+                                      }
+                                    }}
+                                    error={err && err}
+                                  />
+                                </div>
+                              );
+                            },
                           },
-                        },
-                        {
-                          key: "Quantity",
-                          label: "Qty",
-                          width: 150,
-                          render: (row) => {
-                            const idx = Number(row.idx);
-                            const err = itemErrors[idx]?.Quantity;
-                            return (
-                              <div>
-                                <InputFields
-                                  label=""
-                                  type="number"
-                                  name="Quantity"
-                                  placeholder="Enter Qty"
-                                  value={row.Quantity}
-                                  disabled={!row.uom_id || !values.customer}
-                                  onChange={(e) => {
-                                    const raw = (e.target as HTMLInputElement).value;
-                                    const intPart = raw.split(".")[0];
-                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                    recalculateItem(Number(row.idx), "Quantity", sanitized);
-                                  }}
-                                  min={1}
-                                  integerOnly={true}
-                                  error={err && err}
-                                />
-                              </div>
-                            );
+                          {
+                            key: "Quantity",
+                            label: "Qty",
+                            width: 100,
+                            render: (row) => {
+                              const idx = Number(row.idx);
+                              const err = itemErrors[idx]?.Quantity;
+                              return (
+                                <div>
+                                  <InputFields
+                                    label=""
+                                    type="number"
+                                    name="Quantity"
+                                    placeholder="Enter Qty"
+                                    value={row.Quantity}
+                                    disabled={!row.uom_id || !values.customer}
+                                    onChange={(e) => {
+                                      const raw = (e.target as HTMLInputElement).value;
+                                      const intPart = raw.split(".")[0];
+                                      const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                      recalculateItem(Number(row.idx), "Quantity", sanitized);
+                                    }}
+                                    min={1}
+                                    integerOnly={true}
+                                    error={err && err}
+                                  />
+                                </div>
+                              );
+                            },
                           },
-                        },
-                        {
-                          key: "Price",
-                          label: "Price",
-                          render: (row) => {
-                            const idx = Number(row.idx);
-                            const loading = Boolean(itemLoading[idx]?.price);
-                            const price = String(row.Price ?? "");
-                            if (loading) {
-                              return <span className="text-gray-400 animate-pulse">Loading...</span>;
-                            }
-                            if (!price || price === "" || price === "0" || price === "-") {
-                              return <span className="text-gray-400">-</span>;
-                            }
-                            return <span>{price}</span>;
+                          {
+                            key: "Price",
+                            label: "Price",
+                            render: (row) => {
+                              const idx = Number(row.idx);
+                              const loading = Boolean(itemLoading[idx]?.price);
+                              const price = String(row.Price ?? "");
+                              if (loading) {
+                                return <span className="text-gray-400 animate-pulse">Loading...</span>;
+                              }
+                              if (!price || price === "" || price === "0" || price === "-") {
+                                return <span className="text-gray-400">-</span>;
+                              }
+                              return <span>{toInternationalNumber(price)}</span>;
+                            },
                           },
-                        },
-                        {
-                          key: "region",
-                          label: "Region",
-                          width: 150,
-                          render: (row) => {
-                            const idx = Number(row.idx);
-                            const err = itemErrors[idx]?.Quantity;
-                            return (
-                              <div>
-                                <InputFields
-                                  label=""
-                                  name="region"
-                                  placeholder="Enter Region"
-                                  value={row.region}
-                                  disabled={!row.uom_id || !values.customer}
-                                  onChange={(e) => {
-                                    const raw = (e.target as HTMLInputElement).value;
-                                    const intPart = raw.split(".")[0];
-                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                    recalculateItem(Number(row.idx), "region", sanitized);
-                                  }}
-                                  min={1}
-                                  integerOnly={true}
-                                  error={err && err}
-                                />
-                              </div>
-                            );
+                          {
+                            key: "Total",
+                            label: "Total",
+                            render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span>,
                           },
-                        },
-                        {
-                          key: "return_type",
-                          label: "Return Type",
-                          width: 150,
-                          render: (row) => {
-                            const idx = Number(row.idx);
-                            const err = itemErrors[idx]?.return_type;
-                            return (
-                              <div>
-                                <InputFields
-                                  label=""
-                                  name="return_type"
-                                  placeholder="select Return type"
-                                  value={row.return_type}
-                                  disabled={!row.uom_id || !values.customer}
-                                  onChange={(e) => {
-                                    const raw = (e.target as HTMLInputElement).value;
-                                    const intPart = raw.split(".")[0];
-                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                    recalculateItem(Number(row.idx), "return_type", sanitized);
-                                  }}
-                                  min={1}
-                                  integerOnly={true}
-                                  error={err && err}
-                                />
-                              </div>
-                            );
+                        
+                           {
+                                          key: "return_type",
+                                          label: "Return Type",
+                                          width: 100,
+                                          render: (row) => (
+                                            <div style={{ minWidth: '100px', maxWidth: '100px' }}>
+                                              <InputFields
+                                                label=""
+                                                name="return_type"
+                                                value={row.return_type}
+                                                options={returnTypeOptions}
+                                                disabled={!row.item_id}
+                                                onChange={(e) => {
+                                                  const value = e.target.value;
+                                                  const newData = [...itemData];
+                                                  const index = Number(row.idx);
+                                                  newData[index].return_type = value;
+                                                  // Reset return_reason when type changes
+                                                  newData[index].return_reason = "";
+                                                  setItemData(newData);
+                                                  // Fetch reason list for this return type and row
+                                                  (async () => {
+                                                    try {
+                                                      const res = await reasonList({ return_id: value });
+                                                      const list = Array.isArray(res?.data) ? (res.data as Reason[]) : (Array.isArray(res) ? (res as Reason[]) : []);
+                                                      const options = list.map((reason: Reason) => ({
+                                                        label: reason.reson || reason.return_reason || reason.reason || reason.return_type || String(reason.id),
+                                                        value: String(reason.id),
+                                                      }));
+                                                      setRowReasonOptions(prev => ({ ...prev, [row.idx]: options }));
+                                                    } catch (err) {
+                                                      console.error('Failed to fetch reasons for return type', value, err);
+                                                      setRowReasonOptions(prev => ({ ...prev, [row.idx]: [] }));
+                                                    }
+                                                  })();
+                                                }}
+                                              />
+                                            </div>
+                                          ),
+                                        },
+                                        {
+                                          key: "return_reason",
+                                          label: "Return Reason",
+                                          width: 200,
+                                          render: (row) => {
+                                            // Prefer fetched reason options for the specific row, fall back to static lists
+                                            const fetched = rowReasonOptions[row.idx] || [];
+                                            const fallback = row.return_type === "1" ? goodOptions : row.return_type === "2" ? badOptions : [];
+                                            const options = fetched.length > 0 ? fetched : fallback;
+                                            return (
+                                              <div style={{ minWidth: '200px', maxWidth: '200px' }}>
+                                                <InputFields
+                                                  label=""
+                                                  name="return_reason"
+                                                  value={row.return_reason}
+                                                  options={options}
+                                                  disabled={!row.return_type}
+                                                  onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    const newData = [...itemData];
+                                                    const index = Number(row.idx);
+                                                    newData[index].return_reason = value;
+                                                    setItemData(newData);
+                                                  }}
+                                                />
+                                              </div>
+                                            );
+                                          },
+                                        },
+                          {
+                            key: "action",
+                            label: "Action",
+                            render: (row) => (
+                              <button
+                                type="button"
+                                className={`${itemData.length <= 1 ? "opacity-50 cursor-not-allowed" : ""} text-red-500 flex items-center`}
+                                onClick={() => itemData.length > 1 && handleRemoveItem(Number(row.idx))}
+                              >
+                                <Icon icon="hugeicons:delete-02" width={20} />
+                              </button>
+                            ),
                           },
-                        },
-                        {
-                          key: "Total",
-                          label: "Total",
-                          render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span>,
-                        },
-                        {
-                          key: "action",
-                          label: "Action",
-                          render: (row) => (
-                            <button
-                              type="button"
-                              className={`${itemData.length <= 1 ? "opacity-50 cursor-not-allowed" : ""} text-red-500 flex items-center`}
-                              onClick={() => itemData.length > 1 && handleRemoveItem(Number(row.idx))}
-                            >
-                              <Icon icon="hugeicons:delete-02" width={20} />
-                            </button>
-                          ),
-                        },
                       ],
                     }}
                   />
+                   <div className="mt-4">
+                        <button type="button" className="text-[#E53935] font-medium text-[16px] flex items-center gap-2" onClick={handleAddNewItem}>
+                          <Icon icon="material-symbols:add-circle-outline" width={20} />
+                          Add New Item
+                        </button>
+                      </div>
                 </div>
 
                 {/* --- Collect table: SHOW ONLY SELECTED ITEMS (driven by itemData) --- */}
@@ -796,26 +916,24 @@ export default function ExchangeAddEditPage() {
                   <h3 className="text-[16px] font-semibold mb-2">Collect</h3>
                   <Table
                     data={itemData
-                      .filter((row) => row.item_id) // only selected items
+                      .filter((row) => row.item_id)
                       .map((row) => {
                         const original = exchangeData.find((it) => String(it.id) === String(row.item_id));
-
+                        // Find selected UOM object
+                        const selectedUom = Array.isArray(row.UOM)
+                          ? row.UOM.find((uom) => String(uom.value) === String(row.uom_id))
+                          : undefined;
                         return {
                           id: String(row.item_id ?? ""),
                           code: String(original?.item_code ?? original?.erp_code ?? ""),
                           name: String(original?.name ?? row.item_name ?? ""),
-                          uom_count: String(
-                            Array.isArray(original?.item_uoms) ? original.item_uoms.length : 0
-                          ),
-                          price: String(
-                            original?.item_uoms?.[0]?.price
-                              ? original.item_uoms[0].price
-                              : row.Price ?? "0"
-                          ),
-                          // raw removed! (cannot be used in table rows)
+                          uom: selectedUom?.label || "",
+                          uom_count: String(Array.isArray(original?.item_uoms) ? original.item_uoms.length : 0),
+                          price: selectedUom?.price ?? row.Price ?? "0",
+                          quantity: row.Quantity,
+                          total: row.Total,
                         };
                       })}
-
                     config={{
                       showNestedLoading: false,
                       columns: [
@@ -829,26 +947,10 @@ export default function ExchangeAddEditPage() {
                             </span>
                           ),
                         },
-                        { key: "uom_count", label: "UOMs", align: "center", render: (r) => <span>{r.uom_count}</span> },
-                        { key: "Quantity", label: "Quantity", align: "center", render: (r) => <span>{r.Quantity}</span> },
-                        { key: "price", label: "Price", align: "right", render: (r) => <span>{r.price || "-"}</span> },
-                        { key: "total", label: "Total", align: "right", render: (r) => <span>{r.total || "-"}</span> },
-                        {
-                          key: "action",
-                          label: "",
-                          render: (r) => (
-                            <button
-                              type="button"
-                              className="text-primary text-sm"
-                              onClick={() => {
-                                const original = exchangeData.find((o: any) => String(o.id) === String(r.id));
-                                if (original) handleAddItemFromList(original as FormData);
-                              }}
-                            >
-                              Add
-                            </button>
-                          ),
-                        },
+                        { key: "uom", label: "UOM", align: "center", render: (r) => <span>{r.uom}</span> },
+                        { key: "quantity", label: "Quantity", align: "center", render: (r) => <span>{r.quantity}</span> },
+                        { key: "price", label: "Price", align: "right", render: (r) => <span>{toInternationalNumber(r.price) || "-"}</span> },
+                        { key: "total", label: "Total", align: "right", render: (r) => <span>{toInternationalNumber(r.total) || "-"}</span> },
                       ],
                     }}
                   />
@@ -858,12 +960,7 @@ export default function ExchangeAddEditPage() {
                 <div className="flex justify-between text-primary gap-0 mb-10">
                   <div className="flex justify-between flex-wrap w-full mt-[20px]">
                     <div className="flex flex-col justify-between gap-[20px] w-full lg:w-auto">
-                      <div className="">
-                        <button type="button" className="text-[#E53935] font-medium text-[16px] flex items-center gap-2" onClick={handleAddNewItem}>
-                          <Icon icon="material-symbols:add-circle-outline" width={20} />
-                          Add New Item
-                        </button>
-                      </div>
+                     
                       <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
                         <InputFields label="comment" type="textarea" name="comment" placeholder="Enter comment" value={values.comment} onChange={handleChange} error={touched.comment && (errors.comment as string)} />
                       </div>
