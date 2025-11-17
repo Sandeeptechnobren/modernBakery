@@ -119,7 +119,7 @@ export const initialLinkData: SidebarDataType[] = [
        {
         isActive: false,
         href: "#",
-        label: "Distributors",
+        label: "Manage Distributors",
         leadingIcon: "mdi:account-cash-outline",
         iconColor: "text-green-500",
         trailingIcon: "mdi-light:chevron-right",
@@ -319,7 +319,7 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/invoice",
+            href: "/agentInvoice",
             label: "Agent Invoice",
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"

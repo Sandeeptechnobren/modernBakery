@@ -29,6 +29,12 @@ export type FilterField = {
     placeholder?: string;
     isSingle?: boolean;
     multiSelectChips?: boolean;
+    // optional predicate to determine whether this filter should be applied.
+    // Receives the full `filters` object and should return `true` when the
+    // filter should be applied (included in payload / client-side filter).
+    // Example for a date-range start field:
+    // applyWhen: (filters) => Boolean(filters.startDate && filters.endDate)
+    applyWhen?: (filters: Record<string, any>) => boolean;
 };
 
 export type configType = {
@@ -1445,8 +1451,17 @@ function FilterBy() {
 
     const activeFilterCount = Object.keys(filters || {}).reduce((acc, k) => {
         const v = filters[k];
-        if (Array.isArray(v)) return acc + (v.length > 0 ? 1 : 0);
-        return acc + (String(v ?? '').trim().length > 0 ? 1 : 0);
+        const hasValue = Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0;
+        if (!hasValue) return acc;
+        // respect applyWhen predicate if provided on the field
+        const field = (config.header?.filterByFields || []).find((f: FilterField) => f.key === k);
+        try {
+            if (field?.applyWhen && !field.applyWhen(filters)) return acc;
+        } catch (err) {
+            // if predicate throws, treat as not applicable
+            return acc;
+        }
+        return acc + 1;
     }, 0);
     const applyFilter = async () => {
         if (activeFilterCount === 0) return;
@@ -1455,8 +1470,24 @@ function FilterBy() {
             try {
                 setNestedLoading(true);
                 // convert array filter values into comma-separated strings for API
+                // Use `applyWhen` predicate (if provided on a FilterField) to
+                // decide whether to include a key in the payload. This makes the
+                // filter behavior reusable: e.g. date start/end can both be
+                // required before applying either.
                 const payloadForApi: Record<string, string | number | null> = {};
+                const fields = config.header?.filterByFields || [];
                 Object.keys(filters || {}).forEach((k) => {
+                    const field = fields.find(f => f.key === k);
+                    try {
+                        if (field?.applyWhen && !field.applyWhen(filters)) {
+                            // skip this key as its predicate decided it shouldn't apply
+                            return;
+                        }
+                    } catch (err) {
+                        // if predicate throws, default to skipping to be safe
+                        return;
+                    }
+
                     const v = filters[k];
                     if (Array.isArray(v)) {
                         payloadForApi[k] = v.length > 0 ? v.join(',') : "";
@@ -1494,8 +1525,20 @@ function FilterBy() {
         } else {
             // fallback to client-side filtering
             const all = tableDetails.data || [];
+            const fields = config.header?.filterByFields || [];
             const filtered = all.filter((row) => {
                 return Object.keys(filters).every((k) => {
+                    const field = fields.find(f => f.key === k);
+                    try {
+                        if (field?.applyWhen && !field.applyWhen(filters)) {
+                            // skip this filter if its predicate says not to apply
+                            return true;
+                        }
+                    } catch (err) {
+                        // if predicate throws, skip this filter to be safe
+                        return true;
+                    }
+
                     const val = filters[k];
                     if (val === "" || val == null) return true;
                     const cell = String((row as TableDataType)[k] ?? "").toLowerCase();
@@ -1665,10 +1708,10 @@ function FilterBy() {
                         <div className="p-4 flex items-center justify-end gap-4">
                             <SidebarBtn
                                 isActive={false}
-                                onClick={() => clearAll()}
+                                onClick={() => appliedFilters === false ? resetLocalFilters() : clearAll()}
                                 label="Clear All"
                                 buttonTw="px-3 py-2 h-9"
-                                disabled={appliedFilters === false}
+                                disabled={activeFilterCount === 0}
                                 className="text-sm"
                             />
                             <SidebarBtn
@@ -1712,7 +1755,7 @@ function FilterBy() {
                                 }
                             }
                         }}
-                        className="ml-2 underline text-gray-600"
+                        className="ml-2 underline text-gray-600 cursor-pointer"
                     >
                         Clear Filter
                     </button>

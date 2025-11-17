@@ -43,8 +43,8 @@ export default function Item() {
   // const [showDeletePopup, setShowDeletePopup] = useState(false);
   // const [selectedRow, setSelectedRow] = useState<LocalTableDataType | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedId,setSelectedId] = useState<string>('');
-  const [open,setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string>('');
+  const [open, setOpen] = useState(false);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [threeDotLoading, setThreeDotLoading] = useState({
@@ -53,63 +53,75 @@ export default function Item() {
   });
 
   const columns = [
-  // { key: "erp_code", label: "ERP Code", render: (row: LocalTableDataType) => row.erp_code || "-" },
-  { key: "name", label: "Name", render: (row: LocalTableDataType) =>{ return <div className="cursor-pointer hover:text-[#EA0A2A]" onClick={()=>{
-    console.log("clicked",row.uuid)
-    setSelectedId(row?.uuid || "")
-  setOpen(true);
-  }}>{row.erp_code + " - " + row.name || "-"}</div> }},
-  {
-    key: "item_category",
-    label: "Category",
-    render: (row: LocalTableDataType) => row.item_category?.category_name || "-",
-  },
-  {
-    key: "base_uom",
-    label: "Base UOM",
-    render: (row: LocalTableDataType) => {
-      if (!row.item_uoms || row.item_uoms.length === 0) return "-";
-      return row.item_uoms[0]?.name ?? "-";
+    // { key: "erp_code", label: "ERP Code", render: (row: LocalTableDataType) => row.erp_code || "-" },
+    {
+      key: "name", 
+      label: "Name", 
+      showByDefault: true,
+      render: (row: LocalTableDataType) => {
+        return <div className="cursor-pointer hover:text-[#EA0A2A]" onClick={() => {
+          // console.log("clicked", row.uuid)
+          setSelectedId(row?.uuid || "")
+          setOpen(true);
+        }}>{row.erp_code + " - " + row.name || "-"}</div>
+      }
     },
-  },
-  {
-    key: "base_uom_price",
-    label: "Base UOM Price",
-    render: (row: LocalTableDataType) => {
-      if (!row.item_uoms || row.item_uoms.length === 0) return "-";
-      return toInternationalNumber(row.item_uoms[0]?.uom_price) ?? "-";
+    {
+      key: "item_category",
+      label: "Category",
+      showByDefault: true,
+      render: (row: LocalTableDataType) => row.item_category?.category_name || "-",
     },
-  },
-  {
-    key: "secondary_uom",
-    label: "Secondary UOM",
-    render: (row: LocalTableDataType) => {
-      if (!row.item_uoms || row.item_uoms.length < 2) return "-";
-      return row.item_uoms[1]?.name ?? "-";
+    {
+      key: "base_uom",
+      label: "Base UOM",
+      showByDefault: true,
+      render: (row: LocalTableDataType) => {
+        if (!row.item_uoms || row.item_uoms.length === 0) return "-";
+        return row.item_uoms[0]?.name ?? "-";
+      },
     },
-  },
-  {
-    key: "secondary_uom_price",
-    label: "Secondary UOM Price",
-    render: (row: LocalTableDataType) => {
-      if (!row.item_uoms || row.item_uoms.length < 2) return "-";
-      return toInternationalNumber(row.item_uoms[1]?.uom_price) ?? "-";
+    {
+      key: "base_uom_price",
+      label: "Base UOM Price",
+      showByDefault: true,
+      render: (row: LocalTableDataType) => {
+        if (!row.item_uoms || row.item_uoms.length === 0) return "-";
+        return toInternationalNumber(row.item_uoms[0]?.uom_price) ?? "-";
+      },
     },
-  },
-  {
-    key: "status",
-    label: "Status",
-    // isSortable: true,
-    showByDefault: true,
-    render: (row: LocalTableDataType) => {
-      const isActive =
-        String(row.status) === "1" ||
-        (typeof row.status === "string" &&
-          row.status.toLowerCase() === "active");
-      return <StatusBtn isActive={isActive} />;
+    {
+      key: "secondary_uom",
+      label: "Secondary UOM",
+      showByDefault: true,
+      render: (row: LocalTableDataType) => {
+        if (!row.item_uoms || row.item_uoms.length < 2) return "-";
+        return row.item_uoms[1]?.name ?? "-";
+      },
     },
-  },
-];
+    {
+      key: "secondary_uom_price",
+      label: "Secondary UOM Price",
+      showByDefault: true,
+      render: (row: LocalTableDataType) => {
+        if (!row.item_uoms || row.item_uoms.length < 2) return "-";
+        return toInternationalNumber(row.item_uoms[1]?.uom_price) ?? "-";
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      // isSortable: true,
+      showByDefault: true,
+      render: (row: LocalTableDataType) => {
+        const isActive =
+          String(row.status) === "1" ||
+          (typeof row.status === "string" &&
+            row.status.toLowerCase() === "active");
+        return <StatusBtn isActive={isActive} />;
+      },
+    },
+  ];
 
   const fetchItems = useCallback(
     async (
@@ -265,7 +277,6 @@ export default function Item() {
                 }
               ],
               columnFilter: true,
-
               actions: [
                 <SidebarBtn
                   key={0}
@@ -300,9 +311,9 @@ export default function Item() {
           }}
         />
       </div>
-      <Drawer anchor="right" open={open} onClose={() => {setOpen(false)}} >
-        <ItemPage id={selectedId}/>
-        </Drawer>
+      <Drawer anchor="right" open={open} onClose={() => { setOpen(false) }} >
+        <ItemPage id={selectedId} />
+      </Drawer>
 
     </>
   );

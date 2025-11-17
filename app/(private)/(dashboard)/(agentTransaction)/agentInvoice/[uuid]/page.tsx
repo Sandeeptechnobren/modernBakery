@@ -789,7 +789,7 @@ export default function InvoiceddEditPage() {
                     : "Invoice created successfully!",
                 "success"
             );
-            router.push("/invoice");
+            router.push("/agentInvoice");
         } catch (error) {
             if (error instanceof yup.ValidationError) {
                 // Handle yup validation errors
@@ -1500,7 +1500,7 @@ export default function InvoiceddEditPage() {
                                 // { key: "Discount", value: `AED ${discount.toFixed(2)}` },
                                 { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
                                 { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
-                                { key: "VAT", value: `AED ${toInternationalNumber(netAmount - totalVat)}` },
+                                // { key: "preVAT", value: `AED ${toInternationalNumber(netAmount - totalVat)}` },
                                 // { key: "Delivery Charges", value: "AED 0.00" },
                             ].map((item) => (
                                 <Fragment key={item.key}>
@@ -1524,7 +1524,7 @@ export default function InvoiceddEditPage() {
                     <button
                         type="button"
                         className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-                        onClick={() => router.push("/invoice")}
+                        onClick={() => router.push("/agentInvoice")}
                         disabled={isSubmitting}
                     >
                         Cancel

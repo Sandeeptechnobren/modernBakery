@@ -124,7 +124,7 @@ export default function OrderDetailPage() {
   const [loading, setLoadingState] = useState<boolean>(false);
   const uuid = params?.uuid as string;
   const CURRENCY = localStorage.getItem("country") || "";
-  const PATH = "/invoice/details/";
+  const PATH = "/agentInvoice/details/";
 
   useEffect(() => {
     if (uuid) {
@@ -166,7 +166,7 @@ export default function OrderDetailPage() {
   const exportFile = async () => {
       try {
         setLoadingState(true);
-        const response = await exportInvoiceWithDetails({ uuid: uuid, format: "csv" });
+        const response = await exportInvoiceWithDetails({ uuid: uuid, format: "pdf" });
         if (response && typeof response === 'object' && response.download_url) {
           await downloadFile(response.download_url);
           showSnackbar("File downloaded successfully ", "success");
@@ -199,7 +199,7 @@ export default function OrderDetailPage() {
           <Icon
             icon="lucide:arrow-left"
             width={24}
-            onClick={() => router.back()}
+            onClick={() => router.push("/agentInvoice")}
             className="cursor-pointer"
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">

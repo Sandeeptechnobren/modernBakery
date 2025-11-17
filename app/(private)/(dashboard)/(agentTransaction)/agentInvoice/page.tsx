@@ -38,7 +38,7 @@ const columns = [
 
     },
     { key: "invoice_code", label: "Invoice Code", showByDefault: true },
-    { key: "order_code", label: "Order Code"},
+    { key: "order_code", label: "Order Code" },
     {
         key: "customer_code", label: "Customer", showByDefault: true, render: (row: TableDataType) => {
             const code = row.customer_code || "-";
@@ -350,12 +350,14 @@ export default function CustomerInvoicePage() {
                             {
                                 key: "start_date",
                                 label: "Start Date",
-                                type: "date"
+                                type: "date",
+                                applyWhen: (filters) => !!filters.start_date && !!filters.end_date
                             },
                             {
                                 key: "end_date",
                                 label: "End Date",
-                                type: "date"
+                                type: "date",
+                                applyWhen: (filters) => !!filters.start_date && !!filters.end_date
                             },
                             {
                                 key: "company_id",
@@ -405,7 +407,7 @@ export default function CustomerInvoicePage() {
                         actions: [
                             <SidebarBtn
                                 key={1}
-                                href="/invoice/add"
+                                href="/agentInvoice/add"
                                 isActive
                                 leadingIcon="mdi:plus"
                                 label="Add"
@@ -422,7 +424,7 @@ export default function CustomerInvoicePage() {
                             icon: "lucide:eye",
                             onClick: (row: TableDataType) =>
                                 router.push(
-                                    `/invoice/details/${row.uuid}`
+                                    `/agentInvoice/details/${row.uuid}`
                                 ),
                         },
                     ],
