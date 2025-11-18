@@ -58,59 +58,59 @@ interface FormData {
 }
 
 interface OrderData {
+  id: number,
+  uuid: string,
+  order_code: string,
+  warehouse_id: number,
+  warehouse_code: string,
+  warehouse_name: string,
+  warehouse_email: string,
+  warehouse_number: string,
+  warehouse_address: string,
+  customer_id: string,
+  customer_code: string,
+  customer_name: string,
+  customer_email: string,
+  customer_street: string,
+  customer_town: string,
+  customer_contact: string,
+  route_id: number,
+  route_code: string,
+  route_name: string,
+  salesman_id: string,
+  salesman_code: string,
+  salesman_name: string,
+  delivery_date: string,
+  comment: string,
+  status: number,
+  created_at: string,
+  details: {
     id: number,
     uuid: string,
+    header_id: number,
     order_code: string,
-    warehouse_id: number,
-    warehouse_code: string,
-    warehouse_name: string,
-    warehouse_email: string,
-    warehouse_number: string,
-    warehouse_address: string,
-    customer_id: string,
-    customer_code: string,
-    customer_name: string,
-    customer_email: string,
-    customer_street: string,
-    customer_town: string,
-    customer_contact: string,
-    route_id: number,
-    route_code: string,
-    route_name: string,
-    salesman_id: string,
-    salesman_code: string,
-    salesman_name: string,
-    delivery_date: string,
-    comment: string,
-    status: number,
-    created_at: string,
-    details: {
+    item_id: number,
+    item_code: string,
+    item_name: string,
+    uom_id: number,
+    uom_name: string,
+    item_price: number,
+    quantity: number,
+    vat: number,
+    discount: number,
+    gross_total: number,
+    net_total: number,
+    total: number,
+    item_uoms: {
       id: number,
-      uuid: string,
-      header_id: number,
-      order_code: string,
       item_id: number,
-      item_code: string,
-      item_name: string,
-      uom_id: number,
-      uom_name: string,
-      item_price: number,
-      quantity: number,
-      vat: number,
-      discount: number,
-      gross_total: number,
-      net_total: number,
-      total: number,
-      item_uoms: {
-        id: number,
-        item_id: number,
-        uom_type: string,
-        name: string,
-        price: string,
-        is_stock_keeping: boolean,
-        upc: string,
-        enable_for: string
-      }[],
+      uom_type: string,
+      name: string,
+      price: string,
+      is_stock_keeping: boolean,
+      upc: string,
+      enable_for: string
+    }[],
   }[]
 }
 
@@ -151,6 +151,7 @@ export default function DeliveryAddEditPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
+  const CURRENCY = localStorage.getItem("currency") || "";
   const [skeleton, setSkeleton] = useState({
     route: false,
     delivery: false,
@@ -255,7 +256,7 @@ export default function DeliveryAddEditPage() {
       return;
     }
     const data = res?.data || [];
-    
+
     // sets the price directly in the item_uoms
     const updatedData = data.map((item: any) => {
       const item_uoms = item?.item_uoms ? item?.item_uoms?.map((uom: any) => {
@@ -265,7 +266,7 @@ export default function DeliveryAddEditPage() {
           return { ...uom, price: item.pricing?.buom_ctn_price }
         }
       }) : item?.item_uoms;
-      return { ...item, item_uoms}
+      return { ...item, item_uoms }
     })
 
     // console.log(updatedData);
@@ -273,7 +274,7 @@ export default function DeliveryAddEditPage() {
     setSearchedItem(updatedData);
     const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
       value: String(item.id),
-      label: (item.code ?? item.item_code ?? item.erp_code ?? "") + " - " + (item.name ?? "")
+      label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
     }));
     // Merge newly fetched options with existing ones so previously selected items remain available
     setItemsOptions((prev: { label: string; value: string }[] = []) => {
@@ -481,11 +482,11 @@ export default function DeliveryAddEditPage() {
       } else {
         try {
           await saveFinalCode({
-              reserved_code: code,
-              model_name: "delivery",
+            reserved_code: code,
+            model_name: "delivery",
           });
         } catch (e) {
-            // Optionally handle error, but don't block success
+          // Optionally handle error, but don't block success
         }
         showSnackbar("Delivery created successfully", "success");
         router.push("/agentCustomerDelivery");
@@ -503,9 +504,9 @@ export default function DeliveryAddEditPage() {
   const keyValueData = [
     // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
     // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
-    { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
-    { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
-    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
+    { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
+    { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
+    // { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(preVat)}` },
     // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
   ];
 
@@ -549,7 +550,7 @@ export default function DeliveryAddEditPage() {
     const data = res?.data || [];
     const options = data.map((warehouse: { id: number; warehouse_code: string; warehouse_name: string }) => ({
       value: String(warehouse.id),
-      label:  warehouse.warehouse_code + " - " + warehouse.warehouse_name
+      label: warehouse.warehouse_code + " - " + warehouse.warehouse_name
     }));
     setFilteredWarehouseOptions(options);
     return options;
@@ -811,7 +812,7 @@ export default function DeliveryAddEditPage() {
                                 // integerOnly={true}
                                 placeholder="Enter Qty"
                                 value={row.Quantity}
-                                disabled={ !row.uom_id || !values.delivery}
+                                disabled={!row.uom_id || !values.delivery}
                                 onChange={(e) => {
                                   const raw = (e.target as HTMLInputElement).value;
                                   const intPart = raw.split('.')[0];
@@ -876,15 +877,22 @@ export default function DeliveryAddEditPage() {
                 <div className="flex justify-between text-primary gap-0 mb-10">
                   <div className="flex justify-between flex-wrap w-full mt-[20px]">
                     <div className="flex flex-col justify-between gap-[20px] w-full lg:w-auto">
-                      <div className="">
-                        <button
-                          type="button"
-                          className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-                          onClick={handleAddNewItem}
-                        >
-                          <Icon icon="material-symbols:add-circle-outline" width={20} />
-                          Add New Item
-                        </button>
+                      <div className="mt-4">
+                        {(() => {
+                          // disable add when there's already an empty/new item row
+                          const hasEmptyRow = itemData.some(it => (String(it.item_id ?? '').trim() === '' && String(it.uom_id ?? '').trim() === ''));
+                          return (
+                            <button
+                              type="button"
+                              disabled={hasEmptyRow}
+                              className={`text-[#E53935] font-medium text-[16px] flex items-center gap-2 ${hasEmptyRow ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              onClick={() => { if (!hasEmptyRow) handleAddNewItem(); }}
+                            >
+                              <Icon icon="material-symbols:add-circle-outline" width={20} />
+                              Add New Item
+                            </button>
+                          );
+                        })()}
                       </div>
                       <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
                         <InputFields
@@ -908,7 +916,7 @@ export default function DeliveryAddEditPage() {
                       ))}
                       <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                         <span>Total</span>
-                        <span>AED {toInternationalNumber(finalTotal)}</span>
+                        <span>{CURRENCY} {toInternationalNumber(finalTotal)}</span>
                       </div>
                     </div>
                   </div>
@@ -924,7 +932,7 @@ export default function DeliveryAddEditPage() {
                   >
                     Cancel
                   </button>
-                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Delivery..." : "Create Delivery"} disabled={isSubmitting} onClick={() => submitForm()} />
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Delivery..." : "Create Delivery"} disabled={isSubmitting || !values.warehouse || !values.delivery_date || !values.delivery || !itemData || !itemData.length} onClick={() => submitForm()} />
                 </div>
               </>
             );

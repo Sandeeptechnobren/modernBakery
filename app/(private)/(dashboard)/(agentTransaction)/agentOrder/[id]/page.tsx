@@ -107,6 +107,7 @@ export default function OrderAddEditPage() {
     customer: false,
     item: false,
   });
+  const CURRENCY = localStorage.getItem("country") || "";
   const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
   const form = {
@@ -215,7 +216,7 @@ export default function OrderAddEditPage() {
           return { ...uom, price: item.pricing?.buom_ctn_price }
         }
       }) : item?.item_uoms;
-      return { ...item, item_uoms}
+      return { ...item, item_uoms }
     })
 
     // console.log(updatedData);
@@ -223,7 +224,7 @@ export default function OrderAddEditPage() {
     setOrderData(updatedData);
     const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
       value: String(item.id),
-      label: (item.code ?? item.item_code ?? item.erp_code ?? "") + " - " + (item.name ?? "")
+      label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
     }));
     // Merge newly fetched options with existing ones so previously selected items remain available
     setItemsOptions((prev: { label: string; value: string }[] = []) => {
@@ -454,9 +455,9 @@ export default function OrderAddEditPage() {
   const keyValueData = [
     // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
     // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
-    { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
-    { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
-    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
+    { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
+    { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
+    // { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
     // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
   ];
 
@@ -792,15 +793,22 @@ export default function OrderAddEditPage() {
                 <div className="flex justify-between text-primary gap-0 mb-10">
                   <div className="flex justify-between flex-wrap w-full mt-[20px]">
                     <div className="flex flex-col justify-between gap-[20px] w-full lg:w-auto">
-                      <div className="">
-                        <button
-                          type="button"
-                          className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-                          onClick={handleAddNewItem}
-                        >
-                          <Icon icon="material-symbols:add-circle-outline" width={20} />
-                          Add New Item
-                        </button>
+                      <div className="mt-4">
+                        {(() => {
+                          // disable add when there's already an empty/new item row
+                          const hasEmptyRow = itemData.some(it => (String(it.item_id ?? '').trim() === '' && String(it.uom_id ?? '').trim() === ''));
+                          return (
+                            <button
+                              type="button"
+                              disabled={hasEmptyRow}
+                              className={`text-[#E53935] font-medium text-[16px] flex items-center gap-2 ${hasEmptyRow ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              onClick={() => { if (!hasEmptyRow) handleAddNewItem(); }}
+                            >
+                              <Icon icon="material-symbols:add-circle-outline" width={20} />
+                              Add New Item
+                            </button>
+                          );
+                        })()}
                       </div>
                       <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
                         <InputFields
@@ -840,7 +848,7 @@ export default function OrderAddEditPage() {
                   >
                     Cancel
                   </button>
-                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !values.items || values.items.length === 0} onClick={() => submitForm()} />
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !itemData || !itemData.length } onClick={() => submitForm()} />
                 </div>
               </>
             );

@@ -42,6 +42,7 @@ type Props = {
   required?: boolean;
   loading?: boolean;
   searchable?: boolean | string;
+  showSearchInDropdown?: boolean;
   onSearch?: (search: string) => void;
   placeholder?: string;
   textareaCols?: number;
@@ -80,6 +81,7 @@ export default function InputFields({
   required = false,
   loading = false,
   searchable = false,
+  showSearchInDropdown = false,
   onSearch = () => { },
   multiSelectChips = false,
   originalValue = null,
@@ -661,6 +663,7 @@ export default function InputFields({
                         type="text"
                         placeholder={!value ? `Search ${label}` : undefined}
                         value={displayValue}
+                        autoComplete='off'
                         onChange={e => {
                           if (disabled) return;
                           const v = (e.target as HTMLInputElement).value;
@@ -674,7 +677,7 @@ export default function InputFields({
                           }
                         }}
                         onFocus={() => setDropdownOpen(true)}
-                        className={`flex-1 truncate text-sm outline-none border-none px-3 h-full ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                        className={`flex-1 truncate outline-none border-none px-3 h-full ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
                         style={hasSelection ? { color: '#111827' } : undefined}
                         onKeyDown={e => {
                           if (e.key === 'Enter') {
@@ -691,19 +694,19 @@ export default function InputFields({
                     );
                   })()
                 ) : (
-                  <span className={`truncate flex-1 ${!value ? "text-gray-400" : "text-gray-900"}`}>
+                  <span className={`truncate flex-1 px-3 ${!value ? "text-gray-400" : "text-gray-900"}`}>
                     {(!value ? `Select ${label}` : options?.find(opt => opt.value === value)?.label)
                     }
                   </span>
                 )}
                 {/* Show down arrow only if not disabled and not searchable */}
-                {!isSearchable && !disabled && (
-                  <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                { !disabled && (
+                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 )}
               </div>
               {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
-                <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl overflow-auto">
-                  {!isSearchable && (
+                <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content transition-all ease-in-out fixed z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl overflow-auto">
+                  {showSearchInDropdown && (
                     <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
                       <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
                       <input

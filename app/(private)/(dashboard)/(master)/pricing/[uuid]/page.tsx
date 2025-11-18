@@ -13,7 +13,7 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 import { itemList, addPricingDetail, pricingDetailById, pricingHeaderById, editPricingDetail } from "@/app/services/allApi";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import InputFields from "@/app/components/inputFields";
-import Table from "@/app/components/customTable";
+import Table, { TableDataType } from "@/app/components/customTable";
 import Loading from "@/app/components/Loading";
 import { useRouter } from "next/navigation";
 import * as yup from "yup";
@@ -48,6 +48,137 @@ const initialKeys: KeyGroup[] = [
     ],
   },
 ];
+
+const Buom = ({ row, details, setDetails }: any) => {
+  const [buom, setBuom] = useState("0")
+
+  useEffect(() => {
+
+    details.filter((ids: any, index: number) => {
+      console.log(ids, "ids", row.id)
+      if (ids.item_id == row.id) {
+        setBuom(ids.buom_ctn_price)
+
+      }
+    })
+  }, [])
+
+
+
+  return (<InputFields
+    label=""
+    type="text"
+    value={buom}
+    onChange={(e) => {
+      setBuom(e.target.value)
+      let isAvailable = false
+      let indexVal = 0
+      if (details.length > 0) {
+
+        details.filter((ids: any, index: number) => {
+          console.log(ids, "ids", row.id)
+          if (ids.item_id == row.id) {
+            isAvailable = true
+            indexVal = index
+
+          }
+        })
+
+        if (isAvailable) {
+          details[indexVal] = { ...details[indexVal], buom_ctn_price: e.target.value }
+          setDetails(details)
+        }
+        else {
+          const newdata = { buom_ctn_price: e.target.value, auom_pc_price: 0, item_id: row.id, name: `${row.item_code}-${row.name}` }
+          details.push(newdata)
+          setDetails(details)
+        }
+
+        // let newdata = {buom_ctn_price:e.target.value,auom_pc_price:0,item_id:row.id,name:`${row.item_code}-${row.name}`}    
+        // details.push(newdata)
+        // setDetails(details)
+
+
+
+
+
+
+
+      }
+      else {
+        const newdata = { buom_ctn_price: e.target.value, auom_pc_price: 0, item_id: row.id, name: `${row.item_code}-${row.name}` }
+        details.push(newdata)
+        setDetails(details)
+
+      }
+
+    }}
+    width="w-full"
+  />)
+}
+
+const Auom = ({ row, details, setDetails }: any) => {
+  const [auom, setAuom] = useState("0")
+  useEffect(() => {
+
+    details.filter((ids: any, index: number) => {
+      console.log(ids, "ids", row.id)
+      if (ids.item_id == row.id) {
+        setAuom(ids.auom_pc_price)
+
+      }
+    })
+  }, [])
+  return (<InputFields
+    label=""
+    type="text"
+    value={auom || ""}
+    onChange={(e) => {
+      setAuom(e.target.value)
+      let isAvailable = false
+      let indexVal = 0
+      if (details.length > 0) {
+
+        details.filter((ids: any, index: number) => {
+          console.log(ids, "ids", row.id)
+          if (ids.item_id == row.id) {
+            isAvailable = true
+            indexVal = index
+
+          }
+        })
+
+        if (isAvailable) {
+          details[indexVal] = { ...details[indexVal], auom_pc_price: e.target.value }
+          setDetails(details)
+        }
+        else {
+          const newdata = { buom_ctn_price: 0, auom_pc_price: e.target.value, item_id: row.id, name: `${row.item_code}-${row.name}` }
+          details.push(newdata)
+          setDetails(details)
+        }
+
+        // let newdata = {buom_ctn_price:e.target.value,auom_pc_price:0,item_id:row.id,name:`${row.item_code}-${row.name}`}    
+        // details.push(newdata)
+        // setDetails(details)
+
+
+
+
+
+
+
+      }
+      else {
+        const newdata = { buom_ctn_price: 0, auom_pc_price: e.target.value, item_id: row.id, name: `${row.item_code}-${row.name}` }
+        details.push(newdata)
+        setDetails(details)
+
+      }
+    }}
+    width="w-full"
+  />)
+}
 
 type SelectKeyProps = {
   keyCombo: { Location: string[]; Customer: string[]; Item: string[] };
@@ -208,6 +339,7 @@ export default function AddPricing() {
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
   const isEditMode = id !== undefined && id !== "add" && id !== "";
   const [loading, setLoading] = useState(false);
+  const [details, setDetails] = useState([])
 
   // Fetch existing pricing details in edit mode
   useEffect(() => {
@@ -217,8 +349,11 @@ export default function AddPricing() {
       try {
         // Prefer the detailed endpoint for edit-mode population
         const raw = await pricingHeaderById(id);
-  // API sometimes wraps result under `data` or returns object directly
-  const res = raw && typeof raw === "object" && "data" in raw ? (raw as { data: unknown }).data : raw;
+
+        // console.log(,"raw343")
+        setDetails(raw.data.details)
+        // API sometimes wraps result under `data` or returns object directly
+        const res = raw && typeof raw === "object" && "data" in raw ? (raw as { data: unknown }).data : raw;
         if (res && typeof res === "object") {
           // populate basic fields if available
           setPromotion((s) => ({
@@ -377,7 +512,7 @@ export default function AddPricing() {
     }
     fetchEditData();
   }, [isEditMode, id]);
- 
+
   const validateStep = (step: number) => {
     if (step === 1) {
       return (
@@ -436,6 +571,7 @@ export default function AddPricing() {
   const clearErrors = () => setErrors({});
 
   const handleSubmit = async () => {
+    console.log(details, "hii496")
     clearErrors();
     const initialKeys = [
       {
@@ -504,59 +640,13 @@ export default function AddPricing() {
       item: selectedItemIds,
       // keep legacy CSV field for compatibility
       item_id: selectedItemIds.join(","),
-      details: selectedItemIds.map((itemId) => {
-        // Find the matching item data (same logic as itemsData builder)
-        let itemData = selectedItemDetails.find(
-          (item) => String(item.code || item.itemCode) === String(itemId)
-        );
-        if (!itemData) {
-          itemData = itemOptions.find(
-            (opt) => String(opt.value) === String(itemId)
-          );
-        }
-
-        // Recreate the display itemCode string (so matching with promotion.orderItems is consistent)
-        let itemCodeStr = "";
-        if (itemData) {
-          if (itemData.code) itemCodeStr = String(itemData.code);
-          else if (itemData.itemCode) itemCodeStr = String(itemData.itemCode);
-          else if (itemData.label) {
-            const labelParts = String(itemData.label).split(" - ");
-            itemCodeStr = labelParts.length > 1 ? labelParts[0] : String(itemData.label);
-          }
-        } else {
-          itemCodeStr = String(itemId);
-        }
-
-        const itemName = itemData?.name || itemData?.label || "";
-
-        // Find the order item for prices. Try multiple fallbacks: match by itemCode (string), or by numeric id
-        const orderItem = promotion.orderItems.find((oi) => {
-          return (
-            String(oi.itemCode) === String(itemCodeStr) ||
-            String(oi.itemCode) === String(itemId) ||
-            String(oi.item_id) === String(itemId)
-          );
-        });
-
-        // Convert stored price strings to numbers (if present) and fallback sensibly
-        const buom = orderItem?.buom_ctn_price ?? orderItem?.price ?? "";
-        const auom = orderItem?.auom_pc_price ?? "";
-
-        return {
-          name: itemName,
-          item_id: Number(itemId),
-          buom_ctn_price: buom !== undefined && buom !== null && buom !== "" ? Number(buom) : 0,
-          auom_pc_price: auom !== undefined && auom !== null && auom !== "" ? Number(auom) : 0,
-          status: 1,
-        };
-      }),
+      details: details,
     };
 
     try {
       await pricingValidationSchema.validate(payload, { abortEarly: false });
-  setLoading(true);
-  const res = isEditMode && id ? await editPricingDetail(id, payload) : await addPricingDetail(payload);
+      setLoading(true);
+      const res = isEditMode && id ? await editPricingDetail(id, payload) : await addPricingDetail(payload);
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit pricing", "error");
       } else {
@@ -833,7 +923,7 @@ export default function AddPricing() {
           </ContainerCard>
         );
       case 3:
-          const itemsData = (keyValue["Item"] || []).map((itemId, idx) => {
+        const itemsData = (keyValue["Item"] || []).map((itemId, idx) => {
           let itemData = selectedItemDetails.find(
             (item) => String(item.code || item.itemCode) === String(itemId)
           );
@@ -880,10 +970,7 @@ export default function AddPricing() {
         });
 
         const totalPages = Math.ceil(itemsData.length / pageSize);
-        const paginatedData = itemsData.slice(
-          (page - 1) * pageSize,
-          page * pageSize
-        );
+        const paginatedData = itemsData
         type PaginationBtnProps = {
           label: string;
           isActive: boolean;
@@ -896,8 +983,8 @@ export default function AddPricing() {
         }: PaginationBtnProps) => (
           <button
             className={`w-[32px] h-[32px] rounded-[6px] flex items-center justify-center mx-[2px] text-[14px] font-semibold transition-colors duration-150 border-none outline-none focus:ring-2 focus:ring-[#EA0A2A] select-none ${isActive
-                ? "bg-[#FFF0F2] text-[#EA0A2A] shadow-sm"
-                : "bg-white text-[#717680] hover:bg-[#F5F5F5]"
+              ? "bg-[#FFF0F2] text-[#EA0A2A] shadow-sm"
+              : "bg-white text-[#717680] hover:bg-[#F5F5F5]"
               }`}
             style={{ minWidth: 32 }}
             onClick={onClick}
@@ -966,9 +1053,9 @@ export default function AddPricing() {
         //     </div>
         //   );
         // };
- // inner small loader removed — top-level full-page loader handles edit-mode
-        
- return (
+        // inner small loader removed — top-level full-page loader handles edit-mode
+
+        return (
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
             <h2 className="text-xl font-semibold mb-6">Pricing</h2>
             <div className="grid grid-cols-4 gap-6 mb-6">
@@ -1038,7 +1125,7 @@ export default function AddPricing() {
               <div className="font-semibold text-lg mb-4">Items</div>
               <div className="mb-6">
                 <Table
-                  data={paginatedData}
+                  data={selectedItemDetails as unknown as TableDataType[]}
                   config={{
                     table: {
                       height: 500,
@@ -1046,29 +1133,24 @@ export default function AddPricing() {
                     showNestedLoading: false,
                     columns: [
                       {
-                        key: "itemCode",
+                        key: "item_code",
                         label: "Item Code",
                         render: (row) => (
                           <span className="font-semibold text-[#181D27] text-[14px]">
-                            {row.itemCode || "-"}
+                            {row?.item_code}- {row?.name}
                           </span>
                         ),
                       },
-                      {
-                        key: "itemName",
-                        label: "Item Name",
-                        render: (row) => {return row.itemName || "-";}
-                        
-                      },
+
                       {
                         key: "price",
                         label: "Price",
                         render: (row) => (
                           <div className="text-[14px] text-[#181D27] font-semibold space-y-1">
-                            {Array.isArray(row?.uom) && row.uom.length > 0 ? (
-                              row.uom.map((u) => (
-                                <div key={u.id}>
-                                  {u.name ? `${u.name} - ₹${u.price}` : `₹${u.price}`}
+                            {Array.isArray(row?.item_uoms) && row.item_uoms.length > 0 ? (
+                              row.item_uoms.map((u) => (
+                                <div key={u?.id}>
+                                  {`${u?.name} - ₹${u?.uom_price}`}
                                 </div>
                               ))
                             ) : (
@@ -1081,130 +1163,15 @@ export default function AddPricing() {
                         key: "buom_ctn_price",
                         label: "Base Price",
                         render: (row) => (
-                          <InputFields
-                            label=""
-                            type="text"
-                            value={row.buom_ctn_price || ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setPromotion((s) => {
-                                const arr = [...s.orderItems];
-                                const idxFound = arr.findIndex(
-                                  (oi) => oi.itemCode === row.itemCode
-                                );
-                                if (idxFound !== -1) {
-                                  arr[idxFound] = {
-                                    ...arr[idxFound],
-                                    buom_ctn_price: val,
-                                  };
-                                } else {
-                                  arr.push({
-                                    itemName: row.itemName,
-                                    itemCode: row.itemCode,
-                                    quantity: "",
-                                    toQuantity: "",
-                                    uom: "CTN",
-                                    price: row.price,
-                                    buom_ctn_price: val,
-                                    auom_pc_price: val,
-                                  });
-                                }
-                                // filter logic, etc... as before.
-                                return { ...s, orderItems: arr };
-                              });
-                            }}
-                            width="w-full"
-                          />
+                          <Buom row={row} setDetails={setDetails} details={details} />
                         ),
                       },
                       {
                         key: "auom_pc_price",
                         label: "Secondary Price",
                         render: (row) => (
-                          <InputFields
-                            label=""
-                            type="text"
-                            value={row.auom_pc_price || ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setPromotion((s) => {
-                                const arr = [...s.orderItems];
-                                const idxFound = arr.findIndex(
-                                  (oi) => oi.itemCode === row.itemCode
-                                );
-                                if (idxFound !== -1) {
-                                  arr[idxFound] = {
-                                    ...arr[idxFound],
-                                    auom_pc_price: val,
-                                  };
-                                } else {
-                                  arr.push({
-                                    itemName: row.itemName,
-                                    itemCode: row.itemCode,
-                                    quantity: "",
-                                    toQuantity: "",
-                                    uom: "CTN",
-                                    price: row.price,
-                                    auom_pc_price: val,
-                                    buom_ctn_price: val,
-                                  });
-                                }
-                                // filter logic, etc... as before.
-                                return { ...s, orderItems: arr };
-                              });
-                            }}
-                            width="w-full"
-                          />
+                          <Auom row={row} setDetails={setDetails} details={details} />
                         ),
-                      },
-                    ],
-                    rowActions: [
-                      {
-                        icon: "lucide:trash-2",
-                        onClick: (row) => {
-                          // Remove from selected items in keyValue["Item"]
-                          setKeyValue((prev) => ({
-                            ...prev,
-                            Item: (prev.Item || []).filter((itemId) => {
-                              let itemData = selectedItemDetails.find(
-                                (item) =>
-                                  String(item.code || item.itemCode) ===
-                                  String(itemId)
-                              );
-                              if (!itemData) {
-                                itemData = itemOptions.find(
-                                  (opt) => String(opt.value) === String(itemId)
-                                );
-                              }
-                              let itemCode = "-";
-                              if (itemData) {
-                                if (itemData.code) itemCode = itemData.code;
-                                else if (itemData.itemCode)
-                                  itemCode = itemData.itemCode;
-                                else if (itemData.label) {
-                                  const labelParts = String(
-                                    itemData.label
-                                  ).split(" - ");
-                                  itemCode =
-                                    labelParts.length > 1
-                                      ? labelParts[0]
-                                      : String(itemData.label);
-                                }
-                              } else {
-                                itemCode = String(itemId);
-                              }
-                              return itemCode !== row.itemCode;
-                            }),
-                          }));
-
-                          // Remove from promotion orderItems if set
-                          setPromotion((s) => ({
-                            ...s,
-                            orderItems: s.orderItems.filter(
-                              (oi) => oi.itemCode !== row.itemCode
-                            ),
-                          }));
-                        },
                       },
                     ],
 
@@ -1220,7 +1187,7 @@ export default function AddPricing() {
         return null;
     }
   };
-if (
+  if (
     isEditMode && loading
   ) {
     return (
@@ -1228,7 +1195,7 @@ if (
         <Loading />
       </div>
     );
-  } 
+  }
   return (
     <>
       <div className="flex items-center gap-2">

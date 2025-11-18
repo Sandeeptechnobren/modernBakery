@@ -32,6 +32,7 @@ interface FullItem {
     id: string;
     // Some APIs/key usages call this `code` and some `item_code` – keep both optional to be defensive
     code?: string;
+    erp_code?: string;
     item_code?: string;
     name?: string;
     uom: ItemUom[];
@@ -129,10 +130,12 @@ export default function InvoiceddEditPage() {
     const { setLoading } = useLoading();
     const router = useRouter();
     const params = useParams();
+    const CURRENCY = localStorage.getItem("country") || "";
 
     const uuid = params?.uuid as string | undefined;
     const isEditMode = uuid !== undefined && uuid !== "add";
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [deliveryOptions, setDeliveryOptions] = useState<Option[]>([]);
     const [skeleton, setSkeleton] = useState({
         route: false,
         customer: false,
@@ -383,8 +386,8 @@ export default function InvoiceddEditPage() {
                     // Agent customer
                     return {
                         value: String(customer.id),
-                        label: `${customer.osa_code || ""} - ${customer.outlet_name || ""}`,
-                        name: customer.outlet_name || customer.customer_name || customer.name || '',
+                        label: `${customer.osa_code || ""} - ${customer.name || ""}`,
+                        name: customer.name || customer.customer_name || customer.name || '',
                     };
                 }
             });
@@ -442,11 +445,12 @@ export default function InvoiceddEditPage() {
                 const uomArr: ItemUom[] = extractUoms(sourceUomsRaw);
 
                 const itemObj = item as Record<string, unknown>;
-                const codeVal = typeof itemObj.item_code === 'string' ? String(itemObj.item_code) : (typeof itemObj.code === 'string' ? String(itemObj.code) : undefined);
+                const codeVal = typeof itemObj.erp_code === 'string' ? String(itemObj.erp_code) : (typeof itemObj.code === 'string' ? String(itemObj.code) : undefined);
 
                 const normalized: FullItem = {
                     id,
-                    item_code: codeVal,
+                    erp_code: codeVal,
+                    item_code: item.item_code,
                     name: item.name,
                     uom: uomArr,
                 };
@@ -475,14 +479,15 @@ export default function InvoiceddEditPage() {
         }
     }, [showSnackbar, suppressItemSearch]);
 
-    const handleDeliverySearch = useCallback(async (searchText: string) => {
-        if (!form.warehouse) {
-            return [];
-        }
+    const handleDeliverySearch = useCallback(async (warehouseId?: string) => {
+        // console.log('Searching deliveries for warehouse:', warehouseId || form.warehouse);
+        if (!warehouseId && !form.warehouse) return;
         try {
+            setSkeleton((prev) => ({ ...prev, customer: true }));
             const response = await deliveryList({
-                warehouse_id: form.warehouse,
-                search: searchText,
+                warehouse_id: warehouseId || form.warehouse,
+                invoice_date: form.invoice_date,
+                // query: searchText,
                 per_page: "50"
             });
             const data: Delivery[] = Array.isArray(response?.data) ? (response.data as Delivery[]) : [];
@@ -501,11 +506,13 @@ export default function InvoiceddEditPage() {
                 label: `${delivery.delivery_code || ''} - ${delivery.customer?.outlet_name || delivery.customer?.name || 'No Customer'}`,
                 code: delivery.delivery_code,
             }));
-            return options;
+
+            setDeliveryOptions(options);
         } catch (error) {
             console.error('Error fetching deliveries:', error);
             showSnackbar('Failed to search deliveries', 'error');
-            return [];
+        } finally {
+            setSkeleton((prev) => ({ ...prev, customer: false }));
         }
     }, [form.warehouse, showSnackbar]);
 
@@ -876,11 +883,15 @@ export default function InvoiceddEditPage() {
                         label="Invoice type"
                         name="invoice_type"
                         value={form.invoice_type}
+                        searchable={true}
                         options={[
                             { label: "Against Delivery", value: "0" },
                             { label: "Direct Invoice", value: "1" },
                         ]}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                            setForm(prev => ({ ...prev, customerType: "", warehouse: "", warehouse_name: "", route: "", route_name: "", customer: "", customer_name: "", invoice_type: "", invoice_date: new Date().toISOString().slice(0, 10), note: "", transactionType: "1", paymentTerms: "1", paymentTermsUnit: "1" }));
+                            handleChange(e);
+                        }}
                         error={errors.invoice_type}
                     />
                     <InputFields
@@ -888,6 +899,7 @@ export default function InvoiceddEditPage() {
                         label="Invoice Date"
                         type="date"
                         name="invoice_date"
+                        min={new Date().toISOString().split("T")[0]}
                         value={form.invoice_date}
                         onChange={handleChange}
                         error={errors.invoice_date}
@@ -902,6 +914,7 @@ export default function InvoiceddEditPage() {
                                 initialValue={form.warehouse_name}
                                 onSearch={(searchText) => handleWarehouseSearch(searchText)}
                                 onSelect={(option) => {
+                                    console.log(option)
                                     setForm(prev => ({
                                         ...prev,
                                         warehouse: option.value,
@@ -912,6 +925,7 @@ export default function InvoiceddEditPage() {
                                     if (errors.warehouse) {
                                         setErrors(prev => ({ ...prev, warehouse: "" }));
                                     }
+                                    handleDeliverySearch(option.value);
                                 }}
                                 onClear={() => {
                                     setForm(prev => ({
@@ -924,7 +938,7 @@ export default function InvoiceddEditPage() {
                                 }}
                                 error={errors.warehouse}
                             />
-                            <AutoSuggestion
+                            {/* <AutoSuggestion
                                 required
                                 label="Delivery"
                                 name="customer"
@@ -1103,6 +1117,160 @@ export default function InvoiceddEditPage() {
                                 error={errors.customer}
                                 disabled={!form.warehouse}
                                 noOptionsMessage={!form.warehouse ? "Please select a warehouse first" : "No deliveries found"}
+                            /> */}
+                            <InputFields
+                                required
+                                label="Delivery"
+                                name="customer"
+                                placeholder="Search delivery..."
+                                value={form.customer}
+                                options={deliveryOptions}
+                                showSkeleton={skeleton.customer}
+                                onChange={(e) => {
+                                    // Temporarily suppress item search calls while we auto-populate rows
+                                    setSuppressItemSearch(true);
+                                    setForm(prev => ({
+                                        ...prev,
+                                        customer: e.target.value,
+                                    }));
+                                    if (errors.customer) {
+                                        setErrors(prev => ({ ...prev, customer: "" }));
+                                    }
+
+                                    // Auto-populate items from selected delivery
+                                    const selectedDelivery = deliveriesById[e.target.value];
+                                    if (selectedDelivery && Array.isArray(selectedDelivery.details)) {
+                                        const newRowUomOptions: Record<string, { value: string; label: string; price?: string }[]> = {};
+                                        const newFullItemsData: Record<string, FullItem> = { ...fullItemsData };
+
+                                        const loadedItemData: InvoiceItemRow[] = selectedDelivery.details.map((detail: DeliveryDetail, index: number) => {
+                                            const itemId = String(detail.item?.id ?? "");
+                                            const uomId = String(detail.uom_id ?? "");
+
+                                            // Extract item code and name from delivery detail
+                                            const itemCode = detail.item?.code || "";
+                                            const itemName = detail.item?.name || "";
+                                            const itemLabel = itemCode && itemName ? `${itemCode} - ${itemName}` : itemId;
+
+                                            // Always create UOM option from delivery detail (this is the selected UOM)
+                                            const uomName = detail.uom_name || "";
+                                            const deliveryUomOption = uomId && uomName ? {
+                                                value: String(uomId),
+                                                label: uomName,
+                                                price: String(detail.item_price || "0"),
+                                            } : null;
+
+                                            // Prefer UOMs provided in delivery detail (`item_uoms`) if available
+                                            const detailObj = detail as Record<string, unknown>;
+                                            const detailUomsRaw = Array.isArray(detailObj['item_uoms'] as unknown) ? detailObj['item_uoms'] : [];
+                                            if (Array.isArray(detailUomsRaw) && detailUomsRaw.length > 0) {
+                                                const uomOpts = extractUoms(detailUomsRaw).map(u => ({
+                                                    value: String(u.id ?? ""),
+                                                    label: u.name ?? "",
+                                                    price: u.price !== undefined ? String(u.price) : "0",
+                                                }));
+                                                newRowUomOptions[index.toString()] = uomOpts;
+
+                                                // Store full item data for future reference
+                                                newFullItemsData[itemId] = {
+                                                    id: itemId,
+                                                    code: itemCode,
+                                                    name: itemName,
+                                                    uom: extractUoms(detailUomsRaw),
+                                                };
+                                            } else {
+                                                // Check if we have more UOM options from itemOptions
+                                                const typedItemOptions = itemOptions as Array<Option & { uoms?: ItemUom[] }>;
+                                                const selectedItem = typedItemOptions.find((it) => it.value === itemId);
+                                                if (selectedItem && Array.isArray(selectedItem.uoms) && selectedItem.uoms.length > 0) {
+                                                    const uomOpts = selectedItem.uoms.map((uom: ItemUom) => ({
+                                                        value: String(uom.id || ""),
+                                                        label: uom.name || "",
+                                                        price: (uom.price as string | number | undefined) ? String(uom.price) : "0",
+                                                    }));
+                                                    newRowUomOptions[index.toString()] = uomOpts;
+
+                                                    // Store full item data for future reference
+                                                    newFullItemsData[itemId] = {
+                                                        id: itemId,
+                                                        code: itemCode,
+                                                        name: itemName,
+                                                        uom: selectedItem.uoms,
+                                                    };
+                                                } else if (deliveryUomOption) {
+                                                    // If no UOM options from itemOptions, use delivery detail UOM
+                                                    newRowUomOptions[index.toString()] = [deliveryUomOption];
+
+                                                    // Store minimal item data
+                                                    newFullItemsData[itemId] = {
+                                                        id: itemId,
+                                                        code: itemCode,
+                                                        name: itemName,
+                                                        uom: [{
+                                                            id: uomId,
+                                                            name: uomName,
+                                                            price: detail.item_price || "0",
+                                                        }],
+                                                    };
+                                                }
+                                            }
+
+                                            const qty = Number(detail.quantity ?? 0);
+                                            const price = Number(detail.item_price ?? 0);
+                                            const discount = Number(detail.discount ?? 0);
+                                            const total = qty * price;
+                                            const vat = total * 0.18;
+                                            const net = total - vat;
+
+                                            return {
+                                                item_id: itemId,
+                                                itemName: itemLabel,
+                                                itemLabel: itemLabel,
+                                                UOM: uomId,
+                                                uom_id: uomId,
+                                                Quantity: String(qty || 1),
+                                                Price: (Number(price) || 0).toFixed(2),
+                                                Excise: "0.00",
+                                                Discount: (Number(discount) || 0).toFixed(2),
+                                                Net: net.toFixed(2),
+                                                Vat: vat.toFixed(2),
+                                                Total: total.toFixed(2),
+                                            };
+                                        });
+
+                                        setFullItemsData(newFullItemsData);
+                                        setRowUomOptions(newRowUomOptions);
+                                        setItemData(loadedItemData);
+
+                                        // Set note if available
+                                        if (selectedDelivery.comment) {
+                                            setForm((prev) => ({ ...prev, note: selectedDelivery.comment || prev.note }));
+                                        }
+                                    } else {
+                                        // Reset if no details
+                                        setRowUomOptions({});
+                                        setItemData([
+                                            {
+                                                item_id: "",
+                                                itemName: "",
+                                                itemLabel: "",
+                                                UOM: "",
+                                                uom_id: "",
+                                                Quantity: "1",
+                                                Price: "",
+                                                Excise: "",
+                                                Discount: "",
+                                                Net: "",
+                                                Vat: "",
+                                                Total: "",
+                                            },
+                                        ]);
+                                    }
+                                    // Re-enable item search shortly after rows are set to avoid AutoSuggestion remount spam
+                                    setTimeout(() => setSuppressItemSearch(false), 300);
+                                }}
+                                error={errors.customer}
+                                disabled={!form.warehouse}
                             />
                         </>
                     )}
@@ -1113,9 +1281,10 @@ export default function InvoiceddEditPage() {
                                 label="Customer Type"
                                 name="customerType"
                                 value={form.customerType}
+                                searchable={true}
                                 options={[
-                                    { label: "Agent Customer", value: "1" },
-                                    { label: "Company Customer", value: "2" },
+                                    { label: "Field Customer", value: "1" },
+                                    { label: "Key Customer", value: "2" },
                                 ]}
                                 onChange={handleChange}
                                 error={errors.customerType}
@@ -1194,6 +1363,7 @@ export default function InvoiceddEditPage() {
                                 initialValue={form.customer_name}
                                 onSearch={handleCustomerSearch}
                                 onSelect={(option) => {
+
                                     setForm(prev => ({
                                         ...prev,
                                         customer: option.value,
@@ -1250,86 +1420,87 @@ export default function InvoiceddEditPage() {
                                                 selectedOption={selectedOpt ?? null}
                                                 onSearch={handleItemSearch}
                                                 onSelect={(option: Option & { uoms?: ItemUom[] }) => {
-                                                const selectedItemId = option.value;
-                                                const newData = [...itemData];
-                                                const index = Number(row.idx);
-                                                newData[index].item_id = selectedItemId;
-                                                newData[index].itemName = selectedItemId;
-                                                newData[index].itemLabel = option.label;
-                                                let uomSource: ItemUom[] | undefined = undefined;
-                                                const selectedItem = fullItemsData[selectedItemId];
-                                                if (selectedItem && Array.isArray(selectedItem.uom) && selectedItem.uom.length > 0) {
-                                                    uomSource = selectedItem.uom;
-                                                } else {
-                                                    const opt = option as Option & { uoms?: ItemUom[] };
-                                                    if (Array.isArray(opt.uoms) && opt.uoms.length > 0) {
-                                                        const uomArray: ItemUom[] = opt.uoms.map((u) => ({ id: String(u.id ?? ""), name: u.name ?? "", price: u.price }));
-                                                        uomSource = uomArray;
-                                                        setFullItemsData(prev => ({
-                                                            ...prev,
-                                                            [selectedItemId]: {
-                                                                id: selectedItemId,
-                                                                item_code: opt.code || undefined,
-                                                                name: opt.name || undefined,
-                                                                uom: uomArray,
-                                                            }
+                                                    const selectedItemId = option.value;
+                                                    const newData = [...itemData];
+                                                    const index = Number(row.idx);
+                                                    newData[index].item_id = selectedItemId;
+                                                    newData[index].itemName = selectedItemId;
+                                                    newData[index].itemLabel = option.label;
+                                                    let uomSource: ItemUom[] | undefined = undefined;
+                                                    const selectedItem = fullItemsData[selectedItemId];
+                                                    if (selectedItem && Array.isArray(selectedItem.uom) && selectedItem.uom.length > 0) {
+                                                        uomSource = selectedItem.uom;
+                                                    } else {
+                                                        const opt = option as Option & { uoms?: ItemUom[] };
+                                                        if (Array.isArray(opt.uoms) && opt.uoms.length > 0) {
+                                                            const uomArray: ItemUom[] = opt.uoms.map((u) => ({ id: String(u.id ?? ""), name: u.name ?? "", price: u.price }));
+                                                            uomSource = uomArray;
+                                                            setFullItemsData(prev => ({
+                                                                ...prev,
+                                                                [selectedItemId]: {
+                                                                    id: selectedItemId,
+                                                                    item_code: opt.code || undefined,
+                                                                    name: opt.name || undefined,
+                                                                    uom: uomArray,
+                                                                }
+                                                            }));
+                                                        }
+                                                    }
+
+                                                    if (uomSource && uomSource.length > 0) {
+                                                        const uomOpts = uomSource.map((uom: ItemUom) => ({
+                                                            value: String(uom.id || ""),
+                                                            label: uom.name || "",
+                                                            price: (uom.price as string | number | undefined) ? String(uom.price) : "0"
                                                         }));
+
+                                                        setRowUomOptions(prev => ({
+                                                            ...prev,
+                                                            [row.idx]: uomOpts
+                                                        }));
+
+                                                        const firstUom = uomOpts[0];
+                                                        if (firstUom) {
+                                                            newData[index].uom_id = firstUom.value;
+                                                            newData[index].UOM = firstUom.value;
+                                                            newData[index].Price = firstUom.price || "0";
+                                                        }
+                                                    } else {
+                                                        setRowUomOptions(prev => {
+                                                            const newOpts = { ...prev };
+                                                            delete newOpts[row.idx];
+                                                            return newOpts;
+                                                        });
+                                                        newData[index].uom_id = "";
+                                                        newData[index].UOM = "";
+                                                        newData[index].Price = "0";
                                                     }
-                                                }
 
-                                                if (uomSource && uomSource.length > 0) {
-                                                    const uomOpts = uomSource.map((uom: ItemUom) => ({
-                                                        value: String(uom.id || ""),
-                                                        label: uom.name || "",
-                                                        price: (uom.price as string | number | undefined) ? String(uom.price) : "0"
-                                                    }));
-
-                                                    setRowUomOptions(prev => ({
-                                                        ...prev,
-                                                        [row.idx]: uomOpts
-                                                    }));
-
-                                                    const firstUom = uomOpts[0];
-                                                    if (firstUom) {
-                                                        newData[index].uom_id = firstUom.value;
-                                                        newData[index].UOM = firstUom.value;
-                                                        newData[index].Price = firstUom.price || "0";
-                                                    }
-                                                } else {
+                                                    setItemData(newData);
+                                                    recalculateItem(index, "itemName", selectedItemId);
+                                                }}
+                                                onClear={() => {
+                                                    const newData = [...itemData];
+                                                    const index = Number(row.idx);
+                                                    newData[index].item_id = "";
+                                                    newData[index].itemName = "";
+                                                    newData[index].itemLabel = "";
+                                                    newData[index].uom_id = "";
+                                                    newData[index].UOM = "";
+                                                    newData[index].Price = "0";
                                                     setRowUomOptions(prev => {
                                                         const newOpts = { ...prev };
                                                         delete newOpts[row.idx];
                                                         return newOpts;
                                                     });
-                                                    newData[index].uom_id = "";
-                                                    newData[index].UOM = "";
-                                                    newData[index].Price = "0";
-                                                }
-
-                                                setItemData(newData);
-                                                recalculateItem(index, "itemName", selectedItemId);
-                                            }}
-                                            onClear={() => {
-                                                const newData = [...itemData];
-                                                const index = Number(row.idx);
-                                                newData[index].item_id = "";
-                                                newData[index].itemName = "";
-                                                newData[index].itemLabel = "";
-                                                newData[index].uom_id = "";
-                                                newData[index].UOM = "";
-                                                newData[index].Price = "0";
-                                                setRowUomOptions(prev => {
-                                                    const newOpts = { ...prev };
-                                                    delete newOpts[row.idx];
-                                                    return newOpts;
-                                                });
-                                                setItemData(newData);
-                                            }}
-                                            disabled={!isFormReadyForItems && !row.item_id}
-                                        />
-                                    </div>
-                                );
-                            }},
+                                                    setItemData(newData);
+                                                }}
+                                                disabled={!isFormReadyForItems && !row.item_id}
+                                            />
+                                        </div>
+                                    );
+                                }
+                            },
                             {
                                 key: "UOM",
                                 label: "UOM",
@@ -1437,14 +1608,21 @@ export default function InvoiceddEditPage() {
 
                 {/* Add New Item */}
                 <div className="mt-4">
-                    <button
-                        type="button"
-                        className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-                        onClick={handleAddNewItem}
-                    >
-                        <Icon icon="material-symbols:add-circle-outline" width={20} />
-                        Add New Item
-                    </button>
+                    {(() => {
+                        // disable add when there's already an empty/new item row
+                        const hasEmptyRow = itemData.some(it => (String(it.item_id ?? '').trim() === '' && String(it.uom_id ?? '').trim() === ''));
+                        return (
+                            <button
+                                type="button"
+                                disabled={hasEmptyRow}
+                                className={`text-[#E53935] font-medium text-[16px] flex items-center gap-2 ${hasEmptyRow ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                onClick={() => { if (!hasEmptyRow) handleAddNewItem(); }}
+                            >
+                                <Icon icon="material-symbols:add-circle-outline" width={20} />
+                                Add New Item
+                            </button>
+                        );
+                    })()}
                 </div>
 
                 <div className="flex justify-between text-primary">
@@ -1494,12 +1672,12 @@ export default function InvoiceddEditPage() {
                             </div> */}
                         </div>
 
-                        <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA]">
+                        <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-[#D5D7DA]">
                             {[
                                 // { key: "Gross Total", value: `AED ${grossTotal.toFixed(2)}` },
                                 // { key: "Discount", value: `AED ${discount.toFixed(2)}` },
-                                { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
-                                { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
+                                { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
+                                { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
                                 // { key: "preVAT", value: `AED ${toInternationalNumber(netAmount - totalVat)}` },
                                 // { key: "Delivery Charges", value: "AED 0.00" },
                             ].map((item) => (
@@ -1510,7 +1688,7 @@ export default function InvoiceddEditPage() {
                             ))}
                             <div className="font-semibold text-[#181D27] text-[18px] flex justify-between mt-2 mb-2">
                                 <span>Total</span>
-                                <span>AED {toInternationalNumber(finalTotal)}</span>
+                                <span>{CURRENCY} {toInternationalNumber(finalTotal)}</span>
                             </div>
                         </div>
 
@@ -1530,7 +1708,8 @@ export default function InvoiceddEditPage() {
                         Cancel
                     </button>
                     <SidebarBtn
-                        isActive={!isSubmitting}
+                        isActive={true}
+                        disabled={isSubmitting}
                         label={
                             isSubmitting
                                 ? (isEditMode ? "Updating Invoice..." : "Creating Invoice...")
