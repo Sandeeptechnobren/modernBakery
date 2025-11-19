@@ -28,13 +28,6 @@ export const initialLinkData: SidebarDataType[] = [
         children: [
           {
             isActive: false,
-            href: "/distributors",
-            label: "Distributors",
-            leadingIcon: "tabler:building-warehouse",
-            iconColor: "text-violet-500",
-          },
-          {
-            isActive: false,
             href: "/vehicle",
             label: "Vehicle",
             leadingIcon: "mdi:car",
@@ -120,10 +113,17 @@ export const initialLinkData: SidebarDataType[] = [
         isActive: false,
         href: "#",
         label: "Manage Distributors",
-        leadingIcon: "mdi:account-cash-outline",
+        leadingIcon: "tabler:building-warehouse",
         iconColor: "text-green-500",
         trailingIcon: "mdi-light:chevron-right",
         children: [
+          {
+            isActive: false,
+            href: "/distributors",
+            label: "Distributors",
+            leadingIcon: "tabler:building-warehouse",
+            iconColor: "text-violet-500",
+          },
           {
             isActive: false,
             href: "/distributorsStock",
@@ -382,13 +382,51 @@ export const initialLinkData: SidebarDataType[] = [
           },
         ]
       },
-      // {
-      //     isActive: false,
-      //     href: "/harissTransaction",
-      //     label: "Report",
-      //     leadingIcon: "hugeicons:transaction",
-      //     iconColor: "text-fuchsia-500"
-      // },
+      {
+        isActive: false,
+        href: "#",
+        label: "Company Transaction",
+        leadingIcon: "streamline-ultimate:accounting-bill-stack-1",
+        iconColor: "text-green-500",
+        trailingIcon: "mdi-light:chevron-right",
+        children: [
+          {
+            isActive: false,
+            href: "/purchaseOrder",
+            label: "Purchase Order",
+            leadingIcon: "carbon:delivery-parcel",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/order",
+            label: "Order",
+            leadingIcon: "carbon:delivery-parcel",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/delivery",
+            label: "Delivery",
+            leadingIcon: "hugeicons:invoice",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/invoice",
+            label: "Invoice",
+            leadingIcon: "hugeicons:invoice",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/creditNote",
+            label: "Credit Note",
+            leadingIcon: "hugeicons:invoice",
+            iconColor: "text-cyan-500"
+          },
+        ]
+      },
     ],
   },
 ];

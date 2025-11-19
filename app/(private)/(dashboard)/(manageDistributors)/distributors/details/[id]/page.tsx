@@ -240,7 +240,7 @@ export default function ViewPage() {
         },
     ];
 
-
+    
 
     const salesColumns: configType["columns"] = [
         {
@@ -747,9 +747,9 @@ export default function ViewPage() {
                 const pagination = result.pagination?.pagination || result.pagination || {};
                 return {
                     data: result.data || [],
-                    total: pagination.last_page || result.pagination?.last_page || 0,
-                    totalRecords: pagination.total || result.pagination?.total || 0,
-                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    total: pagination.last_page || result.pagination?.totalPages || 1,
+                    totalRecords: pagination.total || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 1,
                     pageSize: pagination.per_page || pageSize,
                 };
             }

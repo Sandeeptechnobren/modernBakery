@@ -60,7 +60,7 @@ export default function Route() {
         },
         {
             key: "warehouse",
-            label: "Warehouse",
+            label: "Distributor",
             render: (data: TableDataType) =>
                 typeof data.warehouse === "object" && data.warehouse !== null
                     ? (data.warehouse as { code?: string }).code
