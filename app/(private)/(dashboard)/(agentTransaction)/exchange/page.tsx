@@ -29,7 +29,7 @@ const columns = [
     },
     {
         key: "warehouse_code, warehouse_name",
-        label: "Warehouse",
+        label: "Distributors",
         showByDefault: true,
         render: (row: TableDataType) => {
             const code = row.warehouse_code || "";
@@ -51,20 +51,6 @@ const columns = [
             if (!code && !name) return "-";
             return `${code}${code && name ? " - " : ""}${name}`;
         },
-    },
-
-    {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => {
-            // Treat status 1 or 'active' (case-insensitive) as active
-            const isActive =
-                String(row.status) === "1" ||
-                (typeof row.status === "string" &&
-                    row.status.toLowerCase() === "active");
-            return <StatusBtn isActive={isActive} />;
-        },
-        showByDefault: true,
     },
 ];
 

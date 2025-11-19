@@ -1964,6 +1964,37 @@ export const agentCustomerById = async (uuid: string) => {
     return handleError(error);
   }
 };
+// https://api.coreexl.com/osa_developmentV2/public/api/settings/warehouse-stocks/loaded-stock/7
+
+export const warehouseStocksKpi = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/warehouse-stocks/${id}/valuation`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const warehouseLowStocksKpi = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/warehouse-stocks/46/low-items`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const warehouseStockTopOrders = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/warehouse-stocks/46/stock-details`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 export const editAgentCustomer = async (uuid: string, payload: object) => {
   try {

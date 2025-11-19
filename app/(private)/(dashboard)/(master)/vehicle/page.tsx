@@ -77,10 +77,10 @@ const columns = [
     },
   },
   {
-    key: "warehouse", label: "Warehouse",render: (row: TableDataType) => {
+    key: "warehouse", label: "Distributor",render: (row: TableDataType) => {
         const wh = row.warehouse;
-        let code = "-";
-        let name = "-";
+        let code = "";
+        let name = "";
         if (wh && typeof wh === "object" && wh !== null) {
           const w = wh as { warehouse_code?: string; warehouse_name?: string };
           code = w.warehouse_code ?? "-";
@@ -88,18 +88,11 @@ const columns = [
         } else if (typeof wh === "string") {
           name = wh;
         }
-        return `${code}${code && name ? " - " : ""}${name}`;
+
+        
+        return <>{code && name? code +"-"+name:"-"}</>;
       },
-       filter: {
-      isFilterable: true,
-      render: (data: TableDataType[]) => {
-        return data.map((item, index) => {
-          const wh: any = item.warehouse;
-          const display = (wh && typeof wh === "object") ? (wh.warehouse_name || "-") : (typeof wh === "string" ? wh : "-");
-          return <div key={String(item.id) + index} className="w-full text-left p-2">{display}</div>;
-        });
-      }
-    }
+      
   },
   // { key: "ownerReference", label: "Owner Reference" },
   // { key: "vehicleRoute", label: "Vehicle Route" },

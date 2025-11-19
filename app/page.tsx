@@ -23,7 +23,7 @@ export default function Home() {
                 localStorage.setItem("token", res.data.access_token);
                 localStorage.setItem("role", res?.data?.user?.role?.id);
                 localStorage.setItem("country", res?.data?.companies[0]?.selling_currency);
-                router.push("/distributors");
+                router.push("/vehicle");
             }
         }
         if (localStorage.getItem("token")) verifyUser();

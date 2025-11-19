@@ -87,6 +87,7 @@ export default function AddEditCapsCollection() {
   const isEditMode = loadUUID && loadUUID !== "add";
 
   const [form, setForm] = useState({
+    code: "",
     warehouse: "",
     customer: "",
     status: "1",
@@ -248,6 +249,7 @@ const handleItemSearch = useCallback(async (searchText: string) => {
           const data = res?.data ?? res;
 
           setForm({
+            code: data?.code || "",
             warehouse: data?.warehouse_id ? String(data.warehouse_id) : "",
             customer: data?.customer ? String(data.customer) : "",
             status: data?.status ? String(data.status) : "1",
@@ -398,6 +400,7 @@ const handleItemSearch = useCallback(async (searchText: string) => {
 
       setSubmitting(true);
       const payload = {
+        code: code || form.code,
         warehouse_id: parseInt(form.warehouse),
         customer: form.customer,
         status: parseInt(form.status),

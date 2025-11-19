@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-import StatusBtn from "@/app/components/statusBtn2";
-import { formatDate } from "@/app/(private)/utils/date";
+// import StatusBtn from "@/app/components/statusBtn2";
+// import { formatDate } from "@/app/(private)/utils/date";
+import { formatWithPattern } from "@/app/utils/formatDate";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
@@ -39,8 +40,8 @@ const dropdownDataList: DropdownItem[] = [
 const columns = [
     { key: "code", label: "Pricing Code" },
     { key: "name", label: "Name" },
-    { key: "start_date", label: "Start Date", render: (row: TableDataType) => row.start_date ? formatDate(row.start_date) : ""  },
-    { key: "end_date", label: "End Date", render: (row: TableDataType) => row.end_date ? formatDate(row.end_date) : ""  },
+    { key: "start_date", label: "Start Date", render: (row: TableDataType) => row.start_date ? formatWithPattern(new Date(row.start_date),"DD MMM YYYY","en-GB") : ""  },
+    { key: "end_date", label: "End Date", render: (row: TableDataType) => row.end_date ? formatWithPattern(new Date(row.end_date),"DD MMM YYYY","en-GB") : ""  },
 ];
 
 export default function Pricing() {

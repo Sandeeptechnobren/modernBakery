@@ -302,9 +302,10 @@ export default function Page() {
                 columns: [
                   { key: "invoice_code", label: "Invoice Code" },
                   { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</> },
-                  { key: "name", label: "UOM", render: (row: TableDataType) => <>{(typeof row?.name === "object" && (row?.name as { name: string })?.name) ?? row?.name ?? row.uom_id}</> },
-                  { key: "quantity", label: "Quantity" },
-                  { key: "itemvalue", label: "Price" }
+                  // { key: "name", label: "UOM", render: (row: TableDataType) => <>{(typeof row?.name === "object" && (row?.name as { name: string })?.name) ?? row?.name ?? row.uom_id}</> },
+                  { key: "itemvalue", label: "Quantity" },
+                                    { key: "item_price", label: "Price", render: (row: TableDataType) => <>{toInternationalNumber(row.itemvalue)}</> }
+
                 ],
                 pageSize: 50
               }}

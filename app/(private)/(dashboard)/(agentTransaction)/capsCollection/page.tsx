@@ -21,12 +21,26 @@ export default function SalemanLoad() {
     const columns: configType["columns"] = [
         { key: "code", label: "Code" },
         // { key: "date", label: "Collection Date" },
-        { key: "warehouse_code", label: "Warehouse Code",  render: (row: TableDataType) => {
+        { key: "warehouse_code", label: "Distributors",  render: (row: TableDataType) => {
         const code = row.warehouse_code || "-";
         const name = row.warehouse_name || "-";
         return `${code}${code && name ? " - " : ""}${name}`;
       } },
-    { key: "customer", label: "Customer" },
+    {
+  key: "customer",
+  label: "Customer",
+  render: (row: TableDataType) => {
+    const code = row.customer_code ? row.customer_code : null;
+    const name = row.customer_name ? row.customer_name : null;
+
+    if (!code && !name) return "-";              // both null → show "-"
+    if (code && !name) return code;              // only code
+    if (!code && name) return name;              // only name
+
+    return `${code} - ${name}`;                  // both available
+  },
+}
+
         
     ];
 

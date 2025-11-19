@@ -236,7 +236,7 @@ export default function ViewPage() {
     ];
 
     
-    
+
     const salesColumns: configType["columns"] = [
         {
             key: "invoice_code",
@@ -746,10 +746,10 @@ export default function ViewPage() {
                 const pagination = result.pagination?.pagination || result.pagination || {};
                 return {
                     data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 0,
-                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-                    pageSize: pagination.limit || pageSize,
+                    total: pagination.last_page || result.pagination?.totalPages || 1,
+                    totalRecords: pagination.total || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 1,
+                    pageSize: pagination.per_page || pageSize,
                 };
             }
         },
