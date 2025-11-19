@@ -5,6 +5,8 @@ import React, { useEffect, useRef, useState } from "react";
 import DateRangePicker from "./DateRangePicker";
 import CustomCheckbox from './customCheckbox';
 import Radio from '@mui/material/Radio';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import RadioGroup from '@mui/material/RadioGroup';
 
 export type Option = {
   value: string;
@@ -382,9 +384,7 @@ export default function InputFields({
       case "radio":
         return (<div className="flex-wrap flex flex-col gap-[10px] mt-2 pl-[5px]">
           <div className='flex gap-[10px] h-[44px]'>
-            {options && options.map((opt, idx) => (
-              <label key={opt.value + idx} className="inline-flex items-center gap-3 cursor-pointer">
-                <input
+            {/* <input
                   type="radio"
                   name={name}
                   value={opt.value}
@@ -393,12 +393,29 @@ export default function InputFields({
                   disabled={disabled}
                   className={`w-4 h-4 accent-gray-600 border-6 border-gray-600 focus:ring-[1px] focus:ring-red-400 appearance-none rounded-full checked:bg-red-500 checked:border-red-600 ${error ? "border-red-500" : "border-gray-300"}`}
                   style={{ boxShadow: value === opt.value ? '0 0 0 2px #fff, 0 0 0 3px #252b37' : undefined }}
+                /> */}
+            <RadioGroup
+              aria-labelledby="demo-radio-buttons-group-label"
+              defaultValue="female"
+              name="radio-buttons-group"
+            >
+              {options && options.map((opt, idx) => (
+                <FormControlLabel
+                  key={opt.value + idx}
+                  value={opt.value}
+                  control={<Radio sx={{
+                    '&.Mui-checked': {
+                      color: "red",
+                    },
+                  }} />}
+                  onChange={() => safeOnChange(createSingleSelectEvent(opt.value))}
+                  name={name}
+                  label={opt.label}
+                  disabled={disabled}
                 />
-                <span className="text-md text-gray-600">{opt.label}</span>
-              </label>
-            ))}
+              ))}
+            </RadioGroup>
           </div>
-          <Radio />
           {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
         </div>);
 
