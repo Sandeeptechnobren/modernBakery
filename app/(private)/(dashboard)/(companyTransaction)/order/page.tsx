@@ -168,7 +168,7 @@ export default function CustomerInvoicePage() {
                     config={{
                         api: { list: fetchOrders, filterBy: filterBy },
                         header: {
-                            title: "Customer Orders",
+                            title: "Company Orders",
                             searchBar: false,
                             columnFilter: true,
                             threeDot: [
@@ -238,26 +238,7 @@ export default function CustomerInvoicePage() {
                                     multiSelectChips: true,
                                     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
                                 }
-                            ],
-                            actions: [
-                                // <SidebarBtn
-                                //     key={0}
-                                //     href="#"
-                                //     isActive
-                                //     leadingIcon="mdi:download"
-                                //     label="Download"
-                                //     labelTw="hidden lg:block"
-                                //     onClick={() => exportFile("csv")}
-                                // />,
-                                <SidebarBtn
-                                    key={1}
-                                    href="/agentOrder/add"
-                                    isActive
-                                    leadingIcon="mdi:plus"
-                                    label="Add"
-                                    labelTw="hidden lg:block"
-                                />
-                            ],
+                            ]
                         },
                         rowSelection: true,
                         footer: { nextPrevBtn: true, pagination: true },

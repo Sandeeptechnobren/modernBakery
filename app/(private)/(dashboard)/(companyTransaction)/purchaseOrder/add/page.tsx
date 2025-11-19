@@ -10,7 +10,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, SalesmanListGlobalSearch, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
@@ -63,7 +63,6 @@ interface FormData {
 interface ItemData {
   item_id: string;
   item_name: string;
-  // stored human-readable label for a selected item (used when server results don't include it)
   item_label?: string;
   UOM: { label: string; value: string }[];
   uom_id?: string;
@@ -77,7 +76,7 @@ interface ItemData {
   [key: string]: string | { label: string; value: string }[] | undefined;
 }
 
-export default function OrderAddEditPage() {
+export default function PurchaseOrderAddEditPage() {
   const itemRowSchema = Yup.object({
     item_id: Yup.string().required("Please select an item"),
     uom_id: Yup.string().required("Please select a UOM"),
@@ -105,10 +104,12 @@ export default function OrderAddEditPage() {
   const [skeleton, setSkeleton] = useState({
     route: false,
     customer: false,
+    salesteam: false,
     item: false,
   });
   const CURRENCY = localStorage.getItem("country") || "";
   const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
+  const [filteredSalesTeamOptions, setFilteredSalesTeamOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
   const form = {
     warehouse: "",
@@ -245,7 +246,7 @@ export default function OrderAddEditPage() {
       codeGeneratedRef.current = true;
       (async () => {
         const res = await genearateCode({
-          model_name: "order",
+          model_name: "po_order",
         });
         if (res?.code) {
           setCode(res.code);
@@ -428,19 +429,19 @@ export default function OrderAddEditPage() {
       // console.log("Submitting payload:", payload);
       const res = await addAgentOrder(payload);
       if (res.error) {
-        showSnackbar(res.data.message || "Failed to create order", "error");
-        console.error("Create order error:", res);
+        showSnackbar(res.data.message || "Failed to create purchase order", "error");
+        console.error("Create Purchase order error:", res);
       } else {
         try {
           await saveFinalCode({
             reserved_code: code,
-            model_name: "order",
+            model_name: "po_order",
           });
         } catch (e) {
           // Optionally handle error, but don't block success
         }
         showSnackbar("Order created successfully", "success");
-        router.push("/agentOrder");
+        router.push("/purchaseOrder");
       }
     } catch (err) {
       console.error(err);
@@ -482,6 +483,27 @@ export default function OrderAddEditPage() {
     return options;
   }
 
+  const fetchSalesTeams = async (values: FormikValues, search: string) => {
+    const res = await SalesmanListGlobalSearch({
+      warehouse_id: values.warehouse,
+      query: search || "",
+      per_page: "10"
+    });
+    if (res.error) {
+      showSnackbar(res.data?.message || "Failed to fetch Sales Teams", "error");
+      setSkeleton({ ...skeleton, salesteam: false });
+      return;
+    }
+    const data = res?.data || [];
+    const options = data.map((salesteam: { id: number; osa_code: string; name: string }) => ({
+      value: String(salesteam.id),
+      label: salesteam.osa_code + " - " + salesteam.name
+    }));
+    setFilteredSalesTeamOptions(options);
+    setSkeleton({ ...skeleton, salesteam: false });
+    return options;
+  }
+
   const fetchWarehouse = async (searchQuery?: string) => {
     const res = await warehouseListGlobalSearch({
       query: searchQuery || "",
@@ -490,7 +512,7 @@ export default function OrderAddEditPage() {
     });
 
     if (res.error) {
-      showSnackbar(res.data?.message || "Failed to fetch customers", "error");
+      showSnackbar(res.data?.message || "Failed to fetch Warehouse", "error");
       return;
     }
     const data = res?.data || [];
@@ -523,7 +545,7 @@ export default function OrderAddEditPage() {
             onClick={() => router.back()}
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
-            Add Order
+            Add Purchase Order
           </h1>
         </div>
       </div>
@@ -535,7 +557,7 @@ export default function OrderAddEditPage() {
             <Logo type="full" />
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Order</span>
+            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Purchase Order</span>
             <span className="text-primary text-[14px] tracking-[8px]">#{code}</span>
           </div>
         </div>
@@ -613,6 +635,29 @@ export default function OrderAddEditPage() {
                       disabled={values.warehouse === ""}
                       error={touched.customer && (errors.customer as string)}
                       className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <AutoSuggestion
+                      required
+                      label="Sales Team"
+                      name="salesteam"
+                      placeholder="Search Sales Team"
+                      onSearch={(q) => { return fetchSalesTeams(values, q) }}
+                      initialValue={filteredSalesTeamOptions.find(o => o.value === String(values?.salesteam))?.label || ""}
+                      onSelect={(opt) => {
+                        if (values.salesteam !== opt.value) {
+                          setFieldValue("salesteam", opt.value);
+                        } else {
+                          setFieldValue("salesteam", opt.value);
+                        }
+                      }}
+                      onClear={() => {
+                        setFieldValue("salesteam", "");
+                        setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
+                      }}
+                      disabled={values.warehouse === ""}
+                      error={touched.salesteam && (errors.salesteam as string)}
                     />
                   </div>
                   <div>
@@ -844,11 +889,11 @@ export default function OrderAddEditPage() {
                   <button
                     type="button"
                     className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-                    onClick={() => router.push("/agentOrder")}
+                    onClick={() => router.push("/purchaseOrder")}
                   >
                     Cancel
                   </button>
-                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !itemData || itemData.length > 0 } onClick={() => submitForm()} />
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Purchase Order..." : "Create Purchase Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !values.salesteam || !itemData || itemData.length < 0 } onClick={() => submitForm()} />
                 </div>
               </>
             );

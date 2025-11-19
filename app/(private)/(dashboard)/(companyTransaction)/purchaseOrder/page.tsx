@@ -11,7 +11,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import OrderStatus from "@/app/components/orderStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { formatWithPattern } from "@/app/utils/formatDate";
-import { purchaseOrderExportCollapse, purchaseOrderList } from "@/app/services/companyTransaction";
+import { purchaseOrderExportCollapse, purchaseOrderExportHeader, purchaseOrderList } from "@/app/services/companyTransaction";
 import { formatDate } from "../../(master)/salesTeam/details/[uuid]/page";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { downloadFile } from "@/app/services/allApi";
@@ -121,7 +121,7 @@ export default function CustomerInvoicePage() {
     const exportFile = async (format: "csv" | "xlsx" = "csv") => {
         try {
             setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
-            const response = await purchaseOrderExportCollapse({ format });
+            const response = await purchaseOrderExportHeader({ format });
             if (response && typeof response === 'object' && response.download_url) {
                 await downloadFile(response.download_url);
                 showSnackbar("File downloaded successfully ", "success");
@@ -222,15 +222,6 @@ export default function CustomerInvoicePage() {
                                 // }
                             ],
                             actions: [
-                                // <SidebarBtn
-                                //     key={0}
-                                //     href="#"
-                                //     isActive
-                                //     leadingIcon="mdi:download"
-                                //     label="Download"
-                                //     labelTw="hidden lg:block"
-                                //     onClick={() => exportFile("csv")}
-                                // />,
                                 <SidebarBtn
                                     key={1}
                                     href="/purchaseOrder/add"

@@ -19,6 +19,15 @@ export const purchaseOrderById = async (uuid: string) => {
   }
 };
 
+export const purchaseOrderAdd = async (body: object) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/po_orders/create`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const purchaseOrderExportCollapse = async (params?: Params) => {
   try {
     // available params - from_date, to_date, format
