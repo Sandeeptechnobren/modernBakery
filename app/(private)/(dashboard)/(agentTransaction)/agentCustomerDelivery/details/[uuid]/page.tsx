@@ -22,6 +22,7 @@ interface DeliveryDetail {
   item?: {
     id: number;
     code: string;
+    erp_code?: string;
     name: string;
   };
   uom_name?: string;
@@ -95,7 +96,7 @@ interface TableRow {
 
 const columns = [
   { key: "id", label: "#", width: 60 },
-  { key: "itemName", label: "Product Name", render: (value: any) => <>{value.itemCode ? value.itemCode : ""} {value.itemCode && value.itemName ? " - " : ""} {value.itemName ? value.itemName : ""}</> },
+  { key: "itemName", label: "Product Name", render: (value: any) => <>{value.erp_code ? value.erp_code : ""} {value.erp_code && value.itemName ? " - " : ""} {value.itemName ? value.itemName : ""}</> },
   { key: "name", label: "UOM" },
   { key: "Quantity", label: "Quantity" },
   {
@@ -139,6 +140,7 @@ export default function OrderDetailPage() {
             const mappedData = data.details.map((detail: DeliveryDetail, index: number) => ({
               id: (index + 1).toString(),
               itemCode: detail.item?.code || "-",
+              erp_code: detail.item?.erp_code || "",
               itemName: detail.item?.name || "-",
               name: detail.uom_name || "-", // Fixed: use uom_name from API
               Quantity: detail.quantity?.toString() || "0",

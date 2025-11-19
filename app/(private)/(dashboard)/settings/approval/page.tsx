@@ -271,7 +271,7 @@ fetchUsersList();
                             />
                             <InputFields
                                 required
-                                label="Labels"
+                                label="Modules"
                                 name="labels"
                                 value={form.modules}
                                 isSingle={true}

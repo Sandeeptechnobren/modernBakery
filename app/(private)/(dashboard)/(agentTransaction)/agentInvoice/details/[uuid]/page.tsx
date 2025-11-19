@@ -88,6 +88,7 @@ interface InvoiceData {
 
 interface TableRow {
   item_code: string,
+  erp_code: string,
   item_name: string,
   uom_name: string,
   quantity: number,
@@ -101,8 +102,8 @@ interface TableRow {
 
 const columns = [
   { key: "id", label: "#", width: 60 },
-  { key: "itemCode", label: "Item Code" },
-  { key: "itemName", label: "Item Name", width: 250 },
+  // { key: "itemCode", label: "Item Code" },
+  { key: "itemName", label: "Item Name", render: (value: TableDataType) => <>{(value.erp_code ? value.erp_code : '') + (value.erp_code && value.itemName ? " - " : "") + (value.itemName ? value.itemName : "") || '-'}</> },
   { key: "UOM", label: "UOM" },
   { key: "Quantity", label: "Quantity" },
   { key: "Price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.Price) || '0.00'}</> },
@@ -140,6 +141,7 @@ export default function OrderDetailPage() {
             const mappedData = data.details.map((detail: TableRow, index: number) => ({
               id: String(index + 1),
               itemCode: String(detail.item_code ?? "-"),
+              erp_code: String(detail.erp_code ?? "-"),
               itemName: String(detail.item_name ?? "-"),
               UOM: String(detail.uom_name ?? detail.uom ?? "-"),
               Quantity: String(detail.quantity ?? 0),

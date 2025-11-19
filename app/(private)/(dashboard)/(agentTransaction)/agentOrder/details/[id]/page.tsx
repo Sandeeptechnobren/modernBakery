@@ -20,7 +20,7 @@ import { formatWithPattern } from "@/app/(private)/utils/date";
 
 const columns = [
   { key: "index", label: "#" },
-  { key: "item_name", label: "Item Name", render: (value: TableDataType) => <>{value.item_code ? `${value.item_code}` : ""} {value.item_code && value.item_name ? " - " : ""} {value.item_name ? value.item_name : ""}</> },
+  { key: "item_name", label: "Item Name", render: (value: TableDataType) => <>{value.erp_code ? `${value.erp_code}` : ""} {value.erp_code && value.item_name ? " - " : ""} {value.item_name ? value.item_name : ""}</> },
   { key: "uom_name", label: "UOM" },
   { key: "quantity", label: "Quantity" },
   { key: "item_price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.item_price) || '0.00'}</> },
@@ -66,6 +66,7 @@ interface OrderData {
       item_id: number,
       item_code: string,
       item_name: string,
+      erp_code?: string,
       uom_id: number,
       uom_name: string,
       item_price: number,
@@ -169,8 +170,8 @@ export default function OrderDetailPage() {
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
             Order #{data?.order_code || "-"}
           </h1>
-          <BorderIconButton disabled={!data?.previous_uuid} onClick={data?.previous_uuid ? () => router.push(`/agentOrder/details/${data.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
-          <BorderIconButton disabled={!data?.next_uuid} onClick={data?.next_uuid ? () => router.push(`/agentOrder/details/${data.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
+          <BorderIconButton disabled={!data?.previous_uuid} onClick={data?.previous_uuid ? () => router.push(`${PATH}${data.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
+          <BorderIconButton disabled={!data?.next_uuid} onClick={data?.next_uuid ? () => router.push(`${PATH}${data.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
         </div>
 
         {/* Action Buttons */}

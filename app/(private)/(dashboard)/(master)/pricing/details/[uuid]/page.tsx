@@ -31,6 +31,21 @@ export const tabs = [
     url: "keyValue",
     component: <KeyValue />,
   },
+    {
+    name: "Distributers",
+    url: "distributers",
+    component: <KeyValue />,
+  },
+   {
+    name: "Items",
+    url: "items",
+    component: <KeyValue />,
+  },
+   {
+    name: "Items",
+    url: "items",
+    component: <KeyValue />,
+  }
 ];
 
 export default function Page() {
