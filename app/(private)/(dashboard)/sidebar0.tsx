@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Logo from "../../components/logo";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
@@ -36,6 +36,7 @@ export default function Sidebar({
   const [activeHref, setActiveHref] = useState<string>("");
   const pathname = usePathname();
   const router = useRouter();
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) => ({
@@ -79,8 +80,19 @@ export default function Sidebar({
     setOpenMenus((prev) => ({ ...prev, ...initialOpen }));
   }, [])
 
+  // close sidebar when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && e.target instanceof Node && !wrapperRef.current.contains(e.target)) {
+        try { setIsOpen(false); } catch (err) { /* ignore */ }
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [setIsOpen]);
+
   return (
-    <div className="group peer">
+    <div className="group peer" ref={wrapperRef}>
       <div className={`${isOpen ? "w-[250px]" : "w-[80px]"} group-hover:w-[250px] h-[100vh] absolute ease-in-out duration-600 bg-white z-50 pb-[40px]`}>
         {/* logo */}
         <div className="w-full h-[60px] px-[16px] py-[12px] border-r-[1px] border-b-[1px] border-[#E9EAEB]">
@@ -96,7 +108,7 @@ export default function Sidebar({
         </div>
 
         {/* menu */}
-        <div className="w-full h-[calc(100vh-60px)] py-5 px-4 border-[1px] border-[#E9EAEB] border-t-0 overflow-y-auto scrollbar-none">
+        <div className={`w-full h-[calc(100vh-60px)] text-sm py-5 ${isOpen ? "px-2" : "px-4"} group-hover:px-2 transition-all ease-in-out border-[1px] border-[#E9EAEB] border-t-0 overflow-y-auto scrollbar-none`}>
           <div className="mb-5 w-full h-full">
             {data.map((group: SidebarDataType,index) => (
               <div key={index} className={`${isOpen ? "mb-[20px]" : "m-0" } group-hover:mb-[20px]`}>
@@ -124,10 +136,12 @@ export default function Sidebar({
                           isActive={isActive}
                           href={hasChildren ? "#" : link.href} // don't redirect if parent
                           label={link.label}
-                          labelTw={`${isOpen ? "block" : "hidden" } group-hover:block`}
+                          labelTw={`${isOpen ? "block" : "hidden" } group-hover:block text-sm`}
                           leadingIcon={link.leadingIcon}
+                          leadingIconSize={20}
                           trailingIcon={trailingIcon}
                           trailingIconTw={`${isOpen ? "block" : "hidden" } group-hover:block`}
+                          // className={isOpen ? "" : "justify-center"}
                           onClick={() => handleClick(link.href, link.label, hasChildren)}
                         />
 

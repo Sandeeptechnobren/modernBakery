@@ -1256,7 +1256,7 @@ export default function UserAddEdit() {
                         }
                         setSkeleton((s) => ({ ...s, customer: true }));
                         try {
-                          const customers = await agentCustomerList({ customer_sub_category_id: vals.join(",") });
+                          const customers = await agentCustomerList({ subcategory_id: vals.join(",") });
                           const options = customers.data.map((customer: { id: string; osa_code: string; name: string }) => ({ value: customer.id, label: (customer.osa_code || "") + (customer.osa_code && customer.name ? " - " : "") + (customer.name || "") })) ?? [];
                           setOptions((prev) => ({ ...prev, customer: options }));
                         } catch (e: unknown) {

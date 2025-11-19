@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Table, {
     listReturnType,
     TableDataType,
@@ -11,10 +10,11 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import OrderStatus from "@/app/components/orderStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/utils/formatDate";
-import { purchaseOrderList } from "@/app/services/companyTransaction";
+import { purchaseOrderExportCollapse, purchaseOrderList } from "@/app/services/companyTransaction";
 import { formatDate } from "../../(master)/salesTeam/details/[uuid]/page";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import { downloadFile } from "@/app/services/allApi";
 
 const columns = [
     { key: "sap_id", label: "SAP", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.sap_id}</span> },
@@ -68,13 +68,13 @@ export default function CustomerInvoicePage() {
             page: number = 1,
             pageSize: number = 5
         ): Promise<listReturnType> => {
-            setLoading(true);
+            // setLoading(true);
             const params: Record<string, string> = {
                 page: page.toString(),
                 pageSize: pageSize.toString()
             };
             const listRes = await purchaseOrderList(params);
-            setLoading(false);
+            // setLoading(false);
             return {
                 data: Array.isArray(listRes.data) ? listRes.data : [],
                 total: listRes?.pagination?.totalPages || 1,
@@ -83,58 +83,58 @@ export default function CustomerInvoicePage() {
             };
         }, [setLoading, showSnackbar]);
 
-    // const filterBy = useCallback(
-    //     async (
-    //         payload: Record<string, string | number | null>,
-    //         pageSize: number
-    //     ): Promise<listReturnType> => {
-    //         let result;
-    //         setLoading(true);
-    //         try {
-    //             const params: Record<string, string> = { per_page: pageSize.toString() };
-    //             Object.keys(payload || {}).forEach((k) => {
-    //                 const v = payload[k as keyof typeof payload];
-    //                 if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-    //                     params[k] = String(v);
-    //                 }
-    //             });
-    //             result = await agentOrderList(params);
-    //         } finally {
-    //             setLoading(false);
-    //         }
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            // setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await purchaseOrderList(params);
+            } finally {
+                // setLoading(false);
+            }
 
-    //         if (result?.error) throw new Error(result.data?.message || "Filter failed");
-    //         else {
-    //             const pagination = result.pagination?.pagination || result.pagination || {};
-    //             return {
-    //                 data: result.data || [],
-    //                 total: pagination.totalPages || result.pagination?.totalPages || 0,
-    //                 totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-    //                 currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-    //                 pageSize: pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     [setLoading]
-    // );
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.page || result.pagination?.page || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
 
-    // const exportFile = async (format: "csv" | "xlsx" = "csv") => {
-    //     try {
-    //         setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
-    //         const response = await agentOrderExport({ format });
-    //         if (response && typeof response === 'object' && response.download_url) {
-    //             await downloadFile(response.download_url);
-    //             showSnackbar("File downloaded successfully ", "success");
-    //         } else {
-    //             showSnackbar("Failed to get download URL", "error");
-    //         }
-    //         setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
-    //     } catch (error) {
-    //         showSnackbar("Failed to download warehouse data", "error");
-    //         setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
-    //     } finally {
-    //     }
-    // };
+    const exportFile = async (format: "csv" | "xlsx" = "csv") => {
+        try {
+            setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
+            const response = await purchaseOrderExportCollapse({ format });
+            if (response && typeof response === 'object' && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
+        } catch (error) {
+            showSnackbar("Failed to download warehouse data", "error");
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
+        } finally {
+        }
+    };
 
     useEffect(() => {
         setRefreshKey((k) => k + 1);
@@ -146,78 +146,80 @@ export default function CustomerInvoicePage() {
                 <Table
                     refreshKey={refreshKey}
                     config={{
-                        api: { list: fetchOrders },
+                        api: { list: fetchOrders, filterBy: filterBy },
                         header: {
                             title: "Purchase Orders",
                             searchBar: false,
                             columnFilter: true,
-                            // threeDot: [
-                            //     {
-                            //         icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
-                            //         label: "Export CSV",
-                            //         labelTw: "text-[12px] hidden sm:block",
-                            //         onClick: () => !threeDotLoading.csv && exportFile("csv"),
-                            //     },
-                            //     {
-                            //         icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
-                            //         label: "Export Excel",
-                            //         labelTw: "text-[12px] hidden sm:block",
-                            //         onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
-                            //     },
-                            // ],
+                            threeDot: [
+                                {
+                                    icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
+                                    label: "Export CSV",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => !threeDotLoading.csv && exportFile("csv"),
+                                },
+                                {
+                                    icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
+                                    label: "Export Excel",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
+                                },
+                            ],
                             filterByFields: [
                                 {
                                     key: "start_date",
                                     label: "Start Date",
-                                    type: "date"
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date,
                                 },
                                 {
                                     key: "end_date",
                                     label: "End Date",
-                                    type: "date"
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date,
                                 },
-                                {
-                                    key: "company_id",
-                                    label: "Company",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(companyOptions) ? companyOptions : [],
-                                },
-                                {
-                                    key: "warehouse_id",
-                                    label: "Warehouse",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
-                                },
-                                {
-                                    key: "region_id",
-                                    label: "Region",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(regionOptions) ? regionOptions : [],
-                                },
-                                {
-                                    key: "sub_region_id",
-                                    label: "Sub Region",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(areaOptions) ? areaOptions : [],
-                                },
-                                {
-                                    key: "route_id",
-                                    label: "Route",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(routeOptions) ? routeOptions : [],
-                                },
-                                {
-                                    key: "salesman_id",
-                                    label: "Salesman",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                                }
+                                // {
+                                //     key: "company_id",
+                                //     label: "Company",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(companyOptions) ? companyOptions : [],
+                                // },
+                                // {
+                                //     key: "warehouse_id",
+                                //     label: "Warehouse",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
+                                // },
+                                // {
+                                //     key: "region_id",
+                                //     label: "Region",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(regionOptions) ? regionOptions : [],
+                                // },
+                                // {
+                                //     key: "sub_region_id",
+                                //     label: "Sub Region",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(areaOptions) ? areaOptions : [],
+                                // },
+                                // {
+                                //     key: "route_id",
+                                //     label: "Route",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(routeOptions) ? routeOptions : [],
+                                // },
+                                // {
+                                //     key: "salesman_id",
+                                //     label: "Salesman",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                // }
                             ],
                             actions: [
                                 // <SidebarBtn
@@ -229,14 +231,14 @@ export default function CustomerInvoicePage() {
                                 //     labelTw="hidden lg:block"
                                 //     onClick={() => exportFile("csv")}
                                 // />,
-                                // <SidebarBtn
-                                //     key={1}
-                                //     href="/agentOrder/add"
-                                //     isActive
-                                //     leadingIcon="mdi:plus"
-                                //     label="Add"
-                                //     labelTw="hidden lg:block"
-                                // />
+                                <SidebarBtn
+                                    key={1}
+                                    href="/purchaseOrder/add"
+                                    isActive
+                                    leadingIcon="mdi:plus"
+                                    label="Add"
+                                    labelTw="hidden lg:block"
+                                />
                             ],
                         },
                         rowSelection: true,
