@@ -14,6 +14,7 @@ import InputDropdown from "@/app/components/inputDropdown";
 import { set } from "date-fns";
 import ApprovalFlowTable from "./dragTable";
 import { submenuList,roleList,userList } from "@/app/services/allApi";
+import {VerticalArrow} from "./proccessFlow";
 
 // Dummy module, role, and user data for now
 // const modulesList = [
@@ -349,6 +350,8 @@ fetchUsersList();
             >
                 {renderStepContent()}
             </StepperForm>
+
+            <VerticalArrow/>
         </>
     );
 }

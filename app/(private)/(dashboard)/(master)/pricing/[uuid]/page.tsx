@@ -98,12 +98,6 @@ const Buom = ({ row, details, setDetails }: any) => {
         // details.push(newdata)
         // setDetails(details)
 
-
-
-
-
-
-
       }
       else {
         const newdata = { buom_ctn_price: e.target.value, auom_pc_price: 0, item_id: row.id, name: `${row.item_code}-${row.name}` }

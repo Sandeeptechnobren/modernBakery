@@ -13,6 +13,7 @@ import { Icon } from "@iconify-icon/react";
 import { warehouseLowStocksKpi, warehouseStocksKpi, warehouseStockTopOrders } from "@/app/services/allApi";
 import { CustomTableSkelton } from "@/app/components/customSkeleton";
 import Skeleton from "@mui/material/Skeleton";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 
 type CardItem = {
@@ -98,7 +99,7 @@ const OverallPerformance: React.FC = () => {
   const cards: CardItem[] = [
     {
       title: "Total Valuation",
-      value: stockData?.total_warehouse_valuation?.total_valuation?stockData?.total_warehouse_valuation?.total_valuation:0.00,
+      value: stockData?.total_warehouse_valuation?.total_valuation? toInternationalNumber(stockData?.total_warehouse_valuation?.total_valuation) :0.00,
       percentage: -12,
       icon: "carbon:currency",
       color: "#fceaef",
@@ -106,7 +107,7 @@ const OverallPerformance: React.FC = () => {
     },
     {
       title: "Warehouse Stock",
-      value: stockData?.total_warehouse_valuation?.total_qty?stockData?.total_warehouse_valuation?.total_qty:0.00,
+      value: stockData?.total_warehouse_valuation?.total_qty? toInternationalNumber(stockData?.total_warehouse_valuation?.total_qty,{maximumFractionDigits:0}):0.00,
       percentage: -10,
       icon: "maki:warehouse",
       color: "#fff0f2",
@@ -180,9 +181,11 @@ const OverallPerformance: React.FC = () => {
           {/* <div className=""> */}
            
 <InputFields
+          searchable={true}
           //   required
-          //   label="Warehouse"
+          // label="Distributers"
           placeholder="Select Distributers"
+          name="Distributers"
           value={selectedWarehouse}
           options={warehouseOptions}
            
