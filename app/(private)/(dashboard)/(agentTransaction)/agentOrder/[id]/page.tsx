@@ -10,7 +10,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, getAllActiveWarehouse, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
@@ -378,7 +378,7 @@ export default function OrderAddEditPage() {
     (sum, item) => sum + Number(item.Discount || 0),
     0
   );
-  const finalTotal = grossTotal + totalVat;
+  const finalTotal = netAmount + totalVat;
 
   const generatePayload = (values?: FormikValues) => {
     return {
@@ -483,9 +483,10 @@ export default function OrderAddEditPage() {
   }
 
   const fetchWarehouse = async (searchQuery?: string) => {
-    const res = await warehouseListGlobalSearch({
-      query: searchQuery || "",
+    const res = await getAllActiveWarehouse({
+      search: searchQuery || "",
       dropdown: "1",
+      status: "1",
       per_page: "50"
     });
 

@@ -10,8 +10,18 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { genearateCode, itemGlobalSearch, saveFinalCode, warehouseListGlobalSearch } from "@/app/services/allApi";
-import { addAgentOrder, agentOrderList, createDelivery } from "@/app/services/agentTransaction";
+import {
+  genearateCode,
+  getAllActiveWarehouse,
+  itemGlobalSearch,
+  saveFinalCode,
+  warehouseListGlobalSearch,
+} from "@/app/services/allApi";
+import {
+  addAgentOrder,
+  agentOrderList,
+  createDelivery,
+} from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -20,98 +30,98 @@ import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import { toTitleCase } from "@/app/(private)/utils/text";
 
 interface FormData {
-  id: number,
-  erp_code: string,
-  item_code: string,
-  name: string,
-  description: string,
+  id: number;
+  erp_code: string;
+  item_code: string;
+  name: string;
+  description: string;
   item_uoms: {
-    id: number,
-    item_id: number,
-    uom_type: string,
-    name: string,
-    price: string,
-    is_stock_keeping: boolean,
-    upc: string,
-    enable_for: string
-  }[],
-  brand: string,
-  image: string,
+    id: number;
+    item_id: number;
+    uom_type: string;
+    name: string;
+    price: string;
+    is_stock_keeping: boolean;
+    upc: string;
+    enable_for: string;
+  }[];
+  brand: string;
+  image: string;
   category: {
-    id: number,
-    name: string,
-    code: string
-  },
+    id: number;
+    name: string;
+    code: string;
+  };
   itemSubCategory: {
-    id: number,
-    name: string,
-    code: string
-  },
-  shelf_life: string,
-  commodity_goods_code: string,
-  excise_duty_code: string,
-  status: number,
-  is_taxable: boolean,
-  has_excies: boolean,
-  item_weight: string,
-  volume: number
+    id: number;
+    name: string;
+    code: string;
+  };
+  shelf_life: string;
+  commodity_goods_code: string;
+  excise_duty_code: string;
+  status: number;
+  is_taxable: boolean;
+  has_excies: boolean;
+  item_weight: string;
+  volume: number;
 }
 
 interface OrderData {
-  id: number,
-  uuid: string,
-  order_code: string,
-  warehouse_id: number,
-  warehouse_code: string,
-  warehouse_name: string,
-  warehouse_email: string,
-  warehouse_number: string,
-  warehouse_address: string,
-  customer_id: string,
-  customer_code: string,
-  customer_name: string,
-  customer_email: string,
-  customer_street: string,
-  customer_town: string,
-  customer_contact: string,
-  route_id: number,
-  route_code: string,
-  route_name: string,
-  salesman_id: string,
-  salesman_code: string,
-  salesman_name: string,
-  delivery_date: string,
-  comment: string,
-  status: number,
-  created_at: string,
+  id: number;
+  uuid: string;
+  order_code: string;
+  warehouse_id: number;
+  warehouse_code: string;
+  warehouse_name: string;
+  warehouse_email: string;
+  warehouse_number: string;
+  warehouse_address: string;
+  customer_id: string;
+  customer_code: string;
+  customer_name: string;
+  customer_email: string;
+  customer_street: string;
+  customer_town: string;
+  customer_contact: string;
+  route_id: number;
+  route_code: string;
+  route_name: string;
+  salesman_id: string;
+  salesman_code: string;
+  salesman_name: string;
+  delivery_date: string;
+  comment: string;
+  status: number;
+  created_at: string;
   details: {
-    id: number,
-    uuid: string,
-    header_id: number,
-    order_code: string,
-    item_id: number,
-    item_code: string,
-    item_name: string,
-    uom_id: number,
-    uom_name: string,
-    item_price: number,
-    quantity: number,
-    vat: number,
-    discount: number,
-    gross_total: number,
-    net_total: number,
-    total: number,
+    id: number;
+    uuid: string;
+    header_id: number;
+    order_code: string;
+    item_id: number;
+    item_code: string;
+    item_name: string;
+    uom_id: number;
+    uom_name: string;
+    item_price: number;
+    quantity: number;
+    vat: number;
+    discount: number;
+    gross_total: number;
+    net_total: number;
+    total: number;
     item_uoms: {
-      id: number,
-      item_id: number,
-      uom_type: string,
-      name: string,
-      price: string,
-      is_stock_keeping: boolean,
-      upc: string,
-      enable_for: string
-    }[],
-  }[]
+      id: number;
+      item_id: number;
+      uom_type: string;
+      name: string;
+      price: string;
+      is_stock_keeping: boolean;
+      upc: string;
+      enable_for: string;
+    }[];
+  }[];
 }
 
 interface ItemData {
@@ -128,7 +138,10 @@ interface ItemData {
   Net: string;
   Vat: string;
   Total: string;
-  [key: string]: string | { label: string; value: string; price?: string }[] | undefined;
+  [key: string]:
+    | string
+    | { label: string; value: string; price?: string }[]
+    | undefined;
 }
 
 export default function DeliveryAddEditPage() {
@@ -157,8 +170,12 @@ export default function DeliveryAddEditPage() {
     delivery: false,
     item: false,
   });
-  const [filteredDeliveryOptions, setFilteredDeliveryOptions] = useState<{ label: string; value: string }[]>([]);
-  const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
+  const [filteredDeliveryOptions, setFilteredDeliveryOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
   const form = {
     warehouse: "",
     route: "",
@@ -169,7 +186,9 @@ export default function DeliveryAddEditPage() {
 
   const [deliveryData, setDeliveryData] = useState<OrderData[]>([]);
   const [searchedItem, setSearchedItem] = useState<FormData[] | null>(null);
-  const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
+  const [itemsOptions, setItemsOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [itemData, setItemData] = useState<ItemData[]>([
     {
       item_id: "",
@@ -187,11 +206,19 @@ export default function DeliveryAddEditPage() {
   ]);
 
   // per-row validation errors for item rows (keyed by row index)
-  const [itemErrors, setItemErrors] = useState<Record<number, Record<string, string>>>({});
+  const [itemErrors, setItemErrors] = useState<
+    Record<number, Record<string, string>>
+  >({});
 
   // per-row loading (for UOM / price) so UI can show skeletons while fetching
-  const [itemLoading, setItemLoading] = useState<Record<number, { uom?: boolean; price?: boolean }>>({});
-  const validateRow = async (index: number, row?: ItemData, options?: { skipUom?: boolean }) => {
+  const [itemLoading, setItemLoading] = useState<
+    Record<number, { uom?: boolean; price?: boolean }>
+  >({});
+  const validateRow = async (
+    index: number,
+    row?: ItemData,
+    options?: { skipUom?: boolean },
+  ) => {
     const rowData = row ?? itemData[index];
     if (!rowData) return;
     // prepare data for Yup: convert numeric strings to numbers
@@ -259,28 +286,43 @@ export default function DeliveryAddEditPage() {
 
     // sets the price directly in the item_uoms
     const updatedData = data.map((item: any) => {
-      const item_uoms = item?.item_uoms ? item?.item_uoms?.map((uom: any) => {
-        if (uom?.uom_type === "primary") {
-          return { ...uom, price: item.pricing?.auom_pc_price }
-        } else if (uom?.uom_type === "secondary") {
-          return { ...uom, price: item.pricing?.buom_ctn_price }
-        }
-      }) : item?.item_uoms;
-      return { ...item, item_uoms }
-    })
+      const item_uoms = item?.item_uoms
+        ? item?.item_uoms?.map((uom: any) => {
+            if (uom?.uom_type === "primary") {
+              return { ...uom, price: item.pricing?.auom_pc_price };
+            } else if (uom?.uom_type === "secondary") {
+              return { ...uom, price: item.pricing?.buom_ctn_price };
+            }
+          })
+        : item?.item_uoms;
+      return { ...item, item_uoms };
+    });
 
     // console.log(updatedData);
 
     setSearchedItem(updatedData);
-    const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
-      value: String(item.id),
-      label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
-    }));
+    const options = data.map(
+      (item: {
+        id: number;
+        name: string;
+        code?: string;
+        item_code?: string;
+        erp_code?: string;
+      }) => ({
+        value: String(item.id),
+        label:
+          (item.erp_code ?? item.item_code ?? item.code ?? "") +
+          " - " +
+          (item.name ?? ""),
+      }),
+    );
     // Merge newly fetched options with existing ones so previously selected items remain available
     setItemsOptions((prev: { label: string; value: string }[] = []) => {
       const map = new Map<string, { label: string; value: string }>();
       prev.forEach((o) => map.set(o.value, o));
-      options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+      options.forEach((o: { label: string; value: string }) =>
+        map.set(o.value, o),
+      );
       return Array.from(map.values());
     });
     setSkeleton({ ...skeleton, item: false });
@@ -305,7 +347,12 @@ export default function DeliveryAddEditPage() {
     }
   }, []);
 
-  const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
+  const recalculateItem = async (
+    index: number,
+    field: string,
+    value: string,
+    values?: FormikValues,
+  ) => {
     const newData = [...itemData];
     const item: ItemData = newData[index] as ItemData;
     (item as any)[field] = value;
@@ -323,21 +370,39 @@ export default function DeliveryAddEditPage() {
         item.Quantity = "1";
         item.item_label = "";
       } else {
-        const selectedOrder = searchedItem?.find((order: FormData) => String(order.id) === value) ?? null;
-        item.item_id = selectedOrder ? String(selectedOrder.id || value) : value;
+        const selectedOrder =
+          searchedItem?.find((order: FormData) => String(order.id) === value) ??
+          null;
+        item.item_id = selectedOrder
+          ? String(selectedOrder.id || value)
+          : value;
         item.item_name = selectedOrder?.name ?? "";
-        item.UOM = selectedOrder?.item_uoms?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
-        item.uom_id = selectedOrder?.item_uoms?.[0]?.id ? String(selectedOrder.item_uoms[0].id) : "";
-        item.Price = selectedOrder?.item_uoms?.[0]?.price ? String(selectedOrder.item_uoms[0].price) : "";
+        item.UOM =
+          selectedOrder?.item_uoms?.map((uom) => ({
+            label: uom.name,
+            value: uom.id.toString(),
+            price: uom.price,
+          })) || [];
+        item.uom_id = selectedOrder?.item_uoms?.[0]?.id
+          ? String(selectedOrder.item_uoms[0].id)
+          : "";
+        item.Price = selectedOrder?.item_uoms?.[0]?.price
+          ? String(selectedOrder.item_uoms[0].price)
+          : "";
         item.Quantity = "1";
         // persist a readable label
-        const computedLabel = selectedOrder ? `${selectedOrder.item_code ?? selectedOrder.erp_code ?? ''}${selectedOrder.item_code || selectedOrder.erp_code ? ' - ' : ''}${selectedOrder.name ?? ''}` : "";
+        const computedLabel = selectedOrder
+          ? `${selectedOrder.item_code ?? selectedOrder.erp_code ?? ""}${selectedOrder.item_code || selectedOrder.erp_code ? " - " : ""}${selectedOrder.name ?? ""}`
+          : "";
         item.item_label = computedLabel;
         // ensure the selected item is available in itemsOptions
         if (item.item_label) {
           setItemsOptions((prev: { label: string; value: string }[] = []) => {
-            if (prev.some(o => o.value === item.item_id)) return prev;
-            return [...prev, { value: item.item_id, label: item.item_label as string }];
+            if (prev.some((o) => o.value === item.item_id)) return prev;
+            return [
+              ...prev,
+              { value: item.item_id, label: item.item_label as string },
+            ];
           });
         }
       }
@@ -412,22 +477,22 @@ export default function DeliveryAddEditPage() {
   // --- Compute totals for summary
   const grossTotal = itemData.reduce(
     (sum, item) => sum + Number(item.Total || 0),
-    0
+    0,
   );
   const totalVat = itemData.reduce(
     (sum, item) => sum + Number(item.Vat || 0),
-    0
+    0,
   );
   const netAmount = itemData.reduce(
     (sum, item) => sum + Number(item.Net || 0),
-    0
+    0,
   );
   const preVat = totalVat ? grossTotal - totalVat : grossTotal;
   const discount = itemData.reduce(
     (sum, item) => sum + Number(item.Discount || 0),
-    0
+    0,
   );
-  const finalTotal = grossTotal + totalVat;
+  const finalTotal = netAmount + totalVat;
 
   const generatePayload = (values?: FormikValues) => {
     return {
@@ -457,7 +522,10 @@ export default function DeliveryAddEditPage() {
     };
   };
 
-  const handleSubmit = async (values: FormikValues, formikHelpers: FormikHelpers<FormikValues>) => {
+  const handleSubmit = async (
+    values: FormikValues,
+    formikHelpers: FormikHelpers<FormikValues>,
+  ) => {
     try {
       // validate item rows separately (they live in local state)
       const itemsSchema = Yup.array().of(itemRowSchema);
@@ -466,9 +534,14 @@ export default function DeliveryAddEditPage() {
       } catch (itemErr: any) {
         // log detailed item validation errors and surface a friendly message
         console.error("Item validation errors:", itemErr.inner || itemErr);
-        showSnackbar(itemErr.inner.map((err: any) => err.message).join(", "), "error");
+        showSnackbar(
+          itemErr.inner.map((err: any) => err.message).join(", "),
+          "error",
+        );
         // set a top-level form error to prevent submission
-        formikHelpers.setErrors({ items: "Item rows validation failed" } as any);
+        formikHelpers.setErrors({
+          items: "Item rows validation failed",
+        } as any);
         return;
       }
 
@@ -504,7 +577,10 @@ export default function DeliveryAddEditPage() {
   const keyValueData = [
     // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
     // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
-    { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
+    {
+      key: "Net Total",
+      value: `${CURRENCY} ${toInternationalNumber(netAmount)}`,
+    },
     { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
     // { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(preVat)}` },
     // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
@@ -516,7 +592,7 @@ export default function DeliveryAddEditPage() {
       warehouse_id: values.warehouse,
       delivery_date: values.delivery_date,
       query: search || "",
-      per_page: "10"
+      per_page: "10",
     });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch Deliveries", "error");
@@ -524,24 +600,35 @@ export default function DeliveryAddEditPage() {
       return;
     }
     const data = res?.data || [];
-    const options = data.map((delivery: { id: number; osa_code: string; customer_name: string, customer_code: string, order_code: string; }) => {
-      const capitalizedCustomerName = toTitleCase(String(delivery.customer_name || ""));
-      return {
-        value: String(delivery.id),
-        label: `${delivery.order_code ? delivery.order_code : ""} (${delivery.customer_code ? delivery.customer_code : ""} - ${capitalizedCustomerName})`,
-      };
-    });
+    const options = data.map(
+      (delivery: {
+        id: number;
+        osa_code: string;
+        customer_name: string;
+        customer_code: string;
+        order_code: string;
+      }) => {
+        const capitalizedCustomerName = toTitleCase(
+          String(delivery.customer_name || ""),
+        );
+        return {
+          value: String(delivery.id),
+          label: `${delivery.order_code ? delivery.order_code : ""} (${delivery.customer_code ? delivery.customer_code : ""} - ${capitalizedCustomerName})`,
+        };
+      },
+    );
     setFilteredDeliveryOptions(options);
-    setDeliveryData(data);;
+    setDeliveryData(data);
     setSkeleton({ ...skeleton, delivery: false });
     return options;
-  }
+  };
 
   const fetchWarehouse = async (searchQuery?: string) => {
-    const res = await warehouseListGlobalSearch({
-      query: searchQuery || "",
+    const res = await getAllActiveWarehouse({
+      search: searchQuery || "",
       dropdown: "1",
-      per_page: "50"
+      status: "1",
+      per_page: "50",
     });
 
     if (res.error) {
@@ -549,13 +636,19 @@ export default function DeliveryAddEditPage() {
       return;
     }
     const data = res?.data || [];
-    const options = data.map((warehouse: { id: number; warehouse_code: string; warehouse_name: string }) => ({
-      value: String(warehouse.id),
-      label: warehouse.warehouse_code + " - " + warehouse.warehouse_name
-    }));
+    const options = data.map(
+      (warehouse: {
+        id: number;
+        warehouse_code: string;
+        warehouse_name: string;
+      }) => ({
+        value: String(warehouse.id),
+        label: warehouse.warehouse_code + " - " + warehouse.warehouse_name,
+      }),
+    );
     setFilteredWarehouseOptions(options);
     return options;
-  }
+  };
 
   // const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
   //   const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
@@ -569,32 +662,93 @@ export default function DeliveryAddEditPage() {
   // };
 
   return (
-    <div className="flex flex-col">
-      <div className="flex justify-between items-center mb-[20px]">
-        <div className="flex items-center gap-[16px]">
+    <div
+      className="
+        flex flex-col
+      "
+    >
+      <div
+        className="
+          flex
+          mb-[20px]
+          justify-between items-center
+        "
+      >
+        <div
+          className="
+            flex
+            items-center gap-[16px]
+          "
+        >
           <Icon
             icon="lucide:arrow-left"
             width={24}
             onClick={() => router.back()}
           />
-          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
+          <h1
+            className="
+              flex
+              text-[20px] font-semibold text-[#181D27] leading-[30px]
+              items-center
+            "
+          >
             Add Delivery
           </h1>
         </div>
       </div>
 
-      <ContainerCard className="rounded-[10px] scrollbar-none">
+      <ContainerCard
+        className="
+          rounded-[10px]
+          scrollbar-none
+        "
+      >
         {/* --- Header Section --- */}
-        <div className="flex justify-between mb-10 flex-wrap gap-[20px]">
-          <div className="flex flex-col gap-[10px]">
+        <div
+          className="
+            flex flex-wrap
+            mb-10
+            justify-between gap-[20px]
+          "
+        >
+          <div
+            className="
+              flex flex-col
+              gap-[10px]
+            "
+          >
             <Logo type="full" />
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Delivery</span>
-            <span className="text-primary text-[14px] tracking-[8px]">#{code}</span>
+          <div
+            className="
+              flex flex-col
+              items-end
+            "
+          >
+            <span
+              className="
+                mb-[10px]
+                text-[42px] text-[#A4A7AE]
+                uppercase
+              "
+            >
+              Delivery
+            </span>
+            <span
+              className="
+                text-primary text-[14px] tracking-[8px]
+              "
+            >
+              #{code}
+            </span>
           </div>
         </div>
-        <hr className="w-full text-[#D5D7DA]" />
+        <hr
+          className="
+            w-full
+            text-[#D5D7DA]
+          "
+        />
 
         <Formik<FormikValues>
           initialValues={form}
@@ -602,7 +756,15 @@ export default function DeliveryAddEditPage() {
           validationSchema={validationSchema}
           enableReinitialize={true}
         >
-          {({ values, touched, errors, setFieldValue, handleChange, submitForm, isSubmitting }: FormikProps<FormikValues>) => {
+          {({
+            values,
+            touched,
+            errors,
+            setFieldValue,
+            handleChange,
+            submitForm,
+            isSubmitting,
+          }: FormikProps<FormikValues>) => {
             // // Log Formik validation errors to console for easier debugging
             // useEffect(() => {
             //   if (errors && Object.keys(errors).length > 0) {
@@ -615,7 +777,15 @@ export default function DeliveryAddEditPage() {
 
             return (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-10">
+                <div
+                  className="
+                    grid grid-cols-1
+                    mt-6 mb-10
+                    gap-6
+                    md:grid-cols-2
+                    lg:grid-cols-3
+                  "
+                >
                   <div>
                     <AutoSuggestion
                       required
@@ -623,7 +793,11 @@ export default function DeliveryAddEditPage() {
                       name="warehouse"
                       placeholder="Search warehouse"
                       onSearch={(q) => fetchWarehouse(q)}
-                      initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
+                      initialValue={
+                        filteredWarehouseOptions.find(
+                          (o) => o.value === String(values?.warehouse),
+                        )?.label || ""
+                      }
                       onSelect={(opt) => {
                         if (values.warehouse !== opt.value) {
                           setFieldValue("warehouse", opt.value);
@@ -632,7 +806,10 @@ export default function DeliveryAddEditPage() {
                           // fetch deliveries for the selected warehouse only
                           (async () => {
                             setFieldValue("delivery", "");
-                            await fetchAgentDeliveries({ ...values, warehouse: opt.value }, "");
+                            await fetchAgentDeliveries(
+                              { ...values, warehouse: opt.value },
+                              "",
+                            );
                           })();
                         } else {
                           setFieldValue("warehouse", opt.value);
@@ -641,14 +818,25 @@ export default function DeliveryAddEditPage() {
                       onClear={() => {
                         setFieldValue("warehouse", "");
                         setFieldValue("delivery", "");
-                        setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
+                        setItemData([
+                          {
+                            item_id: "",
+                            item_name: "",
+                            item_label: "",
+                            UOM: [],
+                            Quantity: "1",
+                            Price: "",
+                            Excise: "",
+                            Discount: "",
+                            Net: "",
+                            Vat: "",
+                            Total: "",
+                          },
+                        ]);
                         setFilteredDeliveryOptions([]);
                         setSkeleton((prev) => ({ ...prev, delivery: false }));
                       }}
-                      error={
-                        touched.warehouse &&
-                        (errors.warehouse as string)
-                      }
+                      error={touched.warehouse && (errors.warehouse as string)}
                     />
                   </div>
                   <div>
@@ -659,8 +847,17 @@ export default function DeliveryAddEditPage() {
                       name="delivery_date"
                       placeholder="Select Delivery"
                       value={values.delivery_date}
-                      min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
-                      onChange={(e) => { handleChange(e); setFieldValue("delivery", ""); fetchAgentDeliveries({ ...values, delivery_date: e.target.value }, ""); }}
+                      min={new Date(Date.now() + 24 * 60 * 60 * 1000)
+                        .toISOString()
+                        .slice(0, 10)}
+                      onChange={(e) => {
+                        handleChange(e);
+                        setFieldValue("delivery", "");
+                        fetchAgentDeliveries(
+                          { ...values, delivery_date: e.target.value },
+                          "",
+                        );
+                      }}
                     />
                   </div>
                   <div>
@@ -676,32 +873,82 @@ export default function DeliveryAddEditPage() {
                         const val = (e.target as HTMLSelectElement).value;
                         if (values.delivery !== val) {
                           setFieldValue("delivery", val);
-                          const currentDelivery = deliveryData.find(o => String(o.id) === val);
-                          setFieldValue("customer_id", currentDelivery?.customer_id || "");
+                          const currentDelivery = deliveryData.find(
+                            (o) => String(o.id) === val,
+                          );
+                          setFieldValue(
+                            "customer_id",
+                            currentDelivery?.customer_id || "",
+                          );
                           const details = currentDelivery?.details ?? [];
-                          const mapped = details.map(d => {
+                          const mapped = details.map((d) => {
                             const qty = Number(d.quantity || 0);
                             const price = Number(d.item_price || 0);
-                            const computedTotal = d.total != null ? Number(d.total) : qty * price;
-                            const computedVat = d.vat != null ? Number(d.vat) : 0;
+                            const computedTotal =
+                              d.total != null ? Number(d.total) : qty * price;
+                            const computedVat =
+                              d.vat != null ? Number(d.vat) : 0;
                             const preVat = computedTotal - computedVat;
                             return {
                               item_id: String(d.item_id ?? ""),
                               item_name: d.item_name ?? "",
-                              item_label: `${d.item_code ?? ""}${d.item_code ? ' - ' : ''}${d.item_name ?? ""}`,
-                              UOM: d.item_uoms ? d.item_uoms.map((uom: any) => ({ label: uom.name ?? "", value: String(uom.id), price: String(uom.price ?? "") })) : [],
+                              item_label: `${d.item_code ?? ""}${d.item_code ? " - " : ""}${d.item_name ?? ""}`,
+                              UOM: d.item_uoms
+                                ? d.item_uoms.map((uom: any) => ({
+                                    label: uom.name ?? "",
+                                    value: String(uom.id),
+                                    price: String(uom.price ?? ""),
+                                  }))
+                                : [],
                               uom_id: d.uom_id ? String(d.uom_id) : "",
                               Quantity: String(d.quantity ?? "1"),
-                              Price: d.item_price != null ? String(d.item_price) : "",
+                              Price:
+                                d.item_price != null
+                                  ? String(d.item_price)
+                                  : "",
                               Excise: String((d as any).excise ?? "0.00"),
                               Discount: String(d.discount ?? "0.00"),
-                              Net: String(d.net_total ?? d.net_total ?? computedTotal - computedVat),
-                              Vat: String(computedVat.toFixed ? computedVat.toFixed(2) : String(computedVat)),
-                              Total: String(computedTotal.toFixed ? computedTotal.toFixed(2) : String(computedTotal)),
-                              preVat: String(preVat.toFixed ? preVat.toFixed(2) : String(preVat)),
+                              Net: String(
+                                d.net_total ??
+                                  d.net_total ??
+                                  computedTotal - computedVat,
+                              ),
+                              Vat: String(
+                                computedVat.toFixed
+                                  ? computedVat.toFixed(2)
+                                  : String(computedVat),
+                              ),
+                              Total: String(
+                                computedTotal.toFixed
+                                  ? computedTotal.toFixed(2)
+                                  : String(computedTotal),
+                              ),
+                              preVat: String(
+                                preVat.toFixed
+                                  ? preVat.toFixed(2)
+                                  : String(preVat),
+                              ),
                             } as ItemData;
                           });
-                          setItemData(mapped.length ? mapped : [{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
+                          setItemData(
+                            mapped.length
+                              ? mapped
+                              : [
+                                  {
+                                    item_id: "",
+                                    item_name: "",
+                                    item_label: "",
+                                    UOM: [],
+                                    Quantity: "1",
+                                    Price: "",
+                                    Excise: "",
+                                    Discount: "",
+                                    Net: "",
+                                    Vat: "",
+                                    Total: "",
+                                  },
+                                ],
+                          );
                         }
                       }}
                       // onClear={() => {
@@ -719,7 +966,9 @@ export default function DeliveryAddEditPage() {
                   data={itemData.map((row, idx) => ({
                     ...row,
                     idx: idx.toString(),
-                    UOM: Array.isArray(row.UOM) ? JSON.stringify(row.UOM) : "[]",
+                    UOM: Array.isArray(row.UOM)
+                      ? JSON.stringify(row.UOM)
+                      : "[]",
                     item_id: String(row.item_id ?? ""),
                     Quantity: String(row.Quantity ?? ""),
                     Price: String(row.Price ?? ""),
@@ -742,8 +991,12 @@ export default function DeliveryAddEditPage() {
                           // Optimized: avoid mapping+filtering arrays on every render.
                           // Find the option for the current row (if still present) and fall back to stored label
                           // so the selection remains visible even when the option isn't returned by a search.
-                          const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
-                          const fallbackOption = row.item_label ? { value: row.item_id, label: row.item_label } : undefined;
+                          const matchedOption = itemsOptions.find(
+                            (o) => o.value === row.item_id,
+                          );
+                          const fallbackOption = row.item_label
+                            ? { value: row.item_id, label: row.item_label }
+                            : undefined;
                           const selectedOpt = matchedOption ?? fallbackOption;
                           const initialLabel = selectedOpt?.label ?? "";
                           // console.log(row);
@@ -758,15 +1011,25 @@ export default function DeliveryAddEditPage() {
                                 selectedOption={selectedOpt ?? null}
                                 onSelect={(opt) => {
                                   if (opt.value !== row.item_id) {
-                                    recalculateItem(Number(row.idx), "item_id", opt.value);
+                                    recalculateItem(
+                                      Number(row.idx),
+                                      "item_id",
+                                      opt.value,
+                                    );
                                   }
                                 }}
                                 onClear={() => {
-                                  recalculateItem(Number(row.idx), "item_id", "");
+                                  recalculateItem(
+                                    Number(row.idx),
+                                    "item_id",
+                                    "",
+                                  );
                                 }}
                                 disabled={!values.delivery}
                                 error={err && err}
-                                className="w-full"
+                                className="
+                                  w-full
+                                "
                               />
                             </div>
                           );
@@ -789,12 +1052,26 @@ export default function DeliveryAddEditPage() {
                                 width="max-w-[150px]"
                                 options={options}
                                 searchable={true}
-                                disabled={options.length === 0 || !values.delivery}
+                                disabled={
+                                  options.length === 0 || !values.delivery
+                                }
                                 showSkeleton={Boolean(itemLoading[idx]?.uom)}
                                 onChange={(e) => {
-                                  recalculateItem(Number(row.idx), "uom_id", e.target.value)
-                                  const price = options.find((uom: { value: string }) => String(uom.value) === e.target.value)?.price || "0.00";
-                                  recalculateItem(Number(row.idx), "Price", price);
+                                  recalculateItem(
+                                    Number(row.idx),
+                                    "uom_id",
+                                    e.target.value,
+                                  );
+                                  const price =
+                                    options.find(
+                                      (uom: { value: string }) =>
+                                        String(uom.value) === e.target.value,
+                                    )?.price || "0.00";
+                                  recalculateItem(
+                                    Number(row.idx),
+                                    "Price",
+                                    price,
+                                  );
                                 }}
                                 error={err && err}
                               />
@@ -820,10 +1097,23 @@ export default function DeliveryAddEditPage() {
                                 value={row.Quantity}
                                 disabled={!row.uom_id || !values.delivery}
                                 onChange={(e) => {
-                                  const raw = (e.target as HTMLInputElement).value;
-                                  const intPart = raw.split('.')[0];
-                                  const sanitized = intPart === '' ? '' : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                  recalculateItem(Number(row.idx), "Quantity", sanitized);
+                                  const raw = (e.target as HTMLInputElement)
+                                    .value;
+                                  const intPart = raw.split(".")[0];
+                                  const sanitized =
+                                    intPart === ""
+                                      ? ""
+                                      : String(
+                                          Math.max(
+                                            0,
+                                            parseInt(intPart, 10) || 0,
+                                          ),
+                                        );
+                                  recalculateItem(
+                                    Number(row.idx),
+                                    "Quantity",
+                                    sanitized,
+                                  );
                                 }}
                                 min={1}
                                 integerOnly={true}
@@ -841,34 +1131,87 @@ export default function DeliveryAddEditPage() {
                           const loading = Boolean(itemLoading[idx]?.price);
                           const price = String(row.Price ?? "");
                           if (loading) {
-                            return <span className="text-gray-400 animate-pulse">Loading...</span>;
+                            return (
+                              <span
+                                className="
+                                text-gray-400
+                                animate-pulse
+                              "
+                              >
+                                Loading...
+                              </span>
+                            );
                           }
-                          if (!price || price === "" || price === "0" || price === "-") {
-                            return <span className="text-gray-400">-</span>;
+                          if (
+                            !price ||
+                            price === "" ||
+                            price === "0" ||
+                            price === "-"
+                          ) {
+                            return (
+                              <span
+                                className="
+                                text-gray-400
+                              "
+                              >
+                                -
+                              </span>
+                            );
                           }
                           return <span>{toInternationalNumber(price)}</span>;
-                        }
+                        },
                       },
                       // { key: "excise", label: "Excise", render: (row) => <span>{toInternationalNumber(row.Excise) || "0.00"}</span> },
                       // { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
                       // { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
-                      { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
-                      { key: "Vat", label: "VAT", render: (row) => <span>{toInternationalNumber(row.Vat) || "0.00"}</span> },
+                      {
+                        key: "Net",
+                        label: "Net",
+                        render: (row) => (
+                          <span>
+                            {toInternationalNumber(row.Net) || "0.00"}
+                          </span>
+                        ),
+                      },
+                      {
+                        key: "Vat",
+                        label: "VAT",
+                        render: (row) => (
+                          <span>
+                            {toInternationalNumber(row.Vat) || "0.00"}
+                          </span>
+                        ),
+                      },
                       // { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
-                      { key: "Total", label: "Total", render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span> },
+                      {
+                        key: "Total",
+                        label: "Total",
+                        render: (row) => (
+                          <span>
+                            {toInternationalNumber(row.Total) || "0.00"}
+                          </span>
+                        ),
+                      },
                       {
                         key: "action",
                         label: "Action",
                         render: (row) => (
                           <button
                             type="button"
-                            className={`${itemData.length <= 1
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                              } text-red-500 flex items-center`}
                             onClick={() =>
-                              itemData.length > 1 && handleRemoveItem(Number(row.idx))
+                              itemData.length > 1 &&
+                              handleRemoveItem(Number(row.idx))
                             }
+                            className={`
+                              flex
+                              text-red-500
+                              items-center
+                              ${
+                                itemData.length <= 1
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }
+                            `}
                           >
                             <Icon icon="hugeicons:delete-02" width={20} />
                           </button>
@@ -880,27 +1223,73 @@ export default function DeliveryAddEditPage() {
                 />
 
                 {/* --- Summary --- */}
-                <div className="flex justify-between text-primary gap-0 mb-10">
-                  <div className="flex justify-between flex-wrap w-full mt-[20px]">
-                    <div className="flex flex-col justify-between gap-[20px] w-full lg:w-auto">
-                      <div className="mt-4">
+                <div
+                  className="
+                    flex
+                    mb-10
+                    text-primary
+                    justify-between gap-0
+                  "
+                >
+                  <div
+                    className="
+                      flex flex-wrap
+                      w-full
+                      mt-[20px]
+                      justify-between
+                    "
+                  >
+                    <div
+                      className="
+                        flex flex-col
+                        w-full
+                        justify-between gap-[20px]
+                        lg:w-auto
+                      "
+                    >
+                      <div
+                        className="
+                          mt-4
+                        "
+                      >
                         {(() => {
                           // disable add when there's already an empty/new item row
-                          const hasEmptyRow = itemData.some(it => (String(it.item_id ?? '').trim() === '' && String(it.uom_id ?? '').trim() === ''));
+                          const hasEmptyRow = itemData.some(
+                            (it) =>
+                              String(it.item_id ?? "").trim() === "" &&
+                              String(it.uom_id ?? "").trim() === "",
+                          );
                           return (
                             <button
                               type="button"
                               disabled={hasEmptyRow}
-                              className={`text-[#E53935] font-medium text-[16px] flex items-center gap-2 ${hasEmptyRow ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              onClick={() => { if (!hasEmptyRow) handleAddNewItem(); }}
+                              onClick={() => {
+                                if (!hasEmptyRow) handleAddNewItem();
+                              }}
+                              className={`
+                                flex
+                                text-[#E53935] font-medium text-[16px]
+                                items-center gap-2
+                                ${hasEmptyRow ? "opacity-50 cursor-not-allowed" : ""}
+                              `}
                             >
-                              <Icon icon="material-symbols:add-circle-outline" width={20} />
+                              <Icon
+                                icon="material-symbols:add-circle-outline"
+                                width={20}
+                              />
                               Add New Item
                             </button>
                           );
                         })()}
                       </div>
-                      <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
+                      <div
+                        className="
+                          flex flex-col
+                          w-full
+                          justify-end gap-[20px]
+                          lg:w-[400px]
+                        "
+                      >
                         <InputFields
                           label="Note"
                           type="textarea"
@@ -913,32 +1302,81 @@ export default function DeliveryAddEditPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-[10px] w-full lg:w-[350px]">
+                    <div
+                      className="
+                        flex flex-col
+                        w-full
+                        gap-[10px]
+                        lg:w-[350px]
+                      "
+                    >
                       {keyValueData.map((item) => (
                         <Fragment key={item.key}>
                           <KeyValueData data={[item]} />
-                          <hr className="text-[#D5D7DA]" />
+                          <hr
+                            className="
+                              text-[#D5D7DA]
+                            "
+                          />
                         </Fragment>
                       ))}
-                      <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
+                      <div
+                        className="
+                          flex
+                          font-semibold text-[#181D27] text-[18px]
+                          justify-between
+                        "
+                      >
                         <span>Total</span>
-                        <span>{CURRENCY} {toInternationalNumber(finalTotal)}</span>
+                        <span>
+                          {CURRENCY} {toInternationalNumber(finalTotal)}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* --- Buttons --- */}
-                <hr className="text-[#D5D7DA]" />
-                <div className="flex justify-end gap-4 mt-6">
+                <hr
+                  className="
+                    text-[#D5D7DA]
+                  "
+                />
+                <div
+                  className="
+                    flex
+                    mt-6
+                    justify-end gap-4
+                  "
+                >
                   <button
                     type="button"
-                    className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
                     onClick={() => router.push("/agentCustomerDelivery")}
+                    className="
+                      px-6 py-2
+                      text-gray-700
+                      rounded-lg border border-gray-300
+                      hover:bg-gray-100
+                    "
                   >
                     Cancel
                   </button>
-                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Delivery..." : "Create Delivery"} disabled={isSubmitting || !values.warehouse || !values.delivery_date || !values.delivery || !itemData || !itemData.length} onClick={() => submitForm()} />
+                  <SidebarBtn
+                    type="submit"
+                    isActive={true}
+                    label={
+                      isSubmitting ? "Creating Delivery..." : "Create Delivery"
+                    }
+                    disabled={
+                      isSubmitting ||
+                      !values.warehouse ||
+                      !values.delivery_date ||
+                      !values.delivery ||
+                      !itemData ||
+                      !itemData.length
+                    }
+                    onClick={() => submitForm()}
+                  />
                 </div>
               </>
             );

@@ -9,11 +9,11 @@ import { itemById, itemReturn, itemSales } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
 import KeyValueData from "@/app/components/keyValueData";
-import Image from "next/image";
 import StatusBtn from "@/app/components/statusBtn2";
 import { useLoading } from "@/app/services/loadingContext";
 import Table, { TableDataType } from "@/app/components/customTable";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
+import Image from "next/image";
 
 interface Item {
   id?: number;
@@ -80,8 +80,11 @@ export default function Page() {
   const { id, tabName } = useParams();
   const { setLoading } = useLoading();
   const [item, setItem] = useState<Item | null>(null);
-
   const { showSnackbar } = useSnackbar();
+  const [imageSrc, setImageSrc] = useState<string>("/no-image.png");
+  useEffect(() => {
+    setImageSrc(item?.image ?? "/no-image.png");
+  }, [item?.image]);
 
   const onTabClick = (idx: number) => {
     if (typeof idx !== "number") return;
@@ -118,7 +121,7 @@ export default function Page() {
     fetchItemDetails();
   }, [id, showSnackbar]);
 
-
+console.log(item?.image, "itemimage")
 
   return (
     <>
@@ -134,14 +137,14 @@ export default function Page() {
       <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
         <div className="flex flex-col sm:flex-row items-center gap-[20px]">
           <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB] overflow-hidden">
-            <img
-              src={item?.image ? item.image : "/no-image.png"}
+            <Image
+              src={imageSrc}
               alt={item?.name || "item"}
-              // width={40}
-              // height={40}
+              width={50}
+              height={50}
               className="w-full object-cover rounded-full border border-[#E4E4E4] bg-[#E9EAEB] scale-[1.5]"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = "/no-image.png";
+              onError={() => {
+                setImageSrc("/no-image.png");
               }}
             />
           </div>
@@ -302,7 +305,7 @@ export default function Page() {
                 columns: [
                   { key: "invoice_code", label: "Invoice Code" },
                   { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</> },
-                  { key: "name", label: "UOM", render: (row: TableDataType) => <>{(typeof row?.name === "object" && (row?.name as { name: string })?.name) ?? row?.name ?? row.uom_id}</> },
+                  { key: "name", label: "UOM"},
                   { key: "quantity", label: "Quantity", render: (row: TableDataType) => <>{toInternationalNumber(row.quantity, {maximumFractionDigits: 0})}</> },
                   { key: "itemvalue", label: "Price", render: (row: TableDataType) => <>{toInternationalNumber(row.itemvalue)}</> }
                 ],

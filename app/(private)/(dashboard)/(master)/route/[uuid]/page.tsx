@@ -293,6 +293,8 @@ export default function AddEditRoute() {
               <InputFields
                 required
                 label="Warehouse"
+                // isSingle={false}
+                searchable={true}
                 value={form.warehouse}
                 options={warehouseOptions}
                 onChange={(e) => {

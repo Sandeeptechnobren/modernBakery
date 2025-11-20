@@ -140,7 +140,6 @@ export default function CustomerInvoicePage() {
     customerSubCategoryOptions,
     companyOptions,
     salesmanOptions,
-    agentCustomerOptions,
     channelOptions,
     warehouseAllOptions,
     routeOptions,
@@ -150,7 +149,6 @@ export default function CustomerInvoicePage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isExporting, setIsExporting] = useState(false);
   const [threeDotLoading, setThreeDotLoading] = useState({
     csv: false,
     xlsx: false,

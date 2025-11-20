@@ -40,7 +40,7 @@ interface VehicleFormValues {
   odoMeter: string;
   capacity: string;
   fuel_reading: string;
-  status: "active" | "inactive";
+  status: string;
   validFrom: string;
   validTo: string;
 }
@@ -56,9 +56,7 @@ const VehicleSchema = Yup.object().shape({
   fuel_reading: Yup.number()
     .required("Fuel Reading is required")
     .max(999, "Fuel Reading must be at most 3 digits"),
-  status: Yup.string()
-    .oneOf(["active", "inactive"])
-    .required("Status is required"),
+  status: Yup.string().required("Status is required"),
   validFrom: Yup.date().required("Valid From date is required"),
   validTo: Yup.date()
     .min(Yup.ref("validFrom"), "Valid To must be after Valid From")
@@ -102,7 +100,7 @@ export default function AddEditVehicleWithStepper() {
     warehouseId: "",
     odoMeter: "",
     capacity: "",
-    status: "active",
+    status: "1",
     fuel_reading: "",
     validFrom: "",
     validTo: "",
@@ -170,7 +168,7 @@ export default function AddEditVehicleWithStepper() {
               odoMeter: vehicle.opening_odometer || "",
               capacity: vehicle.capacity || "",
               fuel_reading: vehicle.fuel_reading || "",
-              status: vehicle.status === 1 ? "active" : "inactive",
+              status: vehicle.status === 1 ? "1" : "0",
               validFrom: vehicle.valid_from || "",
               validTo: vehicle.valid_to || "",
             });
@@ -218,7 +216,6 @@ export default function AddEditVehicleWithStepper() {
         "vehicleBrand",
         "numberPlate",
         "chassisNumber",
-
         "vehicleType",
       ];
     if (step === 2) fields = ["ownerType", "warehouseId"];
@@ -291,7 +288,7 @@ export default function AddEditVehicleWithStepper() {
       owner_type: form.ownerType,
       warehouse_id: finalWarehouseId, // ← updated
       opening_odometer: form.odoMeter,
-      status: form.status === "active" ? "1" : "0",
+      status: Number(form.status) || 0,
       valid_from: form.validFrom,
       valid_to: form.validTo,
     };
@@ -565,8 +562,8 @@ export default function AddEditVehicleWithStepper() {
                   name="status"
                   error={touched.status && errors.status}
                   options={[
-                    { value: "active", label: "Active" },
-                    { value: "inactive", label: "Inactive" },
+                    { value: "1", label: "Active" },
+                    { value: "0", label: "Inactive" },
                   ]}
                 />
                 {/* {touched.status && errors.status && (
@@ -595,7 +592,7 @@ export default function AddEditVehicleWithStepper() {
         <Link href="/vehicle">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">
+        <h1 className="text-xl font-semibold text-gray-900 mb-[4px]">
           {isEditMode ? "Update Vehicle" : "Add Vehicle"}
         </h1>
       </div>
