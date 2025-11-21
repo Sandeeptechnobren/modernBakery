@@ -306,7 +306,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { list: fetchInvoices, filterBy: filterBy },
                     header: {
-                        title: "Customer Invoices",
+                        title: "Distributor's Invoices",
                         threeDot: [
                             {
                                 icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",

@@ -274,7 +274,7 @@ export default function CustomerInvoicePage() {
           config={{
             api: { list: fetchOrders, filterBy: filterBy },
             header: {
-              title: "Customer Orders",
+              title: "Distributor's Orders",
               searchBar: false,
               columnFilter: true,
               threeDot: [

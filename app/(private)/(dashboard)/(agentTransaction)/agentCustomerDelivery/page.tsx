@@ -226,7 +226,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { list: fetchDelivery, filterBy: filterBy },
                     header: {
-                        title: "Customer Delivery",
+                        title: "Distributor's Delivery",
                         columnFilter: true,
                         searchBar: false,
                         threeDot: [

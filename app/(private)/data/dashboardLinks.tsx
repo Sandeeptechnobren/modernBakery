@@ -109,7 +109,7 @@ export const initialLinkData: SidebarDataType[] = [
           // },
         ],
       },
-       {
+      {
         isActive: false,
         href: "#",
         label: "Manage Distributors",
@@ -131,7 +131,7 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "carbon:delivery-parcel",
             iconColor: "text-cyan-500"
           }
-         
+
         ]
       },
       {
@@ -298,7 +298,7 @@ export const initialLinkData: SidebarDataType[] = [
       {
         isActive: false,
         href: "#",
-        label: "Agent Transaction",
+        label: "Distributor's Transaction",
         leadingIcon: "mdi:account-cash-outline",
         iconColor: "text-green-500",
         trailingIcon: "mdi-light:chevron-right",
@@ -306,21 +306,21 @@ export const initialLinkData: SidebarDataType[] = [
           {
             isActive: false,
             href: "/agentOrder",
-            label: "Agent Order",
+            label: "Distributor's Order",
             leadingIcon: "carbon:delivery-parcel",
             iconColor: "text-cyan-500"
           },
           {
             isActive: false,
             href: "/agentCustomerDelivery",
-            label: "Agent Delivery",
+            label: "Distributor's Delivery",
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
           {
             isActive: false,
             href: "/agentInvoice",
-            label: "Agent Invoice",
+            label: "Distributor's Invoice",
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
@@ -338,6 +338,8 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "mdi:truck-remove-outline",
             iconColor: "text-cyan-500"
           },
+
+
           {
             isActive: false,
             href: "/salesTeamLoad",
