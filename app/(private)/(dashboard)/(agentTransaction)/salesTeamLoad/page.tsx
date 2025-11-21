@@ -188,7 +188,7 @@ export default function SalemanLoad() {
   const downloadPdf = async (uuid: string) => {
     try {
       setLoading(true);
-      const response = await exportSalesmanLoadDownload({ id: uuid, uuid: uuid, load_id: uuid, salesman_load_id: uuid, format: "csv" });
+      const response = await exportSalesmanLoadDownload({ uuid: uuid, format: "excel" });
       if (response && typeof response === 'object' && response.download_url) {
         await downloadFile(response.download_url);
         showSnackbar("File downloaded successfully ", "success");
@@ -232,7 +232,7 @@ export default function SalemanLoad() {
             filterBy: filterBy,
           },
           header: {
-            title: "Salesman Load",
+            title: "SalesTeam Load",
             searchBar: false,
             columnFilter: true,
             threeDot: [

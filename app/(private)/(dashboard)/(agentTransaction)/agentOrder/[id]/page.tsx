@@ -565,9 +565,9 @@ export default function OrderAddEditPage() {
                   <div>
                     <AutoSuggestion
                       required
-                      label="Warehouse"
+                      label="  Distributor"
                       name="warehouse"
-                      placeholder="Search warehouse"
+                      placeholder="Search   Distributor"
                       onSearch={(q) => fetchWarehouse(q)}
                       initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
                       onSelect={(opt) => {
@@ -863,7 +863,7 @@ export default function OrderAddEditPage() {
                   >
                     Cancel
                   </button>
-                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !itemData || itemData.length > 0 } onClick={() => submitForm()} />
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !itemData || itemData.length > 0} onClick={() => submitForm()} />
                 </div>
               </>
             );

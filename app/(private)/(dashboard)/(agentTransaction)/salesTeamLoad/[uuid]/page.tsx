@@ -384,7 +384,7 @@ export default function AddEditSalesmanLoad() {
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-              Load
+              SalesTeam Load
             </span>
             <span className="text-primary text-[14px] tracking-[10px]">
               #{code}

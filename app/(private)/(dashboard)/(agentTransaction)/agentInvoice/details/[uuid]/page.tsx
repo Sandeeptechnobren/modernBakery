@@ -8,7 +8,7 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, RefObject, Fragment } from "react";
-import { deliveryByUuid, exportInvoiceWithDetails, exportInvoiceDetails,invoiceByUuid } from "@/app/services/agentTransaction";
+import { deliveryByUuid, exportInvoiceWithDetails, exportInvoiceDetails, invoiceByUuid } from "@/app/services/agentTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
@@ -19,7 +19,7 @@ import KeyValueData from "@/app/components/keyValueData";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import { isValidDate } from "@/app/utils/formatDate";
 import { downloadFile } from "@/app/services/allApi";
-  // const CURRENCY = localStorage.getItem("country") || "";
+// const CURRENCY = localStorage.getItem("country") || "";
 
 interface DeliveryDetail {
   id: number;
@@ -121,7 +121,7 @@ export default function OrderDetailPage() {
   const params = useParams();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
-  const [invoiceId,setId] = useState<string>('');
+  const [invoiceId, setId] = useState<string>('');
   // const [showDropdown, setShowDropdown] = useState(false);
   const [deliveryData, setDeliveryData] = useState<InvoiceData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
@@ -137,7 +137,7 @@ export default function OrderDetailPage() {
           setLoading(true);
           const response = await invoiceByUuid(uuid);
           const data = response?.data ?? response;
-          setId( data?.header_id);
+          setId(data?.header_id);
           setDeliveryData(data);
 
           // Map details to table data
@@ -170,21 +170,21 @@ export default function OrderDetailPage() {
   }, [uuid, setLoading, showSnackbar]);
 
   const exportFile = async () => {
-      try {
-        setLoadingState(true);
-        const response = await exportInvoiceWithDetails({ uuid: uuid, format: "pdf" });
-        if (response && typeof response === 'object' && response.download_url) {
-          await downloadFile(response.download_url);
-          showSnackbar("File downloaded successfully ", "success");
-        } else {
-          showSnackbar("Failed to get download URL", "error");
-        }
-      } catch (error) {
-        showSnackbar("Failed to download warehouse data", "error");
-      } finally {
-        setLoadingState(false);
+    try {
+      setLoadingState(true);
+      const response = await exportInvoiceWithDetails({ uuid: uuid, format: "pdf" });
+      if (response && typeof response === 'object' && response.download_url) {
+        await downloadFile(response.download_url);
+        showSnackbar("File downloaded successfully ", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
       }
-    };
+    } catch (error) {
+      showSnackbar("Failed to download warehouse data", "error");
+    } finally {
+      setLoadingState(false);
+    }
+  };
 
   const keyValueData = [
     // { key: "Gross Total", value: `AED ${deliveryData?.gross_total || "0.00"}` },
@@ -290,7 +290,7 @@ export default function OrderDetailPage() {
             {/* To (Customer) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>Customer</span>
+                <span>Buyer</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">{deliveryData?.customer_code ? deliveryData.customer_code : ""} {deliveryData?.customer_code && deliveryData?.customer_name ? " - " : ""} {deliveryData?.customer_name}</span>
                   {/* <span>{deliveryData?.customer_address && deliveryData?.customer_address}</span> */}

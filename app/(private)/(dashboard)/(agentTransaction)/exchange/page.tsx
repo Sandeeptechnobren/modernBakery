@@ -7,11 +7,12 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
-import { exchangeList } from "@/app/services/agentTransaction";
+import { exchangeList, exportExchangeData } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { downloadFile } from "@/app/services/allApi";
 
 const dropdownDataList = [
     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -58,7 +59,10 @@ export default function CustomerInvoicePage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
-
+    const [threeDotLoading, setThreeDotLoading] = useState({
+        csv: false,
+        xlsx: false,
+    });
     const [filters, setFilters] = useState({
         fromDate: new Date().toISOString().split("T")[0],
         toDate: new Date().toISOString().split("T")[0],
@@ -120,6 +124,31 @@ export default function CustomerInvoicePage() {
         }
     }, [setLoading]);
 
+
+    const exportFile = async (format: 'csv' | 'xlsx' = 'csv') => {
+        try {
+            // setLoading(true);
+            // Pass selected format to the export API
+            setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
+            const response = await exportExchangeData({ format });
+            // const url = response?.url || response?.data?.url;
+            const url = response?.download_url || response?.url || response?.data?.url;
+            if (url) {
+                await downloadFile(url);
+                showSnackbar("File downloaded successfully", "success");
+            } else {
+                showSnackbar("Failed to get download file", "error");
+            }
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
+        } catch (error) {
+            console.error("Export failed:", error);
+            showSnackbar("Failed to download invoices", "error");
+            setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
+        } finally {
+            // setLoading(false);
+        }
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* 🔹 Table Section */}
@@ -131,6 +160,20 @@ export default function CustomerInvoicePage() {
                         title: "Exchange",
                         columnFilter: true,
                         searchBar: false,
+                        threeDot: [
+                            {
+                                icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
+                                label: "Export CSV",
+                                labelTw: "text-[12px] hidden sm:block",
+                                onClick: () => !threeDotLoading.csv && exportFile("csv"),
+                            },
+                            {
+                                icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
+                                label: "Export Excel",
+                                labelTw: "text-[12px] hidden sm:block",
+                                onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
+                            },],
+
                         actions: [
                             //   <SidebarBtn
                             //       key={0}
@@ -159,9 +202,11 @@ export default function CustomerInvoicePage() {
                         {
                             icon: "lucide:eye",
                             onClick: (row: TableDataType) =>
-                                router.push(
-                                    `/exchange/details/${row.uuid}`
-                                ),
+                                router.push(`/exchange/details/${row.uuid}`),
+                        },
+                        {
+                            icon: "lucide:download",
+                            onClick: (row: TableDataType) => exportFile()
                         }
                     ],
                     pageSize: 10,

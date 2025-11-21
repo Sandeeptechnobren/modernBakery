@@ -908,9 +908,9 @@ export default function InvoiceddEditPage() {
                         <>
                             <AutoSuggestion
                                 required
-                                label="Warehouse"
+                                label="  Distributor"
                                 name="warehouse"
-                                placeholder="Search warehouse..."
+                                placeholder="Search   Distributor..."
                                 initialValue={form.warehouse_name}
                                 onSearch={(searchText) => handleWarehouseSearch(searchText)}
                                 onSelect={(option) => {

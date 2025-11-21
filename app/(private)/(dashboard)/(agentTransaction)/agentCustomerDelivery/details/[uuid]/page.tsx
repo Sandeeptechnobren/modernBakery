@@ -303,7 +303,7 @@ export default function OrderDetailPage() {
             {/* To (Customer) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>Customer</span>
+                <span>Buyer</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">
                     {deliveryData?.customer?.code ? deliveryData?.customer?.code : ""}

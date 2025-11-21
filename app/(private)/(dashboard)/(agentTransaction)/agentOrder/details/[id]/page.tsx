@@ -237,7 +237,7 @@ export default function OrderDetailPage() {
             {/* To (Customer) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>Customer</span>
+                <span>Buyer</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">{data?.customer_code && data?.customer_name ? `${data?.customer_code} - ${data?.customer_name}` : "-"}</span>
                   <span>{data?.customer_street && ` ${data?.customer_street}`}</span>

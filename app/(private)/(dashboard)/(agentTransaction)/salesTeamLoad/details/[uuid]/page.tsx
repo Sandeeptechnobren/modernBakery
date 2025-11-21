@@ -136,8 +136,8 @@ export default function ViewPage() {
 
   const downloadPdf = async (uuid: string) => {
     try {
-      setLoadingState(true);
-      const response = await exportSalesmanLoadDownload({ id: uuid, uuid: uuid, load_id: uuid, salesman_load_id: uuid, format: "pdf" });
+      setLoading(true);
+      const response = await exportSalesmanLoadDownload({ uuid: uuid, format: "excel" });
       if (response && typeof response === 'object' && response.download_url) {
         await downloadFile(response.download_url);
         showSnackbar("File downloaded successfully ", "success");
@@ -147,7 +147,7 @@ export default function ViewPage() {
     } catch (error) {
       showSnackbar("Failed to download file", "error");
     } finally {
-      setLoadingState(false);
+      setLoading(false);
     }
   };
 
@@ -176,7 +176,7 @@ export default function ViewPage() {
               <Logo type="full" />
               <div className="text-right">
                 <h2 className="text-4xl font-bold text-gray-400 uppercase mb-2">
-                  Salesman Load
+                  SalesTeam Load
                 </h2>
                 <p className="text-primary text-sm tracking-[5px]">
                   {customer?.osa_code || "-"}
