@@ -12,7 +12,7 @@ import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { createInvoice, updateInvoice, invoiceByUuid, deliveryList } from "@/app/services/agentTransaction";
-import { warehouseListGlobalSearch, routeList, getCompanyCustomers, agentCustomerList, itemGlobalSearch, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import { warehouseListGlobalSearch, routeList, getCompanyCustomers, agentCustomerList, itemGlobalSearch, genearateCode, saveFinalCode, getAllActiveWarehouse } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import * as yup from "yup";
@@ -311,7 +311,7 @@ export default function InvoiceddEditPage() {
     // Search functions for AutoSuggestion components
     const handleWarehouseSearch = useCallback(async (searchText: string) => {
         try {
-            const response = await warehouseListGlobalSearch({ query: searchText, status: "active", invoice_date: form.invoice_date });
+            const response = await getAllActiveWarehouse({ search: searchText, status: "active", invoice_date: form.invoice_date });
             const data: Warehouse[] = Array.isArray(response?.data) ? (response.data as Warehouse[]) : [];
             const options: Option[] = data.map((warehouse) => ({
                 value: String(warehouse.id),

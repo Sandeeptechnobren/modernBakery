@@ -11,6 +11,7 @@ import { customerSubCategoryList, deleteCustomerSubCategory } from "@/app/servic
 import BorderIconButton from "@/app/components/borderIconButton";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
+import StatusBtn from "@/app/components/statusBtn2";
 
 // ✅ API types
 interface CustomerCategory {
@@ -45,32 +46,21 @@ export default function CustomerSubCategoryPage() {
   const router = useRouter();
 
   const columns = [
-    { key: "customer_sub_category_code", label: "Sub-Category Code",
+    {
+      key: "customer_sub_category_code", label: "Sub-Category Code",
       render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.customer_sub_category_code}
-            </span>
-        ),
-     },
+        <span className="font-semibold text-[#181D27] text-[14px]">
+          {row.customer_sub_category_code}
+        </span>
+      ),
+    },
     { key: "customer_sub_category_name", label: "Sub-Category Name" },
     { key: "customer_category_name", label: "Category Name" },
-   {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {row.status === "Active" ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        In Active
-                    </span>
-                )}
-            </div>
-        ),
-    },
+    {
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => <StatusBtn isActive={row.status === "Active"} />,
+    },
   ];
 
   return (
@@ -148,7 +138,7 @@ export default function CustomerSubCategoryPage() {
                   );
                 },
               },
-              
+
             ],
             api: {
               list: async (pageNo: number, pageSize: number) => {
@@ -163,7 +153,7 @@ export default function CustomerSubCategoryPage() {
                       status: s.status,
                     })
                   );
-                  
+
                   const tableData: TableDataType[] = formatted.map((c) => ({
                     id: String(c.id),
                     customer_category_name: c.customer_category_name,
@@ -196,7 +186,7 @@ export default function CustomerSubCategoryPage() {
         />
       </div>
 
-      
+
     </>
   );
 }

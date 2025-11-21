@@ -2,37 +2,28 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Table, {
     listReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { agentOrderExport, agentOrderList, changeStatusAgentOrder } from "@/app/services/agentTransaction";
 import OrderStatus from "@/app/components/orderStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/utils/formatDate";
+import { purchaseOrderExportCollapse, purchaseOrderExportHeader, purchaseOrderList } from "@/app/services/companyTransaction";
+import { formatDate } from "../../(master)/salesTeam/details/[uuid]/page";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import { downloadFile } from "@/app/services/allApi";
 
 const columns = [
-    { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
-    { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
-    {
-        key: "warehouse_name",
-        label: "Warehouse Name",
-        showByDefault: true,
-        render: (row: TableDataType) => {
-            const code = row.warehouse_code ?? "";
-            const name = row.warehouse_name ?? "";
-            if (!code && !name) return "-";
-            return `${code}${code && name ? " - " : ""}${name}`;
-        },
-    },
+    { key: "sap_id", label: "SAP", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.sap_id}</span> },
+    { key: "order_code", label: "Order Number", showByDefault: true,},
+    { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => formatDate(row.created_at) || "-" },
     
     {
         key: "customer_name",
-        label: "Customer Name",
+        label: "Customer",
         showByDefault: true,
         render: (row: TableDataType) => {
             const code = row.customer_code ?? "";
@@ -43,7 +34,8 @@ const columns = [
     },
     {
         key: "salesman_name",
-        label: "Salesman Name",
+        label: "Sales Team",
+        showByDefault: true,
         render: (row: TableDataType) => {
             const code = row.salesman_code ?? "";
             const name = row.salesman_name ?? "";
@@ -51,18 +43,6 @@ const columns = [
             return `${code}${code && name ? " - " : ""}${name}`;
         },
     },
-    {
-        key: "route_name",
-        label: "Route Name",
-        render: (row: TableDataType) => {
-            const code = row.route_code ?? "";
-            const name = row.route_name ?? "";
-            if (!code && !name) return "-";
-            return `${code}${code && name ? " - " : ""}${name}`;
-        },
-    },
-    { key: "payment_method", label: "Payment Method", render: (row: TableDataType) => row.payment_method || "-" },
-    { key: "order_source", label: "Order Source", render: (row: TableDataType) => row.order_source || "-" },
     { key: "delivery_date", label: "Delivery Date", showByDefault: true, render: (row: TableDataType) => formatWithPattern(new Date(row.delivery_date), "DD MMM YYYY", "en-GB").toLowerCase() || "-" },
     { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
     {
@@ -88,13 +68,13 @@ export default function CustomerInvoicePage() {
             page: number = 1,
             pageSize: number = 5
         ): Promise<listReturnType> => {
-            setLoading(true);
+            // setLoading(true);
             const params: Record<string, string> = {
                 page: page.toString(),
                 pageSize: pageSize.toString()
             };
-            const listRes = await agentOrderList(params);
-            setLoading(false);
+            const listRes = await purchaseOrderList(params);
+            // setLoading(false);
             return {
                 data: Array.isArray(listRes.data) ? listRes.data : [],
                 total: listRes?.pagination?.totalPages || 1,
@@ -109,7 +89,7 @@ export default function CustomerInvoicePage() {
             pageSize: number
         ): Promise<listReturnType> => {
             let result;
-            setLoading(true);
+            // setLoading(true);
             try {
                 const params: Record<string, string> = { per_page: pageSize.toString() };
                 Object.keys(payload || {}).forEach((k) => {
@@ -118,9 +98,9 @@ export default function CustomerInvoicePage() {
                         params[k] = String(v);
                     }
                 });
-                result = await agentOrderList(params);
+                result = await purchaseOrderList(params);
             } finally {
-                setLoading(false);
+                // setLoading(false);
             }
 
             if (result?.error) throw new Error(result.data?.message || "Filter failed");
@@ -130,7 +110,7 @@ export default function CustomerInvoicePage() {
                     data: result.data || [],
                     total: pagination.totalPages || result.pagination?.totalPages || 0,
                     totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                    currentPage: pagination.page || result.pagination?.page || 0,
                     pageSize: pagination.limit || pageSize,
                 };
             }
@@ -141,7 +121,7 @@ export default function CustomerInvoicePage() {
     const exportFile = async (format: "csv" | "xlsx" = "csv") => {
         try {
             setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
-            const response = await agentOrderExport({ format });
+            const response = await purchaseOrderExportHeader({ format });
             if (response && typeof response === 'object' && response.download_url) {
                 await downloadFile(response.download_url);
                 showSnackbar("File downloaded successfully ", "success");
@@ -168,7 +148,7 @@ export default function CustomerInvoicePage() {
                     config={{
                         api: { list: fetchOrders, filterBy: filterBy },
                         header: {
-                            title: "Customer Orders",
+                            title: "Purchase Orders",
                             searchBar: false,
                             columnFilter: true,
                             threeDot: [
@@ -189,69 +169,62 @@ export default function CustomerInvoicePage() {
                                 {
                                     key: "start_date",
                                     label: "Start Date",
-                                    type: "date"
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date,
                                 },
                                 {
                                     key: "end_date",
                                     label: "End Date",
-                                    type: "date"
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date,
                                 },
-                                {
-                                    key: "company_id",
-                                    label: "Company",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(companyOptions) ? companyOptions : [],
-                                },
-                                {
-                                    key: "warehouse_id",
-                                    label: "Warehouse",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
-                                },
-                                {
-                                    key: "region_id",
-                                    label: "Region",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(regionOptions) ? regionOptions : [],
-                                },
-                                {
-                                    key: "sub_region_id",
-                                    label: "Sub Region",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(areaOptions) ? areaOptions : [],
-                                },
-                                {
-                                    key: "route_id",
-                                    label: "Route",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(routeOptions) ? routeOptions : [],
-                                },
-                                {
-                                    key: "salesman_id",
-                                    label: "Salesman",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                                }
+                                // {
+                                //     key: "company_id",
+                                //     label: "Company",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(companyOptions) ? companyOptions : [],
+                                // },
+                                // {
+                                //     key: "warehouse_id",
+                                //     label: "Warehouse",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
+                                // },
+                                // {
+                                //     key: "region_id",
+                                //     label: "Region",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(regionOptions) ? regionOptions : [],
+                                // },
+                                // {
+                                //     key: "sub_region_id",
+                                //     label: "Sub Region",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(areaOptions) ? areaOptions : [],
+                                // },
+                                // {
+                                //     key: "route_id",
+                                //     label: "Route",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(routeOptions) ? routeOptions : [],
+                                // },
+                                // {
+                                //     key: "salesman_id",
+                                //     label: "Salesman",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                // }
                             ],
                             actions: [
-                                // <SidebarBtn
-                                //     key={0}
-                                //     href="#"
-                                //     isActive
-                                //     leadingIcon="mdi:download"
-                                //     label="Download"
-                                //     labelTw="hidden lg:block"
-                                //     onClick={() => exportFile("csv")}
-                                // />,
                                 <SidebarBtn
                                     key={1}
-                                    href="/agentOrder/add"
+                                    href="/purchaseOrder/add"
                                     isActive
                                     leadingIcon="mdi:plus"
                                     label="Add"
@@ -267,7 +240,7 @@ export default function CustomerInvoicePage() {
                                 icon: "lucide:eye",
                                 onClick: (row: TableDataType) =>
                                     router.push(
-                                        `/agentOrder/details/${row.uuid}`
+                                        `/purchaseOrder/details/${row.uuid}`
                                     ),
                             }
                         ],

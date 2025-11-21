@@ -242,11 +242,11 @@ export default function AddEditRoute() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/compailedClaim">
+          <Link href="/compiledClaims">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Compailed Claim" : "Add Compailed Claim"}
+            {isEditMode ? "Update Compiled Claims" : "Add Compiled Claims"}
           </h1>
         </div>
       </div>
@@ -255,7 +255,7 @@ export default function AddEditRoute() {
       <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
-            Compailed Claim Details
+            Compiled Claims Details
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Route Code */}

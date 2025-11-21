@@ -7,6 +7,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { downloadFile } from "@/app/services/allApi";
 import {compailedClaimList,exportCompailedData} from "@/app/services/claimManagement";
 import { useLoading } from "@/app/services/loadingContext";
+import { formatWithPattern } from "@/app/utils/formatDate";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
@@ -30,7 +31,28 @@ interface DropdownItem {
 // 🔹 Table columns
 const columns = [
   { key: "osa_code", label: "Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
-  { key: "claim_period", label: "Claim Period", render: (row: TableDataType) => row.claim_period || "-" },
+  { key: "claim_period", label: "Claim Period", render: (row: TableDataType) => {
+  const cp = row.claim_period;
+  // if claim period is null/undefined show a dash
+  if (cp === null || cp === undefined) return "-";
+      if (typeof cp === "string") {
+        // expected format: 'YYYY-MM-DD to YYYY-MM-DD' or similar
+        const parts = cp.split(/\s+to\s+/i).map(p => p.trim()).filter(Boolean);
+        if (parts.length === 2) {
+          const d1 = new Date(parts[0]);
+          const d2 = new Date(parts[1]);
+          if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
+            return `${formatWithPattern(d1, "DD MMM YYYY", "en-GB")} to ${formatWithPattern(d2, "DD MMM YYYY", "en-GB") || "-"}`;
+          }
+        }
+        // fallback: try parsing as single date
+        const single = new Date(cp);
+        if (!isNaN(single.getTime())) return formatWithPattern(single, "DD MMM YYYY", "en-GB") || "-";
+        return cp;
+      }
+  if ((cp as any) instanceof Date) return formatWithPattern(cp as Date, "DD MMM YYYY", "en-GB") || "-";
+      return String(cp) || "-";
+    } },
   
    {
      key: "warehouse", label: "Distributor",render: (row: TableDataType) => {
@@ -148,7 +170,7 @@ export default function CompailedClaim() {
                 },
                 
               ],
-              title: "Compailed Claim",
+              title: "Compiled Claims",
 
 
               // searchBar: true,
@@ -156,7 +178,7 @@ export default function CompailedClaim() {
               actions: [
                 <SidebarBtn
                   key={0}
-                  href="/compailedClaim/add"
+                  href="/compiledClaims/add"
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add"

@@ -231,9 +231,9 @@ export default function ExchangeAddEditPage() {
   };
 
   // Function for fetching Item
-  const fetchItem = async (searchTerm: string) => {
+  const fetchItem = async (searchTerm: string, warehouse_id?: string) => {
     setSkeleton((prev) => ({ ...prev, item: true }));
-    const res = await itemGlobalSearch({ perPage: "10", query: searchTerm });
+    const res = await itemGlobalSearch({ perPage: "10", query: searchTerm, warehouse_id });
     if (res?.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
       setSkeleton((prev) => ({ ...prev, item: false }));
@@ -623,7 +623,7 @@ export default function ExchangeAddEditPage() {
         <Formik<FormikValues> initialValues={form} onSubmit={handleSubmit} validationSchema={validationSchema} enableReinitialize={true}>
           {({ values, touched, errors, setFieldValue, handleChange, submitForm, isSubmitting }: FormikProps<FormikValues>) => {
             // key/value summary data (use values.currency)
-            
+
 
             return (
               <>
@@ -699,207 +699,197 @@ export default function ExchangeAddEditPage() {
                     config={{
                       showNestedLoading: false,
                       columns: [
-                          {
-                            key: "item_id",
-                            label: "Item Name",
-                            width: 390,
-                            render: (row) => {
-                              const idx = Number(row.idx);
-                              const err = itemErrors[idx]?.item_id;
-                              const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
-                              const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
-                              return (
-                                <div>
-                                  <AutoSuggestion
-                                    label=""
-                                    name={`item_id_${row.idx}`}
-                                    placeholder="Search item"
-                                    onSearch={(q) => fetchItem(q)}
-                                    initialValue={initialLabel}
-                                    onSelect={(opt) => {
-                                      if (opt.value !== row.item_id) {
-                                        recalculateItem(Number(row.idx), "item_id", opt.value);
-                                      }
-                                    }}
-                                    onClear={() => {
-                                      recalculateItem(Number(row.idx), "item_id", "");
-                                    }}
-                                    disabled={!values.customer}
-                                    error={err && err}
-                                    className="w-full"
-                                  />
-                                </div>
-                              );
-                            },
+                        {
+                          key: "item_id",
+                          label: "Item Name",
+                          width: 300,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.item_id;
+                            const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
+                            const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
+                            return (
+                              <div>
+                                <AutoSuggestion
+                                  label=""
+                                  name={`item_id_${row.idx}`}
+                                  placeholder="Search item"
+                                  onSearch={(q) => fetchItem(q, values.warehouse)}
+                                  initialValue={initialLabel}
+                                  minSearchLength={0}
+                                  onSelect={(opt) => {
+                                    if (opt.value !== row.item_id) {
+                                      recalculateItem(Number(row.idx), "item_id", opt.value);
+                                    }
+                                  }}
+                                  onClear={() => {
+                                    recalculateItem(Number(row.idx), "item_id", "");
+                                  }}
+                                  disabled={!values.warehouse}
+                                  error={err && err}
+                                  className="w-full"
+                                />
+                              </div>
+                            );
                           },
-                          {
-                            key: "uom_id",
-                            label: "UOM",
-                            width: 120,
-                            render: (row) => {
-                              const idx = Number(row.idx);
-                              const err = itemErrors[idx]?.uom_id;
-                              const options = JSON.parse(row.UOM ?? "[]");
-                              return (
-                                <div>
-                                  <InputFields
-                                    label=""
-                                    value={row.uom_id}
-                                    placeholder="Select UOM"
-                                    width="max-w-[120px]"
-                                    options={options}
-                                    searchable={true}
-                                    disabled={options.length === 0 || !values.customer}
-                                    showSkeleton={Boolean(itemLoading[idx]?.uom)}
-                                    onChange={(e) => {
-                                      const chosen = (e.target as HTMLInputElement).value;
-                                      recalculateItem(Number(row.idx), "uom_id", chosen);
-                                      const found = options.find((uom: { value: string; label: string; price?: string }) => String(uom.value) === chosen);
-                                      const price = found?.uom_price ?? "0.00";
-                                      if (price !== undefined) {
-                                        recalculateItem(Number(row.idx), "Price", String(price));
-                                      }
-                                    }}
-                                    error={err && err}
-                                  />
-                                </div>
-                              );
-                            },
+                        },
+                        {
+                          key: "uom_id",
+                          label: "UOM",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.uom_id;
+                            const options = JSON.parse(row.UOM ?? "[]");
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  value={row.uom_id}
+                                  placeholder="Select UOM"
+                                  width="max-w-[150px]"
+                                  options={options}
+                                  searchable={true}
+                                  disabled={options.length === 0 || !values.customer}
+                                  showSkeleton={Boolean(itemLoading[idx]?.uom)}
+                                  onChange={(e) => {
+                                    const chosen = (e.target as HTMLInputElement).value;
+                                    recalculateItem(Number(row.idx), "uom_id", chosen);
+                                    // find price in options (they include 'price' if provided earlier)
+                                    const found = options.find((uom: any) => String(uom.value) === chosen);
+                                    const price = found?.uom_price ?? found?.uom_price ?? "0.00";
+                                    if (price !== undefined) {
+                                      recalculateItem(Number(row.idx), "Price", String(price));
+                                    }
+                                  }}
+                                  error={err && err}
+                                />
+                              </div>
+                            );
                           },
-                          {
-                            key: "Quantity",
-                            label: "Qty",
-                            width: 100,
-                            render: (row) => {
-                              const idx = Number(row.idx);
-                              const err = itemErrors[idx]?.Quantity;
-                              return (
-                                <div>
-                                  <InputFields
-                                    label=""
-                                    type="number"
-                                    name="Quantity"
-                                    placeholder="Enter Qty"
-                                    value={row.Quantity}
-                                    disabled={!row.uom_id || !values.customer}
-                                    onChange={(e) => {
-                                      const raw = (e.target as HTMLInputElement).value;
-                                      const intPart = raw.split(".")[0];
-                                      const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                      recalculateItem(Number(row.idx), "Quantity", sanitized);
-                                    }}
-                                    min={1}
-                                    integerOnly={true}
-                                    error={err && err}
-                                  />
-                                </div>
-                              );
-                            },
+                        },
+                        {
+                          key: "Quantity",
+                          label: "Qty",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.Quantity;
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  type="number"
+                                  name="Quantity"
+                                  placeholder="Enter Qty"
+                                  value={row.Quantity}
+                                  disabled={!row.uom_id || !values.customer}
+                                  onChange={(e) => {
+                                    const raw = (e.target as HTMLInputElement).value;
+                                    const intPart = raw.split(".")[0];
+                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                    recalculateItem(Number(row.idx), "Quantity", sanitized);
+                                  }}
+                                  min={1}
+                                  integerOnly={true}
+                                  error={err && err}
+                                />
+                              </div>
+                            );
                           },
-                          {
-                            key: "Price",
-                            label: "Price",
-                            render: (row) => {
-                              const idx = Number(row.idx);
-                              const loading = Boolean(itemLoading[idx]?.price);
-                              const price = String(row.Price ?? "");
-                              if (loading) {
-                                return <span className="text-gray-400 animate-pulse">Loading...</span>;
-                              }
-                              if (!price || price === "" || price === "0" || price === "-") {
-                                return <span className="text-gray-400">-</span>;
-                              }
-                              return <span>{toInternationalNumber(price)}</span>;
-                            },
+                        },
+                        {
+                          key: "Price",
+                          label: "Price",
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const loading = Boolean(itemLoading[idx]?.price);
+                            const price = String(row.Price ?? "");
+                            if (loading) {
+                              return <span className="text-gray-400 animate-pulse">Loading...</span>;
+                            }
+                            if (!price || price === "" || price === "0" || price === "-") {
+                              return <span className="text-gray-400">-</span>;
+                            }
+                            return <span>{price}</span>;
                           },
-                          {
-                            key: "Total",
-                            label: "Total",
-                            render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span>,
+                        },
+                        {
+                          key: "region",
+                          label: "Region",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.Quantity;
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  name="region"
+                                  placeholder="Enter Region"
+                                  value={row.region}
+                                  disabled={!row.uom_id || !values.customer}
+                                  onChange={(e) => {
+                                    const raw = (e.target as HTMLInputElement).value;
+                                    const intPart = raw.split(".")[0];
+                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                    recalculateItem(Number(row.idx), "region", sanitized);
+                                  }}
+                                  min={1}
+                                  integerOnly={true}
+                                  error={err && err}
+                                />
+                              </div>
+                            );
                           },
-                        
-                           {
-                                          key: "return_type",
-                                          label: "Return Type",
-                                          width: 100,
-                                          render: (row) => (
-                                            <div style={{ minWidth: '100px', maxWidth: '100px' }}>
-                                              <InputFields
-                                                label=""
-                                                name="return_type"
-                                                value={row.return_type}
-                                                options={returnTypeOptions}
-                                                disabled={!row.item_id}
-                                                onChange={(e) => {
-                                                  const value = e.target.value;
-                                                  const newData = [...itemData];
-                                                  const index = Number(row.idx);
-                                                  newData[index].return_type = value;
-                                                  // Reset return_reason when type changes
-                                                  newData[index].return_reason = "";
-                                                  setItemData(newData);
-                                                  // Fetch reason list for this return type and row
-                                                  (async () => {
-                                                    try {
-                                                      const res = await reasonList({ return_id: value });
-                                                      const list = Array.isArray(res?.data) ? (res.data as Reason[]) : (Array.isArray(res) ? (res as Reason[]) : []);
-                                                      const options = list.map((reason: Reason) => ({
-                                                        label: reason.reson || reason.return_reason || reason.reason || reason.return_type || String(reason.id),
-                                                        value: String(reason.id),
-                                                      }));
-                                                      setRowReasonOptions(prev => ({ ...prev, [row.idx]: options }));
-                                                    } catch (err) {
-                                                      console.error('Failed to fetch reasons for return type', value, err);
-                                                      setRowReasonOptions(prev => ({ ...prev, [row.idx]: [] }));
-                                                    }
-                                                  })();
-                                                }}
-                                              />
-                                            </div>
-                                          ),
-                                        },
-                                        {
-                                          key: "return_reason",
-                                          label: "Return Reason",
-                                          width: 200,
-                                          render: (row) => {
-                                            // Prefer fetched reason options for the specific row, fall back to static lists
-                                            const fetched = rowReasonOptions[row.idx] || [];
-                                            const fallback = row.return_type === "1" ? goodOptions : row.return_type === "2" ? badOptions : [];
-                                            const options = fetched.length > 0 ? fetched : fallback;
-                                            return (
-                                              <div style={{ minWidth: '200px', maxWidth: '200px' }}>
-                                                <InputFields
-                                                  label=""
-                                                  name="return_reason"
-                                                  value={row.return_reason}
-                                                  options={options}
-                                                  disabled={!row.return_type}
-                                                  onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    const newData = [...itemData];
-                                                    const index = Number(row.idx);
-                                                    newData[index].return_reason = value;
-                                                    setItemData(newData);
-                                                  }}
-                                                />
-                                              </div>
-                                            );
-                                          },
-                                        },
-                          {
-                            key: "action",
-                            label: "Action",
-                            render: (row) => (
-                              <button
-                                type="button"
-                                className={`${itemData.length <= 1 ? "opacity-50 cursor-not-allowed" : ""} text-red-500 flex items-center`}
-                                onClick={() => itemData.length > 1 && handleRemoveItem(Number(row.idx))}
-                              >
-                                <Icon icon="hugeicons:delete-02" width={20} />
-                              </button>
-                            ),
+                        },
+                        {
+                          key: "return_type",
+                          label: "Return Type",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.return_type;
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  name="return_type"
+                                  placeholder="select Return type"
+                                  value={row.return_type}
+                                  disabled={!row.uom_id || !values.customer}
+                                  onChange={(e) => {
+                                    const raw = (e.target as HTMLInputElement).value;
+                                    const intPart = raw.split(".")[0];
+                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
+                                    recalculateItem(Number(row.idx), "return_type", sanitized);
+                                  }}
+                                  min={1}
+                                  integerOnly={true}
+                                  error={err && err}
+                                />
+                              </div>
+                            );
                           },
+                        },
+                        {
+                          key: "Total",
+                          label: "Total",
+                          render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span>,
+                        },
+                        {
+                          key: "action",
+                          label: "Action",
+                          render: (row) => (
+                            <button
+                              type="button"
+                              className={`${itemData.length <= 1 ? "opacity-50 cursor-not-allowed" : ""} text-red-500 flex items-center`}
+                              onClick={() => itemData.length > 1 && handleRemoveItem(Number(row.idx))}
+                            >
+                              <Icon icon="hugeicons:delete-02" width={20} />
+                            </button>
+                          ),
+                        },
                       ],
                     }}
                   />
@@ -966,7 +956,7 @@ export default function ExchangeAddEditPage() {
                       </div>
                     </div>
 
-                    
+
                   </div>
                 </div>
 

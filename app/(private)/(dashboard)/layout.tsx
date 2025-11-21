@@ -9,7 +9,6 @@ import Loading from "@/app/components/Loading";
 import { ThemeProvider, useTheme } from "./contexts";
 import usePermissionManager from "@/app/components/contexts/usePermission";
 import { PermissionProvider } from "@/app/components/contexts/permissionContext";
-import { a } from "framer-motion/client";
 
 type Role = {
     id: number;

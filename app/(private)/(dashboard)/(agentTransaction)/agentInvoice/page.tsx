@@ -10,7 +10,7 @@ import Table, {
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { invoiceList, exportInvoice, invoiceStatusUpdate } from "@/app/services/agentTransaction";
+import { invoiceList, exportInvoice, invoiceStatusUpdate, exportOrderInvoice } from "@/app/services/agentTransaction";
 import { downloadFile } from "@/app/services/allApi";
 import StatusBtn from "@/app/components/statusBtn2";
 import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/utils/formatNumber";
@@ -135,6 +135,24 @@ export default function CustomerInvoicePage() {
             // setLoading(false);
         }
     };
+
+    const downloadPdf = async (uuid: string) => {
+        try {
+            setLoading(true);
+            const response = await exportOrderInvoice({ uuid: uuid, format: "pdf" });
+            if (response && typeof response === 'object' && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+        } catch (error) {
+            showSnackbar("Failed to download file", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const statusUpdate = async (
         dataOrIds: TableDataType[] | (string | number)[] | undefined,
@@ -288,7 +306,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { list: fetchInvoices, filterBy: filterBy },
                     header: {
-                        title: "Customer Invoices",
+                        title: "Distributor's Invoices",
                         threeDot: [
                             {
                                 icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
@@ -426,6 +444,10 @@ export default function CustomerInvoicePage() {
                                 router.push(
                                     `/agentInvoice/details/${row.uuid}`
                                 ),
+                        },
+                        {
+                            icon: "lucide:download",
+                            onClick: (row: TableDataType) => downloadPdf(row.uuid),
                         },
                     ],
                     pageSize: 10,

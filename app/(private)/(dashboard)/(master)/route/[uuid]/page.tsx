@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import * as yup from "yup";
 
 export default function AddEditRoute() {
-  const { routeTypeOptions, warehouseOptions, vehicleListOptions } =
+  const { routeTypeOptions, warehouseAllOptions, vehicleListOptions } =
     useAllDropdownListData();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -197,7 +197,7 @@ export default function AddEditRoute() {
     }
   };
 
-  if ((isEditMode && loading) || !warehouseOptions || !routeTypeOptions) {
+  if ((isEditMode && loading) || !warehouseAllOptions || !routeTypeOptions) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <Loading />
@@ -292,9 +292,11 @@ export default function AddEditRoute() {
             <div className="flex flex-col">
               <InputFields
                 required
+                searchable={true}
                 label="Warehouse"
+                // isSingle={false}
                 value={form.warehouse}
-                options={warehouseOptions}
+                options={warehouseAllOptions}
                 onChange={(e) => {
                   const newWarehouse = e.target.value;
                   handleChange("warehouse", newWarehouse);
@@ -321,6 +323,7 @@ export default function AddEditRoute() {
             <div className="flex flex-col">
               <InputFields
                 label="Vehicle"
+                searchable={true}
                 value={form.vehicleType}
                 onChange={(e) => handleChange("vehicleType", e.target.value)}
                 options={filteredOptions}

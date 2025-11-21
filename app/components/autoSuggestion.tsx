@@ -452,7 +452,7 @@ export default function AutoSuggestion({
       {open && (
         <div
           style={{ position: 'fixed', left: dropdownProps.left, top: dropdownProps.top, width: dropdownProps.width }}
-          className={`z-50 bg-white mt-[6px] rounded-md shadow-lg max-h-60 overflow-auto scrollbar-none`}
+          className={`z-50 bg-white border border-gray-300 mt-[6px] rounded-md shadow-lg max-h-60 overflow-auto scrollbar-none`}
         >
           {loading ? (
             <div className="px-3 py-2 text-sm text-gray-500">
@@ -460,7 +460,7 @@ export default function AutoSuggestion({
               <Skeleton ></Skeleton>
             </div>
           ) : options.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-gray-400">{noOptionsMessage}</div>
+            <div className="px-3 py-5 text-gray-600 text-center">{noOptionsMessage}</div>
           ) : (
             <>
               {multiple && (

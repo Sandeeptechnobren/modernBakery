@@ -19,6 +19,7 @@ import KeyValueData from "@/app/components/keyValueData";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import { isValidDate } from "@/app/utils/formatDate";
 import { downloadFile } from "@/app/services/allApi";
+  // const CURRENCY = localStorage.getItem("country") || "";
 
 interface DeliveryDetail {
   id: number;

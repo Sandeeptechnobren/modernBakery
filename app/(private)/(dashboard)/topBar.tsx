@@ -85,6 +85,7 @@ export default function TopBar({
                                 icon="heroicons-outline:menu-alt-1"
                                 width={24}
                                 onClick={toggleOpen}
+                                className="cursor-pointer"
                             />
                         )}
                         <div className="w-full hidden sm:w-[320px] sm:block">

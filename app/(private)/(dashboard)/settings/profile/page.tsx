@@ -61,25 +61,25 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <h3 className="font-semibold text-gray-700">Personal Info</h3>
 
-     <div className="grid grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
+            <div className="grid grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
 
-  <span className="text-gray-600">User Name</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">Admin</span>
+              <span className="text-gray-600">User Name</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">Admin</span>
 
-  <span className="text-gray-600">Full Name</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">Administrator Admin</span>
+              <span className="text-gray-600">Full Name</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">Administrator Admin</span>
 
-  <span className="text-gray-600">Date of Birth</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">02 Jan 1990</span>
+              <span className="text-gray-600">Date of Birth</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">02 Jan 1990</span>
 
-  <span className="text-gray-600">Position</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">Operation Manager</span>
+              <span className="text-gray-600">Position</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">Operation Manager</span>
 
-</div>
+            </div>
 
           </div>
 
@@ -89,33 +89,33 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <h3 className="font-semibold text-gray-700">Contact Info</h3>
 
-        <div className="grid grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
+            <div className="grid grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
 
-  <span className="text-gray-600">Email</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">shashwat.com</span>
+              <span className="text-gray-600">Email</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">shashwat.com</span>
 
-  <span className="text-gray-600">Phone Number</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">88949 nahi bataoga</span>
+              <span className="text-gray-600">Phone Number</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">88949 nahi bataoga</span>
 
-  <span className="text-gray-600">Street</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium"> P.O Box 38148</span>
+              <span className="text-gray-600">Street</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium"> P.O Box 38148</span>
 
-  <span className="text-gray-600">City</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">Dubai</span>
-  
-  <span className="text-gray-600">Zip code</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">57382</span>
+              <span className="text-gray-600">City</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">Dubai</span>
 
-  <span className="text-gray-600">Country</span>
-  <span className="text-gray-600">:</span>
-  <span className="font-medium">Dubai</span>
+              <span className="text-gray-600">Zip code</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">57382</span>
 
-</div>
+              <span className="text-gray-600">Country</span>
+              <span className="text-gray-600">:</span>
+              <span className="font-medium">Dubai</span>
+
+            </div>
             {/* <div className="flex justify-between text-sm">
               <span>Email</span>
               <span>: administrator@email.com</span>
@@ -315,12 +315,12 @@ export default function ProfilePage() {
             </ContainerCard>
           )}
           {/* <ContainerCard> */}
-            {/* SYSTEM SETTINGS TAB */}
-            {activeTab === "settings" && (
-              <ContainerCard>
+          {/* SYSTEM SETTINGS TAB */}
+          {activeTab === "settings" && (
+            <ContainerCard>
               <div className="space-y-4">
                 {/* LANGUAGE */}
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl shadow-sm">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl  boder-gray-300">
                   <Icon
                     icon="lucide:globe"
                     width={28}
@@ -338,7 +338,7 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl shadow-sm">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl boder-gray-300">
                   <Icon
                     icon="lucide:globe"
                     width={28}
@@ -356,7 +356,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* THEME */}
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl shadow-sm">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl boder-gray-300">
                   <Icon
                     icon="lucide:globe"
                     width={28}
@@ -376,7 +376,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* PRIVACY SETTINGS */}
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl  shadow-sm">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl  boder-gray-300">
                   <Icon
                     icon="lucide:globe"
                     width={28}
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                     <Icon icon="lucide:chevron-right" />
                   </div>
                 </div>
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl  shadow-sm">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl  boder-gray-300">
                   <Icon
                     icon="lucide:globe"
                     width={28}
@@ -411,7 +411,7 @@ export default function ProfilePage() {
 
                 {/* DOWNLOAD MANUAL */}
                 {/* flex justify-between items-center p-4 bg-gray-50 rounded-xl  shadow-sm */}
-                <div className="p-4 bg-gray-50 rounded-xl  space-y-3">
+                <div className="p-[16px] w-full h-auto rounded-lg border border border-gray-200">
                   <h4 className="font-medium flex items-center gap-2">
                     <Icon icon="lucide:download" /> Download User Manual
                   </h4>
@@ -420,77 +420,121 @@ export default function ProfilePage() {
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 bg-white">
-                    <div className="p-4 border border-gray-300 rounded-xl flex flex-col gap-3 items-start">
-                      <Icon
-                        icon="lucide:file-text"
-                        width={24}
-                        className="text-gray-500"
-                      />
-                      <p className="font-medium">Order Management</p>
-                      <button className="bg-white px-3 py-1 rounded-xl border border-gray-300">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
+                      <div className="w-full `gap-[10px]` ">
+                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
+                          <Icon
+                            icon="lucide:file-text"
+                            width={20}
+                          />
+                        </div>
+
+                        <div className="mt-[10px] flex">
+                          <p className="font-medium">Order Management</p>
+
+                        </div>
+                      </div>
+                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
                         Download
                       </button>
                     </div>
-                    <div className="p-4 border border-gray-300 rounded-xl flex flex-col gap-3 items-start">
-                      <Icon
-                        icon="lucide:file-text"
-                        width={24}
-                        className="text-gray-500"
-                      />
-                      <p className="font-medium">Order Management</p>
-                      <button className="bg-white px-3 py-1 rounded-xl border border-gray-300">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
+                      <div className="w-full `gap-[10px]` ">
+                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
+                          <Icon
+                            icon="lucide:file-text"
+                            width={20}
+                          />
+                        </div>
+
+                        <div className="mt-[10px] flex">
+                          <p className="font-medium">Order Management</p>
+
+                        </div>
+                      </div>
+                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
                         Download
                       </button>
                     </div>
-                    <div className="p-4 border border-gray-300 rounded-xl flex flex-col gap-3 items-start">
-                      <Icon
-                        icon="lucide:file-text"
-                        width={24}
-                        className="text-gray-500"
-                      />
-                      <p className="font-medium">Order Management</p>
-                      <button className="bg-white px-3 py-1 rounded-xl border border-gray-300">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
+                      <div className="w-full `gap-[10px]` ">
+                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
+                          <Icon
+                            icon="lucide:file-text"
+                            width={20}
+                          />
+                        </div>
+
+                        <div className="mt-[10px] flex">
+                          <p className="font-medium">Order Management</p>
+
+                        </div>
+                      </div>
+                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
                         Download
                       </button>
                     </div>
-                    <div className="p-4 border border-gray-300 rounded-xl flex flex-col gap-3 items-start">
-                      <Icon
-                        icon="lucide:file-text"
-                        width={24}
-                        className="text-gray-500"
-                      />
-                      <p className="font-medium">Order Management</p>
-                      <button className="bg-white px-3 py-1 rounded-xl border border-gray-300">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
+                      <div className="w-full `gap-[10px]` ">
+                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
+                          <Icon
+                            icon="lucide:file-text"
+                            width={20}
+                          />
+                        </div>
+
+                        <div className="mt-[10px] flex">
+                          <p className="font-medium">Order Management</p>
+
+                        </div>
+                      </div>
+                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
                         Download
                       </button>
                     </div>
-                    <div className="p-4 border border-gray-300 rounded-xl flex flex-col gap-3 items-start">
-                      <Icon
-                        icon="lucide:file-text"
-                        width={24}
-                        className="text-gray-500"
-                      />
-                      <p className="font-medium">Order Management</p>
-                      <button className="bg-white px-3 py-1 rounded-xl border border-gray-300">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
+                      <div className="w-full `gap-[10px]` ">
+                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
+                          <Icon
+                            icon="lucide:file-text"
+                            width={20}
+                          />
+                        </div>
+
+                        <div className="mt-[10px] flex">
+                          <p className="font-medium">Order Management</p>
+
+                        </div>
+                      </div>
+                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
                         Download
                       </button>
                     </div>
-                    <div className="p-4 border border-gray-300 rounded-xl flex flex-col gap-3 items-start">
-                      <Icon
-                        icon="lucide:file-text"
-                        width={24}
-                        className="text-gray-500"
-                      />
-                      <p className="font-medium">Order Management</p>
-                      <button className="bg-white px-3 py-1 rounded-xl border border-gray-300">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
+                      <div className="w-full `gap-[10px]` ">
+                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
+                          <Icon
+                            icon="lucide:file-text"
+                            width={20}
+                          />
+                        </div>
+
+                        <div className="mt-[10px] flex">
+                          <p className="font-medium">Order Management</p>
+
+                        </div>
+                      </div>
+                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
                         Download
                       </button>
                     </div>
+
+
                   </div>
                 </div>
               </div>
-              </ContainerCard>
-            )}
+            </ContainerCard>
+          )}
           {/* </ContainerCard> */}
         </div>
       </div>

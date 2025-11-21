@@ -228,7 +228,7 @@ export default function AddEditSalesmanLoad() {
     salesman_type: yup.string().required("Salesman Type is required"),
     warehouse: yup.string().required("Warehouse is required"),
     route: yup.string().required("Route is required"),
-    
+
     salesman: yup.string().required("Salesman is required"),
   });
 
@@ -312,7 +312,7 @@ export default function AddEditSalesmanLoad() {
             : "Salesman Load added successfully",
           "success"
         );
-        router.push("/salesmanLoad");
+        router.push("/selesTeamLoad");
       }
     } catch (err) {
       if (err instanceof yup.ValidationError) {
@@ -558,7 +558,9 @@ export default function AddEditSalesmanLoad() {
           <button
             type="button"
             className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-            onClick={() => router.push("/salesmanLoad")}
+            // onClick={() => router.push("/selesTeamLoad")}
+            onClick={() => router.back()}
+
           >
             Cancel
           </button>

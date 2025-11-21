@@ -628,10 +628,9 @@ export const updateWarehouse = async (id: string, payload: object) => {
   }
 };
 
-export const getAllActiveWarehouse = async () => {
+export const getAllActiveWarehouse = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/master/warehouse/list_warehouse/active`);
-
+    const res = await API.get(`/api/master/warehouse/list_warehouse/active`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1635,7 +1634,7 @@ export const addVehicle = async (data: object) => {
 
 export const updateVehicle = async (
   uuid: string,
-  data: FormData | Record<string, string>
+  data: object
 ) => {
   try {
     const res = await API.put(`/api/master/vehicle/${uuid}/update`, data);
@@ -1997,6 +1996,30 @@ export const editAgentCustomer = async (uuid: string, payload: object) => {
       `/api/master/agent_customers/update/${uuid}`,
       payload
     );
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const approvalAdd = async (payload: object) => {
+  try {
+    const res = await API.post(
+      `/api/master/approval/workflow/save`,
+      payload
+    );
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const workFlowList = async () => {
+  try {
+    const res = await API.get(
+      `/api/master/approval/workflow/list`);
 
     return res.data;
   } catch (error: unknown) {

@@ -18,37 +18,47 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 export default function SalemanLoad() {
     const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions } = useAllDropdownListData();
     const columns: configType["columns"] = [
-        { key: "invoice_id", label: "Invoice Code" },
+        { key: "code", label: "Invoice Code" },
         { key: "collection_no", label: "Collection No." },
-        { key: "ammount", label: "Amout", render: (row: TableDataType) => {
-                        // row.total_amount may be string or number; toInternationalNumber handles both
-                        return toInternationalNumber(row.total, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                        } as FormatNumberOptions);
-                    },  },
+        {
+            key: "ammount", label: "Amout", render: (row: TableDataType) => {
+                // row.total_amount may be string or number; toInternationalNumber handles both
+                return toInternationalNumber(row.total, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                } as FormatNumberOptions);
+            },
+        },
         { key: "outstanding", label: "Outstanding" },
         // { key: "date", label: "Collection Date" },
-        { key: "warehouse_code", label: "Warehouse Code" , render: (row: TableDataType) => {
-        const code = row.warehouse_code || "-";
-        const name = row.warehouse_name || "-";
-        return `${code}${code && name ? " - " : ""}${name}`;
-    }},
-    { key: "route_code", label: "Route Code", render: (row: TableDataType) => {
-    const code = row.route_code || "-";
-    const name = row.route_name || "-";
-    return `${code}${code && name ? " - " : ""}${name}`;
-  } },
-    { key: "customer_code", label: "Customer", render: (row: TableDataType) => {
-    const code = row.customer_code || "-";
-    const name = row.customer_name || "-";
-    return `${code}${code && name ? " - " : ""}${name}`;
-  } },
-        { key: "salesman_code", label: "Salesman Code", render: (row: TableDataType) => {
-        const code = row.salesman_code || "-";
-        const name = row.salesman_name || "-";
-        return `${code}${code && name ? " - " : ""}${name}`;
-      } },
+        {
+            key: "warehouse_code", label: "Warehouse Code", render: (row: TableDataType) => {
+                const code = row.warehouse_code || "-";
+                const name = row.warehouse_name || "-";
+                return `${code}${code && name ? " - " : ""}${name}`;
+            }
+        },
+        {
+            key: "route_code", label: "Route Code", render: (row: TableDataType) => {
+                const code = row.route_code || "-";
+                const name = row.route_name || "-";
+                return `${code}${code && name ? " - " : ""}${name}`;
+            }
+        },
+        {
+            key: "customer_code", label: "Customer", render: (row: TableDataType) => {
+                const code = row.customer_code || "-";
+                const name = row.customer_name || "-";
+                return `${code}${code && name ? " - " : ""}${name}`;
+            }
+        },
+        {
+            key: "salesman_code", label: "Salesman Code", render: (row: TableDataType) => {
+                const code = row.salesman_code || "-";
+                const name = row.salesman_name || "-";
+                return `${code}${code && name ? " - " : ""}${name}`;
+            }
+        },
         {
             key: "status",
             label: "Status",

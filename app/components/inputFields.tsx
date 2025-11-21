@@ -4,6 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 // import 'react-phone-input-2/lib/style.css';
 import DateRangePicker from "./DateRangePicker";
 import CustomCheckbox from './customCheckbox';
+import Radio from '@mui/material/Radio';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import RadioGroup from '@mui/material/RadioGroup';
 
 export type Option = {
   value: string;
@@ -360,16 +363,16 @@ export default function InputFields({
   const handleNumberKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!integerOnly) return;
     // If user presses backspace, clear the whole input value
-    if (e.key === 'Backspace') {
-      const input = e.currentTarget as HTMLInputElement;
-      if (input && input.value && input.value.length > 0) {
-        e.preventDefault();
-        try { safeOnChange({ target: { value: '', name } } as any); } catch (err) { }
-        // update DOM immediately
-        input.value = '';
-      }
-      return;
-    }
+    // if (e.key === 'Backspace') {
+    //   const input = e.currentTarget as HTMLInputElement;
+    //   if (input && input.value && input.value.length > 0) {
+    //     e.preventDefault();
+    //     try { safeOnChange({ target: { value: '', name } } as any); } catch (err) { }
+    //     // update DOM immediately
+    //     input.value = '';
+    //   }
+    //   return;
+    // }
     // prevent decimal point, exponent, plus/minus
     if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
       e.preventDefault();
@@ -381,9 +384,7 @@ export default function InputFields({
       case "radio":
         return (<div className="flex-wrap flex flex-col gap-[10px] mt-2 pl-[5px]">
           <div className='flex gap-[10px] h-[44px]'>
-            {options && options.map((opt, idx) => (
-              <label key={opt.value + idx} className="inline-flex items-center gap-3 cursor-pointer">
-                <input
+            {/* <input
                   type="radio"
                   name={name}
                   value={opt.value}
@@ -392,10 +393,29 @@ export default function InputFields({
                   disabled={disabled}
                   className={`w-4 h-4 accent-gray-600 border-6 border-gray-600 focus:ring-[1px] focus:ring-red-400 appearance-none rounded-full checked:bg-red-500 checked:border-red-600 ${error ? "border-red-500" : "border-gray-300"}`}
                   style={{ boxShadow: value === opt.value ? '0 0 0 2px #fff, 0 0 0 3px #252b37' : undefined }}
+                /> */}
+            <RadioGroup
+              aria-labelledby="demo-radio-buttons-group-label"
+              defaultValue="female"
+              name="radio-buttons-group"
+              value={value}
+            >
+              {options && options.map((opt, idx) => (
+                <FormControlLabel
+                  key={opt.value + idx}
+                  value={opt.value}
+                  control={<Radio sx={{
+                    '&.Mui-checked': {
+                      color: "red",
+                    },
+                  }} />}
+                  onChange={() => safeOnChange(createSingleSelectEvent(opt.value))}
+                  name={name}
+                  label={opt.label}
+                  disabled={disabled}
                 />
-                <span className="text-md text-gray-600">{opt.label}</span>
-              </label>
-            ))}
+              ))}
+            </RadioGroup>
           </div>
           {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
         </div>);
@@ -575,14 +595,13 @@ export default function InputFields({
                     }
                   })()
                 )}
-                {/* Show down arrow only if not disabled and not searchable */}
                 {!disabled && (
-                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  <svg onClick={(e) => setDropdownOpen(v => !v)} className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 )}
               </div>
               {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
                 <>
-                  <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white rounded-md shadow-lg overflow-auto" >
+                  <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-auto" >
                     {!isSearchable && filteredOptions.length > 0 && (
                       <div className="px-3 py-2 h-9 flex items-center">
                         <svg className="w-6 h-6 text-gray-400 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
@@ -676,7 +695,7 @@ export default function InputFields({
                     return (
                       <input
                         type="text"
-                        placeholder={!value ? `Search ${label}` : undefined}
+                        placeholder={placeholder ? placeholder : `Search ${label}`}
                         value={displayValue}
                         autoComplete='off'
                         onChange={e => {
@@ -692,7 +711,7 @@ export default function InputFields({
                           }
                         }}
                         onFocus={() => setDropdownOpen(true)}
-                        className={`flex-1 truncate outline-none border-none px-3 h-full ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                        className={`w-full truncate outline-none border-none px-3 h-full placeholder:text-gray-400 ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
                         style={hasSelection ? { color: '#111827' } : undefined}
                         onKeyDown={e => {
                           if (e.key === 'Enter') {
@@ -714,9 +733,8 @@ export default function InputFields({
                     }
                   </span>
                 )}
-                {/* Show down arrow only if not disabled and not searchable */}
                 {!disabled && (
-                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  <svg onClick={(e) => setDropdownOpen(v => !v)} className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 )}
               </div>
               {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
@@ -736,7 +754,7 @@ export default function InputFields({
                   )}
                   <div>
                     {filteredOptions.length === 0 ? (
-                      <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
+                      <div className="px-3 py-5 text-gray-600 text-center">No options</div>
                     ) : filteredOptions.map((opt, idx) => (
                       <div
                         key={opt.value + idx}

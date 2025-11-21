@@ -16,13 +16,10 @@ import {
   addItem,
   editItem,
   genearateCode,
-  getCustomerSubCategoryById,
-  customerSubCategoryList,
   itemSubCategoryList,
 } from "@/app/services/allApi";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import Loading from "@/app/components/Loading";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import Table from "@/app/components/customTable";

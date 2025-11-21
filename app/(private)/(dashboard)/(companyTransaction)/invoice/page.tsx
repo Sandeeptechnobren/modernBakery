@@ -3,20 +3,15 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Table, {
-    listReturnType,
-    TableDataType,
-    searchReturnType,
-} from "@/app/components/customTable";
+import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { invoiceList, exportInvoice, invoiceStatusUpdate } from "@/app/services/agentTransaction";
 import { downloadFile } from "@/app/services/allApi";
 import StatusBtn from "@/app/components/statusBtn2";
 import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/utils/formatNumber";
-import { formatDate } from "@/app/(private)/utils/date";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { formatWithPattern } from "@/app/(private)/utils/date";
+import { invoiceExportHeader, invoiceList } from "@/app/services/companyTransaction";
 
 
 
@@ -118,8 +113,8 @@ export default function CustomerInvoicePage() {
             // setLoading(true);
             // Pass selected format to the export API
             setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
-            const response = await exportInvoice({ format });
-            const url = response?.url || response?.data?.url;
+            const response = await invoiceExportHeader({ format });
+            const url = response?.download_url || response?.data?.download_url;
             if (url) {
                 await downloadFile(url);
                 showSnackbar("File downloaded successfully", "success");
@@ -136,84 +131,6 @@ export default function CustomerInvoicePage() {
         }
     };
 
-    const statusUpdate = async (
-        dataOrIds: TableDataType[] | (string | number)[] | undefined,
-        selectedRowOrStatus?: number[] | number
-    ) => {
-        try {
-            if (!dataOrIds || (Array.isArray(dataOrIds) && dataOrIds.length === 0)) {
-                showSnackbar("No invoices selected", "error");
-                return;
-            }
-
-            // Collect selected UUIDs (prefer `uuid` field from table rows). The API expects
-            // invoice_ids to be an array of identifiers (use uuid when available).
-            let selectedRowsData: (string | number)[] = [];
-            let status: number | undefined;
-
-            const first = dataOrIds[0] as any;
-            if (typeof first === "object") {
-                const data = dataOrIds as TableDataType[];
-                const selectedRow = selectedRowOrStatus as number[] | undefined;
-                if (!selectedRow || selectedRow.length === 0) {
-                    showSnackbar("No invoices selected", "error");
-                    return;
-                }
-
-                selectedRowsData = data
-                    .filter((row: TableDataType, index) => selectedRow.includes(index))
-                    .map((row: TableDataType) => {
-                        const r = row as any;
-                        return r.uuid ?? r.id ?? r.invoice_id ?? null;
-                    })
-                    .filter(Boolean) as (string | number)[];
-
-                status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
-            } else {
-                const ids = dataOrIds as (string | number)[];
-                selectedRowsData = ids.filter(Boolean);
-                status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
-            }
-
-            if (selectedRowsData.length === 0) {
-                showSnackbar("No invoices selected", "error");
-                return;
-            }
-
-            await invoiceStatusUpdate({ invoice_ids: selectedRowsData, status: status ?? 0 });
-            setRefreshKey((k) => k + 1);
-            showSnackbar("Invoice status updated successfully", "success");
-        } catch (error: any) {
-            console.error("Status update failed:", error);
-            // Try to extract meaningful message from API response
-            let message = "Failed to update invoice status";
-
-            const respData = error?.response?.data ?? error?.data ?? null;
-            if (respData) {
-                if (typeof respData === "string") {
-                    message = respData;
-                } else if (respData.message) {
-                    message = respData.message;
-                } else if (respData.errors && typeof respData.errors === 'object') {
-                    // Flatten validation errors into a single string
-                    try {
-                        const vals = Object.values(respData.errors).flat();
-                        if (Array.isArray(vals) && vals.length > 0) {
-                            message = vals.join("; ");
-                        }
-                    } catch (e) {
-                        // fallback to default
-                    }
-                }
-            } else if (error?.message) {
-                message = error.message;
-            }
-
-            showSnackbar(String(message), "error");
-        }
-    };
-
-    // 🔹 Fetch Invoices
     const fetchInvoices = useCallback(async (
         page: number = 1,
         pageSize: number = 10
@@ -288,7 +205,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { list: fetchInvoices, filterBy: filterBy },
                     header: {
-                        title: "Customer Invoices",
+                        title: "Company Invoices",
                         threeDot: [
                             {
                                 icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
@@ -301,48 +218,6 @@ export default function CustomerInvoicePage() {
                                 label: "Export Excel",
                                 labelTw: "text-[12px] hidden sm:block",
                                 onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
-                            },
-                            {
-                                icon: "lucide:radio",
-                                label: "Inactive",
-                                // showOnSelect: true,
-                                showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                    if (!selectedRow || selectedRow.length === 0) return false;
-                                    const status = selectedRow?.map((id) => data[id].status).map(String);
-                                    return status?.includes("1") || false;
-                                },
-                                onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                    const status: string[] = [];
-                                    const ids = selectedRow?.map((id) => {
-                                        const currentStatus = data[id].status;
-                                        if (!status.includes(currentStatus)) {
-                                            status.push(currentStatus);
-                                        }
-                                        return data[id].uuid;
-                                    })
-                                    statusUpdate(ids, Number(0));
-                                },
-                            },
-                            {
-                                icon: "lucide:radio",
-                                label: "Active",
-                                // showOnSelect: true,
-                                showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                    if (!selectedRow || selectedRow.length === 0) return false;
-                                    const status = selectedRow?.map((id) => data[id].status).map(String);
-                                    return status?.includes("0") || false;
-                                },
-                                onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                    const status: string[] = [];
-                                    const ids = selectedRow?.map((id) => {
-                                        const currentStatus = data[id].status;
-                                        if (!status.includes(currentStatus)) {
-                                            status.push(currentStatus);
-                                        }
-                                        return data[id].uuid;
-                                    })
-                                    statusUpdate(ids, Number(1));
-                                },
                             },
                         ],
                         columnFilter: true,
@@ -357,61 +232,51 @@ export default function CustomerInvoicePage() {
                                 label: "End Date",
                                 type: "date"
                             },
-                            {
-                                key: "company_id",
-                                label: "Company",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(companyOptions) ? companyOptions : [],
-                            },
-                            {
-                                key: "warehouse_id",
-                                label: "Warehouse",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
-                            },
-                            {
-                                key: "region_id",
-                                label: "Region",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(regionOptions) ? regionOptions : [],
-                            },
-                            {
-                                key: "sub_region_id",
-                                label: "Sub Region",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(areaOptions) ? areaOptions : [],
-                            },
-                            {
-                                key: "route_id",
-                                label: "Route",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(routeOptions) ? routeOptions : [],
-                            },
-                            {
-                                key: "salesman_id",
-                                label: "Salesman",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                            }
+                            // {
+                            //     key: "company_id",
+                            //     label: "Company",
+                            //     isSingle: false,
+                            //     multiSelectChips: true,
+                            //     options: Array.isArray(companyOptions) ? companyOptions : [],
+                            // },
+                            // {
+                            //     key: "warehouse_id",
+                            //     label: "Warehouse",
+                            //     isSingle: false,
+                            //     multiSelectChips: true,
+                            //     options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
+                            // },
+                            // {
+                            //     key: "region_id",
+                            //     label: "Region",
+                            //     isSingle: false,
+                            //     multiSelectChips: true,
+                            //     options: Array.isArray(regionOptions) ? regionOptions : [],
+                            // },
+                            // {
+                            //     key: "sub_region_id",
+                            //     label: "Sub Region",
+                            //     isSingle: false,
+                            //     multiSelectChips: true,
+                            //     options: Array.isArray(areaOptions) ? areaOptions : [],
+                            // },
+                            // {
+                            //     key: "route_id",
+                            //     label: "Route",
+                            //     isSingle: false,
+                            //     multiSelectChips: true,
+                            //     options: Array.isArray(routeOptions) ? routeOptions : [],
+                            // },
+                            // {
+                            //     key: "salesman_id",
+                            //     label: "Salesman",
+                            //     isSingle: false,
+                            //     multiSelectChips: true,
+                            //     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                            // }
 
                         ],
-                        searchBar: false,
-                        actions: [
-                            <SidebarBtn
-                                key={1}
-                                href="/agentInvoice/add"
-                                isActive
-                                leadingIcon="mdi:plus"
-                                label="Add"
-                                labelTw="hidden lg:block"
-                            />
-                        ]
+                        searchBar: false
                     },
                     footer: { nextPrevBtn: true, pagination: true },
                     columns,
@@ -422,7 +287,7 @@ export default function CustomerInvoicePage() {
                             icon: "lucide:eye",
                             onClick: (row: TableDataType) =>
                                 router.push(
-                                    `/agentInvoice/details/${row.uuid}`
+                                    `/invoice/details/${row.uuid}`
                                 ),
                         },
                     ],

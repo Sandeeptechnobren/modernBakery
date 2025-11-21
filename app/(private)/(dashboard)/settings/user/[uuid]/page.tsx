@@ -873,8 +873,9 @@ export default function UserAddEdit() {
                   value={values.role}
                   options={roleOptions}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-                    setIsNestedDropdownValue(true);
                     const val = e?.target?.value;
+                    if(val === values.role) return;
+                    setIsNestedDropdownValue(true);
                     setFieldValue("role", val);
                     setFieldValue("company", []);
                     await fetchLabelsForRoles(val);
@@ -1041,7 +1042,11 @@ export default function UserAddEdit() {
                       const v = e?.target?.value;
                       const vals = normalizeToArray(v);
                       setFieldValue("route", vals);
-                      setFieldValue("itemCategory", []);
+                      // setFieldValue("itemCategory", []);
+                      if(vals.length === 0 || options.itemCategory.length > 0) {
+                        setOptions((prev) => ({ ...prev, item: [], customerChannel: [], customerCategory: [], customerSubCategory: [], customer: [] }));
+                        return;
+                      }
                       setSkeleton((s) => ({ ...s, itemCategory: true }));
                       try {
                         const regions = await itemCategoryList();
@@ -1136,14 +1141,14 @@ export default function UserAddEdit() {
                         const v = e?.target?.value;
                         const vals = normalizeToArray(v);
                         setFieldValue("item", vals);
-                        setFieldValue("customerChannel", []);
-                        if (vals.length === 0) {
-                          setOptions((prev) => ({ ...prev, customerChannel: [], customerCategory: [], customerSubCategory: [], customer: [] }));
+                        // setFieldValue("customerChannel", []);
+                        if (vals.length === 0 || options.customerChannel.length > 0) {
+                          setOptions((prev) => ({ ...prev, customerCategory: [], customerSubCategory: [], customer: [] }));
                           return;
                         }
                         setSkeleton((s) => ({ ...s, customerChannel: true }));
                         try {
-                          const items = await outletChannelList({ item_id: vals.join(",") });
+                          const items = await outletChannelList();
                           const options = items.data.map((item: { id: string; outlet_channel: string; outlet_channel_code: string }) => ({ value: String(item.id), label: (item.outlet_channel_code || "") + (item.outlet_channel_code && item.outlet_channel ? " - " : "") + (item.outlet_channel || "") })) ?? [];
                           setOptions((prev) => ({ ...prev, customerChannel: options, customerCategory: [], customerSubCategory: [], customer: [] }));
                         } catch (e: unknown) {
@@ -1180,7 +1185,7 @@ export default function UserAddEdit() {
                         setSkeleton((s) => ({ ...s, customerCategory: true }));
                         try {
                           const customerCategories = await customerCategoryList({ channel_id: vals.join(",") });
-                          const options = customerCategories.data.map((customerCategory: { id: string; category_code: string; category_name: string }) => ({ value: String(customerCategory.id), label: (customerCategory.category_code || "") + (customerCategory.category_code && customerCategory.category_name ? " - " : "") + (customerCategory.category_name || "") })) ?? [];
+                          const options = customerCategories.data.map((customerCategory: { id: string; customer_category_code: string; customer_category_name: string }) => ({ value: String(customerCategory.id), label: (customerCategory.customer_category_code || "") + (customerCategory.customer_category_code && customerCategory.customer_category_name ? " - " : "") + (customerCategory.customer_category_name || "") })) ?? [];
                           setOptions((prev) => ({ ...prev, customerCategory: options, customerSubCategory: [], customer: [] }));
                         } catch (e: unknown) {
                           setOptions((prev) => ({ ...prev, customerCategory: [], customerSubCategory: [], customer: [] }));
@@ -1216,7 +1221,7 @@ export default function UserAddEdit() {
                         setSkeleton((s) => ({ ...s, customerSubCategory: true }));
                         try {
                           const itemSubCategories = await customerSubCategoryList({ customer_category_id: vals.join(",") });
-                          const options = itemSubCategories.data.map((itemSubCategory: { id: string; sub_category_code: string; sub_category_name: string }) => ({ value: String(itemSubCategory.id), label: (itemSubCategory.sub_category_code || "") + (itemSubCategory.sub_category_code && itemSubCategory.sub_category_name ? " - " : "") + (itemSubCategory.sub_category_name || "") })) ?? [];
+                          const options = itemSubCategories.data.map((itemSubCategory: { id: string; customer_sub_category_code: string; customer_sub_category_name: string }) => ({ value: String(itemSubCategory.id), label: (itemSubCategory.customer_sub_category_code || "") + (itemSubCategory.customer_sub_category_code && itemSubCategory.customer_sub_category_name ? " - " : "") + (itemSubCategory.customer_sub_category_name || "") })) ?? [];
                           setOptions((prev) => ({ ...prev, customerSubCategory: options, customer: [] }));
                         } catch (e: unknown) {
                           setOptions((prev) => ({ ...prev, customerSubCategory: [], customer: [] }));
@@ -1251,7 +1256,7 @@ export default function UserAddEdit() {
                         }
                         setSkeleton((s) => ({ ...s, customer: true }));
                         try {
-                          const customers = await agentCustomerList({ customer_sub_category_id: vals.join(",") });
+                          const customers = await agentCustomerList({ subcategory_id: vals.join(",") });
                           const options = customers.data.map((customer: { id: string; osa_code: string; name: string }) => ({ value: customer.id, label: (customer.osa_code || "") + (customer.osa_code && customer.name ? " - " : "") + (customer.name || "") })) ?? [];
                           setOptions((prev) => ({ ...prev, customer: options }));
                         } catch (e: unknown) {

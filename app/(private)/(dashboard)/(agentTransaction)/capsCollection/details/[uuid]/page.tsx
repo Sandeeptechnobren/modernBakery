@@ -169,11 +169,11 @@ export default function ViewPage() {
 
               {/* Buttons */}
               <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
-                <SidebarBtn
+                {/* <SidebarBtn
                   leadingIcon={"lucide:download"}
                   leadingIconSize={20}
                   label="Download"
-                />
+                /> */}
                 <PrintButton
                   targetRef={targetRef as unknown as RefObject<HTMLElement>}
                 />

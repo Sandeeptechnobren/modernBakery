@@ -120,12 +120,6 @@ const Buom = ({ row, details, setDetails }: any) => {
         // details.push(newdata)
         // setDetails(details)
 
-
-
-
-
-
-
       }
       else {
         const newdata = { buom_ctn_price: e.target.value, auom_pc_price: 0, item_id: row.id, name: `${row.item_code}-${row.name}` }
@@ -1053,7 +1047,7 @@ export default function AddPricing() {
                         key={`autosuggest-location-${locKey}`}
                         name={locKey}
                         placeholder={`Search ${locKey}`}
-                        multiple={true}
+                        // multiple={true}
                         initialSelected={(() => {
                           const sel = keyValue[locKey] || [];
                           const opts = locKey === "Company" ? companyOptions : locKey === "Region" ? regionOptions : locKey === "Area" ? areaOptions : locKey === "Warehouse" ? warehouseOptions : routeOptions;
