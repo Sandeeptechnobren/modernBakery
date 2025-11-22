@@ -8,6 +8,8 @@ import { downloadFile, exportVehicleData, vehicleGlobalSearch, vehicleListData, 
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
+import { formatWithPattern } from "@/app/utils/formatDate";
 
 // 🔹 API response type
 interface Vehicle {
@@ -48,7 +50,7 @@ const columns = [
   { key: "number_plat", label: "Number Plate", render: (row: TableDataType) => row.number_plat || "-" },
   { key: "vehicle_chesis_no", label: "Chassis Number", render: (row: TableDataType) => row.vehicle_chesis_no || "-" },
   { key: "vehicle_brand", label: "Brand", render: (row: TableDataType) => row.vehicle_brand || "-" },
-  { key: "opening_odometer", label: "Odo Meter", render: (row: TableDataType) => row.opening_odometer || "-" },
+  { key: "opening_odometer", label: "Odo Meter", render: (row: TableDataType) => toInternationalNumber(row.opening_odometer, {maximumFractionDigits: 0}) || "-" },
   {
     key: "vehicle_type",
     label: "Vehicle Type",
@@ -63,7 +65,7 @@ const columns = [
       return strValue;
     },
   },
-  { key: "capacity", label: "Capacity", render: (row: TableDataType) => row.capacity || "-" },
+  { key: "capacity", label: "Capacity", render: (row: TableDataType) => toInternationalNumber(row.capacity, {maximumFractionDigits: 0}) || "-" },
   {
     key: "owner_type",
     label: "Owner Type",
@@ -90,19 +92,19 @@ const columns = [
         }
 
         
-        return <>{code && name? code +"-"+name:"-"}</>;
+        return <>{code && name? code +" - "+name : "-"}</>;
       },
       
   },
   // { key: "ownerReference", label: "Owner Reference" },
   // { key: "vehicleRoute", label: "Vehicle Route" },
   { key: "description", label: "Description", render: (row: TableDataType) => row.description || "-" },
-  { key: "valid_from", label: "Valid From", render: (row: TableDataType) => row.valid_from || "-" },
-  { key: "valid_to", label: "Valid To", render: (row: TableDataType) => row.valid_to || "-" },
+  { key: "valid_from", label: "Valid From", render: (row: TableDataType) => formatWithPattern(new Date(row.valid_from), "DD MMM YYYY", "en-GB") || "-" },
+  { key: "valid_to", label: "Valid To", render: (row: TableDataType) => formatWithPattern(new Date(row.valid_to), "DD MMM YYYY", "en-GB") || "-" },
   {
     key: "status",
     label: "Status",
-    isSortable: true,
+    // isSortable: true,
     render: (row: TableDataType) => (
       <StatusBtn isActive={String(row.status) > "0"} />
     ),
@@ -276,8 +278,6 @@ export default function VehiclePage() {
                 },
               ],
               title: "Vehicle",
-
-
               searchBar: true,
               columnFilter: true,
               actions: [
@@ -295,6 +295,7 @@ export default function VehiclePage() {
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
+            showNestedLoading: true,
             rowActions: [
               {
                 icon: "lucide:eye",

@@ -3,6 +3,7 @@ import StepperForm, {
   useStepperForm,
   StepperStep,
 } from "@/app/components/stepperForm";
+import AutoSuggestion from "@/app/components/autoSuggestion";
 import ContainerCard from "@/app/components/containerCard";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useParams } from "next/navigation";
@@ -10,7 +11,28 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { itemList, addPricingDetail, pricingDetailById, pricingHeaderById, editPricingDetail } from "@/app/services/allApi";
+import {
+  itemList,
+  addPricingDetail,
+  pricingDetailById,
+  pricingHeaderById,
+  editPricingDetail,
+  companyList,
+  companyListGlobalSearch,
+  regionList,
+  regionGlobalSearch,
+  subRegionList,
+  subRegionListGlobalSearch,
+  warehouseList,
+  warehouseListGlobalSearch,
+  routeList,
+  routeGlobalSearch,
+  customerCategoryGlobalSearch,
+  agentCustomerGlobalSearch,
+  itemGlobalSearch,
+  channelList,
+  itemCategory,
+} from "@/app/services/allApi";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import InputFields from "@/app/components/inputFields";
 import Table, { TableDataType } from "@/app/components/customTable";
@@ -97,12 +119,6 @@ const Buom = ({ row, details, setDetails }: any) => {
         // let newdata = {buom_ctn_price:e.target.value,auom_pc_price:0,item_id:row.id,name:`${row.item_code}-${row.name}`}    
         // details.push(newdata)
         // setDetails(details)
-
-
-
-
-
-
 
       }
       else {
@@ -298,19 +314,113 @@ function SelectKeyCombination({ keyCombo, setKeyCombo }: SelectKeyProps) {
 }
 
 export default function AddPricing() {
-  const {
-    itemOptions,
-    companyOptions,
-    regionOptions,
-    warehouseOptions,
-    areaOptions,
-    routeOptions,
-    customerTypeOptions,
-    channelOptions,
-    customerCategoryOptions,
-    companyCustomersOptions,
-    itemCategoryOptions,
-  } = useAllDropdownListData();
+  // All dropdown state declarations and keyValue at the very top
+  const [keyValue, setKeyValue] = useState<Record<string, string[]>>({});
+  const [companyOptions, setCompanyOptions] = useState<{ label: string; value: string }[]>([]);
+  const [regionOptions, setRegionOptions] = useState<{ label: string; value: string }[]>([]);
+  const [areaOptions, setAreaOptions] = useState<{ label: string; value: string }[]>([]);
+  const [warehouseOptions, setWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
+  const [routeOptions, setRouteOptions] = useState<{ label: string; value: string }[]>([]);
+  const [channelOptions, setChannelOptions] = useState<{ label: string; value: string }[]>([]);
+  const [customerCategoryOptions, setCustomerCategoryOptions] = useState<{ label: string; value: string }[]>([]);
+  const [itemCategoryOptions, setItemCategoryOptions] = useState<{ label: string; value: string }[]>([]);
+  const [itemOptions, setItemOptions] = useState<{ label: string; value: string }[]>([]);
+
+  // Removed duplicate dropdown state declarations
+
+  // Removed duplicate keyValue declaration
+  useEffect(() => {
+    async function loadCompanies() {
+      const companies = await companyList();
+      setCompanyOptions(companies?.data?.map((c: any) => ({ label: c.company_name || c.name, value: String(c.id) })) || []);
+    }
+    loadCompanies();
+    // preload some channel and categories for better UX
+    (async () => {
+      try {
+        const ch = await channelList({ per_page: "50" });
+        setChannelOptions((ch?.data || []).map((c: any) => ({
+          label: `${c.outlet_channel || c.outlet_channel_name || c.channel_name || c.name || ''}`,
+          value: String(c.id),
+        })));
+      } catch (e) {}
+      try {
+        const cat = await customerCategoryGlobalSearch({ per_page: "50" });
+        setCustomerCategoryOptions((cat?.data || []).map((c: any) => ({ label: `${c.customer_category_name  || ''}`, value: String(c.id) })));
+      } catch (e) {}
+      try {
+        const ic = await itemCategory({ per_page: "50" });
+        setItemCategoryOptions((ic?.data || []).map((c: any) => ({ label: c.category_name || c.name || "", value: String(c.id) })));
+      } catch (e) {}
+    })();
+  }, []);
+
+  // When company changes, fetch regions and reset children
+  useEffect(() => {
+    if (!keyValue["Company"] || keyValue["Company"].length === 0) {
+      setRegionOptions([]);
+      setAreaOptions([]);
+      setWarehouseOptions([]);
+      setRouteOptions([]);
+      setKeyValue((kv) => ({ ...kv, Region: [], Area: [], Warehouse: [], Route: [] }));
+      return;
+    }
+    async function fetchRegions() {
+      const regions = await regionList({ company_id: keyValue["Company"].join(",") });
+      setRegionOptions(regions?.data?.map((r: any) => ({ label: r.region_name || r.name, value: String(r.id) })) || []);
+      setKeyValue((kv) => ({ ...kv, Region: [], Area: [], Warehouse: [], Route: [] }));
+    }
+    fetchRegions();
+  }, [keyValue["Company"]]);
+
+  // When region changes, fetch areas and reset children
+  useEffect(() => {
+    if (!keyValue["Region"] || keyValue["Region"].length === 0) {
+      setAreaOptions([]);
+      setWarehouseOptions([]);
+      setRouteOptions([]);
+      setKeyValue((kv) => ({ ...kv, Area: [], Warehouse: [], Route: [] }));
+      return;
+    }
+    async function fetchAreas() {
+      const areas = await subRegionList({ region_id: keyValue["Region"].join(",") });
+      setAreaOptions(areas?.data?.map((a: any) => ({ label: a.area_name || a.name, value: String(a.id) })) || []);
+      setKeyValue((kv) => ({ ...kv, Area: [], Warehouse: [], Route: [] }));
+    }
+    fetchAreas();
+  }, [keyValue["Region"]]);
+
+  // When area changes, fetch warehouses and reset children
+  useEffect(() => {
+    if (!keyValue["Area"] || keyValue["Area"].length === 0) {
+      setWarehouseOptions([]);
+      setRouteOptions([]);
+      setKeyValue((kv) => ({ ...kv, Warehouse: [], Route: [] }));
+      return;
+    }
+    async function fetchWarehouses() {
+      const warehouses = await warehouseList({ area_id: keyValue["Area"].join(",") });
+      setWarehouseOptions(warehouses?.data?.map((w: any) => ({ label: w.warehouse_name || w.name, value: String(w.id) })) || []);
+      setKeyValue((kv) => ({ ...kv, Warehouse: [], Route: [] }));
+    }
+    fetchWarehouses();
+  }, [keyValue["Area"]]);
+
+  // When warehouse changes, fetch routes and reset child
+  useEffect(() => {
+    if (!keyValue["Warehouse"] || keyValue["Warehouse"].length === 0) {
+      setRouteOptions([]);
+      setKeyValue((kv) => ({ ...kv, Route: [] }));
+      return;
+    }
+    async function fetchRoutes() {
+      const routes = await routeList({ warehouse_id: keyValue["Warehouse"].join(",") });
+      setRouteOptions(routes?.data?.map((r: any) => ({ label: r.route_name || r.name, value: String(r.id) })) || []);
+      setKeyValue((kv) => ({ ...kv, Route: [] }));
+    }
+    fetchRoutes();
+  }, [keyValue["Warehouse"]]);
+  
   const steps: StepperStep[] = [
     { id: 1, label: "Key Combination" },
     { id: 2, label: "Key Value" },
@@ -515,16 +625,21 @@ export default function AddPricing() {
       );
     }
     if (step === 2) {
-      if (keyCombo.Location.includes("Route") && !keyValue.Route) return false;
-      if (
-        keyCombo.Customer.includes("Sales Organisation") &&
-        !keyValue.SalesOrganisation
-      )
-        return false;
-      if (keyCombo.Customer.includes("Sub Channel") && !keyValue.SubChannel)
-        return false;
-      if (keyCombo.Item.includes("Item Group") && !keyValue.ItemGroup)
-        return false;
+      // Require values only for keys that the user selected in Step 1.
+      // For each selected label in keyCombo, ensure keyValue[label] exists and has at least one selection.
+      const requireSelectedValues = (labels: string[]) => {
+        for (const label of labels) {
+          const vals = keyValue[label] || [];
+          if (!Array.isArray(vals) || vals.length === 0) return false;
+        }
+        return true;
+      };
+
+      // If any selected key group has no corresponding values, block progression.
+      if (!requireSelectedValues(keyCombo.Location)) return false;
+      if (!requireSelectedValues(keyCombo.Customer)) return false;
+      if (!requireSelectedValues(keyCombo.Item)) return false;
+
       return true;
     }
     if (step === 3) {
@@ -685,7 +800,7 @@ export default function AddPricing() {
   const [keyCombo, setKeyCombo] = useState<KeyComboType>({
     Location: [],
     Customer: [],
-    Item: [],
+    Item: ["Item"], // Always select Item
   });
 
   type OrderItem = {
@@ -700,7 +815,7 @@ export default function AddPricing() {
     item_id?: number;
   };
 
-  const [keyValue, setKeyValue] = useState<Record<string, string[]>>({});
+  // Removed duplicate keyValue declaration
   const [promotion, setPromotion] = useState<{
     itemName: string;
     startDate: string;
@@ -718,7 +833,7 @@ export default function AddPricing() {
     itemName: "",
     startDate: "",
     endDate: "",
-    status: "active",
+    status: "1",
     orderType: "All",
     offerType: "All",
     type: "Slab",
@@ -784,24 +899,140 @@ export default function AddPricing() {
           <SelectKeyCombination keyCombo={keyCombo} setKeyCombo={setKeyCombo} />
         );
       case 2:
-        type DropdownOption = { label: string; value: string };
-        const locationDropdownMap: Record<string, DropdownOption[]> = {
-          Company: companyOptions,
-          Region: regionOptions,
-          Warehouse: warehouseOptions,
-          Area: areaOptions,
-          Route: routeOptions,
+        // Helper functions for dynamic fetching
+        const handleCompanySearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return companyOptions;
+          try {
+            const res = await companyListGlobalSearch({ query: q, per_page: "50" });
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((c: any) => ({ value: String(c.id), label: `${c.company_code || c.name || ""} - ${c.company_name || c.name || ""}` }));
+          } catch (err) {
+            return [];
+          }
         };
-        const customerDropdownMap: Record<string, DropdownOption[]> = {
-          "Customer Type": customerTypeOptions,
-          Channel: channelOptions,
-          "Customer Category": customerCategoryOptions,
-          Customer: companyCustomersOptions,
+
+        const handleRegionSearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return regionOptions;
+          try {
+            const params: any = { query: q, per_page: "50" };
+            if (keyValue["Company"] && keyValue["Company"].length > 0) params.company_id = keyValue["Company"].join(",");
+            const res = await regionGlobalSearch(params);
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((r: any) => ({ value: String(r.id), label: `${r.region_code || r.code || ""} - ${r.region_name || r.name || ""}` }));
+          } catch (err) {
+            return [];
+          }
         };
-        const itemDropdownMap: Record<string, DropdownOption[]> = {
-          "Item Category": itemCategoryOptions,
-          Item: itemOptions,
+
+        const handleAreaSearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return areaOptions;
+          try {
+            const params: any = { query: q, per_page: "50" };
+            if (keyValue["Region"] && keyValue["Region"].length > 0) params.region_id = keyValue["Region"].join(",");
+            const res = await subRegionListGlobalSearch(params);
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((a: any) => ({ value: String(a.id), label: `${a.area_code || a.code || ""} - ${a.area_name || a.name || ""}` }));
+          } catch (err) {
+            return [];
+          }
         };
+
+        const handleWarehouseSearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return warehouseOptions;
+          try {
+            const params: any = { query: q, per_page: "50" };
+            if (keyValue["Area"] && keyValue["Area"].length > 0) params.area_id = keyValue["Area"].join(",");
+            const res = await warehouseListGlobalSearch(params);
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((w: any) => ({ value: String(w.id), label: `${w.warehouse_code || w.code || ""} - ${w.warehouse_name || w.name || ""}` }));
+          } catch (err) {
+            return [];
+          }
+        };
+
+        const handleRouteSearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return routeOptions;
+          try {
+            const params: any = { query: q, per_page: "50" };
+            if (keyValue["Warehouse"] && keyValue["Warehouse"].length > 0) params.warehouse_id = keyValue["Warehouse"].join(",");
+            const res = await routeGlobalSearch(params);
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((r: any) => ({ value: String(r.id), label: `${r.route_code || r.code || ""} - ${r.route_name || r.name || ""}` }));
+          } catch (err) {
+            return [];
+          }
+        };
+
+        const handleCustomerCategorySearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return customerCategoryOptions || [];
+          try {
+            const params: any = { query: q, per_page: "50" };
+            if (keyValue["Channel"] && keyValue["Channel"].length > 0) {
+              params.channel_id = keyValue["Channel"].join(",");
+            }
+            const res = await customerCategoryGlobalSearch(params);
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((c: any) => ({ value: String(c.id), label: c.customer_category_name || c.name || "" }));
+          } catch (err) {
+            return [];
+          }
+        };
+
+        const handleChannelSearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return channelOptions || [];
+          try {
+            const res = await channelList({ query: q, per_page: "50" });
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((c: any) => ({
+              value: String(c.id),
+              label: `${c.outlet_channel || c.outlet_channel_name || c.channel_name || c.name || ''}`,
+            }));
+          } catch (err) {
+            return [];
+          }
+        };
+
+        const handleItemCategorySearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return itemCategoryOptions || [];
+          try {
+            const res = await itemCategory({ query: q, per_page: "50" });
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((c: any) => ({ value: String(c.id), label: c.category_name || c.name || "" }));
+          } catch (err) {
+            return [];
+          }
+        };
+
+        const handleCustomerSearch = async (q: string) => {
+          if (!q || q.trim().length === 0) return [];
+          try {
+            const params: any = { query: q };
+            if (keyValue["Customer Category"] && keyValue["Customer Category"].length > 0) params.customer_category_id = keyValue["Customer Category"].join(",");
+            const res = await agentCustomerGlobalSearch(params);
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((c: any) => ({ value: String(c.id), label: `${c.osa_code || c.code || ""}${c.name ? " - " + (c.name || c.customer_name || c.outlet_name) : ""}` }));
+          } catch (err) {
+            return [];
+          }
+        };
+
+        const handleItemSearch = async (q: string) => {
+          // allow empty query to return cached itemOptions
+          if (!q || q.trim().length === 0) return itemOptions || [];
+          try {
+            const params: any = { query: q};
+            // if item category is selected, filter items by category
+            if (keyValue["Item Category"] && keyValue["Item Category"].length > 0) {
+              params.item_category_id = keyValue["Item Category"].join(",");
+            }
+            const res = await itemGlobalSearch(params);
+            const data = Array.isArray(res?.data) ? res.data : [];
+            return data.map((it: any) => ({ value: String(it.id), label: `${it.erp_code || ""}${it.name ? " - " + it.name : ""}`, code: it.item_code || it.code, name: it.name }));
+          } catch (err) {
+            return [];
+          }
+        };
+
         return (
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
             <h2 className="text-xl font-semibold mb-6">Key Value</h2>
@@ -812,29 +1043,38 @@ export default function AddPricing() {
                   {keyCombo.Location.map((locKey) => (
                     <div key={locKey} className="mb-4">
                       <div className="mb-2 text-base font-medium">{locKey}</div>
-                      <InputFields
-                        label=""
-                        type="select"
-                        searchable={true}
-                        isSingle={false}
-                        options={
-                          locationDropdownMap[locKey]
-                            ? [
-                              { label: `Select ${locKey}`, value: "" },
-                              ...locationDropdownMap[locKey],
-                            ]
-                            : [{ label: `Select ${locKey}`, value: "" }]
-                        }
-                        value={keyValue[locKey] || []}
-                        onChange={(e) =>
-                          setKeyValue((s) => ({
-                            ...s,
-                            [locKey]: Array.isArray(e.target.value)
-                              ? e.target.value
-                              : [],
-                          }))
-                        }
-                        width="w-full"
+                      <AutoSuggestion
+                        key={`autosuggest-location-${locKey}`}
+                        name={locKey}
+                        placeholder={`Search ${locKey}`}
+                        // multiple={true}
+                        initialSelected={(() => {
+                          const sel = keyValue[locKey] || [];
+                          const opts = locKey === "Company" ? companyOptions : locKey === "Region" ? regionOptions : locKey === "Area" ? areaOptions : locKey === "Warehouse" ? warehouseOptions : routeOptions;
+                          return opts.filter((o) => sel.includes(o.value));
+                        })()}
+                        onSearch={async (q: string) => {
+                          if (locKey === "Company") return await handleCompanySearch(q as string);
+                          if (locKey === "Region") return await handleRegionSearch(q as string);
+                          if (locKey === "Area") return await handleAreaSearch(q as string);
+                          if (locKey === "Warehouse") return await handleWarehouseSearch(q as string);
+                          if (locKey === "Route") return await handleRouteSearch(q as string);
+                          return [];
+                        }}
+                        onChangeSelected={(selected) => {
+                          setKeyValue((s) => ({ ...s, [locKey]: selected.map((o) => o.value) }));
+                        }}
+                        onSelect={(opt: { value: string }) => {
+                          // maintain backward compatibility: add selection if not present
+                          setKeyValue((s) => {
+                            const prev = s[locKey] || [];
+                            if (prev.includes(String(opt.value))) return s;
+                            return { ...s, [locKey]: [...prev, String(opt.value)] };
+                          });
+                        }}
+                        onClear={() => setKeyValue((s) => ({ ...s, [locKey]: [] }))}
+                        error={undefined}
+                        className="w-full"
                       />
                     </div>
                   ))}
@@ -845,32 +1085,40 @@ export default function AddPricing() {
                   <div className="font-semibold text-lg mb-4">Customer</div>
                   {keyCombo.Customer.map((custKey) => (
                     <div key={custKey} className="mb-4">
-                      <div className="mb-2 text-base font-medium">
-                        {custKey}
-                      </div>
-                      <InputFields
+                      <div className="mb-2 text-base font-medium">{custKey}</div>
+                      <AutoSuggestion
+                        key={`autosuggest-customer-${custKey}`}
                         label=""
-                        type="select"
-                        isSingle={false}
-                        searchable={true}
-                        options={
-                          customerDropdownMap[custKey]
-                            ? [
-                              { label: `Select ${custKey}`, value: "" },
-                              ...customerDropdownMap[custKey],
-                            ]
-                            : [{ label: `Select ${custKey}`, value: "" }]
-                        }
-                        value={keyValue[custKey] || []}
-                        onChange={(e) =>
-                          setKeyValue((s) => ({
-                            ...s,
-                            [custKey]: Array.isArray(e.target.value)
-                              ? e.target.value
-                              : [],
-                          }))
-                        }
-                        width="w-full"
+                        name={custKey}
+                        placeholder={`Search ${custKey}`}
+                        multiple={true}
+                        initialSelected={(() => {
+                          const sel = keyValue[custKey] || [];
+                          // for customer category we may not have a local cache; fall back to empty
+                          if (custKey === "Customer Category") return customerCategoryOptions.filter((o) => sel.includes(o.value));
+                          if (custKey === "Channel") return channelOptions.filter((o) => sel.includes(o.value));
+                          if (custKey === "Customer") return [];
+                          return [];
+                        })()}
+                        onSearch={async (q: string) => {
+                          if (custKey === "Channel") return await handleChannelSearch(q as string);
+                          if (custKey === "Customer Category") return await handleCustomerCategorySearch(q as string);
+                          if (custKey === "Customer") return await handleCustomerSearch(q as string);
+                          return [];
+                        }}
+                        onChangeSelected={(selected) => {
+                          setKeyValue((s) => ({ ...s, [custKey]: selected.map((o) => o.value) }));
+                        }}
+                        onSelect={(opt: { value: string }) => {
+                          setKeyValue((s) => {
+                            const prev = s[custKey] || [];
+                            if (prev.includes(String(opt.value))) return s;
+                            return { ...s, [custKey]: [...prev, String(opt.value)] };
+                          });
+                        }}
+                        onClear={() => setKeyValue((s) => ({ ...s, [custKey]: [] }))}
+                        error={undefined}
+                        className="w-full"
                       />
                     </div>
                   ))}
@@ -881,32 +1129,41 @@ export default function AddPricing() {
                   <div className="font-semibold text-lg mb-4">Item</div>
                   {keyCombo.Item.map((itemKey) => (
                     <div key={itemKey} className="mb-4">
-                      <div className="mb-2 text-base font-medium">
-                        {itemKey}
-                      </div>
-                      <InputFields
+                      <div className="mb-2 text-base font-medium">{itemKey}</div>
+                      <AutoSuggestion
+                        key={`autosuggest-item-${itemKey}`}
                         label=""
-                        type="select"
-                        isSingle={false}
-                        searchable={true}
-                        options={
-                          itemDropdownMap[itemKey]
-                            ? [
-                              { label: `Select ${itemKey}`, value: "" },
-                              ...itemDropdownMap[itemKey],
-                            ]
-                            : [{ label: `Select ${itemKey}`, value: "" }]
-                        }
-                        value={keyValue[itemKey] || []}
-                        onChange={(e) =>
-                          setKeyValue((s) => ({
-                            ...s,
-                            [itemKey]: Array.isArray(e.target.value)
-                              ? e.target.value
-                              : [],
-                          }))
-                        }
-                        width="w-full"
+                        name={itemKey}
+                        placeholder={`Search ${itemKey}`}
+                        multiple={true}
+                        initialSelected={(() => {
+                          const sel = keyValue[itemKey] || [];
+                          if (itemKey === "Item") {
+                            return selectedItemDetails
+                              .filter((it) => sel.includes(String(it.id)))
+                              .map((it) => ({ value: String((it as any).id || ""), label: `${(it as any).item_code || (it as any).code || ""}${(it as any).name ? " - " + (it as any).name : ""}` }));
+                          }
+                          if (itemKey === "Item Category") return itemCategoryOptions.filter((o) => sel.includes(o.value));
+                          return [];
+                        })()}
+                        onSearch={async (q: string) => {
+                          if (itemKey === "Item Category") return await handleItemCategorySearch(q as string);
+                          if (itemKey === "Item") return await handleItemSearch(q as string);
+                          return [];
+                        }}
+                        onChangeSelected={(selected) => {
+                          setKeyValue((s) => ({ ...s, [itemKey]: selected.map((o) => o.value) }));
+                        }}
+                        onSelect={(opt: { value: string }) => {
+                          setKeyValue((s) => {
+                            const prev = s[itemKey] || [];
+                            if (prev.includes(String(opt.value))) return s;
+                            return { ...s, [itemKey]: [...prev, String(opt.value)] };
+                          });
+                        }}
+                        onClear={() => setKeyValue((s) => ({ ...s, [itemKey]: [] }))}
+                        error={undefined}
+                        className="w-full"
                       />
                     </div>
                   ))}
@@ -917,38 +1174,18 @@ export default function AddPricing() {
         );
       case 3:
         const itemsData = (keyValue["Item"] || []).map((itemId, idx) => {
-          let itemData = selectedItemDetails.find(
+          const itemData = selectedItemDetails.find(
             (item) => String(item.code || item.itemCode) === String(itemId)
           );
           if (!itemData) {
-            itemData = itemOptions.find(
-              (opt) => String(opt.value) === String(itemId)
-            );
+            // No itemData available, use safe defaults
           }
           let itemCode = "-";
-          if (itemData) {
-            if (itemData.code) itemCode = itemData.code;
-            else if (itemData.itemCode) itemCode = itemData.itemCode;
-            else if (itemData.label) {
-              const labelParts = String(itemData.label).split(" - ");
-              itemCode =
-                labelParts.length > 1 ? labelParts[0] : String(itemData.label);
-            }
-          } else {
-            itemCode = String(itemId);
-          }
+          // No itemData, use itemId as code
+          itemCode = typeof itemId !== "undefined" ? String(itemId) : "-";
           let itemName = "-";
-          if (itemData) {
-            if (itemData.name) itemName = itemData.name;
-            else if (itemData.itemName) itemName = itemData.itemName;
-            else if (itemData.label) {
-              const labelParts = String(itemData.label).split(" - ");
-              itemName =
-                labelParts.length > 1
-                  ? labelParts.slice(1).join(" - ")
-                  : labelParts[0];
-            }
-          }
+          // No itemData, use itemId as name
+          itemName = typeof itemId !== "undefined" ? String(itemId) : "-";
           const orderItem = promotion.orderItems.find((oi) =>
             oi.itemCode === itemCode || String(oi.item_id) === String(itemId) || String(oi.itemCode) === String(itemId)
           );
@@ -989,64 +1226,6 @@ export default function AddPricing() {
         const firstThreePageIndices = [1, 2, 3];
         const lastThreePageIndices =
           totalPages > 3 ? [totalPages - 2, totalPages - 1, totalPages] : [];
-        // const renderPaginationBar = () => {
-        //   if (totalPages <= 1) return null;
-        //   return (
-        //     <div className="flex justify-between items-center px-[8px] py-[12px] mt-2">
-        //       <button
-        //         className="flex items-center gap-1 px-4 py-2 rounded bg-[#F5F5F5] text-[#717680] font-semibold disabled:opacity-50"
-        //         onClick={() => setPage(page - 1)}
-        //         disabled={page === 1}
-        //       >
-        //         <span className="text-[16px]">←</span>
-        //         Previous
-        //       </button>
-        //       <div className="flex gap-[2px] text-[14px] select-none">
-        //         {totalPages > 6 ? (
-        //           <>
-        //             {firstThreePageIndices.map((pageNo) => (
-        //               <PaginationBtn
-        //                 key={pageNo}
-        //                 label={pageNo.toString()}
-        //                 isActive={page === pageNo}
-        //                 onClick={() => setPage(pageNo)}
-        //               />
-        //             ))}
-        //             <PaginationBtn label={"..."} isActive={false} onClick={() => { }} />
-        //             {lastThreePageIndices.map((pageNo) => (
-        //               <PaginationBtn
-        //                 key={pageNo}
-        //                 label={pageNo.toString()}
-        //                 isActive={page === pageNo}
-        //                 onClick={() => setPage(pageNo)}
-        //               />
-        //             ))}
-        //           </>
-        //         ) : (
-        //           <>
-        //             {[...Array(totalPages)].map((_, idx) => (
-        //               <PaginationBtn
-        //                 key={idx + 1}
-        //                 label={(idx + 1).toString()}
-        //                 isActive={page === idx + 1}
-        //                 onClick={() => setPage(idx + 1)}
-        //               />
-        //             ))}
-        //           </>
-        //         )}
-        //       </div>
-        //       <button
-        //         className="flex items-center gap-1 px-4 py-2 rounded bg-[#F5F5F5] text-[#717680] font-semibold disabled:opacity-50"
-        //         onClick={() => setPage(page + 1)}
-        //         disabled={page === totalPages}
-        //       >
-        //         Next
-        //         <span className="text-[16px]">→</span>
-        //       </button>
-        //     </div>
-        //   );
-        // };
-        // inner small loader removed — top-level full-page loader handles edit-mode
 
         return (
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">

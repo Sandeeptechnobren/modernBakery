@@ -40,7 +40,7 @@ interface VehicleFormValues {
   odoMeter: string;
   capacity: string;
   fuel_reading: string;
-  status: "active" | "inactive";
+  status: string;
   validFrom: string;
   validTo: string;
 }
@@ -51,16 +51,33 @@ const VehicleSchema = Yup.object().shape({
   chassisNumber: Yup.string().required("Chassis Number is required"),
   vehicleType: Yup.string().required("Vehicle Type is required"),
   ownerType: Yup.string().required("Owner Type is required"),
-  odoMeter: Yup.number().required("Odometer is required"),
-  capacity: Yup.string().required("Capacity is required"),
+  odoMeter: Yup.number()
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
+    .required("Odometer is required"),
+  capacity: Yup.string()
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
+    .required("Capacity is required"),
   fuel_reading: Yup.number()
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
     .required("Fuel Reading is required")
     .max(999, "Fuel Reading must be at most 3 digits"),
-  status: Yup.string()
-    .oneOf(["active", "inactive"])
-    .required("Status is required"),
-  validFrom: Yup.date().required("Valid From date is required"),
+
+  status: Yup.string().required("Status is required"),
+  validFrom: Yup.date()
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
+    .required("Valid From date is required"),
   validTo: Yup.date()
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value,
+    )
     .min(Yup.ref("validFrom"), "Valid To must be after Valid From")
     .required("Valid To date is required"),
 });
@@ -102,7 +119,7 @@ export default function AddEditVehicleWithStepper() {
     warehouseId: "",
     odoMeter: "",
     capacity: "",
-    status: "active",
+    status: "1",
     fuel_reading: "",
     validFrom: "",
     validTo: "",
@@ -144,7 +161,7 @@ export default function AddEditVehicleWithStepper() {
         const res = await warehouseList();
         if (res?.data && Array.isArray(res.data)) setWarehouses(res.data);
       } catch (err) {
-        showSnackbar("Failed to fetch warehouses ❌", "error");
+        showSnackbar("Failed to fetch warehouses", "error");
       }
     };
     fetchWarehouses();
@@ -170,15 +187,15 @@ export default function AddEditVehicleWithStepper() {
               odoMeter: vehicle.opening_odometer || "",
               capacity: vehicle.capacity || "",
               fuel_reading: vehicle.fuel_reading || "",
-              status: vehicle.status === 1 ? "active" : "inactive",
+              status: vehicle.status === 1 ? "1" : "0",
               validFrom: vehicle.valid_from || "",
               validTo: vehicle.valid_to || "",
             });
           } else {
-            showSnackbar("Vehicle data not found ❌", "error");
+            showSnackbar("Vehicle data not found", "error");
           }
         } catch (err) {
-          showSnackbar("Failed to fetch vehicle ❌", "error");
+          showSnackbar("Failed to fetch vehicle", "error");
         } finally {
           setLoading(false);
         }
@@ -187,7 +204,7 @@ export default function AddEditVehicleWithStepper() {
   }, [isEditMode, uuid, showSnackbar]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
 
@@ -205,7 +222,6 @@ export default function AddEditVehicleWithStepper() {
     });
   };
 
-
   const setFieldValue = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setTouched((prev) => ({ ...prev, [field]: true }));
@@ -214,16 +230,17 @@ export default function AddEditVehicleWithStepper() {
   const validateCurrentStep = async (step: number) => {
     let fields: (keyof VehicleFormValues)[] = [];
     if (step === 1)
-      fields = [
-        "vehicleBrand",
-        "numberPlate",
-        "chassisNumber",
-
-        "vehicleType",
-      ];
+      fields = ["vehicleBrand", "numberPlate", "chassisNumber", "vehicleType"];
     if (step === 2) fields = ["ownerType", "warehouseId"];
     if (step === 3)
-      fields = ["odoMeter", "capacity", "status", "validFrom", "validTo", "description"];
+      fields = [
+        "odoMeter",
+        "capacity",
+        "status",
+        "validFrom",
+        "validTo",
+        "description",
+      ];
     try {
       await VehicleSchema.validate(form, { abortEarly: false });
       setErrors({});
@@ -260,89 +277,106 @@ export default function AddEditVehicleWithStepper() {
     } else {
       showSnackbar(
         "Please fill in all required fields before proceeding.",
-        "error"
+        "error",
       );
     }
   };
 
   const handleSubmit = async () => {
-  const valid = await validateCurrentStep(currentStep);
-  if (!valid) {
-    showSnackbar(
-      "Please fill in all required fields before submitting.",
-      "error"
-    );
-    return;
-  }
+    const valid = await validateCurrentStep(currentStep);
+    if (!valid) {
+      showSnackbar(
+        "Please fill in all required fields before submitting.",
+        "error",
+      );
+      return;
+    }
 
-  try {
-    
-    const finalWarehouseId =
-      form.ownerType === "company" ? "" : form.warehouseId;
-    const payload = {
-      vehicle_code: form.vehicle_code,
-      number_plat: form.numberPlate,
-      vehicle_chesis_no: form.chassisNumber,
-      description: form.description,
-      vehicle_brand: form.vehicleBrand,
-      capacity: form.capacity,
-      fuel_reading: form.fuel_reading,
-      vehicle_type: form.vehicleType,
-      owner_type: form.ownerType,
-      warehouse_id: finalWarehouseId, // ← updated
-      opening_odometer: form.odoMeter,
-      status: form.status === "active" ? "1" : "0",
-      valid_from: form.validFrom,
-      valid_to: form.validTo,
-    };
+    try {
+      const finalWarehouseId =
+        form.ownerType === "company" ? "" : form.warehouseId;
+      const payload = {
+        vehicle_code: form.vehicle_code,
+        number_plat: form.numberPlate,
+        vehicle_chesis_no: form.chassisNumber,
+        description: form.description,
+        vehicle_brand: form.vehicleBrand,
+        capacity: form.capacity,
+        fuel_reading: form.fuel_reading,
+        vehicle_type: form.vehicleType,
+        owner_type: form.ownerType,
+        warehouse_id: finalWarehouseId, // ← updated
+        opening_odometer: form.odoMeter,
+        status: Number(form.status) || 0,
+        valid_from: form.validFrom,
+        valid_to: form.validTo,
+      };
 
-    let res;
+      let res;
 
-    if (isEditMode && uuid) {
-      res = await updateVehicle(uuid, payload);
-    } else {
-      res = await addVehicle(payload);
+      if (isEditMode && uuid) {
+        res = await updateVehicle(uuid, payload);
+      } else {
+        res = await addVehicle(payload);
 
-      if (!res?.error) {
-        try {
-          await saveFinalCode({
-            reserved_code: form.vehicle_code,
-            model_name: "vehicle",
-          });
-        } catch (e) {
-          // optional
+        if (!res?.error) {
+          try {
+            await saveFinalCode({
+              reserved_code: form.vehicle_code,
+              model_name: "vehicle",
+            });
+          } catch (e) {
+            // optional
+          }
         }
       }
-    }
 
-    if (res?.error) {
-      showSnackbar(res.data?.message || "Failed to submit form", "error");
-    } else {
+      if (res?.error) {
+        showSnackbar(res.data?.message || "Failed to submit form", "error");
+      } else {
+        showSnackbar(
+          isEditMode
+            ? "Vehicle updated successfully"
+            : "Vehicle added successfully",
+          "success",
+        );
+        router.push("/vehicle");
+      }
+    } catch (err) {
       showSnackbar(
-        isEditMode
-          ? "Vehicle updated successfully ✅"
-          : "Vehicle added successfully ✅",
-        "success"
+        isEditMode ? "Update vehicle failed" : "Add vehicle failed",
+        "error",
       );
-      router.push("/vehicle");
     }
-  } catch (err) {
-    showSnackbar(
-      isEditMode ? "Update vehicle failed ❌" : "Add vehicle failed ❌",
-      "error"
-    );
-  }
-};
-
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
           <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">Vehicle Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-start gap-2 max-w-[406px]">
+            <h2
+              className="
+                mb-6
+                text-lg font-semibold
+              "
+            >
+              Vehicle Details
+            </h2>
+            <div
+              className="
+                grid grid-cols-1
+                gap-4
+                md:grid-cols-3
+              "
+            >
+              <div
+                className="
+                  flex
+                  max-w-[406px]
+                  items-start gap-2
+                "
+              >
                 <InputFields
                   label="Vehicle Code"
                   name="vehicle_code"
@@ -385,7 +419,6 @@ export default function AddEditVehicleWithStepper() {
                   name="vehicleBrand"
                   error={touched.vehicleBrand && errors.vehicleBrand}
                 />
-
               </div>
 
               <div>
@@ -397,7 +430,6 @@ export default function AddEditVehicleWithStepper() {
                   name="numberPlate"
                   error={touched.numberPlate && errors.numberPlate}
                 />
-
               </div>
               <div>
                 <InputFields
@@ -408,7 +440,6 @@ export default function AddEditVehicleWithStepper() {
                   name="chassisNumber"
                   error={touched.chassisNumber && errors.chassisNumber}
                 />
-
               </div>
 
               <div>
@@ -426,7 +457,6 @@ export default function AddEditVehicleWithStepper() {
                     { value: "tuktuk", label: "Tuktuk" },
                   ]}
                 />
-
               </div>
             </div>
           </ContainerCard>
@@ -434,8 +464,21 @@ export default function AddEditVehicleWithStepper() {
       case 2:
         return (
           <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">Location Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <h2
+              className="
+                mb-6
+                text-lg font-semibold
+              "
+            >
+              Location Information
+            </h2>
+            <div
+              className="
+                grid grid-cols-1
+                gap-4
+                md:grid-cols-3
+              "
+            >
               <div>
                 <InputFields
                   required
@@ -456,23 +499,34 @@ export default function AddEditVehicleWithStepper() {
                   <InputFields
                     label="Warehouse"
                     value={form.warehouseId}
+                    searchable={true}
                     onChange={handleChange}
                     name="warehouseId"
                     options={warehouseOptions}
                   />
                 </div>
               )}
-
             </div>
           </ContainerCard>
         );
       case 3:
         return (
           <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">
+            <h2
+              className="
+                mb-6
+                text-lg font-semibold
+              "
+            >
               Additional Information
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              className="
+                grid grid-cols-1
+                gap-4
+                md:grid-cols-3
+              "
+            >
               <div>
                 <InputFields
                   required
@@ -482,7 +536,6 @@ export default function AddEditVehicleWithStepper() {
                   name="odoMeter"
                   error={touched.odoMeter && errors.odoMeter}
                 />
-
               </div>
               <div>
                 <InputFields
@@ -493,7 +546,6 @@ export default function AddEditVehicleWithStepper() {
                   name="capacity"
                   error={touched.capacity && errors.capacity}
                 />
-
               </div>
 
               <div>
@@ -502,7 +554,9 @@ export default function AddEditVehicleWithStepper() {
                   label="Fuel Reading"
                   type="number"
                   value={form.fuel_reading}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                  }}
                   name="fuel_reading"
                   maxLength={3}
                   error={touched.fuel_reading && errors.fuel_reading}
@@ -560,14 +614,14 @@ export default function AddEditVehicleWithStepper() {
                   required
                   type="radio"
                   label="Status"
-                  value={form.status}
-                  onChange={handleChange}
                   name="status"
-                  error={touched.status && errors.status}
+                  value={"1"}
+                  onChange={(e) => setFieldValue("status", e.target.value)}
                   options={[
-                    { value: "active", label: "Active" },
-                    { value: "inactive", label: "Inactive" },
+                    { value: "1", label: "Active" },
+                    { value: "0", label: "Inactive" },
                   ]}
+                  error={touched.status && errors.status}
                 />
                 {/* {touched.status && errors.status && (
                   <div className="text-red-500 text-xs mt-1">
@@ -583,7 +637,13 @@ export default function AddEditVehicleWithStepper() {
 
   if (isEditMode && loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div
+        className="
+          flex
+          w-full h-full
+          items-center justify-center
+        "
+      >
         <Loading />
       </div>
     );
@@ -591,22 +651,38 @@ export default function AddEditVehicleWithStepper() {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div
+        className="
+          flex
+          items-center gap-2
+        "
+      >
         <Link href="/vehicle">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">
+        <h1
+          className="
+            mb-[4px]
+            text-xl font-semibold text-gray-900
+          "
+        >
           {isEditMode ? "Update Vehicle" : "Add Vehicle"}
         </h1>
       </div>
-      <div className="flex justify-between items-center mb-6">
+      <div
+        className="
+          flex
+          mb-6
+          justify-between items-center
+        "
+      >
         <StepperForm
           steps={steps.map((step) => ({
             ...step,
             isCompleted: isStepCompleted(step.id),
           }))}
           currentStep={currentStep}
-          onStepClick={() => { }}
+          onStepClick={() => {}}
           onBack={prevStep}
           onNext={handleNext}
           onSubmit={handleSubmit}

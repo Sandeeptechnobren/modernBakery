@@ -197,6 +197,23 @@ export default function CustomerInvoicePage() {
         }
     };
 
+    const downloadPdf = async (uuid: string) => {
+        try {
+            setLoading(true);
+            const response = await agentDeliveryExport({ uuid: uuid, format: "pdf" });
+            if (response && typeof response === 'object' && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+        } catch (error) {
+            showSnackbar("Failed to download file", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         setRefreshKey((k) => k + 1);
     }, [customerSubCategoryOptions, routeOptions, warehouseAllOptions, channelOptions, companyOptions, salesmanOptions, agentCustomerOptions, regionOptions, areaOptions]);
@@ -209,7 +226,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { list: fetchDelivery, filterBy: filterBy },
                     header: {
-                        title: "Customer Delivery",
+                        title: "Distributor's Delivery",
                         columnFilter: true,
                         searchBar: false,
                         threeDot: [
@@ -313,6 +330,11 @@ export default function CustomerInvoicePage() {
                                 router.push(
                                     `/agentCustomerDelivery/details/${row.uuid}`
                                 ),
+                        },
+                        {
+                            icon: "lucide:download",
+                            onClick: (row: TableDataType) =>
+                                downloadPdf(row.uuid),
                         },
                         // {
                         //     icon: "lucide:edit-2",

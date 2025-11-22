@@ -69,6 +69,7 @@ export default function AddPaymentPage() {
   const [loadingBanks, setLoadingBanks] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const codeGeneratedRef = useRef(false);
+   const CURRENCY = localStorage.getItem("country") || "";
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [selectedBankInfo, setSelectedBankInfo] = useState({
     bank_name: "",

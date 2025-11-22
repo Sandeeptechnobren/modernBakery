@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import { useLoading } from "@/app/services/loadingContext";
-import { pricingHeaderById } from "@/app/services/allApi";
+// import { pricingHeaderById } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useParams } from "next/navigation";
+
 
 // Your static mapping
 const initialKeys = [
@@ -30,25 +30,17 @@ const initialKeys = [
 ];
 
 // Build mapping object for quick lookup
-const keyIdLabelMap = {};
+const keyIdLabelMap: Record<number, string> = {};
 initialKeys.forEach(group => {
   group.options.forEach(opt => {
     keyIdLabelMap[Number(opt.id)] = opt.label;
   });
 });
 
-function getDescriptionLabels(desc) {
-  let descArray = [];
-  if (Array.isArray(desc)) {
-    descArray = desc;
-  } else if (typeof desc === "string") {
-    descArray = desc.split(",").map(x => Number(x.trim())).filter(Boolean);
-  }
-  return descArray.map(id => keyIdLabelMap[id] || id).join(", ");
-}
+
 
 // Collapsible field/table for array-valued keys
-function CollapsibleField({ label, values, columns }) {
+function CollapsibleField({ label, values, columns }:any) {
   const [expanded, setExpanded] = useState(false);
   if (!values || values.length === 0) return null;
 
@@ -90,15 +82,15 @@ function CollapsibleField({ label, values, columns }) {
           <table className="w-full bg-gray-50 mb-2 border-collapse">
             <thead>
               <tr>
-                {columns.map(col => (
+                {columns.map((col:any) => (
                   <th key={col.key} className="p-2 text-left bg-gray-100">{col.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {values.map((row, i) => (
+              {values.map((row:any, i:any) => (
                 <tr key={i}>
-                  {columns.map(col => (
+                  {columns.map((col:any) => (
                     <td key={col.key} className="p-2 border-b">
                       {row[col.key]
                         ?? row[col.key.replace("_name", "name")]
@@ -119,94 +111,118 @@ function CollapsibleField({ label, values, columns }) {
 
 const arrayColumns = {
   company: [
-    { key: "id", label: "ID" },
+    { key: "code", label: "Code" },
     { key: "name", label: "Name" },
-    { key: "code", label: "Code" }
   ],
   region: [
-    { key: "id", label: "ID" },
+    { key: "code", label: "Code" },
     { key: "name", label: "Name" },
-    { key: "code", label: "Code" }
   ],
   area: [
-    { key: "id", label: "ID" },
+    { key: "code", label: "Code" },
     { key: "name", label: "Name" },
-    { key: "code", label: "Code" }
   ],
   warehouse: [
-    { key: "id", label: "ID" },
+    { key: "warehouse_code", label: "Code" },
     { key: "warehouse_name", label: "Name" },
-    { key: "warehouse_code", label: "Code" }
   ],
   route: [
-    { key: "id", label: "ID" },
+    { key: "code", label: "Code" },
     { key: "name", label: "Name" },
-    { key: "code", label: "Code" }
   ],
   customer_category: [
-    { key: "id", label: "ID" },
+    { key: "code", label: "Code" },
     { key: "name", label: "Name" },
-    { key: "code", label: "Code" }
   ],
   customer: [
-    { key: "id", label: "ID" },
+    { key: "code", label: "Code" },
     { key: "name", label: "Name" },
-    { key: "code", label: "Code" }
   ],
   outlet_channel: [
-    { key: "id", label: "ID" },
+    { key: "code", label: "Code" },
     { key: "name", label: "Name" },
-    { key: "code", label: "Code" }
   ],
   item_category: [
-    { key: "id", label: "ID" },
+    { key: "category_code", label: "Code" },
     { key: "category_name", label: "Name" },
-    { key: "category_code", label: "Code" }
   ],
   item: [
-    { key: "id", label: "ID" },
+    { key: "erp_code", label: "Code" },
     { key: "name", label: "Name" },
-    { key: "erp_code", label: "Code" }
   ]
 };
+interface PricingItem {
+  [key: string]: any;
+  uuid?: string;
+  id?: number | string;
+  code?: string;
+  name?: string;
+  start_date?: string;
+  end_date?: string;
+  description?: number[] | string;
+  status?: string;
+}
 
-export default function Overview() {
+interface KeyValueProps {
+  pricing: PricingItem | null;
+  section?: string; // optional: which section to render (e.g. 'company', 'warehouse', 'item')
+}
+
+export default function KeyValue({ pricing, section }: KeyValueProps) {
   const params = useParams();
   const uuid = Array.isArray(params.uuid)
     ? params.uuid[0] || ""
     : (params.uuid) || "";
 
-  const [pricing, setpricing] = useState(null);
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
 
-  useEffect(() => {
-    if (!uuid) return;
+  // useEffect(() => {
+  //   if (!uuid) return;
 
-    const fetchPricingDetails = async () => {
-      setLoading(true);
-      try {
-        const res = await pricingHeaderById(uuid);
-        if (res.error) {
-          showSnackbar(
-            res.data?.message || "Unable to fetch pricing Details",
-            "error"
-          );
-          return;
-        }
-        setpricing(res.data);
-      } catch (error) {
-        showSnackbar("Unable to fetch pricing Details", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
+  //   const fetchPricingDetails = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const res = await pricingHeaderById(uuid);
+  //       if (res.error) {
+  //         showSnackbar(
+  //           res.data?.message || "Unable to fetch pricing Details",
+  //           "error"
+  //         );
+  //         return;
+  //       }
+  //       setPricing(res.data);
+  //     } catch (error) {
+  //       showSnackbar("Unable to fetch pricing Details", "error");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchPricingDetails();
-  }, [uuid, setLoading, showSnackbar]);
+  //   fetchPricingDetails();
+  // }, [uuid, setLoading, showSnackbar]);
 
   if (!pricing) {
     return <div>Loading...</div>;
+  }
+
+  // normalize section name
+  const normalizedSection = section === "items" ? "item" : section;
+  const keysToRender = normalizedSection ? [normalizedSection] : Object.keys(arrayColumns);
+  // if a specific section was requested but has no items, show 'No Data Found'
+  if (normalizedSection) {
+    const arr = pricing[normalizedSection];
+    if (Array.isArray(arr) && arr.length === 0) {
+      return (
+        <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
+          <div className="w-full flex flex-col gap-y-[20px]">
+            <ContainerCard className="w-full">
+              <div className="py-6 text-center text-gray-500">No Data Found</div>
+            </ContainerCard>
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
@@ -214,16 +230,18 @@ export default function Overview() {
       <div className="w-full flex flex-col gap-y-[20px]">
         <ContainerCard className="w-full">
           {/* Collapsible array fields */}
-          {Object.entries(arrayColumns).map(([key, cols]) =>
-            Array.isArray(pricing[key]) && pricing[key].length > 0
-              ? <CollapsibleField
-                  key={key}
-                  label={key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                  values={pricing[key]}
-                  columns={cols}
-                />
-              : null
-          )}
+          {keysToRender.map((key) => {
+            const cols = (arrayColumns as any)[key];
+            if (!cols) return null;
+            return Array.isArray(pricing[key]) && pricing[key].length > 0 ? (
+              <CollapsibleField
+                key={key}
+                label={key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                values={pricing[key]}
+                columns={cols}
+              />
+            ) : null;
+          })}
         </ContainerCard>
       </div>
     </div>

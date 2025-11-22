@@ -118,6 +118,7 @@ export default function OrderDetailPage() {
 
   const [deliveryData, setDeliveryData] = useState<InvoiceData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
+  const CURRENCY = localStorage.getItem("country") || "";
 
   const uuid = params?.uuid as string;
 
@@ -182,8 +183,10 @@ export default function OrderDetailPage() {
   const finalTotal = Number(deliveryData?.total_amount ?? calculatedTotal ?? 0);
 
   const keyValueData = [
-    { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
-    { key: "VAT", value: `AED ${toInternationalNumber(vatTotal)}` },
+     { key: "Gross Total", value: CURRENCY + " " + toInternationalNumber(grossTotal ?? 0) },
+     { key: "VAT", value: CURRENCY + " " + toInternationalNumber(vatTotal ?? 0) },
+    // { key: "Gross Total", value: CURRENCY + "" + {toInternationalNumber(grossTotal)} },
+    // { key: "VAT", value: `CURRENCY ${toInternationalNumber(vatTotal)}` },
     // { key: "Pre VAT", value: `AED ${toInternationalNumber(Number(deliveryData?.pre_vat || 0))}` },
   ];
 
@@ -341,7 +344,9 @@ export default function OrderDetailPage() {
                 ))}
                 <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
                   <span>Total</span>
-                  <span>AED {toInternationalNumber(finalTotal)}</span>
+                  <span>{CURRENCY} {toInternationalNumber(finalTotal) || 0}</span>
+                                    {/* <span>{CURRENCY} {toInternationalNumber(finalTotal) || 0}</span> */}
+                  
                 </div>
               </div>
 

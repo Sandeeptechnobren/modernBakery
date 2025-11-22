@@ -13,6 +13,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatDate } from "../../../salesTeam/details/[uuid]/page";
 import { TableDataType } from "@/app/components/customTable";
+import TabBtn from "@/app/components/tabBtn";
 
 type Vehicle = {
   id: number;
@@ -50,6 +51,19 @@ export default function ViewPage() {
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [activeTab, setActiveTab] = useState("info");
+
+  const tabList = [
+    { key: "info", label: "Vehicle Information" },
+    { key: "base", label: "Vehicle Base" },
+    // { key: "vehicle", label: "Vehicle" },
+  ];
+
+  const onTabClick = (idx: number) => {
+    if (typeof idx !== "number") return;
+    if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
+    setActiveTab(tabList[idx].key);
+  };
 
   useEffect(() => {
     const fetchVehicleDetails = async () => {
@@ -134,25 +148,68 @@ export default function ViewPage() {
         </ContainerCard>
 
         {/* 🔹 Right Detailed Info */}
-        <ContainerCard className="w-full">
-          <KeyValueData
-            title="Vehicle Information"
-            data={[
-              { key: "Vehicle Brand", value: vehicle?.vehicle_brand || "-" },
-              { key: "Number Plate", value: vehicle?.number_plat || "-" },
-              { key: "Chassis Number", value: vehicle?.vehicle_chesis_no || "-" },
-              { key: "Vehicle Type", value: vehicleTypeLabel(vehicle?.vehicle_type) },
-              { key: "Capacity", value: vehicle?.capacity || "-" },
-              { key: "Fuel Reading", value: vehicle?.fuel_reading || "-" },
-              { key: "Owner Type", value: vehicle?.owner_type || "-" },
-              { key: "Disttributor", value: vehicle?.warehouse?.warehouse_name || "-" },
-              { key: "Valid From", value: vehicle?.valid_from ? formatDate(vehicle?.valid_from as string) : "-" },
-              { key: "Valid To", value: vehicle?.valid_to ? formatDate(vehicle?.valid_to as string) : "-" },
-              { key: "Opening Odometer", value: vehicle?.opening_odometer || "-" },
-              { key: "Description", value: vehicle?.description || "-" },
-            ]}
-          />
-        </ContainerCard>
+        <div className="w-full flex flex-col gap-[20px]">
+          {/* Tabs */}
+          <ContainerCard
+            className="w-full flex gap-[4px] overflow-x-auto"
+            padding="5px"
+          >
+            {tabList.map((tab, index) => (
+              <div key={index}>
+                <TabBtn
+                  label={tab.label}
+                  isActive={activeTab === tab.key}
+                  onClick={() => onTabClick(index)}
+                />
+              </div>
+            ))}
+          </ContainerCard>
+
+          {activeTab === "info" && (
+            <ContainerCard className="w-full mb-[20px] ">
+              <KeyValueData
+                title="Vehicle Information"
+                data={[
+                  { key: "Vehicle Brand", value: vehicle?.vehicle_brand || "-" },
+                  { key: "Number Plate", value: vehicle?.number_plat || "-" },
+                  { key: "Chassis Number", value: vehicle?.vehicle_chesis_no || "-" },
+                  { key: "Vehicle Type", value: vehicleTypeLabel(vehicle?.vehicle_type) },
+                  { key: "Description", value: vehicle?.description || "-" },
+                  { key: "Owner Type", value: ownerTypeLabel(vehicle?.owner_type) },
+                ]}
+              />
+            </ContainerCard>
+          )}
+
+          {activeTab === "base" && (
+            <ContainerCard className="w-full mb-[20px]">
+              <KeyValueData
+                title="Vehicle Base"
+                data={[
+                  { key: "Distributor", value: vehicle?.warehouse?.warehouse_name || "-" },
+                  { key: "Valid From", value: vehicle?.valid_from ? formatDate(vehicle?.valid_from as string) : "-" },
+                  { key: "Valid To", value: vehicle?.valid_to ? formatDate(vehicle?.valid_to as string) : "-" },
+                  { key: "Capacity", value: vehicle?.capacity || "-" },
+                  { key: "Fuel Reading", value: vehicle?.fuel_reading || "-" },
+                  { key: "Opening Odometer", value: vehicle?.opening_odometer || "-" },
+                ]}
+              />
+            </ContainerCard>
+          )}
+
+          {/* {activeTab === "vehicle" && (
+            <ContainerCard className="w-full">
+              <KeyValueData
+                title="Vehicle"
+                data={[
+                  { key: "Capacity", value: vehicle?.capacity || "-" },
+                  { key: "Fuel Reading", value: vehicle?.fuel_reading || "-" },
+                  { key: "Opening Odometer", value: vehicle?.opening_odometer || "-" },
+                ]}
+              />
+            </ContainerCard>
+          )} */}
+        </div>
       </div>
     </>
   );

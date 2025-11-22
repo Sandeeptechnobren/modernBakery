@@ -7,6 +7,7 @@ import Table, {
   TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import StatusBtn from "@/app/components/statusBtn2";
 import { salesmanUnloadList } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -74,14 +75,7 @@ export default function SalesmanUnloadPage() {
       page: number = 1,
       pageSize: number = 50
     ): Promise<listReturnType> => {
-      if (!isFiltered) {
-        return { data: [], total: 0, currentPage: 1, pageSize };
-      }
-
       try {
-        setLoading(true);
-
-        // ✅ Build query with only filled filters
         const params: any = {
           page: page.toString(),
           per_page: pageSize.toString(),
@@ -93,7 +87,6 @@ export default function SalesmanUnloadPage() {
         if (form.region_id) params.region_id = form.region_id;
 
         const listRes = await salesmanUnloadList(params);
-        setLoading(false);
 
         return {
           data: Array.isArray(listRes.data) ? listRes.data : [],
@@ -116,7 +109,6 @@ export default function SalesmanUnloadPage() {
           pageSize: number
         ): Promise<listReturnType> => {
           let result;
-          setLoading(true);
           try {
             const params: Record<string, string> = { };
             // Include pagination + submit flag used by API
@@ -137,7 +129,6 @@ export default function SalesmanUnloadPage() {
             });
             result = await salesmanUnloadList(params);
           } finally {
-            setLoading(false);
           }
 
           if (result?.error) throw new Error(result.data?.message || "Filter failed");
@@ -198,14 +189,14 @@ export default function SalesmanUnloadPage() {
     {
       key: "status",
       label: "Status",
-      render: (row: TableDataType) => (row.status ? "Active" : "Inactive"),
+      render: (row: TableDataType) => (<StatusBtn isActive={row.status ? true : false} />),
     },
   ];
 
   return (
     <div className="flex flex-col h-full">
       <div className="gap-3 mb-4">
-        <h1 className="text-bold-700 text-lg">Salesman Unload</h1>
+        <h1 className="text-bold-700 text-lg font-semibold">Salesman Unload</h1>
       </div>
 
       {/* 📋 Table Section with Dynamic Filters */}

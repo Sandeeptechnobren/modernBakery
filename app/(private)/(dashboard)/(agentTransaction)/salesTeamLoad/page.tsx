@@ -8,11 +8,12 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
-import { salesmanLoadHeaderList } from "@/app/services/agentTransaction";
+import { salesmanLoadHeaderList, exportSalesmanLoad } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { downloadFile } from "@/app/services/allApi";
 
 interface SalesmanLoadRow {
   osa_code?: string;
@@ -27,8 +28,8 @@ interface SalesmanLoadRow {
 
 export default function SalemanLoad() {
 
-    const { regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions } = useAllDropdownListData();
-  
+  const { regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions } = useAllDropdownListData();
+
 
 
   const columns: configType["columns"] = [
@@ -61,7 +62,8 @@ export default function SalemanLoad() {
         return `${s.salesman?.code ?? ""} - ${s.salesman?.name ?? ""}`;
       },
     },
-    { key: "salesman_type", label: "Salesman Type",
+    {
+      key: "salesman_type", label: "Salesman Type",
       render: (row: TableDataType) => {
         const s = row as SalesmanLoadRow;
         return `${s.salesman_type?.code ?? ""} - ${s.salesman_type?.name ?? ""}`;
@@ -103,6 +105,11 @@ export default function SalemanLoad() {
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const [threeDotLoading, setThreeDotLoading] = useState({
+    csv: false,
+    xlsx: false,
+  });
+
 
   const fetchSalesmanLoadHeader = useCallback(
     async (
@@ -135,39 +142,39 @@ export default function SalemanLoad() {
   );
 
   const filterBy = useCallback(
-          async (
-              payload: Record<string, string | number | null>,
-              pageSize: number
-          ): Promise<listReturnType> => {
-              let result;
-              setLoading(true);
-              try {
-                  const params: Record<string, string> = { };
-                  Object.keys(payload || {}).forEach((k) => {
-                      const v = payload[k as keyof typeof payload];
-                      if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                          params[k] = String(v);
-                      }
-                  });
-                  result = await salesmanLoadHeaderList(params);
-              } finally {
-                  setLoading(false);
-              }
-  
-              if (result?.error) throw new Error(result.data?.message || "Filter failed");
-              else {
-                  const pagination = result.pagination?.pagination || result.pagination || {};
-                  return {
-                      data: result.data || [],
-                      total: pagination.last_page || result.pagination?.last_page || 0,
-                      totalRecords: pagination.total || result.pagination?.total || 0,
-                      currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-                      pageSize: pagination.limit || pageSize,
-                  };
-              }
-          },
-          [setLoading]
-      );
+    async (
+      payload: Record<string, string | number | null>,
+      pageSize: number
+    ): Promise<listReturnType> => {
+      let result;
+      setLoading(true);
+      try {
+        const params: Record<string, string> = {};
+        Object.keys(payload || {}).forEach((k) => {
+          const v = payload[k as keyof typeof payload];
+          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+            params[k] = String(v);
+          }
+        });
+        result = await salesmanLoadHeaderList(params);
+      } finally {
+        setLoading(false);
+      }
+
+      if (result?.error) throw new Error(result.data?.message || "Filter failed");
+      else {
+        const pagination = result.pagination?.pagination || result.pagination || {};
+        return {
+          data: result.data || [],
+          total: pagination.last_page || result.pagination?.last_page || 0,
+          totalRecords: pagination.total || result.pagination?.total || 0,
+          currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+          pageSize: pagination.limit || pageSize,
+        };
+      }
+    },
+    [setLoading]
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -176,6 +183,25 @@ export default function SalemanLoad() {
   useEffect(() => {
     setRefreshKey(refreshKey + 1);
   }, [regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions]);
+
+
+  const exportFile = async (format: "csv" | "xlsx" = "csv") => {
+    try {
+      setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
+      const response = await exportSalesmanLoad({ format });
+      if (response && typeof response === 'object' && response.download_url) {
+        await downloadFile(response.download_url);
+        showSnackbar("File downloaded successfully ", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
+      }
+      setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
+    } catch (error) {
+      showSnackbar("Failed to download Salesman Load data", "error");
+      setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
+    } finally {
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -190,72 +216,87 @@ export default function SalemanLoad() {
             title: "Salesman Load",
             searchBar: false,
             columnFilter: true,
+            threeDot: [
+              {
+                icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
+                label: "Export CSV",
+                labelTw: "text-[12px] hidden sm:block",
+                onClick: () => !threeDotLoading.csv && exportFile("csv"),
+              },
+              {
+                icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
+                label: "Export Excel",
+                labelTw: "text-[12px] hidden sm:block",
+                onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
+              },
+            ],
+
             filterByFields: [
-                          {
-                            key: "start_date",
-                            label: "From Date",
-                            type: "date",
-                          },
-                          {
-                            key: "end_date",
-                            label: "To Date",
-                            type: "date",
-                          },
-                          {
-                            key: "warehouse",
-                            label: "Warehouse",
-                            isSingle: false,
-                            multiSelectChips: true,
-                            options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                          },
-                          
-                          {
-                            key: "region_id",
-                            label: "Region",
-                            isSingle: false,
-                            multiSelectChips: true,
-                            options: Array.isArray(regionOptions) ? regionOptions : [{ value: "1", label: "Rajneesh" }],
-                          },
-                          {
-                            key: "route_id",
-                            label: "Route",
-                            isSingle: false,
-                            multiSelectChips: true,
-                            options: Array.isArray(routeOptions) ? routeOptions : [],
-                          },
-                          {
-                            key: "outlet_channel_id",
-                            label: "Outlet Channel",
-                            isSingle: false,
-                            multiSelectChips: true,
-                            options: Array.isArray(channelOptions) ? channelOptions : [],
-                          },
-                          {
-                            key: "category_id",
-                            label: "Category",
-                            type: "select",
-                            options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
-                            isSingle: false,
-                            multiSelectChips: true,
-                          },
-                          {
-                            key: "subcategory_id",
-                            label: "Subcategory",
-                            isSingle: false,
-                            multiSelectChips: true,
-                            options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
-                          },
-                        ],
-                        actions: [
-                          <SidebarBtn
-                            key={0}
-                            href="/salesTeamLoad/add"
-                            isActive
-                            leadingIcon="lucide:plus"
-                            label="Add"
-                            labelTw="hidden sm:block"
-                          />,
-                        ],
+              {
+                key: "start_date",
+                label: "From Date",
+                type: "date",
+              },
+              {
+                key: "end_date",
+                label: "To Date",
+                type: "date",
+              },
+              {
+                key: "warehouse",
+                label: "Warehouse",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+              },
+
+              {
+                key: "region_id",
+                label: "Region",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(regionOptions) ? regionOptions : [{ value: "1", label: "Rajneesh" }],
+              },
+              {
+                key: "route_id",
+                label: "Route",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(routeOptions) ? routeOptions : [],
+              },
+              {
+                key: "outlet_channel_id",
+                label: "Outlet Channel",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(channelOptions) ? channelOptions : [],
+              },
+              {
+                key: "category_id",
+                label: "Category",
+                type: "select",
+                options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
+                isSingle: false,
+                multiSelectChips: true,
+              },
+              {
+                key: "subcategory_id",
+                label: "Subcategory",
+                isSingle: false,
+                multiSelectChips: true,
+                options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
+              },
+            ],
+            actions: [
+              <SidebarBtn
+                key={0}
+                href="/salesTeamLoad/add"
+                isActive
+                leadingIcon="lucide:plus"
+                label="Add"
+                labelTw="hidden sm:block"
+              />,
+            ],
           },
           localStorageKey: "salesmanLoad-table",
           footer: { nextPrevBtn: true, pagination: true },

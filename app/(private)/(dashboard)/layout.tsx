@@ -9,7 +9,6 @@ import Loading from "@/app/components/Loading";
 import { ThemeProvider, useTheme } from "./contexts";
 import usePermissionManager from "@/app/components/contexts/usePermission";
 import { PermissionProvider } from "@/app/components/contexts/permissionContext";
-import { a } from "framer-motion/client";
 
 type Role = {
     id: number;
@@ -85,7 +84,6 @@ export default function DashboardLayout({
     );
 }
 // Permission filtering lives in the PermissionContext now. Layout consumes that context via usePermissionManager.
-console.log("dfsdfsdfsdf");
 function LayoutSelector({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [loading, setLoading] = useState(true);

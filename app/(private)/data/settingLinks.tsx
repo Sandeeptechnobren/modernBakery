@@ -24,7 +24,15 @@ export const initialLinkData: SidebarDataType[] = [
         href: "/settings/profile",
         label: "Profile ",
         leadingIcon: "mdi:account-multiple",
-        trailingIcon: "mdi-light:chevron-right",
+        // trailingIcon: "mdi-light:chevron-right",
+        iconColor: "text-yellow-400",
+      },
+{
+        isActive: false,
+        href: "/settings/process",
+        label: "Process ",
+        leadingIcon: "mdi:account-multiple",
+        // trailingIcon: "mdi-light:chevron-right",
         iconColor: "text-yellow-400",
       },
 

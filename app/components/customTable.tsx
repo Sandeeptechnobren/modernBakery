@@ -99,7 +99,7 @@ export type configType = {
     pageSize?: number;
     pageSizeOptions?: number[]; // yet to implement
     rowSelection?: boolean;
-    dragableColumn?: boolean; // yet to implement
+    dragableColumn?: boolean;
     columns: {
         key: string;
         label: string | React.ReactNode;
@@ -1121,6 +1121,7 @@ function FilterTableHeader({
                     <Icon
                         icon="circum:filter"
                         width={16}
+                        className={selectedValues.length > 0 ? "text-red-600" : ""}
                         onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                     />
                 </div>
@@ -1419,7 +1420,7 @@ export function FilterOptionList({
             {options.map(opt => (
                 <div
                     key={opt.value}
-                    className={`w-full overflow-x-scroll font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer ${selectedValue === opt.value ? 'absolute top-[55px] bg-gray-100 font-semibold mb-[20px]' : ''}`}
+                    className={`w-full font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA] cursor-pointer ${selectedValue === opt.value ? 'absolute top-[55px] bg-gray-100 font-semibold mb-[20px]' : ''}`}
                     onClick={() => {
                         onSelect(selectedValue === opt.value ? "" : opt.value);
                     }}

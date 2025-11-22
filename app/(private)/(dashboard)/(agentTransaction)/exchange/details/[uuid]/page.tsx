@@ -8,60 +8,12 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { deliveryByUuid,exchangeByUUID } from "@/app/services/agentTransaction";
+import {  exchangeByUUID } from "@/app/services/agentTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
-interface DeliveryDetail {
-  id: number;
-  item?: {
-    id: number;
-    code: string;
-    name: string;
-  };
-  uom: number | string;
-  quantity: number;
-  item_price: string;
-  excise?: string;
-  discount?: string;
-  net_total?: string;
-  vat?: string;
-  total?: string;
-}
-
-interface DeliveryData {
-  delivery_code?: string;
-  delivery_date?: string;
-  customer?: {
-    name?: string;
-    code?: string;
-    address?: string;
-    phone?: string;
-    email?: string;
-  };
-  route?: {
-    code?: string;
-    name?: string;
-  };
-  salesman?: {
-    code?: string;
-    name?: string;
-  };
-  warehouse?: {
-    code?: string;
-    name?: string;
-  };
-  details?: DeliveryDetail[];
-  gross_total?: string;
-  discount?: string;
-  net_total?: string;
-  excise?: string;
-  vat?: string;
-  delivery_charges?: string;
-  total?: string;
-}
 
 interface TableRow {
   id: string;
@@ -78,23 +30,20 @@ interface TableRow {
   [key: string]: string;
 }
 
+interface detail {
+  item_code?: string;
+  item_name?: string;
+  uom_name?: string;
+  item_quantity?: number | string;
+  item_price?: string;
+  total?: string;
+  return_type?: string;
+  region?: string;
+}
+
 const dropdownDataList = [
   { icon: "humbleicons:radio", label: "Mark as Pending", iconWidth: 20 },
   // { icon: "hugeicons:delete-02", label: "Delete Delivery", iconWidth: 20 },
-];
-
-const columns = [
-  { key: "id", label: "#", width: 60 },
-  { key: "itemCode", label: "Product Code" },
-  { key: "itemName", label: "Product Name", width: 250 },
-  { key: "UOM", label: "UOM" },
-  { key: "Quantity", label: "Quantity" },
-  { key: "Price", label: "Price" },
-  { key: "Excise", label: "Excise" },
-  { key: "Discount", label: "Discount" },
-  { key: "Net", label: "Net" },
-  { key: "Vat", label: "Vat" },
-  { key: "Total", label: "Total" },
 ];
 
 export default function OrderDetailPage() {
@@ -102,11 +51,40 @@ export default function OrderDetailPage() {
   const params = useParams();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
-  
+
   const [showDropdown, setShowDropdown] = useState(false);
-  const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
-  const [tableData, setTableData] = useState<TableRow[]>([]);
-  
+  interface ExchangeDetail {
+    exchange_code?: string;
+    warehouse_code?: string;
+    warehouse_name?: string;
+    customer_code?: string;
+    customer_name?: string;
+    comment?: string;
+    invoices?: Array<{
+      item_code?: string;
+      item_name?: string;
+      uom_name?: string;
+      item_quantity?: number | string;
+      item_price?: string;
+      total?: string;
+      return_type?: string;
+      region?: string;
+    }>;
+    returns?: Array<{
+      item_code?: string;
+      item_name?: string;
+      uom_name?: string;
+      item_quantity?: number | string;
+      item_price?: string;
+      total?: string;
+      return_type?: string;
+      region?: string;
+    }>;
+  }
+  const [deliveryData, setDeliveryData] = useState<ExchangeDetail | null>(null);
+  const [invoiceTableData, setInvoiceTableData] = useState<TableRow[]>([]);
+  const [returnsTableData, setReturnsTableData] = useState<TableRow[]>([]);
+
   const uuid = params?.uuid as string;
 
   useEffect(() => {
@@ -117,23 +95,73 @@ export default function OrderDetailPage() {
           const response = await exchangeByUUID(uuid);
           const data = response?.data ?? response;
           setDeliveryData(data);
-          
-          // Map details to table data
-          if (data?.details && Array.isArray(data.details)) {
-            const mappedData = data.details.map((detail: DeliveryDetail, index: number) => ({
-              id: (index + 1).toString(),
-              itemCode: detail.item?.code || "-",
-              itemName: detail.item?.name || "-",
-              UOM: detail.uom ? (typeof detail.uom === 'string' ? detail.uom : detail.uom.toString()) : "-",
-              Quantity: detail.quantity?.toString() || "0",
-              Price: detail.item_price || "0",
-              Excise: detail.excise || "0",
-              Discount: detail.discount || "0",
-              Net: detail.net_total || "0",
-              Vat: detail.vat || "0",
-              Total: detail.total || "0",
-            }));
-            setTableData(mappedData);
+          // Map invoices to table data
+          const goodOptions = [
+            { label: "Near By Expiry", value: "0" },
+            { label: "Package Issue", value: "1" },
+            { label: "Not Saleable", value: "2" },
+          ];
+          const badOptions = [
+            { label: "Damage", value: "0" },
+            { label: "Expiry", value: "1" },
+          ];
+
+          function getReturnTypeLabel(value: string) {
+            if (value === "1") return "Good";
+            if (value === "2") return "Bad";
+            return "-";
+          }
+
+          function getRegionLabel(returnType: string, region: string) {
+            if (returnType === "1") {
+              const found = goodOptions.find(opt => opt.value === region);
+              return found ? found.label : "-";
+            }
+            if (returnType === "2") {
+              const found = badOptions.find(opt => opt.value === region);
+              return found ? found.label : "-";
+            }
+            return "-";
+          }
+
+          if (data?.invoices && Array.isArray(data.invoices)) {
+            const mappedInvoices = data.invoices.map(
+              (
+                detail: detail,
+                index: number
+              ) => ({
+                id: (index + 1).toString(),
+                itemCode: detail.item_code || "-",
+                itemName: detail.item_name || "-",
+                UOM: detail.uom_name || "-",
+                Quantity: detail.item_quantity?.toString() || "0",
+                Price: detail.item_price || "0",
+                Total: detail.total || "0",
+                return_type: getReturnTypeLabel(detail.return_type ?? ""),
+                region: getRegionLabel(detail.return_type ?? "", detail.region ?? ""),
+              })
+            );
+            setInvoiceTableData(mappedInvoices);
+          }
+          // Map returns to table data
+          if (data?.returns && Array.isArray(data.returns)) {
+            const mappedReturns = data.returns.map(
+              (
+                detail: detail,
+                index: number
+              ) => ({
+                id: (index + 1).toString(),
+                itemCode: detail.item_code || "-",
+                itemName: detail.item_name || "-",
+                UOM: detail.uom_name || "-",
+                Quantity: detail.item_quantity?.toString() || "0",
+                Price: detail.item_price || "0",
+                Total: detail.total || "0",
+                return_type: getReturnTypeLabel(detail.return_type ?? ""),
+                region: getRegionLabel(detail.return_type ?? "", detail.region ?? ""),
+              })
+            );
+            setReturnsTableData(mappedReturns);
           }
         } catch (error) {
           console.error("Error fetching delivery data:", error);
@@ -145,18 +173,10 @@ export default function OrderDetailPage() {
     }
   }, [uuid, setLoading, showSnackbar]);
 
-  const keyValueData = [
-    { key: "Gross Total", value: `AED ${deliveryData?.gross_total || "0.00"}` },
-    { key: "Discount", value: `AED ${deliveryData?.discount || "0.00"}` },
-    { key: "Net Total", value: `AED ${deliveryData?.net_total || "0.00"}` },
-    { key: "Excise", value: `AED ${deliveryData?.excise || "0.00"}` },
-    { key: "Vat", value: `AED ${deliveryData?.vat || "0.00"}` },
-    { key: "Delivery Charges", value: `AED ${deliveryData?.delivery_charges || "0.00"}` },
-  ];
+
 
   return (
     <>
-      {/* ---------- Header ---------- */}
       <div className="flex justify-between items-center mb-[20px]">
         <div className="flex items-center gap-[16px]">
           <Icon
@@ -170,13 +190,12 @@ export default function OrderDetailPage() {
           </h1>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex gap-[12px] relative">
           <div className="gap-[12px] hidden sm:flex">
-            <BorderIconButton 
+            {/* <BorderIconButton 
               icon="lucide:edit-2" 
               onClick={() => router.push(`/agentCustomerDelivery/${uuid}`)}
-            />
+            /> */}
             <BorderIconButton icon="lucide:printer" />
             <BorderIconButton icon="lucide:mail" />
             <BorderIconButton icon="mdi:message-outline" />
@@ -204,19 +223,19 @@ export default function OrderDetailPage() {
         <div className="flex justify-between flex-wrap gap-[20px]">
           <div className="flex flex-col gap-[10px]">
             <Logo type="full" />
-            <span className="text-primary font-normal text-[16px]">
+            {/* <span className="text-primary font-normal text-[16px]">
               Hariss Trading Co., Dubai - UAE
-            </span>
+            </span> */}
           </div>
 
           <div className="flex flex-col items-end">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-              DELIVERY
+              Exchange
             </span>
             <span className="text-primary text-[14px] tracking-[10px] mb-3">
-              #{deliveryData?.delivery_code || ""}
+              #{deliveryData?.exchange_code || ""}
             </span>
-           
+
           </div>
         </div>
 
@@ -227,34 +246,33 @@ export default function OrderDetailPage() {
           {/* From (Seller) */}
           <div>
             <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-              <span>From (Seller)</span>
+              <span className="font-bold">Warehouse</span>
               <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">Hariss Store</span>
-                <span>Business Bay, Dubai - UAE</span>
-                <span>
+                <span>{deliveryData?.warehouse_code}</span>
+                <span>{deliveryData?.warehouse_name}</span>
+                {/* <span>
                   Phone: +971 123456789 <br /> Email: support@hariss.com
-                </span>
+                </span> */}
               </div>
             </div>
           </div>
 
-          {/* To (Customer) */}
           <div>
             <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-              <span>To (Customer)</span>
+              <span className="font-bold">Customer</span>
               <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">{deliveryData?.customer?.name || "-"}</span>
-                <span>{deliveryData?.customer?.address || "-"}</span>
-                <span>
+                <span>{deliveryData?.customer_code || "-"}</span>
+                <span>{deliveryData?.customer_name || "-"}</span>
+                {/* <span>
                   Phone: {deliveryData?.customer?.phone || "-"} <br /> 
                   Email: {deliveryData?.customer?.email || "-"}
-                </span>
+                </span> */}
               </div>
             </div>
           </div>
 
           {/* Dates / meta - right column */}
-          <div className="flex md:justify-end">
+          {/* <div className="flex md:justify-end">
             <div className="text-primary-bold text-[14px] md:text-right">
               <div>
                 Delivery Date: <span className="font-bold">{deliveryData?.delivery_date ? new Date(deliveryData.delivery_date).toLocaleDateString('en-GB') : "-"}</span>
@@ -266,14 +284,44 @@ export default function OrderDetailPage() {
                 Salesman: <span className="font-bold">{deliveryData?.salesman?.code || "-"} - {deliveryData?.salesman?.name || "-"}</span>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
-        {/* ---------- Order Table ---------- */}
+
+        {/* ---------- Invoices Table ---------- */}
+        <h3 className="text-[16px] font-semibold mb-2">Invoices</h3>
         <Table
-          data={tableData}
+          data={invoiceTableData}
           config={{
-            columns: columns,
+            columns: [
+              { key: "id", label: "#", width: 60 },
+              { key: "itemCode", label: "Product Code" },
+              { key: "itemName", label: "Product Name", width: 250 },
+              { key: "UOM", label: "UOM" },
+              { key: "Quantity", label: "Quantity" },
+              { key: "Price", label: "Price" },
+              { key: "Total", label: "Total" },
+
+            ],
+          }}
+        />
+
+        {/* ---------- Returns Table ---------- */}
+        <h3 className="text-[16px] font-semibold mb-2 mt-8">Returns</h3>
+        <Table
+          data={returnsTableData}
+          config={{
+            columns: [
+              { key: "id", label: "#", width: 60 },
+              { key: "itemCode", label: "Product Code" },
+              { key: "itemName", label: "Product Name", width: 250 },
+              { key: "UOM", label: "UOM" },
+              { key: "Quantity", label: "Quantity" },
+              { key: "Price", label: "Price" },
+              { key: "Total", label: "Total" },
+              { key: "return_type", label: "Return Type" },
+              { key: "region", label: "Reason" },
+            ],
           }}
         />
 
@@ -285,19 +333,14 @@ export default function OrderDetailPage() {
               <div className="flex flex-col space-y-[10px]">
                 <div className="font-semibold text-[#181D27]">Customer Note</div>
                 <div>
-                  Please deliver between 10 AM to 1 PM. Contact before delivery.
+                  {deliveryData?.comment || "-"}
                 </div>
               </div>
-              <div className="flex flex-col space-y-[10px]">
-                <div className="font-semibold text-[#181D27]">
-                  Payment Method
-                </div>
-                <div>Cash on Delivery</div>
-              </div>
+
             </div>
 
             {/* Totals */}
-            <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
+            {/* <div className="flex flex-col gap-[10px] w-full lg:w-[350px] border-b-[1px] border-[#D5D7DA] lg:border-0 pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
               {keyValueData.map((kv) => (
                 <div key={kv.key} className="w-full">
                   <div className="flex justify-between py-2">
@@ -307,34 +350,27 @@ export default function OrderDetailPage() {
                   <hr className="text-[#D5D7DA]" />
                 </div>
               ))}
-              {/* <hr className="text-[#D5D7DA]" /> */}
               <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
                 <span>Total</span>
                 <span>AED {deliveryData?.total || "0.00"}</span>
               </div>
-            </div>
+            </div> */}
 
             {/* Notes (Mobile) */}
             <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px]">
               <div className="flex flex-col space-y-[10px]">
                 <div className="font-semibold text-[#181D27]">Customer Note</div>
                 <div>
-                  Please deliver between 10 AM to 1 PM. Contact before delivery.
+                  {deliveryData?.comment || "-"}
                 </div>
               </div>
-              <div className="flex flex-col space-y-[10px]">
-                <div className="font-semibold text-[#181D27]">
-                  Payment Method
-                </div>
-                <div>Cash on Delivery</div>
-              </div>
+
             </div>
           </div>
         </div>
 
         <hr className="text-[#D5D7DA]" />
 
-        {/* ---------- Footer Buttons ---------- */}
         <div className="flex flex-wrap justify-end gap-[20px]">
           <SidebarBtn
             leadingIcon={"lucide:download"}

@@ -24,7 +24,7 @@ import { useCallback, useEffect, useState } from "react";
 
 
 export default function Route() {
-    const { warehouseOptions } = useAllDropdownListData();
+    const { warehouseAllOptions } = useAllDropdownListData();
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [selectedRowId, setSelectedRowId] = useState<number | undefined>();
     const [showDeletePopup, setShowDeletePopup] = useState(false);
@@ -63,15 +63,16 @@ export default function Route() {
             label: "Distributor",
             render: (data: TableDataType) =>
                 typeof data.warehouse === "object" && data.warehouse !== null
-                    ? (data.warehouse as { code?: string }).code
+                    ? `${(data.warehouse as { code?: string }).code || ""} - ${(data.warehouse as { name?: string }).name || ""}`
                     : "-",
             filter: {
                 isFilterable: true,
                 width: 320,
-                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
                 onSelect: (selected: string | string[]) => {
-                    setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+                    setWarehouseId((prev) => (prev === selected ? "" : (selected as string)));
                 },
+                selectedValue: warehouseId,
             },
         },
         {

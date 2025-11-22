@@ -1,6 +1,7 @@
 "use client";
 import Skeleton from "@mui/material/Skeleton";
 import React, { useEffect, useRef, useState } from "react";
+import CustomCheckbox from "@/app/components/customCheckbox";
 
 export type Option = {
   value: string;
@@ -202,9 +203,10 @@ export default function AutoSuggestion({
 
   // compute dropdown position based on input bounding rect and update on events
   const computeDropdownProps = () => {
-    const input = inputRef.current;
-    if (!input) return;
-    const rect = input.getBoundingClientRect();
+    // Prefer the full container width so the dropdown matches the visible input area
+    const el = containerRef.current ?? inputRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
     setDropdownProps({ left: Math.floor(rect.left), top: Math.floor(rect.bottom), width: Math.floor(rect.width) });
   };
 
@@ -231,7 +233,7 @@ export default function AutoSuggestion({
           e.preventDefault();
           setSelectedOptions(prev => {
             const next = prev.slice(0, -1);
-            try { onChangeSelected && onChangeSelected(next); } catch (err) {}
+            if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (err) {} }, 0); }
             return next;
           });
           return;
@@ -282,25 +284,22 @@ export default function AutoSuggestion({
     if (multiple) {
       // add to selection if not present
       setSelectedOptions(prev => {
-        const exists = prev.some(p => p.value === opt.value);
-        if (exists) return prev;
-        const next = [...prev, opt];
-        try { onChangeSelected && onChangeSelected(next); } catch (e) {}
-        return next;
+       const exists = prev.some(p => p.value === opt.value);
+       if (exists) return prev;
+       const next = [...prev, opt];
+       if (onChangeSelected) {
+        // schedule parent update after render to avoid setState during render warning
+        setTimeout(() => { try { onChangeSelected(next); } catch (e) {} }, 0);
+       }
+       return next;
       });
-      // keep input for further typing
       setQuery("");
       setOptions([]);
       setHighlight(-1);
-      // notify parent about single-select action as well for compatibility
       try { onSelect(opt); } catch (err) {}
     } else {
-      // avoid re-triggering the search effect when we programmatically set
-      // the query after a selection — the effect would reopen the dropdown
-      // because the label length usually meets minSearchLength
       skipSearchRef.current = true;
       setQuery(opt.label);
-      // remember this option as the one that produced the input value
       selectedSingleRef.current = opt;
       setOpen(false);
       setOptions([]);
@@ -308,15 +307,44 @@ export default function AutoSuggestion({
       try {
         onSelect(opt);
       } catch (err) {
-        // ignore
       }
+    }
+  };
+
+  const toggleOption = (opt: Option) => {
+    const isChecked = selectedOptions.some(s => s.value === opt.value);
+    if (isChecked) {
+      setSelectedOptions(prev => {
+        const next = prev.filter(p => p.value !== opt.value);
+        if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (e) {} }, 0); }
+        return next;
+      });
+    } else {
+      setSelectedOptions(prev => {
+        const next = [...prev, opt];
+        if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (e) {} }, 0); }
+        return next;
+      });
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOptions.length === options.length) {
+      // clear all
+      setSelectedOptions([]);
+    if (onChangeSelected) { setTimeout(() => { try { onChangeSelected([]); } catch (e) {} }, 0); }
+    } else {
+      // select all
+      const all = options.slice();
+      setSelectedOptions(all);
+    if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(all); } catch (e) {} }, 0); }
     }
   };
 
   const removeSelected = (val: string) => {
     setSelectedOptions(prev => {
       const next = prev.filter(p => p.value !== val);
-      try { onChangeSelected && onChangeSelected(next); } catch (e) {}
+  if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (e) {} }, 0); }
       return next;
     });
   };
@@ -333,19 +361,53 @@ export default function AutoSuggestion({
       )}
 
       {multiple ? (
-        <div className={`box-border border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 flex items-center gap-2 min-w-0 ${error ? "border-red-500" : "border-gray-300"}`} onClick={() => { if (!disabled) inputRef.current?.focus(); }}>
+        <div
+          className={`box-border border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 flex items-center gap-2 min-w-0 ${error ? "border-red-500" : "border-gray-300"}`}
+          onClick={() => { if (!disabled) inputRef.current?.focus(); }}
+        >
           <div className="flex items-center gap-2 flex-1 flex-nowrap overflow-hidden min-w-0">
-            {selectedOptions.length === 0 && query === '' && (
+            {/* {selectedOptions.length === 0 && query === '' && (
               <span className="text-gray-400 truncate">{placeholder}</span>
-            )}
-            {selectedOptions.map(s => (
-              <span key={s.value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate">
-                <span className="truncate block max-w-[100px]">{s.label}</span>
+            )} */}
+
+            {/* Show up to two tags; if more than two, show first two and a +N badge */}
+            {selectedOptions.length === 1 && (
+              <span key={selectedOptions[0].value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate">
+                <span className="truncate block max-w-[100px]">{selectedOptions[0].label}</span>
                 {!disabled && (
-                  <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(s.value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(selectedOptions[0].value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
                 )}
               </span>
-            ))}
+            )}
+
+            {selectedOptions.length === 2 && (
+              <>
+                {selectedOptions.slice(0,2).map((s, i) => (
+                  <span key={`${s.value}-${i}`} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate mr-2">
+                    <span className="truncate block max-w-[80px]">{s.label}</span>
+                    {!disabled && (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(s.value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
+                    )}
+                  </span>
+                ))}
+              </>
+            )}
+
+            {selectedOptions.length > 2 && (
+              <>
+                {selectedOptions.slice(0,2).map((s, i) => (
+                  <span key={`${s.value}-${i}`} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate mr-2">
+                    <span className="truncate block max-w-[80px]">{s.label}</span>
+                    {!disabled && (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(s.value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
+                    )}
+                  </span>
+                ))}
+                <span className="inline-flex items-center bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-sm font-medium">+{selectedOptions.length - 2}</span>
+              </>
+            )}
+
+            {/* keep the input for typing */}
             <input
               id={id ?? name}
               name={name}
@@ -390,7 +452,7 @@ export default function AutoSuggestion({
       {open && (
         <div
           style={{ position: 'fixed', left: dropdownProps.left, top: dropdownProps.top, width: dropdownProps.width }}
-          className={`z-50 bg-white mt-[6px] rounded-md shadow-lg max-h-60 overflow-auto scrollbar-none`}
+          className={`z-50 bg-white border border-gray-300 mt-[6px] rounded-md shadow-lg max-h-60 overflow-auto scrollbar-none`}
         >
           {loading ? (
             <div className="px-3 py-2 text-sm text-gray-500">
@@ -398,20 +460,81 @@ export default function AutoSuggestion({
               <Skeleton ></Skeleton>
             </div>
           ) : options.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-gray-400">{noOptionsMessage}</div>
+            <div className="px-3 py-5 text-gray-600 text-center">{noOptionsMessage}</div>
           ) : (
-            options.map((opt, idx) => (
-              <div
-                key={`${opt.value}-${idx}`}
-                role="option"
-                aria-selected={highlight === idx}
-                onMouseDown={e => { e.preventDefault(); /* prevent blur before click */ selectOption(opt); }}
-                onMouseEnter={() => setHighlight(idx)}
-                className={`px-3 py-2 cursor-pointer ${highlight === idx ? "bg-gray-100" : "hover:bg-gray-50"}`}
-              >
-                {renderOption ? renderOption(opt) : <div className="text-sm text-gray-800">{opt.label}</div>}
-              </div>
-            ))
+            <>
+              {multiple && (
+                <div
+                  key="__select_all__"
+                  role="option"
+                  onMouseDown={e => { e.preventDefault(); }}
+                  onClick={() => toggleSelectAll()}
+                  className={`px-3 py-2 cursor-pointer flex items-center justify-between ${-1 === highlight ? "" : "hover:bg-gray-50"}`}
+                >
+                  <div className="text-sm text-gray-800">Select All</div>
+                  <CustomCheckbox
+                    id={`autosuggest_select_all`}
+                    label={""}
+                    checked={options.length > 0 && selectedOptions.length === options.length}
+                    onChange={(e) => { e.stopPropagation(); toggleSelectAll(); }}
+                  />
+                </div>
+              )}
+              {options.map((opt, idx) => {
+              const isChecked = selectedOptions.some(s => s.value === opt.value);
+              if (multiple) {
+                return (
+                  <div
+                    key={`${opt.value}-${idx}`}
+                    role="option"
+                    aria-selected={isChecked}
+                    onMouseDown={e => { e.preventDefault(); /* prevent blur before click */ }}
+                    onClick={() => toggleOption(opt)}
+                    onMouseEnter={() => setHighlight(idx)}
+                    className={`px-3 py-2 cursor-pointer flex items-center justify-between ${highlight === idx ? "bg-gray-100" : "hover:bg-gray-50"}`}
+                  >
+                    <div className="text-sm text-gray-800 mr-2 cursor-pointer" onClick={() => toggleOption(opt)}>{renderOption ? renderOption(opt) : opt.label}</div>
+                    <CustomCheckbox
+                      id={`autosuggest_${opt.value}_${idx}`}
+                      label={""}
+                      checked={isChecked}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        if (isChecked) {
+                          // remove
+                          setSelectedOptions(prev => {
+                            const next = prev.filter(p => p.value !== opt.value);
+                            if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (err) {} }, 0); }
+                            return next;
+                          });
+                        } else {
+                          // add
+                          setSelectedOptions(prev => {
+                            const next = [...prev, opt];
+                            if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (err) {} }, 0); }
+                            return next;
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={`${opt.value}-${idx}`}
+                  role="option"
+                  aria-selected={highlight === idx}
+                  onMouseDown={e => { e.preventDefault(); /* prevent blur before click */ selectOption(opt); }}
+                  onMouseEnter={() => setHighlight(idx)}
+                  className={`px-3 py-2 cursor-pointer ${highlight === idx ? "bg-gray-100" : "hover:bg-gray-50"}`}
+                >
+                  {renderOption ? renderOption(opt) : <div className="text-sm text-gray-800">{opt.label}</div>}
+                </div>
+              );
+            })}
+            </>
           )}
         </div>
       )}

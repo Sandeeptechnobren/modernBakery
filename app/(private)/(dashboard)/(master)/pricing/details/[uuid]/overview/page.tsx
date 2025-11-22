@@ -3,7 +3,7 @@
 import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import { useLoading } from "@/app/services/loadingContext";
-import { pricingHeaderById } from "@/app/services/allApi";
+// import { pricingHeaderById } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -67,41 +67,44 @@ interface PricingItem {
   status?: string;
 }
 
-export default function Overview() {
+interface OverviewProps {
+  pricing: PricingItem | null;
+}
+
+export default function Overview({ pricing }: OverviewProps) {
   const params = useParams();
   const uuid = Array.isArray(params.uuid)
     ? params.uuid[0] || ""
     : (params.uuid as string) || "";
 
-  const [pricing, setpricing] = useState<PricingItem | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
 
-  useEffect(() => {
-    if (!uuid) return;
+  // useEffect(() => {
+  //   if (!uuid) return;
 
-    const fetchPricingDetails = async () => {
-      setLoading(true);
-      try {
-        const res = await pricingHeaderById(uuid);
-        if (res.error) {
-          showSnackbar(
-            res.data?.message || "Unable to fetch pricing Details",
-            "error"
-          );
-          return;
-        }
-        setpricing(res.data);
-      } catch (error) {
-        showSnackbar("Unable to fetch pricing Details", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
+  //   const fetchPricingDetails = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const res = await pricingHeaderById(uuid);
+  //       if (res.error) {
+  //         showSnackbar(
+  //           res.data?.message || "Unable to fetch pricing Details",
+  //           "error"
+  //         );
+  //         return;
+  //       }
+  //       setpricing(res.data);
+  //     } catch (error) {
+  //       showSnackbar("Unable to fetch pricing Details", "error");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchPricingDetails();
-  }, [uuid, setLoading, showSnackbar]);
+  //   fetchPricingDetails();
+  // }, [uuid, setLoading, showSnackbar]);
 
  return (
     <>

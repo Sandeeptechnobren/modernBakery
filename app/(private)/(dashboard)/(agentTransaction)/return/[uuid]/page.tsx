@@ -9,7 +9,7 @@ import { useRouter, useParams } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { createReturn, deliveryByUuid, updateDelivery,returnType ,reasonList} from "@/app/services/agentTransaction";
+import { createReturn, deliveryByUuid, updateDelivery, returnType, reasonList } from "@/app/services/agentTransaction";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
@@ -86,7 +86,7 @@ export default function OrderAddEditPage() {
   const { setLoading } = useLoading();
   const router = useRouter();
   const params = useParams();
-
+  const CURRENCY = localStorage.getItem("country") || "";
   const uuid = params?.uuid as string | undefined;
   const isEditMode = uuid !== undefined && uuid !== "add";
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,7 +130,7 @@ export default function OrderAddEditPage() {
       return_reason: "",
     },
   ]);
-useEffect(() => {
+  useEffect(() => {
     // Fetch reason list on component mount
     (async () => {
       try {
@@ -139,7 +139,7 @@ useEffect(() => {
         if (res && Array.isArray(res.data)) {
           const list = res.data as Reason[];
           const options = list.map((reason: Reason) => ({
-                label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+            label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
             value: String(reason.id),
           }));
           setReturnTypeOptions(options);
@@ -151,7 +151,7 @@ useEffect(() => {
       }
     })();
   }, []);
-useEffect(() => {
+  useEffect(() => {
     // Fetch reason list on component mount
     (async () => {
       try {
@@ -160,7 +160,7 @@ useEffect(() => {
         if (res && Array.isArray(res.data)) {
           const list = res.data as Reason[];
           const options = list.map((reason: Reason) => ({
-                label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+            label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
             value: String(reason.id),
           }));
           setGoodReasonOptions(options);
@@ -272,7 +272,7 @@ useEffect(() => {
                     const res = await reasonList({ return_id: rt });
                     const list = Array.isArray(res?.data) ? (res.data as Reason[]) : (Array.isArray(res) ? (res as Reason[]) : []);
                     const options = list.map((reason: Reason) => ({
-                        label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+                      label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
                       value: String(reason.id),
                     }));
                     return { idx: idx.toString(), options };
@@ -633,36 +633,29 @@ useEffect(() => {
   };
 
   const handleItemSearch = async (searchText: string) => {
+    if (!form.warehouse) return [];  // Prevent fetching before selecting warehouse
+
     try {
-      const response = await itemGlobalSearch({ query: searchText });
-      const data = Array.isArray(response?.data) ? response.data : [];
-      interface Item {
-        id: number;
-        item_code?: string;
-        code?: string;
-        name?: string;
-        uom?: Uom[];
-        uoms?: Uom[];
-        item_uoms?: ItemUomRaw[];
-      }
-      interface Uom {
-        id: string;
-        name?: string;
-        price?: string;
-      }
-      return data.map((item: Item) => {
-        const itemRecord = item as Item;
-        return {
-          value: String(item.id),
-          label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
-          code: item.item_code || item.code,
-          name: item.name,
-          // include possible shapes from API: item_uoms, uom, uoms
-          uoms: Array.isArray(itemRecord.item_uoms)
-            ? itemRecord.item_uoms.map((u: ItemUomRaw) => ({ id: String(u.id ?? ''), name: String(u.name ?? ''), price: String(u.uom_price ?? u.price ?? '') }))
-            : (item.uom || item.uoms || []),
-        };
+      const response = await itemGlobalSearch({
+        query: searchText,
+        warehouse_id: form.warehouse, // <- Add warehouse filter
       });
+
+      const data = Array.isArray(response?.data) ? response.data : [];
+
+      return data.map((item: any) => ({
+        value: String(item.id),
+        label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
+        code: item.item_code || item.code,
+        name: item.name,
+        uoms: Array.isArray(item.item_uoms)
+          ? item.item_uoms.map((u: any) => ({
+            id: String(u.id ?? ""),
+            name: String(u.name ?? ""),
+            price: String(u.uom_price ?? u.price ?? "0"),
+          }))
+          : item.uom || item.uoms || [],
+      }));
     } catch {
       return [];
     }
@@ -793,7 +786,8 @@ useEffect(() => {
                       placeholder="Search item..."
                       initialValue={row.itemLabel}
                       onSearch={handleItemSearch}
-                      disabled={!form.customer_name}
+                      minSearchLength={0}
+                      disabled={!form.warehouse_name}
                       onSelect={async (option: { value: string; label: string; uoms?: Uom[] }) => {
                         const selectedItemId = option.value;
                         const newData = [...itemData];
@@ -861,7 +855,7 @@ useEffect(() => {
                       onClear={() => {
                         const newData = [...itemData];
                         const index = Number(row.idx);
-                          newData[index].item_id = "";
+                        newData[index].item_id = "";
                         newData[index].itemName = "";
                         newData[index].itemLabel = "";
                         newData[index].uom_id = "";
@@ -932,14 +926,14 @@ useEffect(() => {
               {
                 key: "Price",
                 label: "Price",
-                 render: (row) => <span>{Number(row.Price || 0).toFixed(2)}</span>
+                render: (row) => <span>{Number(row.Price || 0).toFixed(2)}</span>
               },
               {
                 key: "Total",
                 label: "Total",
                 render: (row) => (
-                  
-                    <span > {Number(row.Total || 0).toFixed(2)}</span>
+
+                  <span > {Number(row.Total || 0).toFixed(2)}</span>
                 ),
               },
 
@@ -1021,8 +1015,8 @@ useEffect(() => {
                   <button
                     type="button"
                     className={`${itemData.length <= 1
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
                       } text-red-500 flex items-center`}
                     onClick={() =>
                       itemData.length > 1 && handleRemoveItem(Number(row.idx))

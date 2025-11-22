@@ -15,6 +15,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { categoryType } from "./page";
 import { useState, useRef, useEffect } from "react";
+import Button from "@/app/components/customButton";
 
 export default function CreateUpdate({
     type,
@@ -43,10 +44,8 @@ export default function CreateUpdate({
       category_code: updateItemCategoryData?.category_code || "",
     },
     validationSchema: Yup.object({
-      categoryName: Yup.string()
-        .required("Category Name is required")
-        .min(2, "Category Name must be at least 2 characters")
-        .max(50, "Category Name cannot exceed 50 characters"),
+      categoryName: Yup.string().required("Category Name is required"),
+    
       status: Yup.number()
         .oneOf([0, 1], "Status must be either 0 or 1")
         .required("Status is required"),
@@ -172,19 +171,19 @@ export default function CreateUpdate({
                 <div>
                     <div>
                         <InputFields
-                            required
+                            // required
                             id="categoryName"
                             name="categoryName"
                             value={formik.values.categoryName}
                             label="Category Name"
-                            error={formik.errors.categoryName}
+                            error={formik.touched.categoryName && formik.errors.categoryName}
                             onChange={formik.handleChange}
                         />
-                        {formik.touched.categoryName && formik.errors.categoryName && (
+                        {/* {formik.touched.categoryName && formik.errors.categoryName && (
                             <span className="text-xs text-red-500">
                                 {formik.errors.categoryName}
                             </span>
-                        )}
+                        )} */}
                     </div>
 
                 </div>
@@ -221,14 +220,9 @@ export default function CreateUpdate({
               labelTw="px-[20px]"
               onClick={onClose}
             />
-            <SidebarBtn
-              isActive={true}
-              buttonTw="h-10"
-              type="submit"
-              disabled={!formik.isValid || formik.isSubmitting}
-              label={type === "update" ? (formik.isSubmitting ? "Updating..." : "Update") : (formik.isSubmitting ? "Submitting..." : "Submit")}
-              labelTw="px-[20px]"
-            />
+              <Button type="submit" disabled={!formik.isValid || formik.isSubmitting}>
+                            {type === "update" ? (formik.isSubmitting ? "Updating..." : "Update") : (formik.isSubmitting ? "Submitting..." : "Submit")}
+                        </Button>
           </div>
         </div>
       </form>

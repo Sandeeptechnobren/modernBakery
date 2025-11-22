@@ -14,22 +14,22 @@ import OrderStatus from "@/app/components/orderStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/utils/formatDate";
+import { orderExportCollapse, orderExportHeader, orderList } from "@/app/services/companyTransaction";
 
 const columns = [
     { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
     { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
-    {
-        key: "warehouse_name",
-        label: "Warehouse Name",
-        showByDefault: true,
-        render: (row: TableDataType) => {
-            const code = row.warehouse_code ?? "";
-            const name = row.warehouse_name ?? "";
-            if (!code && !name) return "-";
-            return `${code}${code && name ? " - " : ""}${name}`;
-        },
-    },
-    
+    // {
+    //     key: "warehouse_name",
+    //     label: "Warehouse Name",
+    //     showByDefault: true,
+    //     render: (row: TableDataType) => {
+    //         const code = row.warehouse_code ?? "";
+    //         const name = row.warehouse_name ?? "";
+    //         if (!code && !name) return "-";
+    //         return `${code}${code && name ? " - " : ""}${name}`;
+    //     },
+    // },
     {
         key: "customer_name",
         label: "Customer Name",
@@ -51,18 +51,18 @@ const columns = [
             return `${code}${code && name ? " - " : ""}${name}`;
         },
     },
-    {
-        key: "route_name",
-        label: "Route Name",
-        render: (row: TableDataType) => {
-            const code = row.route_code ?? "";
-            const name = row.route_name ?? "";
-            if (!code && !name) return "-";
-            return `${code}${code && name ? " - " : ""}${name}`;
-        },
-    },
-    { key: "payment_method", label: "Payment Method", render: (row: TableDataType) => row.payment_method || "-" },
-    { key: "order_source", label: "Order Source", render: (row: TableDataType) => row.order_source || "-" },
+    // {
+    //     key: "route_name",
+    //     label: "Route Name",
+    //     render: (row: TableDataType) => {
+    //         const code = row.route_code ?? "";
+    //         const name = row.route_name ?? "";
+    //         if (!code && !name) return "-";
+    //         return `${code}${code && name ? " - " : ""}${name}`;
+    //     },
+    // },
+    // { key: "payment_method", label: "Payment Method", render: (row: TableDataType) => row.payment_method || "-" },
+    // { key: "order_source", label: "Order Source", render: (row: TableDataType) => row.order_source || "-" },
     { key: "delivery_date", label: "Delivery Date", showByDefault: true, render: (row: TableDataType) => formatWithPattern(new Date(row.delivery_date), "DD MMM YYYY", "en-GB").toLowerCase() || "-" },
     { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
     {
@@ -73,8 +73,7 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
-    const { setLoading } = useLoading();
-    const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions } = useAllDropdownListData();
+    const { customerSubCategoryOptions, companyOptions, salesmanOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions } = useAllDropdownListData();
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
     const [refreshKey, setRefreshKey] = useState(0);
@@ -88,20 +87,18 @@ export default function CustomerInvoicePage() {
             page: number = 1,
             pageSize: number = 5
         ): Promise<listReturnType> => {
-            setLoading(true);
             const params: Record<string, string> = {
                 page: page.toString(),
                 pageSize: pageSize.toString()
             };
-            const listRes = await agentOrderList(params);
-            setLoading(false);
+            const listRes = await orderList(params);
             return {
                 data: Array.isArray(listRes.data) ? listRes.data : [],
                 total: listRes?.pagination?.totalPages || 1,
                 currentPage: listRes?.pagination?.page || 1,
                 pageSize: listRes?.pagination?.limit || pageSize,
             };
-        }, [setLoading, showSnackbar]);
+        }, []);
 
     const filterBy = useCallback(
         async (
@@ -109,7 +106,6 @@ export default function CustomerInvoicePage() {
             pageSize: number
         ): Promise<listReturnType> => {
             let result;
-            setLoading(true);
             try {
                 const params: Record<string, string> = { per_page: pageSize.toString() };
                 Object.keys(payload || {}).forEach((k) => {
@@ -118,9 +114,9 @@ export default function CustomerInvoicePage() {
                         params[k] = String(v);
                     }
                 });
-                result = await agentOrderList(params);
-            } finally {
-                setLoading(false);
+                result = await orderList(params);
+            } catch (error) {
+                throw new Error(String(error));
             }
 
             if (result?.error) throw new Error(result.data?.message || "Filter failed");
@@ -134,14 +130,12 @@ export default function CustomerInvoicePage() {
                     pageSize: pagination.limit || pageSize,
                 };
             }
-        },
-        [setLoading]
-    );
+        }, []);
 
     const exportFile = async (format: "csv" | "xlsx" = "csv") => {
         try {
             setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
-            const response = await agentOrderExport({ format });
+            const response = await orderExportHeader({ format });
             if (response && typeof response === 'object' && response.download_url) {
                 await downloadFile(response.download_url);
                 showSnackbar("File downloaded successfully ", "success");
@@ -152,7 +146,6 @@ export default function CustomerInvoicePage() {
         } catch (error) {
             showSnackbar("Failed to download warehouse data", "error");
             setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
-        } finally {
         }
     };
 
@@ -168,7 +161,7 @@ export default function CustomerInvoicePage() {
                     config={{
                         api: { list: fetchOrders, filterBy: filterBy },
                         header: {
-                            title: "Customer Orders",
+                            title: "Company Orders",
                             searchBar: false,
                             columnFilter: true,
                             threeDot: [
@@ -196,68 +189,49 @@ export default function CustomerInvoicePage() {
                                     label: "End Date",
                                     type: "date"
                                 },
-                                {
-                                    key: "company_id",
-                                    label: "Company",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(companyOptions) ? companyOptions : [],
-                                },
-                                {
-                                    key: "warehouse_id",
-                                    label: "Warehouse",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
-                                },
-                                {
-                                    key: "region_id",
-                                    label: "Region",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(regionOptions) ? regionOptions : [],
-                                },
-                                {
-                                    key: "sub_region_id",
-                                    label: "Sub Region",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(areaOptions) ? areaOptions : [],
-                                },
-                                {
-                                    key: "route_id",
-                                    label: "Route",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(routeOptions) ? routeOptions : [],
-                                },
-                                {
-                                    key: "salesman_id",
-                                    label: "Salesman",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                                }
-                            ],
-                            actions: [
-                                // <SidebarBtn
-                                //     key={0}
-                                //     href="#"
-                                //     isActive
-                                //     leadingIcon="mdi:download"
-                                //     label="Download"
-                                //     labelTw="hidden lg:block"
-                                //     onClick={() => exportFile("csv")}
-                                // />,
-                                <SidebarBtn
-                                    key={1}
-                                    href="/agentOrder/add"
-                                    isActive
-                                    leadingIcon="mdi:plus"
-                                    label="Add"
-                                    labelTw="hidden lg:block"
-                                />
-                            ],
+                                // {
+                                //     key: "company_id",
+                                //     label: "Company",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(companyOptions) ? companyOptions : [],
+                                // },
+                                // {
+                                //     key: "warehouse_id",
+                                //     label: "Warehouse",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
+                                // },
+                                // {
+                                //     key: "region_id",
+                                //     label: "Region",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(regionOptions) ? regionOptions : [],
+                                // },
+                                // {
+                                //     key: "sub_region_id",
+                                //     label: "Sub Region",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(areaOptions) ? areaOptions : [],
+                                // },
+                                // {
+                                //     key: "route_id",
+                                //     label: "Route",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(routeOptions) ? routeOptions : [],
+                                // },
+                                // {
+                                //     key: "salesman_id",
+                                //     label: "Salesman",
+                                //     isSingle: false,
+                                //     multiSelectChips: true,
+                                //     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                // }
+                            ]
                         },
                         rowSelection: true,
                         footer: { nextPrevBtn: true, pagination: true },
@@ -267,7 +241,7 @@ export default function CustomerInvoicePage() {
                                 icon: "lucide:eye",
                                 onClick: (row: TableDataType) =>
                                     router.push(
-                                        `/agentOrder/details/${row.uuid}`
+                                        `/order/details/${row.uuid}`
                                     ),
                             }
                         ],

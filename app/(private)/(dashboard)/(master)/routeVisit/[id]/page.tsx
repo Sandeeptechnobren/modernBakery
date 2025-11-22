@@ -1838,6 +1838,7 @@ export default function AddEditRouteVisit() {
                   required
                   label="Company"
                   value={form.company}
+                  multiSelectChips={true}
                   onChange={(e) =>
                     handleMultiSelectChange(
                       "company",
@@ -1858,6 +1859,7 @@ export default function AddEditRouteVisit() {
                   disabled={form.company.length === 0}
                   label="Region"
                   value={form.region}
+                  multiSelectChips={true}
                   onChange={(e) =>
                     handleMultiSelectChange(
                       "region",
@@ -1878,6 +1880,7 @@ export default function AddEditRouteVisit() {
                   required
                   disabled={form.region.length === 0}
                   label="Area"
+                  multiSelectChips={true}
                   value={form.area}
                   onChange={(e) =>
                     handleMultiSelectChange(
@@ -1900,6 +1903,7 @@ export default function AddEditRouteVisit() {
                   required
                   disabled={form.area.length === 0 || areaOptions.length === 0}
                   label="Warehouse"
+                  multiSelectChips={true}
                   value={form.warehouse}
                   onChange={(e) =>
                     handleMultiSelectChange(
@@ -1922,6 +1926,7 @@ export default function AddEditRouteVisit() {
                   required
                   disabled={form.warehouse.length === 0}
                   label="Route"
+                  multiSelectChips={true}
                   value={form.route}
                   onChange={(e) =>
                     handleMultiSelectChange(
@@ -1943,7 +1948,7 @@ export default function AddEditRouteVisit() {
                   required
                   label="Status"
                   type="radio"
-                  value={form.status}
+                  value={form.status || "1"}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, status: e.target.value }))
                   }
