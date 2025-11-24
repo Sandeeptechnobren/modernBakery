@@ -73,6 +73,8 @@ interface InvoiceData {
     item_code: string;
     item_name: string;
     uom_name: string;
+    return_reason: string;
+    returntype_name: string;
     item_quantity: number;
     item_price: number;
     vat: number;
@@ -103,9 +105,8 @@ const columns = [
   { key: "UOM", label: "UOM" },
   { key: "Quantity", label: "Quantity" },
   { key: "Price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.Price) || '0.00'}</> },
-  { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.Vat) || '0.00'}</> },
-  // { key: "preVat", label: "Pre VAT", render: (value: TableDataType) => <>{toInternationalNumber(Number(value.preVat)) || '0.00'}</> },
-  { key: "Net", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.Net) || '0.00'}</> },
+  { key: "returntype_name", label: "Return Type" },
+  { key: "return_reason", label: "Reason" },
   { key: "total", label: "Total", render: (value: TableDataType) => <>{toInternationalNumber(value.Total) || '0.00'}</> },
 ];
 
@@ -138,6 +139,8 @@ export default function OrderDetailPage() {
               itemCode: String(detail.item_code ?? "-"),
               itemName: String(detail.item_name ?? "-"),
               UOM: String(detail.uom_name ?? "-"),
+              returntype_name: String(detail.returntype_name ?? "-"),
+              return_reason: String(detail.return_reason ?? "-"),
               Quantity: String(detail.item_quantity ?? 0),
               Price: String(detail.item_price ?? 0),
               // Excise: String(detail.itemvalue ?? 0),
@@ -182,13 +185,13 @@ export default function OrderDetailPage() {
   const netTotal = Number(deliveryData?.net_total ?? grossTotal ?? 0);
   const finalTotal = Number(deliveryData?.total_amount ?? calculatedTotal ?? 0);
 
-  const keyValueData = [
-     { key: "Gross Total", value: CURRENCY + " " + toInternationalNumber(grossTotal ?? 0) },
-     { key: "VAT", value: CURRENCY + " " + toInternationalNumber(vatTotal ?? 0) },
-    // { key: "Gross Total", value: CURRENCY + "" + {toInternationalNumber(grossTotal)} },
-    // { key: "VAT", value: `CURRENCY ${toInternationalNumber(vatTotal)}` },
-    // { key: "Pre VAT", value: `AED ${toInternationalNumber(Number(deliveryData?.pre_vat || 0))}` },
-  ];
+  // const keyValueData = [
+  //   //  { key: "Gross Total", value: CURRENCY + " " + toInternationalNumber(grossTotal ?? 0) },
+  //   //  { key: "VAT", value: CURRENCY + " " + toInternationalNumber(vatTotal ?? 0) },
+  //   // { key: "Gross Total", value: CURRENCY + "" + {toInternationalNumber(grossTotal)} },
+  //   // { key: "VAT", value: `CURRENCY ${toInternationalNumber(vatTotal)}` },
+  //   // { key: "Pre VAT", value: `AED ${toInternationalNumber(Number(deliveryData?.pre_vat || 0))}` },
+  // ];
 
   const targetRef = useRef<HTMLDivElement | null>(null);
 
@@ -221,7 +224,7 @@ export default function OrderDetailPage() {
             className="cursor-pointer"
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
-            Return Details
+            Distributor&apos;s Return Details
           </h1>
         </div>
 
@@ -240,7 +243,7 @@ export default function OrderDetailPage() {
             </div>
 
             <div className="flex flex-col items-end">
-              <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
+              <span className="flex justify-end text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
                 Return
               </span>
               <span className="text-primary text-[14px] tracking-[10px] mb-3">
@@ -256,7 +259,7 @@ export default function OrderDetailPage() {
             {/* From (Seller) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-                    <span>From (Seller)</span>
+                    <span>Seller</span>
                     <div className="flex flex-col space-y-[10px]">
                       {(deliveryData?.warehouse_code || deliveryData?.warehouse_name) ? (
                         <span className="font-semibold">
@@ -272,7 +275,7 @@ export default function OrderDetailPage() {
             {/* To (Customer) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>To (Customer)</span>
+                <span>Buyer</span>
                 <div className="flex flex-col space-y-[10px]">
                   {(deliveryData?.customer_code || deliveryData?.customer_name) && (
                     <span className="font-semibold">
@@ -336,12 +339,12 @@ export default function OrderDetailPage() {
 
               {/* Totals */}
               <div className="flex flex-col gap-[10px] w-full lg:w-[350px] pb-[20px] lg:pb-0 mb-[20px] lg:mb-0">
-                {keyValueData.map((kv) => (
+                {/* {keyValueData.map((kv) => (
                   <Fragment key={kv.key}>
                     <KeyValueData data={[kv]} />
                     <hr className="text-[#D5D7DA]" />
                   </Fragment>
-                ))}
+                ))} */}
                 <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
                   <span>Total</span>
                   <span>{CURRENCY} {toInternationalNumber(finalTotal) || 0}</span>

@@ -290,10 +290,9 @@ export default function AutoSuggestion({
 
   const selectOption = (opt: Option) => {
     if (multiple) {
-      // add to selection if not present
+      // add to selection if not present (defensive dedupe inside functional update)
       setSelectedOptions(prev => {
-       const exists = prev.some(p => p.value === opt.value);
-       if (exists) return prev;
+       if (prev.some(p => p.value === opt.value)) return prev;
        const next = [...prev, opt];
        if (onChangeSelected) {
         // schedule parent update after render to avoid setState during render warning
@@ -320,20 +319,18 @@ export default function AutoSuggestion({
   };
 
   const toggleOption = (opt: Option) => {
-    const isChecked = selectedOptions.some(s => s.value === opt.value);
-    if (isChecked) {
-      setSelectedOptions(prev => {
+    // perform add/remove inside functional update and defensively dedupe on add
+    setSelectedOptions(prev => {
+      const exists = prev.some(s => s.value === opt.value);
+      if (exists) {
         const next = prev.filter(p => p.value !== opt.value);
         if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (e) {} }, 0); }
         return next;
-      });
-    } else {
-      setSelectedOptions(prev => {
-        const next = [...prev, opt];
-        if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (e) {} }, 0); }
-        return next;
-      });
-    }
+      }
+      const next = prev.some(p => p.value === opt.value) ? prev : [...prev, opt];
+      if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (e) {} }, 0); }
+      return next;
+    });
   };
 
   const toggleSelectAll = () => {
@@ -477,15 +474,15 @@ export default function AutoSuggestion({
                   role="option"
                   onMouseDown={e => { e.preventDefault(); }}
                   onClick={() => toggleSelectAll()}
-                  className={`px-3 py-2 cursor-pointer flex items-center justify-between ${-1 === highlight ? "" : "hover:bg-gray-50"}`}
+                  className={`px-1 py-2 cursor-pointer flex items-center gap-2 ${-1 === highlight ? "" : "hover:bg-gray-50"}`}
                 >
-                  <div className="text-sm text-gray-800">Select All</div>
                   <CustomCheckbox
                     id={`autosuggest_select_all`}
                     label={""}
                     checked={options.length > 0 && selectedOptions.length === options.length}
                     onChange={(e) => { e.stopPropagation(); toggleSelectAll(); }}
                   />
+                  <div className="text-sm text-gray-800 ">Select All</div>
                 </div>
               )}
               {options.map((opt, idx) => {
@@ -499,32 +496,38 @@ export default function AutoSuggestion({
                     onMouseDown={e => { e.preventDefault(); /* prevent blur before click */ }}
                     onClick={() => toggleOption(opt)}
                     onMouseEnter={() => setHighlight(idx)}
-                    className={`px-3 py-2 cursor-pointer flex items-center justify-between ${highlight === idx ? "bg-gray-100" : "hover:bg-gray-50"}`}
+                    className={`px-1 py-2 cursor-pointer flex items-center gap-2 ${highlight === idx ? "bg-gray-100" : "hover:bg-gray-50"}`}
                   >
-                    <div className="text-sm text-gray-800 mr-2 cursor-pointer" onClick={() => toggleOption(opt)}>{renderOption ? renderOption(opt) : opt.label}</div>
                     <CustomCheckbox
                       id={`autosuggest_${opt.value}_${idx}`}
                       label={""}
                       checked={isChecked}
                       onChange={(e) => {
                         e.stopPropagation();
-                        if (isChecked) {
-                          // remove
-                          setSelectedOptions(prev => {
+                        // do add/remove inside functional update and prevent duplicates on add
+                        setSelectedOptions(prev => {
+                          const exists = prev.some(p => p.value === opt.value);
+                          if (exists) {
                             const next = prev.filter(p => p.value !== opt.value);
                             if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (err) {} }, 0); }
                             return next;
-                          });
-                        } else {
-                          // add
-                          setSelectedOptions(prev => {
-                            const next = [...prev, opt];
-                            if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (err) {} }, 0); }
-                            return next;
-                          });
-                        }
+                          }
+                          const next = prev.some(p => p.value === opt.value) ? prev : [...prev, opt];
+                          if (onChangeSelected) { setTimeout(() => { try { onChangeSelected(next); } catch (err) {} }, 0); }
+                          return next;
+                        });
                       }}
                     />
+                    <div
+                      className="text-sm text-gray-800 mr-2 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleOption(opt);
+                      }}
+                    >
+                      {renderOption ? renderOption(opt) : opt.label}
+                    </div>
+
                   </div>
                 );
               }

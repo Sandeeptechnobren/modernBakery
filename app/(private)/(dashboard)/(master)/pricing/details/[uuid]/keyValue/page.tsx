@@ -40,32 +40,53 @@ initialKeys.forEach(group => {
 
 
 // Collapsible field/table for array-valued keys
-function CollapsibleField({ label, values, columns }:any) {
+type Column = { key: string; label: string };
+
+function getCellValue(row: Record<string, unknown>, colKey: string): string {
+  const keysToTry = [
+    colKey,
+    colKey.replace("_name", "name"),
+    colKey.replace("name", "category_name"),
+  ];
+  for (const k of keysToTry) {
+    const v = row[k];
+    if (v !== undefined && v !== null) return String(v);
+  }
+  return "-";
+}
+
+function CollapsibleField({ label, values, columns }: { label: string; values: Array<Record<string, unknown> | string | number>; columns: Column[] }) {
   const [expanded, setExpanded] = useState(false);
   if (!values || values.length === 0) return null;
 
   if (values.length === 1) {
     // Single value, display inline
+    const first = values[0];
+    if (typeof first === "object" && first !== null) {
+      const obj = first as Record<string, unknown>;
+      return (
+        <div className="flex border-b border-gray-200 min-h-[48px]">
+          <div className="flex-1 py-3 px-5 font-medium">{label}</div>
+          <div className="flex-3 text-left py-3 px-5">{Object.values(obj).join(", ")}</div>
+        </div>
+      );
+    }
     return (
       <div className="flex border-b border-gray-200 min-h-[48px]">
         <div className="flex-1 py-3 px-5 font-medium">{label}</div>
-        <div className="flex-3 text-left py-3 px-5">
-          {typeof values[0] === "object"
-            ? Object.values(values[0]).join(", ")
-            : String(values[0])
-          }
-        </div>
+        <div className="flex-3 text-left py-3 px-5">{String(first)}</div>
       </div>
     );
   }
+
   // Multiple, expandable
   return (
     <div className="border-b border-gray-200">
       <div className="flex items-center min-h-[48px]">
         <div className="flex-1 py-3 px-5 font-medium">{label}</div>
         <div className="flex-3 text-left py-3 px-5">
-          {(typeof values[0] === "object"
-            ? Object.values(values[0]).join(", ")
+          {(typeof values[0] === "object" && values[0] !== null
+            ? Object.values(values[0] as Record<string, unknown>).join(", ")
             : String(values[0]))
           }
           &nbsp;
@@ -82,20 +103,19 @@ function CollapsibleField({ label, values, columns }:any) {
           <table className="w-full bg-gray-50 mb-2 border-collapse">
             <thead>
               <tr>
-                {columns.map((col:any) => (
+                {columns.map((col: Column) => (
                   <th key={col.key} className="p-2 text-left bg-gray-100">{col.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {values.map((row:any, i:any) => (
+              {values.map((row: Record<string, unknown> | string | number, i: number) => (
                 <tr key={i}>
-                  {columns.map((col:any) => (
+                  {columns.map((col: Column) => (
                     <td key={col.key} className="p-2 border-b">
-                      {row[col.key]
-                        ?? row[col.key.replace("_name", "name")]
-                        ?? row[col.key.replace("name", "category_name")]
-                        ?? "-"
+                      {typeof row === "object" && row !== null
+                        ? getCellValue(row as Record<string, unknown>, col.key)
+                        : String(row)
                       }
                     </td>
                   ))}

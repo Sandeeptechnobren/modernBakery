@@ -25,7 +25,7 @@ import ImageThumbnail from "@/app/components/ImageThumbnail";
 // 🔹 Table columns
 const columns = [
   { key: "osa_code", label: "Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
-  { key: "claim_period", label: "Claim Period", render: (row: TableDataType) => row.claim_period || "-" },
+  { key: "claim_period", label: "Claim Period", render: (row: TableDataType) => `${row.year || "-"} ${row.month_range || "-"}` },
   
    {
      key: "warehouse", label: "Distributor",render: (row: TableDataType) => {
