@@ -9,7 +9,7 @@ import Table, {
     searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
-import { capsCollectionList } from "@/app/services/agentTransaction";
+import { capsCollectionList, collectionList } from "@/app/services/agentTransaction";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/utils/formatNumber";
@@ -81,9 +81,9 @@ export default function SalemanLoad() {
         ): Promise<listReturnType> => {
             try {
                 setLoading(true);
-                const listRes = await capsCollectionList({
-                    // page: page.toString(),
-                    // per_page: pageSize.toString(),
+                const listRes = await collectionList({
+                    page: page.toString(),
+                    per_page: pageSize.toString(),
                 });
                 setLoading(false);
                 return {

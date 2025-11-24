@@ -863,7 +863,7 @@ export default function OrderAddEditPage() {
                   >
                     Cancel
                   </button>
-                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !itemData || itemData.length > 0} onClick={() => submitForm()} />
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !itemData || (itemData.length === 1 && !itemData[0].item_name)} onClick={() => submitForm()} />
                 </div>
               </>
             );

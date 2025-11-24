@@ -70,20 +70,20 @@ const columns = [
             } as FormatNumberOptions);
         },
     },
-    {
-        key: "status",
-        label: "Status",
-        isSortable: true,
-        render: (row: TableDataType) => {
-            // Treat status 1 or 'active' (case-insensitive) as active
-            const isActive =
-                String(row.status) === "1" ||
-                (typeof row.status === "string" &&
-                    row.status.toLowerCase() === "active");
-            return <StatusBtn isActive={isActive} />;
-        },
-        showByDefault: true,
-    },
+    // {
+    //     key: "status",
+    //     label: "Status",
+    //     isSortable: true,
+    //     render: (row: TableDataType) => {
+    //         // Treat status 1 or 'active' (case-insensitive) as active
+    //         const isActive =
+    //             String(row.status) === "1" ||
+    //             (typeof row.status === "string" &&
+    //                 row.status.toLowerCase() === "active");
+    //         return <StatusBtn isActive={isActive} />;
+    //     },
+    //     showByDefault: true,
+    // },
 ];
 
 export default function CustomerInvoicePage() {
@@ -264,7 +264,6 @@ export default function CustomerInvoicePage() {
                                 label: "Date Range",
                                 type: "dateChange"
                             },
-
                             {
                                 key: "warehouse",
                                 label: "Warehouse",
@@ -286,8 +285,6 @@ export default function CustomerInvoicePage() {
                                 multiSelectChips: true,
                                 options: Array.isArray(routeOptions) ? routeOptions : [],
                             },
-
-
                             {
                                 key: "customer",
                                 label: "Customer",

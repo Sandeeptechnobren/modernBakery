@@ -64,8 +64,8 @@ export default function SalemanLoad() {
       try {
         setLoading(true);
         const listRes = await capsCollectionList({
-          // page: page.toString(),
-          // per_page: pageSize.toString(),
+          page: page.toString(),
+          per_page: pageSize.toString(),
         });
         setLoading(false);
         return {

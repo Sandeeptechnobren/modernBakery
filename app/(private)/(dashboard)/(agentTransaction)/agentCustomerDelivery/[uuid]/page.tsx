@@ -276,7 +276,11 @@ export default function DeliveryAddEditPage() {
 
   // Function for fetching Item
   const fetchItem = async (searchTerm: string, values?: FormikValues) => {
-    const res = await itemGlobalSearch({ per_page: "10", query: searchTerm, warehouse: values?.warehouse || "" });
+    const res = await itemGlobalSearch({
+      per_page: "10",
+      query: searchTerm,
+      warehouse: values?.warehouse || "",
+    });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
       setSkeleton({ ...skeleton, item: false });
@@ -847,7 +851,9 @@ export default function DeliveryAddEditPage() {
                       name="delivery_date"
                       value={
                         values.delivery_date ||
-                        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                        new Date(Date.now() - 24 * 60 * 60 * 1000)
+                          .toISOString()
+                          .slice(0, 10)
                       }
                       min={new Date().toISOString().slice(0, 10)} // today
                       onChange={handleChange}
@@ -1128,9 +1134,9 @@ export default function DeliveryAddEditPage() {
                             return (
                               <span
                                 className="
-                                text-gray-400
-                                animate-pulse
-                              "
+                                  text-gray-400
+                                  animate-pulse
+                                "
                               >
                                 Loading...
                               </span>
@@ -1145,8 +1151,8 @@ export default function DeliveryAddEditPage() {
                             return (
                               <span
                                 className="
-                                text-gray-400
-                              "
+                                  text-gray-400
+                                "
                               >
                                 -
                               </span>
@@ -1232,19 +1238,8 @@ export default function DeliveryAddEditPage() {
                       justify-between
                     "
                   >
-                    <div
-                      className="
-                        flex flex-col
-                        w-full
-                        justify-between gap-[20px]
-                        lg:w-auto
-                      "
-                    >
-                      <div
-                        className="
-                          mt-4
-                        "
-                      >
+                    <div className="flex flex-col w-full justify-start gap-[20px] lg:w-auto">
+                      <div className="mt-4">
                         {(() => {
                           // disable add when there's already an empty/new item row
                           const hasEmptyRow = itemData.some(
@@ -1359,7 +1354,7 @@ export default function DeliveryAddEditPage() {
                       !values.delivery_date ||
                       !values.delivery ||
                       !itemData ||
-                      !itemData.length
+                      (itemData.length === 1 && !itemData[0].item_name)
                     }
                     onClick={() => submitForm()}
                   />
