@@ -109,7 +109,7 @@ const columns = [
     label: "Net",
     render: (value: any) => <>{toInternationalNumber(Number(value.Net || 0)) || "0.00"}</>,
   },
-  { key: "Vat", label: "Vat", render: (value: any) => <>{toInternationalNumber(Number(value.Vat || 0)) || "0.00"}</> },
+  { key: "Vat", label: "VAT", render: (value: any) => <>{toInternationalNumber(Number(value.Vat || 0)) || "0.00"}</> },
   { key: "Total", label: "Total", render: (value: any) => <>{toInternationalNumber(Number(value.Total || 0)) || "0.00"}</> },
 ];
 

@@ -8,7 +8,7 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import {  exchangeByUUID } from "@/app/services/agentTransaction";
+import { exchangeByUUID } from "@/app/services/agentTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
@@ -196,10 +196,10 @@ export default function OrderDetailPage() {
               icon="lucide:edit-2" 
               onClick={() => router.push(`/agentCustomerDelivery/${uuid}`)}
             /> */}
-            <BorderIconButton icon="lucide:printer" />
-            <BorderIconButton icon="lucide:mail" />
-            <BorderIconButton icon="mdi:message-outline" />
-            <DismissibleDropdown
+            {/* <BorderIconButton icon="lucide:printer" /> */}
+            {/* <BorderIconButton icon="lucide:mail" /> */}
+            {/* <BorderIconButton icon="mdi:message-outline" /> */}
+            {/* <DismissibleDropdown
               isOpen={showDropdown}
               setIsOpen={setShowDropdown}
               button={
@@ -213,7 +213,7 @@ export default function OrderDetailPage() {
                   <CustomDropdown data={dropdownDataList} />
                 </div>
               }
-            />
+            /> */}
           </div>
         </div>
       </div>
@@ -287,9 +287,25 @@ export default function OrderDetailPage() {
           </div> */}
         </div>
 
-
+        <h3 className="text-[16px] font-semibold mb-2 mt-8">Received</h3>
+        <Table
+          data={returnsTableData}
+          config={{
+            columns: [
+              { key: "id", label: "#", width: 60 },
+              { key: "itemCode", label: "Product Code" },
+              { key: "itemName", label: "Product Name", width: 250 },
+              { key: "UOM", label: "UOM" },
+              { key: "Quantity", label: "Quantity" },
+              { key: "Price", label: "Price" },
+              { key: "Total", label: "Total" },
+              { key: "return_type", label: "Return Type" },
+              { key: "region", label: "Reason" },
+            ],
+          }}
+        />
         {/* ---------- Invoices Table ---------- */}
-        <h3 className="text-[16px] font-semibold mb-2">Invoices</h3>
+        <h3 className="text-[16px] font-semibold mb-2">Delivered</h3>
         <Table
           data={invoiceTableData}
           config={{
@@ -307,23 +323,7 @@ export default function OrderDetailPage() {
         />
 
         {/* ---------- Returns Table ---------- */}
-        <h3 className="text-[16px] font-semibold mb-2 mt-8">Returns</h3>
-        <Table
-          data={returnsTableData}
-          config={{
-            columns: [
-              { key: "id", label: "#", width: 60 },
-              { key: "itemCode", label: "Product Code" },
-              { key: "itemName", label: "Product Name", width: 250 },
-              { key: "UOM", label: "UOM" },
-              { key: "Quantity", label: "Quantity" },
-              { key: "Price", label: "Price" },
-              { key: "Total", label: "Total" },
-              { key: "return_type", label: "Return Type" },
-              { key: "region", label: "Reason" },
-            ],
-          }}
-        />
+
 
         {/* ---------- Order Summary ---------- */}
         <div className="flex justify-between text-primary">
