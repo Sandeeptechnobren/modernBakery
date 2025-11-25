@@ -567,7 +567,7 @@ export default function OrderAddEditPage() {
                       required
                       label="  Distributor"
                       name="warehouse"
-                      placeholder="Search   Distributor"
+                      placeholder="Search distributor"
                       onSearch={(q) => fetchWarehouse(q)}
                       initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
                       onSelect={(opt) => {

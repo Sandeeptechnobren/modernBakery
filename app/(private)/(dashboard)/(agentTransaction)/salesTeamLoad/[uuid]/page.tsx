@@ -13,7 +13,7 @@ import {
   salesmanLoadHeaderById,
   salesmanLoadHeaderUpdate,
 } from "@/app/services/agentTransaction";
-import { genearateCode, itemList } from "@/app/services/allApi";
+import { genearateCode, itemList, getWarehouseStockDetails, warehouseStockTopOrders } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -86,6 +86,7 @@ export default function AddEditSalesmanLoad() {
   const [form, setForm] = useState({
     salesman_type: "",
     warehouse: "",
+    warehouse_id: "",
     route: "",
     salesman: "",
     project_type: "",
@@ -105,36 +106,61 @@ export default function AddEditSalesmanLoad() {
       (async () => {
         try {
           setLoading(true);
-          const res = await itemList({ allData: "true", warehouse_id: form.warehouse });
-          const data = res.data
-            .map((item: any) => ({
-              id: item.id,
-              item_code: item.item_code,
-              name: item.name,
-              cse_qty: "",
-              pcs_qty: "",
-              status: 1,
-              uom: item.item_uoms,
-              warehouse_stocks: item.warehouse_stocks || [],
-            }))
+
+          // Fetch warehouse stock details
+          const stockRes = await warehouseStockTopOrders(form.warehouse);
+          const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
+
+          // Fetch full item details to get proper UOM IDs
+          const itemsRes = await itemList({ allData: "true", warehouse_id: form.warehouse });
+          const fullItems = itemsRes.data || [];
+
+          // Merge stock data with full item data
+          const data = stocksArray
+            .map((stockItem: any) => {
+              // Find the full item details
+              const fullItem = fullItems.find((item: any) => item.id === stockItem.item_id);
+
+              if (!fullItem) {
+                console.warn(`Item ${stockItem.item_id} not found in full items list`);
+                return null;
+              }
+
+              return {
+                id: stockItem.item_id,
+                item_code: stockItem.item_code,
+                name: stockItem.item_name,
+                cse_qty: "",
+                pcs_qty: "",
+                status: 1,
+                uom: fullItem.item_uoms || [], // Use proper UOM data from full item
+                warehouse_stocks: [{
+                  warehouse_id: Number(form.warehouse),
+                  qty: Number(stockItem.stock_qty) || 0
+                }],
+              };
+            })
             .filter((item: any) => {
-              // Find stock for the selected warehouse
+              if (!item) return false;
+              // Only show items with stock > 0
               const warehouseStock = item.warehouse_stocks.find(
                 (stock: any) => stock.warehouse_id?.toString() === form.warehouse
               );
-              // Only show items with stock > 0
               return warehouseStock && warehouseStock.qty > 0;
             });
+
+          console.log("✅ Final Processed Items Count:", data.length);
           setItemData(data);
           setIsItemsLoaded(true);
         } catch (error) {
-          console.error(error);
+          console.error("❌ Error fetching warehouse stock:", error);
+          showSnackbar("Failed to fetch items for the selected warehouse", "error");
         } finally {
           setLoading(false);
         }
       })();
     }
-  }, [form.warehouse, setLoading]);
+  }, [form.warehouse, setLoading, showSnackbar]);
 
 
 
@@ -202,6 +228,7 @@ export default function AddEditSalesmanLoad() {
           setForm({
             salesman_type: data?.salesman_type || "",
             warehouse: data?.warehouse?.id?.toString() || "",
+            warehouse_id: data?.warehouse_id?.id?.toString() || "",
             route: data?.route?.id?.toString() || "",
             salesman: data?.salesman?.id?.toString(),
             project_type:
@@ -486,6 +513,7 @@ export default function AddEditSalesmanLoad() {
         <div>
         </div>
         <Table
+          key={`items-table-${itemData.length}`}
           data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
           config={{
             table: { height: 500 },
@@ -561,7 +589,7 @@ export default function AddEditSalesmanLoad() {
                 ),
               },
             ],
-            pageSize: itemData.length
+            pageSize: itemData.length > 0 ? itemData.length : 10
           }}
         />
 
