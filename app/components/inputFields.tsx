@@ -596,7 +596,9 @@ export default function InputFields({
                   })()
                 )}
                 {!disabled && (
-                  <svg onClick={(e) => setDropdownOpen(v => !v)} className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  <div onClick={(e) => { e.stopPropagation(); setDropdownOpen(v => !v); }} className="w-5 h-full flex items-center justify-center pointer-events-auto">
+                    <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
                 )}
               </div>
               {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
@@ -734,7 +736,9 @@ export default function InputFields({
                   </span>
                 )}
                 {!disabled && (
-                  <svg onClick={(e) => setDropdownOpen(v => !v)} className="w-4 h-4 mr-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  <div  onClick={(e) => { e.stopPropagation(); setDropdownOpen(v => !v); }} className="pr-4 h-full flex items-center">
+                  <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </div>
                 )}
               </div>
               {dropdownOpen && !loading && dropdownProperties.width !== "0" && (

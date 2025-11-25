@@ -176,6 +176,7 @@ export const updateStatusNewCustomer = async (data: object) => {
 type SalesmanUnloadParams = {
   start_date?: string;
   end_date?: string;
+  date?: string;
   region_id?: string;
   page?: string;
   per_page?: string;

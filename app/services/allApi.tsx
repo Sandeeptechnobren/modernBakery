@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  headers: {  
+  headers: {
     "Content-Type": "application/json",
   },
 });
@@ -28,8 +28,8 @@ export function handleError(error: unknown) {
   // const router = useRouter()
 
   if (axios.isAxiosError(error) && error.response) {
-    console?.error("API Error:",error, error?.response.data);
-    if(error.status === 401){
+    console?.error("API Error:", error, error?.response.data);
+    if (error.status === 401) {
       // router.push('/login')
       window.location.reload();
     }
@@ -296,7 +296,7 @@ export const updateItemCategory = async (
   category_id: number,
   category_name?: string | undefined,
   status?: 0 | 1 | undefined,
-category_code?: string | undefined
+  category_code?: string | undefined
 ) => {
   const body = {
     ...(category_name && { category_name }),
@@ -379,7 +379,7 @@ export const updateItemSubCategory = async (
   try {
     const res = await API.put(
       `/api/settings/item-sub-category/${sub_category_id}/update`,
-      { sub_category_name,sub_category_code,status, category_id }
+      { sub_category_name, sub_category_code, status, category_id }
     );
     return res.data;
   } catch (error: unknown) {
@@ -500,7 +500,7 @@ export const merchandiserData = async () => {
     return handleError(error);
   }
 };
-export const getCustomerByMerchandiser = async (merchandiser_id:string) => {
+export const getCustomerByMerchandiser = async (merchandiser_id: string) => {
   try {
     const res = await API.get(`/api/master/route-visits/customerlist/${merchandiser_id}`);
     return res.data;
@@ -618,8 +618,8 @@ export const updateWarehouse = async (id: string, payload: object) => {
     const res =
       payload instanceof FormData
         ? await API.put(`/api/master/warehouse/${id}`, payload, {
-            headers: { "Content-Type": "multipart/form-data" },
-          })
+          headers: { "Content-Type": "multipart/form-data" },
+        })
         : await API.put(`/api/master/warehouse/${id}`, payload);
 
     return res.data;
@@ -884,8 +884,8 @@ export const addWarehouse = async (body: object) => {
     const res =
       body instanceof FormData
         ? await API.post("/api/master/warehouse/create", body, {
-            headers: { "Content-Type": "multipart/form-data" },
-          })
+          headers: { "Content-Type": "multipart/form-data" },
+        })
         : await API.post("/api/master/warehouse/create", body);
 
     return res.data;
@@ -1468,7 +1468,7 @@ export const updateExpenseType = async (uuid: string, body: object) => {
     console.error("User List failed ❌", error);
     throw error;
   }
-};  
+};
 
 export const deleteExpenseType = async (id: string) => {
   try {
@@ -1632,6 +1632,16 @@ export const addVehicle = async (data: object) => {
   }
 };
 
+export const numberPlateVerification = async (query: string) => {
+  try {
+    const res = await API.get(`/api/master/vehicle/numberplate?number_plat=${query}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const updateVehicle = async (
   uuid: string,
   data: object
@@ -1778,7 +1788,7 @@ export const getSalesmanById = async (uuid: string) => {
   }
 };
 
-export const getSalesmanBySalesId = async (uuid: string,query:{from:string,to:string,page:string}) => {
+export const getSalesmanBySalesId = async (uuid: string, query: { from: string, to: string, page: string }) => {
   try {
     const res = await API.get(`/api/master/salesmen/salespersalesman/${uuid}?from=${query.from}&to=${query.to}&page=${query.page}`);
     return res.data;
@@ -1787,7 +1797,7 @@ export const getSalesmanBySalesId = async (uuid: string,query:{from:string,to:st
   }
 };
 
-export const getOrderOfSalesmen= async (uuid: string,query:{from:string,to:string}) => {
+export const getOrderOfSalesmen = async (uuid: string, query: { from: string, to: string }) => {
   try {
     const res = await API.get(`/api/master/salesmen/orderpersalesman/${uuid}?from=${query.from}&to=${query.to}`);
     return res.data;
@@ -1982,7 +1992,7 @@ export const warehouseLowStocksKpi = async (id: string) => {
 
 export const warehouseStockTopOrders = async (id: string) => {
   try {
-    const res = await API.get(`/api/settings/warehouse-stocks/46/stock-details`);
+    const res = await API.get(`/api/settings/warehouse-stocks/${id}/stock-details`);
 
     return res.data;
   } catch (error: unknown) {
@@ -2084,7 +2094,7 @@ export const updateItemStatus = async (body: object) => {
 
 export const addItem = async (payload: object, type: "json" | "form-data" = "json") => {
   try {
-    if(type === "json") {
+    if (type === "json") {
       const res = await API.post("/api/master/items/add", payload);
       return res.data;
     }
@@ -2108,7 +2118,7 @@ export const itemById = async (id: string) => {
 
 export const editItem = async (id: string, payload: object, type: "json" | "form-data" = "json") => {
   try {
-    if(type === "json") {
+    if (type === "json") {
       const res = await API.post(`/api/master/items/update/${id}`, payload);
       return res.data;
     }
@@ -2845,7 +2855,7 @@ export const submenuGenerateCode = async (params?: Params) => {
 export const exportRoutes = async (params?: Params) => {
   try {
     const res = await API.post(`/api/master/route/export`, { params });
-    return res.data; 
+    return res.data;
   } catch (error: unknown) {
     handleError(error);
     return null;
@@ -3352,9 +3362,9 @@ export const getSalesmanInWarehouse = async (id?: string, params?: Params) => {
   }
 };
 
-export const getCustomerInWarehouse = async (id?: string,params?:Params) => {
+export const getCustomerInWarehouse = async (id?: string, params?: Params) => {
   try {
-    const res = await API.get(`api/master/warehouse/warehouseCustomer/${id}`,{params});
+    const res = await API.get(`api/master/warehouse/warehouseCustomer/${id}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3506,7 +3516,7 @@ export const addBrand = async (payload: object) => {
     const res = await API.post(`/api/settings/brands/add`, payload);
 
     return res.data;
-  } catch (error: unknown) { 
+  } catch (error: unknown) {
   }
 };
 
@@ -3523,6 +3533,15 @@ export const BrandById = async (uuid: string) => {
 export const editBrand = async (uuid: string, payload: object) => {
   try {
     const res = await API.put(`/api/settings/brands/update/${uuid}`, payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const getWarehouseStockDetails = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/warehouse-stocks/${id}/stock-details`);
 
     return res.data;
   } catch (error: unknown) {

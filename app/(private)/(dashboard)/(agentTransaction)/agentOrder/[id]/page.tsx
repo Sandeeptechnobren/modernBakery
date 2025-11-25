@@ -565,9 +565,9 @@ export default function OrderAddEditPage() {
                   <div>
                     <AutoSuggestion
                       required
-                      label="  Distributor"
+                      label="Distributor"
                       name="warehouse"
-                      placeholder="Search   Distributor"
+                      placeholder="Search Distributor"
                       onSearch={(q) => fetchWarehouse(q)}
                       initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
                       onSelect={(opt) => {
