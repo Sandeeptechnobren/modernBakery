@@ -427,13 +427,7 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
-          {
-            isActive: false,
-            href: "/compensationReport",
-            label: "Compensation Report",
-            leadingIcon: "hugeicons:invoice",
-            iconColor: "text-cyan-500"
-          },
+          
         ]
       },
       {
@@ -456,6 +450,13 @@ export const initialLinkData: SidebarDataType[] = [
             href: "/petitClaim",
             label: "Petit Claim",
             leadingIcon: "mdi:file-document-outline",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/compensationReport",
+            label: "Compensation Report",
+            leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
           

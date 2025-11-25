@@ -55,15 +55,15 @@ const columns = [
       },
   { key: "item_category_dll", label: "Compensation Code", showByDefault: true },
    {
-          key: "warehouse_code", label: "Compensation Name", showByDefault: true,
+          key: "warehouse_code", label: "Item", showByDefault: true,
           render: (row: TableDataType) => {
               const code = row.erp_code || "-";
               const name = row.item_name || "-";
               return `${code}${code && name ? " - " : "-"}${name}`;
           }
       },
-  { key: "base_uom_vol_calc", label: "Base UOM", showByDefault: true, render: (row: TableDataType) => (row.base_uom_vol_calc) ?? "-" },
-  { key: "alter_base_uom_vol_calc", label: "Alter Base UOM", showByDefault: true, render: (row: TableDataType) => (row.alter_base_uom_vol_calc) ?? "-" },
+  { key: "base_uom_vol_calc", label: "Factory Price", showByDefault: true, render: (row: TableDataType) => (row.base_uom_vol_calc) ?? "-" },
+  { key: "alter_base_uom_vol_calc", label: "Purchase Price", showByDefault: true, render: (row: TableDataType) => (row.alter_base_uom_vol_calc) ?? "-" },
   { key: "quantity", label: "Free Quantity", showByDefault: true, render: (row: TableDataType) => toInternationalNumber(row.quantity) ?? "-" },
   { key: "total_amount", label: "Amount", showByDefault: true, render: (row: TableDataType) => <>{toInternationalNumber(row.total_amount) || '0.00'}</> },
   {
@@ -77,7 +77,6 @@ const columns = [
           row.status.toLowerCase() === "active");
       return <StatusBtn isActive={isActive} />;
     },
-    showByDefault: true,
   },
 ];
 
@@ -180,7 +179,7 @@ export default function CustomerInvoicePage() {
           api: {
             filterBy: filterBy },
           header: {
-            title: "Company Delivery",
+            title: "Compensation Report",
             columnFilter: true,
             searchBar: false,
             threeDot: hasData
