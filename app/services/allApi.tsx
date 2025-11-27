@@ -1756,6 +1756,19 @@ export const customerSubCategoryList = async (params?: Params) => {
     return handleError(error);
   }
 };
+
+export const addCustomerSubCategory = async (body: object) => {
+  try {
+    const res = await API.post(
+      `/api/settings/customer-sub-category/create`,
+      body
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const deleteCustomerSubCategory = async (id: number) => {
   try {
     const res = await API.delete(
@@ -1767,10 +1780,67 @@ export const deleteCustomerSubCategory = async (id: number) => {
   }
 };
 
-export const addCustomerSubCategory = async (body: object) => {
+export const assetsTypeList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/asset-types/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addAssetsType = async (body: object) => {
   try {
     const res = await API.post(
-      `/api/settings/customer-sub-category/create`,
+      `/api/settings/asset-types/add`,
+      body
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const manufacturerList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/asset-manufacturer/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addManufacturer = async (body: object) => {
+  try {
+    const res = await API.post(
+      `/api/settings/asset-manufacturer/add`,
+      body
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const assetsModelList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/asset-model-number/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addAssetsModel = async (body: object) => {
+  try {
+    const res = await API.post(
+      `/api/settings/asset-model-number/add`,
       body
     );
     return res.data;

@@ -148,12 +148,10 @@ export default function AddEditSalesmanLoad() {
               );
               return warehouseStock && warehouseStock.qty > 0;
             });
-
-          console.log("✅ Final Processed Items Count:", data.length);
           setItemData(data);
           setIsItemsLoaded(true);
         } catch (error) {
-          console.error("❌ Error fetching warehouse stock:", error);
+          // console.error("❌ Error fetching warehouse stock:", error);
           showSnackbar("Failed to fetch items for the selected warehouse", "error");
         } finally {
           setLoading(false);

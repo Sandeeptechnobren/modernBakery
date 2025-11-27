@@ -272,6 +272,37 @@ export const initialLinkData: SidebarDataType[] = [
         leadingIcon: "wpf:approval",
         iconColor: "text-green-500",
       },
+      {
+        isActive: false,
+        href: "#",
+        label: "Manage Assets",
+        leadingIcon: "streamline-freehand:money-bag",
+        trailingIcon: "mdi-light:chevron-right",
+        iconColor: "text-yellow-400",
+        children: [
+          {
+            isActive: false,
+            href: "/settings/manageAssets/assetsCategory",
+            label: "Assets Category",
+            leadingIcon: "mdi:storefront",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/manageAssets/manufacturer",
+            label: "Manufacturer",
+            leadingIcon: "mdi:package-variant",
+            iconColor: "text-cyan-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/manageAssets/assetsModel",
+            label: "Assets Model",
+            leadingIcon: "mdi:map",
+            iconColor: "text-yellow-400",
+          },
+        ],
+      },
     ],
   },
 ];

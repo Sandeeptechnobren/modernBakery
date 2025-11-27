@@ -868,7 +868,7 @@ export default function InvoiceddEditPage() {
 
                     <div className="flex flex-col items-end">
                         <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-                            Distributor&apos;s Invoices
+                            Invoices
                         </span>
                         <span className="text-primary text-[14px] tracking-[10px]">
                             #{code}

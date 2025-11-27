@@ -33,7 +33,9 @@ import {
   SurveyList,
   uomList,
   vehicleListData,
-  warehouseList
+  warehouseList,
+  assetsTypeList,
+  manufacturerList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -68,6 +70,8 @@ interface DropdownDataContextType {
   companyTypeList: CompanyType[];
   uomList: UOM[];
   locationList: LocationItem[];
+  assetsTypeList: AssetsType[];
+  manufacturerList: Manufacturer[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -102,6 +106,8 @@ interface DropdownDataContextType {
   companyTypeOptions: { value: string; label: string }[];
   uomOptions: { value: string; label: string }[];
   locationOptions: { value: string; label: string }[];
+  assetsTypeOptions: { value: string; label: string }[];
+  manufacturerOptions: { value: string; label: string }[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   refreshDropdown: (name: string, params?: any) => Promise<void>;
@@ -353,6 +359,18 @@ interface LocationItem {
   code: string;
 }
 
+interface AssetsType {
+  id: number;
+  name: string;
+  osa_code: string;
+}
+
+interface Manufacturer {
+  id: number;
+  name: string;
+  osa_code: string;
+}
+
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
 
 export const useAllDropdownListData = () => {
@@ -400,6 +418,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [companyType, setComapanyType] = useState<CompanyType[]>([]);
   const [uom, setUom] = useState<UOM[]>([]);
   const [location, setLocation] = useState<LocationItem[]>([]);
+  const [assetsType, setAssetsType] = useState<AssetsType[]>([]);
+  const [manufacturer, setManufacturer] = useState<Manufacturer[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -516,6 +536,16 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }));
 
   const projectOptions = (Array.isArray(project) ? project : []).map((c: Project) => ({
+    value: String(c.id ?? ''),
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+  }))
+
+  const assetsTypeOptions = (Array.isArray(assetsType) ? assetsType : []).map((c: AssetsType) => ({
+    value: String(c.id ?? ''),
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+  }));
+
+  const manufacturerOptions = (Array.isArray(manufacturer) ? manufacturer : []).map((c: Manufacturer) => ({
     value: String(c.id ?? ''),
     label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
   }))
@@ -934,6 +964,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       { run: () => companyTypeList(), setter: (v) => setComapanyType(v as CompanyType[]) },
       { run: () => uomList(), setter: (v) => setUom(v as UOM[]) },
       { run: () => locationList(), setter: (v) => setLocation(v as LocationItem[]) },
+      { run: () => assetsTypeList(), setter: (v) => setAssetsType(v as AssetsType[]) },
+      { run: () => manufacturerList(), setter: (v) => setManufacturer(v as Manufacturer[]) },
     ];
 
     try {
@@ -1219,6 +1251,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         companyTypeList: companyType,
         uomList: uom,
         locationList: location,
+        assetsTypeList: assetsType,
+        manufacturerList: manufacturer,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
@@ -1271,6 +1305,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         getPrimaryUom,
         uomOptions,
         locationOptions,
+        assetsTypeOptions,
+        manufacturerOptions,
         loading
       }}
     >
