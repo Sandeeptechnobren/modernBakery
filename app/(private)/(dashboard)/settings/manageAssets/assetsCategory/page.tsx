@@ -61,7 +61,7 @@ export default function Page() {
               actions: [
                 <SidebarBtn
                   key={0}
-                  href="/settings/manageAssets/assetsType/add"
+                  href="/settings/manageAssets/assetsCategory/add"
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add"

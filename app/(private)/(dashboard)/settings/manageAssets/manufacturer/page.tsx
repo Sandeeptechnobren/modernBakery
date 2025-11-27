@@ -73,7 +73,7 @@ export default function Page() {
               actions: [
                 <SidebarBtn
                   key={0}
-                  href="/settings/manageAssets/manufacturer/add"
+                  href="./manufacturer/add"
                   isActive
                   leadingIcon="lucide:plus"
                   label="Add"
