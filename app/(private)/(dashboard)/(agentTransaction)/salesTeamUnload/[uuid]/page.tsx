@@ -52,61 +52,56 @@ export default function AddEditSalesmanUnload() {
   const [itemData, setItemData] = useState<TableDataType[]>([]);
   const [isItemsLoaded, setIsItemsLoaded] = useState(false);
 
-  // ✅ Fetch salesman unload data when salesman is selected
-useEffect(() => {
-  if (form.salesman_id && !isEditMode) {
-    (async () => {
-      try {
-        setLoading(true);
-        
-        // ✅ Pass salesman_id as query parameter
-        const res = await salesmanUnloadData(Number(form.salesman_id));
-        
-        // console.log("🟢 Salesman Unload Data Response:", res);
-        // console.log("🟢 Salesman ID sent:", form.salesman_id);
-        
-        // Handle different response structures
-        const itemsArray = res?.data?.items || res?.data || res?.items || [];
-        
-        if (Array.isArray(itemsArray) && itemsArray.length > 0) {
-          const data = itemsArray.map((item: any) => ({
-            item_id: item.item?.item_id || item.item_id || item.item_id,
-            erp_code: item.item?.erp_code || item.erp_code,
-            item_name: item.item?.item_name || item.item_name,
-            total_load: item.total_load || "",
+  // ✅ Fetch salesman unload data when date is selected
+  useEffect(() => {
+    if (form.unload_date && form.salesman_id && !isEditMode) {
+      (async () => {
+        try {
+          setLoading(true);
 
-            unload_qty: item.unload_qty?.toString() || "0", // Default to "0" instead of empty
-            // pcs: item.pcs || "",
-            // uom_id: item.uom_id || "",
-          }));
-          setItemData(data);
-          setIsItemsLoaded(true);
-        } else {
-          // If no data, reset to empty table
+          // Pass the date to the API
+          const res = await salesmanUnloadData(Number(form.salesman_id), { date: form.unload_date });
+
+          const itemsArray = res?.data?.items || res?.data || res?.items || [];
+
+          if (Array.isArray(itemsArray) && itemsArray.length > 0) {
+            const data = itemsArray.map((item: any) => ({
+              item_id: item.item?.item_id || item.item_id || item.item_id,
+              erp_code: item.item?.erp_code || item.erp_code,
+              item_name: item.item?.item_name || item.item_name,
+              total_load: item.total_load || "",
+
+              unload_qty: item.unload_qty?.toString() || "0", // Default to "0" instead of empty
+              uom: item.uom || "",
+            }));
+            setItemData(data);
+            setIsItemsLoaded(true);
+          } else {
+            // If no data, reset to empty table
+            setItemData([]);
+            setIsItemsLoaded(true);
+            showSnackbar("No items found for selected date and salesman", "info");
+          }
+        } catch (error: any) {
+          console.error("Salesman Unload Data Error:", error);
+          console.error("Error details:", error?.response?.data);
+          showSnackbar(
+            error?.response?.data?.message || "Failed to fetch item data",
+            "error"
+          );
+          // Reset items on error
           setItemData([]);
-          setIsItemsLoaded(true);
-          showSnackbar("No items found for selected salesman", "info");
+          setIsItemsLoaded(false);
+        } finally {
+          setLoading(false);
         }
-      } catch (error: any) {
-        console.error("Salesman Unload Data Error:", error);
-        console.error("Error details:", error?.response?.data);
-        showSnackbar(
-          error?.response?.data?.message || "Failed to fetch item data", 
-          "error"
-        );
-        // Reset items on error
-        setItemData([]);
-        setIsItemsLoaded(false);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  } else if (!form.salesman_id && !isEditMode) {
-    // Reset items when salesman is deselected
-    setItemData([]);
-    setIsItemsLoaded(false);
-  }
-}, [form.salesman_id, isEditMode, setLoading, showSnackbar]);
+      })();
+    } else if ((!form.unload_date || !form.salesman_id) && !isEditMode) {
+      // Reset items when date or salesman is deselected
+      setItemData([]);
+      setIsItemsLoaded(false);
+    }
+  }, [form.unload_date, form.salesman_id, isEditMode, setLoading, showSnackbar]);
 
   // ✅ Fetch data for edit mode
   useEffect(() => {
@@ -187,7 +182,8 @@ useEffect(() => {
         .map((i) => ({
           item_id: i.item_id,
           qty: String(i.unload_qty || "0"),
-          status: 1,
+          uom: i.uom,
+          // status: 1,
         }));
 
       if (details.length === 0) {
@@ -382,24 +378,16 @@ useEffect(() => {
                   </span>
                 ),
               },
-              { 
-                key: "total_load", 
+              {
+                key: "total_load",
                 label: "PSC",
                 render: (row) => <span>{row.total_load || "-"}</span>
-              }, 
+              },
               {
                 key: "unload_qty",
                 label: "Quantity",
                 render: (row) => (
-                  <InputFields
-                    label=""
-                    type="number"
-                    name="unload_qty"
-                    value={row.unload_qty || ""}
-                    onChange={(e) =>
-                      recalculateItem(Number(row.idx), "unload_qty", e.target.value)
-                    }
-                  />
+                  <span>{row.unload_qty || "0"}</span>
                 ),
               },
               // { 

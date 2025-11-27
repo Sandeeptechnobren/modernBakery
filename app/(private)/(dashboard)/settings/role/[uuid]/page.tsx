@@ -295,8 +295,13 @@ export default function AddEditRole() {
 
     // 🔁 Refresh permission cache
     try {
-      if (refresh) await refresh({ force: true });
-      else await preload();
+      if (refresh) {
+        await refresh({ force: true });
+        console.log("Permissions refreshed after role change");
+      } else {
+        await preload();
+        console.log("Permissions preloaded after role change");
+      } 
     } catch (cacheErr) {
       console.error("Failed to refresh permissions after role change:", cacheErr);
     }

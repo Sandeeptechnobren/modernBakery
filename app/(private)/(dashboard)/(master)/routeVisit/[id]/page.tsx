@@ -1793,7 +1793,7 @@ export default function AddEditRouteVisit() {
                   <div>
                     <InputFields
                       required
-                      label="Salesman Type"
+                      label="Customer Type"
                       value={form.salesman_type}
                       onChange={(e) =>
                         setForm((prev) => ({
@@ -1802,7 +1802,7 @@ export default function AddEditRouteVisit() {
                         }))
                       }
                       options={[
-                        { value: "1", label: "Agent Customer" },
+                        { value: "1", label: "Field Customer" },
                         { value: "2", label: "Merchandiser" },
                       ]}
                       error={errors.salesman_type}

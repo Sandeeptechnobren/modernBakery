@@ -455,7 +455,12 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
                 </tr>
               </thead>
               <tbody>
-                {steps.map((step, idx) => (
+                {steps.map((step, idx) => {
+                  
+                                    console.log(step,"hii461")
+                   
+                  
+                  return(
                   <SortableRow
                     key={step.id}
                     step={step}
@@ -467,7 +472,7 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
                     roleOptions={roleListData}
                     userOptions={userOptions}
                   />
-                ))}
+                )})}
               </tbody>
             </table>
           </SortableContext>
@@ -510,7 +515,7 @@ function SortableRow({
 
   return (
     <tr  className="text-[14px] bg-white text-[#535862]">
-      <td ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
+      <td  draggable={true} ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
   <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? "Role" : "User"}</td>
   <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1"?<InputFields

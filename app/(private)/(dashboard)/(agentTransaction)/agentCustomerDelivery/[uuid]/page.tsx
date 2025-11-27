@@ -28,6 +28,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import { toTitleCase } from "@/app/(private)/utils/text";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 interface FormData {
   id: number;
@@ -139,9 +140,9 @@ interface ItemData {
   Vat: string;
   Total: string;
   [key: string]:
-  | string
-  | { label: string; value: string; price?: string }[]
-  | undefined;
+    | string
+    | { label: string; value: string; price?: string }[]
+    | undefined;
 }
 
 export default function DeliveryAddEditPage() {
@@ -156,7 +157,7 @@ export default function DeliveryAddEditPage() {
 
   const validationSchema = Yup.object({
     warehouse: Yup.string().required("Warehouse is required"),
-    delivery: Yup.string().required("Delivery is required"),
+    order_code: Yup.string().required("Delivery is required"),
     note: Yup.string().max(1000, "Note is too long"),
     items: Yup.array().of(itemRowSchema),
   });
@@ -167,11 +168,11 @@ export default function DeliveryAddEditPage() {
   const CURRENCY = localStorage.getItem("country") || "";
   const [skeleton, setSkeleton] = useState({
     route: false,
-    delivery: false,
+    order_code: false,
     item: false,
   });
   const [filteredDeliveryOptions, setFilteredDeliveryOptions] = useState<
-    { label: string; value: string }[]
+    { label: string; value: string; order_code?: string }[]
   >([]);
   const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<
     { label: string; value: string }[]
@@ -179,11 +180,12 @@ export default function DeliveryAddEditPage() {
   const form = {
     warehouse: "",
     route: "",
-    delivery: "",
+    order_code: "",
     note: "",
     delivery_date: new Date().toISOString().slice(0, 10),
   };
 
+  const { warehouseAllOptions } = useAllDropdownListData();
   const [deliveryData, setDeliveryData] = useState<OrderData[]>([]);
   const [searchedItem, setSearchedItem] = useState<FormData[] | null>(null);
   const [itemsOptions, setItemsOptions] = useState<
@@ -217,7 +219,7 @@ export default function DeliveryAddEditPage() {
   const validateRow = async (
     index: number,
     row?: ItemData,
-    options?: { skipUom?: boolean },
+    options?: { skipUom?: boolean }
   ) => {
     const rowData = row ?? itemData[index];
     if (!rowData) return;
@@ -292,12 +294,12 @@ export default function DeliveryAddEditPage() {
     const updatedData = data.map((item: any) => {
       const item_uoms = item?.item_uoms
         ? item?.item_uoms?.map((uom: any) => {
-          if (uom?.uom_type === "primary") {
-            return { ...uom, price: item.pricing?.auom_pc_price };
-          } else if (uom?.uom_type === "secondary") {
-            return { ...uom, price: item.pricing?.buom_ctn_price };
-          }
-        })
+            if (uom?.uom_type === "primary") {
+              return { ...uom, price: item.pricing?.auom_pc_price };
+            } else if (uom?.uom_type === "secondary") {
+              return { ...uom, price: item.pricing?.buom_ctn_price };
+            }
+          })
         : item?.item_uoms;
       return { ...item, item_uoms };
     });
@@ -318,14 +320,14 @@ export default function DeliveryAddEditPage() {
           (item.erp_code ?? item.item_code ?? item.code ?? "") +
           " - " +
           (item.name ?? ""),
-      }),
+      })
     );
     // Merge newly fetched options with existing ones so previously selected items remain available
     setItemsOptions((prev: { label: string; value: string }[] = []) => {
       const map = new Map<string, { label: string; value: string }>();
       prev.forEach((o) => map.set(o.value, o));
       options.forEach((o: { label: string; value: string }) =>
-        map.set(o.value, o),
+        map.set(o.value, o)
       );
       return Array.from(map.values());
     });
@@ -335,6 +337,7 @@ export default function DeliveryAddEditPage() {
 
   const codeGeneratedRef = useRef(false);
   const [code, setCode] = useState("");
+  const [orderCode, setOrderCode] = useState("");
   useEffect(() => {
     // generate code
     if (!codeGeneratedRef.current) {
@@ -355,7 +358,7 @@ export default function DeliveryAddEditPage() {
     index: number,
     field: string,
     value: string,
-    values?: FormikValues,
+    values?: FormikValues
   ) => {
     const newData = [...itemData];
     const item: ItemData = newData[index] as ItemData;
@@ -396,7 +399,9 @@ export default function DeliveryAddEditPage() {
         item.Quantity = "1";
         // persist a readable label
         const computedLabel = selectedOrder
-          ? `${selectedOrder.item_code ?? selectedOrder.erp_code ?? ""}${selectedOrder.item_code || selectedOrder.erp_code ? " - " : ""}${selectedOrder.name ?? ""}`
+          ? `${selectedOrder.item_code ?? selectedOrder.erp_code ?? ""}${
+              selectedOrder.item_code || selectedOrder.erp_code ? " - " : ""
+            }${selectedOrder.name ?? ""}`
           : "";
         item.item_label = computedLabel;
         // ensure the selected item is available in itemsOptions
@@ -481,26 +486,27 @@ export default function DeliveryAddEditPage() {
   // --- Compute totals for summary
   const grossTotal = itemData.reduce(
     (sum, item) => sum + Number(item.Total || 0),
-    0,
+    0
   );
   const totalVat = itemData.reduce(
     (sum, item) => sum + Number(item.Vat || 0),
-    0,
+    0
   );
   const netAmount = itemData.reduce(
     (sum, item) => sum + Number(item.Net || 0),
-    0,
+    0
   );
   const preVat = totalVat ? grossTotal - totalVat : grossTotal;
   const discount = itemData.reduce(
     (sum, item) => sum + Number(item.Discount || 0),
-    0,
+    0
   );
   const finalTotal = netAmount + totalVat;
 
   const generatePayload = (values?: FormikValues) => {
     return {
       delivery_code: code,
+      order_code: filteredDeliveryOptions.find(option => option.value === values?.delivery)?.order_code || null,
       warehouse_id: Number(values?.warehouse) || null,
       customer_id: Number(values?.customer_id) || null,
       delivery_date: values?.delivery_date || form.delivery_date,
@@ -528,7 +534,7 @@ export default function DeliveryAddEditPage() {
 
   const handleSubmit = async (
     values: FormikValues,
-    formikHelpers: FormikHelpers<FormikValues>,
+    formikHelpers: FormikHelpers<FormikValues>
   ) => {
     try {
       // validate item rows separately (they live in local state)
@@ -540,7 +546,7 @@ export default function DeliveryAddEditPage() {
         console.error("Item validation errors:", itemErr.inner || itemErr);
         showSnackbar(
           itemErr.inner.map((err: any) => err.message).join(", "),
-          "error",
+          "error"
         );
         // set a top-level form error to prevent submission
         formikHelpers.setErrors({
@@ -592,17 +598,17 @@ export default function DeliveryAddEditPage() {
   ];
 
   const fetchAgentDeliveries = async (values: FormikValues, search: string) => {
-    setSkeleton({ ...skeleton, delivery: true });
+    setSkeleton({ ...skeleton, order_code: true });
     const res = await agentOrderList({
       warehouse_id: values.warehouse,
       delivery_date: values.delivery_date,
       query: search || "",
-      order_flag: "1",
+      no_delivery: "true",
       per_page: "10",
     });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch Deliveries", "error");
-      setSkeleton({ ...skeleton, delivery: false });
+      setSkeleton({ ...skeleton, order_code: false });
       return;
     }
     const data = res?.data || [];
@@ -615,17 +621,20 @@ export default function DeliveryAddEditPage() {
         order_code: string;
       }) => {
         const capitalizedCustomerName = toTitleCase(
-          String(delivery.customer_name || ""),
+          String(delivery.customer_name || "")
         );
         return {
           value: String(delivery.id),
-          label: `${delivery.order_code ? delivery.order_code : ""} (${delivery.customer_code ? delivery.customer_code : ""} - ${capitalizedCustomerName})`,
+          label: `${delivery.order_code ? delivery.order_code : ""} (${
+            delivery.customer_code ? delivery.customer_code : ""
+          } - ${capitalizedCustomerName})`,
+          order_code: delivery.order_code,
         };
-      },
+      }
     );
     setFilteredDeliveryOptions(options);
     setDeliveryData(data);
-    setSkeleton({ ...skeleton, delivery: false });
+    setSkeleton({ ...skeleton, order_code: false });
     return options;
   };
 
@@ -650,7 +659,7 @@ export default function DeliveryAddEditPage() {
       }) => ({
         value: String(warehouse.id),
         label: warehouse.warehouse_code + " - " + warehouse.warehouse_name,
-      }),
+      })
     );
     setFilteredWarehouseOptions(options);
     return options;
@@ -793,54 +802,29 @@ export default function DeliveryAddEditPage() {
                   "
                 >
                   <div>
-                    <AutoSuggestion
+                    <InputFields
                       required
-                      label="  Distributor"
+                      label="Distributor"
                       name="warehouse"
-                      placeholder="Search   Distributor"
-                      onSearch={(q) => fetchWarehouse(q)}
-                      initialValue={
-                        filteredWarehouseOptions.find(
-                          (o) => o.value === String(values?.warehouse),
-                        )?.label || ""
-                      }
-                      onSelect={(opt) => {
-                        if (values.warehouse !== opt.value) {
-                          setFieldValue("warehouse", opt.value);
+                      placeholder="Search Distributor"
+                      value={values.warehouse}
+                      options={warehouseAllOptions}
+                      searchable={true}
+                      onChange={(e) => {
+                        if (values.warehouse !== e.target.value) {
+                          setFieldValue("warehouse", e.target.value);
                           setSkeleton((prev) => ({ ...prev, delivery: true }));
                           setFieldValue("delivery", "");
-                          // fetch deliveries for the selected warehouse only
                           (async () => {
                             setFieldValue("delivery", "");
                             await fetchAgentDeliveries(
-                              { ...values, warehouse: opt.value },
-                              "",
+                              { ...values, warehouse: e.target.value },
+                              ""
                             );
                           })();
                         } else {
-                          setFieldValue("warehouse", opt.value);
+                          setFieldValue("warehouse", e.target.value);
                         }
-                      }}
-                      onClear={() => {
-                        setFieldValue("warehouse", "");
-                        setFieldValue("delivery", "");
-                        setItemData([
-                          {
-                            item_id: "",
-                            item_name: "",
-                            item_label: "",
-                            UOM: [],
-                            Quantity: "1",
-                            Price: "",
-                            Excise: "",
-                            Discount: "",
-                            Net: "",
-                            Vat: "",
-                            Total: "",
-                          },
-                        ]);
-                        setFilteredDeliveryOptions([]);
-                        setSkeleton((prev) => ({ ...prev, delivery: false }));
                       }}
                       error={touched.warehouse && (errors.warehouse as string)}
                     />
@@ -864,7 +848,7 @@ export default function DeliveryAddEditPage() {
                           setFieldValue("delivery", "");
                           await fetchAgentDeliveries(
                             { ...values, delivery_date: e.target.value },
-                            "",
+                            ""
                           );
                         })();
                       }}
@@ -875,21 +859,21 @@ export default function DeliveryAddEditPage() {
                     <InputFields
                       required
                       label="Delivery"
-                      name="delivery"
-                      value={values.delivery}
+                      name="order_code"
+                      value={values.order_code}
                       options={filteredDeliveryOptions}
                       searchable={true}
                       placeholder="Select delivery"
                       onChange={(e) => {
                         const val = (e.target as HTMLSelectElement).value;
-                        if (values.delivery !== val) {
-                          setFieldValue("delivery", val);
+                        if (values.order_code !== val) {
+                          setFieldValue("order_code", val);
                           const currentDelivery = deliveryData.find(
-                            (o) => String(o.id) === val,
+                            (o) => String(o.id) === val
                           );
                           setFieldValue(
                             "customer_id",
-                            currentDelivery?.customer_id || "",
+                            currentDelivery?.customer_id || ""
                           );
                           const details = currentDelivery?.details ?? [];
                           const mapped = details.map((d) => {
@@ -903,13 +887,15 @@ export default function DeliveryAddEditPage() {
                             return {
                               item_id: String(d.item_id ?? ""),
                               item_name: d.item_name ?? "",
-                              item_label: `${d.item_code ?? ""}${d.item_code ? " - " : ""}${d.item_name ?? ""}`,
+                              item_label: `${d.item_code ?? ""}${
+                                d.item_code ? " - " : ""
+                              }${d.item_name ?? ""}`,
                               UOM: d.item_uoms
                                 ? d.item_uoms.map((uom: any) => ({
-                                  label: uom.name ?? "",
-                                  value: String(uom.id),
-                                  price: String(uom.price ?? ""),
-                                }))
+                                    label: uom.name ?? "",
+                                    value: String(uom.id),
+                                    price: String(uom.price ?? ""),
+                                  }))
                                 : [],
                               uom_id: d.uom_id ? String(d.uom_id) : "",
                               Quantity: String(d.quantity ?? "1"),
@@ -921,23 +907,23 @@ export default function DeliveryAddEditPage() {
                               Discount: String(d.discount ?? "0.00"),
                               Net: String(
                                 d.net_total ??
-                                d.net_total ??
-                                computedTotal - computedVat,
+                                  d.net_total ??
+                                  computedTotal - computedVat
                               ),
                               Vat: String(
                                 computedVat.toFixed
                                   ? computedVat.toFixed(2)
-                                  : String(computedVat),
+                                  : String(computedVat)
                               ),
                               Total: String(
                                 computedTotal.toFixed
                                   ? computedTotal.toFixed(2)
-                                  : String(computedTotal),
+                                  : String(computedTotal)
                               ),
                               preVat: String(
                                 preVat.toFixed
                                   ? preVat.toFixed(2)
-                                  : String(preVat),
+                                  : String(preVat)
                               ),
                             } as ItemData;
                           });
@@ -945,20 +931,20 @@ export default function DeliveryAddEditPage() {
                             mapped.length
                               ? mapped
                               : [
-                                {
-                                  item_id: "",
-                                  item_name: "",
-                                  item_label: "",
-                                  UOM: [],
-                                  Quantity: "1",
-                                  Price: "",
-                                  Excise: "",
-                                  Discount: "",
-                                  Net: "",
-                                  Vat: "",
-                                  Total: "",
-                                },
-                              ],
+                                  {
+                                    item_id: "",
+                                    item_name: "",
+                                    item_label: "",
+                                    UOM: [],
+                                    Quantity: "1",
+                                    Price: "",
+                                    Excise: "",
+                                    Discount: "",
+                                    Net: "",
+                                    Vat: "",
+                                    Total: "",
+                                  },
+                                ]
                           );
                         }
                       }}
@@ -967,8 +953,8 @@ export default function DeliveryAddEditPage() {
                       //   setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
                       // }}
                       disabled={!values.warehouse || !values.delivery_date}
-                      showSkeleton={skeleton.delivery}
-                      error={touched.delivery && (errors.delivery as string)}
+                      showSkeleton={skeleton.order_code}
+                      error={touched.order_code && (errors.order_code as string)}
                     />
                   </div>
                 </div>
@@ -1003,7 +989,7 @@ export default function DeliveryAddEditPage() {
                           // Find the option for the current row (if still present) and fall back to stored label
                           // so the selection remains visible even when the option isn't returned by a search.
                           const matchedOption = itemsOptions.find(
-                            (o) => o.value === row.item_id,
+                            (o) => o.value === row.item_id
                           );
                           const fallbackOption = row.item_label
                             ? { value: row.item_id, label: row.item_label }
@@ -1025,7 +1011,7 @@ export default function DeliveryAddEditPage() {
                                     recalculateItem(
                                       Number(row.idx),
                                       "item_id",
-                                      opt.value,
+                                      opt.value
                                     );
                                   }
                                 }}
@@ -1033,7 +1019,7 @@ export default function DeliveryAddEditPage() {
                                   recalculateItem(
                                     Number(row.idx),
                                     "item_id",
-                                    "",
+                                    ""
                                   );
                                 }}
                                 disabled={!values.delivery}
@@ -1071,17 +1057,17 @@ export default function DeliveryAddEditPage() {
                                   recalculateItem(
                                     Number(row.idx),
                                     "uom_id",
-                                    e.target.value,
+                                    e.target.value
                                   );
                                   const price =
                                     options.find(
                                       (uom: { value: string }) =>
-                                        String(uom.value) === e.target.value,
+                                        String(uom.value) === e.target.value
                                     )?.price || "0.00";
                                   recalculateItem(
                                     Number(row.idx),
                                     "Price",
-                                    price,
+                                    price
                                   );
                                 }}
                                 error={err && err}
@@ -1115,15 +1101,15 @@ export default function DeliveryAddEditPage() {
                                     intPart === ""
                                       ? ""
                                       : String(
-                                        Math.max(
-                                          0,
-                                          parseInt(intPart, 10) || 0,
-                                        ),
-                                      );
+                                          Math.max(
+                                            0,
+                                            parseInt(intPart, 10) || 0
+                                          )
+                                        );
                                   recalculateItem(
                                     Number(row.idx),
                                     "Quantity",
-                                    sanitized,
+                                    sanitized
                                   );
                                 }}
                                 min={1}
@@ -1217,9 +1203,10 @@ export default function DeliveryAddEditPage() {
                               flex
                               text-red-500
                               items-center
-                              ${itemData.length <= 1
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
+                              ${
+                                itemData.length <= 1
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
                               }
                             `}
                           >
@@ -1267,7 +1254,7 @@ export default function DeliveryAddEditPage() {
                           const hasEmptyRow = itemData.some(
                             (it) =>
                               String(it.item_id ?? "").trim() === "" &&
-                              String(it.uom_id ?? "").trim() === "",
+                              String(it.uom_id ?? "").trim() === ""
                           );
                           return (
                             <button
@@ -1280,7 +1267,11 @@ export default function DeliveryAddEditPage() {
                                 flex
                                 text-[#E53935] font-medium text-[16px]
                                 items-center gap-2
-                                ${hasEmptyRow ? "opacity-50 cursor-not-allowed" : ""}
+                                ${
+                                  hasEmptyRow
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }
                               `}
                             >
                               <Icon
@@ -1374,7 +1365,7 @@ export default function DeliveryAddEditPage() {
                       isSubmitting ||
                       !values.warehouse ||
                       !values.delivery_date ||
-                      !values.delivery ||
+                      !values.order_code ||
                       !itemData ||
                       (itemData.length === 1 && !itemData[0].item_name)
                     }

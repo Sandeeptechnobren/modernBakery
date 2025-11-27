@@ -135,6 +135,26 @@ export default function TopBar({
                                 <div className="absolute w-[250px] top-[40px] right-0 z-60">
                                     <CustomDropdown
                                         data={[
+                                            ...(process.env.NODE_ENV === "development" ? [{
+                                                icon: "lucide:settings",
+                                                label: "settings (dev)",
+                                                onClick: () => {
+                                                    setIsOpenDropdown(false);
+                                                    router.push(
+                                                        "/settingsdev"
+                                                    );
+                                                },
+                                            }]: []),
+                                            {
+                                                icon: "mdi:account-multiple",
+                                                label: "Profile",
+                                                onClick: () => {
+                                                    setIsOpenDropdown(false);
+                                                    router.push(
+                                                        "/profile"
+                                                    );
+                                                },
+                                            },
                                             {
                                                 icon: "mynaui:lock",
                                                 label: "Change Password",

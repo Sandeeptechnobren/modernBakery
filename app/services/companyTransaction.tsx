@@ -182,11 +182,121 @@ export const compensationReportList = async (params?: Params) => {
   }
 };
 
-
 export const compensationReportExport = async (params?: Params) => {
   try {
     // available params - from_date, to_date, format
     const res = await API.get(`/api/hariss_transaction/ht_invoice/export`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+// Return Hariss Transaction APIs
+export const returnList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_returns/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const returnByUUID = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_returns/show/${uuid}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const returnBatchFetch = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_returns/batchfetch`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const returnExportHeader = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_returns/exportheader`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const returnExportCollapse = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_returns/exportcollapse`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+// Temporary Return Hariss Transaction APIs
+export const tempReturnList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/temp_returns/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const tempReturnByUUID = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/temp_returns/show/${uuid}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+// CAPs Hariss Transaction APIs
+export const capsList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_caps/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const capsByUUID = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_caps/show/${uuid}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const capsCreate = async (params?: Params) => {
+  try {
+    const res = await API.post(`/api/hariss_transaction/ht_caps/create`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const capsExportHeader = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_caps/exportheader`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const capsExportCollapse = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_caps/exportcollapse`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

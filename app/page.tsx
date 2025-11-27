@@ -20,10 +20,9 @@ export default function Home() {
                 setIsLoading(false);
             }
             if (res.code === 200) {
-                localStorage.setItem("token", res.data.access_token);
-                localStorage.setItem("role", res?.data?.user?.role?.id);
+                localStorage.setItem("role", res?.data?.role?.id);
                 localStorage.setItem("country", res?.data?.companies[0]?.selling_currency);
-                router.push("/vehicle");
+                router.push("/profile");
             }
         }
         if (localStorage.getItem("token")) verifyUser();

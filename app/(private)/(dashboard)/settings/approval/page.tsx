@@ -203,7 +203,14 @@ export default function WorkflowTable() {
                                 leadingIcon="lucide:plus"
                                 label="Add"
                                 labelTw="hidden sm:block"
-                            />,
+                            />,<SidebarBtn
+                                key={0}
+                                href="/settings/approval/assignworkflow"
+                                isActive={true}
+                                leadingIcon="lucide:plus"
+                                label="Assign Workflow"
+                                labelTw="hidden sm:block"
+                            />
                         ],
                     },
                     localStorageKey: "workflow-table",

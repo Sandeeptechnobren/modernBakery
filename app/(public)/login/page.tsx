@@ -46,7 +46,7 @@ const LoginPage = () => {
                                 localStorage.setItem("role", res?.data?.user?.role?.id);
                                 localStorage.setItem("country", res?.data?.user?.companies[0]?.selling_currency);
 
-                                router.push("/vehicle");
+                                router.push("/profile");
                             }
                         }}
                     >

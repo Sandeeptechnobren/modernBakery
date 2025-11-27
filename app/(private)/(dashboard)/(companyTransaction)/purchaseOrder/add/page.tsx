@@ -10,14 +10,15 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, SalesmanListGlobalSearch, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, SalesmanListGlobalSearch, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
-import getExcise, { Item } from "@/app/(private)/utils/excise";
+import getExcise from "@/app/(private)/utils/excise";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 interface FormData {
   id: number,
@@ -111,7 +112,8 @@ export default function PurchaseOrderAddEditPage() {
   const CURRENCY = localStorage.getItem("country") || "";
   const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredSalesTeamOptions, setFilteredSalesTeamOptions] = useState<{ label: string; value: string }[]>([]);
-  const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
+  // const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
+  const { warehouseAllOptions } = useAllDropdownListData();
   const form = {
     warehouse: "",
     route: "",
@@ -284,7 +286,7 @@ export default function PurchaseOrderAddEditPage() {
         item.Price = selectedOrder?.item_uoms?.[0]?.price ? String(selectedOrder.item_uoms[0].price) : "";
         item.Quantity = "1";
         const initialExc = getExcise({
-          item: selectedOrder,
+          item: {...selectedOrder, excies: 1},
           uom: Number(item.uom_id) || 0,
           quantity: Number(item.Quantity) || 1,
           itemPrice: Number(item.Price) || null,
@@ -316,6 +318,7 @@ export default function PurchaseOrderAddEditPage() {
         ? // normalize shape so `getExcise` can read `item_category` as a number
           ({
             ...selectedOrder,
+            excies: 1,
             item_category: (selectedOrder as any).item_category?.id ?? (selectedOrder as any).category_id ?? (selectedOrder as any).category?.id ?? (selectedOrder as any).category ?? (selectedOrder as any).category_code ?? 0,
           } as any)
         : {
@@ -408,11 +411,15 @@ export default function PurchaseOrderAddEditPage() {
     0
   );
   const preVat = totalVat ? grossTotal - totalVat : grossTotal;
+  const totalExcise = itemData.reduce(
+    (sum, item) => sum + Number(item.Excise || 0),
+    0
+  );
   const discount = itemData.reduce(
     (sum, item) => sum + Number(item.Discount || 0),
     0
   );
-  const finalTotal = netAmount + totalVat;
+  const finalTotal = netAmount + totalVat + totalExcise;
 
   const generatePayload = (values?: FormikValues) => {
     return {
@@ -491,6 +498,7 @@ export default function PurchaseOrderAddEditPage() {
     // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
     { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
     { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
+    { key: "Excise", value: `${CURRENCY} ${toInternationalNumber(totalExcise)}` },
     // { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
     // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
   ];
@@ -537,25 +545,25 @@ export default function PurchaseOrderAddEditPage() {
     return options;
   }
 
-  const fetchWarehouse = async (searchQuery?: string) => {
-    const res = await warehouseListGlobalSearch({
-      query: searchQuery || "",
-      dropdown: "1",
-      per_page: "50"
-    });
+  // const fetchWarehouse = async (searchQuery?: string) => {
+  //   const res = await warehouseListGlobalSearch({
+  //     query: searchQuery || "",
+  //     dropdown: "1",
+  //     per_page: "50"
+  //   });
 
-    if (res.error) {
-      showSnackbar(res.data?.message || "Failed to fetch Warehouse", "error");
-      return;
-    }
-    const data = res?.data || [];
-    const options = data.map((warehouse: { id: number; warehouse_code: string; warehouse_name: string }) => ({
-      value: String(warehouse.id),
-      label: warehouse.warehouse_code + " - " + warehouse.warehouse_name
-    }));
-    setFilteredWarehouseOptions(options);
-    return options;
-  }
+  //   if (res.error) {
+  //     showSnackbar(res.data?.message || "Failed to fetch Warehouse", "error");
+  //     return;
+  //   }
+  //   const data = res?.data || [];
+  //   const options = data.map((warehouse: { id: number; warehouse_code: string; warehouse_name: string }) => ({
+  //     value: String(warehouse.id),
+  //     label: warehouse.warehouse_code + " - " + warehouse.warehouse_name
+  //   }));
+  //   setFilteredWarehouseOptions(options);
+  //   return options;
+  // }
 
   // const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
   //   const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
@@ -617,29 +625,36 @@ export default function PurchaseOrderAddEditPage() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-10">
                   <div>
-                    <AutoSuggestion
+                    <InputFields
                       required
                       label="Warehouse"
                       name="warehouse"
                       placeholder="Search warehouse"
-                      onSearch={(q) => fetchWarehouse(q)}
-                      initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
-                      onSelect={(opt) => {
-                        if (values.warehouse !== opt.value) {
-                          setFieldValue("warehouse", opt.value);
-                          setSkeleton((prev) => ({ ...prev, customer: true }));
-                          setFieldValue("customer", "");
-                        } else {
-                          setFieldValue("warehouse", opt.value);
-                        }
+                      value={values.warehouse}
+                      options={warehouseAllOptions}
+                      searchable={true}
+                      onChange={(e) => {
+                        setFieldValue("warehouse", e.target.value);
                       }}
-                      onClear={() => {
-                        setFieldValue("warehouse", "");
-                        setFieldValue("customer", "");
-                        setFilteredCustomerOptions([]);
-                        setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
-                        setSkeleton((prev) => ({ ...prev, customer: false }));
-                      }}
+                      // onSearch={(q) => fetchWarehouse(q)}
+                      // initialValue={filteredWarehouseOptions.find(o => o.value === String(values?.warehouse))?.label || ""}
+                      // onSelect={(opt) => {
+                      //   if (values.warehouse !== opt.value) {
+                      //     setFieldValue("warehouse", opt.value);
+                      //     setSkeleton((prev) => ({ ...prev, customer: true }));
+                      //     setFieldValue("customer", "");
+                      //   } else {
+                      //     setFieldValue("warehouse", opt.value);
+                      //   }
+                      // }}
+                      // onClear={() => {
+                      //   setFieldValue("warehouse", "");
+                      //   setFieldValue("customer", "");
+                      //   setFilteredCustomerOptions([]);
+                      //   setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
+                      //   setSkeleton((prev) => ({ ...prev, customer: false }));
+                      // }}
+                      showSkeleton={warehouseAllOptions.length === 0}
                       error={
                         touched.warehouse &&
                         (errors.warehouse as string)
@@ -837,7 +852,7 @@ export default function PurchaseOrderAddEditPage() {
                           return <span>{price}</span>;
                         }
                       },
-                      { key: "excise", label: "Excise", render: (row) => <>{toInternationalNumber(row.excise) || "0.00"}</>},
+                      { key: "excise", label: "Excise", render: (row) => <>{toInternationalNumber(row.Excise) || "0.00"}</>},
                       // { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
                       // { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
                       { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },

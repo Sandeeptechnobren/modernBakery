@@ -13,7 +13,7 @@ import {
   salesmanLoadHeaderById,
   salesmanLoadHeaderUpdate,
 } from "@/app/services/agentTransaction";
-import { genearateCode, itemList } from "@/app/services/allApi";
+import { genearateCode, itemList, getWarehouseStockDetails, warehouseStockTopOrders } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -86,6 +86,7 @@ export default function AddEditSalesmanLoad() {
   const [form, setForm] = useState({
     salesman_type: "",
     warehouse: "",
+    warehouse_id: "",
     route: "",
     salesman: "",
     project_type: "",
@@ -99,34 +100,65 @@ export default function AddEditSalesmanLoad() {
   const [skeleton, setSkeleton] = useState({});
   const codeGeneratedRef = useRef(false);
 
-  // ✅ Load items on mount
-  // ✅ Load all items
+  // ✅ Load items based on selected warehouse
   useEffect(() => {
-    if (!isItemsLoaded) {
+    if (form.warehouse) {
       (async () => {
         try {
           setLoading(true);
-          const res = await itemList({ allData: "true" });
-          const data = res.data.map((item: any) => ({
-            id: item.id,
-            item_code: item.item_code,
-            name: item.name,
-            cse_qty: "",
-            pcs_qty: "",
-            status: 1,
-            uom: item.item_uoms,
-            warehouse_stocks: item.warehouse_stocks || [],
-          }));
+
+          // Fetch warehouse stock details
+          const stockRes = await warehouseStockTopOrders(form.warehouse);
+          const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
+
+          // Fetch full item details to get proper UOM IDs
+          const itemsRes = await itemList({ allData: "true", warehouse_id: form.warehouse });
+          const fullItems = itemsRes.data || [];
+
+          // Merge stock data with full item data
+          const data = stocksArray
+            .map((stockItem: any) => {
+              // Find the full item details
+              const fullItem = fullItems.find((item: any) => item.id === stockItem.item_id);
+
+              if (!fullItem) {
+                console.warn(`Item ${stockItem.item_id} not found in full items list`);
+                return null;
+              }
+
+              return {
+                id: stockItem.item_id,
+                item_code: stockItem.item_code,
+                name: stockItem.item_name,
+                cse_qty: "",
+                pcs_qty: "",
+                status: 1,
+                uom: fullItem.item_uoms || [], // Use proper UOM data from full item
+                warehouse_stocks: [{
+                  warehouse_id: Number(form.warehouse),
+                  qty: Number(stockItem.stock_qty) || 0
+                }],
+              };
+            })
+            .filter((item: any) => {
+              if (!item) return false;
+              // Only show items with stock > 0
+              const warehouseStock = item.warehouse_stocks.find(
+                (stock: any) => stock.warehouse_id?.toString() === form.warehouse
+              );
+              return warehouseStock && warehouseStock.qty > 0;
+            });
           setItemData(data);
           setIsItemsLoaded(true);
         } catch (error) {
-          console.error(error);
+          // console.error("❌ Error fetching warehouse stock:", error);
+          showSnackbar("Failed to fetch items for the selected warehouse", "error");
         } finally {
           setLoading(false);
         }
       })();
     }
-  }, [isItemsLoaded, setLoading]);
+  }, [form.warehouse, setLoading, showSnackbar]);
 
 
 
@@ -194,6 +226,7 @@ export default function AddEditSalesmanLoad() {
           setForm({
             salesman_type: data?.salesman_type || "",
             warehouse: data?.warehouse?.id?.toString() || "",
+            warehouse_id: data?.warehouse_id?.id?.toString() || "",
             route: data?.route?.id?.toString() || "",
             salesman: data?.salesman?.id?.toString(),
             project_type:
@@ -228,7 +261,7 @@ export default function AddEditSalesmanLoad() {
     salesman_type: yup.string().required("Sales Team Type is required"),
     warehouse: yup.string().required("Warehouse is required"),
     route: yup.string().required("Route is required"),
-    
+
     salesman: yup.string().required("Sales Team is required"),
   });
 
@@ -268,12 +301,26 @@ export default function AddEditSalesmanLoad() {
         console.log(singleItems, "jkl")
 
         singleItems.uom.map((singleUom: any) => {
-          details.push({
-            item_id: Number(singleItems.id),
-            qty: singleUom.name == "PAC" ? singleItems.pcs_qty : singleItems.cse_qty,
-            uom: singleUom.uom_id,
+          console.log("UOM Name:", singleUom.name, "UOM Type:", singleUom.uom_type);
 
-          });
+          // Match PCS/PAC for pcs_qty, otherwise use cse_qty
+          const isPcs = singleUom.name?.toUpperCase().includes("PAC") ||
+            singleUom.name?.toUpperCase().includes("PCS") ||
+            singleUom.uom_type?.toUpperCase().includes("PAC") ||
+            singleUom.uom_type?.toUpperCase().includes("PCS");
+
+          const qty = isPcs ? singleItems.pcs_qty : singleItems.cse_qty;
+
+          console.log(`Item ${singleItems.id}, UOM ${singleUom.name}, isPcs: ${isPcs}, qty: ${qty}`);
+
+          // Only push detail if qty is provided and greater than 0
+          if (qty && Number(qty) > 0) {
+            details.push({
+              item_id: Number(singleItems.id),
+              qty: qty,
+              uom: singleUom.uom_id,
+            });
+          }
         })
 
 
@@ -294,7 +341,7 @@ export default function AddEditSalesmanLoad() {
       };
 
 
-      console.log("📦 Final Payload:", JSON.stringify(payload, null, 2));
+      // console.log("📦 Final Payload:", JSON.stringify(payload, null, 2));
 
       let res;
       if (isEditMode && loadUUID) {
@@ -368,7 +415,7 @@ export default function AddEditSalesmanLoad() {
             onClick={() => router.back()}
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[4px]">
-            Add Load
+            Add Sales Team Load
           </h1>
         </div>
       </div>
@@ -384,7 +431,7 @@ export default function AddEditSalesmanLoad() {
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-              SalesTeam Load
+              Sales Team Load
             </span>
             <span className="text-primary text-[14px] tracking-[10px]">
               #{code}
@@ -453,7 +500,7 @@ export default function AddEditSalesmanLoad() {
             }}
           />
           <InputFields
-            label="Salesman"
+            label="Sales Team "
             name="salesman"
             value={form.salesman}
             options={salesmanOptions}
@@ -464,6 +511,7 @@ export default function AddEditSalesmanLoad() {
         <div>
         </div>
         <Table
+          key={`items-table-${itemData.length}`}
           data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
           config={{
             table: { height: 500 },
@@ -491,7 +539,11 @@ export default function AddEditSalesmanLoad() {
                 key: "warehouse_stocks",
                 label: "Available Stocks",
                 render: (row: TableDataType) => {
-                  const stockQty = (row as any)?.warehouse_stocks?.[0]?.qty;
+                  // Find stock for the selected warehouse
+                  const warehouseStock = (row as any)?.warehouse_stocks?.find(
+                    (stock: any) => stock.warehouse_id?.toString() === form.warehouse
+                  );
+                  const stockQty = warehouseStock?.qty;
                   return <span>{stockQty !== undefined ? stockQty : "0"}</span>;
                 },
               },
@@ -535,7 +587,7 @@ export default function AddEditSalesmanLoad() {
                 ),
               },
             ],
-            pageSize: itemData.length
+            pageSize: itemData.length > 0 ? itemData.length : 10
           }}
         />
 

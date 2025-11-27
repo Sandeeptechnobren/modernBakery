@@ -80,19 +80,7 @@ const columns = [
             } as FormatNumberOptions);
         },
     },
-    {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => {
-            // Treat status 1 or 'active' (case-insensitive) as active
-            const isActive =
-                String(row.status) === "1" ||
-                (typeof row.status === "string" &&
-                    row.status.toLowerCase() === "active");
-            return <StatusBtn isActive={isActive} />;
-        },
-        showByDefault: true,
-    },
+    
 ];
 
 export default function CustomerInvoicePage() {

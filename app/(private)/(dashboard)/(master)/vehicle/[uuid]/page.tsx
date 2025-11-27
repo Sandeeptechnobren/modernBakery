@@ -12,6 +12,7 @@ import {
   addVehicle,
   genearateCode,
   getVehicleById,
+  numberPlateVerification,
   saveFinalCode,
   updateVehicle,
   warehouseList,
@@ -20,7 +21,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as Yup from "yup";
 
 interface Warehouse {
@@ -67,7 +68,6 @@ const VehicleSchema = Yup.object().shape({
     )
     .required("Fuel Reading is required")
     .max(999, "Fuel Reading must be at most 3 digits"),
-
   status: Yup.string().required("Status is required"),
   validFrom: Yup.date()
     .transform((value, originalValue) =>
@@ -97,6 +97,7 @@ export default function AddEditVehicleWithStepper() {
     isStepCompleted,
     isLastStep,
   } = useStepperForm(steps.length);
+
   const [isOpen, setIsOpen] = useState(false);
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [prefix, setPrefix] = useState("");
@@ -108,6 +109,8 @@ export default function AddEditVehicleWithStepper() {
   const { warehouseOptions } = useAllDropdownListData();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isValidNumberPlate, setIsValidNumberPlate] = useState<boolean>(false);
+
   const [form, setForm] = useState<VehicleFormValues>({
     vehicle_code: "",
     vehicleBrand: "",
@@ -132,22 +135,28 @@ export default function AddEditVehicleWithStepper() {
       codeGeneratedRef.current = true;
       (async () => {
         setLoading(true);
-        const res = await genearateCode({ model_name: "vehicle" });
-        setLoading(false);
-        if (res?.code) {
-          setForm((prev) => ({ ...prev, vehicle_code: res.code }));
-        }
-        if (res?.prefix) {
-          setPrefix(res.prefix);
-        } else if (res?.code) {
-          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
-          const match = res.prefix;
-          if (match) setPrefix(prefix);
+        try {
+          const res = await genearateCode({ model_name: "vehicle" });
+          if (res?.code) {
+            setForm((prev) => ({ ...prev, vehicle_code: res.code }));
+          }
+          if (res?.prefix) {
+            setPrefix(res.prefix);
+          } else if (res?.code) {
+            // fallback: try to extract prefix from returned code if it contains a dash
+            const match = typeof res.code === "string" ? res.code.match(/^([A-Z\-]+)-?/) : null;
+            if (match && match[1]) setPrefix(match[1]);
+          }
+        } catch (err) {
+          // optional: you can show snackbar if needed
+        } finally {
+          setLoading(false);
         }
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode]);
+
   const [errors, setErrors] = useState<
     Partial<Record<keyof VehicleFormValues, string>>
   >({});
@@ -211,7 +220,7 @@ export default function AddEditVehicleWithStepper() {
     setForm((prev) => ({ ...prev, [name]: value }));
     setTouched((prev) => ({ ...prev, [name]: true }));
 
-    // ✅ Remove error if user has typed something
+    // Remove error if user has typed something
     setErrors((prev) => {
       if (prev[name as keyof VehicleFormValues]) {
         const newErrors = { ...prev };
@@ -220,11 +229,26 @@ export default function AddEditVehicleWithStepper() {
       }
       return prev;
     });
+
+    // If user edits number plate, reset server-check flags
+    if (name === "numberPlate") {
+      setIsValidNumberPlate(false);
+    }
   };
 
   const setFieldValue = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setTouched((prev) => ({ ...prev, [field]: true }));
+
+    // clear corresponding error
+    setErrors((prev) => {
+      if (prev[field as keyof VehicleFormValues]) {
+        const newErrors = { ...prev };
+        delete newErrors[field as keyof VehicleFormValues];
+        return newErrors;
+      }
+      return prev;
+    });
   };
 
   const validateCurrentStep = async (step: number) => {
@@ -246,7 +270,6 @@ export default function AddEditVehicleWithStepper() {
       setErrors({});
       return true;
     } catch (err) {
-      // Yup.ValidationError type
       if (err instanceof Yup.ValidationError) {
         const stepErrors: Partial<Record<keyof VehicleFormValues, string>> = {};
         if (Array.isArray(err.inner)) {
@@ -264,7 +287,6 @@ export default function AddEditVehicleWithStepper() {
         }));
         return Object.keys(stepErrors).length === 0;
       }
-      // Unexpected error
       return false;
     }
   };
@@ -279,6 +301,27 @@ export default function AddEditVehicleWithStepper() {
         "Please fill in all required fields before proceeding.",
         "error"
       );
+    }
+  };
+
+  const checkNumberPlate = async (value: string) => {
+    if (!value) return;
+    try {
+      const res = await numberPlateVerification(value);
+      // assuming API returns { exists: boolean }
+      if (res?.exists) {
+        setIsValidNumberPlate(true);
+        setErrors((prev) => ({ ...prev, numberPlate: "Number plate already exists" }));
+      } else {
+        setIsValidNumberPlate(false);
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next.numberPlate;
+          return next;
+        });
+      }
+    } catch {
+      setErrors((prev) => ({ ...prev, numberPlate: "Error verifying number plate" }));
     }
   };
 
@@ -335,9 +378,7 @@ export default function AddEditVehicleWithStepper() {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(
-          isEditMode
-            ? "Vehicle updated successfully"
-            : "Vehicle added successfully",
+          isEditMode ? "Vehicle updated successfully" : "Vehicle added successfully",
           "success"
         );
         router.push("/vehicle");
@@ -355,28 +396,9 @@ export default function AddEditVehicleWithStepper() {
       case 1:
         return (
           <ContainerCard>
-            <h2
-              className="
-                mb-6
-                text-lg font-semibold
-              "
-            >
-              Vehicle Details
-            </h2>
-            <div
-              className="
-                grid grid-cols-1
-                gap-4
-                md:grid-cols-3
-              "
-            >
-              <div
-                className="
-                  flex
-                  max-w-[406px]
-                  items-start gap-2
-                "
-              >
+            <h2 className="mb-6 text-lg font-semibold">Vehicle Details</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="flex max-w-[406px] items-start gap-2">
                 <InputFields
                   label="Vehicle Code"
                   name="vehicle_code"
@@ -384,32 +406,8 @@ export default function AddEditVehicleWithStepper() {
                   onChange={handleChange}
                   disabled={codeMode === "auto"}
                 />
-                {/* {!isEditMode && (
-                  <>
-                    <IconButton
-                      bgClass="white"
-                       className="  cursor-pointer text-[#252B37] pt-12"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Vehicle Code"
-                      prefix={prefix}
-                      setPrefix={setPrefix}
-                      onSave={(mode, code) => {
-                        setCodeMode(mode);
-                        if (mode === "auto" && code) {
-                          setForm((prev) => ({ ...prev, vehicle_code: code }));
-                        } else if (mode === "manual") {
-                          setForm((prev) => ({ ...prev, vehicle_code: "" }));
-                        }
-                      }}
-                    />
-                  </>
-                )} */}
               </div>
+
               <div>
                 <InputFields
                   required
@@ -425,12 +423,21 @@ export default function AddEditVehicleWithStepper() {
                 <InputFields
                   required
                   label="Number Plate"
-                  value={form.numberPlate}
-                  onChange={handleChange}
                   name="numberPlate"
-                  error={touched.numberPlate && errors.numberPlate}
+                  value={form.numberPlate}
+                  onChange={(e) => {
+                    handleChange(e);
+                  }}
+                  onBlur={async () => {
+                    setTouched((prev) => ({ ...prev, numberPlate: true }));
+                    if (form.numberPlate && !isEditMode) {
+                      await checkNumberPlate(form.numberPlate);
+                    }
+                  }}
+                  error={touched.numberPlate ? errors.numberPlate : undefined}
                 />
               </div>
+
               <div>
                 <InputFields
                   required
@@ -464,21 +471,8 @@ export default function AddEditVehicleWithStepper() {
       case 2:
         return (
           <ContainerCard>
-            <h2
-              className="
-                mb-6
-                text-lg font-semibold
-              "
-            >
-              Location Information
-            </h2>
-            <div
-              className="
-                grid grid-cols-1
-                gap-4
-                md:grid-cols-3
-              "
-            >
+            <h2 className="mb-6 text-lg font-semibold">Location Information</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <InputFields
                   required
@@ -503,7 +497,8 @@ export default function AddEditVehicleWithStepper() {
                     onChange={handleChange}
                     name="warehouseId"
                     options={warehouseOptions}
-                  /> 
+                    error={touched.warehouseId && errors.warehouseId}
+                  />
                 </div>
               )}
             </div>
@@ -512,21 +507,8 @@ export default function AddEditVehicleWithStepper() {
       case 3:
         return (
           <ContainerCard>
-            <h2
-              className="
-                mb-6
-                text-lg font-semibold
-              "
-            >
-              Additional Information
-            </h2>
-            <div
-              className="
-                grid grid-cols-1
-                gap-4
-                md:grid-cols-3
-              "
-            >
+            <h2 className="mb-6 text-lg font-semibold">Additional Information</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <InputFields
                   required
@@ -561,12 +543,8 @@ export default function AddEditVehicleWithStepper() {
                   maxLength={3}
                   error={touched.fuel_reading && errors.fuel_reading}
                 />
-                {/* {touched.fuel_reading && errors.fuel_reading && (
-                  <div className="text-red-500 text-xs mt-1">
-                    {errors.fuel_reading}
-                  </div>
-                )} */}
               </div>
+
               <div>
                 <InputFields
                   label="Description"
@@ -574,9 +552,6 @@ export default function AddEditVehicleWithStepper() {
                   onChange={handleChange}
                   name="description"
                 />
-                {/* {touched.description && errors.description && (
-                  <div className="text-red-500 text-xs mt-1">
-                    {/* {errors.description} */}
               </div>
 
               <div>
@@ -589,12 +564,8 @@ export default function AddEditVehicleWithStepper() {
                   name="validFrom"
                   error={touched.validFrom && errors.validFrom}
                 />
-                {/* {touched.validFrom && errors.validFrom && (
-                  <div className="text-red-500 text-xs mt-1">
-                    {errors.validFrom}
-                  </div>
-                )} */}
               </div>
+
               <div>
                 <InputFields
                   required
@@ -605,10 +576,8 @@ export default function AddEditVehicleWithStepper() {
                   name="validTo"
                   error={touched.validTo && errors.validTo}
                 />
-                {/* {touched.validTo && errors.validTo && (
-                  <div className="text-red-500 text-xs mt-1">
-                    {/* {errors.validTo} */}
               </div>
+
               <div>
                 <InputFields
                   required
@@ -623,9 +592,6 @@ export default function AddEditVehicleWithStepper() {
                   ]}
                   error={touched.status && errors.status}
                 />
-                {/* {touched.status && errors.status && (
-                  <div className="text-red-500 text-xs mt-1">
-                    {/* {errors.status} */}
               </div>
             </div>
           </ContainerCard>
@@ -637,13 +603,7 @@ export default function AddEditVehicleWithStepper() {
 
   if (isEditMode && loading) {
     return (
-      <div
-        className="
-          flex
-          w-full h-full
-          items-center justify-center
-        "
-      >
+      <div className="flex w-full h-full items-center justify-center">
         <Loading />
       </div>
     );
@@ -651,31 +611,15 @@ export default function AddEditVehicleWithStepper() {
 
   return (
     <>
-      <div
-        className="
-          flex
-          items-center gap-2
-        "
-      >
+      <div className="flex items-center gap-2">
         <Link href="/vehicle">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1
-          className="
-            mb-[4px]
-            text-xl font-semibold text-gray-900
-          "
-        >
+        <h1 className="mb-[4px] text-xl font-semibold text-gray-900">
           {isEditMode ? "Update Vehicle" : "Add Vehicle"}
         </h1>
       </div>
-      <div
-        className="
-          flex
-          mb-6
-          justify-between items-center
-        "
-      >
+      <div className="flex mb-6 justify-between items-center">
         <StepperForm
           steps={steps.map((step) => ({
             ...step,

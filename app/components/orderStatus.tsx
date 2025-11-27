@@ -6,11 +6,11 @@ const statusEnum: Record<number, string> = {
     3: "Completed",
 };
 
-export default function OrderStatus({ status }: { status: number | string }) {
-    if(typeof status === "string") {
-        status = parseInt(status, 10);
+export default function OrderStatus({ order_flag }: { order_flag: number | string }) {
+    if(typeof order_flag === "string") {
+        order_flag = parseInt(order_flag, 10);
     }
-    const statusLabel = statusEnum[status] || "Unknown";
+    const statusLabel = statusEnum[order_flag] || "Unknown";
     const statusStyles: Record<number, { text: string; bg: string }> = {
         1: { text: '#0B65C3', bg: '#E6F0FF' }, // Order Created (blue)
         2: { text: '#92400E', bg: '#FFF7ED' }, // Delivery Created (amber)

@@ -758,7 +758,7 @@ export default function ExchangeAddEditPage() {
                                     recalculateItem(Number(row.idx), "uom_id", chosen);
                                     // find price in options (they include 'price' if provided earlier)
                                     const found = options.find((uom: any) => String(uom.value) === chosen);
-                                    const price = found?.uom_price ?? found?.uom_price ?? "0.00";
+                                    const price = found?.price ?? found?.uom_price ?? "0.00";
                                     if (price !== undefined) {
                                       recalculateItem(Number(row.idx), "Price", String(price));
                                     }

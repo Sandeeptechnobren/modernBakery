@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { useFormik } from "formik";
 import TabBtn from "@/app/components/tabBtn";
+import { isVerify } from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("edit"); // edit | settings
@@ -32,13 +34,46 @@ export default function ProfilePage() {
 
   const { values, setFieldValue } = formik;
 
+  const [profile, setProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { showSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      try {
+        const res = await isVerify();
+        if (res && res.code === 200 && res.data) {
+          setProfile(res.data);
+          // seed form fields
+          setFieldValue("firstName", res.data?.name ?? "");
+          setFieldValue("email", res.data?.email ?? "");
+          setFieldValue("country", res.data?.companies?.[0]?.company_name ?? "");
+        } else if (res && res.data && res.data.message) {
+          showSnackbar(String(res.data.message), "error");
+        }
+      } catch (err: any) {
+        showSnackbar(String(err?.message ?? "Unable to fetch profile"), "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (typeof window !== "undefined" && localStorage.getItem("token")) {
+      fetchProfile();
+    } else {
+      setIsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       {/* Top Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard">
+        {/* <Link href="/dashboard">
           <Icon icon="lucide:arrow-left" width={24} />
-        </Link>
+        </Link> */}
         <h1 className="text-xl font-semibold">My Profile</h1>
       </div>
 
@@ -47,12 +82,17 @@ export default function ProfilePage() {
         <ContainerCard className="w-full lg:w-[450px] space-y-6 p-6 h-fit">
           <div className="flex flex-col items-center">
             <img
-              src="/logo.png"
-              className="w-28 h-28 rounded-full object-cover border"
+              src={profile?.profile_picture ?? "/noprofile.svg"}
+              alt={profile?.name ?? "profile"}
+              className="w-28 h-28 rounded-full object-cover"
             />
 
-            <h2 className="text-lg font-semibold mt-3">Administrator</h2>
-            <span className="text-gray-500 text-sm">Operation Manager</span>
+            {profile?.name ? (
+              <h2 className="text-lg font-semibold mt-3">{profile.name}</h2>
+            ) : null}
+            {profile?.role?.name ? (
+              <span className="text-gray-500 text-sm">{profile.role.name}</span>
+            ) : null}
           </div>
 
           <hr className="border border-gray-300" />
@@ -62,22 +102,37 @@ export default function ProfilePage() {
             <h3 className="font-semibold text-gray-700">Personal Info</h3>
 
             <div className="grid grid-cols-[120px_10px_1fr] md:grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
+              {profile?.username ? (
+                <>
+                  <span className="text-gray-600">User Name</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.username}</span>
+                </>
+              ) : null}
 
-              <span className="text-gray-600">User Name</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">Admin</span>
+              {profile?.name ? (
+                <>
+                  <span className="text-gray-600">Full Name</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.name}</span>
+                </>
+              ) : null}
 
-              <span className="text-gray-600">Full Name</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">Administrator Admin</span>
+              {profile?.dob ? (
+                <>
+                  <span className="text-gray-600">Date of Birth</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.dob}</span>
+                </>
+              ) : null}
 
-              <span className="text-gray-600">Date of Birth</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">02 Jan 1990</span>
-
-              <span className="text-gray-600">Position</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">Operation Manager</span>
+              {profile?.position ? (
+                <>
+                  <span className="text-gray-600">Position</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.position}</span>
+                </>
+              ) : null}
 
             </div>
 
@@ -90,30 +145,53 @@ export default function ProfilePage() {
             <h3 className="font-semibold text-gray-700">Contact Info</h3>
 
             <div className="grid grid-cols-[120px_10px_1fr] md:grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
+              {profile?.email ? (
+                <>
+                  <span className="text-gray-600">Email</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.email}</span>
+                </>
+              ) : null}
 
-              <span className="text-gray-600">Email</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">shashwat.com</span>
+              {profile?.contact_number ? (
+                <>
+                  <span className="text-gray-600">Phone Number</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.contact_number}</span>
+                </>
+              ) : null}
 
-              <span className="text-gray-600">Phone Number</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">88949 nahi bataoga</span>
+              {profile?.street ? (
+                <>
+                  <span className="text-gray-600">Street</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.street}</span>
+                </>
+              ) : null}
 
-              <span className="text-gray-600">Street</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium"> P.O Box 38148</span>
+              {profile?.city ? (
+                <>
+                  <span className="text-gray-600">City</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.city}</span>
+                </>
+              ) : null}
 
-              <span className="text-gray-600">City</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">Dubai</span>
+              {profile?.zip ? (
+                <>
+                  <span className="text-gray-600">Zip code</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile.zip}</span>
+                </>
+              ) : null}
 
-              <span className="text-gray-600">Zip code</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">57382</span>
-
-              <span className="text-gray-600">Country</span>
-              <span className="text-gray-600">:</span>
-              <span className="font-medium">Dubai</span>
+              {(profile?.companies && profile.companies.length > 0 && profile.companies[0].company_name) || profile?.country ? (
+                <>
+                  <span className="text-gray-600">Country</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="font-medium">{profile?.companies?.[0]?.company_name ?? profile.country}</span>
+                </>
+              ) : null}
 
             </div>
             {/* <div className="flex justify-between text-sm">
@@ -148,38 +226,9 @@ export default function ProfilePage() {
           </div>
         </ContainerCard>
 
-        {/* <ContainerCard className="w-full  p-6 space-y-8">
-          
- <div className="flex gap-4 border-b pb-2">
-            <button
-              onClick={() => setActiveTab("edit")}
-              className={`pb-1 font-medium ${
-                activeTab === "edit"
-                  ? "text-red-600 border-b-2 border-red-500"
-                  : "text-gray-500"
-              }`}
-            >
-              Edit Information
-            </button>
-
-            <button
-              onClick={() => setActiveTab("settings")}
-              className={`pb-1 font-medium ${
-                activeTab === "settings"
-                  ? "text-red-600 border-b-2 border-red-500"
-                  : "text-gray-500"
-              }`}
-            >
-              System Settings
-            </button>
-          </div>
-
-        </ContainerCard> */}
-
         {/* RIGHT SIDE CONTENT */}
-        <div className="w-full p-6 space-y-8">
+        <div className="w-full space-y-8">
           {/* TAB BUTTONS */}
-
           <ContainerCard className="flex !p-1">
             <div>
               <TabBtn

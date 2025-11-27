@@ -14,7 +14,7 @@ import { Icon } from "@iconify-icon/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState,RefObject,useRef } from "react";
+import { useEffect, useState, RefObject, useRef } from "react";
 import PrintButton from "@/app/components/printButton";
 
 interface CustomerItem {
@@ -76,7 +76,7 @@ export default function ViewPage() {
   const { setLoading } = useLoading();
 
   const title = `Unload ${customer?.osa_code || "-"}`;
-const backBtnUrl = "/salesmanUnload";
+  const backBtnUrl = "/salesmanUnload";
 
   // Tab logic
   const [activeTab, setActiveTab] = useState("overview");
@@ -91,10 +91,10 @@ const backBtnUrl = "/salesmanUnload";
   };
 
   const columns: configType["columns"] = [
-      { key: "item", label: "Item" },
-      { key: "uom", label: "UOM" },
-      { key: "qty", label: "Quantity" },
-    ];
+    { key: "item", label: "Item" },
+    { key: "uom", label: "UOM" },
+    { key: "qty", label: "Quantity" },
+  ];
 
   const tableData =
     customer?.details?.map((detail) => ({
@@ -144,97 +144,97 @@ const backBtnUrl = "/salesmanUnload";
 
       {/* ---------- Main Card ---------- */}
       <div ref={targetRef}>
-            <ContainerCard className="rounded-xl shadow-sm space-y-8 bg-white p-6">
-              {/* Top Section */}
-              <div className="flex justify-between flex-wrap gap-6 items-start">
-                <Logo type="full" />
-      
-                <div className="text-right">
-                  <h2 className="text-4xl font-bold text-gray-400 uppercase mb-2">
-                    Unload
-                  </h2>
-                  <p className="text-primary text-sm tracking-[5px]">
-                    {customer?.osa_code || "-"}
-                  </p>
-                </div>
-              </div>
-      
-              <hr className="border-gray-200" />
-      
-              {/* ---------- Info Section ---------- */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                {/* Left side - details */}
-                <div>
-                  <KeyValueData
-                    data={[
-                      {
-                        key: "Warehouse",
-                        value:
-                          customer?.warehouse?.code && customer?.warehouse?.name
-                            ? `${customer.warehouse.code} - ${customer.warehouse.name.split("-")[0]} - (${customer.warehouse.name.split("-")[1]})`
-                            : "-",
-                      },
-                      {
-                        key: "Route",
-                        value: customer?.route
-                          ? `${customer.route.code} - ${customer.route.name}`
-                          : "-",
-                      },
-                      {
-                        key: "Salesman Type",
-                        value: customer?.salesman_type || "-",
-                      },
-                      {
-                        key: "Salesman",
-                        value: customer?.salesman
-                          ? `${customer.salesman.code} - ${customer.salesman.name}`
-                          : "-",
-                      },
-                      {
-                        key: "Load Date",
-                        value: customer?.load_date
-                         
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-      
-      
-              {/* ---------- Table ---------- */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                  Load Items
-                </h3>
-                <Table
-                  data={tableData}
-                  config={{ columns }}
-                />
-              </div>
-      
-              {/* ---------- Footer Buttons ---------- */}
-              {/* ---------- Footer Buttons ---------- */}
-              <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200">
-                <SidebarBtn
-                  leadingIcon="lucide:download"
-                  leadingIconSize={20}
-                  label="Download"
-                  // onClick={handleDownload}
-                />
-                <SidebarBtn
-                  isActive
-                  leadingIcon="lucide:printer"
-                  leadingIconSize={20}
-                  label="Print Now"
-                  // onClick={handlePrint}
-                />
+        <ContainerCard className="rounded-xl shadow-sm space-y-8 bg-white p-6">
+          {/* Top Section */}
+          <div className="flex justify-between flex-wrap gap-6 items-start">
+            <Logo type="full" />
+
+            <div className="text-right">
+              <h2 className="text-4xl font-bold text-gray-400 uppercase mb-2">
+                Unload
+              </h2>
+              <p className="text-primary text-sm tracking-[5px]">
+                {customer?.osa_code || "-"}
+              </p>
+            </div>
+          </div>
+
+          <hr className="border-gray-200" />
+
+          {/* ---------- Info Section ---------- */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Left side - details */}
+            <div>
+              <KeyValueData
+                data={[
+                  {
+                    key: "Warehouse",
+                    value:
+                      customer?.warehouse?.code && customer?.warehouse?.name
+                        ? `${customer.warehouse.code} - ${customer.warehouse.name.split("-")[0]} - (${customer.warehouse.name.split("-")[1]})`
+                        : "-",
+                  },
+                  {
+                    key: "Route",
+                    value: customer?.route
+                      ? `${customer.route.code} - ${customer.route.name}`
+                      : "-",
+                  },
+                  {
+                    key: "Salesman Type",
+                    value: customer?.salesman_type || "-",
+                  },
+                  {
+                    key: "Salesman",
+                    value: customer?.salesman
+                      ? `${customer.salesman.code} - ${customer.salesman.name}`
+                      : "-",
+                  },
+                  {
+                    key: "Load Date",
+                    value: customer?.load_date
+
+                  },
+                ]}
+              />
+            </div>
+          </div>
+
+
+          {/* ---------- Table ---------- */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-3">
+              Load Items
+            </h3>
+            <Table
+              data={tableData}
+              config={{ columns }}
+            />
+          </div>
+
+          {/* ---------- Footer Buttons ---------- */}
+          {/* ---------- Footer Buttons ---------- */}
+          <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200">
+            <SidebarBtn
+              leadingIcon="lucide:download"
+              leadingIconSize={20}
+              label="Download"
+            // onClick={handleDownload}
+            />
+            <SidebarBtn
+              isActive
+              leadingIcon="lucide:printer"
+              leadingIconSize={20}
+              label="Print Now"
+            // onClick={handlePrint}
+            />
             <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
 
 
-              </div>
-      
-            </ContainerCard>
-</div>
+          </div>
+
+        </ContainerCard>
+      </div>
 
     </>
   );
