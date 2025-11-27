@@ -126,10 +126,10 @@ const columns = [
     render: (row: TableDataType) => row.comment || "-",
   },
   {
-    key: "status",
+    key: "order_flag",
     label: "Status",
     showByDefault: true,
-    render: (row: TableDataType) => <OrderStatus status={row.status} />,
+    render: (row: TableDataType) => <OrderStatus order_flag={row.order_flag} />,
   },
 ];
 

@@ -5,7 +5,7 @@ import ContainerCard from "@/app/components/containerCard";
 import Table, { configType, listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import StatusBtn from "@/app/components/statusBtn2";
 import TabBtn from "@/app/components/tabBtn";
-import { agentCustomerReturnExport, exportInvoice, getAgentCustomerByReturnId, getAgentCustomerBySalesId, invoiceList } from "@/app/services/agentTransaction";
+import { agentCustomerReturnExport, exportInvoice, exportOrderInvoice, getAgentCustomerByReturnId, getAgentCustomerBySalesId, invoiceList } from "@/app/services/agentTransaction";
 import { agentCustomerById, downloadFile } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -124,7 +124,7 @@ export default function CustomerDetails() {
         const exportOrderFile = async (uuid: string, format: string) => {
             try {
                 setSmallLoading(true)
-                const response = await exportInvoice({ uuid, format }); // send proper body object
+                const response = await exportOrderInvoice({ uuid, format }); // send proper body object
 
                 if (response && typeof response === "object" && response.download_url) {
                     await downloadFile(response.download_url);
@@ -146,7 +146,7 @@ export default function CustomerDetails() {
         };
 
         return (smallLoading ? <Skeleton /> : <div className="cursor-pointer" onClick={() => {
-            exportOrderFile(row.uuid, "pdf"); // or "excel", "csv" etc.
+            exportOrderFile(row.uuid, "csv"); // or "excel", "csv" etc.
 
         }}><Icon icon="material-symbols:download" /></div>)
     }

@@ -47,7 +47,7 @@ const columns = [
     { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
     {
         key: "status", label: "Status", showByDefault: true, render: (row: TableDataType) => (
-            <OrderStatus status={row.status} />
+            <OrderStatus order_flag={row.status} />
         )
     },
 ];

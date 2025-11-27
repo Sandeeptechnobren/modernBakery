@@ -380,3 +380,16 @@ export const deleteChillerRequest = async (uuid: string) => {
     return handleError(error);
   }
 };
+
+
+
+
+// export const getWarehouseStockDetails = async (id: string) => {
+//   try {
+//     const res = await API.get(`/api/settings/warehouse-stocks/${id}/stock-details`);
+
+//     return res.data;
+//   } catch (error: unknown) {
+//     return handleError(error);
+//   }
+// };

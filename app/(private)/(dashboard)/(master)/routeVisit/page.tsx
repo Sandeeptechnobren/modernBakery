@@ -22,7 +22,7 @@ const columns = [
     key: "customer_type",
     label: "Customer Type",
     render: (row: TableDataType) =>
-      String(row.customer_type) === "1" ? "Agent Customer" : "Merchandiser",
+      String(row.customer_type) === "1" ? "Merchandiser" : "Agent Customer",
   },
 
   {
