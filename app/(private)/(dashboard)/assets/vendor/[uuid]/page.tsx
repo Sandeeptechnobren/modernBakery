@@ -213,31 +213,7 @@ export default function AddEditVendor() {
                       formik.touched.vendor_code && formik.errors.vendor_code
                     }
                   />
-                  {!isEditMode && (
-                    <>
-                      <IconButton
-                        bgClass="white"
-                         className="  cursor-pointer text-[#252B37] pt-12"
-                        icon="mi:settings"
-                        onClick={() => setIsOpen(true)}
-                      />
-                      <SettingPopUp
-                        isOpen={isOpen}
-                        onClose={() => setIsOpen(false)}
-                        title="Vendor Code"
-                        prefix={prefix}
-                        setPrefix={setPrefix}
-                        onSave={(mode, code) => {
-                          setCodeMode(mode);
-                          if (mode === "auto" && code) {
-                            formik.setFieldValue("vendor_code", code);
-                          } else if (mode === "manual") {
-                            formik.setFieldValue("vendor_code", "");
-                          }
-                        }}
-                      />
-                    </>
-                  )}
+                  
                 </div>
 
                 {/* Vendor Name */}
@@ -303,7 +279,7 @@ export default function AddEditVendor() {
                 {/* Status */}
                 <InputFields
                   label="Status"
-                  type="select"
+                  type="radio"
                   name="status"
                   value={formik.values.status.toString()}
                   onChange={formik.handleChange}
@@ -326,7 +302,7 @@ export default function AddEditVendor() {
               <button
                 type="button"
                 className="px-4 py-2 border rounded-lg"
-                onClick={() => formik.resetForm()}
+                onClick={() => router.back()}
               >
                 Cancel
               </button>

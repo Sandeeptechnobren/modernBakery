@@ -8,7 +8,6 @@ import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
 import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { chillerList, deleteChiller, deleteServiceTypes, serviceTypesList } from "@/app/services/assetsApi";
@@ -22,27 +21,10 @@ const dropdownDataList = [
 export default function ShelfDisplay() {
   const {setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [deleteSelectedRow, setDeleteSelectedRow] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-
-  const handleConfirmDelete = async () => {
-    if (deleteSelectedRow) {
-      // Call the API to delete the row
-      const res = await deleteChiller(deleteSelectedRow.toString());
-      if(res.error) {
-        showSnackbar(res.data.message || "failed to delete the chiller", "error");
-        throw new Error("Unable to delete the chiller");
-      } else {
-          showSnackbar( res.message || `Deleted chiller with ID: ${deleteSelectedRow}`, "success");
-          setShowDeletePopup(false);
-          setRefreshKey(prev => prev +1);
-      }
-    }
-  };
 
   const fetchServiceTypes = useCallback(
     async ( pageNo: number = 1, pageSize: number = 10) : Promise<listReturnType> => {
@@ -108,31 +90,7 @@ export default function ShelfDisplay() {
             },
             header: {
               title: "Chillers",
-              wholeTableActions: [
-                <div key={0} className="flex gap-[12px] relative">
-                  {/* <BorderIconButton icon="gala:file-document" label="Export CSV" /> */}
-                  <DismissibleDropdown
-                    isOpen={showDropdown}
-                    setIsOpen={setShowDropdown}
-                    button={<BorderIconButton icon="ic:sharp-more-vert" />}
-                    dropdown={
-                      <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                        <CustomDropdown>
-                          {dropdownDataList.map((link, idx) => (
-                            <div
-                              key={idx}
-                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                            >
-                              <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
-                              <span className="text-[#181D27] font-[500] text-[16px]">{link.label}</span>
-                            </div>
-                          ))}
-                        </CustomDropdown>
-                      </div>
-                    }
-                  />
-                </div>
-              ],
+              
               searchBar: false,
               columnFilter: true,
               actions: [
@@ -140,7 +98,7 @@ export default function ShelfDisplay() {
                   key="name"
                   href="/assets/chiller/add"
                   leadingIcon="lucide:plus"
-                  label="Add Chiller"
+                  label="Add"
                   labelTw="hidden lg:block"
                   isActive
                 />,
@@ -152,10 +110,10 @@ export default function ShelfDisplay() {
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "serial_number", label: "Serial Number",
+              { key: "osa_code", label: "OSA Code",
                 render: (row: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.serial_number}
+                {row.osa_code}
             </span>
         ),
                },
@@ -166,24 +124,37 @@ export default function ShelfDisplay() {
             </span>
         ),
               },
-              { key: "asset_number", label: "Asset Number" },
-              { key: "model_number", label: "Model Number" },
-              { key: "description", label: "Description" },
+              { key: "serial_number", label: "Serial Number" },
+              { key: "assets_category", label: "Assests Category Name", render: (data: TableDataType) =>
+                typeof data.assets_category === "object" && data.assets_category !== null
+                    ? `${(data.assets_category as { name?: string }).name || ""}`
+                    : "-",  },
+              { key: "model_number", label: "Model Number", render: (data: TableDataType) =>
+                typeof data.model_number === "object" && data.model_number !== null
+                    ? `${(data.model_number as { name?: string }).name || ""}`
+                    : "-",  },
               { key: "acquisition", label: "Acquisition" },
-              { key: "vender_details", label: "Vender Details", render: (data: TableDataType) => {
-                  if(data.vender_details && Array.isArray(data.vender_details)) {
-                    return data.vender_details.map((item: {id: number, code: string, name: string}) => {
-                      return item.name || "";
-                    }).join(", ")                    
-                  } else return "-";
-              } },
-              { key: "document_id", label: "Document Id" },
-              { key: "document_type", label: "Document Type" },
-              { key: "manufacturer", label: "Manufacturer" },
-              { key: "type_name", label: "Type Name" },
-              { key: "is_assign", label: "Is Assign", render: (data: TableDataType) => (data.is_assign && data.is_assign.toString() === "1" ? "Yes" : "No") },
-              { key: "customer_id", label: "Country Id" },
-              { key: "agreement_id", label: "Agreement Id" },
+              { key: "vendor", label: "Vendor", render: (data: TableDataType) =>
+                typeof data.vendor === "object" && data.vendor !== null
+                    ? `${(data.vendor as { name?: string }).name || ""}`
+                    : "-",  },
+              { key: "manufacturer", label: "Manufacturer", render: (data: TableDataType) =>
+                typeof data.manufacturer === "object" && data.manufacturer !== null
+                    ? `${(data.manufacturer as { name?: string }).name || ""}`
+                    : "-",  },
+              { key: "country", label: "Country", render: (data: TableDataType) =>
+                typeof data.country === "object" && data.country !== null
+                    ? `${(data.country as { name?: string }).name || ""}`
+                    : "-",   },
+              { key: "branding", label: "Branding", render: (data: TableDataType) =>
+                typeof data.branding === "object" && data.branding !== null
+                    ? `${(data.branding as { name?: string }).name || ""}`
+                    : "-",    },
+              { key: "assets_type", label: "Assets Type" },
+              { key: "trading_partner_number", label: "Trading Partner No." },
+              { key: "capacity", label: "Capacity" },
+              { key: "manufacturing_year", label: "Manufacturing Year" },
+              { key: "remarks", label: "Remarks" },
               { key: "status", label: "Status", render: (data: TableDataType) => (
                   <StatusBtn isActive={data.status && data.status.toString() === "1" ? true : false} />
               )},
@@ -202,29 +173,11 @@ export default function ShelfDisplay() {
                   router.push(`/assets/chiller/${data.uuid}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: TableDataType) => {
-                  setDeleteSelectedRow(data?.uuid ? String(data.uuid) : data.uuid);
-                  setShowDeletePopup(true);
-                },
-              },
             ],
             pageSize: 10,
           }}
         />
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Shelf Display"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

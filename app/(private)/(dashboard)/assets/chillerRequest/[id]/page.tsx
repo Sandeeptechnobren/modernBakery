@@ -1,16 +1,4 @@
-// outlet_stamp: OutletStamp.png;
-// contract_attached: ContractDoc.pdf;
-// lc_letter: LCLetter.pdf;
-// trading_licence: TradeLicence.pdf;
-// password_photo: OwnerPhoto.jpg;
-// outlet_address_proof: AddressProof.pdf;
-// national_id_file: NationalID.pdf;
-// password_photo_file: PasswordPhoto.jpg;
-// outlet_address_proof_file: AddressProof.pdf;
-// trading_licence_file: TradingLicence.pdf;
-// lc_letter_file: LcLetter.pdf;
-// outlet_stamp_file: OutletStamp.png;
-// sign__customer_file: CustomerSign.png;
+
 "use client";
 
 import StepperForm, {
@@ -362,6 +350,7 @@ APIFormData.interceptors.request.use(
 );
 
 export default function AddCompanyWithStepper() {
+  console.log("ashdfvazbfavhj")
   const [warehouseOptions, setWarehouseOptions] = useState<DropdownOption[]>(
     []
   );
@@ -377,6 +366,7 @@ export default function AddCompanyWithStepper() {
 
   const params = useParams();
   const uuid = params?.id;
+  console.log("UUID from params:", params);
 
   const steps: StepperStep[] = [
     { id: 1, label: "Outlet Information" },
@@ -522,9 +512,9 @@ export default function AddCompanyWithStepper() {
       const warehouseRes = await warehouseList();
       if (warehouseRes.status === "success") {
         const warehouseOpts = warehouseRes.data.map((warehouse: {
-            id: string,
-            warehouse_code: string,
-            warehouse_name: string
+          id: string,
+          warehouse_code: string,
+          warehouse_name: string
         }) => ({
           value: warehouse.id.toString(),
           label: `${warehouse.warehouse_code} - ${warehouse.warehouse_name}`,
@@ -536,9 +526,9 @@ export default function AddCompanyWithStepper() {
       const salesmanRes = await salesmanList({});
       if (salesmanRes.status === "success") {
         const salesmanOpts = salesmanRes.data.map((salesman: {
-            id: string,
-            osa_code: string,
-            name: string
+          id: string,
+          osa_code: string,
+          name: string
         }) => ({
           value: salesman.id.toString(),
           label: `${salesman.osa_code} - ${salesman.name}`,
@@ -550,9 +540,9 @@ export default function AddCompanyWithStepper() {
       const outletRes = await outletChannelList();
       if (outletRes.status === "success") {
         const outletOpts = outletRes.data.map((outlet: {
-            id: string,
-            outlet_channel_code: string,
-            outlet_channel: string
+          id: string,
+          outlet_channel_code: string,
+          outlet_channel: string
         }) => ({
           value: outlet.id.toString(),
           label: `${outlet.outlet_channel_code} - ${outlet.outlet_channel}`,
@@ -694,8 +684,8 @@ export default function AddCompanyWithStepper() {
                   {fileInfo
                     ? fileInfo.file.name
                     : typeof currentValue === "string"
-                    ? currentValue
-                    : "File"}
+                      ? currentValue
+                      : "File"}
                 </p>
                 <p className="text-xs text-gray-500">
                   {fileInfo
@@ -773,13 +763,14 @@ export default function AddCompanyWithStepper() {
     ["national_id", "outlet_stamp", "model", "hil", "ir_reference_no", "installation_done_by", "date_lnitial", "date_lnitial2", "contract_attached", "machine_number", "brand", "asset_number"],
     ["lc_letter", "trading_licence", "password_photo", "outlet_address_proof", "chiller_asset_care_manager", "national_id_file", "password_photo_file", "outlet_address_proof_file", "trading_licence_file", "lc_letter_file", "outlet_stamp_file", "sign__customer_file", "chiller_manager_id", "is_merchandiser", "status", "fridge_status", "iro_id", "remark"]
   ];
-  
+
   const handleNext = async (
     values: Chiller,
     actions: FormikHelpers<Chiller>
   ) => {
     try {
-      await validationSchema.validate(values, { abortEarly: false });
+      const schema = stepSchemas[currentStep - 1];
+      await schema.validate(values, { abortEarly: false });
       markStepCompleted(currentStep);
       nextStep();
     } catch (err: unknown) {
@@ -847,7 +838,7 @@ export default function AddCompanyWithStepper() {
       if (res.error) {
         showSnackbar(
           res.data?.message ||
-            `Failed to ${isEditMode ? "update" : "add"} Chiller`,
+          `Failed to ${isEditMode ? "update" : "add"} Chiller`,
           "error"
         );
       } else {
@@ -1572,7 +1563,7 @@ export default function AddCompanyWithStepper() {
                 isCompleted: isStepCompleted(step.id),
               }))}
               currentStep={currentStep}
-              onStepClick={() => {}}
+              onStepClick={() => { }}
               onBack={prevStep}
               onNext={() =>
                 handleNext(values, {
@@ -1590,8 +1581,8 @@ export default function AddCompanyWithStepper() {
                     ? "Updating..."
                     : "Submitting..."
                   : isEditMode
-                  ? "Update"
-                  : "Submit"
+                    ? "Update"
+                    : "Submit"
               }
             >
               {renderStepContent(values, setFieldValue, errors, touched)}

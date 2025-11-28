@@ -29,22 +29,6 @@ export default function ShelfDisplay() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const handleConfirmDelete = async () => {
-    if (deleteSelectedRow) {
-      // Call the API to delete the row
-      setLoading(true);
-      const res = await deleteVendor(deleteSelectedRow.toString());
-      setLoading(false);
-      if(res.error) {
-        showSnackbar(res.data.message || "failed to delete the Vendor", "error");
-        throw new Error("Unable to delete the Vendor");
-      } else {
-          showSnackbar( res.message || `Deleted Vendor with ID: ${deleteSelectedRow}`, "success");
-          setShowDeletePopup(false);
-          setRefreshKey(prev => prev +1);
-      }
-    }
-  };
 
   const fetchVendor = useCallback(
     async ( pageNo: number = 1, pageSize: number = 10) : Promise<listReturnType> => {
@@ -84,31 +68,7 @@ export default function ShelfDisplay() {
             },
             header: {
               title: "Vendor",
-              wholeTableActions: [
-                <div key={0} className="flex gap-[12px] relative">
-                  {/* <BorderIconButton icon="gala:file-document" label="Export CSV" /> */}
-                  <DismissibleDropdown
-                    isOpen={showDropdown}
-                    setIsOpen={setShowDropdown}
-                    button={<BorderIconButton icon="ic:sharp-more-vert" />}
-                    dropdown={
-                      <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                        <CustomDropdown>
-                          {dropdownDataList.map((link, idx) => (
-                            <div
-                              key={idx}
-                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                            >
-                              <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
-                              <span className="text-[#181D27] font-[500] text-[16px]">{link.label}</span>
-                            </div>
-                          ))}
-                        </CustomDropdown>
-                      </div>
-                    }
-                  />
-                </div>
-              ],
+             
               searchBar: false,
               columnFilter: true,
               actions: [
@@ -116,7 +76,7 @@ export default function ShelfDisplay() {
                   key="name"
                   href="/assets/vendor/add"
                   leadingIcon="lucide:plus"
-                  label="Add Vendor"
+                  label="Add"
                   labelTw="hidden lg:block"
                   isActive
                 />,
@@ -142,23 +102,16 @@ export default function ShelfDisplay() {
             ],
             rowSelection: true,
             rowActions: [
-              {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(`/assets/vendor/view/${data.uuid}`);
-                },
-              },
+              // {
+              //   icon: "lucide:eye",
+              //   onClick: (data: TableDataType) => {
+              //     router.push(`/assets/vendor/view/${data.uuid}`);
+              //   },
+              // },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
                   router.push(`/assets/vendor/${data.uuid}`);
-                },
-              },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: TableDataType) => {
-                  setDeleteSelectedRow(data?.uuid ? String(data.uuid) : data.uuid);
-                  setShowDeletePopup(true);
                 },
               },
             ],
@@ -167,16 +120,6 @@ export default function ShelfDisplay() {
         />
       </div>
 
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Vendor"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

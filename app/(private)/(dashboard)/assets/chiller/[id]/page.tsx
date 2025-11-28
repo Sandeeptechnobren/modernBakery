@@ -1,587 +1,436 @@
 "use client";
 
-import StepperForm, {
-  useStepperForm,
-  StepperStep,
-} from "@/app/components/stepperForm";
+import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import * as Yup from "yup";
-import {
-  Formik,
-  Form,
-  FormikHelpers,
-  FormikErrors,
-  FormikTouched,
-} from "formik";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { Formik, Form, FormikHelpers, FormikValues } from "formik";
+import { useEffect, useState, JSX } from "react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import {
-  addChiller,
-  chillerByUUID,
-  updateChiller,
-} from "@/app/services/assetsApi";
+import { addChiller, chillerByUUID, updateChiller } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
 import { genearateCode } from "@/app/services/allApi";
 
-
+/* ----------------------------------------------------
+   VALIDATION SCHEMA
+---------------------------------------------------- */
 const validationSchema = Yup.object({
-  serial_number: Yup.string()
-    .trim()
-    .required("Serial Number is required")
-    .min(3, "Serial Number must be at least 3 characters")
-    .max(50, "Serial Number cannot exceed 50 characters"),
-  asset_number: Yup.string()
-    .trim()
-    .required("Asset Number is required")
-    .min(3, "Asset Number must be at least 3 characters")
-    .max(50, "Asset Number cannot exceed 50 characters"),
-  model_number: Yup.string()
-    .trim()
-    .required("Model Number is required")
-    .min(3, "Model Number must be at least 3 characters")
-    .max(50, "Model Number cannot exceed 50 characters"),
-  description: Yup.string()
-    .trim()
-    .required("Description is required")
-    .max(255, "Description cannot exceed 255 characters"),
-  acquisition: Yup.date()
-    .required("Acquisition date is required")
-    .typeError("Invalid date format"),
-  vender_details: Yup.array()
-    .of(Yup.string().required("ID is required"))
-    .min(1, "Select at least one vendor")
-    .required("Vender details are required"),
-  manufacturer: Yup.string()
-    .trim()
-    .required("Manufacturer is required")
-    .max(100, "Manufacturer cannot exceed 100 characters"),
-  country_id: Yup.number()
-    .required("Country ID is required")
-    .typeError("Country ID must be a number"),
-  type_name: Yup.string()
-    .trim()
-    .required("Type Name is required")
-    .max(50, "Type Name cannot exceed 50 characters"),
-  sap_code: Yup.string()
-    .trim()
-    .required("SAP Code is required")
-    .max(50, "SAP Code cannot exceed 50 characters"),
-  status: Yup.number()
-    .oneOf([0, 1], "Invalid status selected")
-    .required("Status is required"),
-  is_assign: Yup.number()
-    .oneOf([0, 1], "Invalid assignment status")
-    .required("Assignment status is required"),
-  customer_id: Yup.number()
-    .required("Customer ID is required")
-    .typeError("Customer ID must be a number"),
-  agreement_id: Yup.number()
-    .required("Agreement ID is required")
-    .typeError("Agreement ID must be a number"),
-  document_type: Yup.string()
-    .trim()
-    .required("Document Type is required")
-    .max(10, "Document Type cannot exceed 10 characters"),
-  document_id: Yup.number()
-    .required("Document ID is required")
-    .typeError("Document ID must be a number"),
+  osa_code: Yup.string().required("Code is required"),
+  serial_number: Yup.string().required("Serial Number is required"),
+  model_number: Yup.string().required("Model Number is required"),
+  assets_category: Yup.string().required("Assets Category is required"),
+  sap_code: Yup.string().required("SAP Code is required"),
+
+  acquisition: Yup.date().required("Acquisition date is required"),
+  vender: Yup.string().required("Vendor is required"),
+  manufacturer: Yup.string().required("Manufacturer is required"),
+  country_id: Yup.string().required("Country is required"),
+
+  branding: Yup.string().required("Branding is required"),
+  trading_partner_number: Yup.string().required("Trading Partner Number is required"),
+  capacity: Yup.string().required("Capacity is required"),
+  manufacturing_year: Yup.string().required("Manufacturing year is required"),
+  remarks: Yup.string().required("Remarks are required"),
+  assets_type: Yup.string().required("Assets Type is required"),
+  status: Yup.string().required("Status is required"),
 });
 
-
+/* ----------------------------------------------------
+   STEP-WISE VALIDATION
+---------------------------------------------------- */
 const stepSchemas = [
-  Yup.object().shape({
+  Yup.object({
+    osa_code: validationSchema.fields.osa_code,
     serial_number: validationSchema.fields.serial_number,
-    asset_number: validationSchema.fields.asset_number,
     model_number: validationSchema.fields.model_number,
-    description: validationSchema.fields.description,
-    type_name: validationSchema.fields.type_name,
+    assets_category: validationSchema.fields.assets_category,
     sap_code: validationSchema.fields.sap_code,
   }),
-  Yup.object().shape({
+  Yup.object({
     acquisition: validationSchema.fields.acquisition,
-    vender_details: validationSchema.fields.vender_details,
+    vender: validationSchema.fields.vender,
     manufacturer: validationSchema.fields.manufacturer,
     country_id: validationSchema.fields.country_id,
   }),
-  Yup.object().shape({
+  Yup.object({
+    branding: validationSchema.fields.branding,
+    trading_partner_number: validationSchema.fields.trading_partner_number,
+    capacity: validationSchema.fields.capacity,
+    manufacturing_year: validationSchema.fields.manufacturing_year,
+    remarks: validationSchema.fields.remarks,
+    assets_type: validationSchema.fields.assets_type,
     status: validationSchema.fields.status,
-    is_assign: validationSchema.fields.is_assign,
-  }),
-  Yup.object().shape({
-    customer_id: validationSchema.fields.customer_id,
-    agreement_id: validationSchema.fields.agreement_id,
-    document_type: validationSchema.fields.document_type,
-    document_id: validationSchema.fields.document_id,
   }),
 ];
 
-type chiller = {
-  serial_number: string;
-  asset_number: string;
-  model_number: string;
-  description: string;
-  acquisition: string;
-  vender_details: string[];
-  manufacturer: string;
-  country_id: number;
-  type_name: string;
-  sap_code: string;
-  status: number;
-  is_assign: number;
-  customer_id: number;
-  agreement_id: number;
-  document_type: string;
-  document_id: number;
-};
+export default function AddOrEditChiller() {
+  const [codeMode] = useState<"auto" | "manual">("auto");
+  const {
+    vendorOptions,
+    manufacturerOptions,
+    onlyCountryOptions,
+    assetsTypeOptions,
+    assetsModelOptions,
+    brandOptions,
+  } = useAllDropdownListData();
 
-export default function AddOrEditCompanyWithStepper() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
-  const [prefix, setPrefix] = useState('CHL');
-  const { onlyCountryOptions, vendorOptions, companyCustomersOptions } = useAllDropdownListData();
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Information" },
-    { id: 2, label: "Acquisition and Vendor" },
-    { id: 3, label: "Status and Assignment / Location" },
-    { id: 4, label: "Documentation and Records" },
+    { id: 2, label: "Acquisition & Vendor" },
+    { id: 3, label: "Additional Details" },
   ];
 
-  const {
-    currentStep,
-    nextStep,
-    prevStep,
-    markStepCompleted,
-    isStepCompleted,
-    isLastStep,
-  } = useStepperForm(steps.length);
+  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
+    useStepperForm(steps.length);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-
-  const { setLoading } = useLoading();
   const params = useParams();
-  const codeGeneratedRef = useState<{ current: boolean }>({ current: false });
+  console.log(params)
+  const { setLoading } = useLoading();
+
   const isEditMode = params?.id && params.id !== "add";
-  const chillerId = isEditMode ? (params?.id as string) : null;
-  const [chiller, setChiller] = useState<chiller>({
+  console.log(isEditMode)
+  const chillerId = isEditMode ? String(params.id) : null;
+
+  /* ----------------------------------------------------
+     INITIAL VALUES
+  ---------------------------------------------------- */
+  const [chiller, setChiller] = useState({
+    osa_code: "",
     serial_number: "",
-    asset_number: "",
     model_number: "",
-    description: "",
     acquisition: "",
-    vender_details: [],
+    vender: "",
     manufacturer: "",
-    country_id: parseInt(onlyCountryOptions[0]?.value) || 0,
-    type_name: "",
+    country_id: "",
+    assets_category: "",
     sap_code: "",
-    status: 1,
-    is_assign: 1,
-    customer_id: 1,
-    agreement_id: 1,
-    document_type: "1",
-    document_id: 1,
+    status: "1",
+    assets_type: "",
+    branding: "",
+    trading_partner_number: "",
+    capacity: "",
+    manufacturing_year: "",
+    remarks: "",
   });
 
+  /* ----------------------------------------------------
+     FETCH + PREFILL + AUTO CODE GENERATION
+  ---------------------------------------------------- */
   useEffect(() => {
     async function fetchData() {
       if (isEditMode && chillerId) {
         setLoading(true);
         const res = await chillerByUUID(chillerId);
         setLoading(false);
+
         if (res.error) {
-          showSnackbar(res.data.message || "Failed to fetch chiller", "error");
-          throw new Error("Unable to fetch chiller");
-        } else {
-          setChiller({
-            ...res.data,
-            vender_details: res.data.vender_details.map((v: { id: number }) => String(v.id)),
-            customer_id: res.data.customer_id || companyCustomersOptions[0]?.value || 0,
-            agreement_id: res.data.agreement_id || 1,
-            document_id: res.data.document_id || 1,
-          } as chiller);
+          showSnackbar(res.data?.message || "Failed to fetch details", "error");
+          return;
         }
-      } else if(!isEditMode && !codeGeneratedRef[0].current){
-        codeGeneratedRef[0].current = true;
+
+        const d = res.data;
+
+        // FIXED MAPPING
+        setChiller({
+          osa_code: d.osa_code || "",
+          serial_number: d.serial_number || "",
+          model_number: String(d.model_number?.id || ""),
+          assets_category: String(d.assets_category?.id || ""),
+          sap_code: d.sap_code || "",
+          acquisition: d.acquisition || "",
+
+          vender: String(d.vendor?.id || ""),
+
+          manufacturer: String(d.manufacturer?.id || ""),
+          country_id: String(d.country?.id || ""),
+
+          branding: String(d.branding?.id || ""),
+          trading_partner_number: String(d.trading_partner_number || ""),
+          capacity: d.capacity || "",
+          manufacturing_year: d.manufacturing_year || "",
+          assets_type: d.assets_type || "",
+          remarks: d.remarks || "",
+          status: String(d.status ?? "1"),
+        });
+      } else {
         const res = await genearateCode({ model_name: "chiller" });
-        if (res?.code) {
-          setChiller((prev) => ({ ...prev, serial_number: res.code }));
-        }
-        if (res?.prefix) {
-          setPrefix(res.prefix);
-        } else if (res?.code) {
-          const match = res.prefix;
-          if (match) setPrefix(match);
-        }
+        setChiller((prev) => ({ ...prev, osa_code: res?.code || "" }));
       }
     }
     fetchData();
-  }, [isEditMode, chillerId]);
+  }, []);
 
-  const handleNext = async (
-    values: chiller,
-    actions: FormikHelpers<chiller>
-  ) => {
+  /* ----------------------------------------------------
+     NEXT STEP VALIDATION
+  ---------------------------------------------------- */
+  const handleNext = async (values: any, actions: FormikHelpers<any>) => {
     try {
       const schema = stepSchemas[currentStep - 1];
       await schema.validate(values, { abortEarly: false });
       markStepCompleted(currentStep);
       nextStep();
-    } catch (err: unknown) {
-      if (err instanceof Yup.ValidationError) {
-        const fields = err.inner.map((e) => e.path);
-        actions.setTouched(
-          fields.reduce(
-            (acc, key) => ({ ...acc, [key!]: true }),
-            {} as Record<string, boolean>
-          )
-        );
-        actions.setErrors(
-          err.inner.reduce(
-            (acc: Partial<Record<keyof chiller, string>>, curr) => ({
-              ...acc,
-              [curr.path as keyof chiller]: curr.message,
-            }),
-            {}
-          )
-        );
+    } catch (err: any) {
+      if (err.inner) {
+        const errors: any = {};
+        const touched: any = {};
+        err.inner.forEach((e: any) => {
+          errors[e.path] = e.message;
+          touched[e.path] = true;
+        });
+        actions.setErrors(errors);
+        actions.setTouched(touched);
       }
-      showSnackbar("Please fix validation errors before proceeding", "error");
+      showSnackbar("Please correct highlighted errors", "error");
     }
   };
 
-  const handleSubmit = async (values: chiller) => {
-    try {
-      await validationSchema.validate(values, { abortEarly: false });
+  /* ----------------------------------------------------
+       FINAL SUBMIT
+    ---------------------------------------------------- */
+  const handleSubmit = async (values: any) => {
+    const payload = {
+      osa_code: values.osa_code,
+      serial_number: values.serial_number,
+      model_number: values.model_number,
+      assets_category: values.assets_category,
+      sap_code: values.sap_code,
 
-      const payload = {
-        serial_number: values.serial_number,
-        asset_number: values.asset_number,
-        model_number: values.model_number,
-        description: values.description,
-        acquisition: values.acquisition,
-        vender_details: values.vender_details
-          .map((v): string | null => {
-            if (v && typeof v === "object" && "id" in v) {
-              return String((v as { id: number }).id);
-            }
-            return null;
-          })
-          .filter((id): id is string => id !== null),
-        manufacturer: values.manufacturer,
-        country_id: Number(values.country_id),
-        type_name: values.type_name,
-        sap_code: values.sap_code,
-        status: values.status,
-        is_assign: values.is_assign,
-        customer_id: Number(values.customer_id),
-        agreement_id: Number(values.agreement_id),
-        document_type: "ACF",
-        document_id: values.document_id,
-      };
+      acquisition: values.acquisition,
+      vender: values.vender,
+      manufacturer: values.manufacturer,
+      country_id: Number(values.country_id),
 
-      let res;
-      if (params?.id && params.id !== "add") {
-        res = await updateChiller(String(params.id), payload);
-      } else {
-        res = await addChiller(payload);
-      }
+      branding: values.branding,
+      trading_partner_number: values.trading_partner_number,
+      capacity: values.capacity,
+      manufacturing_year: values.manufacturing_year,
+      assets_type: values.assets_type,
+      remarks: values.remarks,
+      status: Number(values.status),
+    };
 
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to add Chiller", "error");
-      } else {
-        showSnackbar(
-          `${
-            params.id !== "add" ? "Chiller updated" : "Chiller added"
-          } successfully`,
-          "success"
-        );
-        router.push("/assets/chiller");
-      }
-    } catch {
-      showSnackbar("Add Chiller failed ❌", "error");
+    let res;
+    if (isEditMode) res = await updateChiller(chillerId!, payload as any);
+    else res = await addChiller(payload as any);
+
+    if (res.error) {
+      showSnackbar(res.data?.message || "Failed to save", "error");
+    } else {
+      showSnackbar(`Chiller ${isEditMode ? "updated" : "added"} successfully`, "success");
+      router.push("/assets/chiller");
     }
   };
 
+  /* ----------------------------------------------------
+     RENDER STEP CONTENT
+  ---------------------------------------------------- */
   const renderStepContent = (
-    values: chiller,
-    setFieldValue: (
-      field: keyof chiller,
-      value: string | File,
-      shouldValidate?: boolean
-    ) => void,
-    errors: FormikErrors<chiller>,
-    touched: FormikTouched<chiller>
-  ) => {
+    values: FormikValues,
+    setFieldValue: (field: string, value: any) => void,
+    errors: FormikValues,
+    touched: FormikValues
+  ): JSX.Element | null => {
     switch (currentStep) {
       case 1:
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <div className="flex items-start gap-2 max-w-[406px]">
-                  <InputFields
-                    required
-                    label="Serial Number"
-                    name="serial_number"
-                    value={values.serial_number}
-                    onChange={(e) => setFieldValue("serial_number", e.target.value)}
-                    disabled={codeMode === 'auto'}
-                    error={touched.serial_number && errors.serial_number}
-                  />
-                  {!isEditMode && (
-                    <>
-                      <IconButton bgClass="white"  className="  cursor-pointer text-[#252B37] pt-12" icon="mi:settings" onClick={() => setIsOpen(true)} />
-                      <SettingPopUp
-                        isOpen={isOpen}
-                        onClose={() => setIsOpen(false)}
-                        title="Serial Number"
-                        prefix={prefix}
-                        setPrefix={setPrefix}
-                        onSave={(mode, code) => {
-                          setCodeMode(mode);
-                          if (mode === 'auto' && code) {
-                            setFieldValue("serial_number", code);
-                          } else if (mode === 'manual') {
-                            setFieldValue("serial_number", '');
-                          }
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Asset Number"
-                  name="asset_number"
-                  value={values.asset_number}
-                  onChange={(e) =>
-                    setFieldValue("asset_number", e.target.value)
-                  }
-                  error={touched.asset_number && errors.asset_number}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Model Number"
-                  name="model_number"
-                  value={values.model_number}
-                  onChange={(e) =>
-                    setFieldValue("model_number", e.target.value)
-                  }
-                  error={touched.model_number && errors.model_number}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Description"
-                  name="description"
-                  value={values.description}
-                  onChange={(e) => setFieldValue("description", e.target.value)}
-                  error={touched.description && errors.description}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Type Name"
-                  name="type_name"
-                  value={values.type_name}
-                  onChange={(e) => setFieldValue("type_name", e.target.value)}
-                  error={touched.type_name && errors.type_name}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="SAP Code"
-                  name="sap_code"
-                  value={values.sap_code}
-                  onChange={(e) => setFieldValue("sap_code", e.target.value)}
-                  error={touched.sap_code && errors.sap_code}
-                />
-              </div>
+              <InputFields
+                required
+                label="Code"
+                name="osa_code"
+                value={values.osa_code}
+                disabled={codeMode === "auto"}
+                onChange={(e) => setFieldValue("osa_code", e.target.value)}
+                error={touched.osa_code && errors.osa_code}
+              />
+
+              <InputFields
+                required
+                label="Assets Category"
+                name="assets_category"
+                options={assetsTypeOptions}
+                value={values.assets_category}
+                onChange={(e) => setFieldValue("assets_category", e.target.value)}
+                error={touched.assets_category && errors.assets_category}
+              />
+
+              <InputFields
+                required
+                label="Serial Number"
+                name="serial_number"
+                value={values.serial_number}
+                onChange={(e) => setFieldValue("serial_number", e.target.value)}
+                error={touched.serial_number && errors.serial_number}
+              />
+
+              <InputFields
+                required
+                label="Model Number"
+                name="model_number"
+                value={values.model_number}
+                options={assetsModelOptions}
+                onChange={(e) => setFieldValue("model_number", e.target.value)}
+                error={touched.model_number && errors.model_number}
+              />
+
+              <InputFields
+                required
+                label="ERP Code"
+                name="sap_code"
+                value={values.sap_code}
+                onChange={(e) => setFieldValue("sap_code", e.target.value)}
+                error={touched.sap_code && errors.sap_code}
+              />
             </div>
           </ContainerCard>
         );
+
       case 2:
         return (
           <ContainerCard>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div>
-                <InputFields
-                  required
-                  type="date"
-                  label="Acquisition"
-                  name="acquisition"
-                  value={values.acquisition}
-                  onChange={(e) => setFieldValue("acquisition", e.target.value)}
-                  error={touched.acquisition && errors.acquisition}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Vender Details"
-                  name="vender_details"
-                  value={values.vender_details}
-                  isSingle={false}
-                  options={vendorOptions}
-                  onChange={(e) => {
-                    setFieldValue("vender_details", e.target.value);
-                  }}
-                  error={
-                    touched.vender_details
-                      ? Array.isArray(errors.vender_details)
-                        ? errors.vender_details[0]
-                        : errors.vender_details
-                      : false
-                  }
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Manufacturer"
-                  name="manufacturer"
-                  value={values.manufacturer}
-                  onChange={(e) =>
-                    setFieldValue("manufacturer", e.target.value)
-                  }
-                  error={touched.manufacturer && errors.manufacturer}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Country"
-                  name="country_id"
-                  value={values.country_id.toString()}
-                  options={onlyCountryOptions}
-                  onChange={(e) => setFieldValue("country_id", e.target.value)}
-                  error={
-                    errors?.country_id && touched?.country_id
-                      ? errors.country_id
-                      : false
-                  }
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              <InputFields
+                required
+                type="date"
+                label="Acquisition"
+                name="acquisition"
+                value={values.acquisition}
+                onChange={(e) => setFieldValue("acquisition", e.target.value)}
+                error={touched.acquisition && errors.acquisition}
+              />
+
+              <InputFields
+                required
+                label="Vendor"
+                name="vender"
+                options={vendorOptions}
+                value={values.vender}
+                onChange={(e) => setFieldValue("vender", e.target.value)}
+                error={touched.vender && errors.vender}
+              />
+
+              <InputFields
+                required
+                label="Manufacturer"
+                name="manufacturer"
+                options={manufacturerOptions}
+                value={values.manufacturer}
+                onChange={(e) => setFieldValue("manufacturer", e.target.value)}
+                error={touched.manufacturer && errors.manufacturer}
+              />
+
+              <InputFields
+                required
+                label="Country"
+                name="country_id"
+                options={onlyCountryOptions}
+                value={values.country_id}
+                onChange={(e) => setFieldValue("country_id", e.target.value)}
+                error={touched.country_id && errors.country_id}
+              />
             </div>
           </ContainerCard>
         );
+
       case 3:
         return (
           <ContainerCard>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div>
-                <InputFields
-                  required
-                  label="Status"
-                  name="status"
-                  value={values.status.toString()}
-                  onChange={(e) => setFieldValue("status", e.target.value)}
-                  options={[
-                    { value: "1", label: "Active" },
-                    { value: "0", label: "Inactive" },
-                  ]}
-                  error={touched.status && errors.status}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Is Assign"
-                  name="is_assign"
-                  value={values.is_assign.toString()}
-                  onChange={(e) => setFieldValue("is_assign", e.target.value)}
-                  options={[
-                    { value: "1", label: "Yes" },
-                    { value: "0", label: "No" },
-                  ]}
-                  error={touched.is_assign && errors.is_assign}
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              <InputFields
+                required
+                label="Branding"
+                name="branding"
+                value={values.branding}
+                options={brandOptions}
+                onChange={(e) => setFieldValue("branding", e.target.value)}
+                error={touched.branding && errors.branding}
+              />
+
+              <InputFields
+                required
+                label="Trading Partner Number"
+                name="trading_partner_number"
+                value={values.trading_partner_number}
+                onChange={(e) =>
+                  setFieldValue("trading_partner_number", e.target.value)
+                }
+                error={touched.trading_partner_number && errors.trading_partner_number}
+              />
+
+              <InputFields
+                required
+                label="Capacity"
+                name="capacity"
+                value={values.capacity}
+                onChange={(e) => setFieldValue("capacity", e.target.value)}
+                error={touched.capacity && errors.capacity}
+              />
+
+              <InputFields
+                required
+                label="Assets Type"
+                name="assets_type"
+                options={[
+                  { value: "Single Door", label: "Single Door" },
+                  { value: "Double Door", label: "Double Door" },
+                  { value: "Solar", label: "Solar" },
+                ]}
+                value={values.assets_type}
+                onChange={(e) => setFieldValue("assets_type", e.target.value)}
+                error={touched.assets_type && errors.assets_type}
+              />
+
+              <InputFields
+                required
+                label="Manufacturing Year"
+                name="manufacturing_year"
+                options={[
+                  { value: "2020", label: "2020" },
+                  { value: "2021", label: "2021" },
+                  { value: "2022", label: "2022" },
+                  { value: "2023", label: "2023" },
+                  { value: "2024", label: "2024" },
+                  { value: "2025", label: "2025" },
+                ]}
+                value={values.manufacturing_year}
+                onChange={(e) => setFieldValue("manufacturing_year", e.target.value)}
+                error={touched.manufacturing_year && errors.manufacturing_year}
+              />
+
+              <InputFields
+                required
+                label="Remarks"
+                name="remarks"
+                value={values.remarks}
+                onChange={(e) => setFieldValue("remarks", e.target.value)}
+                error={touched.remarks && errors.remarks}
+              />
+
+              <InputFields
+                required
+                type="radio"
+                label="Status"
+                name="status"
+                options={[
+                  { value: "1", label: "Active" },
+                  { value: "0", label: "Inactive" },
+                ]}
+                value={values.status}
+                onChange={(e) => setFieldValue("status", e.target.value)}
+                error={touched.status && errors.status}
+              />
             </div>
           </ContainerCard>
         );
-      case 4:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div>
-                <InputFields
-                  required
-                  label="Customer Name"
-                  name="customer_id"
-                  value={values.customer_id.toString()}
-                  onChange={(e) => setFieldValue("customer_id", e.target.value)}
-                  options={companyCustomersOptions}
-                  error={touched.customer_id && errors.customer_id}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Agreement"
-                  name="agreement_id"
-                  value={values.agreement_id.toString()}
-                  onChange={(e) =>
-                    setFieldValue("agreement_id", e.target.value)
-                  }
-                  options={[
-                    { value: "1", label: "Agreement 1" },
-                    { value: "2", label: "Agreement 2" },
-                    { value: "3", label: "Agreement 3" },
-                    { value: "4", label: "Agreement 4" },
-                    { value: "5", label: "Agreement 5" },
-                  ]}
-                  error={touched.agreement_id && errors.agreement_id}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Document Type"
-                  name="document_type"
-                  value={values.document_type}
-                  onChange={(e) =>
-                    setFieldValue("document_type", e.target.value)
-                  }
-                  options={[{ value: "ACF", label: "ACF" }]}
-                  error={touched.document_type && errors.document_type}
-                />
-              </div>
-              <div>
-                <InputFields
-                  required
-                  label="Document"
-                  name="document_id"
-                  value={values.document_id.toString()}
-                  onChange={(e) => setFieldValue("document_id", e.target.value)}
-                  options={[
-                    { value: "", label: "" },
-                    { value: "1", label: "Document 1" },
-                    { value: "2", label: "Document 2" },
-                    { value: "3", label: "Document 3" },
-                    { value: "4", label: "Document 4" },
-                    { value: "5", label: "Document 5" },
-                  ]}
-                  error={touched.document_id && errors.document_id}
-                />
-              </div>
-            </div>
-          </ContainerCard>
-        );
+
       default:
         return null;
     }
@@ -589,32 +438,24 @@ export default function AddOrEditCompanyWithStepper() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <div onClick={() => router.back()}>
-            <Icon icon="lucide:arrow-left" width={24} />
-          </div>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {params.id == "add" ? "Add New Chiller" : "Update Chiller"}
-          </h1>
+      {/* HEADER */}
+      <div className="flex items-center gap-4 mb-6">
+        <div onClick={() => router.back()}>
+          <Icon icon="lucide:arrow-left" width={24} />
         </div>
+        <h1 className="text-xl font-semibold">
+          {isEditMode ? "Update Chiller" : "Add New Chiller"}
+        </h1>
       </div>
+
+      {/* FORMIK */}
       <Formik
         initialValues={chiller}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
         enableReinitialize
       >
-        {({
-          values,
-          setFieldValue,
-          errors,
-          touched,
-          handleSubmit: formikSubmit,
-          setErrors,
-          setTouched,
-          isSubmitting: issubmitting,
-        }) => (
+        {({ values, setFieldValue, errors, touched, handleSubmit, setErrors, setTouched }) => (
           <Form>
             <StepperForm
               steps={steps.map((step) => ({
@@ -622,19 +463,18 @@ export default function AddOrEditCompanyWithStepper() {
                 isCompleted: isStepCompleted(step.id),
               }))}
               currentStep={currentStep}
-              onStepClick={() => {}}
               onBack={prevStep}
               onNext={() =>
                 handleNext(values, {
                   setErrors,
                   setTouched,
-                } as unknown as FormikHelpers<chiller>)
+                } as FormikHelpers<any>)
               }
-              onSubmit={() => formikSubmit()}
+              onSubmit={handleSubmit}
               showSubmitButton={isLastStep}
               showNextButton={!isLastStep}
               nextButtonText="Save & Next"
-              submitButtonText={issubmitting ? "Submitting..." : "Submit"}
+              submitButtonText="Submit"
             >
               {renderStepContent(values, setFieldValue, errors, touched)}
             </StepperForm>

@@ -36,6 +36,8 @@ import {
   warehouseList,
   assetsTypeList,
   manufacturerList,
+  assetsModelList,
+  BrandList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -72,6 +74,8 @@ interface DropdownDataContextType {
   locationList: LocationItem[];
   assetsTypeList: AssetsType[];
   manufacturerList: Manufacturer[];
+  assetsModelList: AssetsModel[];
+  BrandList: Brand[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -108,6 +112,8 @@ interface DropdownDataContextType {
   locationOptions: { value: string; label: string }[];
   assetsTypeOptions: { value: string; label: string }[];
   manufacturerOptions: { value: string; label: string }[];
+  assetsModelOptions: { value: string; label: string }[];
+  brandOptions: { value: string; label: string }[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   refreshDropdown: (name: string, params?: any) => Promise<void>;
@@ -315,6 +321,18 @@ interface SalesmanList {
   status: number
 }
 
+interface AssetsModel {
+  id: number;
+  name: string;
+  code: string;
+}
+
+interface Brand {
+  id: number;
+  name: string;
+  osa_code: string;
+}
+
 interface AgentCustomerList {
   id: number,
   uuid: string,
@@ -420,6 +438,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [location, setLocation] = useState<LocationItem[]>([]);
   const [assetsType, setAssetsType] = useState<AssetsType[]>([]);
   const [manufacturer, setManufacturer] = useState<Manufacturer[]>([]);
+  const [assetsModel, setAssetsModel] = useState<AssetsModel[]>([]);
+  const [brandList, setBrandList] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -546,6 +566,16 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }));
 
   const manufacturerOptions = (Array.isArray(manufacturer) ? manufacturer : []).map((c: Manufacturer) => ({
+    value: String(c.id ?? ''),
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+  }))
+
+  const assetsModelOptions = (Array.isArray(assetsModel) ? assetsModel : []).map((c: AssetsModel) => ({
+    value: String(c.id ?? ''),
+    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+  }))
+
+  const brandOptions = (Array.isArray(brandList) ? brandList : []).map((c: Brand) => ({
     value: String(c.id ?? ''),
     label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
   }))
@@ -1253,6 +1283,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         locationList: location,
         assetsTypeList: assetsType,
         manufacturerList: manufacturer,
+        assetsModelList: assetsModel,
+        BrandList: brandList,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
@@ -1307,6 +1339,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         locationOptions,
         assetsTypeOptions,
         manufacturerOptions,
+        assetsModelOptions,
+        brandOptions,
         loading
       }}
     >

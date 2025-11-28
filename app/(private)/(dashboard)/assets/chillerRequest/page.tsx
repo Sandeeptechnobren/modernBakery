@@ -266,15 +266,7 @@ export default function Page() {
                   router.push(`/assets/chillerRequest/${data.uuid}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: TableDataType) => {
-                  setDeleteSelectedRow(
-                    data?.uuid ? String(data.uuid) : data.uuid
-                  );
-                  setShowDeletePopup(true);
-                },
-              },
+              
             ],
             pageSize: 10,
           }}
