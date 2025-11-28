@@ -948,7 +948,6 @@ export default function OrderAddEditPage() {
           </button>
           <SidebarBtn
             disabled={!hasValidItems}
-            disabled={!hasValidItems}
             isActive={!isSubmitting}
             label={isSubmitting ? (isEditMode ? "Updating Return..." : "Creating Return...") : (isEditMode ? "Update Return" : "Create Return")}
             onClick={handleSubmit}
