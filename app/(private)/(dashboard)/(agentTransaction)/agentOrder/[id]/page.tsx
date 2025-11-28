@@ -10,7 +10,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, getAllActiveWarehouse, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, warehouseStockTopOrders, agentCustomerList, genearateCode, getAllActiveWarehouse, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
@@ -197,44 +197,98 @@ export default function OrderAddEditPage() {
     }
   };
 
-  // Function for fetching Item
+  // Function for fetching Item based on warehouse stock
   const fetchItem = async (searchTerm: string, values?: FormikValues) => {
-    const res = await itemGlobalSearch({ per_page: "10", query: searchTerm, warehouse: values?.warehouse || "" });
-    if (res.error) {
-      // showSnackbar(res.data?.message || "Failed to fetch items", "error");
+    // If warehouse is selected, use warehouseStockTopOrders
+    if (values?.warehouse) {
+      try {
+        const stockRes = await warehouseStockTopOrders(values.warehouse);
+        const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
+
+        // Fetch full item details for pricing and UOM
+        const itemsRes = await itemList({ allData: "true", warehouse_id: values.warehouse });
+        const fullItems = itemsRes.data || [];
+
+        // Filter items based on search term and stock availability
+        const filteredStocks = stocksArray.filter((stock: any) => {
+          if (Number(stock.stock_qty) <= 0) return false;
+          if (!searchTerm) return true;
+          const searchLower = searchTerm.toLowerCase();
+          return stock.item_name?.toLowerCase().includes(searchLower) ||
+            stock.item_code?.toLowerCase().includes(searchLower);
+        });
+
+        // Process items to include pricing logic
+        const data = filteredStocks.map((stockItem: any) => {
+          const fullItem = fullItems.find((item: any) => item.id === stockItem.item_id);
+          if (!fullItem) return null;
+
+          const item_uoms = fullItem?.item_uoms ? fullItem.item_uoms.map((uom: any) => {
+            if (uom?.uom_type === "primary") {
+              return { ...uom, price: fullItem.pricing?.auom_pc_price }
+            } else if (uom?.uom_type === "secondary") {
+              return { ...uom, price: fullItem.pricing?.buom_ctn_price }
+            }
+            return uom;
+          }) : fullItem?.item_uoms;
+
+          return { ...fullItem, item_uoms };
+        }).filter(Boolean);
+
+        setOrderData(data);
+        const options = data.map((item: any) => ({
+          value: String(item.id),
+          label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
+        }));
+
+        setItemsOptions((prev: { label: string; value: string }[] = []) => {
+          const map = new Map<string, { label: string; value: string }>();
+          prev.forEach((o) => map.set(o.value, o));
+          options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+          return Array.from(map.values());
+        });
+        setSkeleton({ ...skeleton, item: false });
+        return options;
+      } catch (error) {
+        console.error("Error fetching warehouse items:", error);
+        setSkeleton({ ...skeleton, item: false });
+        return [];
+      }
+    } else {
+      // Fallback to global search if no warehouse selected
+      const res = await itemGlobalSearch({ per_page: "10", query: searchTerm, warehouse: "" });
+      if (res.error) {
+        setSkeleton({ ...skeleton, item: false });
+        return;
+      }
+      const data = res?.data || [];
+
+      const updatedData = data.map((item: any) => {
+        const item_uoms = item?.item_uoms ? item?.item_uoms?.map((uom: any) => {
+          if (uom?.uom_type === "primary") {
+            return { ...uom, price: item.pricing?.auom_pc_price }
+          } else if (uom?.uom_type === "secondary") {
+            return { ...uom, price: item.pricing?.buom_ctn_price }
+          }
+        }) : item?.item_uoms;
+        return { ...item, item_uoms }
+      })
+
+      setOrderData(updatedData);
+      const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
+        value: String(item.id),
+        label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
+      }));
+
+      setItemsOptions((prev: { label: string; value: string }[] = []) => {
+        const map = new Map<string, { label: string; value: string }>();
+        prev.forEach((o) => map.set(o.value, o));
+        options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+        return Array.from(map.values());
+      });
       setSkeleton({ ...skeleton, item: false });
-      return;
+      return options;
     }
-    const data = res?.data || [];
-
-    // sets the price directly in the item_uoms
-    const updatedData = data.map((item: any) => {
-      const item_uoms = item?.item_uoms ? item?.item_uoms?.map((uom: any) => {
-        if (uom?.uom_type === "primary") {
-          return { ...uom, price: item.pricing?.auom_pc_price }
-        } else if (uom?.uom_type === "secondary") {
-          return { ...uom, price: item.pricing?.buom_ctn_price }
-        }
-      }) : item?.item_uoms;
-      return { ...item, item_uoms }
-    })
-
-    // console.log(updatedData);
-
-    setOrderData(updatedData);
-    const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
-      value: String(item.id),
-      label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
-    }));
-    // Merge newly fetched options with existing ones so previously selected items remain available
-    setItemsOptions((prev: { label: string; value: string }[] = []) => {
-      const map = new Map<string, { label: string; value: string }>();
-      prev.forEach((o) => map.set(o.value, o));
-      options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
-      return Array.from(map.values());
-    });
-    setSkeleton({ ...skeleton, item: false });
-    return options;
   };
 
   const codeGeneratedRef = useRef(false);

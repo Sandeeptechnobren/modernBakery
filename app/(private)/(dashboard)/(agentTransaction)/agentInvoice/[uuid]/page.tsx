@@ -707,6 +707,7 @@ export default function InvoiceddEditPage() {
         const deliveryId = form.invoice_type === "0" && form.customer ? Number(form.customer) : undefined;
 
         return {
+            invoice_code: code,
             invoice_type: Number(form.invoice_type),
             warehouse_id: Number(form.warehouse),
             customer_id: customerId,

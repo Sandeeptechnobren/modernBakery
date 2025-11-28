@@ -31,7 +31,7 @@ export default function Additional({
                         value: data?.outlet_channel?.outlet_channel_code + " - " + data?.outlet_channel?.outlet_channel || "-",
                     },
                     {
-                        key: "Warehouse",
+                        key: "Distributor",
                         value: data?.get_warehouse?.warehouse_code + " - " + data?.get_warehouse?.warehouse_name || "-",
                     },
                 ]}

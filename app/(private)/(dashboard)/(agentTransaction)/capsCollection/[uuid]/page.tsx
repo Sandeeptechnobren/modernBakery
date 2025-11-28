@@ -108,7 +108,7 @@ export default function AddEditCapsCollection() {
   const [fullItemsData, setFullItemsData] = useState<Record<string, { id: string; item_code?: string; code?: string; name?: string; uoms?: Uom[] }>>({});
   const itemSearchCacheRef = useRef<Record<string, { ts: number; options: ItemOption[] }>>({});
   const lastItemSearchRef = useRef<string>("");
-  
+
   const [rowUomOptions, setRowUomOptions] = useState<
     Record<string, { value: string; label: string; price?: string }[]>
   >({});
@@ -130,79 +130,79 @@ export default function AddEditCapsCollection() {
     }
   };
 
-const handleCustomerSearch = async (searchText: string, warehouseId: string, customerType: string) => {
-  if (!warehouseId) return [];
-  try {
-    let response;
-    if (customerType === "1") {
-      response = await getCompanyCustomers({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
-    } else {
-      response = await agentCustomerList({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
-    }
-    const data = Array.isArray(response?.data) ? response.data : [];
-    return data.map((customer: Record<string, unknown>) => {
-      // Always include contact_no in the returned option
-      const id = String(customer['id'] ?? "");
-      const osa = String(customer['osa_code'] ?? "");
-      const contactNo = String(customer['contact_no'] ?? "");
+  const handleCustomerSearch = async (searchText: string, warehouseId: string, customerType: string) => {
+    if (!warehouseId) return [];
+    try {
+      let response;
       if (customerType === "1") {
-        const businessName = String(customer['business_name'] ?? "");
-        return {
-          value: id, 
-          label: `${osa || ""} - ${businessName || ""}`.trim(),
-          name: businessName,
-          contact_no: contactNo,
-        };
+        response = await getCompanyCustomers({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
       } else {
-        const outletName = String(customer['outlet_name'] ?? "");
-        const customerName = String(customer['customer_name'] ?? customer['name'] ?? "");
-        return {
-          value: id,
-          label: `${osa || ""} - ${outletName || ""}`,
-          name: outletName || customerName,
-          contact_no: contactNo,
-        };
+        response = await agentCustomerList({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
       }
-    });
-  } catch {
-    return [];
-  }
-};
+      const data = Array.isArray(response?.data) ? response.data : [];
+      return data.map((customer: Record<string, unknown>) => {
+        // Always include contact_no in the returned option
+        const id = String(customer['id'] ?? "");
+        const osa = String(customer['osa_code'] ?? "");
+        const contactNo = String(customer['contact_no'] ?? "");
+        if (customerType === "1") {
+          const businessName = String(customer['business_name'] ?? "");
+          return {
+            value: id,
+            label: `${osa || ""} - ${businessName || ""}`.trim(),
+            name: businessName,
+            contact_no: contactNo,
+          };
+        } else {
+          const outletName = String(customer['outlet_name'] ?? "");
+          const customerName = String(customer['customer_name'] ?? customer['name'] ?? "");
+          return {
+            value: id,
+            label: `${osa || ""} - ${outletName || ""}`,
+            name: outletName || customerName,
+            contact_no: contactNo,
+          };
+        }
+      });
+    } catch {
+      return [];
+    }
+  };
 
-const handleItemSearch = useCallback(async (searchText: string) => {
-  const qRaw = (searchText || "").trim();
-  if (qRaw.length < 1) return [];
-  const q = qRaw.toLowerCase();
+  const handleItemSearch = useCallback(async (searchText: string) => {
+    const qRaw = (searchText || "").trim();
+    if (qRaw.length < 1) return [];
+    const q = qRaw.toLowerCase();
 
-  // Return cached results if available (30s TTL)
-  const cached = itemSearchCacheRef.current[q];
-  const now = Date.now();
-  if (cached && now - cached.ts < 30_000) return cached.options;
+    // Return cached results if available (30s TTL)
+    const cached = itemSearchCacheRef.current[q];
+    const now = Date.now();
+    if (cached && now - cached.ts < 30_000) return cached.options;
 
-  if (lastItemSearchRef.current === q && cached) return cached.options;
+    if (lastItemSearchRef.current === q && cached) return cached.options;
 
-  try {
-    const response = await itemGlobalSearch({ query: q });
-    const data = Array.isArray(response?.data) ? response.data : [];
+    try {
+      const response = await itemGlobalSearch({ query: q });
+      const data = Array.isArray(response?.data) ? response.data : [];
 
-    const itemsMap: Record<string, { id: string; code?: string; name?: string; uoms?: Uom[] }> = {};
-    const options: ItemOption[] = data.map((rawItem: unknown) => {
-      const raw = rawItem as Record<string, unknown>;
-      const id = String(raw['id'] ?? "");
-      const code = (raw['item_code'] as string) ?? (raw['code'] as string) ?? undefined;
-      const name = (raw['name'] as string) ?? (raw['item_name'] as string) ?? "";
+      const itemsMap: Record<string, { id: string; code?: string; name?: string; uoms?: Uom[] }> = {};
+      const options: ItemOption[] = data.map((rawItem: unknown) => {
+        const raw = rawItem as Record<string, unknown>;
+        const id = String(raw['id'] ?? "");
+        const code = (raw['item_code'] as string) ?? (raw['code'] as string) ?? undefined;
+        const name = (raw['name'] as string) ?? (raw['item_name'] as string) ?? "";
 
-      // normalize uoms from different shapes
-      const rawUoms = Array.isArray(raw['item_uoms'])
-        ? (raw['item_uoms'] as unknown[])
-        : Array.isArray(raw['uom'])
-        ? (raw['uom'] as unknown[])
-        : Array.isArray(raw['uoms'])
-        ? (raw['uoms'] as unknown[])
-        : [];
+        // normalize uoms from different shapes
+        const rawUoms = Array.isArray(raw['item_uoms'])
+          ? (raw['item_uoms'] as unknown[])
+          : Array.isArray(raw['uom'])
+            ? (raw['uom'] as unknown[])
+            : Array.isArray(raw['uoms'])
+              ? (raw['uoms'] as unknown[])
+              : [];
 
-      const uoms: Uom[] = Array.isArray(rawUoms)
-        ? rawUoms.map((u) => {
+        const uoms: Uom[] = Array.isArray(rawUoms)
+          ? rawUoms.map((u) => {
             const uu = u as Record<string, unknown>;
             return {
               id: String(uu['id'] ?? uu['uom_id'] ?? ""),
@@ -210,23 +210,23 @@ const handleItemSearch = useCallback(async (searchText: string) => {
               price: String(uu['price'] ?? uu['uom_price'] ?? uu['unit_price'] ?? "0"),
             } as Uom;
           })
-        : [];
+          : [];
 
-      if (id) itemsMap[id] = { id, code, name, uoms };
+        if (id) itemsMap[id] = { id, code, name, uoms };
 
-      return { value: id, label: `${code || ""} - ${name}`.trim(), code, name, uoms };
-    });
+        return { value: id, label: `${code || ""} - ${name}`.trim(), code, name, uoms };
+      });
 
-    if (Object.keys(itemsMap).length > 0) setFullItemsData((prev) => ({ ...prev, ...itemsMap }));
+      if (Object.keys(itemsMap).length > 0) setFullItemsData((prev) => ({ ...prev, ...itemsMap }));
 
-    itemSearchCacheRef.current[q] = { ts: now, options };
-    lastItemSearchRef.current = q;
-    return options;
-  } catch (e) {
-    console.error("Error searching items:", e);
-    return [];
-  }
-}, []);
+      itemSearchCacheRef.current[q] = { ts: now, options };
+      lastItemSearchRef.current = q;
+      return options;
+    } catch (e) {
+      console.error("Error searching items:", e);
+      return [];
+    }
+  }, []);
 
   const [tableData, setTableData] = useState<TableDataType[]>([
     {
@@ -367,23 +367,23 @@ const handleItemSearch = useCallback(async (searchText: string) => {
     return options;
   };
 
-   const codeGeneratedRef = useRef(false);
-    const [code, setCode] = useState("");
-    useEffect(() => {
-      // generate code
-      if (!codeGeneratedRef.current) {
-        codeGeneratedRef.current = true;
-        (async () => {
-          const res = await genearateCode({
-            model_name: "caps_collections",
-          });
-          if (res?.code) {
-            setCode(res.code);
-          }
-          setLoading(false);
-        })();
-      }
-    }, []);
+  const codeGeneratedRef = useRef(false);
+  const [code, setCode] = useState("");
+  useEffect(() => {
+    // generate code
+    if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({
+          model_name: "caps_collections",
+        });
+        if (res?.code) {
+          setCode(res.code);
+        }
+        setLoading(false);
+      })();
+    }
+  }, []);
 
 
   // 🚀 Submit
@@ -481,9 +481,9 @@ const handleItemSearch = useCallback(async (searchText: string) => {
           <div>
             <AutoSuggestion
               required
-              label="Warehouse"
+              label="Distributor"
               name="warehouse"
-              placeholder="Search warehouse..."
+              placeholder="Search distributor..."
               initialValue={warehouseOptions.find(o => o.value === String(form.warehouse))?.label || ""}
               onSearch={handleWarehouseSearch}
               onSelect={(option: { value: string }) => {
@@ -585,19 +585,19 @@ const handleItemSearch = useCallback(async (searchText: string) => {
                         const rawUoms = Array.isArray(itemRec['item_uoms'])
                           ? (itemRec['item_uoms'] as unknown[])
                           : Array.isArray(itemRec['uom'])
-                          ? (itemRec['uom'] as unknown[])
-                          : Array.isArray(itemRec['uoms'])
-                          ? (itemRec['uoms'] as unknown[])
-                          : [];
+                            ? (itemRec['uom'] as unknown[])
+                            : Array.isArray(itemRec['uoms'])
+                              ? (itemRec['uoms'] as unknown[])
+                              : [];
                         const uomOpts = Array.isArray(rawUoms)
                           ? rawUoms.map((uu) => {
-                              const u = uu as Record<string, unknown>;
-                              return {
-                                value: String(u['id'] ?? u['uom_id'] ?? ""),
-                                label: String(u['name'] ?? u['uom_name'] ?? u['label'] ?? ""),
-                                price: String(u['price'] ?? u['uom_price'] ?? u['unit_price'] ?? "0"),
-                              };
-                            })
+                            const u = uu as Record<string, unknown>;
+                            return {
+                              value: String(u['id'] ?? u['uom_id'] ?? ""),
+                              label: String(u['name'] ?? u['uom_name'] ?? u['label'] ?? ""),
+                              price: String(u['price'] ?? u['uom_price'] ?? u['unit_price'] ?? "0"),
+                            };
+                          })
                           : [];
 
                         if (uomOpts.length > 0) {

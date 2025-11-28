@@ -100,7 +100,7 @@ type ItemRow = {
 };
 
 // ---- Component ----
-export default function OrderAddEditPage(){
+export default function OrderAddEditPage() {
   const {
     warehouseOptions,
     agentCustomerOptions,
@@ -552,11 +552,11 @@ export default function OrderAddEditPage(){
         name: item.name,
         uoms: Array.isArray(item.item_uoms)
           ? item.item_uoms.map((u: any) => {
-              let finalPrice = "0";
-              if (u.uom_type === "primary") finalPrice = item.pricing?.buom_ctn_price ?? "0";
-              else if (u.uom_type === "secondary") finalPrice = item.pricing?.auom_pc_price ?? "0";
-              return { id: String(u.id), name: String(u.name), price: finalPrice, uom_type: u.uom_type };
-            })
+            let finalPrice = "0";
+            if (u.uom_type === "primary") finalPrice = item.pricing?.buom_ctn_price ?? "0";
+            else if (u.uom_type === "secondary") finalPrice = item.pricing?.auom_pc_price ?? "0";
+            return { id: String(u.id), name: String(u.name), price: finalPrice, uom_type: u.uom_type };
+          })
           : [],
       }));
     } catch {
@@ -593,9 +593,9 @@ export default function OrderAddEditPage(){
         <div className="flex flex-col sm:flex-row gap-4 mt-10 mb-10 flex-wrap">
           <AutoSuggestion
             required
-            label="Warehouse"
+            label="Distributor"
             name="warehouse"
-            placeholder="Search warehouse..."
+            placeholder="Search distributor..."
             initialValue={form.warehouse_name}
             onSearch={handleWarehouseSearch}
             onSelect={(option: any) => {
@@ -662,13 +662,19 @@ export default function OrderAddEditPage(){
                 key: "itemName",
                 label: "Item Name",
                 width: 390,
-                render: (row: any) => {
-                  const selectedItemId = row.item_id;
-                  const found = itemOptions?.find?.((it) => it.value === String(selectedItemId));
-                  const selectedOpt = found ?? { value: String(selectedItemId), label: row.itemLabel || String(selectedItemId) };
-
+                render: (row) => {
+                  const selectedOpt = (() => {
+                    const selectedItemId = row.item_id;
+                    if (!selectedItemId) return null;
+                    // Try to find in global itemOptions first
+                    const typedItemOptions = itemOptions;
+                    const found = typedItemOptions?.find?.((it) => it.value === String(selectedItemId));
+                    if (found) return found;
+                    // Fallback to building a minimal option from the row label
+                    return { value: String(selectedItemId), label: row.itemLabel || String(selectedItemId) };
+                  })();
                   return (
-                    <div style={{ minWidth: "390px", maxWidth: "390px" }}>
+                    <div style={{ minWidth: '390px', maxWidth: '390px' }}>
                       <AutoSuggestion
                         key={`item-${row.idx}`}
                         placeholder="Search item..."
@@ -677,39 +683,50 @@ export default function OrderAddEditPage(){
                         onSearch={handleItemSearch}
                         minSearchLength={0}
                         disabled={!form.customer_name && !row.item_id}
-                        onSelect={async (option: any) => {
+                        // disabled={!form.customer_name}
+                        onSelect={async (option: { value: string; label: string; uoms?: Uom[] }) => {
                           const selectedItemId = option.value;
-                          const index = Number(row.idx);
                           const newData = [...itemData];
+                          const index = Number(row.idx);
                           newData[index].item_id = selectedItemId;
                           newData[index].itemName = selectedItemId;
                           newData[index].itemLabel = option.label;
 
+                          // Try to get UOMs from the selected option first
                           let uoms: Uom[] | undefined = option.uoms;
 
+                          // If option doesn't include UOMs, fetch item info by searching the id
                           if ((!uoms || uoms.length === 0) && selectedItemId) {
                             try {
                               const resp = await itemGlobalSearch({ query: selectedItemId });
-                              const items = Array.isArray(resp?.data) ? resp.data : resp ? [resp] : [];
-                              const found = (items as any[]).find((it) => String(it?.id ?? it?.value ?? "") === String(selectedItemId));
-                              const rawUoms = Array.isArray(found?.item_uoms) ? found.item_uoms : Array.isArray(found?.uom) ? found.uom : [];
-                              if (Array.isArray(rawUoms) && rawUoms.length > 0) {
-                                uoms = rawUoms.map((u: any) => ({ id: String(u.id ?? ""), name: String(u.name ?? ""), price: String(u.uom_price ?? u.price ?? ""), uom_type: u.uom_type }));
+                              const items = Array.isArray(resp?.data) ? resp.data : (resp ? [resp] : []);
+                              // Find the matching item by id (or value) and extract uoms/uom/item_uoms
+                              const found = (items as unknown[]).find((it) => {
+                                const obj = it as Record<string, unknown>;
+                                const idVal = obj['id'] ?? obj['value'];
+                                return String(idVal ?? '') === String(selectedItemId);
+                              }) as Record<string, unknown> | undefined;
+                              if (found) {
+                                // handle both `item_uoms` and `uom` shapes
+                                const rawUoms = Array.isArray(found['item_uoms']) ? (found['item_uoms'] as unknown[]) : (Array.isArray(found['uom']) ? (found['uom'] as unknown[]) : []);
+                                if (Array.isArray(rawUoms) && rawUoms.length > 0) {
+                                  uoms = rawUoms.map((u) => {
+                                    const uu = u as Record<string, unknown>;
+                                    return { id: String(uu['id'] ?? ''), name: String(uu['name'] ?? ''), price: String(uu['uom_price'] ?? uu['price'] ?? '') } as Uom;
+                                  });
+                                }
                               }
                             } catch (err) {
-                              console.error("Failed to fetch item UOMs for selected item:", err);
+                              // ignore fetch error and continue without UOMs
+                              console.error('Failed to fetch item UOMs for selected item:', err);
                             }
                           }
 
                           if (uoms && uoms.length > 0) {
-                            const uomOpts = uoms.map((uom) => ({
-                              value: String(uom.id),
-                              label: uom.name ?? "",
-                              price: uom.price ?? "",
-                              uom_type: uom.uom_type,
-                            }));
-                            setRowUomOptions((prev) => ({ ...prev, [row.idx]: uomOpts }));
+                            const uomOpts = uoms.map((uom: Uom) => ({ value: String(uom.id || ""), label: uom.name || "", price: String(uom.uom_price ?? uom.price ?? "0") }));
+                            setRowUomOptions(prev => ({ ...prev, [row.idx]: uomOpts }));
 
+                            // Auto-select first UOM and store friendly label for display
                             const firstUom = uomOpts[0];
                             if (firstUom) {
                               newData[index].uom_id = firstUom.value;
@@ -718,10 +735,10 @@ export default function OrderAddEditPage(){
                               newData[index].Total = ((Number(firstUom.price) || 0) * (Number(newData[index].Quantity) || 0)).toFixed(2);
                             }
                           } else {
-                            setRowUomOptions((prev) => {
-                              const copy = { ...prev };
-                              delete copy[row.idx];
-                              return copy;
+                            setRowUomOptions(prev => {
+                              const newOpts = { ...prev };
+                              delete newOpts[row.idx];
+                              return newOpts;
                             });
                             newData[index].uom_id = "";
                             newData[index].UOM = "";
@@ -740,7 +757,7 @@ export default function OrderAddEditPage(){
                           newData[index].uom_id = "";
                           newData[index].UOM = "";
                           newData[index].Total = "0.00";
-                          setRowUomOptions((prev) => {
+                          setRowUomOptions(prev => {
                             const newOpts = { ...prev };
                             delete newOpts[row.idx];
                             return newOpts;
@@ -800,7 +817,13 @@ export default function OrderAddEditPage(){
                   </div>
                 ),
               },
-              { key: "Price", label: "Price", render: (row: any) => <span>{Number(row.Price || 0).toFixed(2)}</span> },
+              {
+                key: "Price",
+                label: "Price",
+                render: (row) => <span>{Number(row.Price || 0).toFixed(2)}</span>
+              },
+
+
               {
                 key: "return_type",
                 label: "Reason Type",
@@ -890,21 +913,28 @@ export default function OrderAddEditPage(){
 
         <div className="mt-4">
           {(() => {
-            const hasEmptyRow = itemData.some((it) => String(it.item_id ?? "").trim() === "" && String(it.uom_id ?? "").trim() === "");
+            // disable add when there's already an empty/new item row
+            const hasEmptyRow = itemData.some(it => (String(it.item_id ?? '').trim() === '' && String(it.uom_id ?? '').trim() === ''));
             return (
               <button
                 type="button"
                 disabled={hasEmptyRow}
-                className={`text-[#E53935] font-medium text-[16px] flex items-center gap-2 ${hasEmptyRow ? "opacity-50 cursor-not-allowed" : ""}`}
-                onClick={() => {
-                  if (!hasEmptyRow) handleAddNewItem();
-                }}
+                className={`text-[#E53935] font-medium text-[16px] flex items-center gap-2 ${hasEmptyRow ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => { if (!hasEmptyRow) handleAddNewItem(); }}
               >
                 <Icon icon="material-symbols:add-circle-outline" width={20} />
                 Add New Item
               </button>
             );
           })()}
+          {/* <button
+            type="button"
+            className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
+            onClick={handleAddNewItem}
+          >
+            <Icon icon="material-symbols:add-circle-outline" width={20} />
+            Add New Item
+          </button> */}
         </div>
 
         <div className="flex justify-end gap-4 mt-6">
@@ -917,6 +947,7 @@ export default function OrderAddEditPage(){
             Cancel
           </button>
           <SidebarBtn
+            disabled={!hasValidItems}
             disabled={!hasValidItems}
             isActive={!isSubmitting}
             label={isSubmitting ? (isEditMode ? "Updating Return..." : "Creating Return...") : (isEditMode ? "Update Return" : "Create Return")}

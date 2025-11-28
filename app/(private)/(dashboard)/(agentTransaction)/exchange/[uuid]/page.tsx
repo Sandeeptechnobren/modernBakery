@@ -631,9 +631,9 @@ export default function ExchangeAddEditPage() {
                   <div>
                     <AutoSuggestion
                       required
-                      label="Warehouse"
+                      label="Distributor"
                       name="warehouse"
-                      placeholder="Search warehouse"
+                      placeholder="Search distributor"
                       onSearch={(q) => fetchWarehouse(q)}
                       initialValue={filteredWarehouseOptions.find((o) => o.value === String(values?.warehouse))?.label || ""}
                       onSelect={(opt) => {

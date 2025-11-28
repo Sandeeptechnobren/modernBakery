@@ -33,6 +33,7 @@ export default function ProfilePage() {
   });
 
   const { values, setFieldValue } = formik;
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -258,7 +259,7 @@ export default function ProfilePage() {
 
                   <div>
                     <button className="bg-red-600 text-white px-4 py-2 rounded-md">
-                      Upload Profile
+                      <Icon icon="lucide:upload" width={20} />  Upload Profile
                     </button>
                     <p className="text-xs text-gray-500 mt-1">
                       Upload square JPG or PNG under 1 MB
@@ -369,9 +370,9 @@ export default function ProfilePage() {
             <ContainerCard>
               <div className="space-y-4">
                 {/* LANGUAGE */}
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl  boder-gray-300">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl  border-1 border-gray-200">
                   <Icon
-                    icon="lucide:globe"
+                    icon="lucide:languages"
                     width={28}
                     className="text-gray-500 mr-4"
                   />
@@ -387,9 +388,9 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl boder-gray-300">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl border-1 border-gray-200">
                   <Icon
-                    icon="lucide:globe"
+                    icon="lucide:lock"
                     width={28}
                     className="text-gray-500 mr-4"
                   />
@@ -400,14 +401,16 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   <div className="ml-auto">
-                    <Icon icon="lucide:chevron-right" />
+                    <Icon
+                      onClick={() => setShowSidebar(true)}
+                      icon="lucide:chevron-right" />
                   </div>
                 </div>
 
                 {/* THEME */}
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl boder-gray-300">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl border-1 border-gray-200">
                   <Icon
-                    icon="lucide:globe"
+                    icon="lucide:palette"
                     width={28}
                     className="text-gray-500 mr-4"
                   />
@@ -425,9 +428,9 @@ export default function ProfilePage() {
                 </div>
 
                 {/* PRIVACY SETTINGS */}
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl  boder-gray-300">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl border-1 border-gray-200">
                   <Icon
-                    icon="lucide:globe"
+                    icon="lucide:user-lock"
                     width={28}
                     className="text-gray-500 mr-4"
                   />
@@ -438,12 +441,15 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   <div className="ml-auto">
-                    <Icon icon="lucide:chevron-right" />
+                    <Icon
+                      onClick={() => setShowSidebar(true)}
+
+                      icon="lucide:chevron-right" />
                   </div>
                 </div>
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl  boder-gray-300">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl  border-1 border-gray-200">
                   <Icon
-                    icon="lucide:globe"
+                    icon="lucide:shield-user"
                     width={28}
                     className="text-gray-500 mr-4"
                   />
@@ -454,7 +460,10 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   <div className="ml-auto">
-                    <Icon icon="lucide:chevron-right" />
+                    <Icon
+                      onClick={() => setShowSidebar(true)}
+
+                      icon="lucide:chevron-right" />
                   </div>
                 </div>
 
@@ -491,13 +500,49 @@ export default function ProfilePage() {
                       <div className="w-full `gap-[10px]` ">
                         <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
                           <Icon
-                            icon="lucide:file-text"
+                            icon="lucide:package"
                             width={20}
                           />
                         </div>
 
                         <div className="mt-[10px] flex">
-                          <p className="font-medium">Order Management</p>
+                          <p className="font-medium">Stock Management</p>
+
+                        </div>
+                      </div>
+                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
+                        Download
+                      </button>
+                    </div>
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
+                      <div className="w-full `gap-[10px]` ">
+                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
+                          <Icon
+                            icon="lucide:waypoints"
+                            width={20}
+                          />
+                        </div>
+
+                        <div className="mt-[10px] flex">
+                          <p className="font-medium">Route Management</p>
+
+                        </div>
+                      </div>
+                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
+                        Download
+                      </button>
+                    </div>
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
+                      <div className="w-full `gap-[10px]` ">
+                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
+                          <Icon
+                            icon="lucide:receipt"
+                            width={20}
+                          />
+                        </div>
+
+                        <div className="mt-[10px] flex">
+                          <p className="font-medium">Expense Management</p>
 
                         </div>
                       </div>
@@ -515,7 +560,7 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="mt-[10px] flex">
-                          <p className="font-medium">Order Management</p>
+                          <p className="font-medium">Merchandiser</p>
 
                         </div>
                       </div>
@@ -527,49 +572,13 @@ export default function ProfilePage() {
                       <div className="w-full `gap-[10px]` ">
                         <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
                           <Icon
-                            icon="lucide:file-text"
+                            icon="lucide:proportions"
                             width={20}
                           />
                         </div>
 
                         <div className="mt-[10px] flex">
-                          <p className="font-medium">Order Management</p>
-
-                        </div>
-                      </div>
-                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
-                        Download
-                      </button>
-                    </div>
-                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
-                      <div className="w-full `gap-[10px]` ">
-                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
-                          <Icon
-                            icon="lucide:file-text"
-                            width={20}
-                          />
-                        </div>
-
-                        <div className="mt-[10px] flex">
-                          <p className="font-medium">Order Management</p>
-
-                        </div>
-                      </div>
-                      <button className="mt-[20px] bg-white px-3 py-1 rounded-xl border border-gray-300">
-                        Download
-                      </button>
-                    </div>
-                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
-                      <div className="w-full `gap-[10px]` ">
-                        <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
-                          <Icon
-                            icon="lucide:file-text"
-                            width={20}
-                          />
-                        </div>
-
-                        <div className="mt-[10px] flex">
-                          <p className="font-medium">Order Management</p>
+                          <p className="font-medium">Report</p>
 
                         </div>
                       </div>
@@ -579,9 +588,52 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
+
               </div>
             </ContainerCard>
           )}
+
+          {showSidebar && (
+            <>
+              {/* Overlay */}
+              <div className="fixed inset-0 " onClick={() => setShowSidebar(false)} />
+
+              {/* Sidebar - 1/3 screen */}
+              <div className="fixed top-0 right-0 h-full w-1/3 bg-white z-50 shadow-lg transform transition-transform duration-300 translate-x-0">
+
+                {/* KEEPING YOUR UI EXACTLY THE SAME 👇 */}
+
+                <div className="flex items-center justify-between p-5 border-b">
+                  <h2 className="text-lg font-semibold">Reset Password</h2>
+                  <button onClick={() => setShowSidebar(false)}>
+                    <Icon icon="lucide:x" width={22} />
+                  </button>
+                </div>
+
+                <form onSubmit={formik.handleSubmit} className="p-6 space-y-5">
+                  <InputFields required label="Old Password"
+                    // value={values.oldPassword}
+                    onChange={e => setFieldValue("oldPassword", e.target.value)}
+                  />
+                  <InputFields required label="New Password"
+                    // value={values.newPassword}
+                    onChange={e => setFieldValue("newPassword", e.target.value)}
+                  />
+                  <InputFields required label="Confirm Password"
+                    // value={values.confirmPassword}
+                    onChange={e => setFieldValue("confirmPassword", e.target.value)}
+                  />
+
+                  <button type="submit" className="bg-red-600 text-white w-full py-3 rounded-lg">
+                    Update Password
+                  </button>
+                </form>
+
+                {/* NOTHING CHANGED IN YOUR UI ✅ */}
+              </div>
+            </>
+          )}
+
           {/* </ContainerCard> */}
         </div>
       </div>

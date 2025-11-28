@@ -467,7 +467,7 @@ export default function AddEditSalesmanLoad() {
             </div>
           )}
           <InputFields
-            label="Warehouse"
+            label="Distributor"
             name="warehouse"
             value={form.warehouse}
             options={warehouseOptions}

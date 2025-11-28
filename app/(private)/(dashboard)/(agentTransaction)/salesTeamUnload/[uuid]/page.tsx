@@ -300,7 +300,7 @@ export default function AddEditSalesmanUnload() {
 
           <div className="flex flex-col w-full sm:w-[30%]">
             <InputFields
-              label="Warehouse"
+              label="Distributor"
               name="warehouse"
               value={form.warehouse}
               options={warehouseOptions}
@@ -349,7 +349,7 @@ export default function AddEditSalesmanUnload() {
 
           <div className="flex flex-col w-full sm:w-[30%]">
             <InputFields
-              label="Unload Date"
+              label="Last load Date"
               name="unload_date"
               type="date"
               value={form.unload_date}

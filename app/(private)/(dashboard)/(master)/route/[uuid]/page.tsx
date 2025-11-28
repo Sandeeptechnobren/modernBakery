@@ -293,7 +293,7 @@ export default function AddEditRoute() {
               <InputFields
                 required
                 searchable={true}
-                label="Warehouse"
+                label="Distributor"
                 // isSingle={false}
                 value={form.warehouse}
                 options={warehouseAllOptions}
@@ -359,8 +359,8 @@ export default function AddEditRoute() {
         <button
           type="button"
           className={`px-6 py-2 rounded-lg border text-gray-700 hover:bg-gray-100 ${submitting
-              ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
-              : "border-gray-300"
+            ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
+            : "border-gray-300"
             }`}
           onClick={() => router.push("/route")}
           disabled={submitting}

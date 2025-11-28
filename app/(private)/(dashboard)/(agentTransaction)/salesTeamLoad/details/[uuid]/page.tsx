@@ -139,7 +139,7 @@ export default function ViewPage() {
                 <KeyValueData
                   data={[
                     {
-                      key: "Warehouse",
+                      key: "Distributor",
                       value:
                         customer?.warehouse?.code && customer?.warehouse?.name
                           ? `${customer.warehouse.code} - ${customer.warehouse.name}`
@@ -177,26 +177,26 @@ export default function ViewPage() {
                 <Table data={tableData} config={{ columns }} />
               </div>
             </div>
-              {/* ---------- Right Side (Table) ---------- */}
-              <div className="lg:col-span-2 w-full">
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                  Load Items
-                </h3>
-                <Table data={tableData} config={{ columns }} />
-              </div>
+            {/* ---------- Right Side (Table) ---------- */}
+            <div className="lg:col-span-2 w-full">
+              <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                Load Items
+              </h3>
+              <Table data={tableData} config={{ columns }} />
             </div>
+          </div>
 
-        {/* ---------- Footer Buttons ---------- */}
-        {/* <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200 mt-6">
+          {/* ---------- Footer Buttons ---------- */}
+          {/* <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200 mt-6">
           <SidebarBtn
             leadingIcon="lucide:download"
             leadingIconSize={20}
             label="Download"
             onClick={handleDownload}
           />*/}
-          
+
           <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
-      </ContainerCard>
+        </ContainerCard>
       </div>
     </>
   );
