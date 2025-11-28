@@ -39,6 +39,7 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import Loading from "@/app/components/Loading";
 import { useRouter } from "next/navigation";
 import * as yup from "yup";
+import Select from "@mui/material/Select";
 
 type KeyOption = { label: string; id: string; isSelected: boolean };
 type KeyGroup = { type: string; options: KeyOption[] };
@@ -72,25 +73,25 @@ const initialKeys: KeyGroup[] = [
 ];
 
 const Buom = ({ row, details, setDetails }: any) => {
-  const [buom, setBuom] = useState("0")
+  const [buom, setBuom] = useState("");
+  const unit = row.item_uoms.find((u: any) => u.uom_type === "primary")?.name || "";
 
   useEffect(() => {
-
     details.filter((ids: any, index: number) => {
-      console.log(ids, "ids", row.id)
+      // console.log(ids, "ids", row.id)
       if (ids.item_id == row.id) {
         setBuom(ids.buom_ctn_price)
-
       }
     })
   }, [])
 
-
-
   return (<InputFields
     label=""
-    type="text"
+    type="number"
+    min={0}
+    step="0.01"
     value={buom}
+    trailingElement={unit || " "}
     onChange={(e) => {
       setBuom(e.target.value)
       let isAvailable = false
@@ -134,11 +135,12 @@ const Buom = ({ row, details, setDetails }: any) => {
 }
 
 const Auom = ({ row, details, setDetails }: any) => {
-  const [auom, setAuom] = useState("0")
-  useEffect(() => {
+  const [auom, setAuom] = useState("");
+  const unit = row.item_uoms.find((u: any) => u.uom_type === "secondary")?.name || "";
 
+  useEffect(() => {
     details.filter((ids: any, index: number) => {
-      console.log(ids, "ids", row.id)
+      // console.log(ids, "ids", row.id)
       if (ids.item_id == row.id) {
         setAuom(ids.auom_pc_price)
 
@@ -147,8 +149,11 @@ const Auom = ({ row, details, setDetails }: any) => {
   }, [])
   return (<InputFields
     label=""
-    type="text"
+    type="number"
+    min={0}
+    step="0.01"
     value={auom || ""}
+    trailingElement={unit || " "}
     onChange={(e) => {
       setAuom(e.target.value)
       let isAvailable = false
@@ -156,7 +161,7 @@ const Auom = ({ row, details, setDetails }: any) => {
       if (details.length > 0) {
 
         details.filter((ids: any, index: number) => {
-          console.log(ids, "ids", row.id)
+          // console.log(ids, "ids", row.id)
           if (ids.item_id == row.id) {
             isAvailable = true
             indexVal = index
@@ -556,6 +561,8 @@ export default function AddPricing() {
             } else if (Array.isArray(nextKeyValue["Item"]) && nextKeyValue["Item"].length > 0) {
               // try to fetch full item objects when we only have ids
               try {
+                console.log(nextKeyValue);
+                
                 const items = await itemList({ ids: nextKeyValue["Item"] });
                 if (Array.isArray(items)) setSelectedItemDetails(items as ItemDetail[]);
                 else if (items && typeof items === "object" && Array.isArray((items as Record<string, unknown>).data)) setSelectedItemDetails((items as Record<string, unknown>).data as ItemDetail[]);
@@ -800,7 +807,7 @@ export default function AddPricing() {
   const [keyCombo, setKeyCombo] = useState<KeyComboType>({
     Location: [],
     Customer: [],
-    Item: ["Item"], // Always select Item
+    Item: ["Item"],
   });
 
   type OrderItem = {
@@ -868,29 +875,31 @@ export default function AddPricing() {
   );
   const [page, setPage] = useState(1);
   const pageSize = 5;
-  useEffect(() => {
-    if (keyValue["Item"] && keyValue["Item"].length > 0) {
-      itemList({ ids: keyValue["Item"] })
-        .then((data) => {
-          let items: ItemDetail[] = [];
-          if (Array.isArray(data)) {
-            items = data as ItemDetail[];
-          } else if (
-            data &&
-            typeof data === "object" &&
-            Array.isArray(data.data)
-          ) {
-            items = data.data as ItemDetail[];
-          }
-          setSelectedItemDetails(items);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch item details", err);
-        });
-    } else {
-      setSelectedItemDetails([]);
-    }
-  }, [keyValue["Item"]]);
+  // useEffect(() => {
+  //   if (keyValue["Item"] && keyValue["Item"].length > 0) {
+  //     console.log(keyValue["Item"], "keyvalueitem512")
+  //     itemList({ ids: keyValue["Item"].join(",") })
+  //       .then((data) => {
+  //         let items: ItemDetail[] = [];
+  //         if (Array.isArray(data)) {
+  //           items = data as ItemDetail[];
+  //         } else if (
+  //           data &&
+  //           typeof data === "object" &&
+  //           Array.isArray(data.data)
+  //         ) {
+  //           items = data.data as ItemDetail[];
+  //         }
+  //         setSelectedItemDetails(items);
+  //       })
+  //       .catch((err) => {
+  //         console.error("Failed to fetch item details", err);
+  //       });
+  //   } else {
+  //     setSelectedItemDetails([]);
+  //   }
+  // console.log(keyValue["Item"], "keyvalueitem520");
+  // }, [keyValue["Item"]]);
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -1006,7 +1015,7 @@ export default function AddPricing() {
         const handleCustomerSearch = async (q: string) => {
           if (!q || q.trim().length === 0) return [];
           try {
-            const params: any = { query: q };
+            const params: any = { query: q, per_page: "10" };
             if (keyValue["Customer Category"] && keyValue["Customer Category"].length > 0) params.customer_category_id = keyValue["Customer Category"].join(",");
             const res = await agentCustomerGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
@@ -1027,7 +1036,7 @@ export default function AddPricing() {
             }
             const res = await itemGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
-            return data.map((it: any) => ({ value: String(it.id), label: `${it.erp_code || ""}${it.name ? " - " + it.name : ""}`, code: it.item_code || it.code, name: it.name }));
+            return data.map((it: any) => ({ data: it, value: String(it.id), label: `${it.erp_code || ""}${it.name ? " - " + it.name : ""}`, code: it.item_code || it.code, name: it.name }));
           } catch (err) {
             return [];
           }
@@ -1152,6 +1161,7 @@ export default function AddPricing() {
                           return [];
                         }}
                         onChangeSelected={(selected) => {
+                          setSelectedItemDetails(selected);
                           setKeyValue((s) => ({ ...s, [itemKey]: selected.map((o) => o.value) }));
                         }}
                         onSelect={(opt: { value: string }) => {
@@ -1297,7 +1307,7 @@ export default function AddPricing() {
               <div className="font-semibold text-lg mb-4">Items</div>
               <div className="mb-6">
                 <Table
-                  data={selectedItemDetails as unknown as TableDataType[]}
+                  data={selectedItemDetails.map((it) => it.data) as TableDataType[]}
                   config={{
                     table: {
                       height: 500,
@@ -1309,7 +1319,7 @@ export default function AddPricing() {
                         label: "Item Code",
                         render: (row) => (
                           <span className="font-semibold text-[#181D27] text-[14px]">
-                            {row?.item_code}- {row?.name}
+                            {row?.code}- {row?.name}
                           </span>
                         ),
                       },
@@ -1322,7 +1332,7 @@ export default function AddPricing() {
                             {Array.isArray(row?.item_uoms) && row.item_uoms.length > 0 ? (
                               row.item_uoms.map((u) => (
                                 <div key={u?.id}>
-                                  {`${u?.name} - ₹${u?.uom_price}`}
+                                  {`${u?.name} - ${u?.uom_price}`}
                                 </div>
                               ))
                             ) : (
