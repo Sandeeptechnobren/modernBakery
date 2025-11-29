@@ -53,7 +53,7 @@ export default function Page() {
       } else {
         showSnackbar(
           res.message ||
-            `Deleted Chiller Request with ID: ${deleteSelectedRow}`,
+          `Deleted Chiller Request with ID: ${deleteSelectedRow}`,
           "success"
         );
         setShowDeletePopup(false);
@@ -257,16 +257,16 @@ export default function Page() {
               {
                 icon: "lucide:eye",
                 onClick: (data: TableDataType) => {
-                  router.push(`/assets/chillerRequest/view/${data.uuid}`);
+                  router.push(`/assetsRequest/view/${data.uuid}`);
                 },
               },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
-                  router.push(`/assets/chillerRequest/${data.uuid}`);
+                  router.push(`/assetsRequest/edit/${data.uuid}`);
                 },
               },
-              
+
             ],
             pageSize: 10,
           }}

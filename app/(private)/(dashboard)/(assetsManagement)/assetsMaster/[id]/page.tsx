@@ -74,7 +74,7 @@ export default function AddOrEditChiller() {
     onlyCountryOptions,
     assetsTypeOptions,
     assetsModelOptions,
-    brandOptions,
+    brandingOptions,
   } = useAllDropdownListData();
 
   const steps: StepperStep[] = [
@@ -349,7 +349,7 @@ export default function AddOrEditChiller() {
                 label="Branding"
                 name="branding"
                 value={values.branding}
-                options={brandOptions}
+                options={brandingOptions}
                 onChange={(e) => setFieldValue("branding", e.target.value)}
                 error={touched.branding && errors.branding}
               />

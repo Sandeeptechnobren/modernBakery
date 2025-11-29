@@ -32,6 +32,7 @@ import { salesmanList } from "@/app/services/allApi";
 import { outletChannelList } from "@/app/services/allApi";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Loading from "@/app/components/Loading";
 
 // File validation helper
 const FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
@@ -359,6 +360,7 @@ export default function AddCompanyWithStepper() {
   const [uploadedFiles, setUploadedFiles] = useState<
     Record<string, { file: File; preview?: string }>
   >({});
+  const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [existingData, setExistingData] = useState<Chiller | null>(null);
@@ -865,13 +867,11 @@ export default function AddCompanyWithStepper() {
     errors: FormikErrors<Chiller>,
     touched: FormikTouched<Chiller>
   ) => {
-    if (isLoading) {
+    if (loading) {
       return (
-        <ContainerCard>
-          <div className="flex justify-center items-center py-8">
-            <div className="text-lg">Loading...</div>
-          </div>
-        </ContainerCard>
+        <div className="w-full h-full flex items-center justify-center">
+          <Loading />
+        </div>
       );
     }
 

@@ -60,28 +60,28 @@ export const initialLinkData: SidebarDataType[] = [
           },
           ...(process.env.NODE_ENV === "development"
             ? [
-                {
-                  isActive: false,
-                  href: "/settings/permission",
-                  label: "Permissions",
-                  leadingIcon: "mdi:lock-check",
-                  iconColor: "text-green-500",
-                },
-                {
-                  isActive: false,
-                  href: "/settings/menu",
-                  label: "Menus",
-                  leadingIcon: "duo-icons:menu",
-                  iconColor: "text-green-500",
-                },
-                {
-                  isActive: false,
-                  href: "/settings/submenu",
-                  label: "Sub Menus",
-                  leadingIcon: "ci:arrow-sub-down-right",
-                  iconColor: "text-green-500",
-                },
-              ]
+              {
+                isActive: false,
+                href: "/settings/permission",
+                label: "Permissions",
+                leadingIcon: "mdi:lock-check",
+                iconColor: "text-green-500",
+              },
+              {
+                isActive: false,
+                href: "/settings/menu",
+                label: "Menus",
+                leadingIcon: "duo-icons:menu",
+                iconColor: "text-green-500",
+              },
+              {
+                isActive: false,
+                href: "/settings/submenu",
+                label: "Sub Menus",
+                leadingIcon: "ci:arrow-sub-down-right",
+                iconColor: "text-green-500",
+              },
+            ]
             : []),
         ],
       },
@@ -298,6 +298,20 @@ export const initialLinkData: SidebarDataType[] = [
             isActive: false,
             href: "/settings/manageAssets/assetsModel",
             label: "Assets Model",
+            leadingIcon: "mdi:map",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
+            href: "/settings/manageAssets/vendor",
+            label: "Vendor",
+            leadingIcon: "mdi:map",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
+            href: "/settings/manageAssets/branding",
+            label: "Branding",
             leadingIcon: "mdi:map",
             iconColor: "text-yellow-400",
           },

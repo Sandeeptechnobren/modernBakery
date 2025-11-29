@@ -108,9 +108,9 @@ export default function AddEditVendor() {
         } else {
           showSnackbar(
             res?.message ||
-              (isEditMode
-                ? "Vendor updated successfully"
-                : "Vendor added successfully"),
+            (isEditMode
+              ? "Vendor updated successfully"
+              : "Vendor added successfully"),
             "success"
           );
 
@@ -127,7 +127,7 @@ export default function AddEditVendor() {
           }
 
           resetForm();
-          router.push("/assets/vendor");
+          router.push("/settings/manageAssets/vendor");
         }
       } catch (error) {
         showSnackbar("Something went wrong", "error");
@@ -213,7 +213,7 @@ export default function AddEditVendor() {
                       formik.touched.vendor_code && formik.errors.vendor_code
                     }
                   />
-                  
+
                 </div>
 
                 {/* Vendor Name */}

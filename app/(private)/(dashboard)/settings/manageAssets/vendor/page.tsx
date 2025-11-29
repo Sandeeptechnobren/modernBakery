@@ -20,7 +20,7 @@ const dropdownDataList = [
 ];
 
 export default function ShelfDisplay() {
-  const {setLoading} = useLoading();
+  const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [deleteSelectedRow, setDeleteSelectedRow] = useState<string | null>(null);
@@ -31,14 +31,14 @@ export default function ShelfDisplay() {
 
 
   const fetchVendor = useCallback(
-    async ( pageNo: number = 1, pageSize: number = 10) : Promise<listReturnType> => {
+    async (pageNo: number = 1, pageSize: number = 10): Promise<listReturnType> => {
       setLoading(true);
       const res = await vendorList({
         page: pageNo.toString(),
         per_page: pageSize.toString(),
       });
       setLoading(false);
-      if(res.error) {
+      if (res.error) {
         showSnackbar(res.data.message || "failed to fetch the Vendor List", "error");
         throw new Error("Unable to fetch the Vendor List");
       } else {
@@ -61,20 +61,20 @@ export default function ShelfDisplay() {
       {/* Table */}
       <div className="flex flex-col h-full">
         <Table
-        refreshKey={refreshKey}
+          refreshKey={refreshKey}
           config={{
             api: {
               list: fetchVendor
             },
             header: {
               title: "Vendor",
-             
+
               searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn
                   key="name"
-                  href="/assets/vendor/add"
+                  href="/settings/manageAssets/vendor/add"
                   leadingIcon="lucide:plus"
                   label="Add"
                   labelTw="hidden lg:block"
@@ -84,21 +84,24 @@ export default function ShelfDisplay() {
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "code", label: "Code",
+              {
+                key: "code", label: "Code",
                 render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.code}
-            </span>
-        ),
-               },
+                  <span className="font-semibold text-[#181D27] text-[14px]">
+                    {row.code}
+                  </span>
+                ),
+              },
               { key: "name", label: "Name" },
               { key: "address", label: "Address" },
               { key: "contact", label: "Contact" },
               { key: "email", label: "Email" },
-              { key: "status", label: "Status", render: (data: TableDataType) => (
+              {
+                key: "status", label: "Status", render: (data: TableDataType) => (
                   <StatusBtn isActive={data.status && data.status.toString() === "1" ? true : false} />
-              )},
-          
+                )
+              },
+
             ],
             rowSelection: true,
             rowActions: [
@@ -111,7 +114,7 @@ export default function ShelfDisplay() {
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
-                  router.push(`/assets/vendor/${data.uuid}`);
+                  router.push(`/settings/manageAssets/vendor/${data.uuid}`);
                 },
               },
             ],

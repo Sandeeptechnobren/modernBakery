@@ -416,7 +416,7 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
-          
+
         ]
       },
       {
@@ -448,37 +448,47 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
-          
+
         ]
       },
       {
         isActive: false,
         href: "#",
-        label: "Assets",
+        label: "Assets Management",
         leadingIcon: "streamline-freehand:money-bag",
         iconColor: "text-green-500",
         trailingIcon: "mdi-light:chevron-right",
         children: [
           {
             isActive: false,
-            href: "/assets/chiller",
-            label: "Chiller",
+            href: "/assetsMaster",
+            label: "Assets Master",
             leadingIcon: "guidance:refrigeration",
             iconColor: "text-cyan-500",
           },
           {
             isActive: false,
-            href: "/assets/chillerRequest",
-            label: "Chiller Request",
+            href: "/assetsRequest",
+            label: "Assets Request",
             leadingIcon: "si:pull-request-duotone",
             iconColor: "text-cyan-500",
           },
           {
             isActive: false,
-            href: "/assets/vendor",
-            label: "Vendor",
-            leadingIcon: "streamline-freehand:shop",
-            iconColor: "text-cyan-500",
+            href: "#",
+            label: "Chiller Installation",
+            leadingIcon: "streamline-freehand:money-bag",
+            iconColor: "text-green-500",
+            trailingIcon: "mdi-light:chevron-right",
+            children: [
+              {
+                isActive: false,
+                href: "/chillerInstallation/acf",
+                label: "ACF",
+                leadingIcon: "guidance:refrigeration",
+                iconColor: "text-cyan-500",
+              },
+            ],
           },
         ],
       },

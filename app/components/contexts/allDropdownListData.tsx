@@ -1,6 +1,10 @@
 "use client";
 import {
   agentCustomerList,
+  assetsModelList,
+  assetsTypeList,
+  brandingList,
+  BrandList,
   channelList,
   companyList,
   companyTypeList,
@@ -20,6 +24,7 @@ import {
   itemSubCategory,
   labelList,
   locationList,
+  manufacturerList,
   permissionList,
   projectList,
   regionList,
@@ -34,10 +39,6 @@ import {
   uomList,
   vehicleListData,
   warehouseList,
-  assetsTypeList,
-  manufacturerList,
-  assetsModelList,
-  BrandList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -76,6 +77,7 @@ interface DropdownDataContextType {
   manufacturerList: Manufacturer[];
   assetsModelList: AssetsModel[];
   BrandList: Brand[];
+  brandingList: Branding[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -114,6 +116,7 @@ interface DropdownDataContextType {
   manufacturerOptions: { value: string; label: string }[];
   assetsModelOptions: { value: string; label: string }[];
   brandOptions: { value: string; label: string }[];
+  brandingOptions: { value: string; label: string }[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   refreshDropdown: (name: string, params?: any) => Promise<void>;
@@ -333,6 +336,12 @@ interface Brand {
   osa_code: string;
 }
 
+interface Branding {
+  id: number;
+  name: string;
+  osa_code: string;
+}
+
 interface AgentCustomerList {
   id: number,
   uuid: string,
@@ -440,6 +449,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [manufacturer, setManufacturer] = useState<Manufacturer[]>([]);
   const [assetsModel, setAssetsModel] = useState<AssetsModel[]>([]);
   const [brandList, setBrandList] = useState<Brand[]>([]);
+  const [brandingListState, setBrandingList] = useState<Branding[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -578,6 +588,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const brandOptions = (Array.isArray(brandList) ? brandList : []).map((c: Brand) => ({
     value: String(c.id ?? ''),
     label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+  }))
+
+  const brandingOptions = (Array.isArray(brandingListState) ? brandingListState : []).map((c: Branding) => ({
+    value: String(c.id ?? ''),
+    label: c.name ?? ''
   }))
 
   const uomOptions = (Array.isArray(uom) ? uom : []).map((c: UOM) => ({
@@ -996,6 +1011,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       { run: () => locationList(), setter: (v) => setLocation(v as LocationItem[]) },
       { run: () => assetsTypeList(), setter: (v) => setAssetsType(v as AssetsType[]) },
       { run: () => manufacturerList(), setter: (v) => setManufacturer(v as Manufacturer[]) },
+      { run: () => assetsModelList(), setter: (v) => setAssetsModel(v as AssetsModel[]) },
+      { run: () => BrandList(), setter: (v) => setBrandList(v as Brand[]) },
+      { run: () => brandingList(), setter: (v) => setBrandingList(v as Branding[]) },
     ];
 
     try {
@@ -1285,6 +1303,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         manufacturerList: manufacturer,
         assetsModelList: assetsModel,
         BrandList: brandList,
+        brandingList: brandingListState,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
@@ -1341,6 +1360,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         manufacturerOptions,
         assetsModelOptions,
         brandOptions,
+        brandingOptions,
         loading
       }}
     >

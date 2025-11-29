@@ -1803,6 +1803,29 @@ export const addAssetsType = async (body: object) => {
   }
 };
 
+export const brandingList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/assets-branding/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addBranding = async (body: object) => {
+  try {
+    const res = await API.post(
+      `/api/settings/assets-branding/add`,
+      body
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const manufacturerList = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/asset-manufacturer/list`, {
@@ -2123,7 +2146,7 @@ export const workFlowList = async () => {
 
 export const workFlowAssignList = async () => {
   try {
-    
+
     const res = await API.get(
       `/api/master/approval/workflow/assigned-list
 `);
@@ -2134,7 +2157,7 @@ export const workFlowAssignList = async () => {
   }
 };
 
-export const singleWorkFlowList = async (uuid:string) => {
+export const singleWorkFlowList = async (uuid: string) => {
   try {
     const res = await API.get(
       `/api/master/approval/workflow/detail/${uuid}`);
@@ -2919,7 +2942,7 @@ export const updateMenu = async (uuid: string, payload: menuType) => {
   }
 };
 
-export const assignWorkFlowsToSubmenu= async (payload: any) => {
+export const assignWorkFlowsToSubmenu = async (payload: any) => {
   try {
     const res = await API.post(`/api/master/approval/workflow/start`, payload);
     return res.data;

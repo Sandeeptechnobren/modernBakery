@@ -78,7 +78,13 @@ export type configType = {
             showOnSelect?: boolean;
             showWhen?: (data: TableDataType[], selectedRow?: number[]) => boolean;
         }[],
+        selectedCount?: {
+            label?: string | React.ReactNode;
+            labelTw?: string;
+            onClick?: (data: TableDataType[], selectedRow?: number[]) => void;
+        };
         actions?: React.ReactNode[];
+        actionsWithData?: (data: TableDataType[], selectedRow?: number[]) => React.ReactNode[];
     };
     rowActions?: {
         icon: string;
@@ -422,6 +428,7 @@ function TableHeader() {
     const { config } = useContext(Config);
     const { tableDetails, setTableDetails, setNestedLoading, setSearchState, searchState, initialTableData } = useContext(TableDetails);
     const [searchBarValue, setSearchBarValue] = useState("");
+    const { selectedRow } = useContext(SelectedRow);
 
     async function handleSearch() {
         if (!config.api?.search) return;
@@ -462,6 +469,7 @@ function TableHeader() {
                     <>
                         <div className="flex items-center gap-2 w-[320px] invisible sm:visible">
                             {config.header?.searchBar && (
+                                <div className="w-full">
                                 <SearchBar
                                     value={searchBarValue}
                                     onChange={(
@@ -469,6 +477,7 @@ function TableHeader() {
                                     ) => setSearchBarValue(e.target.value)}
                                     onEnterPress={handleSearch}
                                 />
+                                </div>
                             )}
 
                             {/* show results summary for global search (from context) */}
@@ -513,12 +522,23 @@ function TableHeader() {
                                     <FilterBy />
                                 </div>
                             )}
+                            {config.header?.selectedCount !== undefined && (
+                                <div className="w-full ml-2 text-sm text-gray-600">
+                                    {config.header?.selectedCount?.label && (
+                                        <span className={config.header?.selectedCount?.labelTw} onClick={() => config.header?.selectedCount?.onClick && config.header?.selectedCount?.onClick(tableDetails.data, selectedRow)}>
+                                            {typeof config.header?.selectedCount?.label === "string"
+                                                ? `${config.header?.selectedCount?.label}${selectedRow.length}`
+                                                : <>{config.header?.selectedCount?.label}{selectedRow.length}</>}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* actions */}
                         <div className="flex justify-right  w-fit gap-[8px]">
                             {config.header?.actions?.map((action) => action)}
-
+                            {config.header?.actionsWithData && config.header?.actionsWithData(tableDetails?.data || [], selectedRow).map((action) => action)}
                             {config.header?.columnFilter && <ColumnFilter />}
                         </div>
                     </>

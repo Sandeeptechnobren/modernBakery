@@ -393,3 +393,24 @@ export const deleteChillerRequest = async (uuid: string) => {
 //     return handleError(error);
 //   }
 // };
+
+
+export const acfList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/chiller-request/filter`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addAcf = async (body: object) => {
+  try {
+    const res = await API.post(`/api/assets/iro/add`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
