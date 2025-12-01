@@ -7,7 +7,7 @@ import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { useFormik } from "formik";
 import TabBtn from "@/app/components/tabBtn";
-import { isVerify } from "@/app/services/allApi";
+import { isVerify, updateAuthUser, countryList, roleList } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
 export default function ProfilePage() {
@@ -15,20 +15,21 @@ export default function ProfilePage() {
 
   // Form
   const formik = useFormik({
+    // roleOptions: roleList(),
     initialValues: {
       firstName: "",
       lastName: "",
       dob: "",
-      position: "",
+      role: "",
       email: "",
-      country: "",
-      phone: "",
+      country_id: "",
+      contact_number: "",
       street: "",
       city: "",
       zip: "",
     },
-    onSubmit: (values) => {
-      console.log("Form Submitted", values);
+    onSubmit: async (values) => {
+      await handleProfileUpdate(values);
     },
   });
 
@@ -37,7 +38,93 @@ export default function ProfilePage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [countryOptions, setCountryOptions] = useState<{ label: string; value: string }[]>([]);
+  const [roleOptions, setRoleOptions] = useState<{ label: string; value: string }[]>([]);
   const { showSnackbar } = useSnackbar();
+
+  const handleProfileUpdate = async (values: typeof formik.initialValues) => {
+    if (!profile?.uuid) {
+      showSnackbar("User ID not found", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        name: String(values.firstName || ""),
+        dob: String(values.dob || ""),
+        role: String(values.role || ""),
+        email: String(values.email || ""),
+        contact_number: String(values.contact_number || ""),
+        street: String(values.street || ""),
+        city: String(values.city || ""),
+        zip: String(values.zip || ""),
+        country_id: values.country_id ? Number(values.country_id) : null,
+      };
+
+      const res = await updateAuthUser(profile.uuid, payload);
+
+      if (res && res.code === 200) {
+        showSnackbar("Profile updated successfully", "success");
+        // Refresh profile data
+        const updatedProfile = await isVerify();
+        if (updatedProfile && updatedProfile.code === 200 && updatedProfile.data) {
+          setProfile(updatedProfile.data);
+        }
+      } else if (res && res.data && res.data.message) {
+        showSnackbar(String(res.data.message), "error");
+      } else {
+        showSnackbar("Failed to update profile", "error");
+      }
+    } catch (err: any) {
+      showSnackbar(String(err?.message ?? "Unable to update profile"), "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Fetch role list
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const res = await roleList();
+        if (res && res.data) {
+          const roles = Array.isArray(res.data) ? res.data : [];
+          const options = roles.map((role: any) => ({
+            label: role.name || "",
+            value: String(role.id || ""),
+          }));
+          setRoleOptions(options);
+        }
+      } catch (err) {
+        console.error("Failed to fetch roles:", err);
+      }
+    };
+
+    fetchRoles();
+  }, []);
+
+  // Fetch country list
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const res = await countryList();
+        if (res && res.data) {
+          const countries = Array.isArray(res.data) ? res.data : [];
+          const options = countries.map((country: any) => ({
+            label: country.country_name || country.name || "",
+            value: String(country.id || ""),
+          }));
+          setCountryOptions(options);
+        }
+      } catch (err) {
+        console.error("Failed to fetch countries:", err);
+      }
+    };
+
+    fetchCountries();
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -46,10 +133,16 @@ export default function ProfilePage() {
         const res = await isVerify();
         if (res && res.code === 200 && res.data) {
           setProfile(res.data);
-          // seed form fields
+          // populate all form fields
           setFieldValue("firstName", res.data?.name ?? "");
           setFieldValue("email", res.data?.email ?? "");
-          setFieldValue("country", res.data?.companies?.[0]?.company_name ?? "");
+          setFieldValue("dob", res.data?.dob ?? "");
+          setFieldValue("role", res.data?.role.id ? String(res.data.role.id) : "");
+          setFieldValue("country_id", res.data?.country_id.id ? String(res.data.country_id.id) : "");
+          setFieldValue("contact_number", res.data?.contact_number ?? "");
+          setFieldValue("street", res.data?.street ?? "");
+          setFieldValue("city", res.data?.city ?? "");
+          setFieldValue("zip", res.data?.zip ?? "");
         } else if (res && res.data && res.data.message) {
           showSnackbar(String(res.data.message), "error");
         }
@@ -273,19 +366,10 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <InputFields
                       required
-                      label="First Name"
+                      label=" Name"
                       value={values.firstName}
                       onChange={(e) =>
                         setFieldValue("firstName", e.target.value)
-                      }
-                    />
-
-                    <InputFields
-                      required
-                      label="Last Name"
-                      value={values.lastName}
-                      onChange={(e) =>
-                        setFieldValue("lastName", e.target.value)
                       }
                     />
 
@@ -299,9 +383,10 @@ export default function ProfilePage() {
                     <InputFields
                       required
                       label="Position"
-                      value={values.position}
+                      value={values.role}
+                      options={roleOptions}
                       onChange={(e) =>
-                        setFieldValue("position", e.target.value)
+                        setFieldValue("role", e.target.value)
                       }
                     />
                   </div>
@@ -321,8 +406,8 @@ export default function ProfilePage() {
                     <InputFields
                       required
                       label="Phone Number"
-                      value={values.phone}
-                      onChange={(e) => setFieldValue("phone", e.target.value)}
+                      value={values.contact_number}
+                      onChange={(e) => setFieldValue("contact_number", e.target.value)}
                     />
 
                     <InputFields
@@ -349,17 +434,26 @@ export default function ProfilePage() {
                     <InputFields
                       required
                       label="Country"
-                      value={values.country}
-                      onChange={(e) => setFieldValue("country", e.target.value)}
+                      value={values.country_id}
+                      options={countryOptions}
+                      onChange={(e) => setFieldValue("country_id", e.target.value)}
                     />
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="bg-red-600 text-white px-6 py-3 rounded-md"
+                  disabled={isSubmitting}
+                  className="bg-red-600 text-white px-6 py-3 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Save Changes
+                  {isSubmitting ? (
+                    <>
+                      <Icon icon="lucide:loader-2" width={20} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </button>
               </form>
             </ContainerCard>
