@@ -29,8 +29,8 @@ import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 const columns = [
     {
         key: "delivery_date",
-        label: "Date",
-        showByDefault: true,
+        label: "Delivery Date",
+        // showByDefault: true,
         render: (row: TableDataType) => {
             if (!row.delivery_date) return "-";
             const date = new Date(row.delivery_date as string);
@@ -42,6 +42,7 @@ const columns = [
     {
         key: "customer",
         label: "Customer Name",
+        showByDefault: true,
         render: (row: TableDataType) => {
             const customer = typeof row.customer === "string" ? { code: "", name: row.customer } : (row.customer ?? {});
             const code = customer.code ?? "";
@@ -64,6 +65,7 @@ const columns = [
     {
         key: "warehouse",
         label: "Distributor",
+        showByDefault: true,
         render: (row: TableDataType) => {
             const warehouse = typeof row.warehouse === "string" ? { code: "", name: row.warehouse } : (row.warehouse ?? {});
             const code = warehouse.code ?? "";
@@ -75,6 +77,7 @@ const columns = [
     {
         key: "salesman",
         label: "Salesman Name",
+        showByDefault: true,
         render: (row: TableDataType) => {
             const salesman = typeof row.salesman === "string" ? { code: "", name: row.salesman } : (row.salesman ?? {});
             const code = salesman.code ?? "";

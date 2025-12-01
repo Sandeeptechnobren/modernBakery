@@ -35,7 +35,6 @@ const columns = [
         key: "invoice_time",
         label: "Time",
         showByDefault: true,
-
     },
     { key: "invoice_code", label: "Invoice Code", showByDefault: true },
     { key: "order_code", label: "Order Code" },
