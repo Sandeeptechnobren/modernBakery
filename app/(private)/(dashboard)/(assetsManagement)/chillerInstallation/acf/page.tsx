@@ -96,7 +96,7 @@ const renderCombinedField = (data: TableDataType, field: string) => {
     } else if (code !== "-") {
         return code;
     }
-    return "-";
+    return "-";99999999999
 };
 
 // 🔹 Table Columns

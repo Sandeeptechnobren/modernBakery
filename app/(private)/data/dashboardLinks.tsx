@@ -488,6 +488,13 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "guidance:refrigeration",
                 iconColor: "text-cyan-500",
               },
+              {
+                isActive: false,
+                href: "/chillerInstallation/iro",
+                label: "IRO",
+                leadingIcon: "guidance:refrigeration",
+                iconColor: "text-cyan-500",
+              },
             ],
           },
         ],

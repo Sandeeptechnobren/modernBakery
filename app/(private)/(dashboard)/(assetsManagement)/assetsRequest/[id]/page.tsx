@@ -848,7 +848,7 @@ export default function AddCompanyWithStepper() {
           `Chiller ${isEditMode ? "updated" : "added"} successfully`,
           "success"
         );
-        router.push("/assets/chillerRequest");
+        router.push("/assetsRequest");
       }
     } catch (error) {
       console.error("Submit error:", error);

@@ -414,3 +414,15 @@ export const addAcf = async (body: object) => {
     return handleError(error);
   }
 };
+
+
+export const iroList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/iro/count`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

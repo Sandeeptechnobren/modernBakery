@@ -222,7 +222,7 @@ export default function AddOrEditChiller() {
       showSnackbar(res.data?.message || "Failed to save", "error");
     } else {
       showSnackbar(`Chiller ${isEditMode ? "updated" : "added"} successfully`, "success");
-      router.push("/assets/chiller");
+      router.push("/assetsMaster");
     }
   };
 
