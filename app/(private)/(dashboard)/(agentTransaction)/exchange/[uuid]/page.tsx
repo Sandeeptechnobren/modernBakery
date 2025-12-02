@@ -12,8 +12,10 @@ import {
   agentCustomerGlobalSearch,
   genearateCode,
   itemGlobalSearch,
+  itemList,
   saveFinalCode,
-  warehouseListGlobalSearch
+  warehouseListGlobalSearch,
+  warehouseStockTopOrders
 } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -232,6 +234,10 @@ export default function ExchangeAddEditPage() {
 
   // Function for fetching Item
   const fetchItem = async (searchTerm: string, warehouse_id?: string) => {
+    // Don't fetch items if no warehouse is selected
+    if (!warehouse_id) {
+      return [];
+    }
     setSkeleton((prev) => ({ ...prev, item: true }));
     const res = await itemGlobalSearch({ perPage: "10", query: searchTerm, warehouse_id });
     if (res?.error) {
@@ -642,6 +648,23 @@ export default function ExchangeAddEditPage() {
                           setSkeleton((prev) => ({ ...prev, customer: true }));
                           setFieldValue("customer", "");
                           setFilteredCustomerOptions([]);
+                          // Clear items when warehouse changes
+                          setItemsOptions([]);
+                          setItemData([
+                            {
+                              item_id: "",
+                              item_name: "",
+                              item_label: "",
+                              UOM: [],
+                              uom_id: "",
+                              Quantity: "1",
+                              Price: "",
+                              Total: "0.00",
+                              region: "",
+                              return_type: "",
+                              Vat: "0",
+                            },
+                          ]);
                         } else {
                           setFieldValue("warehouse", opt.value);
                         }
@@ -651,6 +674,23 @@ export default function ExchangeAddEditPage() {
                         setFieldValue("customer", "");
                         setFilteredCustomerOptions([]);
                         setSkeleton((prev) => ({ ...prev, customer: false }));
+                        // Clear items when warehouse is cleared
+                        setItemsOptions([]);
+                        setItemData([
+                          {
+                            item_id: "",
+                            item_name: "",
+                            item_label: "",
+                            UOM: [],
+                            uom_id: "",
+                            Quantity: "1",
+                            Price: "",
+                            Total: "0.00",
+                            region: "",
+                            return_type: "",
+                            Vat: "0",
+                          },
+                        ]);
                       }}
                       error={touched.warehouse && (errors.warehouse as string)}
                     />

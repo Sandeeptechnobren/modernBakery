@@ -3,7 +3,7 @@
 export default function ProfilePage() {
   return (
     <>
-    settings dev page
+      settings dev page
     </>
   );
 }

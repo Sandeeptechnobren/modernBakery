@@ -35,7 +35,7 @@ export default function TopBar({
 
     async function logoutHandler() {
         const res = await logout();
-        if(res.error) showSnackbar(res.data.message, "error");
+        if (res.error) showSnackbar(res.data.message, "error");
         localStorage.removeItem("token");
         router.push("/");
     }
@@ -144,7 +144,7 @@ export default function TopBar({
                                                         "/settingsdev"
                                                     );
                                                 },
-                                            }]: []),
+                                            }] : []),
                                             {
                                                 icon: "mdi:account-multiple",
                                                 label: "Profile",
@@ -166,6 +166,16 @@ export default function TopBar({
                                                 },
                                             },
                                             {
+                                                icon: "mynaui:lock",
+                                                label: "Settings Profile",
+                                                onClick: () => {
+                                                    setIsOpenDropdown(false);
+                                                    router.push(
+                                                        "/settingProfile"
+                                                    );
+                                                },
+                                            },
+                                            {
                                                 icon: "tabler:logout",
                                                 label: "Logout",
                                                 onClick: logoutHandler
@@ -180,10 +190,10 @@ export default function TopBar({
             </div>
 
             {horizontalSidebar && (
-              <HorizontalSidebar 
-                data={initialLinkData} 
-                onClickHandler={(href) => router.push(href)} 
-              />
+                <HorizontalSidebar
+                    data={initialLinkData}
+                    onClickHandler={(href) => router.push(href)}
+                />
             )}
         </div>
     );
