@@ -1,6 +1,4 @@
 "use client";
-
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
     listReturnType,
     searchReturnType,
@@ -13,10 +11,11 @@ import {
     routeGlobalSearch,
     routeStatusUpdate,
 } from "@/app/services/allApi";
-import { bonusList } from "@/app/services/settingsAPI";
+import { pointsList } from "@/app/services/loyaltyProgramApis";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import { useCallback, useEffect, useState } from "react";
 
 
@@ -42,24 +41,38 @@ export default function Tier() {
             ),
         },
         {
-            key: "item_code,item_name",
-            label: "Item",
+            key: "customer_code,customer_name",
+            label: "Customer",
             render: (data: TableDataType) => {
-                return `${data?.item_code ||  "-"} - ${data?.item_name ||  "-"}`;
+                return `${data?.customer_code ||  "-"} - ${data?.customer_name ||  "-"}`;
             },
         },
         {
-            key: "volume",
-            label: "Threshold Value",
+            key: "tier_code,tier_name",
+            label: "Tier",
             render: (data: TableDataType) => {
-                return data?.volume ||  "-";
+                return `${data?.tier_code ||  ""} - ${data?.tier_name ||  ""}`;
             },
         },
         {
-            key: "bonus_points",
-            label: "Bonus Points",
+            key: "total_earning",
+            label: "Total Earning",
             render: (data: TableDataType) => {
-                return data?.bonus_points ||  "-";
+                return toInternationalNumber(data?.total_earning ||  "-");
+            },
+        },
+        {
+            key: "total_spend",
+            label: "Total Spend",
+            render: (data: TableDataType) => {
+                return toInternationalNumber(data?.total_spend ||  "-");
+            },
+        },
+        {
+            key: "total_closing",
+            label: "Total Closing",
+            render: (data: TableDataType) => {
+                return toInternationalNumber(data?.total_closing ||  "-");
             },
         },
         
@@ -74,14 +87,8 @@ export default function Tier() {
         pageSize: number = 10
     ): Promise<listReturnType> => {
         try {
-            const params: any = {
-                page: pageNo.toString(),
-                per_page: pageSize.toString(),
-            };
-            if (warehouseId) {
-                params.warehouse_id = warehouseId;
-            }
-            const listRes = await bonusList(params);
+           
+            const listRes = await pointsList();
             return {
                 data: listRes?.data || [],
                 currentPage: listRes?.pagination?.page || pageNo,
@@ -106,7 +113,7 @@ export default function Tier() {
             // setLoading(true);
             let result;
             if (columnName && columnName !== "") {
-                result = await bonusList({
+                result = await pointsList({
                     per_page: pageSize.toString(),
                     [columnName]: searchQuery,
                     page: page.toString(),
@@ -182,7 +189,7 @@ export default function Tier() {
                             search: searchTier,
                         },
                         header: {
-                            title: "Bonus Points",
+                            title: "Customer Loyalty Points",
                             // threeDot: [
                             //     {
                             //         icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
@@ -240,14 +247,14 @@ export default function Tier() {
                             // searchBar: true,
                             columnFilter: true,
                             actions: [
-                                <SidebarBtn
-                                    key={0}
-                                    href="/settings/bonusPoints/add"
-                                    isActive={true}
-                                    leadingIcon="lucide:plus"
-                                    label="Add"
-                                    labelTw="hidden sm:block"
-                                />,
+                                // <SidebarBtn
+                                //     key={0}
+                                //     href="/customerLoyaltyPoints/add"
+                                //     isActive={true}
+                                //     leadingIcon="lucide:plus"
+                                //     label="Add"
+                                //     labelTw="hidden sm:block"
+                                // />,
                                 // <SidebarBtn
                                 //     key={1}
                                 //     leadingIcon="lucide:download"
@@ -265,18 +272,18 @@ export default function Tier() {
                         columns: columns,
                         rowSelection: true,
                         rowActions: [
-                            // {
-                            //     icon: "lucide:eye",
-                            //     onClick: (data: TableDataType) => {
-                            //         router.push(`/settings/bonusPoints/details/${data.uuid}`);
-                            //     },
-                            // },
                             {
-                                icon: "lucide:edit-2",
+                                icon: "lucide:eye",
                                 onClick: (data: TableDataType) => {
-                                    router.push(`/settings/bonusPoints/${data.uuid}`);
+                                    router.push(`/customerLoyaltyPoints/details/${data.uuid}`);
                                 },
                             },
+                            // {
+                            //     icon: "lucide:edit-2",
+                            //     onClick: (data: TableDataType) => {
+                            //         router.push(`/settings/bonusPoints/${data.uuid}`);
+                            //     },
+                            // },
                         ],
                         pageSize: 50,
                     }}

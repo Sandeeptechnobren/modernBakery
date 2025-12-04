@@ -3633,9 +3633,9 @@ export const getWarehouseStockById = async (uuid: string) => {
   }
 };
 
-export const getAgentCusByRoute = async (id: string) => {
+export const getAgentCusByRoute = async (id: string,params?:Params) => {
   try {
-    const res = await API.get(`/api/master/agent_customers/route/${id}`);
+    const res = await API.get(`/api/master/agent_customers/route/${id}`,{params});
 
     return res.data;
   } catch (error: unknown) {

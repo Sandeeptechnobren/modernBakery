@@ -257,8 +257,8 @@ export default function AddEditTier() {
                 value={form.rewardBasis}
                 onChange={(e) => handleChange("rewardBasis", e.target.value)}
                 options={[
-                  { value: "qty", label: "Quantity" },
-                  { value: "amount", label: "Amount" },
+                  { value: "1", label: "Quantity" },
+                  { value: "2", label: "Amount" },
                 ]}
               />
               {errors.rewardBasis && (

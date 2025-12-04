@@ -1,6 +1,4 @@
 "use client";
-
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
     listReturnType,
     searchReturnType,
@@ -13,10 +11,11 @@ import {
     routeGlobalSearch,
     routeStatusUpdate,
 } from "@/app/services/allApi";
-import { bonusList } from "@/app/services/settingsAPI";
+import { adjustmentList } from "@/app/services/loyaltyProgramApis";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import { useCallback, useEffect, useState } from "react";
 
 
@@ -42,24 +41,45 @@ export default function Tier() {
             ),
         },
         {
-            key: "item_code,item_name",
-            label: "Item",
+            key: "warehouse_code,warehouse_name",
+            label: "Warehouse",
             render: (data: TableDataType) => {
-                return `${data?.item_code ||  "-"} - ${data?.item_name ||  "-"}`;
+                return `${data?.warehouse_code ||  "-"} - ${data?.warehouse_name ||  "-"}`;
             },
         },
         {
-            key: "volume",
-            label: "Threshold Value",
+            key: "route_code,route_name",
+            label: "Route",
             render: (data: TableDataType) => {
-                return data?.volume ||  "-";
+                return `${data?.route_code ||  "-"} - ${data?.route_name ||  "-"}`;
             },
         },
         {
-            key: "bonus_points",
-            label: "Bonus Points",
+            key: "customer_code,customer_name",
+            label: "Customer",
             render: (data: TableDataType) => {
-                return data?.bonus_points ||  "-";
+                return `${data?.customer_code ||  "-"} - ${data?.customer_name ||  "-"}`;
+            },
+        },
+        {
+            key: "currentreward_points",
+            label: "Reward Points",
+            render: (data: TableDataType) => {
+                return toInternationalNumber(data?.currentreward_points ||  "-");
+            },
+        },
+        {
+            key: "adjustment_points",
+            label: "Adjustment Points",
+            render: (data: TableDataType) => {
+                return toInternationalNumber(data?.adjustment_points ||  "-");
+            },
+        },
+        {
+            key: "closing_points",
+            label: "Closing Points",
+            render: (data: TableDataType) => {
+                return toInternationalNumber(data?.closing_points ||  "-");
             },
         },
         
@@ -74,14 +94,14 @@ export default function Tier() {
         pageSize: number = 10
     ): Promise<listReturnType> => {
         try {
-            const params: any = {
+            const params: Record<string, string> = {
                 page: pageNo.toString(),
                 per_page: pageSize.toString(),
             };
             if (warehouseId) {
                 params.warehouse_id = warehouseId;
             }
-            const listRes = await bonusList(params);
+            const listRes = await adjustmentList(params);
             return {
                 data: listRes?.data || [],
                 currentPage: listRes?.pagination?.page || pageNo,
@@ -106,7 +126,7 @@ export default function Tier() {
             // setLoading(true);
             let result;
             if (columnName && columnName !== "") {
-                result = await bonusList({
+                result = await adjustmentList({
                     per_page: pageSize.toString(),
                     [columnName]: searchQuery,
                     page: page.toString(),
@@ -182,7 +202,7 @@ export default function Tier() {
                             search: searchTier,
                         },
                         header: {
-                            title: "Bonus Points",
+                            title: "Points Adjustment",
                             // threeDot: [
                             //     {
                             //         icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
@@ -242,7 +262,7 @@ export default function Tier() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/settings/bonusPoints/add"
+                                    href="/pointsAdjustment/add"
                                     isActive={true}
                                     leadingIcon="lucide:plus"
                                     label="Add"
@@ -264,20 +284,20 @@ export default function Tier() {
                         },
                         columns: columns,
                         rowSelection: true,
-                        rowActions: [
-                            // {
-                            //     icon: "lucide:eye",
-                            //     onClick: (data: TableDataType) => {
-                            //         router.push(`/settings/bonusPoints/details/${data.uuid}`);
-                            //     },
-                            // },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (data: TableDataType) => {
-                                    router.push(`/settings/bonusPoints/${data.uuid}`);
-                                },
-                            },
-                        ],
+                        // rowActions: [
+                        //     // {
+                        //     //     icon: "lucide:eye",
+                        //     //     onClick: (data: TableDataType) => {
+                        //     //         router.push(`/settings/bonusPoints/details/${data.uuid}`);
+                        //     //     },
+                        //     // },
+                        //     // {
+                        //     //     icon: "lucide:edit-2",
+                        //     //     onClick: (data: TableDataType) => {
+                        //     //         router.push(`/settings/bonusPoints/${data.uuid}`);
+                        //     //     },
+                        //     // },
+                        // ],
                         pageSize: 50,
                     }}
                 />
