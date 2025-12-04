@@ -182,14 +182,14 @@ export default function CapsPage() {
                 },
               ],
               actions: [
-                <SidebarBtn
-                  key={1}
-                  href="/caps/add"
-                  isActive
-                  leadingIcon="mdi:plus"
-                  label="Add"
-                  labelTw="hidden lg:block"
-                />,
+                // <SidebarBtn
+                //   key={1}
+                //   href="caps/add"
+                //   isActive
+                //   leadingIcon="mdi:plus"
+                //   label="Add"
+                //   labelTw="hidden lg:block"
+                // />,
               ],
             },
             rowSelection: false,

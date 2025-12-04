@@ -286,7 +286,7 @@ export default function PurchaseOrderAddEditPage() {
         item.Price = selectedOrder?.item_uoms?.[0]?.price ? String(selectedOrder.item_uoms[0].price) : "";
         item.Quantity = "1";
         const initialExc = getExcise({
-          item: {...selectedOrder, excies: 1},
+          item: { ...selectedOrder, excies: 1 },
           uom: Number(item.uom_id) || 0,
           quantity: Number(item.Quantity) || 1,
           itemPrice: Number(item.Price) || null,
@@ -316,18 +316,18 @@ export default function PurchaseOrderAddEditPage() {
     const exciseNumeric = getExcise({
       item: selectedOrder
         ? // normalize shape so `getExcise` can read `item_category` as a number
-          ({
-            ...selectedOrder,
-            excies: 1,
-            item_category: (selectedOrder as any).item_category?.id ?? (selectedOrder as any).category_id ?? (selectedOrder as any).category?.id ?? (selectedOrder as any).category ?? (selectedOrder as any).category_code ?? 0,
-          } as any)
+        ({
+          ...selectedOrder,
+          excies: 1,
+          item_category: (selectedOrder as any).item_category?.id ?? (selectedOrder as any).category_id ?? (selectedOrder as any).category?.id ?? (selectedOrder as any).category ?? (selectedOrder as any).category_code ?? 0,
+        } as any)
         : {
-            id: Number(item.item_id) || 0,
-            agent_excise: 0,
-            direct_sell_excise: 0,
-            base_uom_price: Number(item.Price) || 0,
-            item_category: 0,
-          },
+          id: Number(item.item_id) || 0,
+          agent_excise: 0,
+          direct_sell_excise: 0,
+          base_uom_price: Number(item.Price) || 0,
+          item_category: 0,
+        },
       uom: Number(item.uom_id) || 0,
       quantity: Number(item.Quantity) || 1,
       itemPrice: Number(item.Price) || null,
@@ -336,7 +336,7 @@ export default function PurchaseOrderAddEditPage() {
     const excise = (Math.round(exciseNumeric * 100) / 100).toFixed(2);
     // keep both `Excise` (existing row shape) and `excise` (table render key) in sync
     item.Excise = excise;
-    console.log(item.Excise, (selectedOrder as any).item_category?.id );
+    console.log(item.Excise, (selectedOrder as any).item_category?.id);
     // const discount = 0;
     // const gross = total;
 
@@ -434,18 +434,20 @@ export default function PurchaseOrderAddEditPage() {
       discount: Number(discount.toFixed(2)),
       comment: values?.note || "",
       status: 1,
-      details: itemData.map((item, i) => ({
-        item_id: Number(item.item_id) || null,
-        item_price: Number(item.Price) || null,
-        quantity: Number(item.Quantity) || null,
-        vat: Number(item.Vat) || null,
-        uom_id: Number(item.uom_id) || null,
-        // discount: Number(item.Discount) || null,
-        // discount_id: 0,
-        // gross_total: Number(item.Total) || null,
-        net_total: Number(item.Net) || null,
-        total: Number(item.Total) || null,
-      })),
+      details: itemData
+        .filter((item) => item.item_id && item.uom_id && item.Quantity) // Only include valid items
+        .map((item, i) => ({
+          item_id: Number(item.item_id) || 0,
+          item_price: Number(item.Price) || 0,
+          quantity: Number(item.Quantity) || 0,
+          vat: Number(item.Vat) || 0,
+          uom_id: Number(item.uom_id) || 0,
+          // discount: Number(item.Discount) || 0,
+          // discount_id: 0,
+          // gross_total: Number(item.Total) || 0,
+          net_total: Number(item.Net) || 0,
+          total: Number(item.Total) || 0,
+        })),
     };
   };
 
@@ -627,7 +629,7 @@ export default function PurchaseOrderAddEditPage() {
                   <div>
                     <InputFields
                       required
-                      label="Warehouse"
+                      label="distributor"
                       name="warehouse"
                       placeholder="Search warehouse"
                       value={values.warehouse}
@@ -852,7 +854,7 @@ export default function PurchaseOrderAddEditPage() {
                           return <span>{price}</span>;
                         }
                       },
-                      { key: "excise", label: "Excise", render: (row) => <>{toInternationalNumber(row.Excise) || "0.00"}</>},
+                      { key: "excise", label: "Excise", render: (row) => <>{toInternationalNumber(row.Excise) || "0.00"}</> },
                       // { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
                       // { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
                       { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
@@ -941,7 +943,7 @@ export default function PurchaseOrderAddEditPage() {
                   >
                     Cancel
                   </button>
-                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Purchase Order..." : "Create Purchase Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !values.salesteam || !itemData || itemData.length < 0 } onClick={() => submitForm()} />
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Purchase Order..." : "Create Purchase Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !values.salesteam || !itemData || itemData.length < 0} onClick={() => submitForm()} />
                 </div>
               </>
             );

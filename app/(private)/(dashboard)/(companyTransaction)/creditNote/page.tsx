@@ -29,7 +29,7 @@ const columns = [
             return `${code}${code && name ? " - " : ""}${name}`;
         },
     },
-    
+
     {
         key: "customer_name",
         label: "Customer Name",
@@ -168,7 +168,7 @@ export default function CustomerInvoicePage() {
                     config={{
                         api: { list: fetchOrders, filterBy: filterBy },
                         header: {
-                            title: "Customer Orders",
+                            title: "Credit Note",
                             searchBar: false,
                             columnFilter: true,
                             threeDot: [
@@ -249,14 +249,14 @@ export default function CustomerInvoicePage() {
                                 //     labelTw="hidden lg:block"
                                 //     onClick={() => exportFile("csv")}
                                 // />,
-                                <SidebarBtn
-                                    key={1}
-                                    href="/agentOrder/add"
-                                    isActive
-                                    leadingIcon="mdi:plus"
-                                    label="Add"
-                                    labelTw="hidden lg:block"
-                                />
+                                // <SidebarBtn
+                                //     key={1}
+                                //     href="/agentOrder/add"
+                                //     isActive
+                                //     leadingIcon="mdi:plus"
+                                //     label="Add"
+                                //     labelTw="hidden lg:block"
+                                // />
                             ],
                         },
                         rowSelection: true,

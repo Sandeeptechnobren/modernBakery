@@ -122,7 +122,7 @@ export default function ProfilePage() {
                                 <div className="mb-6">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <div className="w-full sm:flex-1 flex items-center gap-3 px-4 py-2.5 border border-red-200 rounded-lg">
+                                        <div className="w-full sm:flex-1 flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-red-200 rounded-lg">
                                             <Mail className="w-4 h-4 text-red-400 flex-shrink-0" />
                                             <span className="text-gray-700 text-sm truncate">{formData.email}</span>
                                         </div>
@@ -136,11 +136,11 @@ export default function ProfilePage() {
                                 <div className="mb-8">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <div className="w-full sm:flex-1 flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg">
+                                        <div className="w-[80%] sm:flex-1 w-[50px]  flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg">
                                             <Lock className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                             <span className="text-gray-700">{formData.password}</span>
                                         </div>
-                                        <button className="text-sm font-medium text-red-500 hover:text-red-600 whitespace-nowrap px-4 py-2 rounded-lg">
+                                        <button className="text-sm font-medium text-red-500 hover:text-red-600 whitespace-nowrap px-4 py-2 bg-red-50 rounded-lg">
                                             Change Password
                                         </button>
                                     </div>
@@ -171,8 +171,6 @@ export default function ProfilePage() {
                                         <option>British pound</option>
                                     </select>
                                 </div>
-
-                                {/* Time Zone */}
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-3.5 bg-gray-50 border border-gray-300 rounded-lg px-4 sm:px-5">
                                     <div className="flex items-center gap-3">
                                         <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -184,7 +182,7 @@ export default function ProfilePage() {
                                     <select
                                         value={formData.timezone}
                                         onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                                        className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                        className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                                     >
                                         <option>GMT/UTC (UTC+04:00)</option>
                                         <option>EST (UTC-05:00)</option>
@@ -193,8 +191,6 @@ export default function ProfilePage() {
                                     </select>
                                 </div>
                             </div>
-
-                            {/* Deactivate Account */}
                             <div className="pt-8 border-t border-gray-200">
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                     <div>
@@ -208,7 +204,6 @@ export default function ProfilePage() {
                             </div>
                         </>
                     )}
-
                     {activeTab === "Security & Privacy" && (
                         <div className="py-12 text-center">
                             <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -216,14 +211,12 @@ export default function ProfilePage() {
                             <p className="text-gray-500">Manage your security preferences and privacy settings here.</p>
                         </div>
                     )}
-
                     {activeTab === "Notifications" && (
                         <div>
                             <div className="mb-8">
                                 <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">Notifications</h1>
                                 <p className="text-gray-600">Customize your notification settings</p>
                             </div>
-
                             <div className="space-y-6">
                                 {/* Row 1 */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -248,8 +241,6 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                 </div>
-
-                                {/* Row 2 */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -272,8 +263,6 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                 </div>
-
-                                {/* Row 3 */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -296,8 +285,6 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                 </div>
-
-                                {/* Row 4 */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">

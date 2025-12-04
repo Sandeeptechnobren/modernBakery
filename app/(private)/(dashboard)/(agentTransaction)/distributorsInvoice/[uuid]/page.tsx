@@ -310,7 +310,7 @@ export default function InvoiceddEditPage() {
     }, [isEditMode, setLoading, showSnackbar]);
     // Search functions for AutoSuggestion components
     const handleWarehouseSearch = useCallback(async (searchText: string) => {
-        try { 
+        try {
             const response = await getAllActiveWarehouse({ search: searchText, status: "active", invoice_date: form.invoice_date });
             const data: Warehouse[] = Array.isArray(response?.data) ? (response.data as Warehouse[]) : [];
             const options: Option[] = data.map((warehouse) => ({
@@ -1293,7 +1293,7 @@ export default function InvoiceddEditPage() {
                             />
                             <AutoSuggestion
                                 required
-                                label="Warehouse"
+                                label="Distributor"
                                 name="warehouse"
                                 placeholder="Search warehouse..."
                                 initialValue={form.warehouse_name}
