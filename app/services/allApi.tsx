@@ -2221,7 +2221,7 @@ export const returnBackWorkflow = async (body: object) => {
 
 export const editBeforeApprovalWorkflow = async (body: object) => {
   try {
-    const res = await API.post(`/api/master/approval/workflow/reassign`, body);
+    const res = await API.post(`/api/master/approval/workflow/editbefore-approval`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

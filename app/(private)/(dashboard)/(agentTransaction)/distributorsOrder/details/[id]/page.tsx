@@ -19,6 +19,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import {
   approveWorkflow,
+  authUserList,
   downloadFile,
   editBeforeApprovalWorkflow,
   getAgentOrderById,
@@ -33,6 +34,7 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import Button from "@mui/material/Button";
 import InputFields from "@/app/components/inputFields";
+import { camelToTitleCase } from "@/app/(private)/utils/text";
 
 const columns = [
   { key: "index", label: "#" },
@@ -103,6 +105,7 @@ interface OrderData {
   comment: string;
   created_at: string;
   order_source: string;
+  request_Step_id: number;
   payment_method: string;
   status: string;
   previous_uuid?: string;
@@ -209,18 +212,57 @@ export default function OrderDetailPage() {
     }
   };
 
-  const [comment, setComment] = useState<{ show: boolean; text: string }>({
+  const [userOptions, setUserOptions] = useState<{ value: string; label: string }[]>([]);
+  const [comment, setComment] = useState<{
+    show: boolean;
+    text: string;
+    new_user_id?: string;
+    action?: string;
+    errors?: Record<string, string>;
+  }>({
     show: false,
     text: "",
+    new_user_id: "",
+    action: "",
+    errors: {},
   });
-  const commentRef = useRef<{ show: boolean; text: string }>({ show: false, text: "" });
+  const commentRef = useRef<{
+    show: boolean;
+    text: string;
+    new_user_id?: string;
+    action?: string;
+  }>({ show: false, text: "", new_user_id: "", action: "" });
+
   useEffect(() => {
     commentRef.current = comment;
   }, [comment]);
 
-  const getCommentPrompt = () => {
-    return new Promise<void>((resolve) => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await authUserList({});
+        const usersData = (res?.data ?? []).map((user: any) => ({
+          value: String(user.id),
+          label: user.name,
+        }));
+        setUserOptions(usersData);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const getCommentPrompt = (abortSignal?: AbortSignal) => {
+    return new Promise<void>((resolve, reject) => {
       const check = () => {
+        // Check if the operation was aborted
+        if (abortSignal?.aborted) {
+          reject(new DOMException("Operation was aborted", "AbortError"));
+          return;
+        }
+
         if (!commentRef.current.show) {
           resolve();
         } else {
@@ -236,73 +278,170 @@ export default function OrderDetailPage() {
     reject: boolean;
     returnBack: boolean;
     editBeforeApproval: boolean;
-  }>({  
+  }>({
     approve: false,
     reject: false,
     returnBack: false,
     editBeforeApproval: false,
   });
+  const currentActionRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const order: { request_id: number; permissions: string[] } = JSON.parse(
     localStorage.getItem("workflow.order") ?? "{}"
   );
+
   const workflowAction = async (action: string) => {
-    const requireCommentActions = ["reject", "returnBack", "editBeforeApproval"];
-    if (requireCommentActions.includes(action)){
-      setComment({ show: true, text: "" });
-      await getCommentPrompt();
-    } 
-    
-    const request_id = order.request_id;
-    const userId = localStorage.getItem("userId") || "";
-    let res;
-    switch (action) {
-      case "approve":
-        setLoadingWorkflow((prev) => ({ ...prev, approve: true }));
-        res = await approveWorkflow({
-          request_step_id: request_id,
-          approver_id: userId,
-        });
-        setLoadingWorkflow((prev) => ({ ...prev, approve: false }));
-        break;
-
-      case "reject":
-        setLoadingWorkflow((prev) => ({ ...prev, reject: true }));
-        res = await rejectWorkflow({
-          request_step_id: request_id,
-          approver_id: userId,
-          comment: comment.text,
-        });
-        setLoadingWorkflow((prev) => ({ ...prev, reject: false }));
-        break;
-
-      case "returnBack":
-        setLoadingWorkflow((prev) => ({ ...prev, returnBack: true }));
-        res = await returnBackWorkflow({
-          request_step_id: request_id,
-          approver_id: userId,
-          comment: comment.text,
-        });
-        setLoadingWorkflow((prev) => ({ ...prev, returnBack: false }));
-        break;
-
-      case "editBeforeApproval":
-        setLoadingWorkflow((prev) => ({ ...prev, editBeforeApproval: true }));
-        res = await editBeforeApprovalWorkflow({
-          request_step_id: request_id,
-          approver_id: userId,
-          note: comment.text,
-        });
-        setLoadingWorkflow((prev) => ({ ...prev, editBeforeApproval: false }));
-        break;
-
-      default:
-        break;
+    // Prevent double-clicking the same action
+    if (loadingWorkflow[action as keyof typeof loadingWorkflow]) {
+      return;
     }
 
-    if (res && res.error) {
-      showSnackbar(res.error.message || "Action failed", "error");
-    } else {
-      showSnackbar("Action performed successfully", "success");
+    // Allow switching between actions if only showing comment prompt
+    // But prevent switching during actual API execution
+    const isApiInProgress =
+      Object.values(loadingWorkflow).some((loading) => loading) &&
+      !comment.show;
+    if (isApiInProgress && currentActionRef.current !== action) {
+      showSnackbar("Please wait for the current action to complete", "warning");
+      return;
+    }
+
+    // Cancel any existing workflow action if switching
+    if (abortControllerRef.current && currentActionRef.current !== action) {
+      abortControllerRef.current.abort();
+
+      // Clear the previous action's loading state
+      if (currentActionRef.current) {
+        setLoadingWorkflow((prev) => ({
+          ...prev,
+          [currentActionRef.current!]: false,
+        }));
+      }
+    }
+
+    // Set current action and create new AbortController
+    currentActionRef.current = action;
+    abortControllerRef.current = new AbortController();
+    const currentAbortController = abortControllerRef.current;
+
+    // Set loading state immediately to prevent double-clicks
+    setLoadingWorkflow((prev) => ({ ...prev, [action]: true }));
+
+    // If comment is already shown for a different action, close it and start fresh
+    if (comment.show && comment.action !== action) {
+      setComment({ show: false, text: "", new_user_id: "", action: "" });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check if this action was cancelled while waiting
+      if (
+        currentAbortController.signal.aborted ||
+        currentActionRef.current !== action
+      ) {
+        setLoadingWorkflow((prev) => ({ ...prev, [action]: false }));
+        return;
+      }
+    }
+
+    const requireCommentActions = [
+      "reject",
+      "returnBack",
+    ];
+    if (requireCommentActions.includes(action)) {
+      setComment({ show: true, text: "", new_user_id: "", action });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check if cancelled before showing prompt
+      if (
+        currentAbortController.signal.aborted ||
+        currentActionRef.current !== action
+      ) {
+        setComment({ show: false, text: "", new_user_id: "", action: "" });
+        return;
+      }
+
+      try {
+        await getCommentPrompt(currentAbortController.signal);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          setComment({ show: false, text: "", new_user_id: "", action: "" });
+          return;
+        }
+        throw error;
+      }
+
+      // Final check before proceeding with API call
+      if (
+        currentAbortController.signal.aborted ||
+        currentActionRef.current !== action
+      ) {
+        setComment({ show: false, text: "", new_user_id: "", action: "" });
+        return;
+      }
+    }
+
+    try {
+      const request_id = data?.request_Step_id || null;
+      const userId = localStorage.getItem("userId") || "";
+      let res;
+
+      switch (action) {
+        case "approve":
+          res = await approveWorkflow({
+            request_step_id: request_id,
+            approver_id: userId,
+          });
+          break;
+
+        case "reject":
+          res = await rejectWorkflow({
+            request_step_id: request_id,
+            approver_id: userId,
+            comment: commentRef.current.text,
+          });
+          break;
+
+        case "returnBack":
+          res = await returnBackWorkflow({
+            request_step_id: request_id,
+            approver_id: userId,
+            comment: commentRef.current.text,
+          });
+          break;
+
+        case "editBeforeApproval":
+          router.push(`${PATH}${UUID}`);
+          return;
+
+        default:
+          break;
+      }
+
+      if (
+        currentAbortController.signal.aborted ||
+        currentActionRef.current !== action
+      ) {
+        return;
+      }
+
+      if (res && res.error) {
+        showSnackbar(res.data.message || "Action failed", "error");
+      } else {
+        showSnackbar("Action performed successfully", "success");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      showSnackbar("An error occurred while processing the action", "error");
+    } finally {
+      setLoadingWorkflow((prev) => ({ ...prev, [action]: false }));
+      setComment({ show: false, text: "", new_user_id: "", action: "" });
+      if (currentActionRef.current === action) {
+        currentActionRef.current = null;
+        abortControllerRef.current = null;
+      }
     }
   };
 
@@ -369,55 +508,98 @@ export default function OrderDetailPage() {
           {comment.show && (
             <>
               <div className="w-full p-5 bg-white rounded-lg mb-4 opacity-100">
-                <InputFields
-                  type="textarea"
-                  label="Comment"
-                  width="100%"
-                  onChange={(e) =>
-                    setComment({ ...comment, text: e.target.value })
-                  }
-                  value={comment.text}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      setComment({ ...comment, show: false });
-                    }
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setComment({ ...comment, show: false });
                   }}
-                />
+                >
+                  <span className="mbs-5">
+                    {camelToTitleCase(comment.action || "")}
+                  </span>
+                  <InputFields
+                    type="textarea"
+                    label="Comment"
+                    width="100%"
+                    onChange={(e) =>
+                      setComment({ ...comment, text: e.target.value })
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        setComment({ ...comment, show: false });
+                      }
+                    }}
+                    value={comment.text}
+                  />
+                </form>
               </div>
             </>
           )}
           <div className="flex gap-4 flex-wrap">
             {order.permissions.includes("APPROVE") && (
               <BorderIconButton
-                icon={loadingWorkflow.approve ? "line-md:loading-loop" : "mdi:tick"}
+                icon={
+                  loadingWorkflow.approve ? "line-md:loading-loop" : "mdi:tick"
+                }
                 label={"Approve"}
                 labelTw="font-medium text-[12px]"
                 onClick={() => workflowAction("approve")}
+                disabled={
+                  loadingWorkflow.approve ||
+                  (Object.values(loadingWorkflow).some((loading) => loading) &&
+                    !comment.show)
+                }
               />
             )}
             {order.permissions.includes("REJECT") && (
               <BorderIconButton
-                icon={loadingWorkflow.reject ? "line-md:loading-loop" : "mdi:times"}
+                icon={
+                  loadingWorkflow.reject ? "line-md:loading-loop" : "mdi:times"
+                }
                 label={"Reject"}
                 labelTw="font-medium text-[12px]"
                 onClick={() => workflowAction("reject")}
+                disabled={
+                  loadingWorkflow.reject ||
+                  (Object.values(loadingWorkflow).some((loading) => loading) &&
+                    !comment.show)
+                }
               />
             )}
             {order.permissions.includes("RETURN_BACK") && (
               <BorderIconButton
-                icon={loadingWorkflow.returnBack ? "line-md:loading-loop" : "lets-icons:back"}
+                icon={
+                  loadingWorkflow.returnBack
+                    ? "line-md:loading-loop"
+                    : "lets-icons:back"
+                }
                 label={"Return Back"}
                 labelTw="font-medium text-[12px]"
                 onClick={() => workflowAction("returnBack")}
+                disabled={
+                  loadingWorkflow.returnBack ||
+                  (Object.values(loadingWorkflow).some((loading) => loading) &&
+                    !comment.show)
+                }
               />
             )}
             {order.permissions.includes("EDIT_BEFORE_APPROVAL") && (
               <BorderIconButton
-                icon={loadingWorkflow.editBeforeApproval ? "line-md:loading-loop" : "lucide:edit-2"}
+                icon={
+                  loadingWorkflow.editBeforeApproval
+                    ? "line-md:loading-loop"
+                    : "lucide:edit-2"
+                }
                 label={"Edit Before Approval"}
                 labelTw="font-medium text-[12px]"
                 onClick={() => workflowAction("editBeforeApproval")}
+                disabled={
+                  loadingWorkflow.editBeforeApproval ||
+                  (Object.values(loadingWorkflow).some((loading) => loading) &&
+                    !comment.show)
+                }
               />
             )}
           </div>
