@@ -11,6 +11,8 @@ import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
 import Overview from "./overview/page";
 import KeyValue from "./keyValue/page";
+import { useLoading } from "@/app/services/loadingContext";
+import Table from "@/app/components/customTable";
 
 interface Company {
   id?: string | number;
@@ -31,19 +33,16 @@ interface PricingItem {
   status?: string;
 }
 
-
 export default function Page() {
   const params = useParams();
   const uuid = Array.isArray(params.uuid)
     ? params.uuid[0] || ""
     : (params.uuid as string) || "";
-  const { id, tabName } = useParams();
-  const [activeTab, setActiveTab] = useState(0); // default to Overview tab
-  const [pricingData, setpricing] = useState<PricingItem | null>(null);
-  const [loading, setLoading] = useState(false)
-  const [company, setCompany] = useState<Company | null>(null);
+  const [activeTab, setActiveTab] = useState(1);
+  const [pricing, setpricing] = useState<PricingItem | null>(null);
+  const { setLoading } = useLoading();
 
-  const { showSnackbar } = useSnackbar()
+  const { showSnackbar } = useSnackbar();
   const onTabClick = (index: number) => {
     setActiveTab(index);
   };
@@ -51,33 +50,9 @@ export default function Page() {
   const title = "Pricing Details";
   const backBtnUrl = "/pricing";
 
- const tabs = [
-  {
-    name: "Overview",
-    url: "overview",
-    component: <Overview  pricing={pricingData}/>,
-  },
-  {
-    name: "KeyValue",
-    url: "keyValue",
-    component: <KeyValue pricing={pricingData} />,
-  },
-    {
-    name: "Distributers",
-    url: "distributers",
-    // show warehouse data under Distributers tab per API response
-    component: <KeyValue pricing={pricingData} section="warehouse" />,
-  },
-   {
-    name: "Items",
-    url: "items",
-    // show items data in Items tab
-    component: <KeyValue pricing={pricingData} section="item" />,
-  }
-];
+  const tabs = ["Overview", "Key Value", "Distributers", "Items"];
   useEffect(() => {
     if (!uuid) return;
-
     const fetchPricingDetails = async () => {
       setLoading(true);
       try {
@@ -96,17 +71,28 @@ export default function Page() {
         setLoading(false);
       }
     };
-
     fetchPricingDetails();
   }, [uuid, setLoading, showSnackbar]);
-  useEffect(() => {
-    if (!tabName) {
-      setActiveTab(0); // default tab
-    } else {
-      const foundIndex = tabs.findIndex((tab) => tab.url === tabName);
-      setActiveTab(foundIndex !== -1 ? foundIndex : 0);
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 0:
+        return <Overview pricing={pricing} />;
+      case 1:
+        return <KeyValue pricing={pricing} />;
+      case 2:
+        return <KeyValue pricing={pricing} key={3} section="warehouse" />;
+      case 3:
+        return <KeyValue pricing={pricing} key={10} section="item" />;
+      case 3:
+        return <>
+          {/* <Table
+            data={pricing}
+            config={}
+          /> */}
+        </>;
     }
-  }, [tabName]);
+  };
 
   return (
     <>
@@ -118,24 +104,22 @@ export default function Page() {
       </div>
 
       {/* Tabs */}
-      <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
+      <ContainerCard
+        className="w-full flex gap-[4px] overflow-x-auto"
+        padding="5px"
+      >
         {tabs.map((tab, index) => (
           <div key={index}>
             <TabBtn
-              label={tab.name}
-              isActive={activeTab === index} // active state color logic
+              label={tab}
+              isActive={activeTab === index}
               onClick={() => onTabClick(index)}
             />
           </div>
         ))}
       </ContainerCard>
 
-      {/* Tab Content */}
-      <div>
-        {tabs[activeTab]?.component}
-      </div>
+      {renderActiveTab()}
     </>
   );
 }
-
-

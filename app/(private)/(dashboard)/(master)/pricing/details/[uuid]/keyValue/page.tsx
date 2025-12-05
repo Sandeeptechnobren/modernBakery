@@ -6,6 +6,7 @@ import { useLoading } from "@/app/services/loadingContext";
 // import { pricingHeaderById } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useParams } from "next/navigation";
+import Table from "@/app/components/customTable";
 
 
 // Your static mapping
@@ -248,21 +249,24 @@ export default function KeyValue({ pricing, section }: KeyValueProps) {
   return (
     <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
       <div className="w-full flex flex-col gap-y-[20px]">
-        <ContainerCard className="w-full">
+        {/* <ContainerCard className="w-full"> */}
           {/* Collapsible array fields */}
           {keysToRender.map((key) => {
             const cols = (arrayColumns as any)[key];
+            console.log(cols, "columns for", key);
             if (!cols) return null;
             return Array.isArray(pricing[key]) && pricing[key].length > 0 ? (
-              <CollapsibleField
-                key={key}
-                label={key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                values={pricing[key]}
-                columns={cols}
+              <div key={key}>
+              <Table
+                data={pricing[key]}
+                config={{
+                  columns: cols
+                }}
               />
+              </div>
             ) : null;
           })}
-        </ContainerCard>
+        {/* </ContainerCard> */}
       </div>
     </div>
   );

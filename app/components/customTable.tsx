@@ -352,11 +352,11 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                     setSelectedColumns(filtered);
                     return;
                 }
-                setSelectedColumns(config.columns.map((_, index) => index));
+                setSelectedColumns(config.columns?.map((_, index) => index));
             }
         } catch (err) {
             // If reading localStorage fails, fall back to select all
-            setSelectedColumns(config.columns.map((_, index) => index));
+            setSelectedColumns(config.columns?.map((_, index) => index));
         }
         setSelectedRow([]);
     }, [data, refreshKey]);
@@ -700,7 +700,7 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
     useEffect(() => {
         if (displayedData.length === 0) return;
         if (tableOrder && tableOrder.column) return;
-        const firstSortable = columns.find((c: any) => c.isSortable);
+        const firstSortable = columns?.find((c: any) => c.isSortable);
         if (firstSortable) {
             const colKey = firstSortable.key;
             const defaultOrder: "asc" | "desc" = tableOrder.order || "desc";
@@ -902,7 +902,7 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
                                             </td>
                                         )}
 
-                                    {columns.map((col: configType["columns"][0], orderIdx) => {
+                                    {columns?.map((col: configType["columns"][0], orderIdx) => {
                                         const originalIndex = config.columns.findIndex((c) => c.key === col.key);
                                         if (!selectedColumns.includes(originalIndex)) return null;
                                         return (
@@ -977,7 +977,7 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
                     No data available
                 </div>
             )}
-            {displayedData.length > 0 && selectedColumns.length === 0 && (
+            {displayedData.length > 0 && selectedColumns?.length === 0 && (
                 <div className="p-2 content-center text-center py-[12px] text-[24px] max-h-full min-h-[200px] text-primary">
                     No Column Selected
                 </div>

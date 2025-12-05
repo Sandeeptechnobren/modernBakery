@@ -442,7 +442,10 @@ export default function AddPricing() {
     isLastStep,
   } = useStepperForm(steps.length);
   const { showSnackbar } = useSnackbar();
+  const router = useRouter();
   const params = useParams();
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const clearErrors = () => setErrors({});
   // support routes that use either [uuid] or [id] as the segment name
   const rawParam = (typeof params === "object" && params !== null ? (params as Record<string, unknown>)?.uuid : undefined) ?? (typeof params === "object" && params !== null ? (params as Record<string, unknown>)?.id : undefined);
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
@@ -456,15 +459,10 @@ export default function AddPricing() {
       if (!isEditMode || !id) return;
       setLoading(true);
       try {
-        // Prefer the detailed endpoint for edit-mode population
         const raw = await pricingHeaderById(id);
-
-        // console.log(,"raw343")
         setDetails(raw.data.details)
-        // API sometimes wraps result under `data` or returns object directly
         const res = raw && typeof raw === "object" && "data" in raw ? (raw as { data: unknown }).data : raw;
         if (res && typeof res === "object") {
-          // populate basic fields if available
           setPromotion((s) => ({
             ...s,
             itemName: res.name || res.title || s.itemName,
@@ -474,9 +472,7 @@ export default function AddPricing() {
             status: res.status !== undefined ? String(res.status) : s.status,
           }));
 
-          // Map description (array of key ids) back to checkbox labels
           try {
-
             const descArr: number[] = Array.isArray((res as Record<string, unknown>).description)
               ? ((res as Record<string, unknown>).description as unknown[]).map((d) => Number(d)).filter((n: number) => !Number.isNaN(n))
               : [];
@@ -487,19 +483,16 @@ export default function AddPricing() {
               Item: [],
             };
 
-            // initialKeys (top-level) defines the id->label mapping for checkboxes
             initialKeys.forEach((group) => {
               group.options.forEach((opt) => {
                 const optId = Number(opt.id);
                 if (!Number.isNaN(optId) && descArr.includes(optId)) {
-                  // push label into the corresponding group
                   if (group.type === "Location") selectedForCombo.Location.push(opt.label);
                   else if (group.type === "Customer") selectedForCombo.Customer.push(opt.label);
                   else if (group.type === "Item") selectedForCombo.Item.push(opt.label);
                 }
               });
             });
-            // apply if anything found
             if (
               selectedForCombo.Location.length > 0 ||
               selectedForCombo.Customer.length > 0 ||
@@ -677,7 +670,6 @@ export default function AddPricing() {
     }
   };
 
-  const router = useRouter();
   const pricingValidationSchema = yup.object().shape({
     name: yup.string().required("Name is required"),
     applicable_for: yup.string().required("Pricing Type is Required"),
@@ -690,9 +682,6 @@ export default function AddPricing() {
       Item: yup.array().of(yup.string()).min(1, "Item key required"),
     }),
   });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const clearErrors = () => setErrors({});
 
   const handleSubmit = async () => {
     clearErrors();
@@ -890,7 +879,6 @@ export default function AddPricing() {
   const pageSize = 5;
   // useEffect(() => {
   //   if (keyValue["Item"] && keyValue["Item"].length > 0) {
-  //     console.log(keyValue["Item"], "keyvalueitem512")
   //     itemList({ ids: keyValue["Item"].join(",") })
   //       .then((data) => {
   //         let items: ItemDetail[] = [];
@@ -1408,7 +1396,7 @@ export default function AddPricing() {
         <Link href="/pricing">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">
+        <h1 className="text-xl font-semibold text-gray-900 mb-1">
           {isEditMode ? "Update Pricing" : "Add Pricing"}
         </h1>
       </div>
