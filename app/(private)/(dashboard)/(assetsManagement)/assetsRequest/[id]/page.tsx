@@ -887,7 +887,7 @@ export default function AddCompanyWithStepper() {
                   name="owner_name"
                   value={values.owner_name}
                   onChange={(e) => setFieldValue("owner_name", e.target.value)}
-                  error={touched.owner_name && errors.owner_name}
+                // error={touched.owner_name && errors.owner_name}
                 />
                 <ErrorMessage
                   name="owner_name"
@@ -905,7 +905,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("contact_number", e.target.value)
                   }
-                  error={touched.contact_number && errors.contact_number}
+                // error={touched.contact_number && errors.contact_number}
                 />
                 <ErrorMessage
                   name="contact_number"
@@ -920,7 +920,7 @@ export default function AddCompanyWithStepper() {
                   name="landmark"
                   value={values.landmark}
                   onChange={(e) => setFieldValue("landmark", e.target.value)}
-                  error={touched.landmark && errors.landmark}
+                // error={touched.landmark && errors.landmark}
                 />
                 <ErrorMessage
                   name="landmark"
@@ -937,7 +937,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("existing_coolers", e.target.value)
                   }
-                  error={touched.existing_coolers && errors.existing_coolers}
+                // error={touched.existing_coolers && errors.existing_coolers}
                 />
                 <ErrorMessage
                   name="existing_coolers"
@@ -954,10 +954,10 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("outlet_weekly_sale_volume", e.target.value)
                   }
-                  error={
-                    touched.outlet_weekly_sale_volume &&
-                    errors.outlet_weekly_sale_volume
-                  }
+                // error={
+                //   touched.outlet_weekly_sale_volume &&
+                //   errors.outlet_weekly_sale_volume
+                // }
                 />
                 <ErrorMessage
                   name="outlet_weekly_sale_volume"
@@ -974,7 +974,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("display_location", e.target.value)
                   }
-                  error={touched.display_location && errors.display_location}
+                // error={touched.display_location && errors.display_location}
                 />
                 <ErrorMessage
                   name="display_location"
@@ -991,9 +991,9 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("chiller_safty_grill", e.target.value)
                   }
-                  error={
-                    touched.chiller_safty_grill && errors.chiller_safty_grill
-                  }
+                // error={
+                //   touched.chiller_safty_grill && errors.chiller_safty_grill
+                // }
                 />
                 <ErrorMessage
                   name="chiller_safty_grill"
@@ -1019,7 +1019,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("warehouse_id", e.target.value)
                   }
-                  error={touched.warehouse_id && errors.warehouse_id}
+                // error={touched.warehouse_id && errors.warehouse_id}
                 />
                 <ErrorMessage
                   name="warehouse_id"
@@ -1036,7 +1036,7 @@ export default function AddCompanyWithStepper() {
                   value={values.salesman_id.toString()}
                   options={salesmanOptions}
                   onChange={(e) => setFieldValue("salesman_id", e.target.value)}
-                  error={touched.salesman_id && errors.salesman_id}
+                // error={touched.salesman_id && errors.salesman_id}
                 />
                 <ErrorMessage
                   name="salesman_id"
@@ -1053,7 +1053,7 @@ export default function AddCompanyWithStepper() {
                   value={values.outlet_id.toString()}
                   options={outletOptions}
                   onChange={(e) => setFieldValue("outlet_id", e.target.value)}
-                  error={touched.outlet_id && errors.outlet_id}
+                // error={touched.outlet_id && errors.outlet_id}
                 />
                 <ErrorMessage
                   name="outlet_id"
@@ -1071,10 +1071,10 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("manager_sales_marketing", e.target.value)
                   }
-                  error={
-                    touched.manager_sales_marketing &&
-                    errors.manager_sales_marketing
-                  }
+                // error={
+                //   touched.manager_sales_marketing &&
+                //   errors.manager_sales_marketing
+                // }
                 />
                 <ErrorMessage
                   name="manager_sales_marketing"
@@ -1096,7 +1096,7 @@ export default function AddCompanyWithStepper() {
                   name="national_id"
                   value={values.national_id}
                   onChange={(e) => setFieldValue("national_id", e.target.value)}
-                  error={touched.national_id && errors.national_id}
+                // error={touched.national_id && errors.national_id}
                 />
                 <ErrorMessage
                   name="national_id"
@@ -1121,7 +1121,7 @@ export default function AddCompanyWithStepper() {
                   name="model"
                   value={values.model}
                   onChange={(e) => setFieldValue("model", e.target.value)}
-                  error={touched.model && errors.model}
+                // error={touched.model && errors.model}
                 />
                 <ErrorMessage
                   name="model"
@@ -1136,7 +1136,7 @@ export default function AddCompanyWithStepper() {
                   name="hil"
                   value={values.hil}
                   onChange={(e) => setFieldValue("hil", e.target.value)}
-                  error={touched.hil && errors.hil}
+                // error={touched.hil && errors.hil}
                 />
                 <ErrorMessage
                   name="hil"
@@ -1153,7 +1153,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("ir_reference_no", e.target.value)
                   }
-                  error={touched.ir_reference_no && errors.ir_reference_no}
+                // error={touched.ir_reference_no && errors.ir_reference_no}
                 />
                 <ErrorMessage
                   name="ir_reference_no"
@@ -1170,9 +1170,9 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("installation_done_by", e.target.value)
                   }
-                  error={
-                    touched.installation_done_by && errors.installation_done_by
-                  }
+                // error={
+                //   touched.installation_done_by && errors.installation_done_by
+                // }
                 />
                 <ErrorMessage
                   name="installation_done_by"
@@ -1190,7 +1190,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("date_lnitial", e.target.value)
                   }
-                  error={touched.date_lnitial && errors.date_lnitial}
+                // error={touched.date_lnitial && errors.date_lnitial}
                 />
                 <ErrorMessage
                   name="date_lnitial"
@@ -1208,7 +1208,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("date_lnitial2", e.target.value)
                   }
-                  error={touched.date_lnitial2 && errors.date_lnitial2}
+                // error={touched.date_lnitial2 && errors.date_lnitial2}
                 />
                 <ErrorMessage
                   name="date_lnitial2"
@@ -1234,7 +1234,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("machine_number", e.target.value)
                   }
-                  error={touched.machine_number && errors.machine_number}
+                // error={touched.machine_number && errors.machine_number}
                 />
                 <ErrorMessage
                   name="machine_number"
@@ -1249,7 +1249,7 @@ export default function AddCompanyWithStepper() {
                   name="brand"
                   value={values.brand}
                   onChange={(e) => setFieldValue("brand", e.target.value)}
-                  error={touched.brand && errors.brand}
+                // error={touched.brand && errors.brand}
                 />
                 <ErrorMessage
                   name="brand"
@@ -1267,7 +1267,7 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("asset_number", e.target.value)
                   }
-                  error={touched.asset_number && errors.asset_number}
+                // error={touched.asset_number && errors.asset_number}
                 />
                 <ErrorMessage
                   name="asset_number"
@@ -1328,10 +1328,10 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("chiller_asset_care_manager", e.target.value)
                   }
-                  error={
-                    touched.chiller_asset_care_manager &&
-                    errors.chiller_asset_care_manager
-                  }
+                // error={
+                //   touched.chiller_asset_care_manager &&
+                //   errors.chiller_asset_care_manager
+                // }
                 />
                 <ErrorMessage
                   name="chiller_asset_care_manager"
@@ -1414,9 +1414,9 @@ export default function AddCompanyWithStepper() {
                   onChange={(e) =>
                     setFieldValue("chiller_manager_id", e.target.value)
                   }
-                  error={
-                    touched.chiller_manager_id && errors.chiller_manager_id
-                  }
+                // error={
+                //   touched.chiller_manager_id && errors.chiller_manager_id
+                // }
                 />
                 <ErrorMessage
                   name="chiller_manager_id"
@@ -1438,7 +1438,7 @@ export default function AddCompanyWithStepper() {
                     { value: "1", label: "Yes" },
                     { value: "0", label: "No" },
                   ]}
-                  error={touched.is_merchandiser && errors.is_merchandiser}
+                // error={touched.is_merchandiser && errors.is_merchandiser}
                 />
                 <ErrorMessage
                   name="is_merchandiser"
@@ -1458,7 +1458,7 @@ export default function AddCompanyWithStepper() {
                     { value: "1", label: "Active" },
                     { value: "0", label: "Inactive" },
                   ]}
-                  error={touched.status && errors.status}
+                // error={touched.status && errors.status}
                 />
                 <ErrorMessage
                   name="status"
@@ -1480,7 +1480,7 @@ export default function AddCompanyWithStepper() {
                     { value: "1", label: "Active" },
                     { value: "0", label: "Inactive" },
                   ]}
-                  error={touched.fridge_status && errors.fridge_status}
+                // error={touched.fridge_status && errors.fridge_status}
                 />
                 <ErrorMessage
                   name="fridge_status"
@@ -1496,7 +1496,7 @@ export default function AddCompanyWithStepper() {
                   name="iro_id"
                   value={values.iro_id.toString()}
                   onChange={(e) => setFieldValue("iro_id", e.target.value)}
-                  error={touched.iro_id && errors.iro_id}
+                // error={touched.iro_id && errors.iro_id}
                 />
                 <ErrorMessage
                   name="iro_id"
@@ -1511,7 +1511,7 @@ export default function AddCompanyWithStepper() {
                   name="remark"
                   value={values.remark}
                   onChange={(e) => setFieldValue("remark", e.target.value)}
-                  error={touched.remark && errors.remark}
+                // error={touched.remark && errors.remark}
                 />
                 <ErrorMessage
                   name="remark"
