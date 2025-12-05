@@ -819,10 +819,23 @@ export default function DeliveryAddEditPage() {
                       onChange={(e) => {
                         if (values.warehouse !== e.target.value) {
                           setFieldValue("warehouse", e.target.value);
-                          setSkeleton((prev) => ({ ...prev, delivery: true }));
-                          setFieldValue("delivery", "");
+                          setFieldValue("order_code", "");
+                          setFieldValue("salesman_id", "");
+                          setItemData([{
+                            item_id: "",
+                            item_name: "",
+                            item_label: "",
+                            UOM: [],
+                            Quantity: "1",
+                            Price: "",
+                            Excise: "",
+                            Discount: "",
+                            Net: "",
+                            Vat: "",
+                            Total: "",
+                          }]);
+                          setSkeleton((prev) => ({ ...prev, order_code: true }));
                           (async () => {
-                            setFieldValue("delivery", "");
                             await fetchAgentDeliveries(
                               { ...values, warehouse: e.target.value },
                               ""
@@ -850,8 +863,22 @@ export default function DeliveryAddEditPage() {
                       min={new Date().toISOString().slice(0, 10)} // today
                       onChange={(e) => {
                         handleChange(e);
+                        setFieldValue("order_code", "");
+                        setFieldValue("salesman_id", "");
+                        setItemData([{
+                          item_id: "",
+                          item_name: "",
+                          item_label: "",
+                          UOM: [],
+                          Quantity: "1",
+                          Price: "",
+                          Excise: "",
+                          Discount: "",
+                          Net: "",
+                          Vat: "",
+                          Total: "",
+                        }]);
                         (async () => {
-                          setFieldValue("delivery", "");
                           await fetchAgentDeliveries(
                             { ...values, delivery_date: e.target.value },
                             ""
@@ -874,6 +901,7 @@ export default function DeliveryAddEditPage() {
                         const val = (e.target as HTMLSelectElement).value;
                         if (values.order_code !== val) {
                           setFieldValue("order_code", val);
+                          setFieldValue("salesman_id", "");
                           const currentDelivery = deliveryData.find(
                             (o) => String(o.id) === val
                           );
@@ -971,6 +999,7 @@ export default function DeliveryAddEditPage() {
                       name="salesman_id"
                       placeholder="Search Sales Team"
                       disabled={!values.order_code}
+                      selectedOption={values.salesman_id ? undefined : null}
                       onSearch={async (q) => {
                         const res = await SalesmanListGlobalSearch({
                           query: q,
@@ -1404,8 +1433,9 @@ export default function DeliveryAddEditPage() {
                       !values.warehouse ||
                       !values.delivery_date ||
                       !values.order_code ||
+                      !values.salesman_id ||
                       !itemData ||
-                      (itemData.length === 1 && !itemData[0].item_name)
+                      itemData.some((item) => !item.item_id)
                     }
                     onClick={() => submitForm()}
                   />
