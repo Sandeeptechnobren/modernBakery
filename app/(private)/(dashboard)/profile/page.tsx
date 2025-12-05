@@ -471,7 +471,7 @@ export default function ProfilePage() {
                         ✓ {profileImage.name} selected
                       </p>
                     )}
-                    {imagePreview && (
+                    {/* {imagePreview && (
                       <div className="mt-2">
                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-red-600">
                           <img
@@ -481,7 +481,7 @@ export default function ProfilePage() {
                           />
                         </div>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
 
