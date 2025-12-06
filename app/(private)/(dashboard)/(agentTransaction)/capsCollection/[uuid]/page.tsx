@@ -155,11 +155,13 @@ export default function AddEditCapsCollection() {
           };
         } else {
           const outletName = String(customer['outlet_name'] ?? "");
-          const customerName = String(customer['customer_name'] ?? customer['name'] ?? "");
+          const customerName = String(customer['customer_name'] ?? "");
+          const name = String(customer['name'] ?? "");
+          // Always show name in label
           return {
             value: id,
-            label: `${osa || ""} - ${outletName || ""}`,
-            name: outletName || customerName,
+            label: `${osa || ""} - ${customerName || outletName || name || ""}`.trim(),
+            name: customerName || outletName || name || "",
             contact_no: contactNo,
           };
         }
@@ -494,9 +496,7 @@ export default function AddEditCapsCollection() {
               onClear={() => handleChange("warehouse", "")}
               error={errors.warehouse}
             />
-            {errors.warehouse && (
-              <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
-            )}
+           
           </div>
 
           <div>
@@ -516,9 +516,7 @@ export default function AddEditCapsCollection() {
               disabled={!form.warehouse}
               noOptionsMessage={!form.warehouse ? "Please select a warehouse first" : "No customers found"}
             />
-            {errors.customer && (
-              <p className="text-red-500 text-sm mt-1">{errors.customer}</p>
-            )}
+            
           </div>
 
           <InputFields
@@ -546,6 +544,7 @@ export default function AddEditCapsCollection() {
                     initialValue={
                       itemOptions.find(o => o.value === String(row.item))?.label
                     }
+                    disabled={!form.customer}
                     onSearch={handleItemSearch}
                     onSelect={async (option: { value: string; uoms?: Uom[] }) => {
                       handleTableChange(row.id, "item", option.value);
