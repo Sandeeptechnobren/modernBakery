@@ -287,9 +287,11 @@ export default function OrderDetailPage() {
   const currentActionRef = useRef<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const order: { request_id: number; permissions: string[] } = JSON.parse(
-    localStorage.getItem("workflow.order") ?? "{}"
-  );
+  const rawOrder = localStorage.getItem("workflow.order");
+  const order: { request_id: number; permissions: string[] } =
+    rawOrder && rawOrder !== "undefined"
+      ? JSON.parse(rawOrder)
+      : {};
 
   const workflowAction = async (action: string) => {
     // Prevent double-clicking the same action

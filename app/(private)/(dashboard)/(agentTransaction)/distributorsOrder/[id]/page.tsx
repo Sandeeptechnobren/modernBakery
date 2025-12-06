@@ -122,7 +122,7 @@ export default function OrderAddEditPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
-  const { warehouseAllOptions } = useAllDropdownListData();
+  const { warehouseAllOptions,warehouseOptions } = useAllDropdownListData();
   const [skeleton, setSkeleton] = useState({
     route: false,
     customer: false,
@@ -277,7 +277,6 @@ export default function OrderAddEditPage() {
       const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty: string }> = {};
       
       const processedItems = filteredStocks.map((stockItem: any) => {
-        // Process UOMs with pricing from warehouseStockTopOrders response
         const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
           let price = uom.price;
           // Override with specific pricing from the API response
@@ -357,108 +356,108 @@ export default function OrderAddEditPage() {
   }, []);
 
   // Function for fetching Item based on warehouse stock
-  // const fetchItem = async (searchTerm: string, values?: FormikValues) => {
-  //   // If warehouse is selected, use warehouseStockTopOrders
-  //   if (values?.warehouse) {
-  //     try {
-  //       const stockRes = await warehouseStockTopOrders(values.warehouse);
-  //       const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
+  const fetchItem = async (searchTerm: string, values?: FormikValues) => {
+    // If warehouse is selected, use warehouseStockTopOrders
+    if (values?.warehouse) {
+      try {
+        const stockRes = await warehouseStockTopOrders(values.warehouse);
+        const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
 
-  //       // Filter items based on search term and stock availability
-  //       const filteredStocks = stocksArray.filter((stock: any) => {
-  //         if (Number(stock.stock_qty) <= 0) return false;
-  //         if (!searchTerm) return true;
-  //         const searchLower = searchTerm.toLowerCase();
-  //         return stock.item_name?.toLowerCase().includes(searchLower) ||
-  //           stock.item_code?.toLowerCase().includes(searchLower);
-  //       });
+        // Filter items based on search term and stock availability
+        const filteredStocks = stocksArray.filter((stock: any) => {
+          if (Number(stock.stock_qty) <= 0) return false;
+          if (!searchTerm) return true;
+          const searchLower = searchTerm.toLowerCase();
+          return stock.item_name?.toLowerCase().includes(searchLower) ||
+            stock.item_code?.toLowerCase().includes(searchLower);
+        });
 
-  //       // Process items to include pricing logic from warehouseStockTopOrders
-  //       const data = filteredStocks.map((stockItem: any) => {
-  //         // Process UOMs with pricing from the API response
-  //         const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
-  //           let price = uom.price;
-  //           if (uom?.uom_type === "primary") {
-  //             price = stockItem.auom_pc_price || uom.price;
-  //           } else if (uom?.uom_type === "secondary") {
-  //             price = stockItem.buom_ctn_price || uom.price;
-  //           }
-  //           return { 
-  //             ...uom, 
-  //             price,
-  //             id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
-  //             item_id: stockItem.item_id
-  //           };
-  //         }) : [];
+        // Process items to include pricing logic from warehouseStockTopOrders
+        const data = filteredStocks.map((stockItem: any) => {
+          // Process UOMs with pricing from the API response
+          const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
+            let price = uom.price;
+            if (uom?.uom_type === "primary") {
+              price = stockItem.auom_pc_price || uom.price;
+            } else if (uom?.uom_type === "secondary") {
+              price = stockItem.buom_ctn_price || uom.price;
+            }
+            return { 
+              ...uom, 
+              price,
+              id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
+              item_id: stockItem.item_id
+            };
+          }) : [];
 
-  //         return { 
-  //           id: stockItem.item_id,
-  //           name: stockItem.item_name,
-  //           item_code: stockItem.item_code,
-  //           erp_code: stockItem.erp_code,
-  //           item_uoms,
-  //           pricing: {
-  //             buom_ctn_price: stockItem.buom_ctn_price,
-  //             auom_pc_price: stockItem.auom_pc_price
-  //           }
-  //         };
-  //       });
+          return { 
+            id: stockItem.item_id,
+            name: stockItem.item_name,
+            item_code: stockItem.item_code,
+            erp_code: stockItem.erp_code,
+            item_uoms,
+            pricing: {
+              buom_ctn_price: stockItem.buom_ctn_price,
+              auom_pc_price: stockItem.auom_pc_price
+            }
+          };
+        });
 
-  //       setOrderData(data);
-  //       const options = data.map((item: any) => ({
-  //         value: String(item.id),
-  //         label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
-  //       }));
+        setOrderData(data);
+        const options = data.map((item: any) => ({
+          value: String(item.id),
+          label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
+        }));
 
-  //       setItemsOptions((prev: { label: string; value: string }[] = []) => {
-  //         const map = new Map<string, { label: string; value: string }>();
-  //         prev.forEach((o) => map.set(o.value, o));
-  //         options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
-  //         return Array.from(map.values());
-  //       });
-  //       setSkeleton({ ...skeleton, item: false });
-  //       return options;
-  //     } catch (error) {
-  //       console.error("Error fetching warehouse items:", error);
-  //       setSkeleton({ ...skeleton, item: false });
-  //       return [];
-  //     }
-  //   } else {
-  //     // Fallback to global search if no warehouse selected
-  //     const res = await itemGlobalSearch({ per_page: "10", query: searchTerm, warehouse: "" });
-  //     if (res.error) {
-  //       setSkeleton({ ...skeleton, item: false });
-  //       return;
-  //     }
-  //     const data = res?.data || [];
+        setItemsOptions((prev: { label: string; value: string }[] = []) => {
+          const map = new Map<string, { label: string; value: string }>();
+          prev.forEach((o) => map.set(o.value, o));
+          options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+          return Array.from(map.values());
+        });
+        setSkeleton({ ...skeleton, item: false });
+        return options;
+      } catch (error) {
+        console.error("Error fetching warehouse items:", error);
+        setSkeleton({ ...skeleton, item: false });
+        return [];
+      }
+    } else {
+      // Fallback to global search if no warehouse selected
+      const res = await itemGlobalSearch({ per_page: "10", query: searchTerm, warehouse: "" });
+      if (res.error) {
+        setSkeleton({ ...skeleton, item: false });
+        return;
+      }
+      const data = res?.data || [];
 
-  //     const updatedData = data.map((item: any) => {
-  //       const item_uoms = item?.item_uoms ? item?.item_uoms?.map((uom: any) => {
-  //         if (uom?.uom_type === "primary") {
-  //           return { ...uom, price: item.pricing?.auom_pc_price }
-  //         } else if (uom?.uom_type === "secondary") {
-  //           return { ...uom, price: item.pricing?.buom_ctn_price }
-  //         }
-  //       }) : item?.item_uoms;
-  //       return { ...item, item_uoms }
-  //     })
+      const updatedData = data.map((item: any) => {
+        const item_uoms = item?.item_uoms ? item?.item_uoms?.map((uom: any) => {
+          if (uom?.uom_type === "primary") {
+            return { ...uom, price: item.pricing?.auom_pc_price }
+          } else if (uom?.uom_type === "secondary") {
+            return { ...uom, price: item.pricing?.buom_ctn_price }
+          }
+        }) : item?.item_uoms;
+        return { ...item, item_uoms }
+      })
 
-  //     setOrderData(updatedData);
-  //     const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
-  //       value: String(item.id),
-  //       label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
-  //     }));
+      setOrderData(updatedData);
+      const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
+        value: String(item.id),
+        label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
+      }));
 
-  //     setItemsOptions((prev: { label: string; value: string }[] = []) => {
-  //       const map = new Map<string, { label: string; value: string }>();
-  //       prev.forEach((o) => map.set(o.value, o));
-  //       options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
-  //       return Array.from(map.values());
-  //     });
-  //     setSkeleton({ ...skeleton, item: false });
-  //     return options;
-  //   }
-  // };
+      setItemsOptions((prev: { label: string; value: string }[] = []) => {
+        const map = new Map<string, { label: string; value: string }>();
+        prev.forEach((o) => map.set(o.value, o));
+        options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+        return Array.from(map.values());
+      });
+      setSkeleton({ ...skeleton, item: false });
+      return options;
+    }
+  };
 
   const codeGeneratedRef = useRef(false);
   const [code, setCode] = useState("");
@@ -503,7 +502,6 @@ export default function OrderAddEditPage() {
         item.item_id = selectedOrder ? String(selectedOrder.id || value) : value;
         item.item_name = selectedOrder?.name ?? "";
         
-        // Use UOM data from itemsWithUOM which includes pricing from warehouseStockTopOrders
         if (itemUOMData?.uoms) {
           item.UOM = itemUOMData.uoms.map(uom => ({ 
             label: uom.name, 
@@ -855,9 +853,9 @@ export default function OrderAddEditPage() {
                       name="warehouse"
                       placeholder="Search Distributor"
                       value={values.warehouse}
-                      options={warehouseAllOptions}
+                      options={warehouseOptions}
                       searchable={true}
-                      showSkeleton={warehouseAllOptions.length === 0}
+                      showSkeleton={warehouseOptions.length === 0}
                       onChange={(e) => {
                         if (values.warehouse !== e.target.value) {
                           setFieldValue("warehouse", e.target.value);

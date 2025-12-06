@@ -28,7 +28,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
-import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import * as yup from "yup";
 
 // ---- Types ----
@@ -87,6 +87,24 @@ interface ItemOption {
   pricing?: Pricing;
 }
 
+interface ItemUOM {
+  id: number;
+  item_id: number;
+  uom_type: string;
+  name: string;
+  price: string;
+  is_stock_keeping: boolean;
+  upc: string;
+  enable_for: string;
+  uom_id: number;
+}
+
+interface WarehouseStock {
+  item_id: number;
+  warehouse_id: number;
+  qty: string;
+}
+
 type ItemRow = {
   idx?: string;
   item_id: string;
@@ -103,6 +121,17 @@ type ItemRow = {
 
 // ---- Component ----
 export default function OrderAddEditPage() {
+  const itemRowSchema = yup.object({
+    item_id: yup.string().required("Please select an item"),
+    uom_id: yup.string().required("Please select a UOM"),
+    Quantity: yup.number()
+      .typeError("Quantity must be a number")
+      .min(1, "Quantity must be at least 1")
+      .required("Quantity is required"),
+    return_type: yup.string().required("Reason type is required"),
+    return_reason: yup.string().required("Return reason is required"),
+  });
+
   const {
     warehouseOptions,
     agentCustomerOptions,
@@ -140,6 +169,12 @@ export default function OrderAddEditPage() {
     route_name: "",
   });
 
+  // Add state for warehouse items data
+  const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
+  const [warehouseStocks, setWarehouseStocks] = useState<Record<string, WarehouseStock[]>>({});
+  const [itemsWithUOM, setItemsWithUOM] = useState<Record<string, { uoms: ItemUOM[], stock_qty: string }>>({});
+  const [returnData, setReturnData] = useState<any[]>([]);
+
   // static fallback options
   const goodOptions = [
     { label: "Near By Expiry", value: "0" },
@@ -152,6 +187,12 @@ export default function OrderAddEditPage() {
   ];
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // per-row validation errors for item rows (keyed by row index)
+  const [itemErrors, setItemErrors] = useState<
+    Record<number, Record<string, string>>
+  >({});
+  
   // UOM options per row
   const [rowUomOptions, setRowUomOptions] = useState<
     Record<string, { value: string; label: string; price?: string | number; uom_type?: string | number }[]>
@@ -356,6 +397,96 @@ export default function OrderAddEditPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode]);
 
+  // Fetch warehouse items function (same as order page)
+  const fetchWarehouseItems = useCallback(async (warehouseId: string, searchTerm: string = "") => {
+    if (!warehouseId) {
+      setItemsOptions([]);
+      setItemsWithUOM({});
+      setWarehouseStocks({});
+      return;
+    }
+
+    try {
+      
+      // Fetch warehouse stocks - this API returns all needed data including pricing and UOMs
+      const stockRes = await warehouseStockTopOrders(warehouseId);
+      const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
+
+      // Store warehouse stocks for validation
+      setWarehouseStocks(prev => ({
+        ...prev,
+        [warehouseId]: stocksArray
+      }));
+
+      // Filter items based on search term and stock availability
+      const filteredStocks = stocksArray.filter((stock: any) => {
+        if (Number(stock.stock_qty) <= 0) return false;
+        if (!searchTerm) return true;
+        const searchLower = searchTerm.toLowerCase();
+        return stock.item_name?.toLowerCase().includes(searchLower) ||
+               stock.item_code?.toLowerCase().includes(searchLower);
+      });
+
+      // Create items with UOM data map for easy access
+      const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty: string }> = {};
+      
+      const processedItems = filteredStocks.map((stockItem: any) => {
+        const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
+          let price = uom.price;
+          // Override with specific pricing from the API response
+          if (uom?.uom_type === "primary") {
+            price = stockItem.auom_pc_price || uom.price;
+          } else if (uom?.uom_type === "secondary") {
+            price = stockItem.buom_ctn_price || uom.price;
+          }
+          return { 
+            ...uom, 
+            price,
+            id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
+            item_id: stockItem.item_id
+          };
+        }) : [];
+
+        // Store UOM data for this item
+        itemsUOMMap[stockItem.item_id] = {
+          uoms: item_uoms,
+          stock_qty: stockItem.stock_qty
+        };
+
+        return { 
+          id: stockItem.item_id,
+          name: stockItem.item_name,
+          item_code: stockItem.item_code,
+          erp_code: stockItem.erp_code,
+          item_uoms,
+          warehouse_stock: stockItem.stock_qty,
+          pricing: {
+            buom_ctn_price: stockItem.buom_ctn_price,
+            auom_pc_price: stockItem.auom_pc_price
+          }
+        };
+      });
+
+      setItemsWithUOM(itemsUOMMap);
+      setReturnData(processedItems);
+
+      // Create dropdown options
+      const options = processedItems.map((item: any) => ({
+        value: String(item.id),
+        label: `${item.erp_code || item.item_code || ''} - ${item.name || ''} (Stock: ${item.warehouse_stock})`
+      }));
+
+      setItemsOptions(options);
+      setLoading(false);
+      
+      return options;
+    } catch (error) {
+      console.error("Error fetching warehouse items:", error);
+      setLoading(false);
+      return [];
+    }
+  }, [setLoading]);
+
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -368,6 +499,68 @@ export default function OrderAddEditPage() {
     route: yup.string().required("Route is required"),
   });
 
+  // Validate individual item row
+  const validateRow = async (
+    index: number,
+    row?: ItemRow,
+    options?: { skipUom?: boolean }
+  ) => {
+    const rowData = row ?? itemData[index];
+    if (!rowData) return;
+    // prepare data for Yup: convert numeric strings to numbers
+    const toValidate = {
+      item_id: String(rowData.item_id ?? ""),
+      uom_id: String(rowData.uom_id ?? ""),
+      Quantity: Number(rowData.Quantity) || 0,
+      return_type: String(rowData.return_type ?? ""),
+      return_reason: String(rowData.return_reason ?? ""),
+    };
+    try {
+      if (options?.skipUom) {
+        // validate only item_id and Quantity to avoid showing UOM required immediately after selecting item
+        const partialErrors: Record<string, string> = {};
+        try {
+          await itemRowSchema.validateAt("item_id", toValidate);
+        } catch (e: any) {
+          if (e?.message) partialErrors["item_id"] = e.message;
+        }
+        try {
+          await itemRowSchema.validateAt("Quantity", toValidate);
+        } catch (e: any) {
+          if (e?.message) partialErrors["Quantity"] = e.message;
+        }
+        if (Object.keys(partialErrors).length === 0) {
+          // clear errors for this row
+          setItemErrors((prev) => {
+            const copy = { ...prev };
+            delete copy[index];
+            return copy;
+          });
+        } else {
+          setItemErrors((prev) => ({ ...prev, [index]: partialErrors }));
+        }
+      } else {
+        await itemRowSchema.validate(toValidate, { abortEarly: false });
+        // clear errors for this row
+        setItemErrors((prev) => {
+          const copy = { ...prev };
+          delete copy[index];
+          return copy;
+        });
+      }
+    } catch (err: any) {
+      const validationErrors: Record<string, string> = {};
+      if (err && err.inner && Array.isArray(err.inner)) {
+        err.inner.forEach((e: any) => {
+          if (e.path) validationErrors[e.path] = e.message;
+        });
+      } else if (err && err.path) {
+        validationErrors[err.path] = err.message;
+      }
+      setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
+    }
+  };
+
   const recalculateItem = (index: number, field: keyof ItemRow, value: string) => {
     const newData = [...itemData];
     const item = { ...newData[index], [field]: value } as ItemRow;
@@ -377,6 +570,11 @@ export default function OrderAddEditPage() {
     item.Total = (priceNum * qtyNum).toFixed(2);
     newData[index] = item;
     setItemData(newData);
+    
+    // Validate row after update
+    if (field !== "item_id") {
+      validateRow(index, newData[index]);
+    }
   };
 
   const handleAddNewItem = () => {
@@ -446,6 +644,20 @@ export default function OrderAddEditPage() {
       const validItems = itemData.filter((item) => item.item_id && item.uom_id);
       if (validItems.length === 0) {
         showSnackbar("Please add at least one item with UOM selected", "error");
+        return;
+      }
+
+      // Validate all item rows using the same pattern as delivery page
+      const itemsSchema = yup.array().of(itemRowSchema);
+      try {
+        await itemsSchema.validate(itemData, { abortEarly: false });
+      } catch (itemErr: any) {
+        // log detailed item validation errors and surface a friendly message
+        console.error("Item validation errors:", itemErr.inner || itemErr);
+        showSnackbar(
+          itemErr.inner?.map((err: any) => err.message).join(", ") || "Item validation failed",
+          "error"
+        );
         return;
       }
 
@@ -545,71 +757,21 @@ export default function OrderAddEditPage() {
 
   const handleItemSearch = async (searchText: string) => {
     if (!form.warehouse) return [];
-    try {
-      // Fetch warehouse stock details
-      const response = await warehouseStockTopOrders(form.warehouse);
-      const stocksArray = response.data?.stocks || response.stocks || response.data || [];
-
-      // Fetch full item details to get proper UOM data
-      const itemsRes = await itemList({ allData: "true", warehouse_id: form.warehouse });
-      const fullItems = itemsRes.data || [];
-
-      // Merge stock data with full item data
-      const mergedData = stocksArray
-        .map((stockItem: any) => {
-          // Find the full item details
-          const fullItem = fullItems.find((item: any) => item.id === stockItem.item_id);
-
-          if (!fullItem) {
-            // console.warn(`Item ${stockItem.item_id} not found in full items list`);
-            return null;
-          }
-
-          return {
-            id: stockItem.item_id,
-            erp_code: stockItem.item_code || fullItem.erp_code,
-            name: stockItem.item_name || fullItem.name,
-            item_uoms: fullItem.item_uoms || [],
-            pricing: fullItem.pricing || {},
-            stock_qty: stockItem.stock_qty || 0,
-          };
-        })
-        .filter((item: any) => {
-          if (!item) return false;
-          // Only show items with stock > 0
-          return item.stock_qty > 0;
-        });
-
-      // Filter items based on search text
-      const filteredData = searchText
-        ? mergedData.filter((item: any) => {
-          const itemCode = item.erp_code || "";
-          const itemName = item.name || "";
-          const searchLower = searchText.toLowerCase();
-          return (
-            itemCode.toLowerCase().includes(searchLower) ||
-            itemName.toLowerCase().includes(searchLower)
-          );
-        })
-        : mergedData;
-
-      return filteredData.map((item: any) => ({
-        value: String(item.id),
-        label: `${item.erp_code || ""} - ${item.name || ""}`,
-        name: item.name,
-        uoms: Array.isArray(item.item_uoms)
-          ? item.item_uoms.map((u: any) => {
-            let finalPrice = "0";
-            if (u.uom_type === "primary") finalPrice = item.pricing?.buom_ctn_price ?? "0";
-            else if (u.uom_type === "secondary") finalPrice = item.pricing?.auom_pc_price ?? "0";
-            return { id: String(u.id), name: String(u.name), price: finalPrice, uom_type: u.uom_type };
-          })
-          : [],
-      }));
-    } catch (error) {
-      console.error("Error fetching warehouse stock items:", error);
-      return [];
+    
+    // For warehouse items, filter from already loaded itemsOptions
+    if (itemsOptions.length > 0) {
+      const searchLower = searchText.toLowerCase();
+      return itemsOptions.filter(opt => 
+        opt.label.toLowerCase().includes(searchLower)
+      );
     }
+
+    // If no items loaded yet, trigger warehouse items fetch
+    if (form.warehouse) {
+      return await fetchWarehouseItems(form.warehouse, searchText) || [];
+    }
+
+    return [];
   };
 
   const hasValidItems = itemData.some((item) => item && item.item_id && item.uom_id);
@@ -643,6 +805,7 @@ export default function OrderAddEditPage() {
             required
             label="Distributor"
             name="warehouse"
+            searchable={true}
             value={form.warehouse}
             options={warehouseOptions}
             onChange={(e) => {
@@ -659,6 +822,8 @@ export default function OrderAddEditPage() {
               if (selectedWarehouse) {
                 try {
                   fetchAgentCustomerOptions(selectedWarehouse);
+                  // Fetch warehouse items with stock, UOMs and pricing
+                  fetchWarehouseItems(selectedWarehouse);
                 } catch {
                   //
                 }
@@ -721,6 +886,8 @@ export default function OrderAddEditPage() {
                     // Fallback to building a minimal option from the row label
                     return { value: String(selectedItemId), label: row.itemLabel || String(selectedItemId) };
                   })();
+                  const rowIndex = Number(row.idx);
+                  const error = itemErrors[rowIndex]?.item_id;
                   return (
                     <div style={{ minWidth: '390px', maxWidth: '390px' }}>
                       <AutoSuggestion
@@ -731,6 +898,7 @@ export default function OrderAddEditPage() {
                         onSearch={handleItemSearch}
                         minSearchLength={0}
                         disabled={!form.customer_name && !row.item_id}
+                        error={error}
                         // disabled={!form.customer_name}
                         onSelect={async (option: { value: string; label: string; uoms?: Uom[] }) => {
                           const selectedItemId = option.value;
@@ -740,38 +908,17 @@ export default function OrderAddEditPage() {
                           newData[index].itemName = selectedItemId;
                           newData[index].itemLabel = option.label;
 
-                          // Try to get UOMs from the selected option first
-                          let uoms: Uom[] | undefined = option.uoms;
-
-                          // If option doesn't include UOMs, fetch item info by searching the id
-                          if ((!uoms || uoms.length === 0) && selectedItemId) {
-                            try {
-                              const resp = await itemGlobalSearch({ query: selectedItemId });
-                              const items = Array.isArray(resp?.data) ? resp.data : (resp ? [resp] : []);
-                              // Find the matching item by id (or value) and extract uoms/uom/item_uoms
-                              const found = (items as unknown[]).find((it) => {
-                                const obj = it as Record<string, unknown>;
-                                const idVal = obj['id'] ?? obj['value'];
-                                return String(idVal ?? '') === String(selectedItemId);
-                              }) as Record<string, unknown> | undefined;
-                              if (found) {
-                                // handle both `item_uoms` and `uom` shapes
-                                const rawUoms = Array.isArray(found['item_uoms']) ? (found['item_uoms'] as unknown[]) : (Array.isArray(found['uom']) ? (found['uom'] as unknown[]) : []);
-                                if (Array.isArray(rawUoms) && rawUoms.length > 0) {
-                                  uoms = rawUoms.map((u) => {
-                                    const uu = u as Record<string, unknown>;
-                                    return { id: String(uu['id'] ?? ''), name: String(uu['name'] ?? ''), price: String(uu['uom_price'] ?? uu['price'] ?? '') } as Uom;
-                                  });
-                                }
-                              }
-                            } catch (err) {
-                              // ignore fetch error and continue without UOMs
-                              console.error('Failed to fetch item UOMs for selected item:', err);
-                            }
-                          }
+                          // Get UOMs from warehouse stock data (returnData and itemsWithUOM)
+                          const itemData_fromWarehouse = returnData.find((it: any) => String(it.id) === String(selectedItemId));
+                          const uomInfo = itemsWithUOM[selectedItemId];
+                          const uoms: ItemUOM[] = uomInfo?.uoms || itemData_fromWarehouse?.item_uoms || [];
 
                           if (uoms && uoms.length > 0) {
-                            const uomOpts = uoms.map((uom: Uom) => ({ value: String(uom.id || ""), label: uom.name || "", price: String(uom.uom_price ?? uom.price ?? "0") }));
+                            const uomOpts = uoms.map((uom: ItemUOM) => ({ 
+                              value: String(uom.id || ""), 
+                              label: uom.name || "", 
+                              price: String(uom.price ?? "0") 
+                            }));
                             setRowUomOptions(prev => ({ ...prev, [row.idx]: uomOpts }));
 
                             // Auto-select first UOM and store friendly label for display
@@ -795,6 +942,7 @@ export default function OrderAddEditPage() {
                           }
 
                           setItemData(newData);
+                          validateRow(index, newData[index], { skipUom: true });
                         }}
                         onClear={() => {
                           const newData = [...itemData];
@@ -823,6 +971,8 @@ export default function OrderAddEditPage() {
                 width: 120,
                 render: (row: any) => {
                   const uomOptions = rowUomOptions[row.idx] || [];
+                  const rowIndex = Number(row.idx);
+                  const error = itemErrors[rowIndex]?.uom_id;
                   return (
                     <div style={{ minWidth: "120px", maxWidth: "120px" }}>
                       <InputFields
@@ -831,6 +981,7 @@ export default function OrderAddEditPage() {
                         options={uomOptions}
                         value={row.uom_id}
                         disabled={uomOptions.length === 0}
+                        error={error}
                         onChange={(e) => {
                           const selectedUomId = e.target.value;
                           const selectedUom = uomOptions.find((u) => u.value === selectedUomId);
@@ -841,6 +992,7 @@ export default function OrderAddEditPage() {
                           newData[index].Price = String(selectedUom?.price ?? "");
                           newData[index].Total = ((Number(newData[index].Price) || 0) * (Number(newData[index].Quantity) || 0)).toFixed(2);
                           setItemData(newData);
+                          validateRow(index, newData[index]);
                         }}
                       />
                     </div>
@@ -851,19 +1003,24 @@ export default function OrderAddEditPage() {
                 key: "Quantity",
                 label: "Qty",
                 width: 100,
-                render: (row: any) => (
-                  <div style={{ minWidth: "100px", maxWidth: "100px" }}>
-                    <InputFields
-                      label=""
-                      type="number"
-                      name="Quantity"
-                      value={row.Quantity}
-                      integerOnly={true}
-                      min={1}
-                      onChange={(e) => recalculateItem(Number(row.idx), "Quantity", e.target.value)}
-                    />
-                  </div>
-                ),
+                render: (row: any) => {
+                  const rowIndex = Number(row.idx);
+                  const error = itemErrors[rowIndex]?.Quantity;
+                  return (
+                    <div style={{ minWidth: "100px", maxWidth: "100px" }}>
+                      <InputFields
+                        label=""
+                        type="number"
+                        name="Quantity"
+                        value={row.Quantity}
+                        integerOnly={true}
+                        min={1}
+                        error={error}
+                        onChange={(e) => recalculateItem(Number(row.idx), "Quantity", e.target.value)}
+                      />
+                    </div>
+                  );
+                },
               },
               {
                 key: "Price",
@@ -876,46 +1033,56 @@ export default function OrderAddEditPage() {
                 key: "return_type",
                 label: "Reason Type",
                 width: 100,
-                render: (row: any) => (
-                  <div style={{ minWidth: "100px", maxWidth: "100px" }}>
-                    <InputFields
-                      label=""
-                      name="return_type"
-                      value={row.return_type}
-                      options={returnTypeOptions}
-                      disabled={!row.item_id}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const newData = [...itemData];
-                        const index = Number(row.idx);
-                        newData[index].return_type = value;
-                        newData[index].return_reason = "";
-                        setItemData(newData);
+                render: (row: any) => {
+                  const rowIndex = Number(row.idx);
+                  const error = itemErrors[rowIndex]?.return_type;
+                  return (
+                    <div style={{ minWidth: "100px", maxWidth: "100px" }}>
+                      <InputFields
+                        label=""
+                        name="return_type"
+                        value={row.return_type}
+                        options={returnTypeOptions}
+                        disabled={!row.item_id}
+                        error={error}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const newData = [...itemData];
+                          const index = Number(row.idx);
+                          newData[index].return_type = value;
+                          newData[index].return_reason = "";
+                          setItemData(newData);
 
-                        (async () => {
-                          try {
-                            const res = await reasonList({ return_id: value });
-                            const list = Array.isArray(res?.data) ? (res.data as Reason[]) : (Array.isArray(res) ? (res as Reason[]) : []);
-                            const options = list.map((reason) => ({ label: reason.reson || reason.return_reason || reason.reason || reason.return_type || String(reason.id), value: String(reason.id) }));
-                            setRowReasonOptions((prev) => ({ ...prev, [row.idx]: options }));
-                          } catch (err) {
-                            console.error("Failed to fetch reasons for return type", value, err);
-                            setRowReasonOptions((prev) => ({ ...prev, [row.idx]: [] }));
-                          }
-                        })();
-                      }}
-                    />
-                  </div>
-                ),
+                          (async () => {
+                            try {
+                              const res = await reasonList({ return_id: value });
+                              const list = Array.isArray(res?.data) ? (res.data as Reason[]) : (Array.isArray(res) ? (res as Reason[]) : []);
+                              const options = list.map((reason) => ({ label: reason.reson || reason.return_reason || reason.reason || reason.return_type || String(reason.id), value: String(reason.id) }));
+                              setRowReasonOptions((prev) => ({ ...prev, [row.idx]: options }));
+                              // Validate after setting return type
+                              validateRow(index, newData[index]);
+                            } catch (err) {
+                              console.error("Failed to fetch reasons for return type", value, err);
+                              setRowReasonOptions((prev) => ({ ...prev, [row.idx]: [] }));
+                              validateRow(index, newData[index]);
+                            }
+                          })();
+                        }}
+                      />
+                    </div>
+                  );
+                },
               },
               {
                 key: "return_reason",
-                label: "Reason Reason",
+                label: "Reason",
                 width: 200,
                 render: (row: any) => {
                   const fetched = rowReasonOptions[row.idx] || [];
                   const fallback = row.return_type === "1" ? goodOptions : row.return_type === "2" ? badOptions : [];
                   const options = fetched.length > 0 ? fetched : fallback;
+                  const rowIndex = Number(row.idx);
+                  const error = itemErrors[rowIndex]?.return_reason;
                   return (
                     <div style={{ minWidth: "200px", maxWidth: "200px" }}>
                       <InputFields
@@ -924,12 +1091,14 @@ export default function OrderAddEditPage() {
                         value={row.return_reason}
                         options={options}
                         disabled={!row.return_type}
+                        error={error}
                         onChange={(e) => {
                           const value = e.target.value;
                           const newData = [...itemData];
                           const index = Number(row.idx);
                           newData[index].return_reason = value;
                           setItemData(newData);
+                          validateRow(index, newData[index]);
                         }}
                       />
                     </div>

@@ -12,7 +12,7 @@ import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { createInvoice, updateInvoice, invoiceByUuid, deliveryList } from "@/app/services/agentTransaction";
-import { warehouseListGlobalSearch, routeList, getCompanyCustomers, agentCustomerList, itemGlobalSearch, genearateCode, saveFinalCode, getAllActiveWarehouse } from "@/app/services/allApi";
+import { warehouseStockTopOrders, routeList, getCompanyCustomers, agentCustomerList, itemGlobalSearch, genearateCode, saveFinalCode, getAllActiveWarehouse } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import * as yup from "yup";
@@ -26,6 +26,11 @@ interface ItemUom {
     id: string;
     name: string;
     price?: string | number;
+}
+interface WarehouseStock {
+  item_id: number;
+  warehouse_id: number;
+  qty: string;
 }
 
 interface FullItem {
@@ -57,6 +62,18 @@ interface CustomerLike {
     name?: string;
     osa_code?: string;
     business_name?: string;
+}
+
+interface ItemUOM {
+  id: number;
+  item_id: number;
+  uom_type: string;
+  name: string;
+  price: string;
+  is_stock_keeping: boolean;
+  upc: string;
+  enable_for: string;
+  uom_id: number;
 }
 
 interface DeliveryDetail {
@@ -125,7 +142,20 @@ const dropdownDataList = [
 
 
 export default function InvoiceddEditPage() {
+    // Define validation schema for item rows
+    const itemRowSchema = yup.object({
+        item_id: yup.string().required("Please select an item"),
+        uom_id: yup.string().required("Please select a UOM"),
+        Quantity: yup.number()
+            .typeError("Quantity must be a number")
+            .min(1, "Quantity must be at least 1")
+            .required("Quantity is required"),
+    });
+
     const { warehouseOptions, agentCustomerOptions, routeOptions, itemOptions, fetchAgentCustomerOptions } = useAllDropdownListData();
+    const [itemsWithUOM, setItemsWithUOM] = useState<Record<string, { uoms: ItemUOM[], stock_qty: string }>>({});
+    const [invoiceData, setInvoiceData] = useState<FormData[]>([]);
+    const [warehouseStocks, setWarehouseStocks] = useState<Record<string, WarehouseStock[]>>({});
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -141,6 +171,9 @@ export default function InvoiceddEditPage() {
         customer: false,
         item: false,
     });
+    
+    // per-row validation errors for item rows (keyed by row index)
+    const [itemErrors, setItemErrors] = useState<Record<number, Record<string, string>>>({});
     const [form, setForm] = useState({
         customerType: "",
         warehouse: "",
@@ -190,6 +223,62 @@ export default function InvoiceddEditPage() {
     const [suppressItemSearch, setSuppressItemSearch] = useState(false);
     const codeGeneratedRef = useRef(false);
     const [code, setCode] = useState("");
+    
+    // Validation function for item rows
+    const validateRow = async (index: number, row?: InvoiceItemRow, options?: { skipUom?: boolean }) => {
+        const rowData = row ?? itemData[index];
+        if (!rowData) return;
+        
+        // prepare data for Yup: convert numeric strings to numbers
+        const toValidate = {
+            item_id: String(rowData.item_id ?? ""),
+            uom_id: String(rowData.uom_id ?? ""),
+            Quantity: Number(rowData.Quantity) || 0,
+        };
+
+        try {
+            const validationErrors: Record<string, string> = {};
+            
+            if (options?.skipUom) {
+                // validate only item_id and Quantity to avoid showing UOM required immediately after selecting item
+                try {
+                    await itemRowSchema.validateAt("item_id", toValidate);
+                } catch (e: any) {
+                    if (e?.message) validationErrors["item_id"] = e.message;
+                }
+                try {
+                    await itemRowSchema.validateAt("Quantity", toValidate);
+                } catch (e: any) {
+                    if (e?.message) validationErrors["Quantity"] = e.message;
+                }
+            } else {
+                await itemRowSchema.validate(toValidate, { abortEarly: false });
+            }
+
+            if (Object.keys(validationErrors).length === 0) {
+                // clear errors for this row
+                setItemErrors((prev) => {
+                    const copy = { ...prev };
+                    delete copy[index];
+                    return copy;
+                });
+            } else {
+                setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
+            }
+        } catch (err: any) {
+            const validationErrors: Record<string, string> = {};
+            if (err && err.inner && Array.isArray(err.inner)) {
+                err.inner.forEach((e: any) => {
+                    if (e.path) validationErrors[e.path] = e.message;
+                });
+            } else if (err && err.path) {
+                validationErrors[err.path] = err.message;
+            }
+
+            setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
+        }
+    };
+    
     useEffect(() => {
         setLoading(true);
 
@@ -289,6 +378,97 @@ export default function InvoiceddEditPage() {
         }
     }, [isEditMode, uuid, setLoading, showSnackbar]);
     // Auto-generate invoice code in add mode only (prevent on edit)
+
+      const fetchWarehouseItems = useCallback(async (warehouseId: string, searchTerm: string = "") => {
+        if (!warehouseId) {
+          setItemsOptions([]);
+          setItemsWithUOM({});
+          setWarehouseStocks({});
+          return;
+        }
+    
+        try {
+          setSkeleton(prev => ({ ...prev, item: true }));
+          
+          // Fetch warehouse stocks - this API returns all needed data including pricing and UOMs
+          const stockRes = await warehouseStockTopOrders(warehouseId);
+          const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
+    
+          // Store warehouse stocks for validation
+          setWarehouseStocks(prev => ({
+            ...prev,
+            [warehouseId]: stocksArray
+          }));
+    
+          // Filter items based on search term and stock availability
+          const filteredStocks = stocksArray.filter((stock: any) => {
+            if (Number(stock.stock_qty) <= 0) return false;
+            if (!searchTerm) return true;
+            const searchLower = searchTerm.toLowerCase();
+            return stock.item_name?.toLowerCase().includes(searchLower) ||
+                   stock.item_code?.toLowerCase().includes(searchLower);
+          });
+    
+          // Create items with UOM data map for easy access
+          const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty: string }> = {};
+          
+          const processedItems = filteredStocks.map((stockItem: any) => {
+            const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
+              let price = uom.price;
+              // Override with specific pricing from the API response
+              if (uom?.uom_type === "primary") {
+                price = stockItem.auom_pc_price || uom.price;
+              } else if (uom?.uom_type === "secondary") {
+                price = stockItem.buom_ctn_price || uom.price;
+              }
+              return { 
+                ...uom, 
+                price,
+                id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
+                item_id: stockItem.item_id
+              };
+            }) : [];
+    
+            // Store UOM data for this item
+            itemsUOMMap[stockItem.item_id] = {
+              uoms: item_uoms,
+              stock_qty: stockItem.stock_qty
+            };
+    
+            return { 
+              id: stockItem.item_id,
+              name: stockItem.item_name,
+              item_code: stockItem.item_code,
+              erp_code: stockItem.erp_code,
+              item_uoms,
+              warehouse_stock: stockItem.stock_qty,
+              pricing: {
+                buom_ctn_price: stockItem.buom_ctn_price,
+                auom_pc_price: stockItem.auom_pc_price
+              }
+            };
+          });
+    
+          setItemsWithUOM(itemsUOMMap);
+          setInvoiceData(processedItems);
+    
+          // Create dropdown options
+          const options = processedItems.map((item: any) => ({
+            value: String(item.id),
+            label: `${item.erp_code || item.item_code || ''} - ${item.name || ''} (Stock: ${item.warehouse_stock})`
+          }));
+    
+          setItemsOptions(options);
+          setSkeleton(prev => ({ ...prev, item: false }));
+          
+          return options;
+        } catch (error) {
+          console.error("Error fetching warehouse items:", error);
+          setSkeleton(prev => ({ ...prev, item: false }));
+          return [];
+        }
+      }, []);
+
     useEffect(() => {
         if (!isEditMode && !codeGeneratedRef.current) {
             codeGeneratedRef.current = true;
@@ -400,84 +580,33 @@ export default function InvoiceddEditPage() {
     }, [form.route, form.customerType, showSnackbar]);
 
     const handleItemSearch = useCallback(async (searchText: string) => {
+        // If no warehouse selected, return empty
+        if (!form.warehouse) {
+            return [];
+        }
+
         // Prevent searches while we're auto-populating items from a delivery selection
         if (suppressItemSearch) {
             // Reset the flag after blocking one search
             setSuppressItemSearch(false);
             return [];
         }
-        // Avoid API calls for empty/very short queries
-        const qRaw = (searchText || "").trim();
-        if (qRaw.length < 1) return [];
-        const q = qRaw.toLowerCase();
 
-        // Return cached results if available (30s TTL)
-        const cached = itemSearchCacheRef.current[q];
-        const now = Date.now();
-        if (cached && now - cached.ts < 30_000) {
-            return cached.options;
+        // For warehouse items, filter from already loaded itemsOptions
+        if (itemsOptions.length > 0) {
+            const searchLower = searchText.toLowerCase();
+            return itemsOptions.filter(opt => 
+                opt.label.toLowerCase().includes(searchLower)
+            );
         }
 
-        // Skip duplicate back-to-back queries
-        if (lastItemSearchRef.current === q && cached) {
-            return cached.options;
+        // If no items loaded yet, trigger warehouse items fetch
+        if (form.warehouse) {
+            return await fetchWarehouseItems(form.warehouse, searchText) || [];
         }
 
-        try {
-            const response = await itemGlobalSearch({
-                query: q,
-            });
-            const data = Array.isArray(response?.data) ? (response.data as unknown[]) : [];
-
-            // Normalize and store full item data for later UOM lookup
-            const itemsMap: Record<string, FullItem> = {};
-            const options: (Option & { uoms?: ItemUom[] })[] = data.map((raw) => {
-                const rawItem = raw as Record<string, unknown>;
-                const item = rawItem as Partial<FullItem> & { id?: string | number; item_code?: string; code?: string; name?: string; uom?: ItemUom[] };
-                const id = String(item.id ?? '');
-
-                // API may return UOMs as `item_uoms` or `uom`. Prefer `item_uoms` if present.
-                const sourceUomsRaw = Array.isArray(rawItem['item_uoms'] as unknown)
-                    ? rawItem['item_uoms']
-                    : Array.isArray((item as Record<string, unknown>)['uom'] as unknown)
-                        ? (item as Record<string, unknown>)['uom']
-                        : [];
-                const uomArr: ItemUom[] = extractUoms(sourceUomsRaw);
-
-                const itemObj = item as Record<string, unknown>;
-                const codeVal = typeof itemObj.erp_code === 'string' ? String(itemObj.erp_code) : (typeof itemObj.code === 'string' ? String(itemObj.code) : undefined);
-
-                const normalized: FullItem = {
-                    id,
-                    erp_code: codeVal,
-                    item_code: item.item_code,
-                    name: item.name,
-                    uom: uomArr,
-                };
-                if (id) itemsMap[id] = normalized;
-
-                return {
-                    value: id,
-                    label: `${codeVal || ''} - ${item.name || ''}`.trim(),
-                    code: codeVal,
-                    name: item.name,
-                    uoms: uomArr,
-                };
-            });
-
-            if (Object.keys(itemsMap).length > 0) {
-                setFullItemsData(prev => ({ ...prev, ...itemsMap }));
-            }
-            // Cache and return
-            itemSearchCacheRef.current[q] = { ts: now, options };
-            lastItemSearchRef.current = q;
-            return options;
-        } catch (error) {
-            console.error('Error fetching items:', error);
-            showSnackbar('Failed to search items', 'error');
-            return [];
-        }
-    }, [showSnackbar, suppressItemSearch]);
+        return [];
+    }, [form.warehouse, itemsOptions, suppressItemSearch, fetchWarehouseItems]);
 
     const handleDeliverySearch = useCallback(async (warehouseId?: string) => {
         // console.log('Searching deliveries for warehouse:', warehouseId || form.warehouse);
@@ -613,6 +742,11 @@ export default function InvoiceddEditPage() {
         item.Vat = vat.toFixed(2);
         item.Net = net.toFixed(2);
 
+        // Validate the row after recalculation (skip UOM validation if we're just selecting an item)
+        if (field !== "itemName" && field !== "item_id") {
+            validateRow(index, newData[index]);
+        }
+        
         setItemData(newData);
     };
 
@@ -746,9 +880,22 @@ export default function InvoiceddEditPage() {
     const handleSubmit = async () => {
         if (isSubmitting) return;
         try {
+            // Validate form fields
             const schema = createValidationSchema(form);
             await schema.validate(form, { abortEarly: false });
             setErrors({});
+            
+            // Validate item rows separately (they live in local state)
+            const itemsSchema = yup.array().of(itemRowSchema);
+            try {
+                await itemsSchema.validate(itemData, { abortEarly: false });
+            } catch (itemErr: any) {
+                // log detailed item validation errors and surface a friendly message
+                console.error("Item validation errors:", itemErr.inner || itemErr);
+                showSnackbar(itemErr.inner.map((err: any) => err.message).join(", "), "error");
+                return;
+            }
+            
             const validItems = itemData.filter(item => item.item_id && item.uom_id);
             if (validItems.length === 0) {
                 showSnackbar("Please add at least one item with UOM selected", "error");
@@ -927,6 +1074,8 @@ export default function InvoiceddEditPage() {
                                     if (errors.warehouse) {
                                         setErrors(prev => ({ ...prev, warehouse: "" }));
                                     }
+                                    // Fetch items for the selected warehouse
+                                    fetchWarehouseItems(option.value);
                                     handleDeliverySearch(option.value);
                                 }}
                                 onClear={() => {
@@ -937,189 +1086,14 @@ export default function InvoiceddEditPage() {
                                         customer: "",
                                         customer_name: "",
                                     }));
+                                    // Clear items when warehouse is cleared
+                                    setItemsOptions([]);
+                                    setItemsWithUOM({});
+                                    setWarehouseStocks({});
                                 }}
                                 error={errors.warehouse}
                             />
-                            {/* <AutoSuggestion
-                                required
-                                label="Delivery"
-                                name="customer"
-                                placeholder="Search delivery..."
-                                initialValue={form.customer_name}
-                                onSearch={handleDeliverySearch}
-                                onSelect={(option: Option) => {
-                                    // Temporarily suppress item search calls while we auto-populate rows
-                                    setSuppressItemSearch(true);
-                                    setForm(prev => ({
-                                        ...prev,
-                                        customer: option.value,
-                                        customer_name: option.label,
-                                    }));
-                                    if (errors.customer) {
-                                        setErrors(prev => ({ ...prev, customer: "" }));
-                                    }
-
-                                    // Auto-populate items from selected delivery
-                                    const selectedDelivery = deliveriesById[option.value];
-                                    if (selectedDelivery && Array.isArray(selectedDelivery.details)) {
-                                        const newRowUomOptions: Record<string, { value: string; label: string; price?: string }[]> = {};
-                                        const newFullItemsData: Record<string, FullItem> = { ...fullItemsData };
-
-                                        const loadedItemData: InvoiceItemRow[] = selectedDelivery.details.map((detail: DeliveryDetail, index: number) => {
-                                            const itemId = String(detail.item?.id ?? "");
-                                            const uomId = String(detail.uom_id ?? "");
-
-                                            // Extract item code and name from delivery detail
-                                            const itemCode = detail.item?.code || "";
-                                            const itemName = detail.item?.name || "";
-                                            const itemLabel = itemCode && itemName ? `${itemCode} - ${itemName}` : itemId;
-
-                                            // Always create UOM option from delivery detail (this is the selected UOM)
-                                            const uomName = detail.uom_name || "";
-                                            const deliveryUomOption = uomId && uomName ? {
-                                                value: String(uomId),
-                                                label: uomName,
-                                                price: String(detail.item_price || "0"),
-                                            } : null;
-
-                                            // Prefer UOMs provided in delivery detail (`item_uoms`) if available
-                                            const detailObj = detail as Record<string, unknown>;
-                                            const detailUomsRaw = Array.isArray(detailObj['item_uoms'] as unknown) ? detailObj['item_uoms'] : [];
-                                            if (Array.isArray(detailUomsRaw) && detailUomsRaw.length > 0) {
-                                                const uomOpts = extractUoms(detailUomsRaw).map(u => ({
-                                                    value: String(u.id ?? ""),
-                                                    label: u.name ?? "",
-                                                    price: u.price !== undefined ? String(u.price) : "0",
-                                                }));
-                                                newRowUomOptions[index.toString()] = uomOpts;
-
-                                                // Store full item data for future reference
-                                                newFullItemsData[itemId] = {
-                                                    id: itemId,
-                                                    code: itemCode,
-                                                    name: itemName,
-                                                    uom: extractUoms(detailUomsRaw),
-                                                };
-                                            } else {
-                                                // Check if we have more UOM options from itemOptions
-                                                const typedItemOptions = itemOptions as Array<Option & { uoms?: ItemUom[] }>;
-                                                const selectedItem = typedItemOptions.find((it) => it.value === itemId);
-                                                if (selectedItem && Array.isArray(selectedItem.uoms) && selectedItem.uoms.length > 0) {
-                                                    const uomOpts = selectedItem.uoms.map((uom: ItemUom) => ({
-                                                        value: String(uom.id || ""),
-                                                        label: uom.name || "",
-                                                        price: (uom.price as string | number | undefined) ? String(uom.price) : "0",
-                                                    }));
-                                                    newRowUomOptions[index.toString()] = uomOpts;
-
-                                                    // Store full item data for future reference
-                                                    newFullItemsData[itemId] = {
-                                                        id: itemId,
-                                                        code: itemCode,
-                                                        name: itemName,
-                                                        uom: selectedItem.uoms,
-                                                    };
-                                                } else if (deliveryUomOption) {
-                                                    // If no UOM options from itemOptions, use delivery detail UOM
-                                                    newRowUomOptions[index.toString()] = [deliveryUomOption];
-
-                                                    // Store minimal item data
-                                                    newFullItemsData[itemId] = {
-                                                        id: itemId,
-                                                        code: itemCode,
-                                                        name: itemName,
-                                                        uom: [{
-                                                            id: uomId,
-                                                            name: uomName,
-                                                            price: detail.item_price || "0",
-                                                        }],
-                                                    };
-                                                }
-                                            }
-
-                                            const qty = Number(detail.quantity ?? 0);
-                                            const price = Number(detail.item_price ?? 0);
-                                            const discount = Number(detail.discount ?? 0);
-                                            const total = qty * price;
-                                            const vat = total * 0.18;
-                                            const net = total - vat;
-
-                                            return {
-                                                item_id: itemId,
-                                                itemName: itemLabel,
-                                                itemLabel: itemLabel,
-                                                UOM: uomId,
-                                                uom_id: uomId,
-                                                Quantity: String(qty || 1),
-                                                Price: (Number(price) || 0).toFixed(2),
-                                                Excise: "0.00",
-                                                Discount: (Number(discount) || 0).toFixed(2),
-                                                Net: net.toFixed(2),
-                                                Vat: vat.toFixed(2),
-                                                Total: total.toFixed(2),
-                                            };
-                                        });
-
-                                        setFullItemsData(newFullItemsData);
-                                        setRowUomOptions(newRowUomOptions);
-                                        setItemData(loadedItemData);
-
-                                        // Set note if available
-                                        if (selectedDelivery.comment) {
-                                            setForm((prev) => ({ ...prev, note: selectedDelivery.comment || prev.note }));
-                                        }
-                                    } else {
-                                        // Reset if no details
-                                        setRowUomOptions({});
-                                        setItemData([
-                                            {
-                                                item_id: "",
-                                                itemName: "",
-                                                itemLabel: "",
-                                                UOM: "",
-                                                uom_id: "",
-                                                Quantity: "1",
-                                                Price: "",
-                                                Excise: "",
-                                                Discount: "",
-                                                Net: "",
-                                                Vat: "",
-                                                Total: "",
-                                            },
-                                        ]);
-                                    }
-                                    // Re-enable item search shortly after rows are set to avoid AutoSuggestion remount spam
-                                    setTimeout(() => setSuppressItemSearch(false), 300);
-                                }}
-                                onClear={() => {
-                                    setForm(prev => ({
-                                        ...prev,
-                                        customer: "",
-                                        customer_name: "",
-                                    }));
-                                    // Clear items when delivery is cleared
-                                    setRowUomOptions({});
-                                    setItemData([
-                                        {
-                                            item_id: "",
-                                            itemName: "",
-                                            itemLabel: "",
-                                            UOM: "",
-                                            uom_id: "",
-                                            Quantity: "1",
-                                            Price: "",
-                                            Excise: "",
-                                            Discount: "",
-                                            Net: "",
-                                            Vat: "",
-                                            Total: "",
-                                        },
-                                    ]);
-                                }}
-                                error={errors.customer}
-                                disabled={!form.warehouse}
-                                noOptionsMessage={!form.warehouse ? "Please select a warehouse first" : "No deliveries found"}
-                            /> */}
+                         
                             <InputFields
                                 required
                                 label="Delivery"
@@ -1221,7 +1195,7 @@ export default function InvoiceddEditPage() {
                                             const price = Number(detail.item_price ?? 0);
                                             const discount = Number(detail.discount ?? 0);
                                             const total = qty * price;
-                                            const vat = total * 0.18;
+                                            const vat = total - total / 1.18;
                                             const net = total - vat;
 
                                             return {
@@ -1311,6 +1285,8 @@ export default function InvoiceddEditPage() {
                                     if (errors.warehouse) {
                                         setErrors(prev => ({ ...prev, warehouse: "" }));
                                     }
+                                    // Fetch items for the selected warehouse
+                                    fetchWarehouseItems(option.value);
                                 }}
                                 onClear={() => {
                                     setForm(prev => ({
@@ -1322,6 +1298,10 @@ export default function InvoiceddEditPage() {
                                         customer: "",
                                         customer_name: "",
                                     }));
+                                    // Clear items when warehouse is cleared
+                                    setItemsOptions([]);
+                                    setItemsWithUOM({});
+                                    setWarehouseStocks({});
                                 }}
                                 error={errors.warehouse}
                             />
@@ -1401,71 +1381,85 @@ export default function InvoiceddEditPage() {
                                 label: "Item Name",
                                 width: 390,
                                 render: (row) => {
-                                    const selectedOpt = (() => {
-                                        const selectedItemId = row.item_id;
-                                        if (!selectedItemId) return null;
-                                        // Try to find in global itemOptions first
-                                        const typedItemOptions = itemOptions as Array<Option & { uoms?: ItemUom[] }>;
-                                        const found = typedItemOptions?.find?.((it) => it.value === String(selectedItemId));
-                                        if (found) return found;
-                                        // Fallback to building a minimal option from the row label
-                                        return { value: String(selectedItemId), label: row.itemLabel || String(selectedItemId) } as Option;
-                                    })();
+                                    const idx = Number(row.idx);
+                                    const currentItem = itemData[idx];
+                                    const selectedItemId = currentItem?.item_id;
+                                    const err = itemErrors[idx]?.item_id;
+                                    
+                                    // Build selected option from current item data
+                                    const selectedOpt = selectedItemId ? {
+                                        value: selectedItemId,
+                                        label: currentItem.itemLabel || `Item ${selectedItemId}`
+                                    } : null;
 
                                     return (
                                         <div style={{ minWidth: '390px', maxWidth: '390px' }}>
                                             <AutoSuggestion
-                                                // Use stable key to prevent remount and auto-open on delivery selection
                                                 key={`item-${row.idx}`}
                                                 placeholder="Search item..."
-                                                initialValue={row.itemLabel}
-                                                selectedOption={selectedOpt ?? null}
+                                                initialValue={currentItem?.itemLabel || ""}
+                                                selectedOption={selectedOpt}
                                                 onSearch={handleItemSearch}
-                                                onSelect={(option: Option & { uoms?: ItemUom[] }) => {
+                                                onSelect={(option: Option) => {
                                                     const selectedItemId = option.value;
                                                     const newData = [...itemData];
                                                     const index = Number(row.idx);
+                                                    
+                                                    // Get item data from warehouse stocks
+                                                    const itemUOMData = itemsWithUOM[selectedItemId];
+                                                    const selectedOrder = invoiceData.find((order: any) => String(order.id) === selectedItemId);
+                                                    
                                                     newData[index].item_id = selectedItemId;
-                                                    newData[index].itemName = selectedItemId;
+                                                    newData[index].itemName = (selectedOrder as any)?.name || option.label;
                                                     newData[index].itemLabel = option.label;
-                                                    let uomSource: ItemUom[] | undefined = undefined;
-                                                    const selectedItem = fullItemsData[selectedItemId];
-                                                    if (selectedItem && Array.isArray(selectedItem.uom) && selectedItem.uom.length > 0) {
-                                                        uomSource = selectedItem.uom;
-                                                    } else {
-                                                        const opt = option as Option & { uoms?: ItemUom[] };
-                                                        if (Array.isArray(opt.uoms) && opt.uoms.length > 0) {
-                                                            const uomArray: ItemUom[] = opt.uoms.map((u) => ({ id: String(u.id ?? ""), name: u.name ?? "", price: u.price }));
-                                                            uomSource = uomArray;
-                                                            setFullItemsData(prev => ({
-                                                                ...prev,
-                                                                [selectedItemId]: {
-                                                                    id: selectedItemId,
-                                                                    item_code: opt.code || undefined,
-                                                                    name: opt.name || undefined,
-                                                                    uom: uomArray,
-                                                                }
-                                                            }));
-                                                        }
-                                                    }
-
-                                                    if (uomSource && uomSource.length > 0) {
-                                                        const uomOpts = uomSource.map((uom: ItemUom) => ({
-                                                            value: String(uom.id || ""),
-                                                            label: uom.name || "",
-                                                            price: (uom.price as string | number | undefined) ? String(uom.price) : "0"
+                                                    
+                                                    if (itemUOMData?.uoms) {
+                                                        const uomOpts = itemUOMData.uoms.map(uom => ({ 
+                                                            label: uom.name, 
+                                                            value: String(uom.id || ''), 
+                                                            price: uom.price 
                                                         }));
-
+                                                        
                                                         setRowUomOptions(prev => ({
                                                             ...prev,
                                                             [row.idx]: uomOpts
                                                         }));
-
-                                                        const firstUom = uomOpts[0];
+                                                        
+                                                        newData[index].uom_id = uomOpts[0]?.value || "";
+                                                        newData[index].UOM = uomOpts[0]?.value || "";
+                                                        newData[index].Price = uomOpts[0]?.price || "";
+                                                    } else if (selectedOrder && (selectedOrder as any)?.item_uoms) {
+                                                        // Fallback to selectedOrder UOMs with pricing
+                                                        const uomOpts = (selectedOrder as any).item_uoms.map((uom: any) => {
+                                                            let price = uom.price;
+                                                            if (uom.uom_type === "primary") {
+                                                                price = (selectedOrder as any).pricing?.auom_pc_price || uom.price;
+                                                            } else if (uom.uom_type === "secondary") {
+                                                                price = (selectedOrder as any).pricing?.buom_ctn_price || uom.price;
+                                                            }
+                                                            return { 
+                                                                label: uom.name, 
+                                                                value: String(uom.id || ''), 
+                                                                price: price 
+                                                            };
+                                                        });
+                                                        
+                                                        setRowUomOptions(prev => ({
+                                                            ...prev,
+                                                            [row.idx]: uomOpts
+                                                        }));
+                                                        
+                                                        const firstUom = (selectedOrder as any).item_uoms[0];
                                                         if (firstUom) {
-                                                            newData[index].uom_id = firstUom.value;
-                                                            newData[index].UOM = firstUom.value;
-                                                            newData[index].Price = firstUom.price || "0";
+                                                            newData[index].uom_id = String(firstUom.id || "");
+                                                            newData[index].UOM = String(firstUom.id || "");
+                                                            if (firstUom.uom_type === "primary") {
+                                                                newData[index].Price = (selectedOrder as any).pricing?.auom_pc_price || firstUom.price || "";
+                                                            } else if (firstUom.uom_type === "secondary") {
+                                                                newData[index].Price = (selectedOrder as any).pricing?.buom_ctn_price || firstUom.price || "";
+                                                            } else {
+                                                                newData[index].Price = firstUom.price || "";
+                                                            }
                                                         }
                                                     } else {
                                                         setRowUomOptions(prev => {
@@ -1475,9 +1469,19 @@ export default function InvoiceddEditPage() {
                                                         });
                                                         newData[index].uom_id = "";
                                                         newData[index].UOM = "";
-                                                        newData[index].Price = "0";
+                                                        newData[index].Price = "";
                                                     }
-
+                                                    
+                                                    newData[index].Quantity = "1";
+                                                    
+                                                    // Ensure the selected item persists in itemsOptions
+                                                    if (option.label) {
+                                                        setItemsOptions((prev: Option[] = []) => {
+                                                            if (prev.some(o => o.value === selectedItemId)) return prev;
+                                                            return [...prev, { value: selectedItemId, label: option.label }];
+                                                        });
+                                                    }
+                                                    
                                                     setItemData(newData);
                                                     recalculateItem(index, "itemName", selectedItemId);
                                                 }}
@@ -1489,7 +1493,7 @@ export default function InvoiceddEditPage() {
                                                     newData[index].itemLabel = "";
                                                     newData[index].uom_id = "";
                                                     newData[index].UOM = "";
-                                                    newData[index].Price = "0";
+                                                    newData[index].Price = "";
                                                     setRowUomOptions(prev => {
                                                         const newOpts = { ...prev };
                                                         delete newOpts[row.idx];
@@ -1498,6 +1502,7 @@ export default function InvoiceddEditPage() {
                                                     setItemData(newData);
                                                 }}
                                                 disabled={!isFormReadyForItems && !row.item_id}
+                                                error={err}
                                             />
                                         </div>
                                     );
@@ -1508,6 +1513,8 @@ export default function InvoiceddEditPage() {
                                 label: "UOM",
                                 width: 120,
                                 render: (row) => {
+                                    const idx = Number(row.idx);
+                                    const err = itemErrors[idx]?.uom_id;
                                     const uomOptions = rowUomOptions[row.idx] || [];
                                     return (
                                         <div style={{ minWidth: '120px', maxWidth: '120px' }}>
@@ -1524,12 +1531,13 @@ export default function InvoiceddEditPage() {
                                                     const index = Number(row.idx);
                                                     newData[index].uom_id = selectedUomId;
                                                     newData[index].UOM = selectedUomId;
-                                                    if (selectedUom) {
-                                                        newData[index].Price = selectedUom.price || "0";
+                                                    if (selectedUom?.price) {
+                                                        newData[index].Price = selectedUom.price;
                                                     }
                                                     setItemData(newData);
                                                     recalculateItem(index, "UOM", selectedUomId);
                                                 }}
+                                                error={err}
                                             />
                                         </div>
                                     );
@@ -1539,27 +1547,33 @@ export default function InvoiceddEditPage() {
                                 key: "Quantity",
                                 label: "Qty",
                                 width: 100,
-                                render: (row) => (
-                                    <div style={{ minWidth: '100px', maxWidth: '100px' }}>
-                                        <InputFields
-                                            label=""
-                                            type="number"
-                                            name="Quantity"
-                                            value={row.Quantity}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                const numValue = parseFloat(value);
-                                                if (value === "") {
-                                                    recalculateItem(Number(row.idx), "Quantity", value);
-                                                } else if (numValue <= 0) {
-                                                    recalculateItem(Number(row.idx), "Quantity", "1");
-                                                } else {
-                                                    recalculateItem(Number(row.idx), "Quantity", value);
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                ),
+                                render: (row) => {
+                                    const idx = Number(row.idx);
+                                    const err = itemErrors[idx]?.Quantity;
+                                    
+                                    return (
+                                        <div style={{ minWidth: '100px', maxWidth: '100px' }}>
+                                            <InputFields
+                                                label=""
+                                                type="number"
+                                                name="Quantity"
+                                                value={row.Quantity}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    const numValue = parseFloat(value);
+                                                    if (value === "") {
+                                                        recalculateItem(Number(row.idx), "Quantity", value);
+                                                    } else if (numValue <= 0) {
+                                                        recalculateItem(Number(row.idx), "Quantity", "1");
+                                                    } else {
+                                                        recalculateItem(Number(row.idx), "Quantity", value);
+                                                    }
+                                                }}
+                                                error={err}
+                                            />
+                                        </div>
+                                    );
+                                },
                             },
                             {
                                 key: "Price",
