@@ -3,7 +3,7 @@ import AutoSuggestion, { Option } from "@/app/components/autoSuggestion";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import Loading from "@/app/components/Loading";
-import {createBonus,getTierDetails,updateTier} from "@/app/services/settingsAPI";
+import {createBonus,getBonusDetails,updateBonus} from "@/app/services/settingsAPI";
 import { itemGlobalSearch } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -44,28 +44,37 @@ export default function AddEditTier() {
       setLoading(true);
       (async () => {
         try {
-          const res = await getTierDetails(String(routeId));
+          const res = await getBonusDetails(String(routeId));
           const data = res?.data ?? res;
           // store the item id in form.item and also set the selected option
           const itemId = data?.item_id ?? data?.itemId ?? data?.id ?? "";
-          const labelParts = [];
-          if (data?.erp_code) labelParts.push(data.erp_code);
-          else if (data?.item_code) labelParts.push(data.item_code);
-          else if (data?.code) labelParts.push(data.code);
-          if (data?.name) labelParts.push(data.name);
-          const itemLabel = labelParts.join(" - ") || (data?.name ?? "");
+          // Always show as 'item_code - item_name' (or erp_code/code - name)
+          let itemLabel = "";
+          if (data?.item_code && data?.item_name) {
+            itemLabel = `${data.item_code} - ${data.item_name}`;
+          } else if (data?.erp_code && data?.name) {
+            itemLabel = `${data.erp_code} - ${data.name}`;
+          } else if (data?.code && data?.name) {
+            itemLabel = `${data.code} - ${data.name}`;
+          } else if (data?.item_code) {
+            itemLabel = data.item_code;
+          } else if (data?.erp_code) {
+            itemLabel = data.erp_code;
+          } else if (data?.code) {
+            itemLabel = data.code;
+          } else if (data?.name) {
+            itemLabel = data.name;
+          }
 
           setForm({
             item: itemId ? String(itemId) : "",
-            rewardBasis: data?.period,
-            thresholdValue: data?.minpurchase,
-            rewardPoints: data?.maxpurchase,
+            rewardBasis: String(data?.reward_basis),
+            thresholdValue: String(data?.volume),
+            rewardPoints: data?.bonus_points,
           });
           setSelectedItemOption(itemId ? { value: String(itemId), label: itemLabel } : null);
-
-       
         } catch (err) {
-          showSnackbar("Failed to fetch route details", "error");
+          showSnackbar("Failed to fetch bonus points details", "error");
         } finally {
           setLoading(false);
         }
@@ -159,7 +168,7 @@ export default function AddEditTier() {
 
       let res;
       if (isEditMode && routeId) {
-        res = await updateTier(routeId, payload);
+        res = await updateBonus(routeId, payload);
       } else {
         res = await createBonus(payload);
       }
@@ -183,7 +192,7 @@ export default function AddEditTier() {
         // showSnackbar("Please fix validation errors before submitting", "error");
       } else {
         showSnackbar(
-          isEditMode ? "Failed to update route" : "Failed to add route",
+          isEditMode ? "Failed to update bonus points" : "Failed to add bonus points",
           "error"
         );
       }

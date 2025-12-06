@@ -12,7 +12,7 @@ import {
   createCapsCollection,
   updateCapsCollection,
 } from "@/app/services/agentTransaction";
-import { agentCustomerList, genearateCode, getCompanyCustomers, itemGlobalSearch, itemList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerList, genearateCode, getCompanyCustomers, itemGlobalSearch, itemList, warehouseListGlobalSearch, warehouseStockTopOrders } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -24,6 +24,7 @@ interface Uom {
   id: string;
   name?: string;
   price?: string;
+  uom_type?: string;
 }
 interface Warehouse {
   id: number;
@@ -69,6 +70,61 @@ interface ItemOption {
   uoms?: Uom[];
 }
 
+// FormData interface for items (same structure as order page)
+interface FormData {
+  id: number;
+  erp_code?: string;
+  item_code?: string;
+  name?: string;
+  description?: string;
+  item_uoms?: {
+    id: number;
+    item_id: number;
+    uom_type: string;
+    name: string;
+    price: string;
+    is_stock_keeping?: boolean;
+    upc?: string;
+    enable_for?: string;
+  }[];
+  pricing?: {
+    buom_ctn_price?: string;
+    auom_pc_price?: string;
+  };
+  brand?: string;
+  image?: string;
+  category?: {
+    id: number;
+    name: string;
+    code: string;
+  };
+  itemSubCategory?: {
+    id: number;
+    name: string;
+    code: string;
+  };
+  shelf_life?: string;
+  commodity_goods_code?: string;
+  excise_duty_code?: string;
+  status?: number;
+  is_taxable?: boolean;
+  has_excies?: boolean;
+  item_weight?: string;
+  volume?: number;
+}
+
+interface ItemUOM {
+  id: number;
+  item_id: number;
+  uom_type: string;
+  name: string;
+  price: string;
+  is_stock_keeping?: boolean;
+  upc?: string;
+  enable_for?: string;
+  uom_id?: number;
+}
+
 
 
 export default function AddEditCapsCollection() {
@@ -104,14 +160,15 @@ export default function AddEditCapsCollection() {
   });
   const [orderData, setOrderData] = useState<FormData[]>([]);
   const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
-  // store full item records returned by search for later UOM lookup
-  const [fullItemsData, setFullItemsData] = useState<Record<string, { id: string; item_code?: string; code?: string; name?: string; uoms?: Uom[] }>>({});
-  const itemSearchCacheRef = useRef<Record<string, { ts: number; options: ItemOption[] }>>({});
-  const lastItemSearchRef = useRef<string>("");
+  // Store items with UOM data for easy access (same as order page)
+  const [itemsWithUOM, setItemsWithUOM] = useState<Record<string, { uoms: ItemUOM[], stock_qty?: string }>>({});
 
   const [rowUomOptions, setRowUomOptions] = useState<
     Record<string, { value: string; label: string; price?: string }[]>
   >({});
+
+  // Debounce timeout ref for warehouse selection
+  const warehouseDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
 
   // AutoSuggestion search functions (same as return page)
@@ -171,63 +228,107 @@ export default function AddEditCapsCollection() {
     }
   };
 
-  const handleItemSearch = useCallback(async (searchText: string) => {
-    const qRaw = (searchText || "").trim();
-    if (qRaw.length < 1) return [];
-    const q = qRaw.toLowerCase();
-
-    // Return cached results if available (30s TTL)
-    const cached = itemSearchCacheRef.current[q];
-    const now = Date.now();
-    if (cached && now - cached.ts < 30_000) return cached.options;
-
-    if (lastItemSearchRef.current === q && cached) return cached.options;
+  // Fetch warehouse items using warehouseStockTopOrders API (same as order page)
+  const fetchWarehouseItems = useCallback(async (warehouseId: string) => {
+    if (!warehouseId) {
+      setItemsOptions([]);
+      setItemsWithUOM({});
+      setOrderData([]);
+      return;
+    }
 
     try {
-      const response = await itemGlobalSearch({ query: q });
-      const data = Array.isArray(response?.data) ? response.data : [];
+      setSkeleton(prev => ({ ...prev, item: true }));
+      
+      // Fetch warehouse stocks - this API returns all needed data including pricing and UOMs
+      const stockRes = await warehouseStockTopOrders(warehouseId);
+      const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
 
-      const itemsMap: Record<string, { id: string; code?: string; name?: string; uoms?: Uom[] }> = {};
-      const options: ItemOption[] = data.map((rawItem: unknown) => {
-        const raw = rawItem as Record<string, unknown>;
-        const id = String(raw['id'] ?? "");
-        const code = (raw['item_code'] as string) ?? (raw['code'] as string) ?? undefined;
-        const name = (raw['name'] as string) ?? (raw['item_name'] as string) ?? "";
-
-        // normalize uoms from different shapes
-        const rawUoms = Array.isArray(raw['item_uoms'])
-          ? (raw['item_uoms'] as unknown[])
-          : Array.isArray(raw['uom'])
-            ? (raw['uom'] as unknown[])
-            : Array.isArray(raw['uoms'])
-              ? (raw['uoms'] as unknown[])
-              : [];
-
-        const uoms: Uom[] = Array.isArray(rawUoms)
-          ? rawUoms.map((u) => {
-            const uu = u as Record<string, unknown>;
-            return {
-              id: String(uu['id'] ?? uu['uom_id'] ?? ""),
-              name: String(uu['name'] ?? uu['uom_name'] ?? uu['label'] ?? ""),
-              price: String(uu['price'] ?? uu['uom_price'] ?? uu['unit_price'] ?? "0"),
-            } as Uom;
-          })
-          : [];
-
-        if (id) itemsMap[id] = { id, code, name, uoms };
-
-        return { value: id, label: `${code || ""} - ${name}`.trim(), code, name, uoms };
+      // Filter items with stock availability
+      const filteredStocks = stocksArray.filter((stock: any) => {
+        return Number(stock.stock_qty) > 0;
       });
 
-      if (Object.keys(itemsMap).length > 0) setFullItemsData((prev) => ({ ...prev, ...itemsMap }));
+      // Create items with UOM data map for easy access
+      const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty?: string }> = {};
+      
+      const processedItems = filteredStocks.map((stockItem: any) => {
+        const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
+          let price = uom.price;
+          // Override with specific pricing from the API response (same as order page)
+          if (uom?.uom_type === "primary") {
+            price = stockItem.auom_pc_price || uom.price;
+          } else if (uom?.uom_type === "secondary") {
+            price = stockItem.buom_ctn_price || uom.price;
+          }
+          return { 
+            ...uom, 
+            price,
+            id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
+            item_id: stockItem.item_id
+          };
+        }) : [];
 
-      itemSearchCacheRef.current[q] = { ts: now, options };
-      lastItemSearchRef.current = q;
+        // Store UOM data for this item
+        itemsUOMMap[stockItem.item_id] = {
+          uoms: item_uoms,
+          stock_qty: stockItem.stock_qty
+        };
+
+        return { 
+          id: stockItem.item_id,
+          name: stockItem.item_name,
+          item_code: stockItem.item_code,
+          erp_code: stockItem.erp_code,
+          item_uoms,
+          warehouse_stock: stockItem.stock_qty,
+          pricing: {
+            buom_ctn_price: stockItem.buom_ctn_price,
+            auom_pc_price: stockItem.auom_pc_price
+          }
+        };
+      });
+
+      setItemsWithUOM(itemsUOMMap);
+      setOrderData(processedItems);
+
+      // Create dropdown options
+      const options = processedItems.map((item: any) => ({
+        value: String(item.id),
+        label: `${item.erp_code || item.item_code || ''} - ${item.name || ''}`
+      }));
+
+      setItemsOptions(options);
+      setSkeleton(prev => ({ ...prev, item: false }));
+      
       return options;
-    } catch (e) {
-      console.error("Error searching items:", e);
+    } catch (error) {
+      console.error("Error fetching warehouse items:", error);
+      setSkeleton(prev => ({ ...prev, item: false }));
       return [];
     }
+  }, []);
+
+  // Debounced warehouse change handler (same as order page)
+  const handleWarehouseChange = useCallback((warehouseId: string) => {
+    // Clear existing timeout
+    if (warehouseDebounceRef.current) {
+      clearTimeout(warehouseDebounceRef.current);
+    }
+
+    // Set new timeout for debounced API call
+    warehouseDebounceRef.current = setTimeout(() => {
+      fetchWarehouseItems(warehouseId);
+    }, 500); // 500ms debounce delay
+  }, [fetchWarehouseItems]);
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (warehouseDebounceRef.current) {
+        clearTimeout(warehouseDebounceRef.current);
+      }
+    };
   }, []);
 
   const [tableData, setTableData] = useState<TableDataType[]>([
@@ -491,9 +592,19 @@ export default function AddEditCapsCollection() {
               onSelect={(option: { value: string }) => {
                 handleChange("warehouse", option.value);
                 handleChange("customer", "");
-                if (option.value) fetchAgentCustomerOptions(option.value);
+                if (option.value) {
+                  fetchAgentCustomerOptions(option.value);
+                  // Trigger warehouse items fetch (same as order page)
+                  handleWarehouseChange(option.value);
+                }
               }}
-              onClear={() => handleChange("warehouse", "")}
+              onClear={() => {
+                handleChange("warehouse", "");
+                // Clear items when warehouse is cleared
+                setItemsOptions([]);
+                setItemsWithUOM({});
+                setOrderData([]);
+              }}
               error={errors.warehouse}
             />
            
@@ -539,20 +650,38 @@ export default function AddEditCapsCollection() {
                 key: "item",
                 label: "Item",
                 render: (row) => (
-                  <AutoSuggestion
-                    placeholder="Search item..."
-                    initialValue={
-                      itemOptions.find(o => o.value === String(row.item))?.label
-                    }
-                    disabled={!form.customer}
-                    onSearch={handleItemSearch}
-                    onSelect={async (option: { value: string; uoms?: Uom[] }) => {
-                      handleTableChange(row.id, "item", option.value);
+                  <InputFields
+                    label=""
+                    name={`item_${row.id}`}
+                    value={row.item}
+                    searchable={true}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      handleTableChange(row.id, "item", value);
 
-                      // Prefer uoms included in option
-                      const optUoms = option.uoms && option.uoms.length ? option.uoms : undefined;
-                      if (optUoms) {
-                        const uomOpts = optUoms.map((u: Uom) => ({ value: String(u.id ?? ""), label: String(u.name ?? ""), price: String(u.price ?? "0") }));
+                      if (!value) {
+                        // Clear selection
+                        setRowUomOptions((prev) => {
+                          const newOpts = { ...prev };
+                          delete newOpts[row.id];
+                          return newOpts;
+                        });
+                        handleTableChange(row.id, "uom", "");
+                        handleTableChange(row.id, "price", "0");
+                        return;
+                      }
+
+                      // Find the selected item from orderData (same as order page)
+                      const selectedOrder = orderData.find((order: FormData) => String(order.id) === value);
+                      const itemUOMData = itemsWithUOM[value];
+
+                      // Priority 1: Use itemUOMData from itemsWithUOM (populated by warehouseStockTopOrders)
+                      if (itemUOMData?.uoms && itemUOMData.uoms.length > 0) {
+                        const uomOpts = itemUOMData.uoms.map((uom: ItemUOM) => ({
+                          value: String(uom.id ?? ""),
+                          label: String(uom.name ?? ""),
+                          price: String(uom.price ?? "0"),
+                        }));
                         setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
                         const first = uomOpts[0];
                         if (first) {
@@ -562,68 +691,48 @@ export default function AddEditCapsCollection() {
                         return;
                       }
 
-                      // Next try fullItemsData populated by search
-                      const cached = fullItemsData[option.value];
-                      if (cached && Array.isArray(cached.uoms) && cached.uoms.length > 0) {
-                        const uomOpts = cached.uoms.map((u: Uom) => ({ value: String(u.id ?? ""), label: String(u.name ?? ""), price: String(u.price ?? "0") }));
-                        setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
-                        const first = uomOpts[0];
-                        if (first) {
-                          handleTableChange(row.id, "uom", first.value);
-                          handleTableChange(row.id, "price", first.price || "0");
-                        }
-                        return;
-                      }
-
-                      // Fallback: fetch item details from API
-                      try {
-                        setSkeleton((s) => ({ ...s, item: true }));
-                        const res = await itemList({ id: option.value });
-                        const data = res?.data ?? res;
-                        const itemRec = (Array.isArray(data) ? (data[0] as Record<string, unknown>) : (data as Record<string, unknown>)) || {};
-                        const rawUoms = Array.isArray(itemRec['item_uoms'])
-                          ? (itemRec['item_uoms'] as unknown[])
-                          : Array.isArray(itemRec['uom'])
-                            ? (itemRec['uom'] as unknown[])
-                            : Array.isArray(itemRec['uoms'])
-                              ? (itemRec['uoms'] as unknown[])
-                              : [];
-                        const uomOpts = Array.isArray(rawUoms)
-                          ? rawUoms.map((uu) => {
-                            const u = uu as Record<string, unknown>;
-                            return {
-                              value: String(u['id'] ?? u['uom_id'] ?? ""),
-                              label: String(u['name'] ?? u['uom_name'] ?? u['label'] ?? ""),
-                              price: String(u['price'] ?? u['uom_price'] ?? u['unit_price'] ?? "0"),
-                            };
-                          })
-                          : [];
-
-                        if (uomOpts.length > 0) {
-                          setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
-                          const first = uomOpts[0];
-                          if (first) {
-                            handleTableChange(row.id, "uom", first.value);
-                            handleTableChange(row.id, "price", first.price || "0");
+                      // Priority 2: Use UOMs from selectedOrder with pricing (same as order page)
+                      if (selectedOrder && Array.isArray(selectedOrder.item_uoms)) {
+                        const uomOpts = selectedOrder.item_uoms.map((uom: any) => {
+                          let price = uom.price;
+                          // Override with specific pricing from the API response (same as order page)
+                          if (uom?.uom_type === "primary") {
+                            price = selectedOrder.pricing?.auom_pc_price || uom.price;
+                          } else if (uom?.uom_type === "secondary") {
+                            price = selectedOrder.pricing?.buom_ctn_price || uom.price;
                           }
-                        } else {
-                          setRowUomOptions((prev) => ({ ...prev, [row.id]: [] }));
+                          return {
+                            value: String(uom.id ?? ""),
+                            label: String(uom.name ?? ""),
+                            price: String(price ?? "0"),
+                          };
+                        });
+
+                        setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
+
+                        // Set price based on first UOM (same as order page)
+                        const firstUom = selectedOrder.item_uoms[0];
+                        if (firstUom) {
+                          handleTableChange(row.id, "uom", String(firstUom.id || ""));
+                          let firstPrice = firstUom.price;
+                          if (firstUom.uom_type === "primary") {
+                            firstPrice = selectedOrder.pricing?.auom_pc_price || firstUom.price;
+                          } else if (firstUom.uom_type === "secondary") {
+                            firstPrice = selectedOrder.pricing?.buom_ctn_price || firstUom.price;
+                          }
+                          handleTableChange(row.id, "price", String(firstPrice || "0"));
                         }
-                      } catch (e) {
-                        console.error("Failed to fetch item details for UOMs", e);
-                        setRowUomOptions((prev) => ({ ...prev, [row.id]: [] }));
-                      } finally {
-                        setSkeleton((s) => ({ ...s, item: false }));
+                        return;
                       }
+
+                      // Fallback: no UOM data available
+                      setRowUomOptions((prev) => ({ ...prev, [row.id]: [] }));
+                      handleTableChange(row.id, "uom", "");
+                      handleTableChange(row.id, "price", "0");
                     }}
-                    onClear={() => {
-                      handleTableChange(row.id, "item", "");
-                      setRowUomOptions((prev) => {
-                        const newOpts = { ...prev };
-                        delete newOpts[row.id];
-                        return newOpts;
-                      });
-                    }}
+                    options={itemsOptions}
+                    placeholder="Search item"
+                    disabled={!form.customer}
                   />
                 ),
               },
@@ -696,14 +805,21 @@ export default function AddEditCapsCollection() {
           }}
         />
         <div className="mt-4">
-          <button
-            type="button"
-            className="text-[#E53935] flex items-center gap-2 font-medium"
-            onClick={handleAddRow}
-          >
-            <Icon icon="material-symbols:add-circle-outline" width={20} />
-            Add New Item
-          </button>
+          {(() => {
+            // Disable add when there's already an empty/incomplete item row
+            const hasEmptyRow = tableData.some(row => !row.item || !row.uom);
+            return (
+              <button
+                type="button"
+                disabled={hasEmptyRow}
+                className={`text-[#E53935] font-medium text-[16px] flex items-center gap-2 ${hasEmptyRow ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => { if (!hasEmptyRow) handleAddRow(); }}
+              >
+                <Icon icon="material-symbols:add-circle-outline" width={20} />
+                Add New Item
+              </button>
+            );
+          })()}
         </div>
 
         <hr className="my-6 w-full text-[#D5D7DA]" />
@@ -719,8 +835,9 @@ export default function AddEditCapsCollection() {
           </button>
           <SidebarBtn
             isActive={!submitting}
-            label={isEditMode ? "Update CAPS Collection" : "Create CAPS Collection"}
+            label={submitting ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update CAPS Collection" : "Create CAPS Collection")}
             onClick={handleSubmit}
+            disabled={submitting || !form.warehouse || !form.customer || tableData.some(row => !row.item || !row.uom)}
           />
         </div>
       </ContainerCard>
