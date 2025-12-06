@@ -435,3 +435,34 @@ export const iroViewList = async (id: string) => {
     return handleError(error);
   }
 };
+
+
+export const bulkTransferList = async ( params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/bulk-transfer/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const addBulkTransfer = async (body: object) => {
+  try {
+    const res = await API.post(`/api/assets/bulk-transfer/add`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addAllocate = async (body: object) => {
+  try {
+    const res = await API.post(`/api/assets/bulk-transfer/allocate-assets`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
