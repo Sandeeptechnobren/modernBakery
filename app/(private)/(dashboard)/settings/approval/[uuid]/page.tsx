@@ -55,89 +55,79 @@ type NewFlow = {
 };
 
 function convertWorkflow(oldData: any) {
-
-
     return {
-        workflow_id:oldData.workflow_id,
+        workflow_id: oldData.workflow_id,
         approvalName: oldData.name,
         description: oldData.description,
         status: oldData.is_active ? "1" : "0",
         steps: oldData.steps.map((step: any) => {
-           const useIds: any = []
- const roleIds: any = []
+            const useIds: any = []
+            const roleIds: any = []
 
-            step.approvers
-                .filter((a: any) => {
-                    if (a.type === "USER") {
-                        useIds.push(a.user_id.toString())
-                    }
+            step.approvers.filter((a: any) => {
+                if (a.type === "USER") {
+                    useIds.push(a.user_id.toString())
+                }
+            })
 
-
-
-                })
-
-                 step.approvers
-                .filter((a: any) => {
-                    if (a.type === "ROLE") {
-                        roleIds.push(a.role_id.toString())
-                    }
-
-
-
-                })
+            step.approvers.filter((a: any) => {
+                if (a.type === "ROLE") {
+                    roleIds.push(a.role_id.toString())
+                }
+            })
 
             return {
                 ...step,
-                id:step.step_order,
-                step_id:step.step_order,
+                id: step.step_order,
+                step_id: step.step_id, // Use the actual step_id from API response
                 step_order: step.step_order,
                 title: step.title,
                 condition: step.approval_type,
                 approvalMessage: step.message,
                 notificationMessage: step.notification,
                 targetType: step.approvers.filter((a: any) => a.type === "USER").length > 0 ? "2" : "1",
-                selectedCustomer: step.approvers.filter((a: any) => a.type === "USER").length>0?useIds:[],
-                formType:step.permissions,
-                
-                selectedRole: step.approvers.filter((a: any) => a.type !== "USER").length>0?roleIds:[]
+                selectedCustomer: step.approvers.filter((a: any) => a.type === "USER").length > 0 ? useIds : [],
+                formType: step.permissions,
+                selectedRole: step.approvers.filter((a: any) => a.type !== "USER").length > 0 ? roleIds : []
             }
         })
-
-
     };
 }
 
 
 export function convertToNewFlow(old: any): any {
     return {
-        workflow_id:old.workflow_id,
+        workflow_id: old.workflow_id,
         name: old.approvalName,
         description: old.description,
         is_active: old.status === "1",
 
-        steps: old.steps.map((step:any, index:any) => {
+        steps: old.steps.map((step: any, index: any) => {
             // convert permissions
-            const permissions: string[] = step.formType
+            const permissions: string[] = step.formType;
             // approval type
             const approvalType = step.condition || "OR";
-
             // title logic
-            const title = `Step ${index + 1}`;
+            const title = step.title || `Step ${index + 1}`;
 
-            return {
-                ...step,
-
+            // Build the step object
+            const stepData: any = {
                 step_order: index + 1,
-                id:index + 1,
-                step_id:index + 1,
                 title: title,
                 approval_type: approvalType,
-                message: step.approvalMessage || null,
-                notification: step.notificationMessage || null,
+                message: step.approvalMessage,
+                notification: step.notificationMessage,
                 permissions: permissions,
                 user_ids: (step.selectedCustomer ?? step.customer_id ?? []).map(Number),
                 role_ids: (step.selectedRole ?? step.role_id ?? []).map(Number)
             };
+
+            // Only include step_id if it exists (for existing steps being updated)
+            if (step.step_id) {
+                stepData.step_id = step.step_id;
+            }
+
+            return stepData;
         })
     };
 }

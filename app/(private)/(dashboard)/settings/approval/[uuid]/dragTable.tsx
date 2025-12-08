@@ -121,16 +121,25 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
             return alert("Please select target type and role/customer!");
 
         if (editingId) {
-            console.log(editingId,"editi")
-             steps[editingIndex] = {...form}
-             setSteps([...steps])
+            console.log(editingId, "editingId", editingIndex);
+            // Update the step at the editing index
+            const updatedSteps = [...steps];
+            updatedSteps[editingIndex] = {
+                ...updatedSteps[editingIndex],
+                ...form,
+                id: updatedSteps[editingIndex].id,
+                step_id: updatedSteps[editingIndex].step_id,
+            };
+            setSteps(updatedSteps);
             setEditingId(null);
+            setEditingIndex(null);
         } else {
             // ensure boolean flags are set according to selected form types
             const newStep: ApprovalStep = { id: Date.now().toString(), ...form } as ApprovalStep;
             setSteps([...steps, newStep]);
         }
 
+        // Reset form
         setForm({
             formType: [],
             condition: "",
@@ -150,23 +159,27 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
         });
     };
 
-    const handleEdit = (id: string,index:number) => {
-        console.log(id,"editId")
-        const step = steps.find((s) => s.step_id === id)?steps.find((s) => s.step_id === id):steps.find((s:any) => s.step_id === id);
+    const handleEdit = (id: string, index: number) => {
+        console.log(id, "editId");
+        // Find step by either id or step_id
+        const step = steps.find((s) => s.id === id || s.step_id === id);
         if (step) {
-
+            console.log("Found step:", step);
             // normalize formType to array and keep boolean flags
             setForm({
                 ...step,
                 formType: Array.isArray(step?.formType) ? step?.formType : step?.formType ? [String(step?.formType)] : [],
                 selectedRole: step?.selectedRole ?? [],
-                condition:step.condition,
+                condition: step.condition,
+                targetType: step.targetType,
                 role_id: step?.selectedRole ?? [],
                 customer_id: step?.selectedCustomer ?? [],
                 selectedCustomer: step?.selectedCustomer ?? [],
+                approvalMessage: step?.approvalMessage ?? "",
+                notificationMessage: step?.notificationMessage ?? "",
             } as any);
-            setEditingId(id);
-            setEditingIndex(index)
+            setEditingId(step.id || step.step_id);
+            setEditingIndex(index);
         }
     };
 
