@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import InputFields from "@/app/components/inputFields";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import {
@@ -40,9 +40,9 @@ interface ApprovalStep {
 }
 
 interface User {
-          id: string | number;
-          name: string;
-        }
+  id: string | number;
+  name: string;
+}
 
 
 const targetTypeOptions: OptionType[] = [
@@ -66,17 +66,17 @@ const conditionOptions: OptionType[] = [
   { value: "OR", label: "OR" },
 ];
 
-const formTypeOptions: OptionType[] =[
-    { value: "ADD", label: "ADD" },
-    { value: "APPROVE", label: "APPROVE" },
-    { value: "REJECT", label: "REJECT" },
-    { value: "UPDATE", label: "UPDATE" },
-    { value: "RETURN_BACK", label: "RETURN_BACK" },
+const formTypeOptions: OptionType[] = [
+  { value: "ADD", label: "ADD" },
+  { value: "APPROVE", label: "APPROVE" },
+  { value: "REJECT", label: "REJECT" },
+  { value: "UPDATE", label: "UPDATE" },
+  { value: "RETURN_BACK", label: "RETURN_BACK" },
 ];
 
-export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps}: {roleListData:OptionType[],usersData:OptionType[],steps:ApprovalStep[],setSteps:React.Dispatch<React.SetStateAction<ApprovalStep[]>>}) {
+export default function ApprovalFlowTable({ roleListData, usersData, steps, setSteps }: { roleListData: OptionType[], usersData: OptionType[], steps: ApprovalStep[], setSteps: React.Dispatch<React.SetStateAction<ApprovalStep[]>> }) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [userOptions,setUserOptions] = useState<OptionType[]>([]);
+  const [userOptions, setUserOptions] = useState<OptionType[]>([]);
 
   type FormState = {
     formType: string[];
@@ -120,10 +120,10 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
 
     if (editingId) {
       const flags = {
-        allowApproval: (form.formType || []).includes("Allow Approval"),
-        allowReject: (form.formType || []).includes("Allow Reject"),
-        returnToStepNo: (form.formType || []).includes("Return To Step No"),
-        canEditBeforeApproval: (form.formType || []).includes("Can Edit Before Approval"),
+        allowApproval: (form.formType || []).includes("APPROVE"),
+        allowReject: (form.formType || []).includes("REJECT"),
+        returnToStepNo: (form.formType || []).includes("RETURN_BACK"),
+        canEditBeforeApproval: (form.formType || []).includes("UPDATE"),
       };
       setSteps((prev) =>
         prev.map((s) => (s.id === editingId ? { ...s, ...form, ...flags } : s))
@@ -132,10 +132,10 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
     } else {
       // ensure boolean flags are set according to selected form types
       const flags = {
-        allowApproval: (form.formType || []).includes("Allow Approval"),
-        allowReject: (form.formType || []).includes("Allow Reject"),
-        returnToStepNo: (form.formType || []).includes("Return To Step No"),
-        canEditBeforeApproval: (form.formType || []).includes("Can Edit Before Approval"),
+        allowApproval: (form.formType || []).includes("APPROVE"),
+        allowReject: (form.formType || []).includes("REJECT"),
+        returnToStepNo: (form.formType || []).includes("RETURN_BACK"),
+        canEditBeforeApproval: (form.formType || []).includes("UPDATE"),
       };
       const newStep: ApprovalStep = { id: Date.now().toString(), ...form, ...flags } as ApprovalStep;
       setSteps([...steps, newStep]);
@@ -225,37 +225,38 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
       <div className="bg-white shadow-md rounded-2xl p-6 space-y-5">
         <div className="grid grid-cols-2 gap-4">
           {/* New Form Type */}
-            <InputFields
+          <InputFields
             required
-            label="Form Type"
+            label="Permissions"
+            multiSelectChips={true}
             name="formType"
             value={form.formType}
             isSingle={false}
             options={formTypeOptions}
             width="full"
-              onChange={(e: unknown) => {
-                // Normalize InputFields output which may be an array of strings
-                let selected: string[] = [];
-                if (Array.isArray(e)) {
-                  selected = e as string[];
-                } else if (typeof e === 'object' && e !== null && 'target' in e) {
-                  const target = (e as unknown as { target?: { value?: string | string[]; selectedOptions?: HTMLCollectionOf<HTMLOptionElement> } }).target;
-                  if (Array.isArray(target?.value)) {
-                    selected = target.value as string[];
-                  } else if (target?.selectedOptions) {
-                    selected = Array.from(target.selectedOptions as HTMLCollectionOf<HTMLOptionElement>).map((o) => o.value);
-                  } else if (typeof target?.value === 'string' && target.value !== '') {
-                    selected = [target.value];
-                  }
+            onChange={(e: unknown) => {
+              // Normalize InputFields output which may be an array of strings
+              let selected: string[] = [];
+              if (Array.isArray(e)) {
+                selected = e as string[];
+              } else if (typeof e === 'object' && e !== null && 'target' in e) {
+                const target = (e as unknown as { target?: { value?: string | string[]; selectedOptions?: HTMLCollectionOf<HTMLOptionElement> } }).target;
+                if (Array.isArray(target?.value)) {
+                  selected = target.value as string[];
+                } else if (target?.selectedOptions) {
+                  selected = Array.from(target.selectedOptions as HTMLCollectionOf<HTMLOptionElement>).map((o) => o.value);
+                } else if (typeof target?.value === 'string' && target.value !== '') {
+                  selected = [target.value];
                 }
-                const flags = {
-                  allowApproval: selected.includes("Allow Approval"),
-                  allowReject: selected.includes("Allow Reject"),
-                  returnToStepNo: selected.includes("Return To Step No"),
-                  canEditBeforeApproval: selected.includes("Can Edit Before Approval"),
-                };
-                setForm({ ...form, formType: selected, ...flags });
-              }}
+              }
+              const flags = {
+                allowApproval: selected.includes("APPROVE"),
+                allowReject: selected.includes("REJECT"),
+                returnToStepNo: selected.includes("RETURN_BACK"),
+                canEditBeforeApproval: selected.includes("UPDATE"),
+              };
+              setForm({ ...form, formType: selected, ...flags });
+            }}
           />
           <InputFields
             required
@@ -277,46 +278,46 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
             }
           />
           {form.targetType && (
-          <>
-            {form.targetType === "1" && (
-              <InputFields
-                required
-                label="Role"
-                name="roleOrCustomer"
-                value={form.role_id}
-                isSingle={false}
-                options={roleListData}
-                width="full"
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-                  const val = e.target.value;
-                  const selected = roleListData.find((r) => r.value === val) ?? null;
-                  console.log(e.target.value,"mlk")
+            <>
+              {form.targetType === "1" && (
+                <InputFields
+                  required
+                  label="Role"
+                  name="roleOrCustomer"
+                  value={form.role_id}
+                  isSingle={false}
+                  options={roleListData}
+                  width="full"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+                    const val = e.target.value;
+                    const selected = roleListData.find((r) => r.value === val) ?? null;
+                    console.log(e.target.value, "mlk")
 
-                  setForm({ ...form, role_id: val, selectedRole: e.target.value });
-                }}
-              />
-            )}
-            {form.targetType === "2" && (
-              <InputFields
-                required
-                label="User"
-                name="user_id"
-                value={form.customer_id}
-                isSingle={false}
-                options={userOptions}
-                width="full"
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-                  const val = e.target.value;
-                  const selected = userOptions.find((u) => u.value === val) ?? null;
-                  console.log(e.target.value,"mlk")
-                  setForm({ ...form, customer_id: val, selectedCustomer: e.target.value });
-                }}
-              />
-            )}
-    
-          </>
-        )}
-        {form.targetType? <InputFields
+                    setForm({ ...form, role_id: val, selectedRole: e.target.value });
+                  }}
+                />
+              )}
+              {form.targetType === "2" && (
+                <InputFields
+                  required
+                  label="User"
+                  name="user_id"
+                  value={form.customer_id}
+                  isSingle={false}
+                  options={userOptions}
+                  width="full"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+                    const val = e.target.value;
+                    const selected = userOptions.find((u) => u.value === val) ?? null;
+                    console.log(e.target.value, "mlk")
+                    setForm({ ...form, customer_id: val, selectedCustomer: e.target.value });
+                  }}
+                />
+              )}
+
+            </>
+          )}
+          {form.targetType ? <InputFields
             required
             label="Condition"
             name="condition"
@@ -327,9 +328,9 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
             onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
               setForm({ ...form, condition: e.target.value })
             }
-          />:""}
+          /> : ""}
         </div>
-     {/* {form.targetType?   <div className="grid grid-cols-2 gap-4">
+        {/* {form.targetType?   <div className="grid grid-cols-2 gap-4">
 
         <InputFields
                 required
@@ -364,7 +365,7 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
               </div>:""} */}
 
         {/* Role / Customer */}
-        
+
 
         {/* Checkboxes */}
         {/* <div className="grid grid-cols-4 gap-2 mt-3">
@@ -397,7 +398,7 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
 
         {/* Messages */}
         <div className="grid grid-cols-2 gap-4">
-            <InputFields
+          <InputFields
             required
             width="full"
             label="Approval Message"
@@ -422,7 +423,7 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
           onClick={handleAddOrUpdate}
           className="bg-[]-600 text-white"
           isActive={true}
-         
+
         >
           {editingId ? "Update Step" : "Add Step"}
         </SidebarBtn>
@@ -457,23 +458,24 @@ export default function ApprovalFlowTable({roleListData,usersData,steps,setSteps
               </thead>
               <tbody>
                 {steps.map((step, idx) => {
-                  
-                                    console.log(step,"hii461")
-                   
-                  
-                  return(
-                  <SortableRow
-                    key={step.id}
-                    step={step}
-                    index={idx}
-                    allSteps={steps}
-                    onEdit={handleEdit}
-                    onConditionChange={updateCondition}
-                    onRelatedStepsChange={updateRelatedSteps}
-                    roleOptions={roleListData}
-                    userOptions={userOptions}
-                  />
-                )})}
+
+                  console.log(step, "hii461")
+
+
+                  return (
+                    <SortableRow
+                      key={step.id}
+                      step={step}
+                      index={idx}
+                      allSteps={steps}
+                      onEdit={handleEdit}
+                      onConditionChange={updateCondition}
+                      onRelatedStepsChange={updateRelatedSteps}
+                      roleOptions={roleListData}
+                      userOptions={userOptions}
+                    />
+                  )
+                })}
               </tbody>
             </table>
           </SortableContext>
@@ -515,36 +517,36 @@ function SortableRow({
     }));
 
   return (
-    <tr  className="text-[14px] bg-white text-[#535862]">
-      <td  draggable={true} ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
-  <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
+    <tr className="text-[14px] bg-white text-[#535862]">
+      <td draggable={true} ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
+      <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? "Role" : "User"}</td>
-  <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1"?<InputFields
-                
-                value={step.selectedRole}
-                isSingle={false}
-                options={roleOptions}
-                width="full"
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {}}
-              />:"-"}</td>
-                <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "2"?<InputFields
-                
-                value={step.selectedCustomer}
-                isSingle={false}
-                options={userOptions}
-                width="full"
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {}}
-              />:"-"}</td>
+      <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? <InputFields
 
-     <td className="px-[24px] py-[12px] bg-white   ">{step.condition}</td>
+        value={step.selectedRole}
+        isSingle={false}
+        options={roleOptions}
+        width="full"
+        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
+      /> : "-"}</td>
+      <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "2" ? <InputFields
+
+        value={step.selectedCustomer}
+        isSingle={false}
+        options={userOptions}
+        width="full"
+        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
+      /> : "-"}</td>
+
+      <td className="px-[24px] py-[12px] bg-white   ">{step.condition}</td>
       {/* === Related Steps Multi Select === */}
-     
+
       <td className="px-[24px] py-[12px] bg-white   ">{step.approvalMessage}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.notificationMessage}</td>
       <td className="px-[24px] py-[12px] bg-white    text-center">
         <SidebarBtn
           onClick={() => onEdit(step.id)}
-          className="text-blue-600 hover:text-blue-800"
+          className="text-red-600 hover:text-red-800"
         >
           <Icon icon="mdi:pencil" width="20" height="20" />
         </SidebarBtn>

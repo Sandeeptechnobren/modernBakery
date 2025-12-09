@@ -224,8 +224,9 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                     {/* New Form Type */}
                     <InputFields
                         required
-                        label="Form Type"
+                        label="Permissions"
                         name="formType"
+                        multiSelectChips={true}
                         value={form.formType}
                         isSingle={false}
                         options={formTypeOptions}
@@ -374,7 +375,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                             <thead>
                                <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
                   <th className="p-2">Step</th>
-                  <th className="p-2">Form Type</th>
+                  <th className="p-2">Permission</th>
                   <th className="p-2">Target Type</th>
                   <th className="p-2">Role</th>
                   <th className="p-2">User</th>
@@ -471,7 +472,7 @@ function SortableRow({
                 <td className="px-[24px] py-[12px] bg-white text-center">
                     <SidebarBtn
                         onClick={() => onEdit(step.id ? step.id : step.step_id, index)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-red-600 hover:text-red-800"
                     >
                         <Icon icon="mdi:pencil" width="20" height="20" />
                     </SidebarBtn>

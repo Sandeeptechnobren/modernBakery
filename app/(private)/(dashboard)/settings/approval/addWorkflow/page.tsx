@@ -61,12 +61,15 @@ export function convertToNewFlow(old: OldFlow): any {
     is_active: old.status === "1",
 
     steps: old.steps.map((step, index) => {
-      // convert permissions
-      const permissions: string[] = [];
-      if (step.formType?.includes("Allow Approval")) permissions.push("APPROVE");
-      if (step.formType?.includes("Allow Reject")) permissions.push("REJECT");
-      if (step.formType?.includes("Return To Step No")) permissions.push("RETURN_BACK");
-      if (step.formType?.includes("Can Edit Before Approval")) permissions.push("EDIT_BEFORE_APPROVAL");
+
+      // Normalize formType to array to handle both string and string[]
+      const formTypes = Array.isArray(step.formType) ? step.formType : [step.formType];
+      
+    //   if (formTypes.includes("ADD")) permissions.push("ADD");
+    //   if (formTypes.includes("APPROVE")) permissions.push("APPROVE");
+    //   if (formTypes.includes("REJECT")) permissions.push("REJECT");
+    //   if (formTypes.includes("RETURN_BACK")) permissions.push("RETURN_BACK");
+    //   if (formTypes.includes("UPDATE")) permissions.push("EDIT_BEFORE_APPROVAL");
 
       // approval type
       const approvalType = step.condition || "OR";
@@ -80,7 +83,7 @@ export function convertToNewFlow(old: OldFlow): any {
         approval_type: approvalType,
         message: step.approvalMessage || null,
         notification: step.notificationMessage || null,
-        permissions: permissions,
+        permissions: formTypes,
         user_ids: (step.selectedCustomer ?? step.customer_id ?? []).map(Number),
         role_ids: (step.selectedRole ?? step.role_id ?? []).map(Number)
       };
@@ -123,7 +126,7 @@ const ApprovalSchema = Yup.object().shape({
     approvalName: Yup.string().required("Approval name is required"),
     description: Yup.string().required("Description is required"),
     // modules: Yup.string().required(),
-    formType: Yup.string().required("Form type is required"),
+    formType: Yup.string().required("Permission is required"),
     role: Yup.string().required("Role is required"),
     status: Yup.string().required("Role is required"),
     users: Yup.array().min(1, "Select at least one user").required(),
@@ -286,9 +289,10 @@ export default function AddApprovalFlow() {
             // Full form schema validation
             // await ApprovalSchema.validate(form, { abortEarly: false });
             setLoading(true);
+            console.log("Submitting Data:", result);
             const resultData = await approvalAdd(result)
 
-            console.log("Submitting Data:", newFormData);
+  
              if(resultData.success)
             {
             showSnackbar("Approval Flow Created Successfully ✅", "success");

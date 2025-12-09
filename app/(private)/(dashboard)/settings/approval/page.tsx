@@ -10,6 +10,7 @@ import StatusBtn from "@/app/components/statusBtn2";
 import { workFlowList } from "@/app/services/allApi";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 // ---- Your JSON pasted here ----
 // const WORKFLOW_DATA:any = [
@@ -102,6 +103,7 @@ import { useEffect, useState } from "react";
 
 export default function WorkflowTable() {
     const [refreshKey, setRefreshKey] = useState(0);
+    const router = useRouter();
 
     // ------------------ COLUMNS --------------------
     const columns = [
@@ -224,8 +226,8 @@ export default function WorkflowTable() {
                         {
                             icon: "lucide:edit-2",
                             onClick: (row: TableDataType) => {
-                                window.location.href = `/settings/approval/${row.uuid}`;
                                 localStorage.setItem("selectedFlow",JSON.stringify(row))
+                                router.push(`/settings/approval/${row.uuid}`);
                             },
                         },
                     ],
