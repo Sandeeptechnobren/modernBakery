@@ -446,24 +446,26 @@ function SortableRow({
                 <td className="px-[24px] py-[12px] bg-white">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
                 <td className="px-[24px] py-[12px] bg-white">{step.targetType === "1" ? "Role" : "User"}</td>
                 <td className="px-[24px] py-[12px] bg-white">{step.targetType === "1" ? (
-                    <InputFields
-                        value={step.selectedRole}
-                        isSingle={false}
-                        options={roleOptions}
-                        width="full"
-                        multiSelectChips={true}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
-                    />
+                    // <InputFields
+                    //     value={step.selectedRole}
+                    //     isSingle={false}
+                    //     options={roleOptions}
+                    //     width="full"
+                    //     multiSelectChips={true}
+                    //     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
+                    // />
+                    step.selectedRole?.map((role: any) => roleOptions.find(r => r.value === role)?.label).join(", ")
                 ) : "-"}</td>
                 <td className="px-[24px] py-[12px] bg-white">{step.targetType === "2" ? (
-                    <InputFields
-                        value={step.selectedCustomer}
-                        isSingle={false}
-                        options={userOptions}
-                        width="full"
-                        multiSelectChips={true}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
-                    />
+                    // <InputFields
+                    //     value={step.selectedCustomer}
+                    //     isSingle={false}
+                    //     options={userOptions}
+                    //     width="full"
+                    //     multiSelectChips={true}
+                    //     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
+                    // />
+                    step.selectedCustomer?.map((user: any) => userOptions.find(u => u.value === user)?.label).join(", ")
                 ) : "-"}</td>
                 <td className="px-[24px] py-[12px] bg-white">{step.condition}</td>
                 <td className="px-[24px] py-[12px] bg-white">{step.approvalMessage}</td>
@@ -471,10 +473,16 @@ function SortableRow({
                 <td className="px-[24px] py-[12px] bg-white text-center">
                     <SidebarBtn
                         onClick={() => onEdit(step.id ? step.id : step.step_id, index)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-600 hover:text-blue-800 cursor-pointer"
                     >
                         <Icon icon="mdi:pencil" width="20" height="20" />
                     </SidebarBtn>
+                    {/* <SidebarBtn
+                        onClick={() => onEdit(step.id ? step.id : step.step_id, index)}
+                        className="text-blue-600 hover:text-blue-800"
+                    >
+                        <Icon icon="lucide:trash-2" width="20" height="20" />
+                    </SidebarBtn> */}
                 </td>
             </tr>
         ) : <><Skeleton /></>

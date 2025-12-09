@@ -519,22 +519,26 @@ function SortableRow({
       <td  draggable={true} ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
   <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? "Role" : "User"}</td>
-  <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1"?<InputFields
-                
-                value={step.selectedRole}
-                isSingle={false}
-                options={roleOptions}
-                width="full"
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {}}
-              />:"-"}</td>
-                <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "2"?<InputFields
-                
-                value={step.selectedCustomer}
-                isSingle={false}
-                options={userOptions}
-                width="full"
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {}}
-              />:"-"}</td>
+  <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1"?
+              // <InputFields
+              //   value={step.selectedRole}
+              //   isSingle={false}
+              //   options={roleOptions}
+              //   width="full"
+              //   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {}}
+              // />
+              step.selectedRole?.map((role: any) => role.label).join(", ")
+              :"-"}</td>
+                <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "2"?
+              //     <InputFields
+              //   value={step.selectedCustomer}
+              //   isSingle={false}
+              //   options={userOptions}
+              //   width="full"
+              //   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {}}
+              // />
+              step.selectedCustomer?.map((user: any) => user.label).join(", ")
+              :"-"}</td>
 
      <td className="px-[24px] py-[12px] bg-white   ">{step.condition}</td>
       {/* === Related Steps Multi Select === */}
