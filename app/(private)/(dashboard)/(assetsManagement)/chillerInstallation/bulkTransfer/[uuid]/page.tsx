@@ -101,7 +101,7 @@ export default function AddRoute() {
     }
   }, [mode]);
 
-  // ✅ FIXED STOCK FETCHING LOGIC
+  // ✅ FETCH STOCK
   const fetchModelStock = async (modelId: string) => {
     try {
       setLoading(true);
@@ -115,20 +115,41 @@ export default function AddRoute() {
       setForm((prev: any) => ({
         ...prev,
         available_stock: stockValue,
+        requestes_asset: "", // ✅ reset requested when model changes
       }));
     } catch {
       showSnackbar("Failed to fetch stock", "error");
       setForm((prev: any) => ({
         ...prev,
         available_stock: "0",
+        requestes_asset: "",
       }));
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ FORM CHANGE HANDLER
+  // ✅ STRICT INPUT CONTROL
   const handleChange = (field: string, value: string) => {
+    // ✅ Allow ONLY numbers
+    if (field === "available_stock" || field === "requestes_asset") {
+      if (!/^\d*$/.test(value)) return;
+    }
+
+    // ✅ Block Requested > Available Stock
+    if (field === "requestes_asset") {
+      const available = Number(form.available_stock || 0);
+      const requested = Number(value || 0);
+
+      if (requested > available) {
+        showSnackbar(
+          `Only limited stock is available. Please reduce the requested quantity. (${available})`,
+          "error"
+        );
+        return;
+      }
+    }
+
     setForm((prev: any) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
 
@@ -154,7 +175,13 @@ export default function AddRoute() {
         area_id: yup.string().required(),
         warehouse_id: yup.string().required(),
         model_id: yup.string().required(),
-        requestes_asset: yup.string().required(),
+        requestes_asset: yup
+          .number()
+          .required()
+          .max(
+            Number(form.available_stock || 0),
+            "Requested cannot exceed stock"
+          ),
         available_stock: yup.string().required(),
         status: yup.string().required(),
       });
@@ -258,12 +285,17 @@ export default function AddRoute() {
         <InputFields
           label="Available Stock"
           value={form.available_stock}
-          disabled onChange={() => { }} />
+          disabled
+          onChange={() => { }}
+        />
 
         <InputFields
           label="Requested Chiller"
+          type="number"
           value={form.requestes_asset}
           onChange={(e) => handleChange("requestes_asset", e.target.value)}
+          min={0}
+          max={Number(form.available_stock || 0)}
         />
 
         <InputFields

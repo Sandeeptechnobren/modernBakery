@@ -228,7 +228,7 @@ export default function BulkTransferListPage() {
                         {
                             icon: "lucide:eye",
                             onClick: (row: any) => {
-                                router.push(`/chillerInstallation/bulkTransfer/view/${row.uuid}`);
+                                router.push(`/chillerInstallation/bulkTransfer/Detail/${row.uuid}`);
                             },
                         },
                     ],
