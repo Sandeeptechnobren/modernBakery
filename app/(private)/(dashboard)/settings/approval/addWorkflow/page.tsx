@@ -26,6 +26,7 @@ type OldStep = {
   customer_id?: string[] | [];
   approvalMessage: string;
   notificationMessage: string;
+  confirmationMessage?: string;
 };
 
 type OldFlow = {
@@ -42,6 +43,7 @@ type NewStep = {
   approval_type: string;
   message: string | null;
   notification: string | null;
+  confirmationMessage: string | null;
   permissions: string[];
   user_ids: number[];
   role_ids?: number[];
@@ -83,6 +85,7 @@ export function convertToNewFlow(old: OldFlow): any {
         approval_type: approvalType,
         message: step.approvalMessage || null,
         notification: step.notificationMessage || null,
+        confirmationMessage: step.confirmationMessage || null,
         permissions: formTypes,
         user_ids: (step.selectedCustomer ?? step.customer_id ?? []).map(Number),
         role_ids: (step.selectedRole ?? step.role_id ?? []).map(Number)
@@ -147,6 +150,7 @@ export default function AddApprovalFlow() {
   returnToStepNo: boolean;
   canEditBeforeApproval: boolean;
   approvalMessage: string;
+  confirmationMessage:string;
   notificationMessage: string;
   condition: string; // condition expression or type (e.g. "AND" | "OR")
   conditionType: string; // AND / OR

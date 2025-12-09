@@ -26,6 +26,7 @@ type OldStep = {
     customer_id?: string[] | [];
     approvalMessage: string;
     notificationMessage: string;
+    confirmationMessage?: string;
 };
 
 type OldFlow = {
@@ -42,6 +43,7 @@ type NewStep = {
     approval_type: string;
     message: string | null;
     notification: string | null;
+    confirmationMessage: string | null;
     permissions: string[];
     user_ids: number[];
     role_ids?: number[];
@@ -85,6 +87,7 @@ function convertWorkflow(oldData: any) {
                 condition: step.approval_type,
                 approvalMessage: step.message,
                 notificationMessage: step.notification,
+                confirmationMessage: step.confirmationMessage,
                 targetType: step.approvers.filter((a: any) => a.type === "USER").length > 0 ? "2" : "1",
                 selectedCustomer: step.approvers.filter((a: any) => a.type === "USER").length > 0 ? useIds : [],
                 formType: step.permissions,
@@ -112,6 +115,7 @@ export function convertToNewFlow(old: any): any {
                 approval_type: approvalType,
                 message: step.approvalMessage,
                 notification: step.notificationMessage,
+                confirmationMessage: step.confirmationMessage || null,
                 permissions: permissions,
                 user_ids: (step.selectedCustomer ?? step.customer_id ?? []).map(Number),
                 role_ids: (step.selectedRole ?? step.role_id ?? []).map(Number)
@@ -184,6 +188,7 @@ export default function AddApprovalFlow() {
         canEditBeforeApproval: boolean;
         approvalMessage: string;
         notificationMessage: string;
+        confirmationMessage: string;
         condition: string; // condition expression or type (e.g. "AND" | "OR")
         conditionType: string; // AND / OR
         relatedSteps: string[]; // multi-selection
@@ -342,6 +347,7 @@ export default function AddApprovalFlow() {
             // Full form schema validation
             // await ApprovalSchema.validate(form, { abortEarly: false });
             setLoading(true);
+            console.log("approvalWorkfolowUpdate", result)
             const resultData = await approvalWorkfolowUpdate(result)
 
             console.log("Submitting Data:", resultData);

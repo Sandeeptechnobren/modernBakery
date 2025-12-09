@@ -10,12 +10,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import Button from "@mui/material/Button";
 import { Icon } from "@iconify-icon/react";
-import Toggle from "@/app/components/toggle";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { authUserList } from "@/app/services/allApi";
-import { customer } from "@/app/(private)/data/customerDetails";
 
 type OptionType = { value: string; label: string };
 
@@ -23,6 +20,7 @@ type SelectedOption = OptionType | null;
 
 interface ApprovalStep {
   id: string;
+  stepId:string;
   targetType: string;
   condition: string;
   roleOrCustomer: string;
@@ -32,6 +30,7 @@ interface ApprovalStep {
   canEditBeforeApproval: boolean;
   approvalMessage: string;
   notificationMessage: string;
+  confirmationMessage: string;
   conditionType: string; // AND / OR
   relatedSteps: string[]; // multi-selection
   formType: string[] | string; // allow array or single value
@@ -92,6 +91,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
     canEditBeforeApproval: boolean;
     approvalMessage: string;
     notificationMessage: string;
+    confirmationMessage: string;
     conditionType: string;
     relatedSteps: string[];
   };
@@ -110,6 +110,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
     canEditBeforeApproval: false,
     approvalMessage: "",
     notificationMessage: "",
+    confirmationMessage: "",
     conditionType: "",
     relatedSteps: [],
   });
@@ -155,6 +156,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
       canEditBeforeApproval: false,
       approvalMessage: "",
       notificationMessage: "",
+      confirmationMessage: "",
       conditionType: "",
       relatedSteps: [],
     });
@@ -401,7 +403,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
           <InputFields
             required
             width="full"
-            label="Approval Message"
+            label="Approval Status"
             value={form.approvalMessage}
             onChange={(e) =>
               setForm({ ...form, approvalMessage: (e as React.ChangeEvent<HTMLInputElement>).target.value })
@@ -417,7 +419,17 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
               setForm({ ...form, notificationMessage: (e as React.ChangeEvent<HTMLInputElement>).target.value })
             }
           />
+           <InputFields
+            required
+            width="full"
+            label="Confirmation Message"
+            value={form.confirmationMessage}
+            onChange={(e) =>
+              setForm({ ...form, confirmationMessage: (e as React.ChangeEvent<HTMLInputElement>).target.value })
+            }
+          />
         </div>
+        
 
         <SidebarBtn
           onClick={handleAddOrUpdate}
@@ -433,7 +445,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
       <div className="bg-white shadow rounded-2xl p-4 overflow-x-auto">
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
-            items={steps.map((s) => s.id)}
+            items={steps.map((s) => s.stepId)}
             strategy={verticalListSortingStrategy}
           >
             <table className="table-auto min-w-max w-full text-sm">
@@ -453,6 +465,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                   {/* <th className="p-2">Related Steps</th> */}
                   <th className="p-2">Approval Msg</th>
                   <th className="p-2">Notification Msg</th>
+                  <th className="p-2">Confirmation  Msg</th>
                   <th className="p-2 text-center">Action</th>
                 </tr>
               </thead>
@@ -543,6 +556,7 @@ function SortableRow({
 
       <td className="px-[24px] py-[12px] bg-white   ">{step.approvalMessage}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.notificationMessage}</td>
+      <td className="px-[24px] py-[12px] bg-white   ">{step.confirmationMessage}</td>
       <td className="px-[24px] py-[12px] bg-white    text-center">
         <SidebarBtn
           onClick={() => onEdit(step.id)}
