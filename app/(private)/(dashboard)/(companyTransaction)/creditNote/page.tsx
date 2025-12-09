@@ -205,7 +205,7 @@ export default function CustomerInvoicePage() {
                                 },
                                 {
                                     key: "warehouse_id",
-                                    label: "Warehouse",
+                                    label: "Distribution",
                                     isSingle: false,
                                     multiSelectChips: true,
                                     options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],

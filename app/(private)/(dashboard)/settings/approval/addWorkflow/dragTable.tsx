@@ -66,11 +66,10 @@ const conditionOptions: OptionType[] = [
 ];
 
 const formTypeOptions: OptionType[] = [
-  { value: "ADD", label: "ADD" },
   { value: "APPROVE", label: "APPROVE" },
   { value: "REJECT", label: "REJECT" },
-  { value: "UPDATE", label: "UPDATE" },
-  { value: "RETURN_BACK", label: "RETURN_BACK" },
+  { value: "RETURN_BACK", label: "RETURN BACK" },
+  { value: "EDIT_BEFORE_APPROVAL", label: "EDIT BEFORE APPROVAL" },
 ];
 
 export default function ApprovalFlowTable({ roleListData, usersData, steps, setSteps }: { roleListData: OptionType[], usersData: OptionType[], steps: ApprovalStep[], setSteps: React.Dispatch<React.SetStateAction<ApprovalStep[]>> }) {
@@ -403,6 +402,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
           <InputFields
             required
             width="full"
+            placeholder="Pending,Success,Reject"
             label="Approval Status"
             value={form.approvalMessage}
             onChange={(e) =>

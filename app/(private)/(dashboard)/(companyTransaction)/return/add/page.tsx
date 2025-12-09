@@ -629,7 +629,7 @@ export default function PurchaseOrderAddEditPage() {
                       required
                       label="distributor"
                       name="warehouse"
-                      placeholder="Search warehouse"
+                      placeholder="Search distributors."
                       value={values.warehouse}
                       options={warehouseAllOptions}
                       searchable={true}

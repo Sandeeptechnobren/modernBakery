@@ -143,6 +143,7 @@ export default function AddApprovalFlow() {
     ];
     interface ApprovalStep {
   id: string;
+  stepId: string;
   targetType: string;
   roleOrCustomer: string;
   allowApproval: boolean;

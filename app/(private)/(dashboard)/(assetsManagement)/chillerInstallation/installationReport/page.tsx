@@ -7,79 +7,73 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
-import { irList } from "@/app/services/assetsApi";
+import { irList, irReportList } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 
-// ✅ TYPE FOR BULK TRANSFER API ITEM
-interface BulkTransferRow {
+// ✅ TYPE FOR INSTALLATION REPORT API ITEM
+interface InstallationReportRow {
     id: number;
     uuid: string;
-    transfer_no: string;
     osa_code: string;
-    region?: { id?: string; code?: string; name?: string; };
-    area?: { id?: string; code?: string; name?: string; };
-    warehouse?: { id?: string; code?: string; name?: string; };
-    model_number: { id?: string; code?: string; name?: string; };
-    requestes_asset: number;
-    available_stock: number;
-    approved_qty: string;
-    comment_reject: string;
+    iro_id: number;
+    salesman_id: number;
+    schedule_date: string;
     status: number;
+    created_user: number;
+    created_at: string;
+    iro_code: string;
+    warehouse_code: string;
+    warehouse_name: string;
+    salesman_code: string;
+    salesman_name: string;
+    count: number;
 }
 
-// ✅ TABLE COLUMNS (CLEANED)
+// ✅ TABLE COLUMNS FOR INSTALLATION REPORT
 const columns = [
     {
         key: "osa_code",
-        label: "OSA Code",
+        label: "IR Code",
         render: (row: any) => <p>{row.osa_code || "-"}</p>,
     },
     {
-        key: "region",
-        label: "Region",
-        render: (row: any) => (
-            <p>{row.region?.name || '-'}</p>
-        )
+        key: "iro_code",
+        label: "IRO Code",
+        render: (row: any) => <p>{row.iro_code || "-"}</p>,
     },
     {
-        key: "area",
-        label: "Area",
-        render: (row: any) => (
-            <p>{row.area?.name || '-'}</p>
-        ),
+        key: "warehouse_code",
+        label: "Warehouse Code",
+        render: (row: any) => <p>{row.warehouse_code || "-"}</p>,
     },
     {
-        key: "warehouse",
-        label: "Distributors",
-        render: (row: any) => (
-            <p>{row.warehouse?.name || '-'}</p>
-        ),
+        key: "warehouse_name",
+        label: "Warehouse Name",
+        render: (row: any) => <p>{row.warehouse_name || "-"}</p>,
     },
     {
-        key: "model_number",
-        label: "Model Number",
-        render: (row: any) => (
-            <p>{row.model_number?.name || '-'}</p>
-        ),
+        key: "salesman_code",
+        label: "Salesman Code",
+        render: (row: any) => <p>{row.salesman_code || "-"}</p>,
     },
     {
-        key: "requestes_asset",
-        label: "Requested Chiller",
-        render: (row: any) => <p>{row.requestes_asset}</p>,
+        key: "salesman_name",
+        label: "Salesman Name",
+        render: (row: any) => <p>{row.salesman_name || "-"}</p>,
     },
     {
-        key: "approved_qty",
-        label: "Approved Chiller",
-        render: (row: any) => <p>{row.approved_qty}</p>,
+        key: "schedule_date",
+        label: "Schedule Date",
+        render: (row: any) => <p>{row.schedule_date || "-"}</p>,
     },
     {
-        key: "comment_reject",
-        label: "Rejected Reason",
-        render: (row: any) => <p>{row.comment_reject || "-"}</p>,
+        key: "count",
+        label: "Chiller Count",
+        render: (row: any) => <p>{row.count || 0}</p>,
     },
     {
         key: "status",
@@ -113,21 +107,49 @@ export default function BulkTransferListPage() {
             try {
                 setLoading(true);
 
-                const result = await irList({
+                const result = await irReportList({
                     page: page.toString(),
                     per_page: pageSize.toString(),
                     ...appliedFilters,
                 });
 
+                // console.log("🔍 API Response:", result);
+                // console.log("🔍 Result Type:", typeof result);
+                // console.log("🔍 Is Array?:", Array.isArray(result));
+
+                // Handle direct array response
+                if (Array.isArray(result)) {
+                    // console.log("✅ Direct array response detected");
+                    return {
+                        data: result,
+                        total: result.length,
+                        currentPage: page,
+                        pageSize: result.length,
+                    };
+                }
+
+                // Handle object response with data property
+                if (result?.data) {
+                    // console.log("✅ Object response with data property");
+                    return {
+                        data: Array.isArray(result.data) ? result.data : [],
+                        total: result?.pagination?.total || result.data.length || 0,
+                        currentPage: result?.pagination?.current_page || page,
+                        pageSize: result?.pagination?.per_page || pageSize,
+                    };
+                }
+
+                // Fallback
+                console.warn("⚠️ Unexpected response structure");
                 return {
-                    data: Array.isArray(result?.data) ? result.data : [],
-                    total: result?.pagination?.total || 1,
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
+                    data: [],
+                    total: 0,
+                    currentPage: 1,
+                    pageSize: pageSize,
                 };
             } catch (error) {
-                console.error(error);
-                showSnackbar("Failed to fetch bulk transfer list", "error");
+                // console.error("❌ Error fetching installation reports:", error);
+                showSnackbar("Failed to fetch installation report list", "error");
 
                 return {
                     data: [],
@@ -141,7 +163,7 @@ export default function BulkTransferListPage() {
         },
         [setLoading, showSnackbar]
     );
-    
+
     const searchInvoices = useCallback(async (): Promise<searchReturnType> => {
         return { data: [], currentPage: 1, total: 0, pageSize: 20 };
     }, []);
@@ -161,26 +183,26 @@ export default function BulkTransferListPage() {
                     api: { list: fetchBulkTransfer, search: searchInvoices },
 
                     header: {
-                        title: "Bulk Transfer",
+                        title: "Installation Report",
                         columnFilter: true,
                         searchBar: false,
                         actions: [
                             <SidebarBtn
                                 key="add"
-                                href="/chillerInstallation/bulkTransfer/add"
+                                href="/chillerInstallation/installationReport/add"
                                 leadingIcon="lucide:plus"
                                 label="Add"
                                 labelTw="hidden lg:block"
                                 isActive
                             />,
-                            <SidebarBtn
-                                key="addAllocate"
-                                href="/chillerInstallation/bulkTransfer/addAllocate"
-                                leadingIcon="lucide:plus"
-                                label="Add Allocate"
-                                labelTw="hidden lg:block"
-                                isActive
-                            />,
+                            // <SidebarBtn
+                            //     key="addAllocate"
+                            //     href="/chillerInstallation/bulkTransfer/addAllocate"
+                            //     leadingIcon="lucide:plus"
+                            //     label="Add Allocate"
+                            //     labelTw="hidden lg:block"
+                            //     isActive
+                            // />,
                         ],
 
                         // 🔥 FILTER FIELDS THAT MATCH YOUR API

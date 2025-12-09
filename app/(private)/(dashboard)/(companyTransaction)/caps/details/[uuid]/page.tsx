@@ -10,10 +10,12 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import BorderIconButton from "@/app/components/borderIconButton";
 import PrintButton from "@/app/components/printButton";
-import { capsByUUID, purchaseOrderById } from "@/app/services/companyTransaction";
+import { capsByUUID, purchaseOrderById, exportCapsViewPdf } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { isValidDate } from "@/app/utils/formatDate";
+import { downloadFile } from "@/app/services/allApi";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 
 const columns = [
     { key: "index", label: "#" },
@@ -88,6 +90,26 @@ export default function CapsDetailPage() {
     useEffect(() => {
         fetchOrder();
     }, [UUID]);
+
+    const exportFile = async () => {
+        try {
+            setLoadingState(true);
+            const response = await exportCapsViewPdf({
+                uuid: UUID,
+                format: "pdf",
+            });
+            if (response && typeof response === "object" && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+        } catch (error) {
+            showSnackbar("Failed to download warehouse data", "error");
+        } finally {
+            setLoadingState(false);
+        }
+    };
 
     const targetRef = useRef<HTMLDivElement | null>(null);
 
@@ -187,6 +209,12 @@ export default function CapsDetailPage() {
 
                     {/* ---------- Footer Buttons ---------- */}
                     <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
+                        <SidebarBtn
+                            leadingIcon={loading ? "eos-icons:three-dots-loading" : "lucide:download"}
+                            leadingIconSize={20}
+                            label="Download"
+                            onClick={exportFile}
+                        />
                         <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
                     </div>
                 </ContainerCard>

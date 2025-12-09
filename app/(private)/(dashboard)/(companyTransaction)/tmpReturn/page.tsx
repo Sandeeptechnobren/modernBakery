@@ -42,7 +42,7 @@ const columns = [
   },
   {
     key: "warehouse_name",
-    label: "Warehouse Name",
+    label: " distributor  Name",
     showByDefault: true,
     render: (row: TableDataType) => {
       const code = row.warehouse_code ?? "";
@@ -69,10 +69,10 @@ export default function CustomerInvoicePage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
-//   const [threeDotLoading, setThreeDotLoading] = useState({
-//     csv: false,
-//     xlsx: false,
-//   });
+  //   const [threeDotLoading, setThreeDotLoading] = useState({
+  //     csv: false,
+  //     xlsx: false,
+  //   });
 
   const fetchOrders = useCallback(
     async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {

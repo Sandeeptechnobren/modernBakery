@@ -479,13 +479,13 @@ function TableHeader() {
                         <div className="flex items-center gap-2 w-[320px] invisible sm:visible">
                             {config.header?.searchBar && (
                                 <div className="w-full">
-                                <SearchBar
-                                    value={searchBarValue}
-                                    onChange={(
-                                        e: React.ChangeEvent<HTMLInputElement>
-                                    ) => setSearchBarValue(e.target.value)}
-                                    onEnterPress={handleSearch}
-                                />
+                                    <SearchBar
+                                        value={searchBarValue}
+                                        onChange={(
+                                            e: React.ChangeEvent<HTMLInputElement>
+                                        ) => setSearchBarValue(e.target.value)}
+                                        onEnterPress={handleSearch}
+                                    />
                                 </div>
                             )}
 
@@ -1083,13 +1083,13 @@ function FilterTableHeader({
                     // update global filter state to clear this field
                     try {
                         setFilterState(prev => ({ applied: false, payload: { ...(prev?.payload || {}), [column]: "" } }));
-                    } catch (err) {}
+                    } catch (err) { }
                 } else {
                     filterConfig.onSelect(value);
                     // persist selection in global filter state so header survives refresh
                     try {
                         setFilterState(prev => ({ applied: true, payload: { ...(prev?.payload || {}), [column]: value } }));
-                    } catch (err) {}
+                    } catch (err) { }
                 }
             }
             setShowFilterDropdown(false);
@@ -1104,7 +1104,7 @@ function FilterTableHeader({
                 // persist multi-select in global filter state
                 try {
                     setFilterState(prevState => ({ applied: updated.length > 0, payload: { ...(prevState?.payload || {}), [column]: updated } }));
-                } catch (err) {}
+                } catch (err) { }
                 if (filterConfig?.onSelect) filterConfig.onSelect(updated);
                 return updated;
             });
@@ -1144,9 +1144,9 @@ function FilterTableHeader({
                                 selectedValue={typeof selectedRef.current === 'string' ? (selectedRef.current as string) : (filterConfig.selectedValue as string)}
                                 onSelect={(v: string) => {
                                     // call parent's onSelect
-                                    try { filterConfig.onSelect && filterConfig.onSelect(v); } catch (err) {}
+                                    try { filterConfig.onSelect && filterConfig.onSelect(v); } catch (err) { }
                                     // persist into global filter state
-                                    try { setFilterState(prev => ({ applied: !!v, payload: { ...(prev?.payload || {}), [column]: v } })); } catch (err) {}
+                                    try { setFilterState(prev => ({ applied: !!v, payload: { ...(prev?.payload || {}), [column]: v } })); } catch (err) { }
                                 }}
                             />
                         ) : filterConfig?.isSingle !== false ? (
@@ -1282,7 +1282,7 @@ function TableFooter() {
         }
     }
 
-     // Floating Info Bar State
+    // Floating Info Bar State
     const [showFloatingBar, setShowFloatingBar] = useState(
         !!config.floatingInfoBar?.showByDefault
     );
@@ -1302,44 +1302,43 @@ function TableFooter() {
     // Memoize visible buttons to avoid recalculation
     const visibleButtons = useMemo(() => {
         if (!config.floatingInfoBar?.buttons) return [];
-        
+
         return config.floatingInfoBar.buttons.filter(button => {
             // Check showOnSelect condition
             if (button.showOnSelect && selectedRow.length === 0) return false;
-            
+
             // Check showWhen condition
             if (button.showWhen && !button.showWhen(tableDetails?.data || [], selectedRow, selectedColumns)) return false;
-            
+
             return true;
         });
     }, [config.floatingInfoBar?.buttons, selectedRow, tableDetails?.data, selectedColumns]);
 
     const FloatingInfoBar = useCallback(() => {
         if (!config.floatingInfoBar || !showFloatingBar || nestedLoading) return null;
-        
+
         return (
             <Draggable nodeRef={floatingBarNodeRef}>
-                <div 
-                    ref={floatingBarNodeRef} 
+                <div
+                    ref={floatingBarNodeRef}
                     className={`flex justify-between items-center gap-6 w-fit p-4 z-[70] cursor-grab text-white bg-[#00000080] backdrop-blur-xl rounded-[40px] transition-all ease-in-out ${footer ? 'mb-20' : ''}`}
                 >
-                    <span onClick={() => config?.floatingInfoBar?.rowSelectionOnClick && config.floatingInfoBar.rowSelectionOnClick(tableDetails?.data || [], selectedRow, selectedColumns) }>selected {selectedRow.length}</span>
+                    <span onClick={() => config?.floatingInfoBar?.rowSelectionOnClick && config.floatingInfoBar.rowSelectionOnClick(tableDetails?.data || [], selectedRow, selectedColumns)}>selected {selectedRow.length}</span>
                     {visibleButtons.length > 0 && (
                         <span className="flex gap-[18px]">
                             {visibleButtons.map((button, index) => (
-                                <span 
+                                <span
                                     key={`${button.label}-${index}`}
-                                    className={`cursor-pointer bg-[#FDFDFD33] shadow-[0px_1px_2px_0px_#0A0D120D] py-2 px-3 rounded-3xl flex items-center gap-2 ${
-                                        button.labelTw || ''
-                                    }`}
+                                    className={`cursor-pointer bg-[#FDFDFD33] shadow-[0px_1px_2px_0px_#0A0D120D] py-2 px-3 rounded-3xl flex items-center gap-2 ${button.labelTw || ''
+                                        }`}
                                     onClick={() => button.onClick?.(tableDetails?.data || [], selectedRow, selectedColumns)}
                                 >
                                     {button.icon && (
                                         <span className="w-5 h-5">
-                                            <Icon 
+                                            <Icon
                                                 icon={button.icon}
                                                 className="transition-all duration-200 ease-in-out"
-                                                width={button.iconWidth ? parseInt(button.iconWidth) : 20} 
+                                                width={button.iconWidth ? parseInt(button.iconWidth) : 20}
                                             />
                                         </span>
                                     )}
@@ -1492,7 +1491,7 @@ export function FilterOptionList({
 }) {
     return (
         <div className={selectedValue ? "pt-[35px]" : ""}>
-        
+
             {options.map(opt => (
                 <div
                     key={opt.value}
@@ -1502,7 +1501,7 @@ export function FilterOptionList({
                     }}
                 >
                     <span className="truncate">
-                    {opt.label}
+                        {opt.label}
                     </span>
                 </div>
             ))}

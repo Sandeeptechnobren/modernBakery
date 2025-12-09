@@ -48,9 +48,9 @@ export default function DeleteConfirmPopup({
       )}
 
       {/* Message */}
-      <div className="text-center mb-6">
-        <p className="text-gray-700 text-base">Are you sure want to delete {title}?</p>
-      </div>
+      {/* <div className="text-center mb-6">
+        <p className="text-gray-700 text-base">{title}?</p>
+      </div> */}
 
       {/* Footer Buttons */}
       <div className="flex justify-center gap-3 mt-6">
@@ -64,7 +64,7 @@ export default function DeleteConfirmPopup({
         <SidebarBtn
                                             
                                             isActive={true}
-                                            label="Yes, remove !"
+                                            label="Yes, confirm !"
                                             onClick={handleConfirm}
                                             labelTw="hidden sm:block min-w-[120px]"
                                         />

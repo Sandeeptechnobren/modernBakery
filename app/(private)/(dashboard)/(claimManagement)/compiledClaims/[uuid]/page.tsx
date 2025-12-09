@@ -8,7 +8,7 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import {
   warehouseListGlobalSearch,
 } from "@/app/services/allApi";
-import {filterCompailedClaim,createCompailedClaim} from "@/app/services/claimManagement";
+import { filterCompailedClaim, createCompailedClaim } from "@/app/services/claimManagement";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -19,27 +19,27 @@ import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 
 interface CompiledClaimRow {
-    warehouse_id?: string | number;
-    item_name?: string;
-    price?: string | number;
-    claim_period?: string;
-    total_approved_qty?: number;
-    approved_qty?: number;
-    approved_claim_amount?: number;
-    total_rejected_qty?: number;
-    rejected_amount?: number;
-    area_sales_supervisor?: string;
-    regional_sales_manager?: string;
-    month_range?: string;
-    promo_count?: number;
-    promo_qty?: string | number;
-    promo_amount?: number;
-    reject_qty?: string | number;
-    rejecte_amount?: number;
-  };
+  warehouse_id?: string | number;
+  item_name?: string;
+  price?: string | number;
+  claim_period?: string;
+  total_approved_qty?: number;
+  approved_qty?: number;
+  approved_claim_amount?: number;
+  total_rejected_qty?: number;
+  rejected_amount?: number;
+  area_sales_supervisor?: string;
+  regional_sales_manager?: string;
+  month_range?: string;
+  promo_count?: number;
+  promo_qty?: string | number;
+  promo_amount?: number;
+  reject_qty?: string | number;
+  rejecte_amount?: number;
+};
 
 export default function AddEditRoute() {
-  const {  warehouseOptions } =
+  const { warehouseOptions } =
     useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const params = useParams();
@@ -50,7 +50,7 @@ export default function AddEditRoute() {
   const [searchResults, setSearchResults] = useState<CompiledClaimRow[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [creatingMap, setCreatingMap] = useState<Record<string, boolean>>({});
-  
+
   const [form, setForm] = useState({
     fromDate: "",
     toDate: "",
@@ -123,7 +123,7 @@ export default function AddEditRoute() {
   const handleWarehouseSearch = async (searchText: string) => {
     try {
       if (!searchText || String(searchText).trim() === "") return [];
-      const res = await warehouseListGlobalSearch({ query: searchText,  per_page: "10000" });
+      const res = await warehouseListGlobalSearch({ query: searchText, per_page: "10000" });
       if (res?.error) return [];
       const data = Array.isArray(res?.data) ? res.data : [];
       return data.map((w: { id?: string | number; value?: string | number; warehouse_code?: string; code?: string; warehouse_name?: string; name?: string }) => ({
@@ -136,7 +136,7 @@ export default function AddEditRoute() {
     }
   };
 
- 
+
 
   // Search compiled claims by claim period and warehouse
   const handleSearch = async () => {
@@ -150,8 +150,8 @@ export default function AddEditRoute() {
       return;
     }
 
-  setSearchLoading(true);
-  setHasSearched(true);
+    setSearchLoading(true);
+    setHasSearched(true);
     try {
       const params = {
         from_date: form.fromDate,
@@ -175,7 +175,7 @@ export default function AddEditRoute() {
   };
 
   // Create a compiled claim for a single row
-  
+
   const handleCreateCompiledClaim = async (row: CompiledClaimRow) => {
     const key = `${row.warehouse_id ?? ""}_${row.item_name ?? ""}_${row.price ?? ""}`;
     if (creatingMap[key]) return;
@@ -261,14 +261,14 @@ export default function AddEditRoute() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Route Code */}
-           
+
 
 
             {/* Route Name */}
             <div className="flex flex-col">
 
               <InputFields
-              disabled={true}
+                disabled={true}
                 required
                 label="From Date"
                 value={form.fromDate}
@@ -282,12 +282,12 @@ export default function AddEditRoute() {
               {errors.fromDate && (
                 <p className="text-red-500 text-sm mt-1">{errors.fromDate}</p>
               )}
-             
+
             </div>
             <div className="flex flex-col">
 
               <InputFields
-              disabled={true}
+                disabled={true}
                 required
                 label="To Date"
                 value={form.toDate}
@@ -301,7 +301,7 @@ export default function AddEditRoute() {
               {errors.toDate && (
                 <p className="text-red-500 text-sm mt-1">{errors.toDate}</p>
               )}
-             
+
             </div>
 
             <div className="flex flex-col">
@@ -309,7 +309,7 @@ export default function AddEditRoute() {
                 required
                 label="Distributor"
                 name="warehouse"
-                placeholder="Search warehouse..."
+                placeholder="Search distributor...."
                 initialValue={(() => {
                   const found = (warehouseOptions || []).find((o: { value?: string; label?: string }) => String(o.value) === String(form.warehouse));
                   return found ? found.label : "";
@@ -331,109 +331,109 @@ export default function AddEditRoute() {
               )}
             </div>
             <div>
-             <SidebarBtn
-          label="Search"
-          
-          isActive={!searchLoading}
-          onClick={handleSearch}
-          disabled={searchLoading}
-        />
-        </div>
+              <SidebarBtn
+                label="Search"
+
+                isActive={!searchLoading}
+                onClick={handleSearch}
+                disabled={searchLoading}
+              />
+            </div>
           </div>
-          
+
         </div>
-        
+
       </div>
 
-          {/* Search results table, loading, or no data message */}
-          {searchLoading ? (
-            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-              <div className="p-6 flex items-center justify-center min-h-[60px]">
-                <Loading />
-              </div>
+      {/* Search results table, loading, or no data message */}
+      {searchLoading ? (
+        <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+          <div className="p-6 flex items-center justify-center min-h-[60px]">
+            <Loading />
+          </div>
+        </div>
+      ) : searchResults && searchResults.length > 0 ? (
+        <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+          <div className="p-6">
+            <h2 className="text-lg font-medium text-gray-800 mb-4">Search Results</h2>
+            <Table
+              data={searchResults as unknown as TableDataType[]}
+              config={{
+                table: { height: 500 },
+                showNestedLoading: false,
+                pageSize: 50,
+                columns: [
+                  {
+                    key: "depot",
+                    label: "Distributors",
+                    render: (row: TableDataType) => (
+                      <div className="text-sm text-[#181D27]">{`${row.warehouse_code || ''} - ${row.warehouse_name || ''}`}</div>
+                    ),
+                  },
+                  {
+                    key: "approved_count",
+                    label: "Approved Claims (Count)",
+                    render: (row: TableDataType) => <div className="text-sm">{toInternationalNumber(row.approved_count ?? 0)}</div>,
+                  },
+                  {
+                    key: "pending_count",
+                    label: "Pending Claims (Count)",
+                    render: (row: TableDataType) => <div className="text-sm">{toInternationalNumber(row.pending_count ?? 0)}</div>,
+                  },
+                  {
+                    key: "rejected_qty",
+                    label: "Rejected Quantity",
+                    render: (row: TableDataType) => <div className="text-sm">{toInternationalNumber(row.total_rejected_qty ?? 0)}</div>,
+                  },
+                  {
+                    key: "total_qty",
+                    label: "Total Quantity (CSE)",
+                    render: (row: TableDataType) => <div className="text-sm">{toInternationalNumber(row.total_approved_qty ?? 0)}</div>,
+                  },
+                  {
+                    key: "total_claim_amount",
+                    label: "Total Claim Amount",
+                    render: (row: TableDataType) => {
+                      const price = parseFloat(String(row.price || 0)) || 0;
+                      const qty = parseFloat(String(row.total_approved_qty || 0)) || 0;
+                      const total = price * qty;
+                      return <div className="text-sm">{toInternationalNumber(total ? total.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "0")}</div>;
+                    },
+                  },
+                  {
+                    key: "actions",
+                    label: "Actions",
+                    render: (row: TableDataType) => {
+                      const key = `${row.warehouse_id ?? ""}_${row.item_name ?? ""}_${row.price ?? ""}`;
+                      const creating = Boolean(creatingMap[key]);
+                      return (
+                        <SidebarBtn
+                          isActive={!creating}
+                          label={creating ? "Processing..." : "Approved"}
+                          onClick={() => handleCreateCompiledClaim(row)}
+                          disabled={creating}
+                        />
+                      );
+                    },
+                  },
+                ],
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        hasSearched && (
+          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+            <div className="p-6 flex items-center justify-center min-h-[120px]">
+              <span className="text-gray-500 text-lg">No data found</span>
             </div>
-          ) : searchResults && searchResults.length > 0 ? (
-            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-              <div className="p-6">
-                <h2 className="text-lg font-medium text-gray-800 mb-4">Search Results</h2>
-                <Table
-                  data={searchResults as unknown as TableDataType[]}
-                  config={{
-                    table: { height: 500 },
-                    showNestedLoading: false,
-                    pageSize: 50,
-                    columns: [
-                      {
-                        key: "depot",
-                        label: "Distributors",
-                        render: (row: TableDataType) => (
-                          <div className="text-sm text-[#181D27]">{`${row.warehouse_code || ''} - ${row.warehouse_name || ''}`}</div>
-                        ),
-                      },
-                      {
-                        key: "approved_count",
-                        label: "Approved Claims (Count)",
-                        render: (row: TableDataType) => <div className="text-sm">{toInternationalNumber(row.approved_count ?? 0)}</div>,
-                      },
-                      {
-                        key: "pending_count",
-                        label: "Pending Claims (Count)",
-                        render: (row: TableDataType) => <div className="text-sm">{toInternationalNumber(row.pending_count ?? 0)}</div>,
-                      },
-                      {
-                        key: "rejected_qty",
-                        label: "Rejected Quantity",
-                        render: (row: TableDataType) => <div className="text-sm">{toInternationalNumber(row.total_rejected_qty ?? 0)}</div>,
-                      },
-                      {
-                        key: "total_qty",
-                        label: "Total Quantity (CSE)",
-                        render: (row: TableDataType) => <div className="text-sm">{toInternationalNumber(row.total_approved_qty ?? 0)}</div>,
-                      },
-                      {
-                        key: "total_claim_amount",
-                        label: "Total Claim Amount",
-                        render: (row: TableDataType) => {
-                          const price = parseFloat(String(row.price || 0)) || 0;
-                          const qty = parseFloat(String(row.total_approved_qty || 0)) || 0;
-                          const total = price * qty;
-                          return <div className="text-sm">{toInternationalNumber(total ? total.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "0")}</div>;
-                        },
-                      },
-                      {
-                        key: "actions",
-                        label: "Actions",
-                        render: (row: TableDataType) => {
-                          const key = `${row.warehouse_id ?? ""}_${row.item_name ?? ""}_${row.price ?? ""}`;
-                          const creating = Boolean(creatingMap[key]);
-                          return (
-                            <SidebarBtn
-                              isActive={!creating}
-                              label={creating ? "Processing..." : "Approved"}
-                              onClick={() => handleCreateCompiledClaim(row)}
-                              disabled={creating}
-                            />
-                          );
-                        },
-                      },
-                    ],
-                  }}
-                />
-              </div>
-            </div>
-          ) : (
-            hasSearched && (
-              <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-                <div className="p-6 flex items-center justify-center min-h-[120px]">
-                  <span className="text-gray-500 text-lg">No data found</span>
-                </div>
-              </div>
-            )
-          )}
+          </div>
+        )
+      )}
 
-    
 
-    
+
+
     </>
   );
 }
