@@ -13,7 +13,7 @@ import {
   RefObject,
   useMemo,
 } from "react";
-// import KeyValueData from "../master/customer/[customerId]/keyValueData";
+import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -139,6 +139,8 @@ export default function OrderDetailPage() {
   const { showSnackbar } = useSnackbar();
   const [data, setData] = useState<OrderData | null>(null);
   const [loading, setLoadingState] = useState<boolean>(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [approvalName, setApprovalName] = useState("");
   const params = useParams();
   const UUID = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
   const CURRENCY = localStorage.getItem("country") || "";
@@ -293,6 +295,7 @@ export default function OrderDetailPage() {
     permissions: string[];
     message?: string;
     notification?: string;
+    confirmationMessage?: string;
     step_title?: string;
   } =
     rawOrder && rawOrder !== "undefined"
@@ -580,7 +583,9 @@ export default function OrderDetailPage() {
                 }
                 label={"Approve"}
                 labelTw="font-medium text-[12px]"
-                onClick={() => workflowAction("approve")}
+                onClick={() => {
+                  setApprovalName("approve");
+                  setShowDeletePopup(true)}}
                 disabled={
                   loadingWorkflow.approve ||
                   (Object.values(loadingWorkflow).some((loading) => loading) &&
@@ -595,7 +600,9 @@ export default function OrderDetailPage() {
                 }
                 label={"Reject"}
                 labelTw="font-medium text-[12px]"
-                onClick={() => workflowAction("reject")}
+                onClick={() => {
+                  setApprovalName("reject");
+                  setShowDeletePopup(true)}}
                 disabled={
                   loadingWorkflow.reject ||
                   (Object.values(loadingWorkflow).some((loading) => loading) &&
@@ -612,7 +619,9 @@ export default function OrderDetailPage() {
                 }
                 label={"Return Back"}
                 labelTw="font-medium text-[12px]"
-                onClick={() => workflowAction("returnBack")}
+                onClick={() => {
+                  setApprovalName("returnBack");
+                  setShowDeletePopup(true)}}
                 disabled={
                   loadingWorkflow.returnBack ||
                   (Object.values(loadingWorkflow).some((loading) => loading) &&
@@ -629,7 +638,9 @@ export default function OrderDetailPage() {
                 }
                 label={"Edit Before Approval"}
                 labelTw="font-medium text-[12px]"
-                onClick={() => workflowAction("editBeforeApproval")}
+                onClick={() => {
+                  setApprovalName("editBeforeApproval");
+                  setShowDeletePopup(true)}}
                 disabled={
                   loadingWorkflow.editBeforeApproval ||
                   (Object.values(loadingWorkflow).some((loading) => loading) &&
@@ -866,6 +877,16 @@ export default function OrderDetailPage() {
           </div>
         </ContainerCard>
       </div>
+
+      {showDeletePopup && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+                <DeleteConfirmPopup
+                  title={order?.confirmationMessage}
+                  onClose={() => setShowDeletePopup(false)}
+                  onConfirm={() => workflowAction(approvalName)}
+                />
+              </div>
+            )}
     </>
   );
 }

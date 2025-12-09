@@ -302,3 +302,55 @@ export const capsExportCollapse = async (params?: Params) => {
     return handleError(error);
   }
 };
+
+
+
+//return view pdf
+export const exportReturnViewPdf = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_returns/export`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const exportOrderViewPdf = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_orders/export`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const exportPurposeOrderViewPdf = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/po_orders/export`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const exportDeliveryViewPdf = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_delivery/export`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const exportInvoiceViewPdf = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_invoice/pdfexport`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const exportCapsViewPdf = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/ht_caps/export`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

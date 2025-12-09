@@ -40,7 +40,7 @@ export default function Route() {
     const columns = [
         {
             key: "route_code, route_name",
-            label: "Route Code",
+            label: "Route",
             render: (data: TableDataType) => (
                 <span className="font-semibold text-[#181D27] text-[14px]">
                     {`${data.route_code || ""} - ${data.route_name || ""}` || "-"}

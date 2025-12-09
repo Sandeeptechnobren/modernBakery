@@ -596,9 +596,9 @@ export default function ProfilePage() {
           {/* SYSTEM SETTINGS TAB */}
           {activeTab === "settings" && (
             <ContainerCard>
-              <div className="space-y-4">
+              <div className="space-y-4 cursor-pointer">
                 {/* LANGUAGE */}
-                <div className="flex items-center p-4 bg-gray-50 rounded-xl  border-1 border-gray-200">
+                <div className="flex items-center p-4 bg-gray-50 rounded-xl  border-1 border-gray-200 cursor-pointer">
                   <Icon
                     icon="lucide:languages"
                     width={28}
@@ -622,7 +622,7 @@ export default function ProfilePage() {
                     width={28}
                     className="text-gray-500 mr-4"
                   />
-                  <div>
+                  <div className="cursor-pointer" onClick={() => setShowSidebar(true)}>
                     <h4 className="font-medium">Reset Password</h4>
                     <p className="text-sm text-gray-500">
                       Update or change your account password
@@ -823,17 +823,14 @@ export default function ProfilePage() {
 
           {showSidebar && (
             <>
-              {/* Overlay */}
-              {/* <div className="fixed inset-0 bg-black bg-/opacity-50 z-40" onClick={() => setShowSidebar(false)} /> */}
+              {/* ✅ Proper Blur + Light Black Overlay */}
               <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-40 
-             opacity-0 animate-fadeIn transition-opacity duration-300"
+                className=" h-full fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
                 onClick={() => setShowSidebar(false)}
               />
-              {/* Sidebar - 1/3 screen */}
-              <div className="fixed top-0 right-0 h-full w-1/3 bg-white z-50 shadow-lg transform transition-transform duration-300 translate-x-0">
 
-                {/* KEEPING YOUR UI EXACTLY THE SAME 👇 */}
+              {/* ✅ Sidebar */}
+              <div className="fixed top-0 right-0 h-full w-1/3 bg-white z-50 shadow-lg transform transition-transform duration-300 translate-x-0">
 
                 <div className="flex items-center justify-between p-5 border-b">
                   <h2 className="text-lg font-semibold">Reset Password</h2>
@@ -842,29 +839,30 @@ export default function ProfilePage() {
                   </button>
                 </div>
 
-                <form onSubmit={formik.handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={formik.handleSubmit} className="p-7 space-y-6">
                   <InputFields required label="Old Password"
-                    // value={values.oldPassword}
                     onChange={e => setFieldValue("oldPassword", e.target.value)}
                   />
                   <InputFields required label="New Password"
-                    // value={values.newPassword}
                     onChange={e => setFieldValue("newPassword", e.target.value)}
                   />
                   <InputFields required label="Confirm Password"
-                    // value={values.confirmPassword}
                     onChange={e => setFieldValue("confirmPassword", e.target.value)}
                   />
 
-                  <button type="submit" className="bg-red-600 text-white w-full py-3 rounded-lg">
-                    Update Password
-                  </button>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      className="bg-red-600 text-white w-[160px] py-3 rounded-lg"
+                    >
+                      Update Password
+                    </button>
+                  </div>
                 </form>
-
-                {/* NOTHING CHANGED IN YOUR UI ✅ */}
               </div>
             </>
           )}
+
 
           {/* </ContainerCard> */}
         </div>

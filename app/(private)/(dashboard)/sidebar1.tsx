@@ -40,6 +40,7 @@ export default function Sidebar({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [currentPageForSecondSidebar, setCurrentPageForSecondSidebar] =
     useState("");
   const router = useRouter();
@@ -332,12 +333,21 @@ export default function Sidebar({
                         },
                         {
                           icon: "tabler:logout",
-                          label: "Logout",
+                          label: isLoggingOut ? "Logging out..." : "Logout",
                           onClick: () => {
+                            if (isLoggingOut) return; // Prevent multiple clicks
+                            setIsLoggingOut(true);
                             logout().then((res) => {
                               if (res?.code === 200 || res?.code === 401) {
+                                localStorage.removeItem("token");
+                                setShowDropdown(false);
                                 router.push("/");
+                              } else {
+                                setIsLoggingOut(false);
                               }
+                            }).catch((error) => {
+                              console.error("Logout error:", error);
+                              setIsLoggingOut(false);
                             });
                           },
                         },

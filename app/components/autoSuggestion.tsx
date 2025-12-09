@@ -371,49 +371,49 @@ export default function AutoSuggestion({
         >
           {/* Layout 1: chips + search icon */}
           {!showSearchInput && (
-            <></>
-            // <div className="flex items-center gap-2 flex-1 flex-nowrap overflow-hidden min-w-0">
-            //   {selectedOptions.length === 1 && (
-            //     <span key={selectedOptions[0].value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate cursor-pointer" onClick={() => { setOpen(true); setShowSelectedOnly(true); }}>
-            //       <span className="truncate block max-w-[100px]">{selectedOptions[0].label}</span>
-            //       {!disabled && (
-            //         <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(selectedOptions[0].value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
-            //       )}
-            //     </span>
-            //   )}
+            // <></>
+            <div className="flex items-center gap-2 flex-1 flex-nowrap overflow-hidden min-w-0">
+              {selectedOptions.length === 1 && (
+                <span key={selectedOptions[0].value} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate cursor-pointer" onClick={() => { setOpen(true); setShowSelectedOnly(true); }}>
+                  <span className="truncate block max-w-[100px]">{selectedOptions[0].label}</span>
+                  {!disabled && (
+                    <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(selectedOptions[0].value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
+                  )}
+                </span>
+              )}
 
-            //   {selectedOptions.length === 2 && (
-            //     <>
-            //       {selectedOptions.slice(0,2).map((s, i) => (
-            //         <span key={`${s.value}-${i}`} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate mr-2 cursor-pointer" onClick={() => { setOpen(true); setShowSelectedOnly(true); }}>
-            //           <span className="truncate block max-w-[80px]">{s.label}</span>
-            //           {!disabled && (
-            //             <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(s.value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
-            //           )}
-            //         </span>
-            //       ))}
-            //     </>
-            //   )}
+              {selectedOptions.length === 2 && (
+                <>
+                  {selectedOptions.slice(0,2).map((s, i) => (
+                    <span key={`${s.value}-${i}`} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate mr-2 cursor-pointer" onClick={() => { setOpen(true); setShowSelectedOnly(true); }}>
+                      <span className="truncate block max-w-[80px]">{s.label}</span>
+                      {!disabled && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(s.value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
+                      )}
+                    </span>
+                  ))}
+                </>
+              )}
 
-            //   {selectedOptions.length > 2 && (
-            //     <>
-            //       {selectedOptions.slice(0,2).map((s, i) => (
-            //         <span key={`${s.value}-${i}`} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate mr-2 cursor-pointer" onClick={() => { setOpen(true); setShowSelectedOnly(true); }}>
-            //           <span className="truncate block max-w-[80px]">{s.label}</span>
-            //           {!disabled && (
-            //             <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(s.value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
-            //           )}
-            //         </span>
-            //       ))}
-            //       <span className="inline-flex items-center bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-sm font-medium cursor-pointer" onClick={() => { setOpen(true); setShowSelectedOnly(true); }}>+{selectedOptions.length - 2}</span>
-            //     </>
-            //   )}
+              {selectedOptions.length > 2 && (
+                <>
+                  {selectedOptions.slice(0,2).map((s, i) => (
+                    <span key={`${s.value}-${i}`} className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[200px] truncate mr-2 cursor-pointer" onClick={() => { setOpen(true); setShowSelectedOnly(true); }}>
+                      <span className="truncate block max-w-[80px]">{s.label}</span>
+                      {!disabled && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); removeSelected(s.value); }} className="ml-2 text-gray-500 hover:text-gray-700">×</button>
+                      )}
+                    </span>
+                  ))}
+                  <span className="inline-flex items-center bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-sm font-medium cursor-pointer" onClick={() => { setOpen(true); setShowSelectedOnly(true); }}>+{selectedOptions.length - 2}</span>
+                </>
+              )}
 
-            //   {/* Search icon at end */}
-            //   <button type="button" className="ml-2 text-gray-400 hover:text-gray-600 flex items-center" onClick={() => { setShowSearchInput(true); setTimeout(() => { inputRef.current?.focus(); }, 0); }}>
-            //     <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-            //   </button>
-            // </div>
+              {/* Search icon at end */}
+              <button type="button" className="ml-2 text-gray-400 hover:text-gray-600 flex items-center" onClick={() => { setShowSearchInput(true); setTimeout(() => { inputRef.current?.focus(); }, 0); }}>
+                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+              </button>
+            </div>
           )}
 
           {/* Layout 2: input field + cross icon */}

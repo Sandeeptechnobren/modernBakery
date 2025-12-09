@@ -49,7 +49,7 @@ const columns = [
   // { key: "order_code", label: "Order Code",showByDefault: true },
   {
     key: "customer",
-    label: "Customer Name",
+    label: "Customer",
     render: (row: TableDataType) => {
       const customer =
         typeof row.customer === "string"
@@ -63,7 +63,7 @@ const columns = [
   },
   {
     key: "route",
-    label: "Route Name",
+    label: "Route",
     render: (row: TableDataType) => {
       const route =
         typeof row.route === "string"
@@ -77,7 +77,7 @@ const columns = [
   },
   {
     key: "warehouse",
-    label: "Warehouse Name",
+    label: "Distributor",
     render: (row: TableDataType) => {
       const warehouse =
         typeof row.warehouse === "string"
@@ -91,7 +91,7 @@ const columns = [
   },
   {
     key: "salesman",
-    label: "Salesman Name",
+    label: "Sales Team",
     render: (row: TableDataType) => {
       const salesman =
         typeof row.salesman === "string"
@@ -332,7 +332,7 @@ export default function CustomerInvoicePage() {
             //   },
             //   {
             //     key: "salesman_id",
-            //     label: "Salesman",
+            //     label: "Sales Team",
             //     isSingle: false,
             //     multiSelectChips: true,
             //     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],

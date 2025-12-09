@@ -15,7 +15,7 @@ import KeyValueData from "@/app/components/keyValueData";
 import PrintButton from "@/app/components/printButton";
 import { agentOrderExport } from "@/app/services/agentTransaction";
 import { downloadFile } from "@/app/services/allApi";
-import { purchaseOrderById } from "@/app/services/companyTransaction";
+import { purchaseOrderById, exportPurposeOrderViewPdf } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
@@ -137,7 +137,7 @@ export default function OrderDetailPage() {
     const exportFile = async () => {
         try {
             setLoadingState(true);
-            const response = await agentOrderExport({ uuid: UUID, format: "pdf" });
+            const response = await exportPurposeOrderViewPdf({ uuid: UUID, format: "pdf" });
             if (response && typeof response === 'object' && response.download_url) {
                 await downloadFile(response.download_url);
                 showSnackbar("File downloaded successfully ", "success");

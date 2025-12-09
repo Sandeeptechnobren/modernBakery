@@ -307,7 +307,7 @@ export default function OrderDetailPage() {
                 )}
                 {(deliveryData?.salesman_code || deliveryData?.salesman_name) && (
                   <div className="mt-2">
-                    Salesman: <span className="font-bold">
+                    Sales Team: <span className="font-bold">
                       {deliveryData?.salesman_code && deliveryData?.salesman_name
                         ? `${deliveryData.salesman_code} - ${deliveryData.salesman_name}`
                         : deliveryData?.salesman_code || deliveryData?.salesman_name}

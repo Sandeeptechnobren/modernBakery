@@ -61,7 +61,7 @@ const columns = [
         }
     },
     {
-        key: "salesman_code", label: "Salesman", showByDefault: true, render: (row: TableDataType) => {
+        key: "salesman_code", label: "Slaes Team", showByDefault: true, render: (row: TableDataType) => {
             const code = row.salesman_code || "-";
             const name = row.salesman_name || "-";
             return `${code}${code && name ? " - " : "-"}${name}`;
@@ -401,7 +401,7 @@ export default function CustomerInvoicePage() {
                             },
                             {
                                 key: "salesman_id",
-                                label: "Salesman",
+                                label: "Sales Team",
                                 isSingle: false,
                                 multiSelectChips: true,
                                 options: Array.isArray(salesmanOptions) ? salesmanOptions : [],

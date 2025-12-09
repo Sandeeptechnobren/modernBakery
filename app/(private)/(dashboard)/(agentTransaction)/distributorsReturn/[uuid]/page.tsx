@@ -309,9 +309,9 @@ export default function OrderAddEditPage() {
                 // determine final price using pricing override if present
                 let finalPrice: string | number = uom.price ?? "";
                 if (uom.uom_type === "primary") {
-                  finalPrice = selectedItem.pricing?.buom_ctn_price ?? "-";
-                } else if (uom.uom_type === "secondary") {
                   finalPrice = selectedItem.pricing?.auom_pc_price ?? "-";
+                } else if (uom.uom_type === "secondary") {
+                  finalPrice = selectedItem.pricing?.buom_ctn_price ?? "-";
                 }
                 return { value: uom.id ?? "", label: uom.name ?? "", price: finalPrice, uom_type: uom.uom_type };
               });

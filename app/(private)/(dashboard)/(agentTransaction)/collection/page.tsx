@@ -53,7 +53,7 @@ export default function SalemanLoad() {
             }
         },
         {
-            key: "salesman_code", label: "Salesman Code", render: (row: TableDataType) => {
+            key: "salesman_code", label: "Salesman", render: (row: TableDataType) => {
                 const code = row.salesman_code || "-";
                 const name = row.salesman_name || "-";
                 return `${code}${code && name ? " - " : ""}${name}`;
@@ -133,7 +133,7 @@ export default function SalemanLoad() {
                                 },
                                 {
                                     key: "salesman",
-                                    label: "Salesman",
+                                    label: "Sales Team",
                                     isSingle: false,
                                     multiSelectChips: true,
                                     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],

@@ -202,7 +202,7 @@ export default function Page() {
               },
               {
                 key: "warehouse",
-                label: "Warehouse",
+                label: "Distributor",
                 render: (data: TableDataType) =>
                   renderCombinedField(data, "warehouse"),
               },
@@ -214,7 +214,7 @@ export default function Page() {
               },
               {
                 key: "salesman",
-                label: "Salesman",
+                label: "Sales Team",
                 render: (data: TableDataType) =>
                   renderCombinedField(data, "salesman"),
               },

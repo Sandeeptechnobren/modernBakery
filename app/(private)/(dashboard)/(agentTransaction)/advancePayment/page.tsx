@@ -244,7 +244,7 @@ export default function PaymentListPage() {
                                 },
                                  {
                                     key: "salesman",
-                                    label: "Salesman",
+                                    label: "Sales Team",
                                     isSingle: false,
                                     multiSelectChips: true,
                                     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],

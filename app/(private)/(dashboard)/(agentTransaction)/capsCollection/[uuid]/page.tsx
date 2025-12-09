@@ -257,9 +257,9 @@ export default function AddEditCapsCollection() {
           let price = uom.price;
           // Override with specific pricing from the API response (same as order page)
           if (uom?.uom_type === "primary") {
-            price = stockItem.auom_pc_price || uom.price;
-          } else if (uom?.uom_type === "secondary") {
             price = stockItem.buom_ctn_price || uom.price;
+          } else if (uom?.uom_type === "secondary") {
+            price = stockItem.auom_pc_price || uom.price;
           }
           return { 
             ...uom, 

@@ -176,7 +176,7 @@ const SalesmanPage = () => {
   const columns = [
     {
       key: "osa_code",
-      label: "Salesman",
+      label: "Sales Team",
       render: (row: TableDataType) => (
         <span className="font-semibold text-[#181D27] text-[14px]">
           {row.osa_code} - {row.name}

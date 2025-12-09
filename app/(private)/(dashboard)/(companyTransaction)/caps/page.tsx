@@ -22,7 +22,7 @@ const columns = [
   { key: "osa_code", label: "Code", showByDefault: true },
   {
     key: "warehouse_name",
-    label: "Warehouse Name",
+    label: "Distribution   Name",
     showByDefault: true,
     render: (row: TableDataType) => {
       const code = row.warehouse_code ?? "";

@@ -40,6 +40,7 @@ const dropdownDataList: DropdownItem[] = [
 const columns = [
     { key: "code", label: "Pricing Code" },
     { key: "name", label: "Name" },
+    { key: "applicable_for", label: "Pricing Type" },
     { key: "start_date", label: "Start Date", render: (row: TableDataType) => row.start_date ? formatWithPattern(new Date(row.start_date),"DD MMM YYYY","en-GB") : ""  },
     { key: "end_date", label: "End Date", render: (row: TableDataType) => row.end_date ? formatWithPattern(new Date(row.end_date),"DD MMM YYYY","en-GB") : ""  },
 ];

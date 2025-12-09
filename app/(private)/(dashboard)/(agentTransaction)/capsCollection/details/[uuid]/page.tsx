@@ -148,7 +148,7 @@ export default function ViewPage() {
 
                     {deliveryData?.salesman_code && (
                       <div className="mt-2">
-                        Salesman:{" "}
+                        Sales Team:{" "}
                         <span className="font-bold">
                           {deliveryData.salesman_code} -{" "}
                           {deliveryData.salesman_name}

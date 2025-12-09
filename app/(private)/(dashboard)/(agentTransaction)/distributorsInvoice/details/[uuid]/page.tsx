@@ -312,7 +312,7 @@ export default function OrderDetailPage() {
                   Route: <span className="font-bold">{deliveryData?.route_code ? deliveryData.route_code : ""} {deliveryData?.route_code && deliveryData?.route_name ? " - " : ""} {deliveryData?.route_name ? deliveryData.route_name : ""}</span>
                 </div>}
                 {deliveryData?.salesman_name && <div className="mt-2">
-                  Salesman: <span className="font-bold">{deliveryData?.salesman_name}</span>
+                  Sales Team: <span className="font-bold">{deliveryData?.salesman_name}</span>
                 </div>}
               </div>
             </div>

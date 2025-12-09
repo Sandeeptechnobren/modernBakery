@@ -41,7 +41,7 @@ const columns = [
     // { key: "order_code", label: "Order Code",showByDefault: true },
     {
         key: "customer",
-        label: "Customer Name",
+        label: "Customer",
         showByDefault: true,
         render: (row: TableDataType) => {
             const customer = typeof row.customer === "string" ? { code: "", name: row.customer } : (row.customer ?? {});
@@ -53,7 +53,7 @@ const columns = [
     },
     {
         key: "route",
-        label: "Route Name",
+        label: "Route",
         showByDefault: true,
         render: (row: TableDataType) => {
             const route = typeof row.route === "string" ? { code: "", name: row.route } : (row.route ?? {});
@@ -77,7 +77,7 @@ const columns = [
     },
     {
         key: "salesman",
-        label: "Salesman Name",
+        label: "Sales Team",
         showByDefault: true,
         render: (row: TableDataType) => {
             const salesman = typeof row.salesman === "string" ? { code: "", name: row.salesman } : (row.salesman ?? {});

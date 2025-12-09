@@ -20,7 +20,7 @@ const columns = [
     { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
     {
         key: "warehouse_name",
-        label: "Warehouse Name",
+        label: "Distributor",
         showByDefault: true,
         render: (row: TableDataType) => {
             const code = row.warehouse_code ?? "";
@@ -32,7 +32,7 @@ const columns = [
 
     {
         key: "customer_name",
-        label: "Customer Name",
+        label: "Customer",
         showByDefault: true,
         render: (row: TableDataType) => {
             const code = row.customer_code ?? "";
@@ -43,7 +43,7 @@ const columns = [
     },
     {
         key: "salesman_name",
-        label: "Salesman Name",
+        label: "Salesman",
         render: (row: TableDataType) => {
             const code = row.salesman_code ?? "";
             const name = row.salesman_name ?? "";
@@ -53,7 +53,7 @@ const columns = [
     },
     {
         key: "route_name",
-        label: "Route Name",
+        label: "Route",
         render: (row: TableDataType) => {
             const code = row.route_code ?? "";
             const name = row.route_name ?? "";
@@ -205,7 +205,7 @@ export default function CustomerInvoicePage() {
                                 },
                                 {
                                     key: "warehouse_id",
-                                    label: "Warehouse",
+                                    label: "Distribution",
                                     isSingle: false,
                                     multiSelectChips: true,
                                     options: Array.isArray(warehouseAllOptions) ? warehouseAllOptions : [],
@@ -233,7 +233,7 @@ export default function CustomerInvoicePage() {
                                 },
                                 {
                                     key: "salesman_id",
-                                    label: "Salesman",
+                                    label: "Sales Team",
                                     isSingle: false,
                                     multiSelectChips: true,
                                     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],

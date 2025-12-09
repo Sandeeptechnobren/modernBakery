@@ -20,6 +20,7 @@ import {
   deliveryExportHeader,
   deliveryListByUUID,
   orderListByUUID,
+  exportDeliveryViewPdf,
 } from "@/app/services/companyTransaction";
 
 const columns = [
@@ -189,7 +190,7 @@ export default function OrderDetailPage() {
   const exportFile = async () => {
     try {
       setLoadingState(true);
-      const response = await deliveryExportHeader({
+      const response = await exportDeliveryViewPdf({
         uuid: UUID,
         format: "pdf",
       });

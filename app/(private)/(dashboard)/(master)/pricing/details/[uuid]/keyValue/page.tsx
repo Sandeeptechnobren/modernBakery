@@ -170,6 +170,8 @@ const arrayColumns = {
   item: [
     { key: "erp_code", label: "Code" },
     { key: "name", label: "Name" },
+    { key: "buom_ctn_price", label: "Base Price" },
+    { key: "auom_pc_price", label: "Secondary Price" },
   ]
 };
 interface PricingItem {
@@ -255,6 +257,31 @@ export default function KeyValue({ pricing, section }: KeyValueProps) {
             const cols = (arrayColumns as any)[key];
             console.log(cols, "columns for", key);
             if (!cols) return null;
+            
+            // Special handling for "item" to merge with details for pricing
+            if (key === "item" && Array.isArray(pricing[key]) && pricing[key].length > 0) {
+              const itemsWithPrices = pricing[key].map((item: any) => {
+                // Find matching detail by item_id
+                const detail = pricing.details?.find((d: any) => d.item_id === item.id);
+                return {
+                  ...item,
+                  buom_ctn_price: detail?.buom_ctn_price || "-",
+                  auom_pc_price: detail?.auom_pc_price || "-",
+                };
+              });
+              
+              return (
+                <div key={key}>
+                  <Table
+                    data={itemsWithPrices}
+                    config={{
+                      columns: cols
+                    }}
+                  />
+                </div>
+              );
+            }
+            
             return Array.isArray(pricing[key]) && pricing[key].length > 0 ? (
               <div key={key}>
               <Table

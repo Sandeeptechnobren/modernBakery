@@ -874,7 +874,7 @@ export default function UserAddEdit() {
                   options={roleOptions}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
                     const val = e?.target?.value;
-                    if(val === values.role) return;
+                    if (val === values.role) return;
                     setIsNestedDropdownValue(true);
                     setFieldValue("role", val);
                     setFieldValue("company", []);
@@ -997,7 +997,7 @@ export default function UserAddEdit() {
                 {visibleLabels.includes("warehouse") && (
                   <InputFields
                     required
-                    label="Warehouse"
+                    label="Distributors"
                     name="warehouse"
                     isSingle={false}
                     // searchable={true}
@@ -1043,7 +1043,7 @@ export default function UserAddEdit() {
                       const vals = normalizeToArray(v);
                       setFieldValue("route", vals);
                       // setFieldValue("itemCategory", []);
-                      if(vals.length === 0 || options.itemCategory.length > 0) {
+                      if (vals.length === 0 || options.itemCategory.length > 0) {
                         setOptions((prev) => ({ ...prev, item: [], customerChannel: [], customerCategory: [], customerSubCategory: [], customer: [] }));
                         return;
                       }

@@ -154,7 +154,7 @@ const columns = [
     },
     {
         key: "warehouse",
-        label: "Warehouse",
+        label: "Distributor",
         render: (data: TableDataType) =>
             renderCombinedField(data, "warehouse"),
     },
@@ -166,7 +166,7 @@ const columns = [
     },
     {
         key: "salesman",
-        label: "Salesman",
+        label: "Sales Team",
         render: (data: TableDataType) =>
             renderCombinedField(data, "salesman"),
     },

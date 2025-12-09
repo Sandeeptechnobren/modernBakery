@@ -669,14 +669,10 @@ export default function AddPricing() {
   const validateStep = (step: number) => {
     if (step === 1) {
       return (
-        // keyCombo.Location.length > 0 &&
-        // keyCombo.Customer.length > 0 &&
         keyCombo.Item.length > 0
       );
     }
     if (step === 2) {
-      // Require values only for keys that the user selected in Step 1.
-      // For each selected label in keyCombo, ensure keyValue[label] exists and has at least one selection.
       const requireSelectedValues = (labels: string[]) => {
         for (const label of labels) {
           const vals = keyValue[label] || [];
@@ -685,9 +681,6 @@ export default function AddPricing() {
         return true;
       };
 
-      // If any selected key group has no corresponding values, block progression.
-      // if (!requireSelectedValues(keyCombo.Location)) return false;
-      // if (!requireSelectedValues(keyCombo.Customer)) return false;
       if (!requireSelectedValues(keyCombo.Item)) return false;
 
       return true;
@@ -1043,6 +1036,8 @@ export default function AddPricing() {
             if (keyValue["Item Category"] && keyValue["Item Category"].length > 0) {
               params.item_category_id = keyValue["Item Category"].join(",");
             }
+            params.allData = "true";
+            params.per_page = "100000";
             const res = await itemGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
             return data.map((it: any) => ({ 
@@ -1066,17 +1061,18 @@ export default function AddPricing() {
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
             <h2 className="text-xl font-semibold mb-6">Key Value</h2>
             <div className="flex gap-6">
-              <div className="flex-1">
-                <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
-                  <div className="font-semibold text-lg mb-4">Location</div>
-                  {keyCombo.Location.map((locKey) => (
+              {keyCombo.Location.length > 0 && (
+                <div className="flex-1">
+                  <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                    <div className="font-semibold text-lg mb-4">Location</div>
+                    {keyCombo.Location.map((locKey) => (
                     <div key={locKey} className="mb-4">
                       <div className="mb-2 text-base font-medium">{locKey}</div>
                       <AutoSuggestion
                         key={`autosuggest-location-${locKey}`}
                         name={locKey}
                         placeholder={`Search ${locKey}`}
-                        // multiple={true}
+                        multiple={true}
                         initialSelected={(() => {
                           const sel = keyValue[locKey] || [];
                           const opts = locKey === "Company" ? companyOptions : locKey === "Region" ? regionOptions : locKey === "Area" ? areaOptions : locKey === "Warehouse" ? warehouseOptions : routeOptions;
@@ -1109,10 +1105,12 @@ export default function AddPricing() {
                   ))}
                 </ContainerCard>
               </div>
-              <div className="flex-1">
-                <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
-                  <div className="font-semibold text-lg mb-4">Customer</div>
-                  {keyCombo.Customer.map((custKey) => (
+              )}
+              {keyCombo.Customer.length > 0 && (
+                <div className="flex-1">
+                  <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                    <div className="font-semibold text-lg mb-4">Customer</div>
+                    {keyCombo.Customer.map((custKey) => (
                     <div key={custKey} className="mb-4">
                       <div className="mb-2 text-base font-medium">{custKey}</div>
                       <AutoSuggestion
@@ -1153,6 +1151,7 @@ export default function AddPricing() {
                   ))}
                 </ContainerCard>
               </div>
+              )}
               <div className="flex-1">
                 <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
                   <div className="font-semibold text-lg mb-4">Item</div>

@@ -34,8 +34,9 @@ interface ApprovalStep {
     canEditBeforeApproval: boolean;
     approvalMessage: string;
     notificationMessage: string;
-    conditionType: string; // AND / OR
-    relatedSteps: string[]; // multi-selection
+    confirmationMessage: string;
+    conditionType: string; // AND / OR    relatedSteps: string[]; // multi-selection
+    relatedSteps: string[];
     formType: string[] | string; // allow array or single value
     selectedRole?: SelectedOption[];
     selectedCustomer?: SelectedOption[];
@@ -64,14 +65,12 @@ const conditionOptions: OptionType[] = [
     { value: "OR", label: "OR" },
 ];
 
-const formTypeOptions: OptionType[] =[
-    { value: "ADD", label: "ADD" },
-    { value: "APPROVE", label: "APPROVE" },
-    { value: "REJECT", label: "REJECT" },
-    { value: "UPDATE", label: "UPDATE" },
-    { value: "RETURN_BACK", label: "RETURN_BACK" },
+const formTypeOptions: OptionType[] = [
+  { value: "APPROVE", label: "APPROVE" },
+  { value: "REJECT", label: "REJECT" },
+  { value: "RETURN_BACK", label: "RETURN BACK" },
+  { value: "EDIT_BEFORE_APPROVAL", label: "EDIT BEFORE APPROVAL" },
 ];
-
 export default function ApprovalFlowTable({ roleListData, usersData, steps, setSteps }: { roleListData: OptionType[], usersData: OptionType[], steps: ApprovalStep[], setSteps: React.Dispatch<React.SetStateAction<ApprovalStep[]>> }) {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingIndex, setEditingIndex] = useState<number | any>(null);
@@ -79,30 +78,31 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
     // Removed internal userOptions state
     // const [userOptions, setUserOptions] = useState<OptionType[]>([]);
 
-    type FormState = {
-        formType: string[];
+    // type FormState = {
+    //     formType: string[];
 
-        condition: string;
-        targetType: string;
-        role_id?: string;
-        selectedRole?: SelectedOption[];
-        selectedCustomer?: SelectedOption[];
-        customer_id?: string;
-        allowApproval: boolean;
-        allowReject: boolean;
-        returnToStepNo: boolean;
-        canEditBeforeApproval: boolean;
-        approvalMessage: string;
-        notificationMessage: string;
-        conditionType: string;
-        relatedSteps: string[];
-    };
+    //     condition: string;
+    //     targetType: string;
+    //     role_id?: string;
+    //     selectedRole?: SelectedOption[];
+    //     selectedCustomer?: SelectedOption[];
+    //     customer_id?: string;
+    //     allowApproval: boolean;
+    //     allowReject: boolean;
+    //     returnToStepNo: boolean;
+    //     canEditBeforeApproval: boolean;
+    //     approvalMessage: string;
+    //     notificationMessage: string;
+    //     confirmationMessage: string;
+    //     conditionType: string;
+    // };
 
     const [form, setForm] = useState<any>({
         formType: [],
         condition: "",
         targetType: "",
         role_id: undefined,
+        confirmationMessage: "",
         selectedRole: [],
         selectedCustomer: [],
         customer_id: undefined,
@@ -154,6 +154,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
             canEditBeforeApproval: false,
             approvalMessage: "",
             notificationMessage: "",
+            confirmationMessage: "",
             conditionType: "",
             relatedSteps: [],
         });
@@ -177,6 +178,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                 selectedCustomer: step?.selectedCustomer ?? [],
                 approvalMessage: step?.approvalMessage ?? "",
                 notificationMessage: step?.notificationMessage ?? "",
+                confirmationMessage: step?.confirmationMessage ?? "",
             } as any);
             setEditingId(step.id || step.step_id);
             setEditingIndex(index);
@@ -188,8 +190,8 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
         const { active, over } = event;
         if (active.id !== over?.id) {
             setSteps((items) => {
-                const oldIndex = items.findIndex((i) => i.step_id === active.id);
-                const newIndex = items.findIndex((i) => i.step_id === over?.id);
+                const oldIndex = items.findIndex((i) => i.id === active.id);
+                const newIndex = items.findIndex((i) => i.id === over?.id);
                 return arrayMove(items, oldIndex, newIndex);
             });
         }
@@ -212,7 +214,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
     };
 
     // Removed internal useEffect for fetching users
-    
+
     // Memoize the items IDs for SortableContext
     const itemIds = useMemo(() => steps.map((s) => s.id), [steps]);
 
@@ -336,7 +338,8 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                     <InputFields
                         required
                         width="full"
-                        label="Approval Message"
+                        placeholder="Pending,Success,Reject"
+                        label="Approval Status"
                         value={form.approvalMessage}
                         onChange={(e) =>
                             setForm({ ...form, approvalMessage: (e as React.ChangeEvent<HTMLInputElement>).target.value })
@@ -353,6 +356,20 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                         }
                     />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <InputFields
+                        required
+                        width="full"
+                        label="Confirmation Message"
+                        value={form.confirmationMessage}
+                        onChange={(e) =>
+                            setForm({ ...form, confirmationMessage: (e as React.ChangeEvent<HTMLInputElement>).target.value })
+                        }
+                    />
+
+
+                </div>
+
 
                 <SidebarBtn
                     onClick={handleAddOrUpdate}
@@ -373,38 +390,40 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                     >
                         <table className="table-auto min-w-max w-full text-sm">
                             <thead>
-                               <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
-                  <th className="p-2">Step</th>
-                  <th className="p-2">Permission</th>
-                  <th className="p-2">Target Type</th>
-                  <th className="p-2">Role</th>
-                  <th className="p-2">User</th>
+                                <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
+                                    <th className="p-2">Step</th>
+                                    <th className="p-2">Permission</th>
+                                    <th className="p-2">Target Type</th>
+                                    <th className="p-2">Role</th>
+                                    <th className="p-2">User</th>
 
-                  {/* <th className="p-2 text-center">Approval</th>
+                                    {/* <th className="p-2 text-center">Approval</th>
                   <th className="p-2 text-center">Reject</th>
                   <th className="p-2 text-center">Return</th>
                   <th className="p-2 text-center">Edit Before</th> */}
-                  <th className="p-2 text-center">Condition</th>
-                  {/* <th className="p-2">Related Steps</th> */}
-                  <th className="p-2">Approval Msg</th>
-                  <th className="p-2">Notification Msg</th>
-                  <th className="p-2 text-center">Action</th>
-                </tr>
+                                    <th className="p-2 text-center">Condition</th>
+                                    {/* <th className="p-2">Related Steps</th> */}
+                                    <th className="p-2">Approval Msg</th>
+                                    <th className="p-2">Notification Msg</th>
+                                    <th className="p-2">Confirmation  Msg</th>
+                                    <th className="p-2 text-center">Action</th>
+                                </tr>
                             </thead>
                             <tbody>
                                 {steps.map((step, idx) => {
-                                    return(
-                                    <SortableRow
-                                        key={step.id}
-                                        step={step}
-                                        index={idx}
-                                        onEdit={handleEdit}
-                                        onConditionChange={updateCondition}
-                                        onRelatedStepsChange={updateRelatedSteps}
-                                        roleOptions={roleListData}
-                                        userOptions={usersData} // Changed to use props
-                                    />
-                                )})}
+                                    return (
+                                        <SortableRow
+                                            key={step.id}
+                                            step={step}
+                                            index={idx}
+                                            onEdit={handleEdit}
+                                            onConditionChange={updateCondition}
+                                            onRelatedStepsChange={updateRelatedSteps}
+                                            roleOptions={roleListData}
+                                            userOptions={usersData} // Changed to use props
+                                        />
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </SortableContext>
@@ -428,7 +447,7 @@ function SortableRow({
 }: {
     step: any;
     index: number;
-    onEdit: (id: string,index:number) => void;
+    onEdit: (id: string, index: number) => void;
     onConditionChange: (id: string, condition: string) => void;
     onRelatedStepsChange: (id: string, selected: string[]) => void;
     roleOptions: OptionType[];
@@ -471,6 +490,7 @@ function SortableRow({
                 <td className="px-[24px] py-[12px] bg-white">{step.condition}</td>
                 <td className="px-[24px] py-[12px] bg-white">{step.approvalMessage}</td>
                 <td className="px-[24px] py-[12px] bg-white">{step.notificationMessage}</td>
+                <td className="px-[24px] py-[12px] bg-white">{step.confirmationMessage}</td>
                 <td className="px-[24px] py-[12px] bg-white text-center">
                     <SidebarBtn
                         onClick={() => onEdit(step.id ? step.id : step.step_id, index)}

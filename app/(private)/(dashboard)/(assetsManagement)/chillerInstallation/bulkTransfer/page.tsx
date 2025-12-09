@@ -177,10 +177,10 @@ export default function BulkTransferListPage() {
                                 isActive
                             />,
                             <SidebarBtn
-                                key="addAllocate"
+                                key="addAllocated"
                                 href="/chillerInstallation/bulkTransfer/addAllocated"
                                 leadingIcon="lucide:plus"
-                                label="Add Allocate"
+                                label="Add Allocated"
                                 labelTw="hidden lg:block"
                                 isActive
                             />,
@@ -228,7 +228,7 @@ export default function BulkTransferListPage() {
                         {
                             icon: "lucide:eye",
                             onClick: (row: any) => {
-                                router.push(`/chillerInstallation/bulkTransfer/view/${row.uuid}`);
+                                router.push(`/chillerInstallation/bulkTransfer/Detail/${row.uuid}`);
                             },
                         },
                     ],

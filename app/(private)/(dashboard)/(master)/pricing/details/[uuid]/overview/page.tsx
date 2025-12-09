@@ -61,6 +61,7 @@ interface PricingItem {
   id?: number | string;
   code?: string;
   name?: string;
+  applicable_for?: string;
   start_date?: string;
   end_date?: string;
   description?: number[] | string;
@@ -115,6 +116,7 @@ export default function Overview({ pricing }: OverviewProps) {
               data={[
                 { key: "Code", value: pricing?.code || "-" },
                 { key: "Name", value: pricing?.name || "-" },
+                { key: "Pricing Type", value: pricing?.applicable_for || "-" },
                 { key: "Start Date", value: pricing?.start_date || "-" },
                 { key: "End Date", value: pricing?.end_date || "-" },
                 { key: "Description", value: pricing?.description ? getDescriptionLabels(pricing.description) : "-" }

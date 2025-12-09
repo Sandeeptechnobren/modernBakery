@@ -27,6 +27,7 @@ export default function TopBar({
     const { showSnackbar } = useSnackbar();
     const [isOpenDropdown, setIsOpenDropdown] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
     const [searchBarValue, setSearchBarValue] = useState("");
 
@@ -34,10 +35,18 @@ export default function TopBar({
     const paddingLeft = horizontalSidebar ? "pl-[0px]" : paddingIfOpen;
 
     async function logoutHandler() {
-        const res = await logout();
-        if (res.error) showSnackbar(res.data.message, "error");
-        localStorage.removeItem("token");
-        router.push("/");
+        if (isLoggingOut) return; // Prevent multiple clicks
+        setIsLoggingOut(true);
+        try {
+            const res = await logout();
+            if (res.error) showSnackbar(res.data.message, "error");
+            localStorage.removeItem("token");
+            setIsOpenDropdown(false);
+            router.push("/");
+        } catch (error) {
+            console.error("Logout error:", error);
+            setIsLoggingOut(false);
+        }
     }
 
     // Fullscreen toggle
@@ -177,7 +186,7 @@ export default function TopBar({
                                             },
                                             {
                                                 icon: "tabler:logout",
-                                                label: "Logout",
+                                                label: isLoggingOut ? "Logging out..." : "Logout",
                                                 onClick: logoutHandler
                                             }
                                         ]}
