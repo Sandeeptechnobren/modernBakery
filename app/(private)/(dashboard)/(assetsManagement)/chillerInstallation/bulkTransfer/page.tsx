@@ -177,10 +177,10 @@ export default function BulkTransferListPage() {
                                 isActive
                             />,
                             <SidebarBtn
-                                key="addAllocate"
-                                href="/chillerInstallation/bulkTransfer/addAllocate"
+                                key="addAllocated"
+                                href="/chillerInstallation/bulkTransfer/addAllocated"
                                 leadingIcon="lucide:plus"
-                                label="Add Allocate"
+                                label="Add Allocated"
                                 labelTw="hidden lg:block"
                                 isActive
                             />,

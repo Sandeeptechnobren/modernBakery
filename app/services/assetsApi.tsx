@@ -488,9 +488,10 @@ export const callRegisterList = async (params: Params) => {
     return handleError(error);
   }
 };
-export const getBtrByRegion = async (region_id: string,) => {
+export const getBtrByRegion = async (params: Params) => {
   try {
-    const res = await API.get(`/api/assets/bulk-transfer/get-BTR/${region_id}`,
+    const res = await API.get(`/api/assets/bulk-transfer/get-BTR`,
+      { params }
 
     );
     return res.data;
@@ -498,6 +499,27 @@ export const getBtrByRegion = async (region_id: string,) => {
     return handleError(error);
   }
 };
+
+export const getWarehouseChillers = async (btrId: string, params = {}) => {
+  if (!btrId) throw new Error("BTR ID is required");
+
+  const res = await API.get(
+    `/api/assets/bulk-transfer/gteChillerByBTR/${btrId}`, // ✅ URL FIXED
+    {
+      headers: {
+        id: String(btrId), // ✅ HEADER FIXED
+      },
+      params,
+    }
+  );
+  // console.log(res)
+  return res.data;
+};
+
+
+
+
+
 
 
 
@@ -509,3 +531,28 @@ export const getBtrByRegion = async (region_id: string,) => {
 //     return handleError(error);
 //   }
 // };
+
+export const getModelNumbers = async (params?: any) => {
+  try {
+    const res = await API.get(`/api/assets/bulk-transfer/model-numbers`,
+      { params }
+
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const getModelStock = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/bulk-transfer/model-stock`,
+      { params }
+
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
