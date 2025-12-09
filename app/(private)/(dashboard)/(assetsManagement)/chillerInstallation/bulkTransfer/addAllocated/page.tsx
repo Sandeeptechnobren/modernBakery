@@ -111,12 +111,12 @@ export default function AddRoute() {
         }));
 
       } else {
-        console.log("❌ No warehouse in response - setting 'No Warehouse Found'");
+        // console.log("❌ No warehouse in response - setting 'No Warehouse Found'");
         setWarehouseName("No Warehouse Found");
         setForm((prev) => ({ ...prev, warehouse_id: "" }));
       }
     } catch (e) {
-      console.error("❌ Error fetching warehouse:", e);
+      // console.error("❌ Error fetching warehouse:", e);
       setWarehouseName("Error fetching warehouse");
     }
   };

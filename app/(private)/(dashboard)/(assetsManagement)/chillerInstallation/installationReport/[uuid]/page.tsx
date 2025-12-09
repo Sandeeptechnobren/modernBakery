@@ -165,16 +165,16 @@ export default function AddInstallationReportPage() {
                     // Only update if different
                     if (uniqueSelected.length !== selectedRows.length ||
                         !uniqueSelected.every(item => selectedRows.some(s => s.id === item.id))) {
-                        console.log("✅ Updating selection from DOM:", uniqueSelected);
+                        // console.log("✅ Updating selection from DOM:", uniqueSelected);
                         setSelectedRows(uniqueSelected);
                     }
                 } else if (selectedRows.length > 0) {
                     // No checkboxes checked but we have selections - clear them
-                    console.log("❌ Clearing selections - no checkboxes checked");
+                    // console.log("❌ Clearing selections - no checkboxes checked");
                     setSelectedRows([]);
                 }
             } catch (error) {
-                console.error("Error extracting selections:", error);
+                // console.error("Error extracting selections:", error);
             }
         };
 
@@ -246,7 +246,7 @@ export default function AddInstallationReportPage() {
 
         try {
             const res = await getIROList({ iro_id: iroId });
-            console.log("🔍 IRO Response:", res);
+            // console.log("🔍 IRO Response:", res);
 
             const rawData = Array.isArray(res) ? res[0] : res?.data?.[0] || res?.data || res;
             const warehouse = rawData?.warehouse || rawData;
@@ -263,7 +263,7 @@ export default function AddInstallationReportPage() {
                 setForm((prev) => ({ ...prev, warehouse_id: "" }));
             }
         } catch (e) {
-            console.error("❌ Error fetching distributor:", e);
+            // console.error("❌ Error fetching distributor:", e);
             setWarehouseName("Error fetching distributor");
         }
     };
@@ -321,7 +321,7 @@ export default function AddInstallationReportPage() {
                 })),
             };
 
-            console.log("📤 Submitting payload:", payload);
+            // console.log("📤 Submitting payload:", payload);
 
             await addInstallationReport(payload);
 
@@ -351,13 +351,13 @@ export default function AddInstallationReportPage() {
         }
 
         try {
-            console.log("🔍 Fetching chillers for Warehouse ID:", warehouseId, "IRO ID:", form.iro_id);
+            // console.log("🔍 Fetching chillers for Warehouse ID:", warehouseId, "IRO ID:", form.iro_id);
             const res = await getIROTable(form.iro_id, warehouseId);
-            console.log("✅ IRO Table Response:", res);
+            // console.log("✅ IRO Table Response:", res);
             const data = Array.isArray(res) ? res : res?.data || [];
 
             setAllChillers(data);
-            console.log("📦 Stored chillers:", data);
+            // console.log("📦 Stored chillers:", data);
 
             return {
                 data: data,
@@ -366,7 +366,7 @@ export default function AddInstallationReportPage() {
                 total: data.length || 0,
             };
         } catch (error) {
-            console.error("❌ Error fetching chillers:", error);
+            // console.error("❌ Error fetching chillers:", error);
             showSnackbar("Error fetching chillers", "error");
             return { data: [], currentPage: 0, pageSize: 0, total: 0 };
         }
@@ -403,21 +403,21 @@ export default function AddInstallationReportPage() {
 
     // 🔧 HANDLE ROW SELECTION CALLBACK
     const handleRowSelection = useCallback((data: TableDataType[], selectedRowIndices?: number[]) => {
-        console.log("🎯 rowSelectionOnClick CALLBACK triggered:", {
-            dataLength: data?.length,
-            selectedIndices: selectedRowIndices,
-            timestamp: new Date().toISOString()
-        });
+        // console.log("🎯 rowSelectionOnClick CALLBACK triggered:", {
+        //     dataLength: data?.length,
+        //     selectedIndices: selectedRowIndices,
+        //     timestamp: new Date().toISOString()
+        // });
 
         if (selectedRowIndices && selectedRowIndices.length > 0 && data) {
             const selected = selectedRowIndices
                 .map((index) => data[index])
                 .filter(Boolean);
 
-            console.log("✅ Selected rows via CALLBACK:", selected);
+            // console.log("✅ Selected rows via CALLBACK:", selected);
             setSelectedRows(selected);
         } else {
-            console.log("❌ No rows selected via CALLBACK");
+            // console.log("❌ No rows selected via CALLBACK");
             setSelectedRows([]);
         }
     }, []);

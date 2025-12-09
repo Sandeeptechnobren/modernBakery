@@ -72,7 +72,15 @@ const getColumns = (
         {
             key: "technician",
             label: "Technician",
-            render: (row: any) => <p>{row.technician?.name || row.technician?.code || "-"}</p>,
+            render: (row: any) => {
+                const code = row.technician?.code;
+                const name = row.technician?.name;
+
+                if (code && name) return <p>{`${code} - ${name}`}</p>;
+                if (code) return <p>{code}</p>;
+                if (name) return <p>{name}</p>;
+                return <p>-</p>;
+            },
         },
         // {
         //     key: "created_at",
@@ -110,13 +118,13 @@ export default function ServiceTerritoryListPage() {
                     ...appliedFilters,
                 });
 
-                console.log("🔍 API Response:", result);
-                console.log("🔍 Result Type:", typeof result);
-                console.log("🔍 Is Array?:", Array.isArray(result));
+                // console.log("🔍 API Response:", result);
+                // console.log("🔍 Result Type:", typeof result);
+                // console.log("🔍 Is Array?:", Array.isArray(result));
 
                 // Handle direct array response
                 if (Array.isArray(result)) {
-                    console.log("✅ Direct array response detected");
+                    // console.log("✅ Direct array response detected");
                     return {
                         data: result,
                         total: result.length,
@@ -137,7 +145,7 @@ export default function ServiceTerritoryListPage() {
                 }
 
                 // Fallback
-                console.warn("⚠️ Unexpected response structure");
+                // console.warn("⚠️ Unexpected response structure");
                 return {
                     data: [],
                     total: 0,

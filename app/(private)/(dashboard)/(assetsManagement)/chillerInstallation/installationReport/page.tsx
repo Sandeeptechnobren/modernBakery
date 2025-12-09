@@ -113,13 +113,13 @@ export default function BulkTransferListPage() {
                     ...appliedFilters,
                 });
 
-                console.log("🔍 API Response:", result);
-                console.log("🔍 Result Type:", typeof result);
-                console.log("🔍 Is Array?:", Array.isArray(result));
+                // console.log("🔍 API Response:", result);
+                // console.log("🔍 Result Type:", typeof result);
+                // console.log("🔍 Is Array?:", Array.isArray(result));
 
                 // Handle direct array response
                 if (Array.isArray(result)) {
-                    console.log("✅ Direct array response detected");
+                    // console.log("✅ Direct array response detected");
                     return {
                         data: result,
                         total: result.length,
@@ -130,7 +130,7 @@ export default function BulkTransferListPage() {
 
                 // Handle object response with data property
                 if (result?.data) {
-                    console.log("✅ Object response with data property");
+                    // console.log("✅ Object response with data property");
                     return {
                         data: Array.isArray(result.data) ? result.data : [],
                         total: result?.pagination?.total || result.data.length || 0,
@@ -148,7 +148,7 @@ export default function BulkTransferListPage() {
                     pageSize: pageSize,
                 };
             } catch (error) {
-                console.error("❌ Error fetching installation reports:", error);
+                // console.error("❌ Error fetching installation reports:", error);
                 showSnackbar("Failed to fetch installation report list", "error");
 
                 return {

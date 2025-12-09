@@ -15,7 +15,7 @@ import KeyValueData from "@/app/components/keyValueData";
 import PrintButton from "@/app/components/printButton";
 import { agentOrderExport } from "@/app/services/agentTransaction";
 import { downloadFile } from "@/app/services/allApi";
-import { purchaseOrderById, returnByUUID, tempReturnByUUID } from "@/app/services/companyTransaction";
+import { purchaseOrderById, returnByUUID, tempReturnByUUID, exportReturnViewPdf } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
@@ -151,6 +151,23 @@ export default function OrderDetailPage() {
     //         setLoadingState(false);
     //     }
     // };
+    const exportFile = async () => {
+        try {
+            setLoadingState(true);
+            const response = await exportReturnViewPdf({ uuid: UUID, format: "pdf" });
+            if (response && typeof response === "object" && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+        } catch (error) {
+            showSnackbar("Failed to download warehouse data", "error");
+        } finally {
+            setLoadingState(false);
+        }
+    };
+
 
     const targetRef = useRef<HTMLDivElement | null>(null);
 
@@ -300,6 +317,14 @@ export default function OrderDetailPage() {
 
                     {/* ---------- Footer Buttons ---------- */}
                     <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
+                        <SidebarBtn
+                            leadingIcon={
+                                loading ? "eos-icons:three-dots-loading" : "lucide:download"
+                            }
+                            leadingIconSize={20}
+                            label="Download"
+                            onClick={exportFile}
+                        />
                         {/* <SidebarBtn
                             leadingIcon={loading ? "eos-icons:three-dots-loading" : "lucide:download"}
                             leadingIconSize={20}

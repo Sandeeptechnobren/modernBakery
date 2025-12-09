@@ -194,12 +194,12 @@ export default function AddEditServiceTerritory() {
                     <Loading />
                 ) : (
                     <form onSubmit={formik.handleSubmit}>
-                        <ContainerCard>
+                        <div>
                             <h2 className="text-lg font-semibold mb-6">
                                 Service Territory Details
                             </h2>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 {/* ST Code */}
                                 <InputFields
                                     label="ST Code"
@@ -292,7 +292,7 @@ export default function AddEditServiceTerritory() {
                                     }
                                 />
                             </div>
-                        </ContainerCard>
+                        </div>
 
                         <div className="flex justify-end gap-4 mt-6">
                             <button
