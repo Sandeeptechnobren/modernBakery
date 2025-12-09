@@ -103,14 +103,9 @@ export function convertToNewFlow(old: any): any {
         is_active: old.status === "1",
 
         steps: old.steps.map((step: any, index: any) => {
-            // convert permissions
             const permissions: string[] = step.formType;
-            // approval type
             const approvalType = step.condition || "OR";
-            // title logic
             const title = step.title || `Step ${index + 1}`;
-
-            // Build the step object
             const stepData: any = {
                 step_order: index + 1,
                 title: title,
@@ -122,7 +117,6 @@ export function convertToNewFlow(old: any): any {
                 role_ids: (step.selectedRole ?? step.role_id ?? []).map(Number)
             };
 
-            // Only include step_id if it exists (for existing steps being updated)
             if (step.step_id) {
                 stepData.step_id = step.step_id;
             }
