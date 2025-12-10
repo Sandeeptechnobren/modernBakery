@@ -89,7 +89,7 @@ export default function ShelfDisplay() {
               search: searchChiller
             },
             header: {
-              title: "Chillers",
+              title: "Assets Master",
 
               searchBar: false,
               columnFilter: true,
@@ -104,7 +104,7 @@ export default function ShelfDisplay() {
                 />,
               ],
             },
-            localStorageKey: "chiller",
+            localStorageKey: "assetsMasterTable",
             table: {
               height: 400
             },
@@ -170,9 +170,10 @@ export default function ShelfDisplay() {
               { key: "manufacturing_year", label: "Manufacturing Year" },
               { key: "remarks", label: "Remarks" },
               {
-                key: "status", label: "Status", render: (data: TableDataType) => (
-                  <StatusBtn isActive={data.status && data.status.toString() === "1" ? true : false} />
-                )
+                key: "status", label: "Status", render: (data: TableDataType) =>
+                  typeof data.status === "object" && data.status !== null
+                    ? `${(data.status as { name?: string }).name || ""}`
+                    : "-",
               },
             ],
             rowSelection: true,

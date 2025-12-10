@@ -133,7 +133,7 @@ export default function Page() {
               list: fetchTableData,
             },
             header: {
-              title: "Chiller Requests",
+              title: "Assets Requests",
               wholeTableActions: [
                 <div key={0} className="flex gap-[12px] relative">
                   <DismissibleDropdown

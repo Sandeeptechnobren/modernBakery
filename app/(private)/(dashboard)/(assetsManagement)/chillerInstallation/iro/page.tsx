@@ -159,56 +159,56 @@ export default function CustomerInvoicePage() {
 
     // 🔹 Fetch Invoices
     const fetchIRO = useCallback(
-    async (
-        page: number = 1,
-        pageSize: number = 50,
-        appliedFilters: Record<string, any> = {}
-    ): Promise<listReturnType> => {
-        try {
-            setLoading(true);
+        async (
+            page: number = 1,
+            pageSize: number = 50,
+            appliedFilters: Record<string, any> = {}
+        ): Promise<listReturnType> => {
+            try {
+                setLoading(true);
 
-            const result = await iroList({
-                ...appliedFilters,   // no pagination params needed
-            });
+                const result = await iroList({
+                    ...appliedFilters,   // no pagination params needed
+                });
 
-            const mapped =
-                result?.count?.headers?.map((h: any) => {
-                    const crfCount = Array.isArray(h.details) ? h.details.length : 0;
+                const mapped =
+                    result?.count?.headers?.map((h: any) => {
+                        const crfCount = Array.isArray(h.details) ? h.details.length : 0;
 
-                    return {
-                        osa_code: `${h.osa_code} (${crfCount} CRF)`,
-                        warehouse: h.warehouse_id,
-                        created_at: h.created_at,
-                        status: h.status,
-                        created_user: h.created_user,
-                    };
-                }) || [];
+                        return {
+                            osa_code: `${h.osa_code} (${crfCount} CRF)`,
+                            warehouse: h.warehouse_id,
+                            created_at: h.created_at,
+                            status: h.status,
+                            created_user: h.created_user,
+                        };
+                    }) || [];
 
-            // ✅ Return mapped data without pagination
-            return {
-                data: mapped,
-                total: mapped.length,
-                currentPage: 1,
-                pageSize: mapped.length, // show all rows
-            };
+                // ✅ Return mapped data without pagination
+                return {
+                    data: mapped,
+                    total: mapped.length,
+                    currentPage: 1,
+                    pageSize: mapped.length, // show all rows
+                };
 
-        } catch (error) {
-            console.error(error);
-            showSnackbar("Failed to fetch IRO list", "error");
+            } catch (error) {
+                console.error(error);
+                showSnackbar("Failed to fetch IRO list", "error");
 
-            return {
-                data: [],
-                total: 0,
-                currentPage: 1,
-                pageSize: 0,
-            };
+                return {
+                    data: [],
+                    total: 0,
+                    currentPage: 1,
+                    pageSize: 0,
+                };
 
-        } finally {
-            setLoading(false);
-        }
-    },
-    [setLoading, showSnackbar]
-);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [setLoading, showSnackbar]
+    );
 
 
 
@@ -310,7 +310,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { list: fetchIRO },
                     header: {
-                        title: "ACF",
+                        title: "Installation Request Order",
                         columnFilter: true,
                         searchBar: false,
                         // threeDot: [
@@ -432,7 +432,7 @@ export default function CustomerInvoicePage() {
                         {
                             icon: "lucide:eye",
                             onClick: (row: TableDataType) => {
-                                    router.push(`/chillerInstallation/iro/view/${row.id}`);
+                                router.push(`/chillerInstallation/iro/view/${row.id}`);
                             },
                         },
                     ],

@@ -697,3 +697,13 @@ export const advancePaymentExport = async (params: Params) => {
     return handleError(error);
   }
 };
+
+
+export const linkageList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/salesman-warehouse-history/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

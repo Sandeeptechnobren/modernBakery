@@ -308,6 +308,13 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
+            href: "/salesTeamRouteLinkage",
+            label: "Sales Team Linkage",
+            leadingIcon: "mdi:tanker-truck",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
             href: "/salesTeamLoad",
             label: "Sales Team Load",
             leadingIcon: "mdi:tanker-truck",

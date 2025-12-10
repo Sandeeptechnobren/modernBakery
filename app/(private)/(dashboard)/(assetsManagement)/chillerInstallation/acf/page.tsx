@@ -96,7 +96,7 @@ const renderCombinedField = (data: TableDataType, field: string) => {
     } else if (code !== "-") {
         return code;
     }
-    return "-";99999999999
+    return "-"; 99999999999
 };
 
 // 🔹 Table Columns
@@ -105,44 +105,20 @@ const columns = [
     {
         key: "osa_code",
         label: "OSA Code",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return (
-                    <div>
-                        <p>{data.chiller_request.osa_code || "-"}</p>
-                    </div>
-                );
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "osa_code"),
     },
     {
         key: "owner_name",
         label: "Owner Name",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return (
-                    <div>
-                        <p>{data.chiller_request.owner_name || "-"}</p>
-                    </div>
-                );
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "owner_name"),
     },
     {
         key: "contact_number",
         label: "Contact Number",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return (
-                    <div>
-                        <p>{data.chiller_request.contact_number || "-"}</p>
-                    </div>
-                );
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "contact_number"),
     },
 
     // Combined Relationship Fields
@@ -175,58 +151,34 @@ const columns = [
     {
         key: "machine_number",
         label: "Machine No",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return <div><p>{data.chiller_request.machine_number || "-"}</p></div>;
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "machine_number"),
     },
     {
         key: "asset_number",
         label: "Asset No",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return <div><p>{data.chiller_request.asset_number || "-"}</p></div>;
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "asset_number"),
     },
     {
         key: "model",
         label: "Model",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return <div><p>{data.chiller_request.model || "-"}</p></div>;
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "model"),
     },
     {
         key: "brand",
         label: "Brand",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return <div><p>{data.chiller_request.brand || "-"}</p></div>;
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "brand"),
     },
 
     // Status
     {
         key: "status",
         label: "Status",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return (
-                    <StatusBtn
-                        isActive={data.chiller_request.status === 1}
-                    />
-                );
-            }
-            return <StatusBtn isActive={false} />;
-        },
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "status"),
     },
 ]
 
@@ -395,7 +347,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { filterBy: filterBy },
                     header: {
-                        title: "ACF",
+                        title: "Approve Chiller Request",
                         columnFilter: true,
                         searchBar: false,
                         // threeDot: [
@@ -497,26 +449,26 @@ export default function CustomerInvoicePage() {
                     columns,
                     rowSelection: true,
                     floatingInfoBar: {
-                                  showByDefault: true,
-                                  showSelectedRow: true,
-                                  buttons: [
-                                    {
-                            label: "Selected Rows: ",
-                            onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                const ids = selectedRow
-                                    ?.map((id) => {
-                                        const row = data[id];
-                                        if (hasChillerRequest(row)) {
-                                            return row.chiller_request.id;
-                                        }
-                                        return null;
-                                    })
-                                    .filter((id): id is number => id !== null);
-                                console.log("Selected Rows:", ids);
-                            }
-                        },
-                                  ]
-                                },
+                        showByDefault: true,
+                        showSelectedRow: true,
+                        buttons: [
+                            {
+                                label: "Selected Rows: ",
+                                onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                    const ids = selectedRow
+                                        ?.map((id) => {
+                                            const row = data[id];
+                                            if (hasChillerRequest(row)) {
+                                                return row.chiller_request.id;
+                                            }
+                                            return null;
+                                        })
+                                        .filter((id): id is number => id !== null);
+                                    console.log("Selected Rows:", ids);
+                                }
+                            },
+                        ]
+                    },
                     localStorageKey: "invoice-table",
                     rowActions: [
                         {

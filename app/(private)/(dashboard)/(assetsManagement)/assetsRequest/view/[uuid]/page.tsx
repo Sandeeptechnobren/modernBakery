@@ -38,7 +38,7 @@ type ChillerRequest = {
   route?: { name?: string };
 };
 
-const title = "Chiller Request Details";
+const title = "Assets Request Details";
 
 export default function ViewPage() {
   const params = useParams();
@@ -65,7 +65,7 @@ export default function ViewPage() {
 
       if (res.error) {
         showSnackbar(
-          res.data.message || "Unable to fetch Chiller Request Details",
+          res.data.message || "Unable to fetch Assets Request Details",
           "error"
         );
       } else {

@@ -10,7 +10,7 @@ import { Formik, Form, FormikHelpers, FormikValues } from "formik";
 import { useEffect, useState, JSX } from "react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { addChiller, chillerByUUID, updateChiller } from "@/app/services/assetsApi";
+import { addChiller, assetsStatusList, chillerByUUID, updateChiller } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { genearateCode } from "@/app/services/allApi";
 
@@ -92,6 +92,10 @@ export default function AddOrEditChiller() {
   console.log(params)
   const { setLoading } = useLoading();
 
+  const [assetsStatusOptions, setAssetsStatusOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+
   const isEditMode = params?.id && params.id !== "add";
   console.log(isEditMode)
   const chillerId = isEditMode ? String(params.id) : null;
@@ -111,7 +115,7 @@ export default function AddOrEditChiller() {
     sap_code: "",
     status: "1",
     assets_type: "",
-    branding: "",
+    branding: "1",
     trading_partner_number: "",
     capacity: "",
     manufacturing_year: "",
@@ -155,7 +159,7 @@ export default function AddOrEditChiller() {
           manufacturing_year: d.manufacturing_year || "",
           assets_type: d.assets_type || "",
           remarks: d.remarks || "",
-          status: String(d.status ?? "1"),
+          status: String(d.status?.id ?? "1"),
         });
       } else {
         const res = await genearateCode({ model_name: "chiller" });
@@ -163,6 +167,28 @@ export default function AddOrEditChiller() {
       }
     }
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await assetsStatusList({});
+        const data = Array.isArray(res) ? res : res?.data;
+
+        if (Array.isArray(data)) {
+          const options = data.map((item: any) => ({
+            value: String(item.id),
+            label: `${item.name}`,
+          }));
+          setAssetsStatusOptions(options);
+        }
+      } catch {
+        showSnackbar("Failed to fetch model numbers", "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   /* ----------------------------------------------------
@@ -205,7 +231,7 @@ export default function AddOrEditChiller() {
       manufacturer: values.manufacturer,
       country_id: Number(values.country_id),
 
-      branding: values.branding,
+      branding: Number(values.branding),
       trading_partner_number: values.trading_partner_number,
       capacity: values.capacity,
       manufacturing_year: values.manufacturing_year,
@@ -221,7 +247,7 @@ export default function AddOrEditChiller() {
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to save", "error");
     } else {
-      showSnackbar(`Chiller ${isEditMode ? "updated" : "added"} successfully`, "success");
+      showSnackbar(`Assets ${isEditMode ? "updated" : "added"} successfully`, "success");
       router.push("/assetsMaster");
     }
   };
@@ -416,13 +442,9 @@ export default function AddOrEditChiller() {
 
               <InputFields
                 required
-                type="radio"
                 label="Status"
                 name="status"
-                options={[
-                  { value: "1", label: "Active" },
-                  { value: "0", label: "Inactive" },
-                ]}
+                options={assetsStatusOptions}
                 value={values.status}
                 onChange={(e) => setFieldValue("status", e.target.value)}
                 error={touched.status && errors.status}
@@ -444,7 +466,7 @@ export default function AddOrEditChiller() {
           <Icon icon="lucide:arrow-left" width={24} />
         </div>
         <h1 className="text-xl font-semibold">
-          {isEditMode ? "Update Chiller" : "Add New Chiller"}
+          {isEditMode ? "Update Assets Master" : "Add New Assets Master"}
         </h1>
       </div>
 

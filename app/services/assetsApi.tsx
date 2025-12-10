@@ -723,3 +723,15 @@ export const updateServiceTerritory = async (uuid: string, body: object) => {
     return handleError(error);
   }
 };
+
+
+export const assetsStatusList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/settings/fridge-status/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

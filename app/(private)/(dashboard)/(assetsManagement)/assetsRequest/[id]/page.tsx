@@ -373,7 +373,7 @@ export default function AddCompanyWithStepper() {
   const steps: StepperStep[] = [
     { id: 1, label: "Outlet Information" },
     { id: 2, label: "Location & Personnel" },
-    { id: 3, label: "Chiller Details" },
+    { id: 3, label: "Assets Details" },
     { id: 4, label: "Documentation & Status" },
   ];
 
@@ -498,11 +498,11 @@ export default function AddCompanyWithStepper() {
         });
         setUploadedFiles(initialUploadedFiles);
       } else {
-        showSnackbar("Failed to fetch chiller request data", "error");
+        showSnackbar("Failed to fetch assets request data", "error");
       }
     } catch (error) {
       console.error("Error fetching existing data:", error);
-      showSnackbar("Failed to fetch chiller request data", "error");
+      showSnackbar("Failed to fetch assets request data", "error");
     } finally {
       setIsLoading(false);
     }
@@ -1536,7 +1536,7 @@ export default function AddCompanyWithStepper() {
             <Icon icon="lucide:arrow-left" width={24} />
           </div>
           <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Chiller" : "Add New Chiller"}
+            {isEditMode ? "Update Assets Request" : "Add New Assets Request"}
           </h1>
         </div>
       </div>

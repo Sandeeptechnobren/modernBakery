@@ -40,7 +40,7 @@ type Chiller = {
   status: number;
 };
 
-const title = "Chiller Details";
+const title = "Assets Details";
 
 export default function ViewPage() {
   const params = useParams();
@@ -57,7 +57,7 @@ export default function ViewPage() {
       setLoading(false);
 
       if (res.error) {
-        showSnackbar(res.data?.message || "Unable to fetch Chiller Details", "error");
+        showSnackbar(res.data?.message || "Unable to fetch Assets Details", "error");
         return;
       }
 
@@ -85,7 +85,7 @@ export default function ViewPage() {
         {/* ---------- Basic Information ---------- */}
         <ContainerCard className="w-full lg:w-[350px]">
           <KeyValueData
-            title="Chiller Basic Information"
+            title="Assets Basic Information"
             data={[
               { key: "OSA Code", value: chiller?.osa_code },
               { key: "SAP Code", value: chiller?.sap_code },

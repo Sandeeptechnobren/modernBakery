@@ -243,14 +243,14 @@ export default function BulkTransferListPage() {
                     columns,
 
                     rowSelection: true,
-                    rowActions: [
-                        {
-                            icon: "lucide:eye",
-                            onClick: (row: any) => {
-                                router.push(`/chillerInstallation/bulkTransfer/view/${row.uuid}`);
-                            },
-                        },
-                    ],
+                    // rowActions: [
+                    //     {
+                    //         icon: "lucide:eye",
+                    //         onClick: (row: any) => {
+                    //             router.push(`/chillerInstallation/bulkTransfer/view/${row.uuid}`);
+                    //         },
+                    //     },
+                    // ],
 
                     pageSize: 20,
                     localStorageKey: "bulk-transfer-table",
