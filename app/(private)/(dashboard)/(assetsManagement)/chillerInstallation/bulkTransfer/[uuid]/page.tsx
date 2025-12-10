@@ -1,12 +1,16 @@
 "use client";
+
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import IconButton from "@/app/components/iconButton";
 import InputFields from "@/app/components/inputFields";
 import Loading from "@/app/components/Loading";
-import SettingPopUp from "@/app/components/settingPopUp";
 import { genearateCode, saveFinalCode } from "@/app/services/allApi";
-import { addBulkTransfer, addAllocate } from "@/app/services/assetsApi";
+import {
+  addBulkTransfer,
+  addAllocate,
+  getModelNumbers,
+  getModelStock,
+} from "@/app/services/assetsApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -19,121 +23,188 @@ export default function AddRoute() {
   const uuid = params?.uuid as string;
   const mode = uuid === "addAllocate" ? "allocate" : "add";
 
-  const { regionOptions, warehouseAllOptions, areaOptions, assetsModelOptions } = useAllDropdownListData();
+  const { regionOptions, warehouseAllOptions, areaOptions } =
+    useAllDropdownListData();
+
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
-  const [prefix, setPrefix] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [filteredOptions, setFilteredRouteOptions] = useState<
+  const [prefix, setPrefix] = useState("");
+  const codeGeneratedRef = useRef(false);
+
+  const [modelNumberOptions, setModelNumberOptions] = useState<
     { value: string; label: string }[]
   >([]);
-  // Form state based on mode
-  const [form, setForm] = useState(() => {
-    if (mode === "allocate") {
-      return {
+
+  const [form, setForm] = useState<any>(
+    mode === "allocate"
+      ? {
         region_id: "",
         btr: "",
         warehouse_id: "",
         truck_no: "",
         turnmen_name: "",
         contact: "",
-      };
-    }
-    return {
-      osa_code: "",
-      region_id: "",
-      area_id: "",
-      warehouse_id: "",
-      model_id: "",
-      requestes_asset: "",
-      available_stock: "",
-      status: "1",
-    };
-  });
+      }
+      : {
+        osa_code: "",
+        region_id: "",
+        area_id: "",
+        warehouse_id: "",
+        model_id: "",
+        requestes_asset: "",
+        available_stock: "",
+        status: "1",
+      }
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [skeleton, setSkeleton] = useState(false);
-  const codeGeneratedRef = useRef(false);
 
-  // Auto generate code (only for 'add' mode)
+  // ✅ FETCH MODEL NUMBERS
+  useEffect(() => {
+    if (mode === "add") {
+      (async () => {
+        try {
+          setLoading(true);
+          const res = await getModelNumbers();
+          const data = Array.isArray(res) ? res : res?.data;
+
+          if (Array.isArray(data)) {
+            const options = data.map((item: any) => ({
+              value: String(item.id),
+              label: `${item.name} (${item.code})`,
+            }));
+            setModelNumberOptions(options);
+          }
+        } catch {
+          showSnackbar("Failed to fetch model numbers", "error");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [mode]);
+
+  // ✅ AUTO GENERATE CODE
   useEffect(() => {
     if (mode === "add" && !codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
       (async () => {
         try {
           const res = await genearateCode({ model_name: "bulk_tran" });
-          if (res?.code) setForm((prev) => ({ ...prev, osa_code: res.code }));
+          if (res?.code) setForm((p: any) => ({ ...p, osa_code: res.code }));
           if (res?.prefix) setPrefix(res.prefix);
-        } catch (e) {
-          console.error("Code generation failed", e);
-        }
+        } catch { }
       })();
     }
   }, [mode]);
 
-  // Validation schema based on mode
-  const validationSchema = mode === "allocate"
-    ? yup.object().shape({
-      region_id: yup.string().required("Region is required"),
-      btr: yup.string().required("BTR is required"),
-      warehouse_id: yup.string().required("Warehouse is required"),
-      truck_no: yup.string().required("Truck Number is required"),
-      turnmen_name: yup.string().required("Turnmen Name is required"),
-      contact: yup.string().required("Contact is required"),
-    })
-    : yup.object().shape({
-      osa_code: yup.string().required("Route Code is required"),
-      region_id: yup.string().required("Region is required"),
-      area_id: yup.string().required("Area is required"),
-      warehouse_id: yup.string().required("Warehouse is required"),
-      model_id: yup.string().required("Model Number is required"),
-      available_stock: yup.string().required("Available Stock is required"),
-      requestes_asset: yup.string().required("Requested Asset is required"),
-      status: yup.string().required("Status is required"),
-    });
+  // ✅ FETCH STOCK
+  const fetchModelStock = async (modelId: string) => {
+    try {
+      setLoading(true);
+      const res = await getModelStock({ model_id: modelId });
 
-  const handleChange = (field: string, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+      const stockValue =
+        res?.data?.available_stock !== undefined
+          ? String(res.data.available_stock)
+          : "0";
+
+      setForm((prev: any) => ({
+        ...prev,
+        available_stock: stockValue,
+        requestes_asset: "", // ✅ reset requested when model changes
+      }));
+    } catch {
+      showSnackbar("Failed to fetch stock", "error");
+      setForm((prev: any) => ({
+        ...prev,
+        available_stock: "0",
+        requestes_asset: "",
+      }));
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // ✅ STRICT INPUT CONTROL
+  const handleChange = (field: string, value: string) => {
+    // ✅ Allow ONLY numbers
+    if (field === "available_stock" || field === "requestes_asset") {
+      if (!/^\d*$/.test(value)) return;
+    }
+
+    // ✅ Block Requested > Available Stock
+    if (field === "requestes_asset") {
+      const available = Number(form.available_stock || 0);
+      const requested = Number(value || 0);
+
+      if (requested > available) {
+        showSnackbar(
+          `Only limited stock is available. Please reduce the requested quantity. (${available})`,
+          "error"
+        );
+        return;
+      }
+    }
+
+    setForm((prev: any) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: "" }));
+
+    if (field === "model_id") {
+      fetchModelStock(value);
+    }
+  };
+
+  // ✅ VALIDATION
+  const validationSchema =
+    mode === "allocate"
+      ? yup.object({
+        region_id: yup.string().required(),
+        btr: yup.string().required(),
+        warehouse_id: yup.string().required(),
+        truck_no: yup.string().required(),
+        turnmen_name: yup.string().required(),
+        contact: yup.string().required(),
+      })
+      : yup.object({
+        osa_code: yup.string().required(),
+        region_id: yup.string().required(),
+        area_id: yup.string().required(),
+        warehouse_id: yup.string().required(),
+        model_id: yup.string().required(),
+        requestes_asset: yup
+          .number()
+          .required()
+          .max(
+            Number(form.available_stock || 0),
+            "Requested cannot exceed stock"
+          ),
+        available_stock: yup.string().required(),
+        status: yup.string().required(),
+      });
+
+  // ✅ SUBMIT
   const handleSubmit = async () => {
     try {
       await validationSchema.validate(form, { abortEarly: false });
-      setErrors({});
       setSubmitting(true);
 
       let res;
+
       if (mode === "allocate") {
-        const payload = {
-          region_id: form.region_id,
-          btr: form.btr,
-          warehouse_id: form.warehouse_id,
-          truck_no: form.truck_no,
-          turnmen_name: form.turnmen_name,
-          contact: form.contact,
-        };
-        res = await addAllocate(payload);
+        res = await addAllocate(form);
       } else {
-        const payload = {
-          osa_code: form.osa_code,
-          region_id: form.region_id,
-          area_id: form.area_id,
-          warehouse_id: form.warehouse_id,
-          model_id: form.model_id,
-          requestes_asset: form.requestes_asset,
-          available_stock: form.available_stock,
+        res = await addBulkTransfer({
+          ...form,
           status: Number(form.status),
-        };
-        res = await addBulkTransfer(payload);
+        });
       }
 
       if (res?.error) {
-        showSnackbar(res.data?.message || "Failed to submit form", "error");
+        showSnackbar("Submission failed", "error");
       } else {
         if (mode === "add") {
           await saveFinalCode({
@@ -142,30 +213,25 @@ export default function AddRoute() {
           });
         }
 
-        showSnackbar(
-          mode === "allocate"
-            ? "Allocation added successfully"
-            : "Bulk Transfer added successfully",
-          "success"
-        );
+        showSnackbar("Successfully Added", "success");
         router.push("/chillerInstallation/bulkTransfer");
       }
-    } catch (err) {
+    } catch (err: any) {
       if (err instanceof yup.ValidationError) {
-        const formErrors: Record<string, string> = {};
-        err.inner.forEach((e) => {
+        const formErrors: any = {};
+        err.inner.forEach((e: any) => {
           if (e.path) formErrors[e.path] = e.message;
         });
         setErrors(formErrors);
       } else {
-        showSnackbar("Failed to add bulk transfer", "error");
+        showSnackbar("Something went wrong", "error");
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading || !warehouseAllOptions || !regionOptions) {
+  if (loading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <Loading />
@@ -175,251 +241,90 @@ export default function AddRoute() {
 
   return (
     <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/chillerInstallation/bulkTransfer">
-            <Icon icon="lucide:arrow-left" width={24} />
-          </Link>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {mode === "allocate" ? "Add Allocate" : "Add Bulk Transfer"}
-          </h1>
-        </div>
+      {/* HEADER */}
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/chillerInstallation/bulkTransfer">
+          <Icon icon="lucide:arrow-left" width={24} />
+        </Link>
+        <h1 className="text-xl font-semibold">Add Bulk Transfer</h1>
       </div>
 
-      {/* Content */}
-      <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-        <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4">
-            {mode === "allocate" ? "Allocation Details" : "Bulk Transfer Details"}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {mode === "allocate" ? (
-              <>
-                {/* Region */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Region"
-                    value={form.region_id}
-                    options={regionOptions}
-                    onChange={(e) => handleChange("region_id", e.target.value)}
-                  />
-                  {errors.region_id && (
-                    <p className="text-red-500 text-sm mt-1">{errors.region_id}</p>
-                  )}
-                </div>
+      {/* FORM */}
+      <div className="bg-white p-6 rounded-xl shadow grid md:grid-cols-3 gap-4">
+        <InputFields label="OSA Code" value={form.osa_code} disabled onChange={() => { }} />
 
-                {/* BTR */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="BTR"
-                    value={form.btr}
-                    onChange={(e) => handleChange("btr", e.target.value)}
-                    options={areaOptions}
-                  />
-                  {errors.btr && (
-                    <p className="text-red-500 text-sm mt-1">{errors.btr}</p>
-                  )}
-                </div>
+        <InputFields
+          label="Region"
+          value={form.region_id}
+          options={regionOptions}
+          onChange={(e) => handleChange("region_id", e.target.value)}
+        />
 
-                {/* Warehouse */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Distributor"
-                    searchable
-                    value={form.warehouse_id}
-                    options={warehouseAllOptions}
-                    onChange={(e) => handleChange("warehouse_id", e.target.value)}
-                  />
-                  {errors.warehouse_id && (
-                    <p className="text-red-500 text-sm mt-1">{errors.warehouse_id}</p>
-                  )}
-                </div>
+        <InputFields
+          label="Area"
+          value={form.area_id}
+          options={areaOptions}
+          onChange={(e) => handleChange("area_id", e.target.value)}
+        />
 
-                {/* Truck Number */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Truck Number"
-                    value={form.truck_no}
-                    onChange={(e) => handleChange("truck_no", e.target.value)}
-                  />
-                  {errors.truck_no && (
-                    <p className="text-red-500 text-sm mt-1">{errors.truck_no}</p>
-                  )}
-                </div>
+        <InputFields
+          label="Distributor"
+          value={form.warehouse_id}
+          options={warehouseAllOptions}
+          onChange={(e) => handleChange("warehouse_id", e.target.value)}
+        />
 
-                {/* Turnmen Name */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Turnmen Name"
-                    value={form.turnmen_name}
-                    onChange={(e) => handleChange("turnmen_name", e.target.value)}
-                  />
-                  {errors.turnmen_name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.turnmen_name}</p>
-                  )}
-                </div>
+        <InputFields
+          label="Model Number"
+          searchable
+          value={form.model_id}
+          options={modelNumberOptions}
+          onChange={(e) => handleChange("model_id", e.target.value)}
+        />
 
-                {/* Contact */}
-                <div>
-                  <InputFields
-                    required
-                    label="Contact"
-                    value={form.contact}
-                    onChange={(e) => handleChange("contact", e.target.value)}
-                  />
-                  {errors.contact && (
-                    <p className="text-red-500 text-sm mt-1">{errors.contact}</p>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* OSA Code */}
-                <div className="flex items-start gap-2 max-w-[406px]">
-                  <InputFields
-                    required
-                    label="OSA Code"
-                    value={form.osa_code}
-                    onChange={(e) => handleChange("osa_code", e.target.value)}
-                    disabled={codeMode === "auto"}
-                  />
-                </div>
+        <InputFields
+          label="Available Stock"
+          value={form.available_stock}
+          disabled
+          onChange={() => { }}
+        />
 
-                {/* Region */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Region"
-                    value={form.region_id}
-                    options={regionOptions}
-                    onChange={(e) => handleChange("region_id", e.target.value)}
-                  />
-                  {errors.region_id && (
-                    <p className="text-red-500 text-sm mt-1">{errors.region_id}</p>
-                  )}
-                </div>
+        <InputFields
+          label="Requested Chiller"
+          type="number"
+          value={form.requestes_asset}
+          onChange={(e) => handleChange("requestes_asset", e.target.value)}
+          min={0}
+          max={Number(form.available_stock || 0)}
+        />
 
-                {/* Area */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Area"
-                    value={form.area_id}
-                    onChange={(e) => handleChange("area_id", e.target.value)}
-                    options={areaOptions}
-                  />
-                  {errors.area_id && (
-                    <p className="text-red-500 text-sm mt-1">{errors.area_id}</p>
-                  )}
-                </div>
-
-                {/* Warehouse */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Distributor"
-                    searchable
-                    value={form.warehouse_id}
-                    options={warehouseAllOptions}
-                    onChange={(e) => handleChange("warehouse_id", e.target.value)}
-                  />
-                  {errors.warehouse_id && (
-                    <p className="text-red-500 text-sm mt-1">{errors.warehouse_id}</p>
-                  )}
-                </div>
-
-                {/* Model Number */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Model Number"
-                    searchable
-                    value={form.model_id}
-                    options={assetsModelOptions}
-                    onChange={(e) => handleChange("model_id", e.target.value)}
-                  />
-                  {errors.model_id && (
-                    <p className="text-red-500 text-sm mt-1">{errors.model_id}</p>
-                  )}
-                </div>
-
-                {/* Available Stock */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Available Stock"
-                    searchable
-                    value={form.available_stock}
-                    onChange={(e) => handleChange("available_stock", e.target.value)}
-                  />
-                  {errors.available_stock && (
-                    <p className="text-red-500 text-sm mt-1">{errors.available_stock}</p>
-                  )}
-                </div>
-
-                {/* Requested Chiller */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Requested Chiller"
-                    searchable
-                    value={form.requestes_asset}
-                    onChange={(e) => handleChange("requestes_asset", e.target.value)}
-                  />
-                  {errors.requestes_asset && (
-                    <p className="text-red-500 text-sm mt-1">{errors.requestes_asset}</p>
-                  )}
-                </div>
-
-                {/* Status */}
-                <div className="flex flex-col">
-                  <InputFields
-                    required
-                    label="Status"
-                    type="radio"
-                    value={form.status}
-                    onChange={(e) => handleChange("status", e.target.value)}
-                    options={[
-                      { value: "1", label: "Active" },
-                      { value: "0", label: "Inactive" },
-                    ]}
-                  />
-                  {errors.status && (
-                    <p className="text-red-500 text-sm mt-1">{errors.status}</p>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <InputFields
+          label="Status"
+          type="radio"
+          value={form.status}
+          onChange={(e) => handleChange("status", e.target.value)}
+          options={[
+            { value: "1", label: "Active" },
+            { value: "0", label: "Inactive" },
+          ]}
+        />
       </div>
 
-      {/* Buttons */}
-      <div className="flex justify-end gap-4 mt-6 pr-0">
+      {/* BUTTONS */}
+      <div className="flex justify-end gap-4 mt-6">
         <button
-          type="button"
-          className={`px-6 py-2 rounded-lg border text-gray-700 hover:bg-gray-100 ${submitting
-            ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
-            : "border-gray-300"
-            }`}
-          onClick={() => router.push("/chillerInstallation/bulkTransfer")}
-          disabled={submitting}
+          className="px-6 py-2 border rounded-lg"
+          onClick={() =>
+            router.push("/chillerInstallation/bulkTransfer")
+          }
         >
           Cancel
         </button>
 
         <SidebarBtn
           label={submitting ? "Submitting..." : "Submit"}
-          isActive={!submitting}
-          leadingIcon="mdi:check"
           onClick={handleSubmit}
-          disabled={submitting}
+          isActive={!submitting}
         />
       </div>
     </>

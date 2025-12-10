@@ -96,7 +96,7 @@ export default function ShelfDisplay() {
               actions: [
                 <SidebarBtn
                   key="name"
-                  href="/assets/chiller/add"
+                  href="/assetsMaster/add"
                   leadingIcon="lucide:plus"
                   label="Add"
                   labelTw="hidden lg:block"

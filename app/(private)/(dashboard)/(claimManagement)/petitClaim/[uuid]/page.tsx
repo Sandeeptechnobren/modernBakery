@@ -36,7 +36,7 @@ export default function PetitClaimFormPage() {
 
   const years = [String(new Date().getFullYear() - 1), String(new Date().getFullYear()), String(new Date().getFullYear() + 1)];
   const months = [
-    "January","February","March","April","May","June","July","August","September","October","November","December",
+    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December",
   ];
 
   const validationSchema = yup.object().shape({
@@ -161,7 +161,7 @@ export default function PetitClaimFormPage() {
           <h1 className="text-xl font-semibold text-gray-900">Add Petit Claims</h1>
         </div>
       </div>
-           
+
       <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -192,7 +192,7 @@ export default function PetitClaimFormPage() {
                 required
                 label="Distributors"
                 name="depot"
-                placeholder="Search warehouse..."
+                placeholder="Search distributor...."
                 initialValue={(() => {
                   const found = (warehouseOptions || []).find((o: { value: string | number; label: string }) => String(o.value) === String(form.depot));
                   return found ? found.label : "";
@@ -218,14 +218,14 @@ export default function PetitClaimFormPage() {
               />
             </div>
             <div>
-             <InputFields
-               required
-               label="Fuel Amount"
-               value={form.fuel_amount}
-               type="number"
-               onChange={(e) => handleChange("fuel_amount", e.target.value)}
-               error={errors.fuel_amount}
-             />
+              <InputFields
+                required
+                label="Fuel Amount"
+                value={form.fuel_amount}
+                type="number"
+                onChange={(e) => handleChange("fuel_amount", e.target.value)}
+                error={errors.fuel_amount}
+              />
             </div>
             <div>
               <InputFields
@@ -239,15 +239,15 @@ export default function PetitClaimFormPage() {
             </div>
           </div>
 
-           
+
         </div>
       </div>
- <div className="flex justify-end gap-4 mt-6 pr-0">
+      <div className="flex justify-end gap-4 mt-6 pr-0">
         <button
           type="button"
           className={`px-6 py-2 rounded-lg border text-gray-700 hover:bg-gray-100 ${submitting
-              ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
-              : "border-gray-300"
+            ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
+            : "border-gray-300"
             }`}
           onClick={() => router.push("/petitClaim")}
           disabled={submitting}
@@ -271,7 +271,7 @@ export default function PetitClaimFormPage() {
           disabled={submitting}
         />
       </div>
-     
+
     </>
   );
 }
