@@ -32,7 +32,7 @@ const tabList = [
   // { key: "guarantee", label: "Guarantee Info" },
   // { key: "additional", label: "Additional Info" },
 ];
- const itemColumns = [
+const itemColumns = [
   {
     key: "item_code",
     label: "Item",
@@ -75,13 +75,15 @@ const OverallPerformance: React.FC = () => {
   const [stockData, setStockData] = useState<any>({
     "total_warehouse_valuation": "0.00",
     "today_loaded_qty": "0.00",
-    "sales_total_valuation": "0.00",});
-    const [stockLowQty,setStockLowQty] = useState({"count": 0.00,
+    "sales_total_valuation": "0.00",
+  });
+  const [stockLowQty, setStockLowQty] = useState({
+    "count": 0.00,
     "items": []
-    })
-     const [topOrders,setTopOrders] = useState({
+  })
+  const [topOrders, setTopOrders] = useState({
     "stocks": []
-    })
+  })
 
   const [selectedWarehouse, setSelectedWarehouse] = useState("")
   const { warehouseOptions } = useAllDropdownListData();
@@ -99,15 +101,15 @@ const OverallPerformance: React.FC = () => {
   const cards: CardItem[] = [
     {
       title: "Total Valuation",
-      value: stockData?.total_warehouse_valuation?.total_valuation? toInternationalNumber(stockData?.total_warehouse_valuation?.total_valuation) :0.00,
+      value: stockData?.total_warehouse_valuation?.total_valuation ? toInternationalNumber(stockData?.total_warehouse_valuation?.total_valuation) : 0.00,
       percentage: -12,
       icon: "carbon:currency",
       color: "#fceaef",
       isUp: false,
     },
     {
-      title: "Warehouse Stock",
-      value: stockData?.total_warehouse_valuation?.total_qty? toInternationalNumber(stockData?.total_warehouse_valuation?.total_qty,{maximumFractionDigits:0}):0.00,
+      title: "Distributor Stock",
+      value: stockData?.total_warehouse_valuation?.total_qty ? toInternationalNumber(stockData?.total_warehouse_valuation?.total_qty, { maximumFractionDigits: 0 }) : 0.00,
       percentage: -10,
       icon: "maki:warehouse",
       color: "#fff0f2",
@@ -130,35 +132,33 @@ const OverallPerformance: React.FC = () => {
       isUp: true,
     },
   ];
-   async function callAllKpisData(id:string)
-   {
-     try{
+  async function callAllKpisData(id: string) {
+    try {
       setLoading(true)
 
-         const res = await warehouseStocksKpi(id)
-         const lowCostRes = await warehouseLowStocksKpi(id)
-         const topOrderRes = await warehouseStockTopOrders(id)
-        //  const top5Orders = await warehouseStockTopOrders(id)
+      const res = await warehouseStocksKpi(id)
+      const lowCostRes = await warehouseLowStocksKpi(id)
+      const topOrderRes = await warehouseStockTopOrders(id)
+      //  const top5Orders = await warehouseStockTopOrders(id)
 
-         console.log(warehouseOptions,"hii")
-         console.log(topOrderRes,"hii")
+      console.log(warehouseOptions, "hii")
+      console.log(topOrderRes, "hii")
 
-         setStockData(res)
-        setStockLowQty(lowCostRes)
-        setTopOrders(topOrderRes)
+      setStockData(res)
+      setStockLowQty(lowCostRes)
+      setTopOrders(topOrderRes)
       setLoading(false)
-      
 
-     }
-     catch(err)
-     {
 
-     }
+    }
+    catch (err) {
 
-   }
+    }
+
+  }
   return (
     <>
-    
+
       {/* <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
         {tabList.map((tab, index) => (
           <div key={index}>
@@ -174,96 +174,95 @@ const OverallPerformance: React.FC = () => {
 
         <div className="flex justify-between md:items-center">
           <div>
-            <p className="text-base font-bold">Distributers Overview</p>
+            <p className="text-base font-bold">Distributors Overview</p>
           </div>
 
           {/* Dropdown */}
           {/* <div className=""> */}
-           
-<InputFields
-          searchable={true}
-          //   required
-          // label="Distributers"
-          placeholder="Select Distributers"
-          name="Distributers"
-          value={selectedWarehouse}
-          options={warehouseOptions}
-           
-          onChange={(e) => {
-            setSelectedWarehouse(e.target.value)
 
-            callAllKpisData(e.target.value)
-            // const newWarehouse = e.target.value;
-            // handleChange("warehouse", newWarehouse);
-            // handleChange("vehicleType", ""); // clear vehicle when warehouse changes
-            // fetchRoutes(newWarehouse);
-          }}
-        />
+          <InputFields
+            searchable={true}
+            //   required
+            // label="Distributers"
+            placeholder="Select Distributers"
+            name="Distributers"
+            value={selectedWarehouse}
+            options={warehouseOptions}
+
+            onChange={(e) => {
+              setSelectedWarehouse(e.target.value)
+
+              callAllKpisData(e.target.value)
+              // const newWarehouse = e.target.value;
+              // handleChange("warehouse", newWarehouse);
+              // handleChange("vehicleType", ""); // clear vehicle when warehouse changes
+              // fetchRoutes(newWarehouse);
+            }}
+          />
 
         </div>
 
         {/* CARDS (dynamic from array) */}
         <div className="mt-6 grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 items-center md:gap-2.5 gap-4">
-          {cards.map((card, index) => 
-          {
-          
-          
-          
-          return(
-           !loading? <div key={index} className="flex items-center rounded-lg bg-white text-gray-700 shadow-md border border-gray-200 p-2" >
-              <div style={{ background: card.color }} className="p-2 rounded-lg"> <Icon icon={card.icon} width="48" height="48" /> </div>
+          {cards.map((card, index) => {
 
-              <div
-                key={index}
-                className="relative flex flex-col w-[100%]"
-              >
 
-                <div className="p-4">
 
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-gray-600 font-medium">{card.title}</p>
+            return (
+              !loading ? <div key={index} className="flex items-center rounded-lg bg-white text-gray-700 shadow-md border border-gray-200 p-2" >
+                <div style={{ background: card.color }} className="p-2 rounded-lg"> <Icon icon={card.icon} width="48" height="48" /> </div>
 
-                    {/* Arrow + Percentage */}
-                   
+                <div
+                  key={index}
+                  className="relative flex flex-col w-[100%]"
+                >
 
+                  <div className="p-4">
+
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-gray-600 font-medium">{card.title}</p>
+
+                      {/* Arrow + Percentage */}
+
+
+                    </div>
+
+
+                    {/* Value */}
+                    <p className="mt-1 text-blue-gray-900 font-bold text-2xl">
+                      {card.value}
+                    </p>
                   </div>
-
-
-                  {/* Value */}
-                  <p className="mt-1 text-blue-gray-900 font-bold text-2xl">
-                    {card.value}
-                  </p>
                 </div>
-              </div>
-            </div> :<div key={index} className="flex items-center rounded-lg bg-white text-gray-700 shadow-md border border-gray-200 p-2 gap-[5px]" ><Skeleton width={20}/><Skeleton width={20}/><Skeleton width={20}/><Skeleton width={20}/></div>
-          )
-        
-})}
-        
+              </div> : <div key={index} className="flex items-center rounded-lg bg-white text-gray-700 shadow-md border border-gray-200 p-2 gap-[5px]" ><Skeleton width={20} /><Skeleton width={20} /><Skeleton width={20} /><Skeleton width={20} /></div>
+            )
+
+          })}
+
         </div>
         <br />
         <div className="flex flex-col h-full">
-          {loading?<CustomTableSkelton/>:
-          <Table
+          {loading ? <CustomTableSkelton /> :
+            <Table
               // refreshKey={1}
-            data={topOrders?.stocks?topOrders?.stocks:[]}
-            config={{
-              //   api: { list: fetchOrders, filterBy: filterBy },
-              header: {
-                //   title: "Customer Orders",
-                searchBar: false,
-                columnFilter: false,
+              data={topOrders?.stocks ? topOrders?.stocks : []}
+              config={{
+                //   api: { list: fetchOrders, filterBy: filterBy },
+                header: {
+                  //   title: "Customer Orders",
+                  searchBar: false,
+                  columnFilter: false,
 
-              },
-              //   rowSelection: true,
-              footer: { nextPrevBtn: true, pagination: true },
-              columns:itemColumns,
-              
-              pageSize: 10,
-            }}
-          />}
+                },
+                //   rowSelection: true,
+                footer: { nextPrevBtn: true, pagination: true },
+                columns: itemColumns,
+
+                pageSize: 10,
+              }}
+            />}
         </div>
-       
+
       </ContainerCard>
     </>
   );

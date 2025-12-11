@@ -396,8 +396,8 @@ export default function Table({
                             <Toggle
                               isChecked={isFullySelected}
                               onChange={() => handleColumnSelect(dayKey)}
-                              // ✅ Disable column toggle if no filtered customers
-                              // disabled={filteredData.length === 0}
+                            // ✅ Disable column toggle if no filtered customers
+                            // disabled={filteredData.length === 0}
                             />
                           )}
                         </div>
