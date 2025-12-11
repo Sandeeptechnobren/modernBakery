@@ -38,14 +38,15 @@ const columns = [
   {
     key: "country_code",
     label: "Country Code",
+    showByDefault: true,
     render: (row: TableDataType) => (
       <span className="font-semibold text-[#181D27] text-[14px]">
         {row.country_code}
       </span>
     ),
   },
-  { key: "country_name", label: "Country Name" },
-  { key: "currency", label: "Currency" },
+  { key: "country_name", label: "Country Name", showByDefault: true },
+  { key: "currency", label: "Currency", showByDefault: true },
   {
     key: "status",
     label: "Status",
@@ -116,37 +117,6 @@ export default function Country() {
             },
             header: {
               title: "Country",
-              wholeTableActions: [
-                <div key={0} className="flex gap-[12px] relative">
-                  <DismissibleDropdown
-                    isOpen={showDropdown}
-                    setIsOpen={setShowDropdown}
-                    button={<BorderIconButton icon="ic:sharp-more-vert" />}
-                    dropdown={
-                      <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                        <CustomDropdown>
-                          {dropdownDataList.map((link, idx) => (
-                            <div
-                              key={idx}
-                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                            >
-                              <Icon
-                                icon={link.icon}
-                                width={link.iconWidth}
-                                className="text-[#717680]"
-                              />
-                              <span className="text-[#181D27] font-[500] text-[16px]">
-                                {link.label}
-                              </span>
-                            </div>
-                          ))}
-                        </CustomDropdown>
-                      </div>
-                    }
-                  />
-                </div>,
-              ],
-              // disable global search bar (use column filters only)
               searchBar: false,
               columnFilter: true,
               actions: [

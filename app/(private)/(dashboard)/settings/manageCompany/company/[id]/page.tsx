@@ -90,50 +90,6 @@ const CompanySchema = Yup.object().shape({
   module_access: Yup.string().required("Module is required field "),
 });
 
-// 🔹 Step-wise schemas
-// const stepSchemas = [
-//   Yup.object({
-//     company_name: Yup.string().required("Company name is required"),
-//     company_code: Yup.string().required("Company code is required"),
-//     company_type: Yup.string().required("Company type is required"),
-//     website: Yup.string()
-//       .required("Company website is required")
-//       .test("is-valid-website", "Invalid website URL", (value) => {
-//         if (!value) return false;
-//         try {
-//           const v = value.startsWith("http://") || value.startsWith("https://") ? value : `http://${value}`;
-//           const parsed = new URL(v);
-//           return !!parsed.hostname && parsed.hostname.indexOf(".") > -1;
-//         } catch (e) {
-//           return false;
-//         }
-//       }),
-//     company_logo: Yup.string().required("Company Logo is required"),
-//     address: Yup.string().required("address is required"),
-//     city: Yup.string().required("city is required"),
-
-//     country_id: Yup.string().required("Country is required"),
-//     module_access: Yup.string().required("Module is required"),
-//     status: Yup.string().required("Status is required"),
-//   }),
-
-//   Yup.object({
-//     primary_contact: Yup.string()
-//       .required("Primary contact is required")
-//       .matches(/^[0-9]+$/, "Only numbers are allowed")
-//       .min(9, "Must be at least 9 digits")
-//       .max(10, "Must be at most 10 digits"),
-
-//     primary_code: Yup.string(),
-//     toll_free_no: Yup.string()
-//       .required("Toll free number is required")
-//       .matches(/^[0-9]+$/, "Only numbers are allowed")
-//       .min(10, "Must be at least 9 digits")
-//       .max(13, "Must be at most 10 digits"),
-
-//     email: Yup.string().email("Invalid email").required("Email is required"),
-//   }),
-
 
 
 //   Yup.object({
