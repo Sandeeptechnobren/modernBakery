@@ -368,7 +368,7 @@ export default function AddEditSalesman() {
         is_block: values.is_block,
         password: values.password,
         contact_no: values.contact_no,
-        warehouse_id: Number(values.warehouse_id),
+        warehouse_id: values.warehouse_id.toString(),
         status: values.status,
         cashier_description_block: values.cashier_description_block,
         invoice_block: values.invoice_block,
@@ -378,8 +378,6 @@ export default function AddEditSalesman() {
         email: values.email,
         is_take: Number(values.is_take),
       };
-
-
 
       let res;
       if (isEditMode) {
@@ -531,7 +529,12 @@ export default function AddEditSalesman() {
                         selectedValues = e.map((v: any) => v?.value ?? v);
                       }
 
-                      // Case 3: InputFields sends just a value
+                      // Case 3: InputFields sends array inside target.value (MultiSelect)
+                      else if (e?.target && Array.isArray(e.target.value)) {
+                        selectedValues = e.target.value;
+                      }
+
+                      // Case 4: InputFields sends just a value (Single Select fallback or weird case)
                       else if (e?.target?.value) {
                         selectedValues = [e.target.value];
                       }
