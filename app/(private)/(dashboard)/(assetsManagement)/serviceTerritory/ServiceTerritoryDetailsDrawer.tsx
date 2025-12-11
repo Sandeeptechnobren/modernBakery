@@ -176,7 +176,7 @@ export default function ServiceTerritoryDetailsDrawer({ uuid, onClose }: Service
                                                 const totalAreas = data.areas?.length || 1;
                                                 const totalRegions = data.regions?.length || 1;
 
-                                                let currentRow = 0;
+                                                const currentRow = 0;
                                                 const rows: JSX.Element[] = [];
 
                                                 // If we have regions and areas, create a structured table
