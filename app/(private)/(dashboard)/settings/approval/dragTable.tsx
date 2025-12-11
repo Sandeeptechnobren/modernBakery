@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import InputFields from "@/app/components/inputFields";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import {
@@ -74,9 +74,9 @@ const formTypeOptions: OptionType[] = [
   { value: "Can Edit Before Approval", label: "Can Edit Before Approval" },
 ];
 
-export default function ApprovalFlowTable({roleListData, usersData, steps, setSteps }: { roleListData: OptionType[], usersData: OptionType[], steps: ApprovalStep[], setSteps: React.Dispatch<React.SetStateAction<ApprovalStep[]>> }) {
+export default function ApprovalFlowTable({ roleListData, usersData, steps, setSteps }: { roleListData: OptionType[], usersData: OptionType[], steps: ApprovalStep[], setSteps: React.Dispatch<React.SetStateAction<ApprovalStep[]>> }) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [userOptions,setUserOptions] = useState<OptionType[]>([]);
+  const [userOptions, setUserOptions] = useState<OptionType[]>([]);
 
   type FormState = {
     formType: string[];
@@ -383,7 +383,7 @@ export default function ApprovalFlowTable({roleListData, usersData, steps, setSt
               setForm({ ...form, notificationMessage: (e as React.ChangeEvent<HTMLInputElement>).target.value })
             }
           />
-           <InputFields
+          <InputFields
             required
             width="full"
             label="Confirmation Message"
@@ -484,8 +484,13 @@ function SortableRow({
     }));
 
   return (
-    <tr className="text-[14px] bg-white text-[#535862]">
-      <td ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
+    <tr ref={setNodeRef} style={style} className="text-[14px] bg-white text-[#535862]">
+      <td className="p-2 text-center font-semibold">
+        <div className="flex items-center justify-center cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+          <Icon icon="mdi:drag-horizontal-variant" className="mr-2" width="20" height="20" />
+          {index + 1}
+        </div>
+      </td>
       <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? "Role" : "User"}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{(step.selectedCustomer?.label ?? step.selectedRole?.label) || step.roleOrCustomer}</td>
@@ -534,7 +539,7 @@ function SortableRow({
       <td className="px-[24px] py-[12px] bg-white   ">{step.approvalMessage}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.notificationMessage}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.confirmationMessage}</td>
-      <td className="px-[24px] py-[12px] bg-white    text-center">
+      <td className="px-[24px] py-[12px] bg-white    text-center cursor-pointer">
         <SidebarBtn
           onClick={() => onEdit(step.id)}
           className="text-red-600 hover:text-red-800"
@@ -542,6 +547,6 @@ function SortableRow({
           <Icon icon="mdi:pencil" width="20" height="20" />
         </SidebarBtn>
       </td>
-    </tr>
+    </tr >
   );
 }

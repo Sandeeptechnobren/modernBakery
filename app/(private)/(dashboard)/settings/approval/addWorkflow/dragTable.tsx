@@ -419,7 +419,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
               setForm({ ...form, notificationMessage: (e as React.ChangeEvent<HTMLInputElement>).target.value })
             }
           />
-           <InputFields
+          <InputFields
             required
             width="full"
             label="Confirmation Message"
@@ -429,8 +429,6 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
             }
           />
         </div>
-        
-
         <SidebarBtn
           onClick={handleAddOrUpdate}
           className="bg-[]-600 text-white"
@@ -530,8 +528,13 @@ function SortableRow({
     }));
 
   return (
-    <tr className="text-[14px] bg-white text-[#535862]">
-      <td draggable={true} ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
+    <tr ref={setNodeRef} style={style} className="text-[14px] bg-white text-[#535862]">
+      <td className="p-2 text-center font-semibold">
+        <div className="flex items-center justify-center cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+          <Icon icon="nimbus:drag-dots" className="mr-2" width="20" height="20" />
+          {index + 1}
+        </div>
+      </td>
       <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? "Role" : "User"}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? <InputFields

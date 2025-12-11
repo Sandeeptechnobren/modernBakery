@@ -53,6 +53,7 @@ interface SalesmanFormValues {
   invoice_block?: string;
   reason: string;
   email: string;
+  is_take: string;
 }
 
 interface contactCountry {
@@ -109,6 +110,7 @@ export default function AddEditSalesman() {
     block_date_to: "",
     reason: "",
     email: "",
+    is_take: "0",
   });
 
   const steps: StepperStep[] = [
@@ -199,10 +201,11 @@ export default function AddEditSalesman() {
     isLastStep,
   } = useStepperForm(steps.length);
 
-  const fetchRoutes = async (value: string) => {
+  const fetchRoutes = async (value: string | string[]) => {
+    const warehouseId = Array.isArray(value) ? value[0] : value;
     const filteredOptions = await routeList({
       // dropdown:"true",
-      warehouse_id: value,
+      warehouse_id: warehouseId,
     });
     if (filteredOptions.error) {
       showSnackbar(
@@ -256,6 +259,7 @@ export default function AddEditSalesman() {
                 d.cashier_description_block?.toString() || "0",
               invoice_block: d.invoice_block?.toString() || "0",
               email: d.email || "",
+              is_take: d.is_take?.toString() || "0",
             });
           }
         } catch (e) {
@@ -331,34 +335,57 @@ export default function AddEditSalesman() {
 
       await SalesmanSchema.validate(values, { abortEarly: false });
 
-      const formData = new FormData();
-      (Object.keys({...values,warehouse_id:[values.warehouse_id]}) as (keyof SalesmanFormValues)[]).forEach((key) => {
-        const val = values[key];
+      // const formData = new FormData();
+      // (Object.keys({ ...values, warehouse_id: [values.warehouse_id] }) as (keyof SalesmanFormValues)[]).forEach((key) => {
+      //   const val = values[key];
 
-        if (Array.isArray(val)) {
-      console.log("Submitting form data: 2", Array.from(formData.entries()));
+      //   if (Array.isArray(val)) {
+      //     console.log("Submitting form data: 2", Array.from(formData.entries()));
 
-          // For arrays (like warehouse_id when multiple selected)
-          val.forEach((v) => formData.append(`${key}[]`, v));
-        } else if (val !== undefined && val !== null) {
-      console.log("Submitting form data: 3", Array.from(formData.entries()));
+      //     // For arrays (like warehouse_id when multiple selected)
+      //     val.forEach((v) => formData.append(`${key}[]`, v));
+      //   } else if (val !== undefined && val !== null) {
+      //     console.log("Submitting form data: 3", Array.from(formData.entries()));
 
-          // Normal string or single value
-          formData.append(key, val.toString());
-        } else {
-      console.log("Submitting form data: 4", Array.from(formData.entries()));
+      //     // Normal string or single value
+      //     formData.append(key, val.toString());
+      //   } else {
+      //     console.log("Submitting form data: 4", Array.from(formData.entries()));
 
-          formData.append(key, "");
-        }
-      });
-      console.log("Submitting form data: 5", formData);
+      //     formData.append(key, "");
+      //   }
+      // });
+      // console.log("Submitting form data: 5", formData);
+
+      const payload = {
+        osa_code: values.osa_code,
+        name: values.name,
+        type: values.type,
+        sub_type: values.sub_type,
+        designation: values.designation,
+        route_id: Number(values.route_id),
+        forceful_login: values.forceful_login,
+        is_block: values.is_block,
+        password: values.password,
+        contact_no: values.contact_no,
+        warehouse_id: Number(values.warehouse_id),
+        status: values.status,
+        cashier_description_block: values.cashier_description_block,
+        invoice_block: values.invoice_block,
+        block_date_from: values.block_date_from,
+        block_date_to: values.block_date_to,
+        reason: values.reason,
+        email: values.email,
+        is_take: Number(values.is_take),
+      };
+
 
 
       let res;
       if (isEditMode) {
-        res = await updateSalesman(salesmanId as string, formData);
+        res = await updateSalesman(salesmanId as string, payload);
       } else {
-        res = await addSalesman(formData);
+        res = await addSalesman(payload);
       }
 
       if (res.error) {
@@ -390,7 +417,7 @@ export default function AddEditSalesman() {
     values: SalesmanFormValues,
     setFieldValue: (
       field: keyof SalesmanFormValues,
-      value: string,
+      value: string | string[],
       shouldValidate?: boolean
     ) => void,
     errors: FormikErrors<SalesmanFormValues>,
@@ -445,6 +472,23 @@ export default function AddEditSalesman() {
                 </div>
               )}
 
+              {values.sub_type === "1" && (
+                <div className="flex flex-col w-full">
+                  <InputFields
+                    label="Is Take Customer Order"
+                    type="radio"
+                    name="is_take"
+                    value={values.is_take}
+                    options={[
+                      { value: "1", label: "Enable" },
+                      { value: "0", label: "Disable" },
+                    ]}
+                    onChange={(e) => setFieldValue("is_take", e.target.value)}
+                    error={touched.is_take && errors.is_take}
+                  />
+                </div>
+              )}
+
               <div>
                 <InputFields
                   required
@@ -470,13 +514,43 @@ export default function AddEditSalesman() {
                   options={warehouseOptions}
                   disabled={warehouseOptions.length === 0}
                   isSingle={false}
-                  onChange={(e) => {
-                    console.log(values.warehouse_id, e.target.value, "selected warehouse")
-                    setFieldValue("warehouse_id", e.target.value);
-                    if (values.warehouse_id !== e.target.value) {
-                      fetchRoutes(e.target.value);
+                  onChange={(e: any) => {
+                    if (values.type === "6") {
+                      let selectedValues: string[] = [];
+
+                      // Case 1: Real browser event
+                      if (e?.target?.selectedOptions) {
+                        selectedValues = Array.from(
+                          e.target.selectedOptions,
+                          (opt: any) => opt.value
+                        );
+                      }
+
+                      // Case 2: Your InputFields sends array directly
+                      else if (Array.isArray(e)) {
+                        selectedValues = e.map((v: any) => v?.value ?? v);
+                      }
+
+                      // Case 3: InputFields sends just a value
+                      else if (e?.target?.value) {
+                        selectedValues = [e.target.value];
+                      }
+
+                      setFieldValue("warehouse_id", selectedValues);
+                      fetchRoutes(selectedValues);
+                    } else {
+                      // SINGLE SELECT
+                      const val =
+                        e?.target?.value ??
+                        e?.value ??
+                        (Array.isArray(e) ? e[0]?.value : "");
+
+                      setFieldValue("warehouse_id", val);
+                      fetchRoutes(val);
                     }
                   }}
+
+
                 />
                 <ErrorMessage
                   name="warehouse_id"
@@ -503,7 +577,7 @@ export default function AddEditSalesman() {
                 />
               </div>}
 
-             {values.type !== "6"? <div>
+              {values.type !== "6" ? <div>
                 <InputFields
                   label="Route"
                   name="route_id"
@@ -513,7 +587,7 @@ export default function AddEditSalesman() {
                   disabled={!!values.sub_type}
                   error={touched.route_id && errors.route_id}
                 />
-              </div>:""}
+              </div> : ""}
 
             </div>
           </ContainerCard>
@@ -547,22 +621,22 @@ export default function AddEditSalesman() {
 
               <div>
                 <InputFields
-                
+
                   label="Email"
                   name="email"
                   value={values.email}
                   onChange={(e) => setFieldValue("email", e.target.value)}
                 />
-              
+
               </div>
               <div>
                 <CustomPasswordInput
-                 
+
                   label="Password"
                   value={values.password}
                   onChange={(e) => setFieldValue("password", e.target.value)}
                 />
-             
+
               </div>
 
               <div></div>
@@ -667,13 +741,13 @@ export default function AddEditSalesman() {
               </div>
               {values.is_block === "1" && (
                 <>
-                {console.log(values.block_date_from,"values.block_date_from")}
+                  {console.log(values.block_date_from, "values.block_date_from")}
                   <div>
                     <InputFields
                       label="Block Date From"
                       type="date"
                       name="block_date_from"
-                      value={ values.block_date_from?new Date(values.block_date_from).toISOString().slice(0, 10):values.block_date_from}
+                      value={values.block_date_from ? new Date(values.block_date_from).toISOString().slice(0, 10) : values.block_date_from}
                       onChange={(e) =>
                         setFieldValue("block_date_from", e.target.value)
                       }
@@ -684,7 +758,7 @@ export default function AddEditSalesman() {
                       label="Block Date To"
                       type="date"
                       name="block_date_to"
-                      value={values.block_date_to?new Date(values.block_date_to).toISOString().slice(0, 10):values.block_date_to}
+                      value={values.block_date_to ? new Date(values.block_date_to).toISOString().slice(0, 10) : values.block_date_to}
                       onChange={(e) =>
                         setFieldValue("block_date_to", e.target.value)
                       }
