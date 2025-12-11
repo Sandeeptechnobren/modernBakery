@@ -160,7 +160,7 @@ export default function Country() {
                 />,
               ],
             },
-            localStorageKey: "country",
+            localStorageKey: "country-table-settings",
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,

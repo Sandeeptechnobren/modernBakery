@@ -161,7 +161,7 @@ export default function Country() {
                 />,
               ],
             },
-            localStorageKey: "country",
+            localStorageKey: "location-table",
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,

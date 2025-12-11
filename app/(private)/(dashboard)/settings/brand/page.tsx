@@ -155,7 +155,7 @@ export default function Country() {
                 />,
               ],
             },
-            localStorageKey: "country",
+            localStorageKey: "brand-table",
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
