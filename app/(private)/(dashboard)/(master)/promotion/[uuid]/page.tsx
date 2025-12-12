@@ -16,9 +16,9 @@ import CustomCheckbox from "@/app/components/customCheckbox";
 import * as yup from "yup";
 
 type KeyComboType = {
-  Location: string[];
-  Customer: string[];
-  Item: string[];
+  Location: string;
+  Customer: string;
+  Item: string;
 };
 type KeyOption = { label: string; id: string; isSelected: boolean };
 type KeyGroup = { type: string; options: KeyOption[] };
@@ -56,7 +56,7 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
       ...group,
       options: group.options.map(opt => ({
         ...opt,
-        isSelected: keyCombo[group.type as keyof KeyComboType]?.includes(opt.label) || false
+        isSelected: keyCombo[group.type as keyof KeyComboType] === opt.label
       }))
     }));
   });
@@ -68,7 +68,7 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
         ...group,
         options: group.options.map(opt => ({
           ...opt,
-          isSelected: keyCombo[group.type as keyof KeyComboType]?.includes(opt.label) || false
+          isSelected: keyCombo[group.type as keyof KeyComboType] === opt.label
         }))
       }));
       const isSame = prev.every((group, i) =>
@@ -79,10 +79,11 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
   }, [keyCombo]);
 
   React.useEffect(() => {
-    const selected: { Location: string[]; Customer: string[]; Item: string[] } = { Location: [], Customer: [], Item: [] };
+    const selected: { Location: string; Customer: string; Item: string } = { Location: "", Customer: "", Item: "" };
     keysArray.forEach((group) => {
       if (group.type === "Location" || group.type === "Customer" || group.type === "Item") {
-        selected[group.type] = group.options.filter((o) => o.isSelected).map((o) => o.label);
+        const found = group.options.find((o) => o.isSelected);
+        selected[group.type as keyof KeyComboType] = found ? found.label : "";
       }
     });
     setKeyCombo(selected);
@@ -94,7 +95,8 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
         if (i !== index) return group; // If not the current group, return as is
 
         // Determine if this group should be single-select
-        const isSingleSelectGroup = group.type === "Location" || group.type === "Item";
+        // All groups (Location, Customer, Item) are now single-select as per request
+        const isSingleSelectGroup = true;
 
         if (isSingleSelectGroup) {
           // Single-select logic: Toggle the clicked option, deselect others
@@ -162,28 +164,28 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
         <span className="font-semibold text-[#181D27] text-[16px]">Key</span>
         <div className="flex flex-wrap items-center gap-2">
           {(() => {
-            const loc = keysArray.find(g => g.type === "Location")?.options.filter(o => o.isSelected).map(o => o.label) || [];
-            return loc.length > 0 ? loc.map((k, i) => (
-              <span key={"loc-"+i} className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{k}</span>
-            )) : null;
+            const loc = keyCombo.Location;
+            return loc ? (
+              <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{loc}</span>
+            ) : null;
           })()}
           {(() => {
-            const cust = keysArray.find(g => g.type === "Customer")?.options.filter(o => o.isSelected).map(o => o.label) || [];
-            return cust.length > 0 ? [
-              <span key="slash-cust" className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>,
-              ...cust.map((k, i) => (
-                <span key={"cust-"+i} className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{k}</span>
-              ))
-            ] : null;
+            const cust = keyCombo.Customer;
+            return cust ? (
+              <>
+                <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
+                <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{cust}</span>
+              </>
+            ) : null;
           })()}
           {(() => {
-            const item = keysArray.find(g => g.type === "Item")?.options.filter(o => o.isSelected).map(o => o.label) || [];
-            return item.length > 0 ? [
-              <span key="slash-item" className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>,
-              ...item.map((k, i) => (
-                <span key={"item-"+i} className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{k}</span>
-              ))
-            ] : null;
+            const item = keyCombo.Item;
+            return item ? (
+              <>
+                <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
+                <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{item}</span>
+              </>
+            ) : null;
           })()}
         </div>
       </ContainerCard>
@@ -248,24 +250,30 @@ export default function AddPricing() {
   const validateStep = (step: number) => {
     if (step === 1) {
       // Require both Location and Item to be selected.
-      return keyCombo.Location.length > 0 && keyCombo.Item.length > 0;
+      return !!keyCombo.Location && !!keyCombo.Item;
     }
     if (step === 2) {
       // Validate all selected Location and Item key-value fields.
       // Customer key-value fields are optional.
       let allValid = true;
 
-      keyCombo.Location.forEach(locKey => {
-        if (!keyValue[locKey] || keyValue[locKey].length === 0) {
+      if (keyCombo.Location) {
+        if (!keyValue[keyCombo.Location] || keyValue[keyCombo.Location].length === 0) {
           allValid = false;
         }
-      });
+      }
 
-      keyCombo.Item.forEach(itemKey => {
-        if (!keyValue[itemKey] || keyValue[itemKey].length === 0) {
+      if (keyCombo.Item) {
+        if (!keyValue[keyCombo.Item] || keyValue[keyCombo.Item].length === 0) {
           allValid = false;
         }
-      });
+      }
+
+      if (keyCombo.Customer) {
+        if (!keyValue[keyCombo.Customer] || keyValue[keyCombo.Customer].length === 0) {
+          allValid = false;
+        }
+      }
       return allValid;
     }
     if (step === 3) {
@@ -277,8 +285,8 @@ export default function AddPricing() {
   const handleNext = () => {
     if (currentStep === 1) {
       const missing = [];
-      if (keyCombo.Location.length === 0) missing.push("Location");
-      if (keyCombo.Item.length === 0) missing.push("Item");
+      if (!keyCombo.Location) missing.push("Location");
+      if (!keyCombo.Item) missing.push("Item");
 
       if (missing.length > 0) {
         showSnackbar(`Please select ${missing.join(" and ")} before proceeding.`, "warning");
@@ -335,21 +343,19 @@ export default function AddPricing() {
     },
   ];
 
-  function getKeyIds(type: string, selectedLabels: string[]): string[] {
+  function getKeyId(type: string, label: string): string {
     const group = initialKeys.find(g => g.type === type);
-    if (!group) return [];
-    return selectedLabels.map((label: string) => {
-      const found = group.options.find(opt => opt.label === label);
-      return found ? found.id : label;
-    });
+    if (!group) return "";
+    const found = group.options.find(opt => opt.label === label);
+    return found ? found.id : label;
   }
 
   // ✅ Fix: Join description IDs properly as comma-separated string
   const descriptionIds = [
-    ...getKeyIds("Location", keyCombo.Location),
-    ...getKeyIds("Customer", keyCombo.Customer),
-    ...getKeyIds("Item", keyCombo.Item)
-  ];
+    getKeyId("Location", keyCombo.Location),
+    getKeyId("Customer", keyCombo.Customer),
+    getKeyId("Item", keyCombo.Item)
+  ].filter(Boolean);
   const description = descriptionIds.join(",");
 
   const selectedItemIds = keyValue["Item"] || [];
@@ -425,9 +431,9 @@ export default function AddPricing() {
 
     // ✅ Add key object for validation
     key: {
-      Location: keyCombo.Location,
-      Customer: keyCombo.Customer,
-      Item: keyCombo.Item,
+      Location: keyCombo.Location ? [keyCombo.Location] : [],
+      Customer: keyCombo.Customer ? [keyCombo.Customer] : [],
+      Item: keyCombo.Item ? [keyCombo.Item] : [],
     }
   };
 
@@ -494,16 +500,12 @@ export default function AddPricing() {
 };
 
 
-  type KeyComboType = {
-    Location: string[];
-    Customer: string[];
-    Item: string[];
-  };
+
 
   const [keyCombo, setKeyCombo] = useState<KeyComboType>({
-    Location: [],
-    Customer: [],
-    Item: [],
+    Location: "",
+    Customer: "",
+    Item: "",
   });
   
   const [keyValue, setKeyValue] = useState<Record<string, string[]>>({});
@@ -732,72 +734,82 @@ export default function AddPricing() {
             <div className="flex-1">
               <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
                 <div className="font-semibold text-lg mb-4">Location</div>
-                {keyCombo.Location.map((locKey) => (
-                  <div key={locKey} className="mb-4">
+                {keyCombo.Location && (
+                  <div className="mb-4">
                     <div className="mb-2 text-base font-medium">
-                      {locKey}
+                      {keyCombo.Location}
+                      <span className="text-red-500 ml-1">*</span>
+                    </div>
+                    <InputFields
+                      label=""
+                      type="select"
+                      isSingle={true}
+                      options={locationDropdownMap[keyCombo.Location] ? [{ label: `Select ${keyCombo.Location}`, value: "" }, ...locationDropdownMap[keyCombo.Location]] : [{ label: `Select ${keyCombo.Location}`, value: "" }]}
+                      value={keyValue[keyCombo.Location]?.[0] || ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setKeyValue(s => ({ ...s, [keyCombo.Location]: val ? [val] : [] }));
+                      }}
+                      width="w-full"
+                    />
+                  </div>
+                )}
+              </ContainerCard>
+            </div>
+            {keyCombo.Customer && (
+            <div className="flex-1">
+              <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                <div className="font-semibold text-lg mb-4">Customer</div>
+                  <div className="mb-4">
+                    <div className="mb-2 text-base font-medium">
+                      {keyCombo.Customer}
                       <span className="text-red-500 ml-1">*</span>
                     </div>
                     <InputFields
                       label=""
                       type="select"
                       isSingle={false}
-                      options={locationDropdownMap[locKey] ? [{ label: `Select ${locKey}`, value: "" }, ...locationDropdownMap[locKey]] : [{ label: `Select ${locKey}`, value: "" }]}
-                      value={keyValue[locKey] || []}
-                      onChange={e => setKeyValue(s => ({ ...s, [locKey]: Array.isArray(e.target.value) ? e.target.value : [] }))}
-                      width="w-full"
-                    />
-                  </div>
-                ))}
-              </ContainerCard>
-            </div>
-            {keyCombo.Customer.length > 0 && (
-            <div className="flex-1">
-              <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
-                <div className="font-semibold text-lg mb-4">Customer</div>
-                {keyCombo.Customer.map((custKey) => (
-                  <div key={custKey} className="mb-4">
-                    <div className="mb-2 text-base font-medium">{custKey}</div>
-                    <InputFields
-                      label=""
-                      type="select"
-                      isSingle={false}
-                      options={customerDropdownMap[custKey] ? [{ label: `Select ${custKey}`, value: "" }, ...customerDropdownMap[custKey]] : [{ label: `Select ${custKey}`, value: "" }]}
-                      value={keyValue[custKey] || []}
+                      options={customerDropdownMap[keyCombo.Customer] ? [{ label: `Select ${keyCombo.Customer}`, value: "" }, ...customerDropdownMap[keyCombo.Customer]] : [{ label: `Select ${keyCombo.Customer}`, value: "" }]}
+                      value={keyValue[keyCombo.Customer] || []}
                       onChange={e => {
-                        const selectedValues = Array.isArray(e.target.value)
-                            ? e.target.value
-                            : (e.target.value ? [e.target.value] : []);
-                        setKeyValue(s => ({ ...s, [custKey]: selectedValues.filter(val => val !== "") }));
+                        const valueFromEvent = e.target.value;
+                        let selectedValues: string[];
+                        if (Array.isArray(valueFromEvent)) {
+                            selectedValues = valueFromEvent;
+                        } else {
+                            selectedValues = valueFromEvent ? [String(valueFromEvent)] : [];
+                        }
+                        setKeyValue(s => ({ ...s, [keyCombo.Customer]: selectedValues.filter(val => val !== "") }));
                       }}
                       width="w-full"
                     />
                   </div>
-                ))}
               </ContainerCard>
             </div>
             )}
             <div className="flex-1">
               <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
                 <div className="font-semibold text-lg mb-4">Item</div>
-                {keyCombo.Item.map((itemKey) => (
-                  <div key={itemKey} className="mb-4">
+                {keyCombo.Item && (
+                  <div className="mb-4">
                     <div className="mb-2 text-base font-medium">
-                      {itemKey}
+                      {keyCombo.Item}
                       <span className="text-red-500 ml-1">*</span>
                     </div>
                     <InputFields
                       label=""
                       type="select"
-                      isSingle={false}
-                      options={itemDropdownMap[itemKey] ? [{ label: `Select ${itemKey}`, value: "" }, ...itemDropdownMap[itemKey]] : [{ label: `Select ${itemKey}`, value: "" }]}
-                      value={keyValue[itemKey] || []}
-                      onChange={e => setKeyValue(s => ({ ...s, [itemKey]: Array.isArray(e.target.value) ? e.target.value : [] }))}
-
+                      isSingle={true}
+                      options={itemDropdownMap[keyCombo.Item] ? [{ label: `Select ${keyCombo.Item}`, value: "" }, ...itemDropdownMap[keyCombo.Item]] : [{ label: `Select ${keyCombo.Item}`, value: "" }]}
+                      value={keyValue[keyCombo.Item]?.[0] || ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setKeyValue(s => ({ ...s, [keyCombo.Item]: val ? [val] : [] }));
+                      }}
                       width="w-full"
                     />
                   </div>
-                ))}
+                )}
               </ContainerCard>
             </div>
           </div>
@@ -1287,6 +1299,8 @@ export default function AddPricing() {
               <InputFields
                 type="text"
                 value={promotion.itemName}
+                alt="Enter Name"
+                placeholder="Enter Name"
                 onChange={e => setPromotion(s => ({ ...s, itemName: e.target.value }))}
                 width="w-full"
               />
