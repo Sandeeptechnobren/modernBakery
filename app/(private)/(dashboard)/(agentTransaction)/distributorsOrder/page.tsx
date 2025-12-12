@@ -11,6 +11,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import {
   agentOrderExport,
+  // agentOrderExport,
   agentOrderList,
   changeStatusAgentOrder,
   // agentOrderExport 
@@ -260,7 +261,7 @@ export default function CustomerInvoicePage() {
 
   useEffect(() => {
     const res = async () => {
-      const res = await workFlowRequest({ model: "order"});
+      const res = await workFlowRequest({ model: "order" });
       localStorage.setItem("workflow.order", JSON.stringify(res.data[0]))
     };
     res();

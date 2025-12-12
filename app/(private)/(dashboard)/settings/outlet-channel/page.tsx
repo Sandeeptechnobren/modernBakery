@@ -19,36 +19,37 @@ const dropdownDataList = [
 ];
 
 const columns = [
-  { key: "outlet_channel_code", label: "Channel Code",
+  {
+    key: "outlet_channel_code", label: "Channel Code",
     render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.outlet_channel_code}
-            </span>
-        ),
-   },
+      <span className="font-semibold text-[#181D27] text-[14px]">
+        {row.outlet_channel_code}
+      </span>
+    ),
+  },
   { key: "outlet_channel", label: "Outlet Channel Name" },
   {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {Number(row.status) === 1 ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
-        ),
-    },
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) => (
+      <div className="flex items-center">
+        {Number(row.status) === 1 ? (
+          <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+            Active
+          </span>
+        ) : (
+          <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+            Inactive
+          </span>
+        )}
+      </div>
+    ),
+  },
 ];
 
 export default function ChannelList() {
   const [channels, setChannels] = useState<TableDataType[]>([]);
-  const { setLoading} = useLoading();
+  const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
 
   const { showSnackbar } = useSnackbar();
@@ -56,7 +57,7 @@ export default function ChannelList() {
 
   async function fetchChannels() {
     const listRes = await channelList();
-    if(listRes.error) {
+    if (listRes.error) {
       showSnackbar(listRes.data.message || "failed to fetch the outlet channels", "error");
     } else {
       setChannels(listRes.data);
@@ -67,37 +68,39 @@ export default function ChannelList() {
   useEffect(() => {
     fetchChannels();
   }, []);
-
   const fetchChannel = useCallback(
-  async (pageNo: number = 1, pageSize: number = 5): Promise<listReturnType> => {
-    setLoading(true);
-    const result = await channelList({
-      current_page: pageNo.toString(),
-      per_page: pageSize.toString(),
-    });
-    setLoading(false);
+    async (pageNo: number = 1, pageSize: number = 10): Promise<listReturnType> => {
+      setLoading(true);
 
-    if (result.error) {
-      showSnackbar(result.data.message, "error");
-      throw new Error("Error fetching data");
-    } else {
+      const result = await channelList({
+        current_page: pageNo.toString(),
+        per_page: pageSize.toString(),
+      });
+
+      setLoading(false);
+
+      if (result.error) {
+        showSnackbar(result.data.message || "Failed to fetch outlet channels", "error");
+        throw new Error("Error fetching data");
+      }
+
       return {
-        data: result.data as TableDataType[],
+        data: result.data || [],
         currentPage: result.pagination?.current_page || 1,
-        pageSize: result.pagination?.per_page || 5,
-        total: result.pagination?.total_pages || 0,
+        pageSize: result.pagination?.per_page || 10,
+        total: result.pagination?.total_records || 0, // ✅ FIXED
       };
-    }
-  },
-  [showSnackbar]
-);
+    },
+    [showSnackbar]
+  );
+
 
 
   return (
     <>
       {/* Table */}
       <div className="max-h-[calc(100%-60px)]">
-        { channels && <Table
+        {channels && <Table
           // data={channels}
           config={{
             api: {
