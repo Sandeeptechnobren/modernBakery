@@ -381,9 +381,9 @@ export default function AddEditSalesman() {
         } else {
       console.log("Submitting form data: 4", Array.from(formData.entries()));
 
-      //     formData.append(key, "");
-      //   }
-      // });
+          formData.append(key, "");
+        }
+      });
       // console.log("Submitting form data: 5", formData);
 
       const payload = {
@@ -430,14 +430,14 @@ export default function AddEditSalesman() {
             reserved_code: values.osa_code,
             model_name: "salesman",
           });
-        } catch { }
+        } catch { /** */ }
       }
     } catch {
       showSnackbar("Validation failed, please check your inputs", "error");
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
   // ✅ Step content renderer
   const renderStepContent = (

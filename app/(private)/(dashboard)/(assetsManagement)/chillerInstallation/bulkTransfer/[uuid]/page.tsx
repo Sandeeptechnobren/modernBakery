@@ -23,15 +23,15 @@ export default function AddRoute() {
   const uuid = params?.uuid as string;
   const mode = uuid === "addAllocate" ? "allocate" : "add";
 
-  const { regionOptions, warehouseAllOptions, areaOptions , ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded} =
+  const { regionOptions, warehouseOptions, areaOptions , ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseLoaded, fetchWarehouseOptions, fetchAreaOptions} =
     useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
     ensureAreaLoaded();
     ensureRegionLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
+    ensureWarehouseLoaded();
+  }, [ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseLoaded]);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();

@@ -6,7 +6,6 @@ import Table, {
     searchReturnType
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import StatusBtn from "@/app/components/statusBtn2";
 import { irServiceTerrtList } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
