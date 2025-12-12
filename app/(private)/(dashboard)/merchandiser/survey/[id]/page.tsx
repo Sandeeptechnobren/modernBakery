@@ -4,7 +4,7 @@ import React from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { Formik, Form, ErrorMessage, FormikHelpers } from "formik";
+import { Formik, Form, ErrorMessage, FormikHelpers, FormikProps } from "formik";
 import * as Yup from "yup";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
@@ -148,14 +148,14 @@ export default function AddSurveyTabs() {
     // labels depend on mode
     ...(isEditMode
       ? [
-          { id: 1, label: "Update Survey" },
-          // keep second tab labeled "Add Question" even in edit mode
-          { id: 2, label: "Add Question" },
-        ]
+        { id: 1, label: "Update Survey" },
+        // keep second tab labeled "Add Question" even in edit mode
+        { id: 2, label: "Add Question" },
+      ]
       : [
-          { id: 1, label: "Create Survey" },
-          { id: 2, label: "Add Question" },
-        ]),
+        { id: 1, label: "Create Survey" },
+        { id: 2, label: "Add Question" },
+      ]),
   ];
 
   const [initialValues, setInitialValues] = React.useState<SurveyFormValues>({
@@ -203,9 +203,9 @@ export default function AddSurveyTabs() {
             const formatted = qs.map((q: any) => ({
               survey_id: q.survey_id?.toString() || routeId.toString(),
               question: q.question || "",
-                questionType: normalizeQuestionType(q.question_type || q.question_type || ""),
-                survey_question_code:
-                  q.survey_question_code || q.question_code || q.code || generateSurveyQuestionCode(),
+              questionType: normalizeQuestionType(q.question_type || q.question_type || ""),
+              survey_question_code:
+                q.survey_question_code || q.question_code || q.code || generateSurveyQuestionCode(),
               options: q.question_based_selected
                 ? String(q.question_based_selected).split(",").map((o: string) => o)
                 : [],
@@ -218,15 +218,15 @@ export default function AddSurveyTabs() {
               formatted.length
                 ? formatted
                 : [
-                    {
-                      survey_id: "",
-                      question: "",
-                      questionType: "",
-                      options: [""],
-                      survey_question_code: generateSurveyQuestionCode(),
-                      editable: true,
-                    },
-                  ]
+                  {
+                    survey_id: "",
+                    question: "",
+                    questionType: "",
+                    options: [""],
+                    survey_question_code: generateSurveyQuestionCode(),
+                    editable: true,
+                  },
+                ]
             );
             // show preview mode when editing existing survey with questions
             if (formatted.length) setIsPreviewMode(true);
@@ -265,7 +265,7 @@ export default function AddSurveyTabs() {
       }
 
       setCreatedSurveyId(res.data.id.toString());
-      
+
       showSnackbar("Survey created successfully ", "success");
       setActiveTab(2);
     } catch (err) {
@@ -276,7 +276,6 @@ export default function AddSurveyTabs() {
         );
         actions.setErrors(errors);
       }
-      showSnackbar("Please fix validation errors before proceeding.", "error");
     } finally {
       actions.setSubmitting(false);
     }
@@ -309,10 +308,8 @@ export default function AddSurveyTabs() {
               }
             });
             setQuestionErrors((prev) => ({ ...prev, [idx]: map }));
-            showSnackbar("Please fix validation errors in questions.", "error");
             return;
           }
-          showSnackbar("Please check all question fields carefully.", "error");
           return;
         }
 
@@ -324,8 +321,8 @@ export default function AddSurveyTabs() {
           question_based_selected: typesWithOptions.includes(q.questionType)
             ? q.options.filter((o) => o.trim() !== "").join(",")
             : ["textbox", "comment box"].includes(q.questionType)
-            ? ""
-            : undefined,
+              ? ""
+              : undefined,
         };
 
         await addSurveyQuestion(payload);
@@ -364,11 +361,9 @@ export default function AddSurveyTabs() {
             });
             setQuestionErrors((prev) => ({ ...prev, [idx]: map }));
             setSavingAll(false);
-            showSnackbar("Please fix validation errors in questions.", "error");
             return false;
           }
           setSavingAll(false);
-          showSnackbar("Please check all question fields carefully.", "error");
           return false;
         }
 
@@ -380,11 +375,11 @@ export default function AddSurveyTabs() {
           question_based_selected: typesWithOptions.includes(q.questionType)
             ? q.options.filter((o) => o.trim() !== "").join(",")
             : ["textbox", "comment box"].includes(q.questionType)
-            ? ""
-            : undefined,
+              ? ""
+              : undefined,
         };
 
-          if (q.question_id) {
+        if (q.question_id) {
           await UpdateSurveyQuestion(q.question_id.toString(), payload as any);
         } else {
           await addSurveyQuestion(payload as any);
@@ -438,8 +433,8 @@ export default function AddSurveyTabs() {
         question_based_selected: typesWithOptions.includes(q.questionType)
           ? q.options.filter((o) => o.trim() !== "").join(",")
           : ["textbox", "comment box"].includes(q.questionType)
-          ? ""
-          : undefined,
+            ? ""
+            : undefined,
       };
 
       if (q.question_id) {
@@ -529,7 +524,7 @@ export default function AddSurveyTabs() {
   const renderTabContent = (
     values: SurveyFormValues,
     setFieldValue: FormikHelpers<SurveyFormValues>["setFieldValue"],
-    formikHelpers: FormikHelpers<SurveyFormValues>
+    formik: FormikProps<SurveyFormValues>
   ) => {
     switch (activeTab) {
       case 1:
@@ -540,44 +535,52 @@ export default function AddSurveyTabs() {
               {/* Survey Code removed from UI (kept as hidden input so form still submits it) */}
               <input type="hidden" name="surveyCode" value={values.surveyCode} />
 
-              <InputFields
-                label="Survey Name"
-                name="surveyName"
-                value={values.surveyName}
-                onChange={(e) => setFieldValue("surveyName", e.target.value)}
-              />
-              <ErrorMessage name="surveyName" component="div" className="text-sm text-red-600 mt-1" />
+              <div>
+                <InputFields
+                  label="Survey Name"
+                  name="surveyName"
+                  value={values.surveyName}
+                  onChange={(e) => setFieldValue("surveyName", e.target.value)}
+                  error={formik.touched.surveyName && formik.errors.surveyName}
+                />
+              </div>
 
-              <InputFields
-                label="Start Date"
-                type="date"
-                name="startDate"
-                value={values.startDate}
-                onChange={(e) => setFieldValue("startDate", e.target.value)}
-              />
-              <ErrorMessage name="startDate" component="div" className="text-sm text-red-600 mt-1" />
+              <div>
+                <InputFields
+                  label="Start Date"
+                  type="date"
+                  name="startDate"
+                  value={values.startDate}
+                  onChange={(e) => setFieldValue("startDate", e.target.value)}
+                  error={formik.touched.startDate && formik.errors.startDate}
+                />
+              </div>
 
-              <InputFields
-                label="End Date"
-                type="date"
-                name="endDate"
-                value={values.endDate}
-                onChange={(e) => setFieldValue("endDate", e.target.value)}
-              />
-              <ErrorMessage name="endDate" component="div" className="text-sm text-red-600 mt-1" />
+              <div>
+                <InputFields
+                  label="End Date"
+                  type="date"
+                  name="endDate"
+                  value={values.endDate}
+                  onChange={(e) => setFieldValue("endDate", e.target.value)}
+                  error={formik.touched.endDate && formik.errors.endDate}
+                />
+              </div>
 
-              <InputFields
-                label="Status"
-                name="status"
-                value={values.status}
-                onChange={(e) => setFieldValue("status", e.target.value)}
-                type="select"
-                options={[
-                  { value: "1", label: "Active" },
-                  { value: "0", label: "Inactive" },
-                ]}
-              />
-              <ErrorMessage name="status" component="div" className="text-sm text-red-600 mt-1" />
+              <div>
+                <InputFields
+                  label="Status"
+                  name="status"
+                  value={values.status}
+                  onChange={(e) => setFieldValue("status", e.target.value)}
+                  type="select"
+                  options={[
+                    { value: "1", label: "Active" },
+                    { value: "0", label: "Inactive" },
+                  ]}
+                  error={formik.touched.status && formik.errors.status}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-4 mt-6">
@@ -588,57 +591,57 @@ export default function AddSurveyTabs() {
               >
                 Cancel
               </button>
-                {
-                  // When editing an existing survey, show "Next" if there are no changes
-                  (() => {
-                    const hasSurveyChanged = (): boolean => {
-                      // compare relevant fields
-                      return (
-                        values.surveyName !== initialValues.surveyName ||
-                        values.startDate !== initialValues.startDate ||
-                        values.endDate !== initialValues.endDate ||
-                        values.status !== initialValues.status ||
-                        values.surveyCode !== initialValues.surveyCode
-                      );
-                    };
+              {
+                // When editing an existing survey, show "Next" if there are no changes
+                (() => {
+                  const hasSurveyChanged = (): boolean => {
+                    // compare relevant fields
+                    return (
+                      values.surveyName !== initialValues.surveyName ||
+                      values.startDate !== initialValues.startDate ||
+                      values.endDate !== initialValues.endDate ||
+                      values.status !== initialValues.status ||
+                      values.surveyCode !== initialValues.surveyCode
+                    );
+                  };
 
-                    if (isEditMode) {
-                      if (!hasSurveyChanged()) {
-                        return (
-                          <SidebarBtn
-                            type="button"
-                            leadingIcon="mdi:arrow-right"
-                            label="Next"
-                            labelTw="hidden sm:block"
-                            isActive
-                            onClick={() => setActiveTab(2)}
-                          />
-                        );
-                      }
+                  if (isEditMode) {
+                    if (!hasSurveyChanged()) {
                       return (
                         <SidebarBtn
                           type="button"
-                          leadingIcon="mdi:check"
-                          label="Update Survey"
+                          leadingIcon="mdi:arrow-right"
+                          label="Next"
                           labelTw="hidden sm:block"
                           isActive
-                          onClick={() => handleCreateSurvey(values, formikHelpers)}
+                          onClick={() => setActiveTab(2)}
                         />
                       );
                     }
-
                     return (
                       <SidebarBtn
                         type="button"
                         leadingIcon="mdi:check"
-                        label="Create Survey"
+                        label="Update Survey"
                         labelTw="hidden sm:block"
                         isActive
-                        onClick={() => handleCreateSurvey(values, formikHelpers)}
+                        onClick={() => handleCreateSurvey(values, formik)}
                       />
                     );
-                  })()
-                }
+                  }
+
+                  return (
+                    <SidebarBtn
+                      type="button"
+                      leadingIcon="mdi:check"
+                      label="Create Survey"
+                      labelTw="hidden sm:block"
+                      isActive
+                      onClick={() => handleCreateSurvey(values, formik)}
+                    />
+                  );
+                })()
+              }
             </div>
           </ContainerCard>
         );
@@ -646,51 +649,51 @@ export default function AddSurveyTabs() {
       case 2:
         return (
           <ContainerCard>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                      <h2 className="text-xl font-semibold">Add Questions</h2>
-                  <p className="text-gray-500 text-sm">
-                    Survey Name:{" "}
-                    <span className="font-medium text-gray-700">
-                      {values.surveyName || "Unnamed Survey"}
-                    </span>
-                  </p>
-                </div>
-
-                {!isPreviewMode ? (
-                  <button
-                    type="button"
-                    onClick={() => handleSaveQuestions(values)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium"
-                    disabled={savingAll}
-                  >
-                    {savingAll ? (
-                      <span className="flex items-center gap-2">
-                        <Icon icon="lucide:loader" width={16} height={16} className="animate-spin" />
-                        {isEditMode ? "Updating..." : "Saving..."}
-                      </span>
-                    ) : (
-                      <div className="flex items-center">
-                        <Icon icon="mdi:check" width={22} height={22} className="mr-2" />
-                        <span>Submit</span>
-                      </div>
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const ok = await handleSaveQuestions(values, true);
-                      if (ok) {
-                        // router.push handled inside handleSaveQuestions when redirectAfter=true
-                      }
-                    }}
-                    className="bg-white border border-gray-300 px-4 py-2 rounded-lg font-medium"
-                  >
-                    Submit
-                  </button>
-                )}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold">Add Questions</h2>
+                <p className="text-gray-500 text-sm">
+                  Survey Name:{" "}
+                  <span className="font-medium text-gray-700">
+                    {values.surveyName || "Unnamed Survey"}
+                  </span>
+                </p>
               </div>
+
+              {!isPreviewMode ? (
+                <button
+                  type="button"
+                  onClick={() => handleSaveQuestions(values)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium"
+                  disabled={savingAll}
+                >
+                  {savingAll ? (
+                    <span className="flex items-center gap-2">
+                      <Icon icon="lucide:loader" width={16} height={16} className="animate-spin" />
+                      {isEditMode ? "Updating..." : "Saving..."}
+                    </span>
+                  ) : (
+                    <div className="flex items-center">
+                      <Icon icon="mdi:check" width={22} height={22} className="mr-2" />
+                      <span>Submit</span>
+                    </div>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await handleSaveQuestions(values, true);
+                    if (ok) {
+                      // router.push handled inside handleSaveQuestions when redirectAfter=true
+                    }
+                  }}
+                  className="bg-white border border-gray-300 px-4 py-2 rounded-lg font-medium"
+                >
+                  Submit
+                </button>
+              )}
+            </div>
 
             <div className="space-y-6">
               {questions.map((q, index) => (
@@ -799,7 +802,7 @@ export default function AddSurveyTabs() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <div className="md:col-span-2">
                           <InputFields
-                          width="max-w-full"
+                            width="max-w-full"
                             label="Question"
                             name={`question_${index}`}
                             value={q.question}
@@ -962,7 +965,7 @@ export default function AddSurveyTabs() {
         <h1 className="text-xl font-semibold">{isEditMode ? "Update Survey" : "Add New Survey"}</h1>
       </div>
 
-  <Formik enableReinitialize initialValues={initialValues} onSubmit={() => {}}>
+      <Formik enableReinitialize initialValues={initialValues} validationSchema={stepSchemas[0]} onSubmit={() => { }}>
         {(formikHelpers) => {
           const { values, setFieldValue } = formikHelpers;
 
@@ -970,13 +973,13 @@ export default function AddSurveyTabs() {
             <Form>
               <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
                 {tabs.map((tab, index) => (
-                    <div key={index}>
-                        <TabBtn
-                            label={tab.label}
-                            isActive={activeTab === tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                        />
-                    </div>
+                  <div key={index}>
+                    <TabBtn
+                      label={tab.label}
+                      isActive={activeTab === tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                    />
+                  </div>
                 ))}
               </ContainerCard>
 

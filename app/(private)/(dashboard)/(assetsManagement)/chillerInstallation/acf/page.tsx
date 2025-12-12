@@ -13,7 +13,11 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { downloadFile } from "@/app/services/allApi";
+import { useFormik } from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import InputFields from "@/app/components/inputFields";
+// import { Icon } from "lucide-react";
+import { Icon } from "@iconify-icon/react";
 
 // Type definitions for the ACF API response
 interface ChillerRequest {
@@ -186,6 +190,18 @@ export default function CustomerInvoicePage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
+    const [selectedRowsData, setSelectedRowsData] = useState<any[]>([]);
+    const { values, setFieldValue } = useFormik({
+        initialValues: {
+            oldPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+        },
+        onSubmit: (values) => {
+            console.log(values);
+        },
+    });
+    const [showSidebar, setShowSidebar] = useState(false);
     const [threeDotLoading, setThreeDotLoading] = useState({
         csv: false,
         xlsx: false,
@@ -196,6 +212,7 @@ export default function CustomerInvoicePage() {
         region: "",
         routeCode: "",
     });
+
     const {
         warehouseAllOptions,
         routeOptions,
@@ -453,22 +470,16 @@ export default function CustomerInvoicePage() {
                         showSelectedRow: true,
                         buttons: [
                             {
-                                label: "Selected Rows: ",
-                                onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                    const ids = selectedRow
-                                        ?.map((id) => {
-                                            const row = data[id];
-                                            if (hasChillerRequest(row)) {
-                                                return row.chiller_request.id;
-                                            }
-                                            return null;
-                                        })
-                                        .filter((id): id is number => id !== null);
-                                    console.log("Selected Rows:", ids);
+                                label: "Selected Rows",
+                                onClick: (data, selectedRow) => {
+                                    const rows = selectedRow?.map(i => data[i]) || [];
+                                    setSelectedRowsData(rows);   // <-- store selected rows for sidebar table
+                                    setShowSidebar(true);
                                 }
-                            },
+                            }
                         ]
                     },
+
                     localStorageKey: "invoice-table",
                     rowActions: [
                         {
@@ -485,6 +496,63 @@ export default function CustomerInvoicePage() {
                     pageSize: 10,
                 }}
             />
+            {showSidebar && (
+                <>
+                    {/* Overlay */}
+                    <div
+                        className="h-full fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+                        onClick={() => setShowSidebar(false)}
+                    />
+
+                    {/* Sidebar */}
+                    <div className="fixed top-0 right-0 h-full w-1/3 bg-white z-50 shadow-lg transform transition-transform duration-300">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-5 border-b">
+                            <h2 className="text-lg font-semibold">Selected Chiller</h2>
+                            <button onClick={() => setShowSidebar(false)}>
+                                <Icon icon="lucide:x" width={22} />
+                            </button>
+                        </div>
+
+                        {/* TABLE INSIDE SIDEBAR */}
+                        <div className="p-5">
+                            <Table
+                                config={{
+                                    columns: [
+                                        {
+                                            key: "osa_code",
+                                            label: "Code",
+                                            render: (row: any) =>
+                                                row?.chiller_request?.osa_code || "-",
+                                        },
+                                        {
+                                            key: "model",
+                                            label: "Model Code",
+                                            render: (row: any) =>
+                                                row?.chiller_request?.model || "-",
+                                        },
+                                    ],
+                                    pageSize: 5,
+                                    rowSelection: false,
+                                    footer: { pagination: false },
+                                    header: { title: "", searchBar: false },
+                                    api: {
+                                        // Pass selected rows to table directly
+                                        filterBy: async () => ({
+                                            data: selectedRowsData, // <-- we fill this below
+                                            total: 1,
+                                            currentPage: 1,
+                                            pageSize: 5,
+                                        }),
+                                    },
+                                }}
+                            />
+                        </div>
+                    </div>
+                </>
+            )}
+
         </div>
     );
 }

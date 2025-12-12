@@ -13,7 +13,6 @@ import { useRouter, useParams } from "next/navigation";
 import {
   Formik,
   Form,
-  ErrorMessage,
   FormikHelpers,
   FormikErrors,
   FormikTouched,
@@ -21,8 +20,8 @@ import {
 import { useState, useEffect } from "react";
 import * as Yup from "yup";
 
-import { merchandiserList } from "@/app/services/merchandiserApi";
 import {
+  merchandiserList,
   addShelves,
   getShelfById,
   updateShelfById,
@@ -30,7 +29,7 @@ import {
 } from "@/app/services/merchandiserApi";
 import Loading from "@/app/components/Loading";
 
-// --- Types ---
+// --------------------- TYPES ---------------------
 type ShelfFormValues = {
   shelf_name: string;
   height: number;
@@ -43,66 +42,59 @@ type ShelfFormValues = {
 };
 
 type MerchandiserResponse = { id: number; name: string };
-
 type CustomerFromBackend = {
   id: number;
   customer_code: string;
   business_name: string;
 };
-
 type CustomerFromEdit = {
   customers: number;
   customer_code: string;
-  customer_type: string;
   owner_name: string;
 };
-
 type CustomerOption = { value: string; label: string };
 
-// --- Validation ---
+// --------------------- VALIDATION ---------------------
 const validationSchema = Yup.object({
-  shelf_name: Yup.string().trim().required("Shelf Name is required").max(100),
+  shelf_name: Yup.string().trim().required("Shelf Name is required"),
   height: Yup.number().required("Height is required"),
   width: Yup.number().required("Width is required"),
   depth: Yup.number().required("Depth is required"),
-  valid_from: Yup.date()
-    .nullable()
-    .transform((_, val) => (val === "" ? null : new Date(val)))
-    .required("Valid From is required"),
+
+  valid_from: Yup.date().nullable().required("Valid From is required"),
+
   valid_to: Yup.date()
     .nullable()
-    .transform((_, val) => (val === "" ? null : new Date(val)))
     .required("Valid To is required")
-    .min(
-      Yup.ref("valid_from"),
-      "Valid To must be the same as or after Valid From"
-    ),
+    .min(Yup.ref("valid_from"), "Valid To must be after Valid From"),
+
   merchendiser_ids: Yup.array()
     .of(Yup.number())
-    .min(1, "Select at least one merchendiser"),
-  customer_ids: Yup.array()
-    .of(Yup.number())
-    .min(1, "Select at least one customer"),
+    .min(1, "Select at least one Merchandiser"),
+
+  customer_ids: Yup.array().of(Yup.number()).min(1, "Select at least one Customer"),
 });
 
-const capitalizeFirstLetter = (str: string) =>
-  str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
-
+// Step-wise schemas
 const stepSchemas = [
   Yup.object().shape({
-    shelf_name: validationSchema.fields.shelf_name,
-    height: validationSchema.fields.height,
-    width: validationSchema.fields.width,
-    depth: validationSchema.fields.depth,
-    valid_from: validationSchema.fields.valid_from,
-    valid_to: validationSchema.fields.valid_to,
+    shelf_name: (validationSchema as any).fields.shelf_name,
+    height: (validationSchema as any).fields.height,
+    width: (validationSchema as any).fields.width,
+    depth: (validationSchema as any).fields.depth,
+    valid_from: (validationSchema as any).fields.valid_from,
+    valid_to: (validationSchema as any).fields.valid_to,
   }),
+
   Yup.object().shape({
-    merchendiser_ids: validationSchema.fields.merchendiser_ids,
-    customer_ids: validationSchema.fields.customer_ids,
+    merchendiser_ids: (validationSchema as any).fields.merchendiser_ids,
+    customer_ids: (validationSchema as any).fields.customer_ids,
   }),
 ];
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// --------------------- COMPONENT ---------------------
 export default function ShelfDisplay() {
   const steps: StepperStep[] = [
     { id: 1, label: "Shelf Details" },
@@ -115,9 +107,9 @@ export default function ShelfDisplay() {
 
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [merchandiserOptions, setMerchandiserOptions] = useState<
-    CustomerOption[]
-  >([]);
+  const [merchandiserOptions, setMerchandiserOptions] = useState<CustomerOption[]>(
+    []
+  );
   const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
 
   const [initialValues, setInitialValues] = useState<ShelfFormValues>({
@@ -140,140 +132,112 @@ export default function ShelfDisplay() {
     isLastStep,
   } = useStepperForm(steps.length);
 
-  // --- Format customer label ---
-  const formatCustomerLabel = (
-    customer: CustomerFromBackend | CustomerFromEdit
-  ): string => {
-    if ("business_name" in customer) {
-      return `${customer.customer_code || ""} - ${
-        customer.business_name || ""
-      }`;
-    } else {
-      return `${customer.customer_code || ""} - ${customer.owner_name || ""}`;
-    }
+  // Format label for customer dropdown
+  const formatCustomerLabel = (customer: CustomerFromBackend | CustomerFromEdit) => {
+    if ("business_name" in customer)
+      return `${customer.customer_code} - ${customer.business_name}`;
+    return `${customer.customer_code} - ${customer.owner_name}`;
   };
 
-  // --- Get customer ID ---
-  const getCustomerId = (customer: CustomerFromBackend | CustomerFromEdit) => {
-    return "id" in customer ? customer.id : customer.customers;
-  };
-
-  // --- Fetch data ---
+  // Fetch Data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Merchandisers
         const merchRes = await merchandiserList();
-        const merchOptions =
+        setMerchandiserOptions(
           merchRes.data?.map((m: MerchandiserResponse) => ({
             value: String(m.id),
             label: m.name,
-          })) || [];
-        setMerchandiserOptions(merchOptions);
+          })) || []
+        );
 
-        if (id && id.toString() !== "add") {
+        // If Edit Mode
+        if (id && id !== "add") {
           setIsEditMode(true);
+
           const res = await getShelfById(String(id));
+
           if (res?.data) {
-            const shelfData = res.data;
-            const customerOptionsForEdit =
-              shelfData.customers?.map((customer: CustomerFromEdit) => ({
-                value: String(customer.customers),
-                label: formatCustomerLabel(customer),
-              })) || [];
+            const shelf = res.data;
 
             setInitialValues({
-              shelf_name: shelfData.shelf_name || "",
-              height: shelfData.height || 0,
-              width: shelfData.width || 0,
-              depth: shelfData.depth || 0,
-              valid_from: shelfData.valid_from
-                ? shelfData.valid_from.split("T")[0]
-                : "",
-              valid_to: shelfData.valid_to
-                ? shelfData.valid_to.split("T")[0]
-                : "",
-              merchendiser_ids: shelfData.merchendiser_ids || [],
-              customer_ids: shelfData.customer_ids || [],
+              shelf_name: shelf.shelf_name || "",
+              height: shelf.height ?? 0,
+              width: shelf.width ?? 0,
+              depth: shelf.depth ?? 0,
+              valid_from: shelf.valid_from?.split("T")[0] || "",
+              valid_to: shelf.valid_to?.split("T")[0] || "",
+              merchendiser_ids: shelf.merchendiser_ids || [],
+              customer_ids: shelf.customer_ids || [],
             });
 
-            setCustomerOptions(customerOptionsForEdit);
-          } else {
-            showSnackbar("Shelf not found", "error");
+            setCustomerOptions(
+              shelf.customers?.map((c: CustomerFromEdit) => ({
+                value: String(c.customers),
+                label: formatCustomerLabel(c),
+              })) || []
+            );
           }
-        } else {
-          setIsEditMode(false);
         }
-      } catch (error) {
-        console.error("Failed to fetch data", error);
-        showSnackbar("Unable to fetch shelf or merchandiser data", "error");
+      } catch (err) {
+        showSnackbar("Failed to fetch shelf / merchandiser", "error");
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [id, showSnackbar]);
 
-  // --- Fetch customers dynamically ---
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // Fetch customers when merchandiser changes
   const fetchCustomers = async (merchIds: number[]) => {
-    if (merchIds.length === 0) {
-      setCustomerOptions([]);
-      return;
-    }
+    if (!merchIds.length) return setCustomerOptions([]);
+
     try {
-      const response = await shelvesDropdown({
-        merchendiser_ids: merchIds.map(String),
-      });
-      if (response?.status && Array.isArray(response.data)) {
-        const formatted = response.data.map(
-          (customer: CustomerFromBackend) => ({
-            value: String(customer.id),
-            label: formatCustomerLabel(customer),
-          })
+      const res = await shelvesDropdown({ merchendiser_ids: merchIds.map(String) });
+
+      if (res?.data) {
+        setCustomerOptions(
+          res.data.map((c: CustomerFromBackend) => ({
+            value: String(c.id),
+            label: formatCustomerLabel(c),
+          }))
         );
-        setCustomerOptions(formatted);
-      } else {
-        setCustomerOptions([]);
       }
-    } catch (err) {
-      console.error("Error fetching customers:", err);
+    } catch {
       setCustomerOptions([]);
     }
   };
 
-  // --- Step navigation ---
+  // Next Step Validation
   const handleNext = async (
     values: ShelfFormValues,
-    actions: FormikHelpers<ShelfFormValues>
+    actions: Partial<FormikHelpers<ShelfFormValues>>
   ) => {
     try {
-      const schema = stepSchemas[currentStep - 1];
-      await schema.validate(values, { abortEarly: false });
+      await stepSchemas[currentStep - 1].validate(values, { abortEarly: false });
       markStepCompleted(currentStep);
       nextStep();
     } catch (err) {
       if (err instanceof Yup.ValidationError) {
-        const fields = err.inner.map((e) => e.path);
-        actions.setTouched(
-          fields.reduce(
-            (acc, key) => ({ ...acc, [key!]: true }),
-            {} as Record<string, boolean>
-          )
-        );
-        actions.setErrors(
-          err.inner.reduce(
-            (acc: Partial<Record<keyof ShelfFormValues, string>>, curr) => ({
-              ...acc,
-              [curr.path as keyof ShelfFormValues]: curr.message,
-            }),
-            {}
-          )
-        );
+        const touchedFields = err.inner.reduce((acc: any, curr) => {
+          acc[curr.path!] = true;
+          return acc;
+        }, {});
+        const errorFields = err.inner.reduce((acc: any, curr) => {
+          acc[curr.path!] = curr.message;
+          return acc;
+        }, {});
+        actions.setTouched && actions.setTouched(touchedFields as any);
+        actions.setErrors && actions.setErrors(errorFields as any);
       }
     }
   };
 
-  // --- Submit Form ---
+  // Submit Form
   const handleSubmit = async (values: ShelfFormValues) => {
     try {
       const payload = {
@@ -287,15 +251,10 @@ export default function ShelfDisplay() {
         ? await updateShelfById(String(id), payload)
         : await addShelves(payload);
 
-      if (res.error) {
+      if (res?.error) {
         showSnackbar(res.data?.message || "Failed to save shelf", "error");
       } else {
-        showSnackbar(
-          isEditMode
-            ? "Shelf updated successfully"
-            : "Shelf added successfully",
-          "success"
-        );
+        showSnackbar(isEditMode ? "Shelf updated" : "Shelf added", "success");
         router.push("/merchandiser/shelfDisplay");
       }
     } catch {
@@ -303,165 +262,153 @@ export default function ShelfDisplay() {
     }
   };
 
-  // --- Render step content ---
+  // --------------------- STEP UI ---------------------
   const renderStepContent = (
     values: ShelfFormValues,
-    setFieldValue: (
-      field: keyof ShelfFormValues,
-      value: ShelfFormValues[keyof ShelfFormValues]
-    ) => void,
+    setFieldValue: (field: string, value: any) => void,
     errors: FormikErrors<ShelfFormValues>,
     touched: FormikTouched<ShelfFormValues>,
-    handleBlur: (e: React.FocusEvent<unknown>) => void
+    handleBlur: (e: any) => void
   ) => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(["shelf_name", "height", "width", "depth"] as const).map(
-                (field) => (
-                  <div key={field} className="flex flex-col">
-                    <InputFields
-                      required
-                      type={field === "shelf_name" ? "text" : "number"}
-                      label={`${capitalizeFirstLetter(
-                        field.replace("_", " ")
-                      )} ${field !== "shelf_name" ? "(cm)" : ""}`}
-                      name={field}
-                      value={(Number(values[field]) < 0
-                        ? 0
-                        : values[field]
-                      ).toString()}
-                      onChange={(e) => setFieldValue(field, e.target.value)}
-                      onBlur={handleBlur}
-                      // error={touched[field] && errors[field]}
-                    />
-                    {/* <ErrorMessage
-                      name={field}
-                      component="span"
-                      className="text-xs text-red-500 mt-1"
-                    /> */}
-                  </div>
-                )
-              )}
+    // ---------------- STEP 1 ----------------
+    if (currentStep === 1) {
+      return (
+        <ContainerCard>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(["shelf_name", "height", "width", "depth"] as const).map((field) => {
+              // determine value as string because InputFields expects string/string[] for value prop
+              const rawValue = (values as any)[field];
+              const valueForInput =
+                typeof rawValue === "number" ? String(rawValue ?? "") : rawValue ?? "";
 
-              <div className="flex flex-col">
+              const errorMsg =
+                touched[field] && errors[field] ? String((errors as any)[field]) : undefined;
+
+              return (
                 <InputFields
+                  key={field}
                   required
-                  type="date"
-                  label="Valid From"
-                  name="valid_from"
-                  value={values.valid_from.length == 0 ? "" : values.valid_from}
-                  onChange={(e) => setFieldValue("valid_from", e.target.value)}
+                  type={field === "shelf_name" ? "text" : "number"}
+                  label={
+                    capitalize(String(field).replace("_", " ")) +
+                    (field !== "shelf_name" ? " (cm)" : "")
+                  }
+                  name={String(field)}
+                  value={valueForInput}
+                  onChange={(e: any) => {
+                    // e.target.value may be string or string[]
+                    const targetValue = e?.target?.value;
+                    if (field === "shelf_name") {
+                      setFieldValue(field, targetValue ?? "");
+                    } else {
+                      // numeric fields - convert to number if possible else 0
+                      const num =
+                        targetValue === "" || targetValue === undefined
+                          ? 0
+                          : Number(targetValue);
+                      setFieldValue(field, Number.isNaN(num) ? 0 : num);
+                    }
+                  }}
                   onBlur={handleBlur}
-                  // error={touched.valid_from && errors.valid_from}
+                  error={errorMsg}
                 />
-                {/* <ErrorMessage
-                  name="valid_from"
-                  component="span"
-                  className="text-xs text-red-500 mt-1"
-                /> */}
-              </div>
+              );
+            })}
 
-              <div className="flex flex-col">
-                <InputFields
-                  required
-                  type="date"
-                  label="Valid To"
-                  name="valid_to"
-                  value={values.valid_to}
-                  onChange={(e) => setFieldValue("valid_to", e.target.value)}
-                  onBlur={handleBlur}
-                  disabled={!values.valid_from}
-                  // error={touched.valid_to && errors.valid_to}
-                />
-                {/* <ErrorMessage
-                  name="valid_to"
-                  component="span"
-                  className="text-xs text-red-500 mt-1"
-                /> */}
-              </div>
-            </div>
-          </ContainerCard>
-        );
+            {/* Valid From */}
+            <InputFields
+              required
+              type="date"
+              label="Valid From"
+              name="valid_from"
+              value={values.valid_from ?? ""}
+              onChange={(e: any) => setFieldValue("valid_from", e?.target?.value ?? "")}
+              onBlur={handleBlur}
+              error={
+                touched.valid_from && errors.valid_from ? String(errors.valid_from) : undefined
+              }
+            />
 
-      case 2:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputFields
-                width="max-w-[500px]"
-                required
-                label="Merchandisers"
-                name="merchandiser_ids"
-                value={values.merchendiser_ids.map(String)}
-                options={merchandiserOptions}
-                isSingle={false}
-                onChange={(e) => {
-                  const vals = Array.isArray(e.target.value)
-                    ? e.target.value
-                    : [];
-                  const selectedIds = vals.map(Number);
-                  setFieldValue("merchendiser_ids", selectedIds);
-                  setFieldValue("customer_ids", []);
-                  fetchCustomers(selectedIds);
-                }}
-                onBlur={handleBlur}
-                error={
-                  touched.merchendiser_ids && errors.merchendiser_ids
-                    ? Array.isArray(errors.merchendiser_ids)
-                      ? errors.merchendiser_ids.join(", ")
-                      : errors.merchendiser_ids
-                    : undefined
-                }
-              />
-
-              <InputFields
-                width="max-w-[500px]"
-                required
-                placeholder={values.merchendiser_ids.length == 0 ? "Merchendiser must be selected" : customerOptions.length == 0 ? "No Customer Found" : ""}
-                label="Customers"
-                name="customer_ids"
-                value={values.customer_ids.map(String)}
-                options={customerOptions}
-                disabled={values.merchendiser_ids.length == 0 || customerOptions.length == 0}
-                isSingle={false}
-                onChange={(e) => {
-                  const vals = Array.isArray(e.target.value)
-                    ? e.target.value
-                    : [];
-                  setFieldValue("customer_ids", vals.map(Number));
-                }}
-                onBlur={handleBlur}
-                error={
-                  touched.customer_ids && errors.customer_ids
-                    ? Array.isArray(errors.customer_ids)
-                      ? errors.customer_ids.join(", ")
-                      : errors.customer_ids
-                    : undefined
-                }
-              />
-            </div>
-          </ContainerCard>
-        );
-
-      default:
-        return null;
+            {/* Valid To */}
+            <InputFields
+              required
+              type="date"
+              label="Valid To"
+              name="valid_to"
+              value={values.valid_to ?? ""}
+              onChange={(e: any) => setFieldValue("valid_to", e?.target?.value ?? "")}
+              onBlur={handleBlur}
+              disabled={!values.valid_from}
+              error={touched.valid_to && errors.valid_to ? String(errors.valid_to) : undefined}
+            />
+          </div>
+        </ContainerCard>
+      );
     }
-  };
 
-  const backBtnUrl = "/merchandiser/shelfDisplay/";
+    // ---------------- STEP 2 ----------------
+    return (
+      <ContainerCard>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Merchandiser */}
+          <InputFields
+            required
+            width="max-w-[500px]"
+            label="Merchandiser"
+            name="merchendiser_ids"
+            value={values.merchendiser_ids.map(String)} // string[]
+            options={merchandiserOptions}
+            isSingle={false}
+            onChange={(e: any) => {
+              const raw = e?.target?.value;
+              // raw may be string or string[]
+              const arr = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
+              const ids = arr.map((v) => Number(v)).filter((n) => !Number.isNaN(n));
+              setFieldValue("merchendiser_ids", ids);
+              setFieldValue("customer_ids", []);
+              fetchCustomers(ids);
+            }}
+            onBlur={handleBlur}
+            error={
+              touched.merchendiser_ids && errors.merchendiser_ids
+                ? String(errors.merchendiser_ids)
+                : undefined
+            }
+          />
+
+          {/* Customers */}
+          <InputFields
+            required
+            width="max-w-[500px]"
+            label="Customers"
+            name="customer_ids"
+            value={values.customer_ids.map(String)}
+            options={customerOptions}
+            disabled={!values.merchendiser_ids.length}
+            isSingle={false}
+            onChange={(e: any) => {
+              const raw = e?.target?.value;
+              const arr = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
+              const ids = arr.map((v) => Number(v)).filter((n) => !Number.isNaN(n));
+              setFieldValue("customer_ids", ids);
+            }}
+            onBlur={handleBlur}
+            error={
+              touched.customer_ids && errors.customer_ids ? String(errors.customer_ids) : undefined
+            }
+          />
+        </div>
+      </ContainerCard>
+    );
+  };
 
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
-        <Link href={backBtnUrl}>
+        <Link href="/merchandiser/shelfDisplay">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold mb-1">
-          {isEditMode ? "Update Shelf" : "Add Shelf"}
-        </h1>
+        <h1 className="text-xl font-semibold">{isEditMode ? "Update Shelf" : "Add Shelf"}</h1>
       </div>
 
       {loading ? (
@@ -473,44 +420,27 @@ export default function ShelfDisplay() {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({
-            values,
-            setFieldValue,
-            errors,
-            touched,
-            handleSubmit: formikSubmit,
-            handleBlur,
-            setErrors,
-            setTouched,
-            isSubmitting,
-          }) => (
+          {({ values, setFieldValue, errors, touched, handleBlur, handleSubmit, setErrors, setTouched }) => (
             <Form>
               <StepperForm
-                steps={steps.map((step) => ({
-                  ...step,
-                  isCompleted: isStepCompleted(step.id),
+                steps={steps.map((s) => ({
+                  ...s,
+                  isCompleted: isStepCompleted(s.id),
                 }))}
                 currentStep={currentStep}
                 onBack={prevStep}
                 onNext={() =>
-                  handleNext(values, {
-                    setErrors,
-                    setTouched,
-                  } as FormikHelpers<ShelfFormValues>)
+                  handleNext(values, { setTouched, setErrors } as unknown as FormikHelpers<
+                    ShelfFormValues
+                  >)
                 }
-                onSubmit={() => formikSubmit()}
+                onSubmit={handleSubmit}
                 showSubmitButton={isLastStep}
                 showNextButton={!isLastStep}
                 nextButtonText="Save & Next"
-                submitButtonText={isSubmitting ? "Submitting..." : "Submit"}
+                submitButtonText="Submit"
               >
-                {renderStepContent(
-                  values,
-                  setFieldValue,
-                  errors,
-                  touched,
-                  handleBlur
-                )}
+                {renderStepContent(values, setFieldValue, errors, touched, handleBlur)}
               </StepperForm>
             </Form>
           )}

@@ -12,6 +12,7 @@ import {
     serviceTerritoryByUUID,
     getTechicianList,
     updateServiceTerritory,
+    ServiceTerritoryByUUID,
 } from "@/app/services/assetsApi";
 import { useEffect, useRef, useState } from "react";
 import { useLoading } from "@/app/services/loadingContext";
@@ -34,7 +35,6 @@ export default function AddEditServiceTerritory() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
 
-    // 🔥 HERE WE IMPORT CASCADING LOGIC same as your Bulk Transfer
     const {
         regionOptions,
         areaOptions,
@@ -119,7 +119,6 @@ export default function AddEditServiceTerritory() {
         (async () => {
             try {
                 const response = await getTechicianList();
-                // ✅ Fix: API returns array directly in response.data
                 const techData = Array.isArray(response?.data)
                     ? response.data
                     : (response?.data?.data || []);
@@ -131,7 +130,6 @@ export default function AddEditServiceTerritory() {
 
                 setTechnicianOptions(options);
             } catch (error) {
-                console.error("❌ Technician API Error:", error);
                 showSnackbar("Failed to fetch technician data", "error");
             }
         })();
@@ -145,25 +143,29 @@ export default function AddEditServiceTerritory() {
             if (isEditMode) {
                 setLocalLoading(true);
                 try {
-                    const res = await serviceTerritoryByUUID(uuid);
+                    const res = await ServiceTerritoryByUUID(uuid);
 
-                    if (res?.data) {
-                        const arr = (v: any) => (Array.isArray(v) ? v.map((x: any) => String(x.id)) : []);
+                    if (res) {
+                        const data = res.data || res;
 
-                        const regionIds = arr(res.data.regions);
-                        const areaIds = arr(res.data.areas);
-                        const warehouseIds = arr(res.data.warehouses);
+                        const regions = data.regions || [];
+                        const areas = data.regions?.flatMap((r: any) => r.areas || []) || [];
+                        const warehouses = areas.flatMap((a: any) => a.warehouses || []) || [];
 
-                        // Load dependent dropdowns
-                        if (regionIds.length > 0) await fetchAreaOptions(regionIds.join(","));
-                        if (areaIds.length > 0) await fetchWarehouseOptions(areaIds.join(","));
+                        const regionIds = regions.map((r: any) => String(r.region_id));
+                        const areaIds = areas.map((a: any) => String(a.area_id));
+                        const warehouseIds = warehouses.map((w: any) => String(w.warehouse_id));
+
+                        // ✅ Load all dropdown options for edit mode (NO cascading fetch)
+                        // We load ALL available options so user can see them
+                        // The values will be pre-selected based on API data
 
                         formik.setValues({
-                            osa_code: res.data.osa_code,
+                            osa_code: data.osa_code,
                             regions: regionIds,
                             areas: areaIds,
                             warehouses: warehouseIds,
-                            technician: res.data.technician?.id || 0,
+                            technician: data.technician?.id ? Number(data.technician.id) : 0,
                         });
                     }
                 } catch {
@@ -184,38 +186,38 @@ export default function AddEditServiceTerritory() {
     }, [uuid]);
 
     // ------------------------------------
-    //     CASCADING FILTER HANDLERS
+    //     CASCADING HANDLERS (ADD MODE ONLY)
     // ------------------------------------
 
-    // REGION → MULTI SELECT
-    // REGION → MULTI SELECT
     const handleRegionChange = async (e: any) => {
-        const values = e.target.value; // ✅ Value is already an array for multi-select
-
+        const values = e.target.value;
         formik.setFieldValue("regions", values);
-        formik.setFieldValue("areas", []);
-        formik.setFieldValue("warehouses", []);
 
-        if (Array.isArray(values) && values.length > 0) {
-            await fetchAreaOptions(values.join(","));
+        // ✅ Only cascade in ADD mode
+        if (isAddMode) {
+            formik.setFieldValue("areas", []);
+            formik.setFieldValue("warehouses", []);
+
+            if (Array.isArray(values) && values.length > 0) {
+                await fetchAreaOptions(values.join(","));
+            }
         }
     };
 
-    // AREA → MULTI SELECT
-    // AREA → MULTI SELECT
     const handleAreaChange = async (e: any) => {
         const values = e.target.value;
-
         formik.setFieldValue("areas", values);
-        formik.setFieldValue("warehouses", []);
 
-        if (Array.isArray(values) && values.length > 0) {
-            await fetchWarehouseOptions(values.join(","));
+        // ✅ Only cascade in ADD mode
+        if (isAddMode) {
+            formik.setFieldValue("warehouses", []);
+
+            if (Array.isArray(values) && values.length > 0) {
+                await fetchWarehouseOptions(values.join(","));
+            }
         }
     };
 
-    // WAREHOUSE MULTI SELECT
-    // WAREHOUSE MULTI SELECT
     const handleWarehouseChange = (e: any) => {
         const values = e.target.value;
         formik.setFieldValue("warehouses", values);
@@ -305,9 +307,9 @@ export default function AddEditServiceTerritory() {
                             <InputFields
                                 label="Technician"
                                 name="technician"
-                                isSingle={true}              // ✅ REQUIRED for dropdown
+                                isSingle={true}
                                 value={formik.values.technician ? String(formik.values.technician) : ""}
-                                options={technicianOptions}  // ✅ dropdown options visible now
+                                options={technicianOptions}
                                 onChange={(e) => {
                                     formik.setFieldValue("technician", Number(e.target.value));
                                 }}
@@ -317,20 +319,6 @@ export default function AddEditServiceTerritory() {
                                         : ""
                                 }
                             />
-                            {/* <InputFields
-                                label="Technician"
-                                name="technician"
-                                value={formik.values.technician ? String(formik.values.technician) : ""}
-                                options={technicianOptions}
-                                onChange={(e) =>
-                                    formik.setFieldValue("technician", Number(e.target.value))
-                                }
-                                error={
-                                    formik.touched.technician && formik.errors.technician
-                                        ? String(formik.errors.technician)
-                                        : ""
-                                }
-                            /> */}
                         </div>
 
                         <div className="flex justify-end gap-4 mt-6">

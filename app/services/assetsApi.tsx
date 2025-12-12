@@ -780,9 +780,28 @@ export const serviceVisitByUUID = async (uuid: string, params?: Params) => {
 };
 export const ServiceTerritoryByUUID = async (uuid: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/assets/service-territory/${uuid}`, {
+    const res = await API.get(`/api/assets/service-territory/getViewData/${uuid}`, {
       params: params,
     });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const serviceTerritoryExport = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/assets/service-territory/export`, {
+      params: { uuid, ...params }
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const serviceTerritoryExportAll = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/assets/service-territory/export`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

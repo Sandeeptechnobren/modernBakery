@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-// import StatusBtn from "@/app/components/statusBtn2";
-// import { formatDate } from "@/app/(private)/utils/date";
 import { formatWithPattern } from "@/app/utils/formatDate";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
@@ -20,7 +18,7 @@ import {
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext"; 
+import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 
 interface DropdownItem {
@@ -30,24 +28,33 @@ interface DropdownItem {
 }
 
 const dropdownDataList: DropdownItem[] = [
-    // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-    // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-    // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-    // { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 const columns = [
     { key: "code", label: "Pricing Code" },
     { key: "name", label: "Name" },
     { key: "applicable_for", label: "Pricing Type" },
-    { key: "start_date", label: "Start Date", render: (row: TableDataType) => row.start_date ? formatWithPattern(new Date(row.start_date),"DD MMM YYYY","en-GB") : ""  },
-    { key: "end_date", label: "End Date", render: (row: TableDataType) => row.end_date ? formatWithPattern(new Date(row.end_date),"DD MMM YYYY","en-GB") : ""  },
+    {
+        key: "start_date",
+        label: "Start Date",
+        render: (row: TableDataType) =>
+            row.start_date
+                ? formatWithPattern(new Date(row.start_date), "DD MMM YYYY", "en-GB")
+                : "",
+    },
+    {
+        key: "end_date",
+        label: "End Date",
+        render: (row: TableDataType) =>
+            row.end_date
+                ? formatWithPattern(new Date(row.end_date), "DD MMM YYYY", "en-GB")
+                : "",
+    },
 ];
 
 export default function Pricing() {
     interface PricingItem {
-
         uuid?: string;
         id?: number | string;
         code?: string;
@@ -59,33 +66,30 @@ export default function Pricing() {
 
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<PricingItem | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
-    const { showSnackbar } = useSnackbar(); 
+
     type TableRow = TableDataType & { uuid?: string };
 
+    // ✅ FIXED LIST API
     const fetchCountries = useCallback(
         async (
             page: number = 1,
             pageSize: number = 50
         ): Promise<listReturnType> => {
             try {
-              setLoading(true);
-                const listRes = await pricingHeaderList({
-                    // limit: pageSize.toString(),
-                    // page: page.toString(),
-                });
-                console.log("Pricing", listRes)
+                setLoading(true);
+                const listRes = await pricingHeaderList({});
+
                 setLoading(false);
+
                 return {
                     data: listRes.data || [],
-                    total: listRes.pagination.totalPages ,
-                    currentPage: listRes.pagination.page ,
-                    pageSize: listRes.pagination.limit ,
+                    total: listRes.pagination?.totalPages || 0,
+                    currentPage: listRes.pagination?.page || 1,
+                    pageSize: listRes.pagination?.limit || pageSize,
                 };
-            } catch (error: unknown) {
+            } catch (error) {
                 console.error("API Error:", error);
                 setLoading(false);
                 throw error;
@@ -94,31 +98,38 @@ export default function Pricing() {
         []
     );
 
+    // ✅ FULLY FIXED SEARCH FUNCTION — NOW COMPATIBLE WITH TABLE
     const searchCountries = useCallback(
         async (
             searchQuery: string,
             pageSize: number
         ): Promise<searchReturnType> => {
-            setLoading(true);
-            const result = await pricingDetailGlobalSearch({
-                query: searchQuery,
-                per_page: pageSize.toString(),
-            });
-            setLoading(false);
-            if (result.error) throw new Error(result.data.message);
-            else {
+            try {
+                setLoading(true);
+
+                const result = await pricingDetailGlobalSearch({
+                    search: searchQuery,
+                    per_page: pageSize.toString(),
+                });
+
+                setLoading(false);
+
+                const pagination = result?.pagination?.pagination || {};
+
                 return {
                     data: result.data || [],
-                    total: result.pagination.pagination.totalPages || 0,
-                    currentPage: result.pagination.pagination.current_page || 0,
-                    pageSize: result.pagination.pagination.limit || pageSize,
+                    total: pagination.totalPages || 0,
+                    currentPage: pagination.current_page || 1,
+                    pageSize: pagination.limit || pageSize,
                 };
+            } catch (err) {
+                setLoading(false);
+                throw err;
             }
         },
         []
     );
 
-   
     useEffect(() => {
         setLoading(true);
     }, []);
@@ -140,40 +151,30 @@ export default function Pricing() {
                                     <DismissibleDropdown
                                         isOpen={showDropdown}
                                         setIsOpen={setShowDropdown}
-                                        button={
-                                            <BorderIconButton icon="ic:sharp-more-vert" />
-                                        }
+                                        button={<BorderIconButton icon="ic:sharp-more-vert" />}
                                         dropdown={
                                             <div className="absolute top-[40px] right-0 z-30 w-[226px]">
                                                 <CustomDropdown>
-                                                    {dropdownDataList.map(
-                                                        (link, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                            >
-                                                                <Icon
-                                                                    icon={
-                                                                        link.icon
-                                                                    }
-                                                                    width={
-                                                                        link.iconWidth
-                                                                    }
-                                                                    className="text-[#717680]"
-                                                                />
-                                                                <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                    {
-                                                                        link.label
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    )}
+                                                    {dropdownDataList.map((link, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                                        >
+                                                            <Icon
+                                                                icon={link.icon}
+                                                                width={link.iconWidth}
+                                                                className="text-[#717680]"
+                                                            />
+                                                            <span className="text-[#181D27] font-[500] text-[16px]">
+                                                                {link.label}
+                                                            </span>
+                                                        </div>
+                                                    ))}
                                                 </CustomDropdown>
                                             </div>
                                         }
                                     />
-                                </div>
+                                </div>,
                             ],
                             searchBar: true,
                             columnFilter: true,
@@ -189,9 +190,7 @@ export default function Pricing() {
                             ],
                         },
                         localStorageKey: "pricing-table",
-                        table: {
-                            height: 500,
-                        },
+                        table: { height: 500 },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
@@ -206,17 +205,13 @@ export default function Pricing() {
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
                                     router.push(`/pricing/${row.uuid}`);
-
                                 },
                             },
-                            
                         ],
                         pageSize: 50,
                     }}
                 />
             </div>
-
-            
         </>
     );
 }
