@@ -8,7 +8,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { itemList,addPromotionHeader ,promotionDetailById,promotionHeaderById} from "@/app/services/allApi";
+import { itemList, addPromotionHeader, promotionDetailById, promotionHeaderById } from "@/app/services/allApi";
 import InputFields from "@/app/components/inputFields";
 import Table from "@/app/components/customTable";
 import { useRouter } from "next/navigation";
@@ -30,7 +30,6 @@ const initialKeys: KeyGroup[] = [
       { id: "2", label: "Region", isSelected: false },
       { id: "4", label: "Area", isSelected: false },
       { id: "3", label: "Warehouse", isSelected: false },
-      { id: "5", label: "Route", isSelected: false },
     ],
   },
   {
@@ -303,199 +302,199 @@ export default function AddPricing() {
   };
 
   const router = useRouter();
- const pricingValidationSchema = yup.object().shape({
-  // Only validate selected items at payload level. The stricter rule for Item Category
-  // and Item selections in Key Value step is enforced separately in the UI validation
-  // (validateStep and pre-submit checks).
-  item: yup.array().of(yup.string()).min(1, "At least one item is required"),
-});
+  const pricingValidationSchema = yup.object().shape({
+    // Only validate selected items at payload level. The stricter rule for Item Category
+    // and Item selections in Key Value step is enforced separately in the UI validation
+    // (validateStep and pre-submit checks).
+    item: yup.array().of(yup.string()).min(1, "At least one item is required"),
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const clearErrors = () => setErrors({});
 
- const handleSubmit = async () => {
-  clearErrors();
-  
-  const initialKeys = [
-    {
-      type: "Location",
-      options: [
-        { id: "1", label: "Company", isSelected: false },
-        { id: "2", label: "Region", isSelected: false },
-        { id: "3", label: "Warehouse", isSelected: false },
-        { id: "4", label: "Area", isSelected: false },
-        { id: "5", label: "Route", isSelected: false },
-      ],
-    },
-    {
-      type: "Customer",
-      options: [
-        { id: "6", label: "Channel", isSelected: false },
-        { id: "7", label: "Customer Category", isSelected: false },
-        { id: "8", label: "Customer", isSelected: false },
-      ],
-    },
-    {
-      type: "Item",
-      options: [
-        { id: "9", label: "Item Category", isSelected: false },
-        { id: "10", label: "Item", isSelected: false },
-      ],
-    },
-  ];
+  const handleSubmit = async () => {
+    clearErrors();
 
-  function getKeyId(type: string, label: string): string {
-    const group = initialKeys.find(g => g.type === type);
-    if (!group) return "";
-    const found = group.options.find(opt => opt.label === label);
-    return found ? found.id : label;
-  }
+    const initialKeys = [
+      {
+        type: "Location",
+        options: [
+          { id: "1", label: "Company", isSelected: false },
+          { id: "2", label: "Region", isSelected: false },
+          { id: "3", label: "Warehouse", isSelected: false },
+          { id: "4", label: "Area", isSelected: false },
+          { id: "5", label: "Route", isSelected: false },
+        ],
+      },
+      {
+        type: "Customer",
+        options: [
+          { id: "6", label: "Channel", isSelected: false },
+          { id: "7", label: "Customer Category", isSelected: false },
+          { id: "8", label: "Customer", isSelected: false },
+        ],
+      },
+      {
+        type: "Item",
+        options: [
+          { id: "9", label: "Item Category", isSelected: false },
+          { id: "10", label: "Item", isSelected: false },
+        ],
+      },
+    ];
 
-  // ✅ Fix: Join description IDs properly as comma-separated string
-  const descriptionIds = [
-    getKeyId("Location", keyCombo.Location),
-    getKeyId("Customer", keyCombo.Customer),
-    getKeyId("Item", keyCombo.Item)
-  ].filter(Boolean);
-  const description = descriptionIds.join(",");
+    function getKeyId(type: string, label: string): string {
+      const group = initialKeys.find(g => g.type === type);
+      if (!group) return "";
+      const found = group.options.find(opt => opt.label === label);
+      return found ? found.id : label;
+    }
 
-  const selectedItemIds = keyValue["Item"] || [];
-  
-  // ✅ Fix: Flatten promotion details properly
-  type PromotionDetailInput = {
-    quantity?: string | number;
-    lower_qty?: string | number;
-    toQuantity?: string | number;
-    upper_qty?: string | number;
-    free_qty?: string | number;
-    uom?: string;
-    promotionGroupName?: string;
-  };
+    // ✅ Fix: Join description IDs properly as comma-separated string
+    const descriptionIds = [
+      getKeyId("Location", keyCombo.Location),
+      getKeyId("Customer", keyCombo.Customer),
+      getKeyId("Item", keyCombo.Item)
+    ].filter(Boolean);
+    const description = descriptionIds.join(",");
 
-  let promotionDetails: PromotionDetailInput[] = [];
-  if (Array.isArray(offerItems) && offerItems.length > 0 && Array.isArray(offerItems[0])) {
-    promotionDetails = (offerItems as unknown as PromotionDetailInput[][]).flat();
-  } else {
-    promotionDetails = offerItems as unknown as PromotionDetailInput[];
-  }
+    const selectedItemIds = keyValue["Item"] || [];
 
-  const payload = {
-    promotion_name: promotion.itemName || "",
-    from_date: promotion.startDate || "",
-    to_date: promotion.endDate || "",
-    status: promotion.status || "1",
-    // discount_type: "",
-    promotionType: promotion.promotionType || "",
-    bundle_combination: promotion.bundle_combination || "",
-    item: selectedItemIds,
-    description: description,
-    
-    // ✅ Fix: Ensure pricing array structure
-    pricing: selectedItemIds.map(itemId => {
-      let itemData = selectedItemDetails.find(item => 
-        String(item.code || item.itemCode) === String(itemId)
-      );
-      if (!itemData) {
-        itemData = itemOptions.find(opt => String(opt.value) === String(itemId));
-      }
+    // ✅ Fix: Flatten promotion details properly
+    type PromotionDetailInput = {
+      quantity?: string | number;
+      lower_qty?: string | number;
+      toQuantity?: string | number;
+      upper_qty?: string | number;
+      free_qty?: string | number;
+      uom?: string;
+      promotionGroupName?: string;
+    };
 
-      let itemCode = itemId;
-      if (itemData) {
-        if (itemData.code) itemCode = itemData.code;
-        else if (itemData.itemCode) itemCode = itemData.itemCode;
-        else if (itemData.label) {
-          const labelParts = String(itemData.label).split(" - ");
-          itemCode = labelParts.length > 1 ? labelParts[0] : String(itemData.label);
+    let promotionDetails: PromotionDetailInput[] = [];
+    if (Array.isArray(offerItems) && offerItems.length > 0 && Array.isArray(offerItems[0])) {
+      promotionDetails = (offerItems as unknown as PromotionDetailInput[][]).flat();
+    } else {
+      promotionDetails = offerItems as unknown as PromotionDetailInput[];
+    }
+
+    const payload = {
+      promotion_name: promotion.itemName || "",
+      from_date: promotion.startDate || "",
+      to_date: promotion.endDate || "",
+      status: promotion.status || "1",
+      // discount_type: "",
+      promotionType: promotion.promotionType || "",
+      bundle_combination: promotion.bundle_combination || "",
+      item: selectedItemIds,
+      description: description,
+
+      // ✅ Fix: Ensure pricing array structure
+      pricing: selectedItemIds.map(itemId => {
+        let itemData = selectedItemDetails.find(item =>
+          String(item.code || item.itemCode) === String(itemId)
+        );
+        if (!itemData) {
+          itemData = itemOptions.find(opt => String(opt.value) === String(itemId));
         }
+
+        let itemCode = itemId;
+        if (itemData) {
+          if (itemData.code) itemCode = itemData.code;
+          else if (itemData.itemCode) itemCode = itemData.itemCode;
+          else if (itemData.label) {
+            const labelParts = String(itemData.label).split(" - ");
+            itemCode = labelParts.length > 1 ? labelParts[0] : String(itemData.label);
+          }
+        }
+
+        const orderItem = orderTables.flat().find(
+          (oi: OrderItemType) => String(oi.itemCode) === String(itemCode)
+        );
+
+        return {
+          item_id: String(itemId),
+          price: orderItem ? Number(orderItem.price) || 0 : 0,
+        };
+      }),
+
+      // ✅ Fix: Map promotion_details with correct field names
+      promotion_details: (promotionDetails || []).map(detail => ({
+        lower_qty: Number(detail.quantity || detail.lower_qty) || 0,
+        upper_qty: Number(detail.toQuantity || detail.upper_qty) || 0,
+        free_qty: Number(detail.free_qty || detail.toQuantity) || 0,
+        uom: detail.uom || "CTN",
+        promotion_group_name: detail.promotionGroupName || "",
+      })),
+
+      // ✅ Add key object for validation
+      key: {
+        Location: keyCombo.Location ? [keyCombo.Location] : [],
+        Customer: keyCombo.Customer ? [keyCombo.Customer] : [],
+        Item: keyCombo.Item ? [keyCombo.Item] : [],
+      }
+    };
+
+    try {
+      // Pre-submit: ensure Item Category and Item key-values are present
+      const missingErrors: Record<string, string> = {};
+      if (!keyValue["Item Category"] || keyValue["Item Category"].length === 0) {
+        missingErrors["Item Category"] = "Item Category is required";
+      }
+      if (!keyValue["Item"] || keyValue["Item"].length === 0) {
+        missingErrors["Item"] = "Item is required";
+      }
+      if (Object.keys(missingErrors).length > 0) {
+        setErrors(missingErrors);
+        showSnackbar("Please fill Item Category and Item before submitting", "error");
+        return;
       }
 
-      const orderItem = orderTables.flat().find(
-        (oi: OrderItemType) => String(oi.itemCode) === String(itemCode)
-      );
+      // ✅ Validate payload-level required pieces (items)
+      await pricingValidationSchema.validate(payload, { abortEarly: false });
 
-      return {
-        item_id: String(itemId),
-        price: orderItem ? Number(orderItem.price) || 0 : 0,
-      };
-    }),
+      setLoading(true);
+      const res = await addPromotionHeader(payload);
 
-    // ✅ Fix: Map promotion_details with correct field names
-    promotion_details: (promotionDetails || []).map(detail => ({
-      lower_qty: Number(detail.quantity || detail.lower_qty) || 0,
-      upper_qty: Number(detail.toQuantity || detail.upper_qty) || 0,
-      free_qty: Number(detail.free_qty || detail.toQuantity) || 0,
-      uom: detail.uom || "CTN",
-      promotion_group_name: detail.promotionGroupName || "",
-    })),
+      if (res?.error) {
+        showSnackbar(res.data?.message || "Failed to submit Promotion", "error");
+      } else {
+        showSnackbar(
+          isEditMode ? "Promotion updated successfully" : "Promotion added successfully",
+          "success"
+        );
+        router.push("/promotion");
+      }
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
 
-    // ✅ Add key object for validation
-    key: {
-      Location: keyCombo.Location ? [keyCombo.Location] : [],
-      Customer: keyCombo.Customer ? [keyCombo.Customer] : [],
-      Item: keyCombo.Item ? [keyCombo.Item] : [],
+      if (err && typeof err === "object" && "name" in err && err.name === "ValidationError") {
+        const formErrors: Record<string, string> = {};
+        const validationError = err as yup.ValidationError;
+
+        if (Array.isArray(validationError.inner)) {
+          validationError.inner.forEach((e: yup.ValidationError) => {
+            if (e.path) {
+              formErrors[e.path] = e.message;
+              console.error(`Validation error at ${e.path}:`, e.message);
+            }
+          });
+        }
+
+        setErrors(formErrors);
+        showSnackbar("Please fix validation errors before proceeding", "error");
+
+        // Log which fields failed for debugging
+        console.log("Validation errors:", formErrors);
+      } else {
+        console.error("Submit error:", err);
+        showSnackbar(
+          isEditMode ? "Failed to update promotion" : "Failed to add promotion",
+          "error"
+        );
+      }
     }
   };
-
-  try {
-    // Pre-submit: ensure Item Category and Item key-values are present
-    const missingErrors: Record<string, string> = {};
-    if (!keyValue["Item Category"] || keyValue["Item Category"].length === 0) {
-      missingErrors["Item Category"] = "Item Category is required";
-    }
-    if (!keyValue["Item"] || keyValue["Item"].length === 0) {
-      missingErrors["Item"] = "Item is required";
-    }
-    if (Object.keys(missingErrors).length > 0) {
-      setErrors(missingErrors);
-      showSnackbar("Please fill Item Category and Item before submitting", "error");
-      return;
-    }
-
-    // ✅ Validate payload-level required pieces (items)
-    await pricingValidationSchema.validate(payload, { abortEarly: false });
-    
-    setLoading(true);
-    const res = await addPromotionHeader(payload);
-    
-    if (res?.error) {
-      showSnackbar(res.data?.message || "Failed to submit Promotion", "error");
-    } else {
-      showSnackbar(
-        isEditMode ? "Promotion updated successfully" : "Promotion added successfully", 
-        "success"
-      );
-      router.push("/promotion");
-    }
-    setLoading(false);
-  } catch (err) {
-    setLoading(false);
-    
-    if (err && typeof err === "object" && "name" in err && err.name === "ValidationError") {
-      const formErrors: Record<string, string> = {};
-      const validationError = err as yup.ValidationError;
-      
-      if (Array.isArray(validationError.inner)) {
-        validationError.inner.forEach((e: yup.ValidationError) => {
-          if (e.path) {
-            formErrors[e.path] = e.message;
-            console.error(`Validation error at ${e.path}:`, e.message);
-          }
-        });
-      }
-      
-      setErrors(formErrors);
-      showSnackbar("Please fix validation errors before proceeding", "error");
-      
-      // Log which fields failed for debugging
-      console.log("Validation errors:", formErrors);
-    } else {
-      console.error("Submit error:", err);
-      showSnackbar(
-        isEditMode ? "Failed to update promotion" : "Failed to add promotion", 
-        "error"
-      );
-    }
-  }
-};
 
 
 
@@ -505,7 +504,7 @@ export default function AddPricing() {
     Customer: "",
     Item: "",
   });
-  
+
   const [keyValue, setKeyValue] = useState<Record<string, string[]>>({});
   const [promotion, setPromotion] = useState({
     itemName: "",
@@ -513,9 +512,9 @@ export default function AddPricing() {
     endDate: "",
     // type: "",
     // discount_type: "",
-    promotionType : "",
-    bundle_combination:"range",
-    status: "1", 
+    promotionType: "",
+    bundle_combination: "range",
+    status: "1",
     salesTeamType: "",
     projectList: "",
   });
@@ -546,8 +545,8 @@ export default function AddPricing() {
       { promotionGroupName: "", itemName: "", itemCode: "", quantity: "", toQuantity: "", uom: "CTN", price: "", free_qty: "" },
     ]
   ]);
-  const [offerItems, setOfferItems] = useState<OfferItemType[] | OfferItemType[][]>([
-    { promotionGroupName: "", itemName: "", itemCode: "", uom: "BAG", toQuantity: "", is_discount: "0" },
+  const [offerItems, setOfferItems] = useState<OfferItemType[][]>([
+    [{ promotionGroupName: "", itemName: "", itemCode: "", uom: "BAG", toQuantity: "", is_discount: "0" }],
   ]);
 
   type ItemDetail = {
@@ -558,7 +557,7 @@ export default function AddPricing() {
     label?: string;
     [key: string]: unknown;
   };
-  type Uom = { name?: string; uom?: string; uom_type?: string; price?: number | string; [k: string]: unknown };
+  type Uom = { name?: string; uom?: string; uom_type?: string; price?: number | string;[k: string]: unknown };
   const [selectedItemDetails, setSelectedItemDetails] = useState<ItemDetail[]>([]);
   const [page, setPage] = useState(1);
   const pageSize = 5;
@@ -686,664 +685,579 @@ export default function AddPricing() {
 
       // Prefill offerItems depending on bundle mode. offerItems may be either
       // OfferItemType[] or OfferItemType[][] (bundle mode uses nested arrays).
-      const isBundle = promotion.bundle_combination === "slab";
       setOfferItems(prev => {
         const p: any = prev;
-        if (isBundle && Array.isArray(p) && p.length > 0 && Array.isArray(p[0])) {
+        if (Array.isArray(p) && p.length > 0 && Array.isArray(p[0])) {
           // nested arrays
           const next = (p as any[][]).map(arr => arr.map(row => ({ ...row, promotionGroupName: row.promotionGroupName || firstCat })));
-          return next as unknown as OfferItemType[];
+          return next as unknown as OfferItemType[][];
         }
-        // flat array
-        return (p as any[]).map(row => ({ ...row, promotionGroupName: row.promotionGroupName || firstCat })) as OfferItemType[];
+        // flat array - wrap it to nested
+        return [(p as any[]).map(row => ({ ...row, promotionGroupName: row.promotionGroupName || firstCat }))] as OfferItemType[][];
       });
     }
   }, [keyValue["Item Category"]]);
 
 
   useEffect(() => {
-    // Clear promotionType if bundle_combination is not 'slab'
-    if (promotion.bundle_combination !== "slab" && promotion.promotionType !== "") {
+    // Clear promotionType if bundle_combination is not 'range'
+    if (promotion.bundle_combination !== "range" && promotion.promotionType !== "") {
       setPromotion(s => ({ ...s, promotionType: "" }));
     }
   }, [promotion.bundle_combination, promotion.promotionType]);
 
   const renderStepContent = () => {
-  switch (currentStep) {
-    case 1:
-      return <SelectKeyCombinationInline keyCombo={keyCombo} setKeyCombo={setKeyCombo} />;
-    case 2:
-      type DropdownOption = { label: string; value: string };
-      const locationDropdownMap: Record<string, DropdownOption[]> = {
-        Company: companyOptions,
-        Region: regionOptions,
-        Warehouse: warehouseOptions,
-        Area: areaOptions,
-        Route: routeOptions,
-      };
-      const customerDropdownMap: Record<string, DropdownOption[]> = {
-        Channel: channelOptions,
-        "Customer Category": customerCategoryOptions,
-        Customer: companyCustomersOptions,
-      };
-      const itemDropdownMap: Record<string, DropdownOption[]> = {
-        "Item Category": itemCategoryOptions,
-        Item: itemOptions,
-      };
-      return (
-        <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Key Value</h2>
-            <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
-          </div>
-          <div className="flex gap-6">
-            <div className="flex-1">
-              <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
-                <div className="font-semibold text-lg mb-4">Location</div>
-                {keyCombo.Location && (
-                  <div className="mb-4">
-                    <div className="mb-2 text-base font-medium">
-                      {keyCombo.Location}
-                      <span className="text-red-500 ml-1">*</span>
-                    </div>
-                    <InputFields
-                      label=""
-                      type="select"
-                      isSingle={true}
-                      options={locationDropdownMap[keyCombo.Location] ? [{ label: `Select ${keyCombo.Location}`, value: "" }, ...locationDropdownMap[keyCombo.Location]] : [{ label: `Select ${keyCombo.Location}`, value: "" }]}
-                      value={keyValue[keyCombo.Location]?.[0] || ""}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setKeyValue(s => ({ ...s, [keyCombo.Location]: val ? [val] : [] }));
-                      }}
-                      width="w-full"
-                    />
-                  </div>
-                )}
-              </ContainerCard>
-            </div>
-            {keyCombo.Customer && (
-            <div className="flex-1">
-              <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
-                <div className="font-semibold text-lg mb-4">Customer</div>
-                  <div className="mb-4">
-                    <div className="mb-2 text-base font-medium">
-                      {keyCombo.Customer}
-                      <span className="text-red-500 ml-1">*</span>
-                    </div>
-                    <InputFields
-                      label=""
-                      type="select"
-                      isSingle={false}
-                      options={customerDropdownMap[keyCombo.Customer] ? [{ label: `Select ${keyCombo.Customer}`, value: "" }, ...customerDropdownMap[keyCombo.Customer]] : [{ label: `Select ${keyCombo.Customer}`, value: "" }]}
-                      value={keyValue[keyCombo.Customer] || []}
-                      onChange={e => {
-                        const valueFromEvent = e.target.value;
-                        let selectedValues: string[];
-                        if (Array.isArray(valueFromEvent)) {
-                            selectedValues = valueFromEvent;
-                        } else {
-                            selectedValues = valueFromEvent ? [String(valueFromEvent)] : [];
-                        }
-                        setKeyValue(s => ({ ...s, [keyCombo.Customer]: selectedValues.filter(val => val !== "") }));
-                      }}
-                      width="w-full"
-                    />
-                  </div>
-              </ContainerCard>
-            </div>
-            )}
-            <div className="flex-1">
-              <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
-                <div className="font-semibold text-lg mb-4">Item</div>
-                {keyCombo.Item && (
-                  <div className="mb-4">
-                    <div className="mb-2 text-base font-medium">
-                      {keyCombo.Item}
-                      <span className="text-red-500 ml-1">*</span>
-                    </div>
-                    <InputFields
-                      label=""
-                      type="select"
-                      isSingle={true}
-                      options={itemDropdownMap[keyCombo.Item] ? [{ label: `Select ${keyCombo.Item}`, value: "" }, ...itemDropdownMap[keyCombo.Item]] : [{ label: `Select ${keyCombo.Item}`, value: "" }]}
-                      value={keyValue[keyCombo.Item]?.[0] || ""}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setKeyValue(s => ({ ...s, [keyCombo.Item]: val ? [val] : [] }));
-                      }}
-                      width="w-full"
-                    />
-                  </div>
-                )}
-              </ContainerCard>
-            </div>
-          </div>
-        </ContainerCard>
-      );
-    case 3:
-      // Helper to update orderItems by row index for a specific table so each row
-      // can store independent values even when itemCode is empty or duplicated.
-      function updateOrderItem(tableIdx: number, rowIdx: string | undefined, key: keyof OrderItemType, value: string) {
-        setOrderTables((tables) => tables.map((arr, idx) => {
-          if (idx !== tableIdx) return arr;
-          return arr.map((oi, i) => String(i) === String(rowIdx) ? { ...oi, [key]: value } : oi);
-        }));
-      }
-
-      function updateOfferItem(idx: string, key: keyof OfferItemType, value: string) {
-        setOfferItems((prev) => {
-          if (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) {
-            return (prev as OfferItemType[][]).map((sub) => sub.map((oi, i) => (String(i) === String(idx) ? { ...oi, [key]: value } : oi)));
-          }
-          return (prev as OfferItemType[]).map((oi, i) => (String(i) === String(idx) ? { ...oi, [key]: value } : oi));
-        });
-      }
-      // Options built from items selected in Step 2
-      const selectedItemOptions = selectedItemDetails.map(d => {
-        const name = String(d.name || d.itemName || d.itemName || d.label || "").trim();
-        const code = String(d.code || d.itemCode || "").trim();
-        const label = code ? `${name} - ${code}` : name;
-        const value = code || name || "";
-        return { label, value };
-      });
-
-      // Helper to set both itemCode and itemName for an order row
-  function selectItemForOrder(tableIdx: number, row: Record<string, unknown>, value: string) {
-        const providerItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
-        const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || providerItems.find((ci) => String((ci as Record<string, unknown>)['id'] ?? '') === String(value));
-        const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
-        // update itemCode then itemName using the row index so it applies to the correct row
-  updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "itemCode", value);
-  updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "itemName", name);
-
-        // If UOM data exists on the selected item, prefill uom and price for this order row.
-        // Prefer a UOM flagged as primary (uom_type === 'primary'), otherwise use the first available UOM.
-        try {
-          const uomList = (foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined) as unknown;
-          if (Array.isArray(uomList) && uomList.length > 0) {
-            const uomArr = uomList as Uom[];
-            const primary = uomArr.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomArr[0];
-            const uomName = String(primary?.name ?? primary?.uom ?? '');
-            const uomPrice = primary && (primary.price !== undefined && primary.price !== null) ? String(primary.price) : '';
-            if (uomName) updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), 'uom', uomName);
-            if (uomPrice) updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), 'price', uomPrice);
-          }
-        } catch (err) {
-          // non-fatal: skip prefill on error
-          console.warn('prefill order uom failed', err);
-        }
-      }
-
-      // Helper to set both itemCode and itemName for an offer row/table
-      function selectItemForOffer(tableIdx: number, rowIdx: string, value: string) {
-        const providerItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
-        const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || providerItems.find((ci) => String((ci as Record<string, unknown>)['id'] ?? '') === String(value));
-        const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
-        // choose primary UOM when available, otherwise first UOM
-        const uomListOffer = foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined;
-        const primaryUom = Array.isArray(uomListOffer) && uomListOffer.length > 0 ? ((uomListOffer as Uom[]).find((uu) => String(uu.uom_type || '').toLowerCase() === 'primary') || (uomListOffer as Uom[])[0]) : undefined;
-
-        setOfferItems((prev: OfferItemType[] | OfferItemType[][]) => {
-          // bundle mode -> nested arrays
-          if (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) {
-            return (prev as OfferItemType[][]).map((arr: OfferItemType[], idx: number) =>
-              idx === tableIdx
-                ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name, uom: primaryUom ? String((primaryUom as Record<string, unknown>)['name'] ?? '') : (oi.uom ?? '') } : oi))
-                : arr
-            );
-          }
-          // normal single array mode
-          return (prev as OfferItemType[]).map((oi: OfferItemType, i: number) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name, uom: primaryUom ? String((primaryUom as Record<string, unknown>)['name'] ?? '') : (oi.uom ?? '') } : oi));
-        });
-      }
-
-      // Clamp percentage inputs to 0-100 when promotionType is Percentage
-      function clampPercentInput(val: string) {
-        if (promotion.promotionType !== "1") return val;
-        const n = Number(val);
-        if (Number.isNaN(n)) return "";
-        const clamped = Math.max(0, Math.min(100, n));
-        return String(clamped);
-      }
-      // Build UOM options for a given table row using selectedItemDetails or provider `item`.
-      // Always returns an array of options so the UI can render a select dropdown.
-      function getUomOptionsForRow(row: Record<string, unknown>) {
-        const codeOrName = String((row as Record<string, unknown>)['itemCode'] ?? (row as Record<string, unknown>)['itemName'] ?? "");
-        let itemObj: ItemDetail | undefined = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === codeOrName || String(it.name || it.itemName || it.label) === codeOrName);
-        if (!itemObj && Array.isArray(item)) {
-          itemObj = (item as ItemDetail[]).find((ci) => String((ci as Record<string, unknown>)['id'] ?? (ci as Record<string, unknown>)['code'] ?? '') === codeOrName || String((ci as Record<string, unknown>)['label'] ?? (ci as Record<string, unknown>)['name'] ?? '') === codeOrName);
-        }
-        const uoms = (itemObj ? ((itemObj as Record<string, unknown>)['uomSummary'] ?? (itemObj as Record<string, unknown>)['uom']) : undefined) ?? [];
-        // If no uoms available return a single placeholder option (so dropdown always shows)
-        if (!Array.isArray(uoms) || uoms.length === 0) {
-          const fallback = String(row.uom || "");
-          if (fallback) return [{ label: fallback, value: fallback, price: undefined }];
-          return [{ label: "-", value: "", price: undefined }];
-        }
-        return (uoms as Uom[]).map((u) => ({ label: `${u.name ?? u.uom ?? ""}${u.uom_type ? ` (${u.uom_type})` : ""}${u.price ? ` - ${u.price}` : ""}`, value: String(u.name ?? u.uom ?? ""), price: u.price }));
-      }
-      // Render all order tables
-      const renderOrderTables = () => {
-        const isBundle = promotion.bundle_combination === "slab";
-        return orderTables.map((orderItems, tableIdx) => {
-          let itemsData = orderItems.map((orderItem, idx) => ({
-            ...orderItem,
-            idx: String(idx),
-          }));
-          if (itemsData.length === 0) {
-            itemsData = [{
-              promotionGroupName: "",
-              itemName: "",
-              itemCode: "",
-              quantity: "",
-              toQuantity: "",
-              uom: "",
-              price: "",
-              idx: "0",
-            }];
-          }
-          const totalPages = Math.ceil(itemsData.length / pageSize);
-          const paginatedData = itemsData.slice((page - 1) * pageSize, page * pageSize);
-          return (
-            <React.Fragment key={tableIdx}>
-              {tableIdx > 0 && (
-                <div className="flex items-center my-4">
-                  <div className="flex-1 h-px bg-gray-300" />
-                  <span className="mx-4 font-bold text-gray-500">OR</span>
-                  <div className="flex-1 h-px bg-gray-300" />
-                </div>
-              )}
-              <div className="mb-6">
-                <Table
-                  data={paginatedData}
-                  config={{
-                                            columns: (isBundle ? [
-                                              {
-                                                key: "quantity",
-                                                label: (promotion.promotionType === "1") ? "Percentage" : "From Quantity",
-                                                width: 120,
-                                                render: (row) => (
-                                                  <InputFields
-                                                    label=""
-                                                    type="number"
-                                                    placeholder={(promotion.promotionType === "1") ? "Percentage" : "From Qty"}
-                                                    value={String((row as Record<string, unknown>)['quantity'] ?? "")}
-                                                    onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "quantity", clampPercentInput(e.target.value))}
-                                                    width="w-full"
-                                                  />
-                                                ),
-                                              },
-                                              {
-                                                key: "toQuantity",
-                                                label: (promotion.promotionType === "1") ? "To Percentage" : "To Quantity",
-                                                width: 120,
-                                                render: (row) => (
-                                                  <InputFields
-                                                    label=""
-                                                    type="number"
-                                                    placeholder={(promotion.promotionType === "1") ? "To Percentage" : "To Qty"}
-                                                    value={String((row as Record<string, unknown>)['toQuantity'] ?? "")}
-                                                    onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "toQuantity", clampPercentInput(e.target.value))}
-                                                    width="w-full"
-                                                  />
-                                                ),
-                                              },
-                                              {
-                                                key: "uom",
-                                                label: "UOM",
-                                                width: 150,
-                                                render: (row) => {
-                                                  const uomOptions = getUomOptionsForRow(row);
-                                                  return (
-                                                    <InputFields
-                                                      label=""
-                                                      type="select"
-                                                      isSingle={true}
-                                                      placeholder="Select UOM"
-                                                      options={[{ label: `Select UOM`, value: "" }, ...uomOptions.map((o: any) => ({ label: o.label, value: o.value }))]}
-                                                      value={String((row as Record<string, unknown>)['uom'] ?? "")}
-                                                      onChange={e => {
-                                                        const val = e.target.value;
-                                                        updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "uom", val);
-                                                        const found = uomOptions.find((u: any) => String(u.value) === String(val));
-                                                        if (found) updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "price", String(found.price ?? ""));
-                                                      }}
-                                                      width="w-full"
-                                                    />
-                                                  );
-                                                }
-                                              },
-                                              {
-                                                key: "selectedItem",
-                                                label: "Item",
-                                                width: 300,
-                                                render: (row: Record<string, unknown>) => (
-                                                  <InputFields
-                                                    label=""
-                                                    type="select"
-                                                    isSingle={true}
-                                                    placeholder="Select Item"
-                                                    options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                                                    value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
-                                                    onChange={e => selectItemForOrder(tableIdx, row, e.target.value)}
-                                                    width="w-full"
-                                                  />
-                                                ),
-                                              },
-                                              {
-                                                key: "free_qty",
-                                                label: "Free Qty",
-                                                width: 120,
-                                                render: (row) => (
-                                                  <InputFields
-                                                    label=""
-                                                    type="number"
-                                                    placeholder="Free Qty"
-                                                    value={String((row as Record<string, unknown>)['free_qty'] ?? "")}
-                                                    onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "free_qty", e.target.value)}
-                                                    width="w-full"
-                                                  />
-                                                ),
-                                              },
-                                              {
-                                                key: "action",
-                                                label: "Action",
-                                                width:"20",
-                                                render: (row) => (
-                                                  <button
-                                                    type="button"
-                                                    className="text-red-500 flex items-center justify-center w-full h-full"
-                                                    onClick={() => {
-                                                      setOrderTables(tables => {
-                                                        return tables.flatMap((arr, idx) => {
-                                                          if (idx !== tableIdx) return [arr];
-                                                          const newArr = arr.filter((oi, i) => String(i) !== String(row.idx));
-                                                          if (newArr.length === 0 && tables.length > 1) {
-                                                            return [];
-                                                          }
-                                                          return [newArr];
-                                                        });
-                                                      });
-                                                    }}
-                                                  >
-                                                    <Icon icon="lucide:trash-2" width={20} />
-                                                  </button>
-                                                ),
-                                              },
-                                            ] : [
-                                              // Normal mode
-                                              {
-                                                key: "selectedItem",
-                                                label: "Item",
-                                                render: (row: Record<string, unknown>) => (
-                                                  <InputFields
-                                                    label=""
-                                                    type="select"
-                                                    isSingle={true}
-                                                    placeholder="Select Item"
-                                                    options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                                                    value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
-                                                    onChange={e => selectItemForOrder(tableIdx, row, e.target.value)}
-                                                    width="w-full"
-                                                  />
-                                                ),
-                                              },
-                                              {
-                                                key: "quantity",
-                                                label: (promotion.promotionType === "1") ? "Percentage" : "Qty",
-                                                render: (row) => (
-                                                  <InputFields
-                                                    label=""
-                                                    type="number"
-                                                    placeholder={(promotion.promotionType === "1") ? "Percentage" : "Qty"}
-                                                    value={String((row as Record<string, unknown>)['quantity'] ?? "")}
-                                                    onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "quantity", clampPercentInput(e.target.value))}
-                                                    width="w-full"
-                                                  />
-                                                ),
-                                              },
-                                              {
-                                                key: "uom",
-                                                label: "UOM",
-                                                render: (row) => (
-                                                  <InputFields
-                                                    label=""
-                                                    type="text"
-                                                    placeholder="UOM"
-                                                    value={String((row as Record<string, unknown>)['uom'] ?? "")}
-                                                    onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "uom", e.target.value)}
-                                                    width="w-full"
-                                                  />
-                                                ),
-                                              },
-                                              {
-                                                key: "action",
-                                                label: "Action",
-                                                width:"24",
-                                                render: (row) => (
-                                                  <button
-                                                    type="button"
-                                                    className="text-red-500 flex items-center justify-center w-full h-full"
-                                                    onClick={() => {
-                                                      setOrderTables(tables => {
-                                                        return tables.flatMap((arr, idx) => {
-                                                          if (idx !== tableIdx) return [arr];
-                                                          const newArr = arr.filter((oi, i) => String(i) !== String(row.idx));
-                                                          if (newArr.length === 0 && tables.length > 1) {
-                                                            return [];
-                                                          }
-                                                          return [newArr];
-                                                        });
-                                                      });
-                                                    }}
-                                                  >
-                                                    <Icon icon="lucide:trash-2" width={20} />
-                                                  </button>
-                                                ),
-                                              },
-                                            ]),
-                                            pageSize,                  }}
-                />
-                {itemsData.length > pageSize && renderPaginationBar(totalPages)}
-                
-                {/* Add Button */}
-                <div className="mt-4">
-                    <button
-                        type="button"
-                        className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-                        onClick={() => {
-                          if (promotion.bundle_combination === "slab") {
-                            setOrderTables(tables => tables.map((arr, idx) => idx === tableIdx ? [
-                              ...arr,
-                              {
-                                promotionGroupName: "",
-                                itemName: "",
-                                itemCode: "",
-                                quantity: "",
-                                toQuantity: "",
-                                uom: "CTN",
-                                price: "",
-                                free_qty: "",
-                              }
-                            ] : arr));
-                          } else {
-                            setOrderTables(tables =>
-                              tables.map((arr, idx) =>
-                                idx === tables.length - 1
-                                  ? [
-                                      ...arr,
-                                      {
-                                        promotionGroupName: "",
-                                        itemName: "",
-                                        itemCode: "",
-                                        quantity: "",
-                                        toQuantity: "",
-                                        uom: "CTN",
-                                        price: "",
-                                        free_qty: "",
-                                      }
-                                    ]
-                                  : arr
-                              )
-                            );
-                          }
-                        }}
-                    >
-                        <Icon icon="material-symbols:add-circle-outline" width={20} />
-                        Add New Item
-                    </button>
-                </div>
-
-              </div>
-            </React.Fragment>
-          );
-        });
-      };
-
-      // Show all offerItems, including custom added rows
-      let offerItemsData: OfferItemType[] = [];
-      if (Array.isArray(offerItems) && offerItems.length > 0 && Array.isArray(offerItems[0])) {
-        offerItemsData = (offerItems as OfferItemType[][]).flat().map((offerItem, idx) => ({ ...offerItem, idx: String(idx) }));
-      } else {
-        offerItemsData = (offerItems as OfferItemType[]).map((offerItem, idx) => ({ ...offerItem, idx: String(idx) }));
-      }
-      if (offerItemsData.length === 0) {
-        offerItemsData = [{
-          promotionGroupName: "",
-          itemName: "",
-          itemCode: "",
-          uom: "BAG",
-          toQuantity: "",
-          is_discount: "0",
-          idx: "0",
-        }];
-      }
-
-    
-
-      type PaginationBtnProps = {
-        label: string;
-        isActive: boolean;
-        onClick: () => void;
-      };
-      const PaginationBtn = ({ label, isActive, onClick }: PaginationBtnProps) => (
-        <button
-          className={`w-[32px] h-[32px] rounded-[6px] flex items-center justify-center mx-[2px] text-[14px] font-semibold transition-colors duration-150 border-none outline-none focus:ring-2 focus:ring-[#EA0A2A] select-none ${
-            isActive ? "bg-[#FFF0F2] text-[#EA0A2A] shadow-sm" : "bg-white text-[#717680] hover:bg-[#F5F5F5]"
-          }`}
-          style={{ minWidth: 32 }}
-          onClick={onClick}
-          disabled={label === "..."}
-        >
-          {label}
-        </button>
-      );
-
-      const renderPaginationBar = (totalPages: number) => {
-        if (totalPages <= 1) return null;
-        const firstThreePageIndices = [1, 2, 3];
-        const lastThreePageIndices = totalPages > 3 ? [totalPages - 2, totalPages - 1, totalPages] : [];
+    switch (currentStep) {
+      case 1:
+        return <SelectKeyCombinationInline keyCombo={keyCombo} setKeyCombo={setKeyCombo} />;
+      case 2:
+        type DropdownOption = { label: string; value: string };
+        const locationDropdownMap: Record<string, DropdownOption[]> = {
+          Company: companyOptions,
+          Region: regionOptions,
+          Warehouse: warehouseOptions,
+          Area: areaOptions,
+          Route: routeOptions,
+        };
+        const customerDropdownMap: Record<string, DropdownOption[]> = {
+          Channel: channelOptions,
+          "Customer Category": customerCategoryOptions,
+          Customer: companyCustomersOptions,
+        };
+        const itemDropdownMap: Record<string, DropdownOption[]> = {
+          "Item Category": itemCategoryOptions,
+          Item: itemOptions,
+        };
         return (
-          <div className="flex justify-between items-center px-[8px] py-[12px] mt-2">
-            <button
-              className="flex items-center gap-1 px-4 py-2 rounded bg-[#F5F5F5] text-[#717680] font-semibold disabled:opacity-50"
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-            >
-              <span className="text-[16px]">←</span>
-              Previous
-            </button>
-            <div className="flex gap-[2px] text-[14px] select-none">
-              {totalPages > 6 ? (
-                <>
-                  {firstThreePageIndices.map((pageNo) => (
-                    <PaginationBtn
-                      key={pageNo}
-                      label={pageNo.toString()}
-                      isActive={page === pageNo}
-                      onClick={() => setPage(pageNo)}
-                    />
-                  ))}
-                  <PaginationBtn label={"..."} isActive={false} onClick={() => {}} />
-                  {lastThreePageIndices.map((pageNo) => (
-                    <PaginationBtn
-                      key={pageNo}
-                      label={pageNo.toString()}
-                      isActive={page === pageNo}
-                      onClick={() => setPage(pageNo)}
-                    />
-                  ))}
-                </>
-              ) : (
-                <>
-                  {[...Array(totalPages)].map((_, idx) => (
-                    <PaginationBtn
-                      key={idx + 1}
-                      label={(idx + 1).toString()}
-                      isActive={page === idx + 1}
-                      onClick={() => setPage(idx + 1)}
-                    />
-                  ))}
-                </>
+          <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Key Value</h2>
+              <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
+            </div>
+            <div className="flex gap-6">
+              <div className="flex-1">
+                <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                  <div className="font-semibold text-lg mb-4">Location</div>
+                  {keyCombo.Location && (
+                    <div className="mb-4">
+                      <div className="mb-2 text-base font-medium">
+                        {keyCombo.Location}
+                        <span className="text-red-500 ml-1">*</span>
+                      </div>
+                      <InputFields
+                        label=""
+                        type="select"
+                        isSingle={true}
+                        options={locationDropdownMap[keyCombo.Location] ? [{ label: `Select ${keyCombo.Location}`, value: "" }, ...locationDropdownMap[keyCombo.Location]] : [{ label: `Select ${keyCombo.Location}`, value: "" }]}
+                        value={keyValue[keyCombo.Location]?.[0] || ""}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setKeyValue(s => ({ ...s, [keyCombo.Location]: val ? [val] : [] }));
+                        }}
+                        width="w-full"
+                      />
+                    </div>
+                  )}
+                </ContainerCard>
+              </div>
+              {keyCombo.Customer && (
+                <div className="flex-1">
+                  <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                    <div className="font-semibold text-lg mb-4">Customer</div>
+                    <div className="mb-4">
+                      <div className="mb-2 text-base font-medium">
+                        {keyCombo.Customer}
+                        <span className="text-red-500 ml-1">*</span>
+                      </div>
+                      <InputFields
+                        label=""
+                        type="select"
+                        isSingle={false}
+                        options={customerDropdownMap[keyCombo.Customer] ? [{ label: `Select ${keyCombo.Customer}`, value: "" }, ...customerDropdownMap[keyCombo.Customer]] : [{ label: `Select ${keyCombo.Customer}`, value: "" }]}
+                        value={keyValue[keyCombo.Customer] || []}
+                        onChange={e => {
+                          const valueFromEvent = e.target.value;
+                          let selectedValues: string[];
+                          if (Array.isArray(valueFromEvent)) {
+                            selectedValues = valueFromEvent;
+                          } else {
+                            selectedValues = valueFromEvent ? [String(valueFromEvent)] : [];
+                          }
+                          setKeyValue(s => ({ ...s, [keyCombo.Customer]: selectedValues.filter(val => val !== "") }));
+                        }}
+                        width="w-full"
+                      />
+                    </div>
+                  </ContainerCard>
+                </div>
               )}
+              <div className="flex-1">
+                <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
+                  <div className="font-semibold text-lg mb-4">Item</div>
+                  {keyCombo.Item && (
+                    <div className="mb-4">
+                      <div className="mb-2 text-base font-medium">
+                        {keyCombo.Item}
+                        <span className="text-red-500 ml-1">*</span>
+                      </div>
+                      <InputFields
+                        label=""
+                        type="select"
+                        isSingle={true}
+                        options={itemDropdownMap[keyCombo.Item] ? [{ label: `Select ${keyCombo.Item}`, value: "" }, ...itemDropdownMap[keyCombo.Item]] : [{ label: `Select ${keyCombo.Item}`, value: "" }]}
+                        value={keyValue[keyCombo.Item]?.[0] || ""}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setKeyValue(s => ({ ...s, [keyCombo.Item]: val ? [val] : [] }));
+                        }}
+                        width="w-full"
+                      />
+                    </div>
+                  )}
+                </ContainerCard>
+              </div>
             </div>
-            <button
-              className="flex items-center gap-1 px-4 py-2 rounded bg-[#F5F5F5] text-[#717680] font-semibold disabled:opacity-50"
-              onClick={() => setPage(page + 1)}
-              disabled={page === totalPages}
-            >
-              Next
-              <span className="text-[16px]">→</span>
-            </button>
-          </div>
+          </ContainerCard>
         );
-      };
+      case 3:
+        // Helper to update orderItems by row index for a specific table so each row
+        // can store independent values even when itemCode is empty or duplicated.
+        function updateOrderItem(tableIdx: number, rowIdx: string | undefined, key: keyof OrderItemType, value: string) {
+          setOrderTables((tables) => tables.map((arr, idx) => {
+            if (idx !== tableIdx) return arr;
+            return arr.map((oi, i) => String(i) === String(rowIdx) ? { ...oi, [key]: value } : oi);
+          }));
+        }
 
-      return (
-        <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
-          <h2 className="text-xl font-semibold mb-6">Promotion</h2>
-          <div className="grid grid-cols-3 gap-6 mb-6">
-            <div>
-              <label className="block mb-1 font-medium">Name<span className="text-red-500 ml-1">*</span></label>
-              <InputFields
-                type="text"
-                value={promotion.itemName}
-                alt="Enter Name"
-                placeholder="Enter Name"
-                onChange={e => setPromotion(s => ({ ...s, itemName: e.target.value }))}
-                width="w-full"
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">Mode</label>
-              <InputFields
-                isSingle={true}
-                options={[{ label: "Range", value: "range" }, { label: "Slab", value: "slab" }, { label: "Sequence", value: "sequence" }]}
-                value={promotion.bundle_combination}
-                onChange={e => setPromotion(s => ({ ...s, bundle_combination: e.target.value }))}
-                width="w-full"
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">Start Date<span className="text-red-500 ml-1">*</span></label>
-              <InputFields
-                type="date"
-                value={promotion.startDate}
-                onChange={e => setPromotion(s => ({ ...s, startDate: e.target.value }))}
-                width="w-full"
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">End Date<span className="text-red-500 ml-1">*</span></label>
-              <InputFields
-                type="date"
-                value={promotion.endDate}
-                onChange={e => setPromotion(s => ({ ...s, endDate: e.target.value }))}
-                width="w-full"
-              />
-            </div>
+
+        // Options built from items selected in Step 2
+        const selectedItemOptions = selectedItemDetails.map(d => {
+          const name = String(d.name || d.itemName || d.itemName || d.label || "").trim();
+          const code = String(d.code || d.itemCode || "").trim();
+          const label = code ? `${name} - ${code}` : name;
+          const value = code || name || "";
+          return { label, value };
+        });
+
+
+
+        // Helper to set both itemCode and itemName for an offer row/table
+        function selectItemForOffer(tableIdx: number, rowIdx: string, value: string) {
+          const providerItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
+          const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || providerItems.find((ci) => String((ci as Record<string, unknown>)['id'] ?? '') === String(value));
+          const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
+          // choose primary UOM when available, otherwise first UOM
+          const uomListOffer = foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined;
+          const primaryUom = Array.isArray(uomListOffer) && uomListOffer.length > 0 ? ((uomListOffer as Uom[]).find((uu) => String(uu.uom_type || '').toLowerCase() === 'primary') || (uomListOffer as Uom[])[0]) : undefined;
+
+          setOfferItems((prev: OfferItemType[][] | any) => {
+             // Always treat as nested array
+             const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev as OfferItemType[][] : [prev as unknown as OfferItemType[]];
              
+             return tables.map((arr: OfferItemType[], idx: number) =>
+                idx === tableIdx
+                  ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name, uom: primaryUom ? String((primaryUom as Record<string, unknown>)['name'] ?? '') : (oi.uom ?? '') } : oi))
+                  : arr
+              );
+          });
+        }
+
+        // Clamp percentage inputs to 0-100 when promotionType is Percentage
+        function clampPercentInput(val: string) {
+          if (promotion.promotionType !== "1") return val;
+          const n = Number(val);
+          if (Number.isNaN(n)) return "";
+          const clamped = Math.max(0, Math.min(100, n));
+          return String(clamped);
+        }
+        // Build UOM options for a given table row using selectedItemDetails or provider `item`.
+        // Always returns an array of options so the UI can render a select dropdown.
+        function getUomOptionsForRow(row: Record<string, unknown>) {
+          const codeOrName = String((row as Record<string, unknown>)['itemCode'] ?? (row as Record<string, unknown>)['itemName'] ?? "");
+          let itemObj: ItemDetail | undefined = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === codeOrName || String(it.name || it.itemName || it.label) === codeOrName);
+          if (!itemObj && Array.isArray(item)) {
+            itemObj = (item as ItemDetail[]).find((ci) => String((ci as Record<string, unknown>)['id'] ?? (ci as Record<string, unknown>)['code'] ?? '') === codeOrName || String((ci as Record<string, unknown>)['label'] ?? (ci as Record<string, unknown>)['name'] ?? '') === codeOrName);
+          }
+          const uoms = (itemObj ? ((itemObj as Record<string, unknown>)['uomSummary'] ?? (itemObj as Record<string, unknown>)['uom']) : undefined) ?? [];
+          // If no uoms available return a single placeholder option (so dropdown always shows)
+          if (!Array.isArray(uoms) || uoms.length === 0) {
+            const fallback = String(row.uom || "");
+            if (fallback) return [{ label: fallback, value: fallback, price: undefined }];
+            return [{ label: "-", value: "", price: undefined }];
+          }
+          return (uoms as Uom[]).map((u) => ({ label: `${u.name ?? u.uom ?? ""}${u.uom_type ? ` (${u.uom_type})` : ""}${u.price ? ` - ${u.price}` : ""}`, value: String(u.name ?? u.uom ?? ""), price: u.price }));
+        }
+        // Helper to set item for the whole order table
+        function selectItemForOrderTable(tableIdx: number, value: string) {
+          const providerItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
+          const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || providerItems.find((ci) => String((ci as Record<string, unknown>)['id'] ?? '') === String(value));
+          
+          const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
+          
+           // Get primary UOM
+           const uomList = (foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined) as unknown;
+           let uomName = "CTN";
+           let uomPrice = "";
+           if (Array.isArray(uomList) && uomList.length > 0) {
+              const uomArr = uomList as Uom[];
+              const primary = uomArr.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomArr[0];
+              uomName = String(primary?.name ?? primary?.uom ?? '');
+              uomPrice = primary && (primary.price !== undefined && primary.price !== null) ? String(primary.price) : '';
+           }
+
+          setOrderTables((tables) => tables.map((arr, idx) => {
+            if (idx !== tableIdx) return arr;
+            
+            if (arr.length === 0) {
+                 // Create a new row if empty
+                 return [{
+                    promotionGroupName: "", 
+                    itemName: name,
+                    itemCode: value,
+                    quantity: "",
+                    toQuantity: "",
+                    uom: uomName,
+                    price: uomPrice,
+                    free_qty: "",
+                 }];
+            }
+
+            return arr.map((oi) => ({ 
+                ...oi, 
+                itemCode: value, 
+                itemName: name,
+                uom: uomName || oi.uom,
+                price: uomPrice || oi.price
+            }));
+          }));
+        }
+
+        // Render all order tables
+              const renderOrderTables = () => {
+                return orderTables.map((orderItems, tableIdx) => {            
+            let itemsData = orderItems.map((orderItem, idx) => ({
+              ...orderItem,
+              idx: String(idx),
+            }));
+            if (itemsData.length === 0) {
+              itemsData = [{
+                promotionGroupName: "",
+                itemName: "",
+                itemCode: "",
+                quantity: "",
+                toQuantity: "",
+                uom: "",
+                price: "",
+                idx: "0",
+              }];
+            }
+            const currentItemCode = orderItems[0]?.itemCode || "";
+            const totalPages = Math.ceil(itemsData.length / pageSize);
+            const paginatedData = itemsData.slice((page - 1) * pageSize, page * pageSize);
+            return (
+              <React.Fragment key={tableIdx}>
+                {tableIdx > 0 && (
+                  <div className="flex items-center my-4">
+                    <div className="flex-1 h-px bg-gray-300" />
+                    <span className="mx-4 font-bold text-gray-500">OR</span>
+                    <div className="flex-1 h-px bg-gray-300" />
+                  </div>
+                )}
+                <div className="mb-6">
+                  <div className="mb-4">
+                        <label className="block mb-1 font-medium">Select Item</label>
+                         <InputFields
+                            label=""
+                            type="select"
+                            isSingle={true}
+                            placeholder="Select Item"
+                            options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
+                            value={currentItemCode}
+                            onChange={e => selectItemForOrderTable(tableIdx, e.target.value)}
+                            width="w-full"
+                          />
+                  </div>
+                  <Table
+                    data={paginatedData}
+                    config={{
+                                                                  columns: [
+                                                                    {
+                                                                      key: "quantity",
+                                                                      label: (promotion.promotionType === "1") ? "Percentage" : "From Quantity",
+                                                                      width: 120,
+                                                                      render: (row) => (
+                                                                        <InputFields
+                                                                          label=""
+                                                                          type="number"
+                                                                          placeholder={(promotion.promotionType === "1") ? "Percentage" : "From Qty"}
+                                                                          value={String((row as Record<string, unknown>)['quantity'] ?? "")}
+                                                                          onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "quantity", clampPercentInput(e.target.value))}
+                                                                          width="w-full"
+                                                                        />
+                                                                      ),
+                                                                    },
+                                                                    {
+                                                                      key: "toQuantity",
+                                                                      label: (promotion.promotionType === "1") ? "To Percentage" : "To Quantity",
+                                                                      width: 120,
+                                                                      render: (row) => (
+                                                                        <InputFields
+                                                                          label=""
+                                                                          type="number"
+                                                                          placeholder={(promotion.promotionType === "1") ? "To Percentage" : "To Qty"}
+                                                                          value={String((row as Record<string, unknown>)['toQuantity'] ?? "")}
+                                                                          onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "toQuantity", clampPercentInput(e.target.value))}
+                                                                          width="w-full"
+                                                                        />
+                                                                      ),
+                                                                    },
+                                                                    {
+                                                                      key: "uom",
+                                                                      label: "UOM",
+                                                                      width: 150,
+                                                                      render: (row) => {
+                                                                        const uomOptions = getUomOptionsForRow(row);
+                                                                        return (
+                                                                          <InputFields
+                                                                            label=""
+                                                                            type="select"
+                                                                            isSingle={true}
+                                                                            placeholder="Select UOM"
+                                                                            options={[{ label: `Select UOM`, value: "" }, ...uomOptions.map((o: any) => ({ label: o.label, value: o.value }))]}
+                                                                            value={String((row as Record<string, unknown>)['uom'] ?? "")}
+                                                                            onChange={e => {
+                                                                              const val = e.target.value;
+                                                                              updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "uom", val);
+                                                                              const found = uomOptions.find((u: any) => String(u.value) === String(val));
+                                                                              if (found) updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "price", String(found.price ?? ""));
+                                                                            }}
+                                                                            width="w-full"
+                                                                          />
+                                                                        );
+                                                                      }
+                                                                    },
+                                                                    {
+                                                                      key: "free_qty",
+                                                                      label: "Free Qty",
+                                                                      width: 120,
+                                                                      render: (row) => (
+                                                                        <InputFields
+                                                                          label=""
+                                                                          type="number"
+                                                                          placeholder="Free Qty"
+                                                                          value={String((row as Record<string, unknown>)['free_qty'] ?? "")}
+                                                                          onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "free_qty", e.target.value)}
+                                                                          width="w-full"
+                                                                        />
+                                                                      ),
+                                                                    },
+                                                                    {
+                                                                      key: "action",
+                                                                      label: "Action",
+                                                                      width: 20,
+                                                                      render: (row) => (
+                                                                        <button
+                                                                          type="button"
+                                                                          className="text-red-500 flex items-center justify-center w-full h-full"
+                                                                          onClick={() => {
+                                                                            setOrderTables(tables => {
+                                                                              return tables.flatMap((arr, idx) => {
+                                                                                if (idx !== tableIdx) return [arr];
+                                                                                const newArr = arr.filter((oi, i) => String(i) !== String(row.idx));
+                                                                                if (newArr.length === 0 && tables.length > 1) {
+                                                                                  return [];
+                                                                                }
+                                                                                return [newArr];
+                                                                              });
+                                                                            });
+                                                                          }}
+                                                                        >
+                                                                          <Icon icon="lucide:trash-2" width={20} />
+                                                                        </button>
+                                                                      ),
+                                                                    },
+                                                                  ],                      pageSize,
+                    }}
+                  />
+                  {itemsData.length > pageSize && renderPaginationBar(totalPages)}
+
+                  {/* Add Button */}
+                  <div className="mt-4">
+                                        <button
+                                            type="button"
+                                            className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
+                                            onClick={() => {
+                                                setOrderTables(tables => tables.map((arr, idx) => {
+                                                    if (idx !== tableIdx) return arr;
+                                                    const first = arr[0];
+                                                    return [
+                                                  ...arr,
+                                                  {
+                                                    promotionGroupName: first?.promotionGroupName || "",
+                                                    itemName: first?.itemName || "",
+                                                    itemCode: first?.itemCode || "",
+                                                    quantity: "",
+                                                    toQuantity: "",
+                                                    uom: first?.uom || "CTN",
+                                                    price: first?.price || "",
+                                                    free_qty: "",
+                                                  }
+                                                ];
+                                            }));
+                                            }}
+                                        >                      <Icon icon="material-symbols:add-circle-outline" width={20} />
+                      Add New Item
+                    </button>
+                  </div>
+
+                </div>
+              </React.Fragment>
+            );
+          });
+        };
+
+        // Show all offerItems, including custom added rows
+        let offerItemsData: OfferItemType[] = [];
+        if (Array.isArray(offerItems) && offerItems.length > 0 && Array.isArray(offerItems[0])) {
+          offerItemsData = (offerItems as OfferItemType[][]).flat().map((offerItem, idx) => ({ ...offerItem, idx: String(idx) }));
+        } else {
+          offerItemsData = (offerItems as OfferItemType[]).map((offerItem, idx) => ({ ...offerItem, idx: String(idx) }));
+        }
+        if (offerItemsData.length === 0) {
+          offerItemsData = [{
+            promotionGroupName: "",
+            itemName: "",
+            itemCode: "",
+            uom: "BAG",
+            toQuantity: "",
+            is_discount: "0",
+            idx: "0",
+          }];
+        }
+
+
+
+        type PaginationBtnProps = {
+          label: string;
+          isActive: boolean;
+          onClick: () => void;
+        };
+        const PaginationBtn = ({ label, isActive, onClick }: PaginationBtnProps) => (
+          <button
+            className={`w-[32px] h-[32px] rounded-[6px] flex items-center justify-center mx-[2px] text-[14px] font-semibold transition-colors duration-150 border-none outline-none focus:ring-2 focus:ring-[#EA0A2A] select-none ${isActive ? "bg-[#FFF0F2] text-[#EA0A2A] shadow-sm" : "bg-white text-[#717680] hover:bg-[#F5F5F5]"
+              }`}
+            style={{ minWidth: 32 }}
+            onClick={onClick}
+            disabled={label === "..."}
+          >
+            {label}
+          </button>
+        );
+
+        const renderPaginationBar = (totalPages: number) => {
+          if (totalPages <= 1) return null;
+          const firstThreePageIndices = [1, 2, 3];
+          const lastThreePageIndices = totalPages > 3 ? [totalPages - 2, totalPages - 1, totalPages] : [];
+          return (
+            <div className="flex justify-between items-center px-[8px] py-[12px] mt-2">
+              <button
+                className="flex items-center gap-1 px-4 py-2 rounded bg-[#F5F5F5] text-[#717680] font-semibold disabled:opacity-50"
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+              >
+                <span className="text-[16px]">←</span>
+                Previous
+              </button>
+              <div className="flex gap-[2px] text-[14px] select-none">
+                {totalPages > 6 ? (
+                  <>
+                    {firstThreePageIndices.map((pageNo) => (
+                      <PaginationBtn
+                        key={pageNo}
+                        label={pageNo.toString()}
+                        isActive={page === pageNo}
+                        onClick={() => setPage(pageNo)}
+                      />
+                    ))}
+                    <PaginationBtn label={"..."} isActive={false} onClick={() => { }} />
+                    {lastThreePageIndices.map((pageNo) => (
+                      <PaginationBtn
+                        key={pageNo}
+                        label={pageNo.toString()}
+                        isActive={page === pageNo}
+                        onClick={() => setPage(pageNo)}
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {[...Array(totalPages)].map((_, idx) => (
+                      <PaginationBtn
+                        key={idx + 1}
+                        label={(idx + 1).toString()}
+                        isActive={page === idx + 1}
+                        onClick={() => setPage(idx + 1)}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+              <button
+                className="flex items-center gap-1 px-4 py-2 rounded bg-[#F5F5F5] text-[#717680] font-semibold disabled:opacity-50"
+                onClick={() => setPage(page + 1)}
+                disabled={page === totalPages}
+              >
+                Next
+                <span className="text-[16px]">→</span>
+              </button>
+            </div>
+          );
+        };
+
+        return (
+          <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
+            <h2 className="text-xl font-semibold mb-6">Promotion</h2>
+            <div className="grid grid-cols-3 gap-6 mb-6">
+              <div>
+                <label className="block mb-1 font-medium">Name<span className="text-red-500 ml-1">*</span></label>
+                <InputFields
+                  type="text"
+                  value={promotion.itemName}
+                  alt="Enter Name"
+                  placeholder="Enter Name"
+                  onChange={e => setPromotion(s => ({ ...s, itemName: e.target.value }))}
+                  width="w-full"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">Mode</label>
+                <InputFields
+                  isSingle={true}
+                  options={[{ label: "Range", value: "range" }, { label: "Slab", value: "slab" }, { label: "Normal", value: "normal" }]}
+                  value={promotion.bundle_combination}
+                  onChange={e => setPromotion(s => ({ ...s, bundle_combination: e.target.value }))}
+                  width="w-full"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">Start Date<span className="text-red-500 ml-1">*</span></label>
+                <InputFields
+                  type="date"
+                  value={promotion.startDate}
+                  onChange={e => setPromotion(s => ({ ...s, startDate: e.target.value }))}
+                  width="w-full"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">End Date<span className="text-red-500 ml-1">*</span></label>
+                <InputFields
+                  type="date"
+                  value={promotion.endDate}
+                  onChange={e => setPromotion(s => ({ ...s, endDate: e.target.value }))}
+                  width="w-full"
+                />
+              </div>
+
 
               <div>
                 <label className="block mb-1 font-medium">Sales Team Type<span className="text-red-500 ml-1">*</span></label>
@@ -1388,12 +1302,12 @@ export default function AddPricing() {
                   width="w-full"
                 />
               </div> */}
-              {promotion.bundle_combination === "slab" && (
+              {promotion.bundle_combination === "range" && (
                 <div>
                   <label className="block mb-1 font-medium">Promotion Type<span className="text-red-500 ml-1">*</span></label>
                   <InputFields
                     isSingle={true}
-                    options={[ { label: "Quantity", value: "0" },{ label: "Percentage", value: "1" },]}
+                    options={[{ label: "Quantity", value: "0" }, { label: "Percentage", value: "1" },]}
                     value={promotion.promotionType}
                     onChange={e => setPromotion(s => ({ ...s, promotionType: e.target.value }))}
                     width="w-full"
@@ -1410,325 +1324,138 @@ export default function AddPricing() {
                   width="w-full"
                 />
               </div>
-          </div>
-          <div className="mt-8">
-            <div className="font-semibold text-lg mb-4">Promotional Order Items</div>
-            {renderOrderTables()}
-            <div className="font-semibold text-lg mb-4">Promotional Offer Items</div>
-            <div className="mb-6">
-              {/* Multi-table logic for offerItems, similar to orderTables */}
-              {(() => {
-                // If 'slab' mode is selected, treat offerItems as an array of tables (array of arrays)
-                const isBundle = promotion.bundle_combination === "slab";
-                // For backward compatibility, if offerItems is not an array of arrays, wrap it
-                let offerTables: OfferItemType[][] = [];
-                  if (isBundle) {
-                  // If offerItems is already an array of arrays, use as is, else wrap each object in its own array
+            </div>
+            <div className="mt-8">
+              <div className="font-semibold text-lg mb-4">Promotional Order Item</div>
+              {renderOrderTables()}
+              <div className="font-semibold text-lg mb-4">Promotional Offer Items</div>
+              <div className="mb-6">
+                {/* Multi-table logic for offerItems, similar to orderTables */}
+                {(() => {
+                  // Always treat as array of tables (nested array)
+                  let offerTables: OfferItemType[][] = [];
                   if (Array.isArray(offerItems) && offerItems.length > 0 && Array.isArray((offerItems as unknown[])[0])) {
-                    // Cast via unknown first to satisfy TypeScript when converting between incompatible array shapes
                     offerTables = offerItems as unknown as OfferItemType[][];
                   } else {
-                    offerTables = (offerItems as OfferItemType[]).map((oi: OfferItemType) => [oi]);
+                    // Fallback if somehow flat
+                     offerTables = [(offerItems as unknown as OfferItemType[])];
                   }
-                } else {
-                  // Single table mode
-                  offerTables = [offerItems as OfferItemType[]];
-                }
 
-                // Helper to update offerItems by tableIdx and rowIdx
-                function updateOfferItemTable(tableIdx: number, rowIdx: string, key: string, value: string) {
-                  setOfferItems((prev: OfferItemType[] | OfferItemType[][]) => {
-                    if (isBundle) {
-                      return (prev as OfferItemType[][]).map((arr: OfferItemType[], idx: number) =>
-                        idx === tableIdx
-                          ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, [key]: value } : oi))
-                          : arr
-                      );
-                    } else {
-                      return (prev as OfferItemType[]).map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, [key]: value } : oi));
-                    }
-                  });
-                }
-
-                // Helper to add a new table or row
-                function addOfferItem(tableIdx: number) {
-                  if (isBundle) {
-                    setOfferItems((prev) => ((prev as OfferItemType[][]).concat([[{
-                      promotionGroupName: "",
-                      itemName: "",
-                      itemCode: "",
-                      uom: "BAG",
-                      toQuantity: "",
-                      is_discount: "0"
-                    }]])));
-                  } else {
-                    setOfferItems((prev) => ((prev as OfferItemType[]).concat([{
-                      promotionGroupName: "",
-                      itemName: "",
-                      itemCode: "",
-                      uom: "BAG",
-                      toQuantity: "",
-                      is_discount: "0"
-                    }])));
+                  // Helper to update offerItems by tableIdx and rowIdx
+                  function updateOfferItemTable(tableIdx: number, rowIdx: string, key: string, value: string) {
+                    setOfferItems((prev: OfferItemType[][] | any) => {
+                       const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev as OfferItemType[][] : [prev as unknown as OfferItemType[]];
+                       
+                        return tables.map((arr: OfferItemType[], idx: number) =>
+                          idx === tableIdx
+                            ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, [key]: value } : oi))
+                            : arr
+                        );
+                    });
                   }
-                }
 
-                // Helper to add a row to a specific table (only for bundle mode)
-                function addRowToOfferTable(tableIdx: number) {
-                  setOfferItems((prev: OfferItemType[] | OfferItemType[][]) =>
-                    (prev as OfferItemType[][]).map((arr: OfferItemType[], idx: number) =>
-                      idx === tableIdx
-                        ? [
-                            ...arr,
-                            {
-                              promotionGroupName: "",
-                              itemName: "",
-                              itemCode: "",
-                              uom: "BAG",
-                              toQuantity: "",
-                              is_discount: "0"
-                            }
-                          ]
-                        : arr
-                    )
-                  );
-                }
 
-                // Helper to delete a row or table
-                function deleteOfferItem(tableIdx: number, rowIdx: string) {
-                  setOfferItems((prev: OfferItemType[] | OfferItemType[][]) => {
-                    if (isBundle) {
-                      // Remove row from the correct table
-                      const newTables = (prev as OfferItemType[][]).map((arr: OfferItemType[], idx: number) => {
-                        if (idx !== tableIdx) return arr;
-                        const filtered = arr.filter((oi, i) => String(i) !== String(rowIdx));
-                        return filtered;
-                      });
-                      // Remove table if empty and more than one table exists
-                      const filteredTables = newTables.filter((arr: OfferItemType[]) => arr.length > 0);
-                      return filteredTables.length > 0 ? filteredTables : [[{
+
+                  return offerTables.map((offerArr, tableIdx) => {
+                    let offerItemsData = offerArr.map((offerItem: OfferItemType, idx: number) => ({ ...offerItem, idx: String(idx) }));
+                    if (offerItemsData.length === 0) {
+                      offerItemsData = [{
                         promotionGroupName: "",
                         itemName: "",
                         itemCode: "",
                         uom: "BAG",
                         toQuantity: "",
-                        is_discount: "0"
-                      }]];
-                    } else {
-                      // Only allow delete if more than one row exists
-                      const prevArr = prev as OfferItemType[];
-                      if (prevArr.length > 1) {
-                        return prevArr.filter((_, idx: number) => idx !== Number(rowIdx));
-                      }
-                      return prevArr;
+                        is_discount: "0",
+                        idx: "0",
+                      }];
                     }
-                  });
-                }
-
-                return offerTables.map((offerArr, tableIdx) => {
-                  let offerItemsData = offerArr.map((offerItem: OfferItemType, idx: number) => ({ ...offerItem, idx: String(idx) }));
-                  if (offerItemsData.length === 0) {
-                    offerItemsData = [{
-                      promotionGroupName: "",
-                      itemName: "",
-                      itemCode: "",
-                      uom: "BAG",
-                      toQuantity: "",
-                      is_discount: "0",
-                      idx: "0",
-                    }];
-                  }
-                  const totalPages = Math.ceil(offerItemsData.length / pageSize);
-                  const paginatedData = offerItemsData.slice((page - 1) * pageSize, page * pageSize);
-                  return (
-                    <React.Fragment key={tableIdx}>
-                      {isBundle && tableIdx > 0 && (
-                        <div className="flex items-center my-4">
-                          <div className="flex-1 h-px bg-gray-300" />
-                          <span className="mx-4 font-bold text-gray-500">OR</span>
-                          <div className="flex-1 h-px bg-gray-300" />
-                        </div>
-                      )}
-                      <div className="mb-6">
-                        <Table
-                          data={paginatedData}
-                          config={{
-                            columns: (isBundle ? [
-                              {
-                                key: "selectedItem",
-                                label: "Item",
-                                width: 300,
-                                render: (row: any) => (
-                                  <InputFields
-                                    label=""
-                                    type="select"
-                                    isSingle={true}
-                                    placeholder="Select Item"
-                                    options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                                    value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
-                                    onChange={e => selectItemForOffer(tableIdx, row.idx, e.target.value)}
-                                    width="w-full"
-                                  />
-                                ),
-                              },
-                              {
-                                key: "itemName",
-                                label: "Item Name",
-                                width: 300,
-                                render: (row) => (
-                                  <InputFields
-                                    label=""
-                                    type="text"
-                                    placeholder="Item Name"
-                                    value={String((row as Record<string, unknown>)['itemName'] ?? "")}
-                                    onChange={e => updateOfferItemTable(tableIdx, row.idx, "itemName", e.target.value)}
-                                    width="w-full"
-                                  />
-                                ),
-                              },
-                              {
-                                key: "uom",
-                                label: "UOM",
-                                width: 150,
-                                render: (row) => {
-                                  const uomOptions = getUomOptionsForRow(row);
-                                  return (
+                    const totalPages = Math.ceil(offerItemsData.length / pageSize);
+                    const paginatedData = offerItemsData.slice((page - 1) * pageSize, page * pageSize);
+                    return (
+                      <React.Fragment key={tableIdx}>
+                        {tableIdx > 0 && (
+                          <div className="flex items-center my-4">
+                            <div className="flex-1 h-px bg-gray-300" />
+                            <span className="mx-4 font-bold text-gray-500">OR</span>
+                            <div className="flex-1 h-px bg-gray-300" />
+                          </div>
+                        )}
+                        <div className="mb-6">
+                          <Table
+                            data={paginatedData}
+                            config={{
+                              columns: [
+                                {
+                                  key: "selectedItem",
+                                  label: "Item",
+                                  width: 300,
+                                  render: (row: any) => (
                                     <InputFields
                                       label=""
                                       type="select"
                                       isSingle={true}
-                                      placeholder="Select UOM"
-                                      options={[{ label: `Select UOM`, value: "" }, ...uomOptions.map((o: any) => ({ label: o.label, value: o.value }))]}
-                                      value={String((row as Record<string, unknown>)['uom'] ?? "")}
-                                      onChange={e => updateOfferItemTable(tableIdx, row.idx, "uom", e.target.value)}
+                                      placeholder="Select Item"
+                                      options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
+                                      value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
+                                      onChange={e => selectItemForOffer(tableIdx, row.idx, e.target.value)}
                                       width="w-full"
                                     />
-                                  );
-                                }
-                              },
-                              {
-                                key: "action",
-                                label: "Action",
-                                width: 80,
-                                render: (row: any) => (
-                                  <button
-                                    type="button"
-                                    className="text-red-500 flex items-center justify-center w-full h-full"
-                                    onClick={() => deleteOfferItem(tableIdx, row.idx)}
-                                  >
-                                    <Icon icon="lucide:trash-2" width={20} />
-                                  </button>
-                                ),
-                              },
-                            ] : [
-                              {
-                                key: "selectedItem",
-                                label: "Item",
-                                width: 300,
-                                render: (row: any) => (
-                                  <InputFields
-                                    label=""
-                                    type="select"
-                                    isSingle={true}
-                                    placeholder="Select Item"
-                                    options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                                    value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
-                                    onChange={e => selectItemForOffer(tableIdx, row.idx, e.target.value)}
-                                    width="w-full"
-                                  />
-                                ),
-                              },
-                              // Normal mode
-                              {
-                                key: "itemName",
-                                label: "Item Name",
-                                width: 300,
-                                render: (row) => (
-                                  <InputFields
-                                    label=""
-                                    type="text"
-                                    placeholder="Item Name"
-                                    value={String((row as Record<string, unknown>)['itemName'] ?? "")}
-                                    onChange={e => updateOfferItemTable(tableIdx, row.idx, "itemName", e.target.value)}
-                                    width="w-full"
-                                  />
-                                ),
-                              },
-                              {
-                                key: "uom",
-                                label: "UOM",
-                                width: 150,
-                                render: (row) => (
-                                  <InputFields
-                                    label=""
-                                    type="text"
-                                    placeholder="UOM"
-                                    value={String((row as Record<string, unknown>)['uom'] ?? "")}
-                                    onChange={e => updateOfferItemTable(tableIdx, row.idx, "uom", e.target.value)}
-                                    width="w-full"
-                                  />
-                                ),
-                              },
-                              {
-                                key: "toQuantity",
-                                label: (promotion.promotionType === "1") ? "Percentage" : "Qty",
-                                width: 120,
-                                render: (row) => (
-                                  <InputFields
-                                    label=""
-                                    type="number"
-                                    placeholder={(promotion.promotionType === "1") ? "Percentage" : "Qty"}
-                                    value={String((row as Record<string, unknown>)['toQuantity'] ?? "")}
-                                      onChange={e => updateOfferItemTable(tableIdx, row.idx, "toQuantity", clampPercentInput(e.target.value))}
-                                    width="w-full"
-                                  />
-                                ),
-                              },
-                              {
-                                key: "action",
-                                label: "Action",
-                                width: 80,
-                                render: (row: any) => (
-                                  <button
-                                    type="button"
-                                    className="text-red-500 flex items-center justify-center w-full h-full"
-                                    onClick={() => deleteOfferItem(tableIdx, row.idx)}
-                                  >
-                                    <Icon icon="lucide:trash-2" width={20} />
-                                  </button>
-                                ),
-                              },
-                            ]),
-                            pageSize,
-                          }}
-                        />
-                        {offerItemsData.length > pageSize && renderPaginationBar(totalPages)}
-                        
-                        {/* Add Button */}
-                        <div className="mt-4">
-                            <button
-                                type="button"
-                                className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-                                onClick={() => addOfferItem(tableIdx)}
-                            >
-                                <Icon icon="material-symbols:add-circle-outline" width={20} />
-                                Add New Item
-                            </button>
+                                  ),
+                                },
+                                {
+                                  key: "itemName",
+                                  label: "Item Name",
+                                  width: 300,
+                                  render: (row) => (
+                                    <InputFields
+                                      label=""
+                                      type="text"
+                                      placeholder="Item Name"
+                                      value={String((row as Record<string, unknown>)['itemName'] ?? "")}
+                                      onChange={e => updateOfferItemTable(tableIdx, row.idx, "itemName", e.target.value)}
+                                      width="w-full"
+                                    />
+                                  ),
+                                },
+                                {
+                                  key: "uom",
+                                  label: "UOM",
+                                  width: 150,
+                                  render: (row) => {
+                                    const uomOptions = getUomOptionsForRow(row);
+                                    return (
+                                      <InputFields
+                                        label=""
+                                        type="select"
+                                        isSingle={true}
+                                        placeholder="Select UOM"
+                                        options={[{ label: `Select UOM`, value: "" }, ...uomOptions.map((o: any) => ({ label: o.label, value: o.value }))]}
+                                        value={String((row as Record<string, unknown>)['uom'] ?? "")}
+                                        onChange={e => updateOfferItemTable(tableIdx, row.idx, "uom", e.target.value)}
+                                        width="w-full"
+                                      />
+                                    );
+                                  }
+                                },
+                              ],
+                              pageSize,
+                            }}
+                          />
+                          {offerItemsData.length > pageSize && renderPaginationBar(totalPages)}
                         </div>
-                      </div>
-                    </React.Fragment>
-                  );
-                });
-              })()}
+                      </React.Fragment>
+                    );
+                  });
+                })()}
+              </div>
             </div>
-          </div>
 
-        </ContainerCard>
-      );
-    default:
-      return null;
-  }
-};
+          </ContainerCard>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -1744,7 +1471,7 @@ export default function AddPricing() {
         <StepperForm
           steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
           currentStep={currentStep}
-          onStepClick={() => {}}
+          onStepClick={() => { }}
           onBack={prevStep}
           onNext={handleNext}
           onSubmit={handleSubmit}
