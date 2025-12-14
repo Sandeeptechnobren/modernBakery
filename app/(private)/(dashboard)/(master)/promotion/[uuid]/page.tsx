@@ -8,7 +8,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { itemList, addPromotionHeader, promotionDetailById, promotionHeaderById } from "@/app/services/allApi";
+import { itemList, addPromotionHeader, editPromotionHeader, promotionDetailById, promotionHeaderById } from "@/app/services/allApi";
 import InputFields from "@/app/components/inputFields";
 import Table from "@/app/components/customTable";
 import { useRouter } from "next/navigation";
@@ -77,18 +77,6 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
     });
   }, [keyCombo]);
 
-  useEffect(() => {
-    const selected: { Location: string; Customer: string; Item: string } = { Location: "", Customer: "", Item: "" };
-    keysArray.forEach((group) => {
-      if (group.type === "Location" || group.type === "Customer" || group.type === "Item") {
-        const found = group.options.find((o) => o.isSelected);
-        selected[group.type as keyof KeyComboType] = found ? found.label : "";
-      }
-    });
-    console.log(selected, "selected")
-    setKeyCombo(selected);
-  }, [keysArray, setKeyCombo]);
-
   function onKeySelect(index: number, optionIndex: number) {
     setKeysArray((prev) => {
       const newKeys = prev.map((group, i) => {
@@ -122,6 +110,17 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
           };
         }
       });
+
+      // Update parent state directly
+      const selected: { Location: string; Customer: string; Item: string } = { Location: "", Customer: "", Item: "" };
+      newKeys.forEach((group) => {
+        if (group.type === "Location" || group.type === "Customer" || group.type === "Item") {
+          const found = group.options.find((o) => o.isSelected);
+          selected[group.type as keyof KeyComboType] = found ? found.label : "";
+        }
+      });
+      setKeyCombo(selected);
+
       return newKeys;
     });
   }
@@ -207,19 +206,85 @@ export default function AddPricing() {
       try {
         // Only call promotionHeaderById for edit mode
         const headerRes = await promotionHeaderById(id);
+        console.log(headerRes,"hearder")
         if (headerRes && typeof headerRes === "object") {
+          const data = headerRes.data; // Alias for easier access
           setPromotion(s => ({
             ...s,
-            itemName: headerRes.promotion_name || "",
-            from_date: headerRes.from_date || "",
-            to_date: headerRes.to_date || "",
-            offer_type: headerRes.offer_type || "",
-            // type: headerRes.type || "",
-            // discount_type: headerRes.discount_type || "",
-            promotionType: headerRes.promotionType || "",
-            bundle_combination: headerRes.bundle_combination || s.bundle_combination || "",
-            status: headerRes.status !== undefined ? String(headerRes.status) : s.status,
+            itemName: data.promotion_name || "",
+            startDate: data.from_date || "", // Map from_date -> startDate
+            endDate: data.to_date || "",     // Map to_date -> endDate
+            offer_type: data.offer_type || "",
+            promotionType: data.promotion_type || "", // Map promotion_type -> promotionType
+            bundle_combination: data.bundle_combination || s.bundle_combination || "",
+            status: data.status !== undefined ? String(data.status) : s.status,
+            salesTeamType: String(data.sales_team_type || ""),
+            projectList: String(data.project_list || ""),
           }));
+
+          // Set Key Combo
+          const keys = data.key || {};
+          const newKeyCombo = {
+            Location: keys.Location?.[0] || "",
+            Customer: keys.Customer?.[0] || "",
+            Item: data.item_category?.length > 0 ? "Item Category" : (data.items?.length > 0 ? "Item" : ""),
+          };
+          setKeyCombo(newKeyCombo);
+
+          // Set Key Values
+          const newKeyValue: Record<string, string[]> = {};
+          if (newKeyCombo.Location) newKeyValue[newKeyCombo.Location] = data.location?.map(String) || [];
+          if (newKeyCombo.Customer) newKeyValue[newKeyCombo.Customer] = data.customer?.map(String) || [];
+          if (newKeyCombo.Item === "Item Category") {
+            const categories = data.item_category?.map(String) || [];
+            newKeyValue["Item Category"] = categories;
+            if (categories.length > 0) {
+              fetchItemsCategoryWise(categories.toString());
+            }
+            // Populate Items if available
+            if (data.items && data.items.length > 0) {
+               newKeyValue["Item"] = data.items.map(String);
+            }
+          }
+          if (newKeyCombo.Item === "Item") {
+             newKeyValue["Item"] = data.items?.map(String) || [];
+          }
+          setKeyValue(newKeyValue);
+
+          // Set UOM
+          setSelectedUom(String(data.uom || ""));
+
+          // Set Order Tables (Promotion Details)
+          if (Array.isArray(data.promotion_details) && data.promotion_details.length > 0) {
+             const details = data.promotion_details.map((d: any) => ({
+               promotionGroupName: "", // Not in response, maybe infer?
+               itemName: "", // Will be filled by item fetch logic if needed
+               itemCode: "", 
+               quantity: String(d.from_qty || ""),
+               toQuantity: String(d.to_qty || ""),
+               uom: String(data.uom || "CTN"), // Use header UOM as fallback?
+               price: "",
+               free_qty: String(d.free_qty || ""),
+               idx: String(d.id || Math.random())
+             }));
+             setOrderTables([details]);
+          }
+
+          // Set Offer Items
+          // Response has `offer_items` as object, but state expects array of arrays (for tables)
+          if (data.offer_items) {
+            const offerData = Array.isArray(data.offer_items) ? data.offer_items : [data.offer_items];
+            const offers = offerData.map((o: any) => ({
+              promotionGroupName: "",
+              itemName: "", // Can fetch name if needed
+              itemCode: String(o.item_id || ""),
+              uom: String(o.uom || ""),
+              toQuantity: "", // Not in example response?
+              is_discount: "0",
+              idx: String(Math.random())
+            }));
+            setOfferItems([offers]);
+          }
         }
       } catch (err) {
         showSnackbar("Failed to fetch promotion data for edit mode", "error");
@@ -330,39 +395,63 @@ export default function AddPricing() {
       otherwise: (schema) => schema.notRequired(),
     }),
     item: yup.array().of(yup.string()).min(1, "At least one item is required"),
+    promotion_details: yup.array().of(
+      yup.object().shape({
+        from_qty: yup.number()
+          .required("From Quantity is required")
+          .moreThan(0, "From Quantity must be greater than 0")
+          .transform((value) => (isNaN(value) ? undefined : value)),
+        to_qty: yup.number()
+          .required("To Quantity is required")
+          .moreThan(0, "To Quantity must be greater than 0")
+          .transform((value) => (isNaN(value) ? undefined : value))
+          .test('is-greater', 'To Quantity must be greater than From Quantity', function(value) {
+            const { from_qty } = this.parent;
+            return !from_qty || !value || value > from_qty;
+          }),
+        free_qty: yup.number()
+          .required("Free Quantity is required")
+          .transform((value) => (isNaN(value) ? undefined : value)),
+      })
+    ).min(1, "At least one promotion detail is required"),
+    offer_items: yup.array().of(
+      yup.object().shape({
+        item_id: yup.string().required("Offer Item is required"),
+        uom: yup.string().required("Offer Item UOM is required"),
+      })
+    ).min(1, "At least one offer item is required"),
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const clearErrors = () => setErrors({});
+  // const [errors, setErrors] = useState<Record<string, string>>({});
+  // const clearErrors = () => setErrors({});
 
   const handleSubmit = async () => {
-    clearErrors();
 
-    const initialKeys = [
-      {
-        type: "Location",
-        options: [
-          { id: "1", label: "Company", isSelected: false },
-          { id: "2", label: "Region", isSelected: false },
-          { id: "3", label: "Warehouse", isSelected: false },
-          { id: "4", label: "Area", isSelected: false },
-        ],
-      },
-      {
-        type: "Customer",
-        options: [
-          { id: "6", label: "Channel", isSelected: false },
-          { id: "7", label: "Customer Category", isSelected: false },
-          { id: "8", label: "Customer", isSelected: false },
-        ],
-      },
-      {
-        type: "Item",
-        options: [
-          { id: "9", label: "Item Category", isSelected: false },
-          { id: "10", label: "Item", isSelected: false },
-        ],
-      },
-    ];
+    // const initialKeys = [
+    //   {
+    //     type: "Location",
+    //     options: [
+    //       { id: "1", label: "Company", isSelected: false },
+    //       { id: "2", label: "Region", isSelected: false },
+    //       { id: "3", label: "Warehouse", isSelected: false },
+    //       { id: "4", label: "Area", isSelected: false },
+    //     ],
+    //   },
+    //   {
+    //     type: "Customer",
+    //     options: [
+    //       { id: "6", label: "Channel", isSelected: false },
+    //       { id: "7", label: "Customer Category", isSelected: false },
+    //       { id: "8", label: "Customer", isSelected: false },
+    //     ],
+    //   },
+    //   {
+    //     type: "Item",
+    //     options: [
+    //       { id: "9", label: "Item Category", isSelected: false },
+    //       { id: "10", label: "Item", isSelected: false },
+    //     ],
+    //   },
+    // ];
 
     // function getKeyId(type: string, label: string): string {
     //   const group = initialKeys.find(g => g.type === type);
@@ -412,11 +501,11 @@ export default function AddPricing() {
       to_date: promotion.endDate || "",
       status: promotion.status || "1",
       // discount_type: "",
-      promotion_type: promotion.promotionType || "",
+      promotion_type: promotion.promotionType || "quantity",
       bundle_combination: promotion.bundle_combination || "",
       sales_team_type: promotion.salesTeamType || "",
       project_list: promotion.projectList || "",
-      item: selectedItemIds,
+      items: selectedItemIds,
       item_category: keyValue["Item Category"] || [],
       uom: selectedUom || "CTN",
       location: keyValue[keyCombo.Location],
@@ -462,7 +551,7 @@ export default function AddPricing() {
       }
 
       if (Object.keys(missingErrors).length > 0) {
-        setErrors(missingErrors);
+        // setErrors(missingErrors);
         showSnackbar(`Please fill ${Object.keys(missingErrors).join(", ")} before submitting`, "error");
         return;
       }
@@ -470,9 +559,14 @@ export default function AddPricing() {
       // ✅ Validate payload-level required pieces (items)
       await pricingValidationSchema.validate(payload, { abortEarly: false });
       console.log(payload, "payload")
-      return
       setLoading(true);
-      const res = await addPromotionHeader(payload);
+      
+      let res;
+      if (isEditMode && id) {
+        res = await editPromotionHeader(String(id), payload);
+      } else {
+        res = await addPromotionHeader(payload);
+      }
 
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit Promotion", "error");
@@ -492,6 +586,12 @@ export default function AddPricing() {
         const validationError = err as yup.ValidationError;
 
         if (Array.isArray(validationError.inner)) {
+          // Get the first error message to show in snackbar
+          const firstError = validationError.inner[0];
+          if (firstError) {
+             showSnackbar(firstError.message, "error");
+          }
+
           validationError.inner.forEach((e: yup.ValidationError) => {
             if (e.path) {
               formErrors[e.path] = e.message;
@@ -500,8 +600,8 @@ export default function AddPricing() {
           });
         }
 
-        setErrors(formErrors);
-        showSnackbar("Please fix validation errors before proceeding", "error");
+        // setErrors(formErrors);
+        // showSnackbar("Please fix validation errors before proceeding", "error");
 
         // Log which fields failed for debugging
         console.log("Validation errors:", formErrors);
@@ -1035,7 +1135,12 @@ export default function AddPricing() {
                       columns: [
                         {
                           key: "quantity",
-                          label: (promotion.promotionType === "percentage") ? "Percentage" : "From Quantity",
+                          label: (
+                            <span>
+                              {(promotion.promotionType === "percentage") ? "Percentage" : "From Quantity"}
+                              <span className="text-red-500 ml-1">*</span>
+                            </span>
+                          ),
                           width: 120,
                           render: (row) => (
                             <InputFields
@@ -1051,7 +1156,12 @@ export default function AddPricing() {
                         },
                         {
                           key: "toQuantity",
-                          label: (promotion.promotionType === "percentage") ? "To Percentage" : "To Quantity",
+                          label: (
+                            <span>
+                              {(promotion.promotionType === "percentage") ? "To Percentage" : "To Quantity"}
+                              <span className="text-red-500 ml-1">*</span>
+                            </span>
+                          ),
                           width: 120,
                           render: (row) => (
                             <InputFields
@@ -1067,7 +1177,12 @@ export default function AddPricing() {
                         },
                         {
                           key: "free_qty",
-                          label: "Free Qty",
+                          label: (
+                            <span>
+                              Free Qty
+                              <span className="text-red-500 ml-1">*</span>
+                            </span>
+                          ),
                           width: 120,
                           render: (row) => (
                             <InputFields
@@ -1249,7 +1364,9 @@ export default function AddPricing() {
 
         return (
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
-
+            <div className="flex justify-end items-center mb-6">
+              <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
+            </div>
 
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
@@ -1370,7 +1487,10 @@ export default function AddPricing() {
             </div>
             <div className="mt-8">
               <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6 mb-8">
-                <div className="font-semibold text-lg mb-4">Promotional Order Item</div>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="font-semibold text-lg">Promotional Order Item</div>
+                  <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
+                </div>
 
                 <div className="grid grid-cols-3 gap-6 mb-5">
                   {keyCombo.Item === "Item Category" && (
@@ -1480,7 +1600,10 @@ export default function AddPricing() {
 
               </ContainerCard>
 
-              <div className="font-semibold text-lg mb-4">Promotional Offer Items</div>
+              <div className="flex justify-between items-center mb-4">
+                <div className="font-semibold text-lg">Promotional Offer Items</div>
+                <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
+              </div>
               {(() => {
                 // Always treat as array of tables (nested array)
                 let offerTables: OfferItemType[][] = [];
@@ -1539,7 +1662,12 @@ export default function AddPricing() {
                             columns: [
                               {
                                 key: "selectedItem",
-                                label: "Item",
+                                label: (
+                                  <span>
+                                    Item
+                                    <span className="text-red-500 ml-1">*</span>
+                                  </span>
+                                ),
                                 width: 300,
                                 render: (row: any) => (
                                   <InputFields
@@ -1547,6 +1675,7 @@ export default function AddPricing() {
                                     type="select"
                                     isSingle={true}
                                     placeholder="Select Item"
+                                    showSkeleton={itemLoading}
                                     options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
                                     value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
                                     onChange={e => selectItemForOffer(tableIdx, row.idx, e.target.value)}
@@ -1571,7 +1700,12 @@ export default function AddPricing() {
                               },
                               {
                                 key: "uom",
-                                label: "UOM",
+                                label: (
+                                  <span>
+                                    UOM
+                                    <span className="text-red-500 ml-1">*</span>
+                                  </span>
+                                ),
                                 width: 150,
                                 render: (row) => {
                                   return (

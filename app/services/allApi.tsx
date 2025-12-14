@@ -3314,7 +3314,7 @@ export const promotionHeaderById = async (id: string) => {
 export const editPromotionHeader = async (id: string, payload: object) => {
   try {
     const res = await API.put(
-      `/api/master/promotion-headers/update/${id}`,
+      `/api/master/promotion-headers/${id}`,
       payload
     );
 
