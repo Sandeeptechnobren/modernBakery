@@ -32,6 +32,7 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
+    { key: "osa_code", label: "Pricing Code" },
     { key: "code", label: "Pricing Code" },
     { key: "name", label: "Name" },
     { key: "applicable_for", label: "Pricing Type" },

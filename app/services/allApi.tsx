@@ -1389,12 +1389,23 @@ export const updateUser = async (id: string, payload: object) => {
 };
 
 // outlet channel APIs
-export const outletChannelList = async (params?: Params) => {
+// export const outletChannelList = async (params?: Params) => {
+//   try {
+//     const res = await API.get("/api/settings/outlet-channels/list", { params });
+//     return res.data;
+//   } catch (error) {
+//     return handleError(error);
+//   }
+// };
+export const ChannelList = async (params?: Record<string, string>) => {
   try {
-    const res = await API.get("/api/settings/outlet-channels/list", { params });
+    const res = await API.get("/api/settings/outlet-channels/list", {
+      params: params,
+    });
     return res.data;
   } catch (error) {
-    return handleError(error);
+    console.error("Channel List failed ❌", error);
+    throw error;
   }
 };
 
@@ -3643,9 +3654,9 @@ export const getWarehouseStockById = async (uuid: string) => {
   }
 };
 
-export const getAgentCusByRoute = async (id: string,params?:Params) => {
+export const getAgentCusByRoute = async (id: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/master/agent_customers/route/${id}`,{params});
+    const res = await API.get(`/api/master/agent_customers/route/${id}`, { params });
 
     return res.data;
   } catch (error: unknown) {

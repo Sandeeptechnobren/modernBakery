@@ -17,8 +17,8 @@ import { formatWithPattern } from "@/app/utils/formatDate";
 import { orderExportCollapse, orderExportHeader, orderList } from "@/app/services/companyTransaction";
 
 const columns = [
-    { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
-    { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
+    { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
+    { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="">{row.order_code}</span> },
     // {
     //     key: "warehouse_name",
     //     label: "Warehouse Name",

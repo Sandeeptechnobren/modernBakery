@@ -279,6 +279,8 @@ export default function AddEditServiceTerritory() {
                                 multiSelectChips={true}
                                 value={formik.values.areas}
                                 options={areaOptions}
+                                disabled={!formik.values.regions || formik.values.regions.length === 0}
+                                showSkeleton={localLoading}
                                 onChange={handleAreaChange}
                                 error={
                                     formik.touched.areas && formik.errors.areas
@@ -294,6 +296,8 @@ export default function AddEditServiceTerritory() {
                                 isSingle={false}
                                 multiSelectChips={true}
                                 value={formik.values.warehouses}
+                                disabled={!formik.values.areas || formik.values.areas.length === 0}
+                                showSkeleton={localLoading}
                                 options={warehouseOptions}
                                 onChange={handleWarehouseChange}
                                 error={

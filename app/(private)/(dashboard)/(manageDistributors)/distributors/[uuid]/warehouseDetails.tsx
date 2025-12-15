@@ -128,14 +128,29 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
-                    type='number'
+                    type="number"
                     name="tin_no"
                     label="TIN NO."
                     value={values.tin_no}
-                    onChange={(e) => setFieldValue('tin_no', e.target.value)}
+                    onChange={(e) => {
+                        const val = e.target.value;
+
+                        // Prevent negative values
+                        if (Number(val) < 0) return;
+
+                        setFieldValue("tin_no", val);
+                    }}
                     placeholder="Enter TIN No."
+                    min={0}                // ← prevents negative input
+                    onKeyDown={(e) => {
+                        // Block "-" key
+                        if (e.key === "-" || e.key === "e") {
+                            e.preventDefault();
+                        }
+                    }}
                 />
             </div>
+
             <div className="flex flex-col gap-2">
                 <InputFields
                     required

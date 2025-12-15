@@ -72,27 +72,29 @@ export default function ChannelList() {
     async (pageNo: number = 1, pageSize: number = 10): Promise<listReturnType> => {
       setLoading(true);
 
-      const result = await channelList({
-        current_page: pageNo.toString(),
-        per_page: pageSize.toString(),
+      const res = await channelList({
+        limit: pageSize.toString(),
+        page: pageNo.toString(),
       });
 
       setLoading(false);
 
-      if (result.error) {
-        showSnackbar(result.data.message || "Failed to fetch outlet channels", "error");
-        throw new Error("Error fetching data");
+      if (res.error) {
+        showSnackbar(res.data.message || "Failed to fetch outlet channels ❌", "error");
+        throw new Error("Unable to fetch the outlet channels");
       }
 
       return {
-        data: result.data || [],
-        currentPage: result.pagination?.current_page || 1,
-        pageSize: result.pagination?.per_page || 10,
-        total: result.pagination?.total_records || 0, // ✅ FIXED
+        data: res.data || [],
+        currentPage: res.pagination.current_page || pageNo,
+        pageSize: res.pagination.per_page || pageSize,
+        total: res.pagination.total_pages || 1,
+        totalRecords: res.pagination.total_records || 0,
       };
     },
     [showSnackbar]
   );
+
 
 
 

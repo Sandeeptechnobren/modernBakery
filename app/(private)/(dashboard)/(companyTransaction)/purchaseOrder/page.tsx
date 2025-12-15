@@ -17,10 +17,10 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { downloadFile } from "@/app/services/allApi";
 
 const columns = [
-    { key: "sap_id", label: "SAP", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.sap_id}</span> },
-    { key: "order_code", label: "Order Number", showByDefault: true,},
+    { key: "sap_id", label: "SAP", showByDefault: true, render: (row: TableDataType) => <span>{row.sap_id}</span> },
+    { key: "order_code", label: "Order Number", showByDefault: true, },
     { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => formatDate(row.created_at) || "-" },
-    
+
     {
         key: "customer_name",
         label: "Customer",

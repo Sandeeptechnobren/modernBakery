@@ -343,41 +343,39 @@ export default function Planogram() {
     try {
       const schema = stepSchemas[currentStep - 1];
       await schema.validate(values, { abortEarly: false });
+
+      // 🧼 Clear old validation when step changes
+      actions.setTouched({});
+      actions.setErrors({});
+
+      // Continue to next step
       markStepCompleted(currentStep);
       nextStep();
     } catch (err) {
       if (err instanceof Yup.ValidationError) {
-        // Create a simpler error object that matches FormikErrors type
         const errorMap: FormikErrors<PlanogramFormValues> = {};
+        const touchedMap: FormikTouched<PlanogramFormValues> = {};
 
         err.inner.forEach((error) => {
           if (error.path) {
             // Only set errors for fields that exist in our form values
             const fieldName = error.path as keyof PlanogramFormValues;
-            const errorMap: Record<string, string> = {};
 
             if (fieldName in values) {
-              errorMap[fieldName] = error.message;
+              (errorMap as any)[fieldName] = error.message;
             }
+            (touchedMap as any)[fieldName] = true; // Keep touched for all validated fields
           }
         });
 
         actions.setErrors(errorMap);
-
-        // Set touched for the fields that have errors
-        const touchedMap: FormikTouched<PlanogramFormValues> = {};
-        err.inner.forEach((error) => {
-          if (error.path) {
-            const fieldName = error.path as keyof PlanogramFormValues;
-            if (fieldName in values) {
-              (touchedMap[fieldName] as boolean) = true;
-            }
-          }
-        });
         actions.setTouched(touchedMap);
+
+        return;
       }
     }
   };
+
 
   // ---------------- IMAGE HANDLING ----------------
   const handleImageUpload = (
@@ -404,10 +402,10 @@ export default function Planogram() {
 
     if (existingIndex >= 0) {
       updatedImages[shelfOption.merch_id][shelfOption.cust_id][existingIndex] =
-        {
-          shelf_id: shelfId,
-          image: file,
-        };
+      {
+        shelf_id: shelfId,
+        image: file,
+      };
     } else {
       updatedImages[shelfOption.merch_id][shelfOption.cust_id].push({
         shelf_id: shelfId,
@@ -503,7 +501,7 @@ export default function Planogram() {
                   name="name"
                   value={values.name}
                   onChange={(e) => setFieldValue("name", e.target.value)}
-                  // error={touched.name && errors.name}
+                // error={touched.name && errors.name}
                 />
                 {/* <ErrorMessage
                   name="name"
@@ -519,7 +517,7 @@ export default function Planogram() {
                   name="valid_from"
                   value={values.valid_from}
                   onChange={(e) => setFieldValue("valid_from", e.target.value)}
-                  // error={touched.valid_from && errors.valid_from}
+                // error={touched.valid_from && errors.valid_from}
                 />
                 {/* <ErrorMessage
                   name="valid_from"
@@ -536,7 +534,7 @@ export default function Planogram() {
                   name="valid_to"
                   value={values.valid_to}
                   onChange={(e) => setFieldValue("valid_to", e.target.value)}
-                  // error={touched.valid_to && errors.valid_to}
+                // error={touched.valid_to && errors.valid_to}
                 />
                 {/* <ErrorMessage
                   name="valid_to"
@@ -590,8 +588,8 @@ export default function Planogram() {
                     values.merchendiser_ids.length === 0
                       ? "A merchandiser must be selected"
                       : customerOptions.length === 0
-                      ? "No customer found"
-                      : ""
+                        ? "No customer found"
+                        : ""
                   }
                   required
                   label="Customers"
@@ -632,8 +630,8 @@ export default function Planogram() {
                     values.customer_ids.length === 0
                       ? "A customer must be selected"
                       : shelfOptions.length === 0
-                      ? "No shelf found"
-                      : ""
+                        ? "No shelf found"
+                        : ""
                   }
                   required
                   label="Shelf"
@@ -651,12 +649,12 @@ export default function Planogram() {
                     ).map(Number);
                     setFieldValue("shelf_id", selectedIds);
                   }}
-                  // error={
-                  //   touched.shelf_id &&
-                  //   (Array.isArray(errors.shelf_id)
-                  //     ? errors.shelf_id[0]
-                  //     : errors.shelf_id)
-                  // }
+                // error={
+                //   touched.shelf_id &&
+                //   (Array.isArray(errors.shelf_id)
+                //     ? errors.shelf_id[0]
+                //     : errors.shelf_id)
+                // }
                 />
                 {/* <ErrorMessage
                   name="shelf_id"
@@ -725,7 +723,7 @@ export default function Planogram() {
                                       currentImage
                                         ? URL.createObjectURL(currentImage)
                                         : process.env.NEXT_PUBLIC_API_URL +
-                                            existingImage || ""
+                                        existingImage || ""
                                     }
                                     alt={`Shelf ${shelfId}`}
                                     className="h-32 w-32 object-cover rounded-lg border bg-gray-100"
