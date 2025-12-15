@@ -29,7 +29,7 @@ import {
   updateChillerRequest,
 } from "@/app/services/assetsApi";
 import { salesmanList } from "@/app/services/allApi";
-import { outletChannelList } from "@/app/services/allApi";
+import { channelList } from "@/app/services/allApi";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/app/components/Loading";
@@ -454,7 +454,7 @@ export default function AddCompanyWithStepper() {
       }
 
       // Fetch outlet data
-      const outletRes = await outletChannelList();
+      const outletRes = await channelList();
       if (outletRes.status === "success") {
         const outletOpts = outletRes.data.map((outlet: {
           id: string,
