@@ -8,13 +8,14 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { itemList, addPromotionHeader, editPromotionHeader, promotionDetailById, promotionHeaderById } from "@/app/services/allApi";
+import { addPromotionHeader, editPromotionHeader, promotionHeaderById } from "@/app/services/allApi";
 import InputFields from "@/app/components/inputFields";
 import Table from "@/app/components/customTable";
 import { useRouter } from "next/navigation";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import * as yup from "yup";
 import { Item } from "@/app/(private)/utils/excise";
+import Loading from "@/app/components/Loading";
 
 type KeyComboType = {
   Location: string;
@@ -78,30 +79,27 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
   }, [keyCombo]);
 
   function onKeySelect(index: number, optionIndex: number) {
-    // 1. Calculate the new state for keysArray based on the previous state
+    // 1. Calculate the new state based on the CURRENT keysArray state
     const newKeys = keysArray.map((group, i) => {
-      if (i !== index) return group; // If not the current group, return as is
+      if (i !== index) return group;
 
       // Determine if this group should be single-select
       // Location, Customer and Item are single-select
       const isSingleSelectGroup = (group.type === "Location" || group.type === "Customer" || group.type === "Item");
 
       if (isSingleSelectGroup) {
-        // Single-select logic: Toggle the clicked option, deselect others
         return {
           ...group,
           options: group.options.map((opt, j) => {
             if (j === optionIndex) {
-              // Toggle the clicked option
               return { ...opt, isSelected: !opt.isSelected };
             } else {
-              // Deselect all other options in this group
               return { ...opt, isSelected: false };
             }
           }),
         };
       } else {
-        // Multi-select logic (for Item group)
+        // Multi-select logic (legacy/unused for these groups now but kept for structure)
         return {
           ...group,
           options: group.options.map((opt, j) =>
@@ -127,67 +125,68 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
 
 
 
-  return (
-    <ContainerCard className="h-fit mt-[20px] flex flex-col gap-2 p-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none text-[#181D27]">
-      <div className="flex justify-between items-center mb-4">
-        <div className="font-semibold text-[20px]">Key Combination</div>
-        <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
-      </div>
-      <div className="grid grid-cols-3 gap-6">
-        {keysArray.map((group, index) => (
-          <div
-            key={index}
-            className="bg-white border border-[#E5E7EB] rounded-[12px] p-6 flex flex-col shadow-sm"
-          >
-            <div className="font-semibold text-[18px] mb-4 text-[#181D27]">
-              {group.type}
-              {(group.type === "Location" || group.type === "Item") && <span className="text-red-500 ml-1">*</span>}
-            </div>
-            <div className="flex flex-col gap-4">
-              {group.options.map((option, optionIndex) => (
-                <CustomCheckbox
-                  key={optionIndex}
-                  id={option.label + index}
-                  label={option.label}
-                  checked={option.isSelected}
-                  onChange={() => onKeySelect(index, optionIndex)}
-                />
-              ))}
-            </div>
+
+return (
+  <ContainerCard className="h-fit mt-[20px] flex flex-col gap-2 p-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none text-[#181D27]">
+    <div className="flex justify-between items-center mb-4">
+      <div className="font-semibold text-[20px]">Key Combination</div>
+      <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
+    </div>
+    <div className="grid grid-cols-3 gap-6">
+      {keysArray.map((group, index) => (
+        <div
+          key={index}
+          className="bg-white border border-[#E5E7EB] rounded-[12px] p-6 flex flex-col shadow-sm"
+        >
+          <div className="font-semibold text-[18px] mb-4 text-[#181D27]">
+            {group.type}
+            {(group.type === "Location" || group.type === "Item") && <span className="text-red-500 ml-1">*</span>}
           </div>
-        ))}
-      </div>
-      <ContainerCard className="mt-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none p-4 flex items-center gap-2">
-        <span className="font-semibold text-[#181D27] text-[16px]">Key</span>
-        <div className="flex flex-wrap items-center gap-2">
-          {(() => {
-            const loc = keyCombo.Location;
-            return loc ? (
-              <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{loc}</span>
-            ) : null;
-          })()}
-          {(() => {
-            const cust = keyCombo.Customer;
-            return cust ? (
-              <>
-                <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
-                <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{cust}</span>
-              </>
-            ) : null;
-          })()}
-          {(() => {
-            const item = keyCombo.Item;
-            return item ? (
-              <>
-                <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
-                <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{item}</span>
-              </>
-            ) : null;
-          })()}
+          <div className="flex flex-col gap-4">
+            {group.options.map((option, optionIndex) => (
+              <CustomCheckbox
+                key={optionIndex}
+                id={option.label + index}
+                label={option.label}
+                checked={option.isSelected}
+                onChange={() => onKeySelect(index, optionIndex)}
+              />
+            ))}
+          </div>
         </div>
-      </ContainerCard>
+      ))}
+    </div>
+    <ContainerCard className="mt-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none p-4 flex items-center gap-2">
+      <span className="font-semibold text-[#181D27] text-[16px]">Key</span>
+      <div className="flex flex-wrap items-center gap-2">
+        {(() => {
+          const loc = keyCombo.Location;
+          return loc ? (
+            <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{loc}</span>
+          ) : null;
+        })()}
+        {(() => {
+          const cust = keyCombo.Customer;
+          return cust ? (
+            <>
+              <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
+              <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{cust}</span>
+            </>
+          ) : null;
+        })()}
+        {(() => {
+          const item = keyCombo.Item;
+          return item ? (
+            <>
+              <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
+              <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{item}</span>
+            </>
+          ) : null;
+        })()}
+      </div>
     </ContainerCard>
-  );
+  </ContainerCard>
+);
 }
 
 
@@ -198,7 +197,24 @@ export default function AddPricing() {
   const rawParam = (paramsTyped?.uuid ?? paramsTyped?.id) as string | string[] | undefined;
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
   const isEditMode = id !== undefined && id !== "add" && id !== "";
-  const { item, companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions, customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchRoutebySalesmanOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions, fetchItemsCategoryWise, salesmanTypeOptions, projectOptions } = useAllDropdownListData();
+  const {
+    companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions, 
+    customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions, 
+    fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, 
+    fetchCompanyCustomersOptions, fetchItemsCategoryWise, salesmanTypeOptions, projectOptions,
+    ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureUomLoaded
+  } = useAllDropdownListData();
+
+  useEffect(() => {
+    ensureCompanyLoaded();
+    ensureChannelLoaded();
+    ensureItemCategoryLoaded();
+    ensureSalesmanTypeLoaded();
+    ensureProjectLoaded();
+    ensureUomLoaded();
+  }, [ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureUomLoaded]);
+
+
   useEffect(() => {
     async function fetchEditData() {
       if (!isEditMode || !id) return;
@@ -208,6 +224,7 @@ export default function AddPricing() {
         const headerRes = await promotionHeaderById(id);
         if (headerRes && typeof headerRes === "object") {
           const data = headerRes.data; // Alias for easier access
+          // Set Promotion specific fields
           setPromotion(s => ({
             ...s,
             itemName: data.promotion_name || "",
@@ -221,32 +238,55 @@ export default function AddPricing() {
             projectList: Array.isArray(data.project_list) ? data.project_list.map(String) : (data.project_list ? [String(data.project_list)] : []),
           }));
 
-          // Set Key Combo
+          // Determine Key Combo (prioritize percentage_discounts if present)
+          let newKeyComboItem = "";
+          if (Array.isArray(data.percentage_discounts) && data.percentage_discounts.length > 0) {
+            if (data.percentage_discounts[0].percentage_item_category) {
+              newKeyComboItem = "Item Category";
+            } else if (data.percentage_discounts[0].percentage_item_id) {
+              newKeyComboItem = "Item";
+            }
+          } else {
+            newKeyComboItem = data.item_category?.length > 0 ? "Item Category" : (data.items?.length > 0 ? "Item" : "");
+          }
           const keys = data.key || {};
           const newKeyCombo = {
             Location: keys.Location?.[0] || "",
             Customer: keys.Customer?.[0] || "",
-            Item: data.item_category?.length > 0 ? "Item Category" : (data.items?.length > 0 ? "Item" : ""),
+            Item: newKeyComboItem,
           };
           setKeyCombo(newKeyCombo);
 
-          // Set Key Values
+          // Populate Percentage Discounts
+          if (Array.isArray(data.percentage_discounts) && data.percentage_discounts.length > 0) {
+            const mappedPercentageDiscounts = data.percentage_discounts.map((pd: any) => ({
+              key: pd.percentage_item_id || pd.percentage_item_category || "",
+              percentage: String(pd.percentage || ""),
+              idx: String(Math.random())
+            }));
+            setPercentageDiscounts(mappedPercentageDiscounts);
+          }
+
+          // Set Key Values (for Location and Customer, Item/Category handled by Percentage Discounts or sync effect)
           const newKeyValue: Record<string, string[]> = {};
           if (newKeyCombo.Location) newKeyValue[newKeyCombo.Location] = data.location?.map(String) || [];
           if (newKeyCombo.Customer) newKeyValue[newKeyCombo.Customer] = data.customer?.map(String) || [];
-          if (newKeyCombo.Item === "Item Category") {
-            const categories = data.item_category?.map(String) || [];
-            newKeyValue["Item Category"] = categories;
-            if (categories.length > 0) {
-              fetchItemsCategoryWise(categories.toString());
+          // Item/Item Category for keyValue is populated via sync effect from percentageDiscounts
+          // or directly from data.item_category / data.items if not percentage promotion.
+          if (!newKeyComboItem) { // Only set if not percentage_discounts driven
+            if (newKeyCombo.Item === "Item Category") {
+              const categories = data.item_category?.map(String) || [];
+              newKeyValue["Item Category"] = categories;
+              if (categories.length > 0) {
+                fetchItemsCategoryWise(categories.toString());
+              }
+              if (data.items && data.items.length > 0) {
+                 newKeyValue["Item"] = data.items.map(String);
+              }
             }
-            // Populate Items if available
-            if (data.items && data.items.length > 0) {
-              newKeyValue["Item"] = data.items.map(String);
+            if (newKeyCombo.Item === "Item") {
+               newKeyValue["Item"] = data.items?.map(String) || [];
             }
-          }
-          if (newKeyCombo.Item === "Item") {
-            newKeyValue["Item"] = data.items?.map(String) || [];
           }
           setKeyValue(newKeyValue);
 
@@ -307,7 +347,7 @@ export default function AddPricing() {
     isLastStep
   } = useStepperForm(steps.length);
   const { showSnackbar } = useSnackbar();
-  const [itemOptions, setItemOptions] = useState<Item>([])
+  const [itemOptions, setItemOptions] = useState<any[]>([])
   const [loading, setLoading] = useState(false);
   const validateStep = (step: number) => {
     if (step === 1) {
@@ -479,15 +519,15 @@ export default function AddPricing() {
     // ].filter(Boolean);
     // const description = descriptionIds.join(",");
 
-        let selectedItemIds = keyValue["Item"] || [];
+    let selectedItemIds = keyValue["Item"] || [];
 
-        if (keyCombo.Item === "Item Category") {
+    if (keyCombo.Item === "Item Category") {
 
-          selectedItemIds = [];
+      selectedItemIds = [];
 
-        }
+    }
 
-        // Validate Percentage Discounts before payload construction
+    // Validate Percentage Discounts before payload construction
     if (promotion.promotionType === "percentage") {
       const isPercentageValid = percentageDiscounts.every(pd => pd.key && pd.percentage);
       if (!isPercentageValid) {
@@ -546,14 +586,14 @@ export default function AddPricing() {
         // promotion_group_name: detail.promotionGroupName || "",
       })),
 
-      percentage_discounts: (promotion.promotionType === "percentage" 
-        ? percentageDiscounts.map(pd => ({
-            id: pd.key || "",
-            percentage: Number(pd.percentage) || 0,
-          }))
-        : []
-      ),
-
+            percentage_discounts: (promotion.promotionType === "percentage" 
+              ? percentageDiscounts.map(pd => ({
+                  percentage_item_id: keyCombo.Item === "Item" ? (pd.key || "") : null,
+                  percentage_item_category: keyCombo.Item === "Item Category" ? (pd.key || "") : null,
+                  percentage: Number(pd.percentage) || 0,
+                }))
+              : []
+            ),
       offer_items: (offerDetails || []).flatMap(detail => {
         const itemCodes = Array.isArray(detail.itemCode) ? detail.itemCode : [detail.itemCode];
         return itemCodes.map(code => ({
@@ -716,69 +756,8 @@ export default function AddPricing() {
   };
   const [percentageDiscounts, setPercentageDiscounts] = useState<PercentageDiscountType[]>([{ key: "", percentage: "", idx: "0" }]);
 
-  type ItemDetail = {
-    code?: string;
-    itemCode?: string;
-    name?: string;
-    itemName?: string;
-    label?: string;
-    [key: string]: unknown;
-  };
-  type Uom = { name?: string; uom?: string; uom_type?: string; price?: number | string;[k: string]: unknown };
   const [page, setPage] = useState(1);
   const pageSize = 5;
-  // useEffect(() => {
-  //   if (keyValue["Item"] && keyValue["Item"].length > 0) {
-  //     itemList({ ids: keyValue["Item"] })
-  //       .then(data => {
-  //         let items: ItemDetail[] = [];
-  //         if (Array.isArray(data)) {
-  //           items = data as ItemDetail[];
-  //         } else if (data && typeof data === "object" && Array.isArray(data.data)) {
-  //           items = data.data as ItemDetail[];
-  //         }
-
-  //         // Enrich each returned item with uomSummary from provider `item` state when available
-  //         const ctxItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
-  //         const enriched = items.map((it: ItemDetail) => {
-  //           // match by id or code
-  //           const match = ctxItems.find(ci => String((ci as Record<string, unknown>)['id'] ?? (ci as Record<string, unknown>)['code'] ?? (ci as Record<string, unknown>)['itemCode'] ?? '') === String(it.id ?? it.code ?? it.itemCode ?? ''));
-  //           const maybeUomSummary = match ? ((match as Record<string, unknown>)['uomSummary'] ?? (match as Record<string, unknown>)['uom']) : undefined;
-  //           const uomSummary = Array.isArray(maybeUomSummary) ? (maybeUomSummary as unknown[]) : (Array.isArray((it as Record<string, unknown>)['uom']) ? (it as Record<string, unknown>)['uom'] as unknown[] : []);
-  //           return { ...it, uomSummary };
-  //         });
-
-  //         setSelectedItemDetails(enriched);
-
-  //         // Sync orderTables with the first selected item to ensure consistency
-  //         if (enriched.length > 0) {
-  //           const primaryItem = enriched[0];
-  //           const name = String(primaryItem.name || primaryItem.itemName || primaryItem.label || "");
-  //           const code = String(primaryItem.code || primaryItem.itemCode || "");
-
-  //           // Get primary UOM
-  //           const uomList = (primaryItem.uomSummary || primaryItem.uom) as Uom[];
-  //           let uomName = "";
-  //           if (Array.isArray(uomList) && uomList.length > 0) {
-  //             const primary = uomList.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomList[0];
-  //             uomName = String(primary?.name ?? primary?.uom ?? '');
-  //           }
-  //           setSelectedUom(uomName);
-
-  //           setOrderTables(tables => tables.map(arr => arr.map(row => ({
-  //             ...row,
-  //             itemName: name,
-  //             itemCode: code
-  //           }))));
-  //         }
-  //       })
-  //       .catch(err => {
-  //         console.error("Failed to fetch item details", err);
-  //       });
-  //   } else {
-  //     setSelectedItemDetails([]);
-  //   }
-  // }, [keyValue["Item"], item]);
 
   useEffect(() => {
     const companies = keyValue["Company"];
@@ -829,9 +808,11 @@ export default function AddPricing() {
 
   // When Channel selection changes, fetch customer categories for the first selected channel.
   useEffect(() => {
+    console.log(keyValue["Channel"], "keyValue")
     const channels = keyValue["Channel"];
     if (Array.isArray(channels) && channels.length > 0) {
       try {
+        console.log("fetchCustomerCategoryOptions")
         fetchCustomerCategoryOptions(channels[0]);
       } catch (err) {
         console.error("Failed to fetch customer category options for channel", channels[0], err);
@@ -1024,38 +1005,13 @@ export default function AddPricing() {
                   </ContainerCard>
                 </div>
               )}
-              {/* <div className="flex-1">
-                <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
-                  <div className="font-semibold text-lg mb-4">Item</div>
-                  {keyCombo.Item && (
-                    <div className="mb-4">
-                      <div className="mb-2 text-base font-medium">
-                        {keyCombo.Item}
-                        <span className="text-red-500 ml-1">*</span>
-                      </div>
-                      <InputFields
-                        label=""
-                        type="select"
-                        isSingle={true}
-                        options={itemDropdownMap[keyCombo.Item] ? [{ label: `Select ${keyCombo.Item}`, value: "" }, ...itemDropdownMap[keyCombo.Item]] : [{ label: `Select ${keyCombo.Item}`, value: "" }]}
-                        value={keyValue[keyCombo.Item]?.[0] || ""}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setKeyValue(s => ({ ...s, [keyCombo.Item]: val ? [val] : [] }));
-                        }}
-                        width="w-full"
-                      />
-                    </div>
-                  )}
-                </ContainerCard>
-              </div> */}
             </div>
           </ContainerCard>
         );
       case 3:
         const itemDropdownMap: Record<string, DropdownOption[]> = {
           "Item Category": itemCategoryOptions,
-          Item: itemOptions,
+          Item: Array.isArray(itemOptions) ? itemOptions : [],
         };
         // Helper to update orderItems by row index for a specific table so each row
         // can store independent values even when itemCode is empty or duplicated.
@@ -1077,7 +1033,7 @@ export default function AddPricing() {
         function selectItemForOffer(tableIdx: number, rowIdx: string, value: string | string[]) {
           // If value is array, we might want to default UOM based on the first item or leave it.
           // For now, let's just update the itemCode.
-          
+
           setOfferItems((prev: OfferItemType[][] | any) => {
             // Always treat as nested array
             const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev as OfferItemType[][] : [prev as unknown as OfferItemType[]];
@@ -1166,7 +1122,7 @@ export default function AddPricing() {
           const dropdownOptions = isCategoryMode
             ? (itemDropdownMap["Item Category"] ? [{ label: `Select ${dropdownLabel}`, value: "" }, ...itemDropdownMap["Item Category"]] : [])
             : (itemDropdownMap["Item"] ? [{ label: `Select ${dropdownLabel}`, value: "" }, ...itemDropdownMap["Item"]] : []);
-          
+
           return (
             <div className="mb-6 mt-8">
               <div className="flex justify-between items-center mb-4">
@@ -1192,8 +1148,8 @@ export default function AddPricing() {
                           .filter(p => String(p.idx) !== String((row as Record<string, unknown>)['idx']))
                           .map(p => p.key)
                           .filter(k => k && k !== "");
-                        
-                        const filteredOptions = dropdownOptions.filter(opt => 
+
+                        const filteredOptions = dropdownOptions.filter(opt =>
                           opt.value === "" || opt.value === currentVal || !otherSelectedValues.includes(opt.value)
                         );
 
@@ -1252,8 +1208,8 @@ export default function AddPricing() {
                           disabled={percentageDiscounts.length === 1 && String((row as Record<string, unknown>)['idx']) === "0"}
                           className={`flex items-center justify-center w-full h-full ${percentageDiscounts.length === 1 && String((row as Record<string, unknown>)['idx']) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
                           onClick={() => {
-                             if (percentageDiscounts.length === 1 && String((row as Record<string, unknown>)['idx']) === "0") return;
-                             setPercentageDiscounts(prev => prev.filter(p => String(p.idx) !== String((row as Record<string, unknown>)['idx'])));
+                            if (percentageDiscounts.length === 1 && String((row as Record<string, unknown>)['idx']) === "0") return;
+                            setPercentageDiscounts(prev => prev.filter(p => String(p.idx) !== String((row as Record<string, unknown>)['idx'])));
                           }}
                         >
                           <Icon icon="lucide:trash-2" width={20} />
@@ -1456,7 +1412,7 @@ export default function AddPricing() {
         if (Array.isArray(offerItems) && offerItems.length > 0 && Array.isArray(offerItems[0])) {
           offerItemsData = (offerItems as OfferItemType[][]).flat().map((offerItem, idx) => ({ ...offerItem, idx: String(idx) }));
         } else {
-          offerItemsData = (offerItems as OfferItemType[]).map((offerItem, idx) => ({ ...offerItem, idx: String(idx) }));
+          offerItemsData = (offerItems as unknown as OfferItemType[]).map((offerItem, idx) => ({ ...offerItem, idx: String(idx) }));
         }
         if (offerItemsData.length === 0) {
           offerItemsData = [{
@@ -1620,11 +1576,11 @@ export default function AddPricing() {
                     } else {
                       selectedValues = val ? [String(val)] : [];
                     }
-                    setPromotion(s => ({ 
-                      ...s, 
+                    setPromotion(s => ({
+                      ...s,
                       salesTeamType: selectedValues,
                       // Clear projectList if "6" (Project) is not in the selection
-                      projectList: selectedValues.includes("6") ? s.projectList : [] 
+                      projectList: selectedValues.includes("6") ? s.projectList : []
                     }))
                   }}
                   width="w-full"
@@ -1919,7 +1875,7 @@ export default function AddPricing() {
                                           if (idx !== tableIdx) return [arr];
                                           const newArr = arr.filter((oi, i) => String(i) !== String((row as Record<string, unknown>)['idx']));
                                           if (newArr.length === 0 && tables.length > 1) {
-                                             return [];
+                                            return [];
                                           }
                                           return [newArr];
                                         });
@@ -1950,6 +1906,7 @@ export default function AddPricing() {
 
   return (
     <>
+      {loading && <Loading />}
       <div className="flex items-center gap-2">
         <Link href="/promotion">
           <Icon icon="lucide:arrow-left" width={24} />
