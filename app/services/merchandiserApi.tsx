@@ -127,6 +127,86 @@ export const shelvesListById = async (id: string, params?: Params) => {
   }
 };
 
+export const modelStockList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/shelve_item/list", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addModelStock = async (body: object) => {
+  try {
+    const res = await API.post(
+      "/api/merchendisher/shelve_item/add",
+      body
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateModelStock = async (uuid: string, body: object) => {
+  try {
+    const res = await API.put(
+      `/api/merchendisher/shelve_item/update/${uuid}`,
+      body
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteModelStock = async (uuid: string) => {
+  try {
+    const res = await API.delete(
+      `/api/merchendisher/shelve_item/destroy/${uuid}`
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const modelStockById = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/merchendisher/shelve_item/show/${uuid}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const viewStockList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/shelve_item/viewstock-list", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const damageList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/shelve_item/damage-list", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const expiryList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/shelve_item/expiry-list", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 // ✅ Update Planogram
 export const updatePlanogram = async (id: string, body: PlanogramType) => {
   try {

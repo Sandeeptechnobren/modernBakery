@@ -44,12 +44,12 @@ type ShelfFormValues = {
 type MerchandiserResponse = { id: number; name: string };
 type CustomerFromBackend = {
   id: number;
-  customer_code: string;
+  osa_code: string;
   business_name: string;
 };
 type CustomerFromEdit = {
   customers: number;
-  customer_code: string;
+  osa_code: string;
   owner_name: string;
 };
 type CustomerOption = { value: string; label: string };
@@ -135,8 +135,8 @@ export default function ShelfDisplay() {
   // Format label for customer dropdown
   const formatCustomerLabel = (customer: CustomerFromBackend | CustomerFromEdit) => {
     if ("business_name" in customer)
-      return `${customer.customer_code} - ${customer.business_name}`;
-    return `${customer.customer_code} - ${customer.owner_name}`;
+      return `${customer.osa_code} - ${customer.business_name}`;
+    return `${customer.osa_code} - ${customer.owner_name}`;
   };
 
   // Fetch Data
@@ -255,7 +255,7 @@ export default function ShelfDisplay() {
         showSnackbar(res.data?.message || "Failed to save shelf", "error");
       } else {
         showSnackbar(isEditMode ? "Shelf updated" : "Shelf added", "success");
-        router.push("/merchandiser/shelfDisplay");
+        router.push("/shelfDisplay");
       }
     } catch {
       showSnackbar("Something went wrong", "error");
@@ -405,7 +405,7 @@ export default function ShelfDisplay() {
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/merchandiser/shelfDisplay">
+        <Link href="/shelfDisplay">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
         <h1 className="text-xl font-semibold">{isEditMode ? "Update Shelf" : "Add Shelf"}</h1>

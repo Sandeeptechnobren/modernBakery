@@ -1,36 +1,33 @@
 "use client";
 
-import StepperForm, {
-  useStepperForm,
-  StepperStep,
-} from "@/app/components/stepperForm";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
-import Link from "next/link";
-import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
+import StepperForm, {
+  StepperStep,
+  useStepperForm,
+} from "@/app/components/stepperForm";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useRouter, useParams } from "next/navigation";
-import Image from "next/image";
+import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import {
-  Formik,
   Form,
-  ErrorMessage,
-  FormikHelpers,
+  Formik,
   FormikErrors,
-  FormikTouched,
+  FormikHelpers,
+  FormikTouched
 } from "formik";
-import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import * as Yup from "yup";
 
+import Loading from "@/app/components/Loading";
 import { merchendiserList } from "@/app/services/allApi";
 import {
   addPlanogram,
   getPlanogramById,
-  updatePlanogramById,
   shelvesDropdown,
-  shelfList,
+  updatePlanogramById,
 } from "@/app/services/merchandiserApi";
-import Loading from "@/app/components/Loading";
 
 // ---------------- TYPES ----------------
 type ShelfImage = {
@@ -88,7 +85,6 @@ const validationSchema = Yup.object({
   customer_ids: Yup.array()
     .of(Yup.number())
     .min(1, "Select at least one customer"),
-  shelf_id: Yup.array().of(Yup.number()).min(1, "Select at least one Shelf"),
 });
 
 // Only validate specific fields for each step
@@ -101,7 +97,6 @@ const stepSchemas = [
   Yup.object().shape({
     merchendiser_ids: validationSchema.fields.merchendiser_ids,
     customer_ids: validationSchema.fields.customer_ids,
-    shelf_id: validationSchema.fields.shelf_id,
   }),
 ];
 
@@ -118,9 +113,6 @@ export default function Planogram() {
 
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [shelfPayload, setShelfPayload] = useState<{
-    customer_groups: { [key: string]: string[] };
-  }>();
   const [merchendiserOptions, setMerchendiserOptions] = useState<
     CustomerOption[]
   >([]);
@@ -129,8 +121,16 @@ export default function Planogram() {
   const [existingImages, setExistingImages] = useState<Record<number, string>>(
     {}
   );
+  const [planogramImageError, setPlanogramImageError] = useState<string | null>(null);
+  const ALLOWED_LOGO_TYPES = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/webp",
+    "image/svg+xml",
+  ];
+  const MAX_LOGO_SIZE = 1 * 1024 * 1024;
 
-  console.log(shelfPayload);
 
   const [initialValues, setInitialValues] = useState<PlanogramFormValues>({
     name: "",
@@ -271,7 +271,6 @@ export default function Planogram() {
       });
 
       const payload = Object.fromEntries(payloadMap);
-      setShelfPayload({ customer_groups: payload });
 
       if (response?.status && Array.isArray(response.data)) {
         const formatted = response.data.map(
@@ -289,51 +288,6 @@ export default function Planogram() {
       setCustomerOptions([]);
     }
   };
-
-  // ---------------- FETCH SHELVES ----------------
-  const fetchShelves = async (payload: {
-    customer_groups: {
-      [key: string]: string[];
-    };
-  }) => {
-    if (!payload) {
-      setShelfOptions([]);
-      return;
-    }
-    try {
-      const response = await shelfList(payload);
-      const shelves: ShelfOption[] = [];
-
-      // Flatten the nested structure
-      for (const merchId in response.data) {
-        for (const custId in response.data[merchId]) {
-          response.data[merchId][custId].forEach(
-            (shelf: { shelf_id: number; shelf_name: string; code: string }) => {
-              console.log(shelf);
-              shelves.push({
-                value: String(shelf.shelf_id),
-                label: `${shelf.code || ""} - ${shelf.shelf_name || ""}`,
-                shelf_id: shelf.shelf_id,
-                merch_id: merchId,
-                cust_id: custId,
-              });
-            }
-          );
-        }
-      }
-
-      setShelfOptions(shelves);
-    } catch (err) {
-      console.error(err);
-      setShelfOptions([]);
-    }
-  };
-
-  useEffect(() => {
-    if (shelfPayload) {
-      fetchShelves(shelfPayload);
-    }
-  }, [shelfPayload]);
 
   // ---------------- STEP NAVIGATION ----------------
   const handleNext = async (
@@ -418,13 +372,12 @@ export default function Planogram() {
 
   // ---------------- SUBMIT ----------------
   const handleSubmit = async (values: PlanogramFormValues) => {
+    const formData = new FormData();
     try {
       if (!values.customer_ids.length) {
         showSnackbar("Please select at least one customer", "error");
         return;
       }
-
-      const formData = new FormData();
       formData.append("name", values.name);
       formData.append("valid_from", values.valid_from);
       formData.append("valid_to", values.valid_to);
@@ -435,9 +388,6 @@ export default function Planogram() {
       );
       values.customer_ids.forEach((id) =>
         formData.append("customer_id[]", String(id))
-      );
-      values.shelf_id.forEach((id) =>
-        formData.append("shelf_id[]", String(id))
       );
 
       // Append images in the correct format
@@ -473,10 +423,14 @@ export default function Planogram() {
             : "Planogram added successfully",
           "success"
         );
-        router.push("/merchandiser/planogram");
+        router.push("/planogram");
       }
     } catch (err) {
       console.error(err);
+      if (formData) {
+        console.error("FormData:", Object.fromEntries(formData.entries()));
+      }
+      console.error("Error details:", err);
       showSnackbar("Something went wrong", "error");
     }
   };
@@ -502,6 +456,7 @@ export default function Planogram() {
                   value={values.name}
                   onChange={(e) => setFieldValue("name", e.target.value)}
                 // error={touched.name && errors.name}
+                // error={touched.name && errors.name}
                 />
                 {/* <ErrorMessage
                   name="name"
@@ -517,6 +472,7 @@ export default function Planogram() {
                   name="valid_from"
                   value={values.valid_from}
                   onChange={(e) => setFieldValue("valid_from", e.target.value)}
+                // error={touched.valid_from && errors.valid_from}
                 // error={touched.valid_from && errors.valid_from}
                 />
                 {/* <ErrorMessage
@@ -534,6 +490,7 @@ export default function Planogram() {
                   name="valid_to"
                   value={values.valid_to}
                   onChange={(e) => setFieldValue("valid_to", e.target.value)}
+                // error={touched.valid_to && errors.valid_to}
                 // error={touched.valid_to && errors.valid_to}
                 />
                 {/* <ErrorMessage
@@ -564,7 +521,6 @@ export default function Planogram() {
                     ).map(Number);
                     setFieldValue("merchendiser_ids", selectedIds);
                     setFieldValue("customer_ids", []);
-                    setFieldValue("shelf_id", []);
                     setFieldValue("images", {});
                     fetchCustomers(selectedIds);
                   }}
@@ -606,9 +562,7 @@ export default function Planogram() {
                       Array.isArray(e.target.value) ? e.target.value : []
                     ).map(Number);
                     setFieldValue("customer_ids", selectedIds);
-                    setFieldValue("shelf_id", []);
                     setFieldValue("images", {});
-                    shelfPayload && fetchShelves(shelfPayload);
                   }}
                   error={
                     touched.customer_ids &&
@@ -623,125 +577,35 @@ export default function Planogram() {
                   className="text-xs text-red-500"
                 /> */}
               </div>
-              <div>
+              <div className="relative">
                 <InputFields
-                  width="max-w-[500px]"
-                  placeholder={
-                    values.customer_ids.length === 0
-                      ? "A customer must be selected"
-                      : shelfOptions.length === 0
-                        ? "No shelf found"
-                        : ""
-                  }
                   required
-                  label="Shelf"
-                  name="shelf_id"
-                  value={values.shelf_id.map(String)}
-                  options={shelfOptions}
-                  disabled={
-                    values.customer_ids.length === 0 ||
-                    shelfOptions.length === 0
-                  }
-                  isSingle={false}
+                  label="Planogram Image"
+                  name="images"
+                  type="file"
+                  value={typeof values.images === 'string' ? values.images : ''}
                   onChange={(e) => {
-                    const selectedIds = (
-                      Array.isArray(e.target.value) ? e.target.value : []
-                    ).map(Number);
-                    setFieldValue("shelf_id", selectedIds);
-                  }}
-                // error={
-                //   touched.shelf_id &&
-                //   (Array.isArray(errors.shelf_id)
-                //     ? errors.shelf_id[0]
-                //     : errors.shelf_id)
-                // }
+                    const input = e.target as HTMLInputElement;
+                    const file = input.files?.[0] ?? null;
+                    setPlanogramImageError(null);
+                    if (file) {
+                      if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+                        setPlanogramImageError('Unsupported file type. Please upload png, jpeg, webp or svg.');
+                        setFieldValue('images', null as any);
+                        return;
+                      }
+                      if (file.size > MAX_LOGO_SIZE) {
+                        setPlanogramImageError('File too large. Maximum size is 1MB.');
+                        setFieldValue('images', null as any);
+                        return;
+                      }
+                      setFieldValue('images', file as any);
+
+                    }
+                  }
+                  }
                 />
-                {/* <ErrorMessage
-                  name="shelf_id"
-                  component="span"
-                  className="text-xs text-red-500"
-                /> */}
-
-                {/* Selected shelves with image upload */}
-                {values.shelf_id.length > 0 && (
-                  <div className="col-span-full w-full mt-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
-                    <h3 className="font-medium mb-4">
-                      Selected Shelves ({values.shelf_id.length}):
-                    </h3>
-
-                    {/* Flex wrap grid style */}
-                    <div className="flex flex-wrap gap-4">
-                      {values.shelf_id.map((shelfId) => {
-                        const shelf = shelfOptions.find(
-                          (s) => s.shelf_id === shelfId
-                        );
-                        const currentImage = values.images[
-                          shelf?.merch_id || ""
-                        ]?.[shelf?.cust_id || ""]?.find(
-                          (img: ShelfImage) => img.shelf_id === shelfId
-                        )?.image;
-                        const existingImage = existingImages[shelfId];
-
-                        return (
-                          <div
-                            key={shelfId}
-                            className="flex-1 min-w-[250px] max-w-[320px] p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all"
-                          >
-                            <div className="mb-3">
-                              <h4 className="font-medium text-gray-800 text-base truncate">
-                                {shelf?.label}
-                              </h4>
-                              <p className="text-xs text-gray-500">
-                                Shelf ID: {shelfId}
-                              </p>
-                            </div>
-
-                            <div className="mt-2">
-                              <InputFields
-                                label="Add Image"
-                                name={`image_${shelfId}`}
-                                type="file"
-                                onChange={(e) => {
-                                  const file =
-                                    (e.target as HTMLInputElement).files?.[0] ||
-                                    null;
-                                  handleImageUpload(
-                                    shelfId,
-                                    file,
-                                    setFieldValue,
-                                    values
-                                  );
-                                }}
-                              />
-
-                              {(currentImage || existingImage) && (
-                                <div className="flex flex-col items-start gap-2 mt-3">
-                                  <Image
-                                    width={128}
-                                    height={128}
-                                    src={
-                                      currentImage
-                                        ? URL.createObjectURL(currentImage)
-                                        : process.env.NEXT_PUBLIC_API_URL +
-                                        existingImage || ""
-                                    }
-                                    alt={`Shelf ${shelfId}`}
-                                    className="h-32 w-32 object-cover rounded-lg border bg-gray-100"
-                                  />
-                                  {currentImage && (
-                                    <span className="text-xs text-green-600">
-                                      {currentImage.name}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {planogramImageError && <div className="text-xs text-red-500 mt-1">{planogramImageError}</div>}
               </div>
             </div>
           </ContainerCard>
@@ -751,7 +615,7 @@ export default function Planogram() {
     }
   };
 
-  const backBtnUrl = "/merchandiser/planogram/";
+  const backBtnUrl = "/planogram";
 
   return (
     <div>

@@ -242,7 +242,7 @@ export default function Planogram() {
             actions: [
               <SidebarBtn
                 key="add-planogram"
-                href="/merchandiser/planogram/add"
+                href="/planogram/add"
                 leadingIcon="lucide:plus"
                 label="Add"
                 labelTw="hidden sm:block"
@@ -257,12 +257,12 @@ export default function Planogram() {
             {
               icon: "lucide:eye",
               onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/planogram/view/${data.uuid}`),
+                router.push(`/planogram/view/${data.uuid}`),
             },
             {
               icon: "lucide:edit-2",
               onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/planogram/${data.uuid}`),
+                router.push(`/planogram/${data.uuid}`),
             },
             // {
             //   icon: "lucide:trash-2",

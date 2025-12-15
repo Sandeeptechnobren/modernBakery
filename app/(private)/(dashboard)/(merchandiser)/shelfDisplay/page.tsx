@@ -45,13 +45,13 @@ export default function ShelfDisplay() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  
+
 
   const handleExport = async (fileType: "csv" | "xlsx") => {
     try {
       setLoading(true);
 
-      const res = await exportShelveData({ format : fileType });
+      const res = await exportShelveData({ format: fileType });
       console.log("Export API Response:", res);
 
       let downloadUrl = "";
@@ -131,7 +131,7 @@ export default function ShelfDisplay() {
 
   return (
     <>
-    
+
       {/* Table */}
       <div className="flex flex-col h-full">
         <Table
@@ -141,8 +141,8 @@ export default function ShelfDisplay() {
               list: fetchShelfDisplay,
             },
             header: {
-              title:"Shelf Display",
-               threeDot: [
+              title: "Shelf Display",
+              threeDot: [
                 {
                   icon: "gala:file-document",
                   label: "Export CSV",
@@ -163,14 +163,14 @@ export default function ShelfDisplay() {
                 //  onClick: (data: TableDataType[], selectedRow?: number[]) => {
                 //     handleStatusChange(data, selectedRow, "0");
                 // },
-              // }
+                // }
               ],
               searchBar: false,
               columnFilter: true,
               actions: [
                 <SidebarBtn
                   key="name"
-                  href="/merchandiser/shelfDisplay/add"
+                  href="/shelfDisplay/add"
                   leadingIcon="lucide:plus"
                   label="Add"
                   labelTw="hidden lg:block"
@@ -205,14 +205,6 @@ export default function ShelfDisplay() {
                   return `${d}-${m}-${y}`;
                 },
               },
-              // { key: "customer_details", label: "Customers", render: (data: TableDataType) => {
-              //   if (Array.isArray(data.customer_details) && data.customer_details.length > 0) {
-              //     return data.customer_details
-              //       .map((customer) => `${customer.customer_code} - ${customer.owner_name}`)
-              //       .join(", ");
-              //   }
-              //   return "-";
-              //  }},
             ],
             rowSelection: true,
             rowActions: [
@@ -220,14 +212,14 @@ export default function ShelfDisplay() {
                 icon: "lucide:eye",
                 onClick: (data: object) => {
                   const row = data as TableDataType;
-                  router.push(`/merchandiser/shelfDisplay/view/${row.uuid}`);
+                  router.push(`/shelfDisplay/view/${row.uuid}`);
                 },
               },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableDataType;
-                  router.push(`/merchandiser/shelfDisplay/${row.uuid}`);
+                  router.push(`/shelfDisplay/${row.uuid}`);
                 },
               },
               // {
@@ -244,7 +236,7 @@ export default function ShelfDisplay() {
         />
       </div>
 
- 
+
     </>
   );
 }

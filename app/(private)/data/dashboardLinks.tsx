@@ -169,103 +169,6 @@ export const initialLinkData: SidebarDataType[] = [
       {
         isActive: false,
         href: "#",
-        label: "Merchandisers",
-        leadingIcon: "picon:business",
-        trailingIcon: "mdi-light:chevron-right",
-        iconColor: "text-yellow-400",
-        children: [
-          {
-            isActive: false,
-            href: "/merchandiser/shelfDisplay",
-            label: "Shelf Display",
-            leadingIcon: "streamline:shelf",
-            iconColor: "text-yellow-400",
-          },
-          {
-            isActive: false,
-            href: "/merchandiser/planogram",
-            label: "Planogram",
-            leadingIcon: "lucide:user",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
-            href: "/merchandiser/campaign",
-            label: "Campaign Info",
-            leadingIcon: "material-symbols:info-rounded",
-            iconColor: "text-yellow-400",
-          },
-          //          {
-          //     isActive: false,
-          //     href: "/merchandiser/planogramImage",
-          //     label: "Planogram Image",
-          //     leadingIcon: "mdi:map",
-          //     iconColor: "text-yellow-400"
-          // },
-          // {
-          //     isActive: false,
-          //     href: "/merchandiser/planogramImage",
-          //     label: "Planogram Image",
-          //     leadingIcon: "mdi:map",
-          //     iconColor: "text-yellow-400",
-          // },
-
-          {
-            isActive: false,
-            href: "/merchandiser/survey",
-            label: "Survey",
-            leadingIcon: "wpf:survey",
-            iconColor: "text-yellow-400",
-          },
-          {
-            isActive: false,
-            href: "/merchandiser/complaintFeedback",
-            label: "Complaint Feedback",
-            leadingIcon: "hugeicons:chat-feedback",
-            iconColor: "text-yellow-400",
-          },
-
-          {
-            isActive: false,
-            href: "/merchandiser/competitor",
-            label: "Competitor Info",
-            leadingIcon: "akar-icons:info",
-            iconColor: "text-yellow-400",
-          },
-          {
-            isActive: false,
-            href: "/merchandiser/stockinstore",
-            label: "Stock in Store",
-            leadingIcon: "vaadin:stock",
-            iconColor: "text-yellow-400",
-          },
-          // {
-          //     isActive: false,
-          //     href: "dashboard/merchandiser/complaintFeedback",
-          //     label: "Camplaint Feedback",
-          //     leadingIcon: "mdi:map",
-          //     iconColor: "text-yellow-400"
-          // },
-        ],
-      },
-      // {
-      //     isActive: false,
-      //     href: "/report",
-      //     label: "Report",
-      //     leadingIcon: "tabler:file-text",
-      //     trailingIcon: "mdi-light:chevron-right",
-      //     iconColor: "text-red-500"
-      // },
-      // {
-      //     isActive: false,
-      //     href: "#",
-      //     label: "Agent Transaction",
-      //     leadingIcon: "mdi:account-cash-outline",
-      //     iconColor: "text-violet-500"
-      // },
-      {
-        isActive: false,
-        href: "#",
         label: "Distributor's Transaction",
         leadingIcon: "mdi:account-cash-outline",
         iconColor: "text-green-500",
@@ -462,6 +365,66 @@ export const initialLinkData: SidebarDataType[] = [
           },
 
         ]
+      },
+      {
+        isActive: false,
+        href: "#",
+        label: "Merchandisers",
+        leadingIcon: "picon:business",
+        trailingIcon: "mdi-light:chevron-right",
+        iconColor: "text-yellow-400",
+        children: [
+          {
+            isActive: false,
+            href: "/shelfDisplay",
+            label: "Shelf Display",
+            leadingIcon: "streamline:shelf",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
+            href: "/planogram",
+            label: "Planogram",
+            leadingIcon: "lucide:user",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/campaign",
+            label: "Campaign Info",
+            leadingIcon: "material-symbols:info-rounded",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
+            href: "/survey",
+            label: "Survey",
+            leadingIcon: "wpf:survey",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
+            href: "/complaintFeedback",
+            label: "Complaint Feedback",
+            leadingIcon: "hugeicons:chat-feedback",
+            iconColor: "text-yellow-400",
+          },
+
+          {
+            isActive: false,
+            href: "/competitor",
+            label: "Competitor Info",
+            leadingIcon: "akar-icons:info",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
+            href: "/stockinstore",
+            label: "Stock in Store",
+            leadingIcon: "vaadin:stock",
+            iconColor: "text-yellow-400",
+          },
+        ],
       },
       {
         isActive: false,

@@ -29,7 +29,7 @@ import {
   updateChillerRequest,
 } from "@/app/services/assetsApi";
 import { salesmanList } from "@/app/services/allApi";
-import { outletChannelList } from "@/app/services/allApi";
+import { channelList } from "@/app/services/allApi";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/app/components/Loading";
@@ -67,6 +67,10 @@ const validationSchema = Yup.object({
     .trim()
     .required("Owner Name is required")
     .max(100, "Owner Name cannot exceed 100 characters"),
+  outlet_id: Yup.string()
+    .trim()
+    .required("Outlet Name is required")
+    .max(100, "Outlet Name cannot exceed 100 characters"),
   contact_number: Yup.string()
     .matches(/^\d{10}$/, "Contact Number must be exactly 10 digits")
     .required("Contact Number is required"),
@@ -76,186 +80,118 @@ const validationSchema = Yup.object({
   existing_coolers: Yup.string()
     .trim()
     .max(100, "Existing coolers cannot exceed 100 characters"),
+  outlet_weekly_sale_volume_current: Yup.string()
+    .trim()
+    .max(100, "Outlet weekly sale volume cannot exceed 100 characters"),
   outlet_weekly_sale_volume: Yup.string()
     .trim()
     .max(100, "Outlet weekly sale volume cannot exceed 100 characters"),
   display_location: Yup.string()
     .trim()
     .max(100, "Display location cannot exceed 100 characters"),
+  chiller_size_requested: Yup.string()
+    .trim()
+    .max(100, "Chiller size requested cannot exceed 100 characters"),
   chiller_safty_grill: Yup.string()
     .trim()
     .max(100, "Chiller safety grill cannot exceed 100 characters"),
   warehouse_id: Yup.number()
     .required("Warehouse is required")
     .typeError("Warehouse must be a number"),
-  salesman_id: Yup.number()
-    .required("Salesman is required")
-    .typeError("Salesman must be a number"),
-  outlet_id: Yup.number()
-    .required("Outlet is required")
-    .typeError("Outlet must be a number"),
-  manager_sales_marketing: Yup.number()
-    .required("Manager Sales Marketing is required")
-    .typeError("Manager Sales Marketing must be a number"),
+  customer_id: Yup.number()
+    .required("Customer is required")
+    .typeError("Customer must be a number"),
   national_id: Yup.string()
     .trim()
     .max(50, "National ID cannot exceed 50 characters"),
-  outlet_stamp: fileValidation,
-  model: Yup.string().trim().max(50, "Model cannot exceed 50 characters"),
-  hil: Yup.string().trim().max(50, "HIL cannot exceed 50 characters"),
-  ir_reference_no: Yup.string()
+  stock_share_with_competitor: Yup.string()
     .trim()
-    .max(50, "IR Reference No cannot exceed 50 characters"),
-  installation_done_by: Yup.string()
-    .trim()
-    .max(100, "Installation done by cannot exceed 100 characters"),
-  date_lnitial: Yup.date().typeError("Invalid date format for initial date"),
-  date_lnitial2: Yup.date().typeError("Invalid date format for initial date 2"),
-  contract_attached: fileValidation,
-  machine_number: Yup.string()
-    .trim()
-    .max(50, "Machine number cannot exceed 50 characters"),
-  brand: Yup.string().trim().max(50, "Brand cannot exceed 50 characters"),
-  asset_number: Yup.string()
-    .trim()
-    .required("Asset Number is required")
-    .max(50, "Asset Number cannot exceed 50 characters"),
+    .max(50, "Stock Share With Competitor cannot exceed 50 characters"),
   lc_letter: fileValidation,
   trading_licence: fileValidation,
   password_photo: fileValidation,
   outlet_address_proof: fileValidation,
-  chiller_asset_care_manager: Yup.number().typeError(
-    "Chiller asset care manager must be a number"
-  ),
+  outlet_stamp: fileValidation,
   national_id_file: fileValidation,
   password_photo_file: fileValidation,
   outlet_address_proof_file: fileValidation,
   trading_licence_file: fileValidation,
   lc_letter_file: fileValidation,
   outlet_stamp_file: fileValidation,
-  sign__customer_file: fileValidation,
-  chiller_manager_id: Yup.number().typeError(
-    "Chiller manager ID must be a number"
-  ),
-  is_merchandiser: Yup.number()
-    .oneOf([0, 1], "Invalid merchandiser status")
-    .required("Merchandiser status is required"),
-  status: Yup.number()
-    .oneOf([0, 1], "Invalid status selected")
-    .required("Status is required"),
-  fridge_status: Yup.number()
-    .oneOf([0, 1], "Invalid fridge status")
-    .required("Fridge status is required"),
-  iro_id: Yup.number()
-    .required("IRO ID is required")
-    .typeError("IRO ID must be a number"),
-  remark: Yup.string().trim().max(500, "Remark cannot exceed 500 characters"),
 });
 
 const stepSchemas = [
   // Step 1: Basic Outlet Information
   Yup.object().shape({
+    warehouse_id: validationSchema.fields.warehouse_id,
+    customer_id: validationSchema.fields.customer_id,
     owner_name: validationSchema.fields.owner_name,
     contact_number: validationSchema.fields.contact_number,
     landmark: validationSchema.fields.landmark,
-    existing_coolers: validationSchema.fields.existing_coolers,
-    outlet_weekly_sale_volume:
-      validationSchema.fields.outlet_weekly_sale_volume,
-    display_location: validationSchema.fields.display_location,
-    chiller_safty_grill: validationSchema.fields.chiller_safty_grill,
+    outlet_id: validationSchema.fields.outlet_id,
   }),
 
   // Step 2: Location and Personnel
   Yup.object().shape({
-    warehouse_id: validationSchema.fields.warehouse_id,
-    salesman_id: validationSchema.fields.salesman_id,
-    outlet_id: validationSchema.fields.outlet_id,
-    manager_sales_marketing: validationSchema.fields.manager_sales_marketing,
+    existing_coolers: validationSchema.fields.existing_coolers,
+    stock_share_with_competitor: validationSchema.fields.stock_share_with_competitor,
+    outlet_weekly_sale_volume_current:
+      validationSchema.fields.outlet_weekly_sale_volume_current,
+    outlet_weekly_sale_volume:
+      validationSchema.fields.outlet_weekly_sale_volume,
+    display_location: validationSchema.fields.display_location,
+    chiller_size_requested: validationSchema.fields.chiller_size_requested,
+    chiller_safty_grill: validationSchema.fields.chiller_safty_grill,
   }),
 
   // Step 3: Chiller Details
   Yup.object().shape({
     national_id: validationSchema.fields.national_id,
-    outlet_stamp: validationSchema.fields.outlet_stamp,
-    model: validationSchema.fields.model,
-    hil: validationSchema.fields.hil,
-    ir_reference_no: validationSchema.fields.ir_reference_no,
-    installation_done_by: validationSchema.fields.installation_done_by,
-    date_lnitial: validationSchema.fields.date_lnitial,
-    date_lnitial2: validationSchema.fields.date_lnitial2,
-    contract_attached: validationSchema.fields.contract_attached,
-    machine_number: validationSchema.fields.machine_number,
-    brand: validationSchema.fields.brand,
-    asset_number: validationSchema.fields.asset_number,
-  }),
-
-  // Step 4: Documentation and Status
-  Yup.object().shape({
-    lc_letter: validationSchema.fields.lc_letter,
-    trading_licence: validationSchema.fields.trading_licence,
     password_photo: validationSchema.fields.password_photo,
     outlet_address_proof: validationSchema.fields.outlet_address_proof,
-    chiller_asset_care_manager:
-      validationSchema.fields.chiller_asset_care_manager,
+    outlet_stamp: validationSchema.fields.outlet_stamp,
+    lc_letter: validationSchema.fields.lc_letter,
+    trading_licence: validationSchema.fields.trading_licence,
     national_id_file: validationSchema.fields.national_id_file,
     password_photo_file: validationSchema.fields.password_photo_file,
-    outlet_address_proof_file:
-      validationSchema.fields.outlet_address_proof_file,
+    outlet_address_proof_file: validationSchema.fields.outlet_address_proof_file,
+    outlet_stamp_file: validationSchema.fields.outlet_stamp_file,
     trading_licence_file: validationSchema.fields.trading_licence_file,
     lc_letter_file: validationSchema.fields.lc_letter_file,
-    outlet_stamp_file: validationSchema.fields.outlet_stamp_file,
-    sign__customer_file: validationSchema.fields.sign__customer_file,
-    chiller_manager_id: validationSchema.fields.chiller_manager_id,
-    is_merchandiser: validationSchema.fields.is_merchandiser,
-    status: validationSchema.fields.status,
-    fridge_status: validationSchema.fields.fridge_status,
-    iro_id: validationSchema.fields.iro_id,
-    remark: validationSchema.fields.remark,
   }),
 ];
 
 type Chiller = {
+  osa_code: string;
+  warehouse_id: number;
+  customer_id: number;
   owner_name: string;
   contact_number: string;
+  town: string;
   landmark: string;
+  district: string;
+  location: string;
+  outlet_id: string;
+  specify_if_other_type: string;
   existing_coolers: string;
+  stock_share_with_competitor: string;
+  outlet_weekly_sale_volume_current: string;
   outlet_weekly_sale_volume: string;
   display_location: string;
+  chiller_size_requested: string;
   chiller_safty_grill: string;
-  warehouse_id: number;
-  salesman_id: number;
-  outlet_id: number;
-  manager_sales_marketing: number;
   national_id: string;
-  outlet_stamp: string | File;
-  model: string;
-  hil: string;
-  ir_reference_no: string;
-  installation_done_by: string;
-  date_lnitial: string;
-  date_lnitial2: string;
-  contract_attached: string | File;
-  machine_number: string;
-  brand: string;
-  asset_number: string;
-  lc_letter: string | File;
-  trading_licence: string | File;
   password_photo: string | File;
   outlet_address_proof: string | File;
-  chiller_asset_care_manager: number;
+  outlet_stamp: string | File;
+  lc_letter: string | File;
+  trading_licence: string | File;
   national_id_file: string | File;
   password_photo_file: string | File;
   outlet_address_proof_file: string | File;
   trading_licence_file: string | File;
   lc_letter_file: string | File;
   outlet_stamp_file: string | File;
-  sign__customer_file: string | File;
-  chiller_manager_id: number;
-  is_merchandiser: number;
-  status: number;
-  fridge_status: number;
-  iro_id: number;
-  remark: string;
 };
 
 type DropdownOption = {
@@ -271,11 +207,6 @@ type FileField = {
 
 const fileFields: FileField[] = [
   { fieldName: "outlet_stamp", label: "Outlet Stamp", accept: "image/*,.pdf" },
-  {
-    fieldName: "contract_attached",
-    label: "Contract Attached",
-    accept: ".pdf,.doc,.docx,image/*",
-  },
   {
     fieldName: "lc_letter",
     label: "LC Letter",
@@ -322,11 +253,6 @@ const fileFields: FileField[] = [
     label: "Outlet Stamp File",
     accept: "image/*,.pdf",
   },
-  {
-    fieldName: "sign__customer_file",
-    label: "Customer Signature",
-    accept: "image/*,.pdf",
-  },
 ];
 
 // Create axios instance for form data
@@ -365,6 +291,7 @@ export default function AddCompanyWithStepper() {
   const [isLoading, setIsLoading] = useState(true);
   const [existingData, setExistingData] = useState<Chiller | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { agentCustomerOptions, channelOptions } = useAllDropdownListData();
 
   const params = useParams();
   const uuid = params?.id;
@@ -374,7 +301,6 @@ export default function AddCompanyWithStepper() {
     { id: 1, label: "Outlet Information" },
     { id: 2, label: "Location & Personnel" },
     { id: 3, label: "Assets Details" },
-    { id: 4, label: "Documentation & Status" },
   ];
 
   const {
@@ -419,47 +345,36 @@ export default function AddCompanyWithStepper() {
 
         // Transform the API response to match our Chiller type
         const transformedData: Chiller = {
+          osa_code: data.osa_code || "",
+          warehouse_id: data.warehouse?.id || 0,
+          customer_id: data.customer?.id.toString() || 0,
           owner_name: data.owner_name || "",
           contact_number: data.contact_number || "",
+          town: data.town || "",
           landmark: data.landmark || "",
+          district: data.district || "",
+          location: data.location || "",
+          outlet_id: data.outlet?.id.toString() || 0,
+          specify_if_other_type: data.specify_if_other_type || "",
           existing_coolers: data.existing_coolers || "",
+          stock_share_with_competitor: data.stock_share_with_competitor || "",
+          outlet_weekly_sale_volume_current: data.outlet_weekly_sale_volume_current || "",
           outlet_weekly_sale_volume: data.outlet_weekly_sale_volume || "",
           display_location: data.display_location || "",
+          chiller_size_requested: data.chiller_size_requested || "",
           chiller_safty_grill: data.chiller_safty_grill || "",
-          warehouse_id: data.warehouse?.id || 0,
-          salesman_id: data.salesman?.id || 0,
-          outlet_id: data.outlet?.id || 0,
-          manager_sales_marketing: data.manager_sales_marketing || 0,
           national_id: data.national_id || "",
-          outlet_stamp: data.outlet_stamp || "",
-          model: data.model || "",
-          hil: data.hil || "",
-          ir_reference_no: data.ir_reference_no || "",
-          installation_done_by: data.installation_done_by || "",
-          date_lnitial: data.date_lnitial || "",
-          date_lnitial2: data.date_lnitial2 || "",
-          contract_attached: data.contract_attached || "",
-          machine_number: data.machine_number || "",
-          brand: data.brand || "",
-          asset_number: data.asset_number || "",
-          lc_letter: data.lc_letter || "",
-          trading_licence: data.trading_licence || "",
           password_photo: data.password_photo || "",
           outlet_address_proof: data.outlet_address_proof || "",
-          chiller_asset_care_manager: data.chiller_asset_care_manager || 0,
+          outlet_stamp: data.outlet_stamp || "",
+          lc_letter: data.lc_letter || "",
+          trading_licence: data.trading_licence || "",
           national_id_file: data.national_id_file || "",
           password_photo_file: data.password_photo_file || "",
           outlet_address_proof_file: data.outlet_address_proof_file || "",
           trading_licence_file: data.trading_licence_file || "",
           lc_letter_file: data.lc_letter_file || "",
           outlet_stamp_file: data.outlet_stamp_file || "",
-          sign__customer_file: data.sign__customer_file || "",
-          chiller_manager_id: data.chiller_manager_id || 0,
-          is_merchandiser: data.is_merchandiser || 0,
-          status: data.status || 1,
-          fridge_status: data.fridge_status || 0,
-          iro_id: data.iro_id || 0,
-          remark: data.remark || "",
         };
 
         setExistingData(transformedData);
@@ -539,7 +454,7 @@ export default function AddCompanyWithStepper() {
       }
 
       // Fetch outlet data
-      const outletRes = await outletChannelList();
+      const outletRes = await channelList();
       if (outletRes.status === "success") {
         const outletOpts = outletRes.data.map((outlet: {
           id: string,
@@ -716,47 +631,36 @@ export default function AddCompanyWithStepper() {
   };
 
   const initialValues: Chiller = {
+    osa_code: "",
+    warehouse_id: 0,
+    customer_id: 0,
     owner_name: "",
     contact_number: "",
+    town: "",
     landmark: "",
+    district: "",
+    location: "",
+    outlet_id: "",
+    specify_if_other_type: "",
     existing_coolers: "",
+    stock_share_with_competitor: "",
+    outlet_weekly_sale_volume_current: "",
     outlet_weekly_sale_volume: "",
     display_location: "",
+    chiller_size_requested: "",
     chiller_safty_grill: "",
-    warehouse_id: 0,
-    salesman_id: 0,
-    outlet_id: 0,
-    manager_sales_marketing: 0,
     national_id: "",
-    outlet_stamp: "",
-    model: "",
-    hil: "",
-    ir_reference_no: "",
-    installation_done_by: "",
-    date_lnitial: "",
-    date_lnitial2: "",
-    contract_attached: "",
-    machine_number: "",
-    brand: "",
-    asset_number: "",
-    lc_letter: "",
-    trading_licence: "",
     password_photo: "",
     outlet_address_proof: "",
-    chiller_asset_care_manager: 0,
+    outlet_stamp: "",
+    lc_letter: "",
+    trading_licence: "",
     national_id_file: "",
     password_photo_file: "",
     outlet_address_proof_file: "",
     trading_licence_file: "",
     lc_letter_file: "",
     outlet_stamp_file: "",
-    sign__customer_file: "",
-    chiller_manager_id: 0,
-    is_merchandiser: 0,
-    status: 1, // Default to active
-    fridge_status: 0,
-    iro_id: 0,
-    remark: "",
   };
 
   const stepFields = [
@@ -882,6 +786,56 @@ export default function AddCompanyWithStepper() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <InputFields
+                  label="OSA Code"
+                  name="osa_code"
+                  value={values.osa_code}
+                  onChange={(e) => setFieldValue("osa_code", e.target.value)}
+                // error={touched.owner_name && errors.owner_name}
+                />
+                <ErrorMessage
+                  name="osa_code"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Distributors"
+                  name="warehouse_id"
+                  value={values.warehouse_id.toString()}
+                  options={warehouseOptions}
+                  onChange={(e) =>
+                    setFieldValue("warehouse_id", e.target.value)
+                  }
+                // error={touched.warehouse_id && errors.warehouse_id}
+                />
+                <ErrorMessage
+                  name="warehouse_id"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Customer"
+                  name="customer_id"
+                  value={values.customer_id.toString()}
+                  options={agentCustomerOptions}
+                  onChange={(e) =>
+                    setFieldValue("customer_id", e.target.value)
+                  }
+                // error={touched.warehouse_id && errors.warehouse_id}
+                />
+                <ErrorMessage
+                  name="customer_id"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+              <div>
+                <InputFields
                   required
                   label="Owner Name"
                   name="owner_name"
@@ -895,7 +849,6 @@ export default function AddCompanyWithStepper() {
                   className="text-sm text-red-600 mb-1"
                 />
               </div>
-
               <div>
                 <InputFields
                   required
@@ -913,7 +866,20 @@ export default function AddCompanyWithStepper() {
                   className="text-sm text-red-600 mb-1"
                 />
               </div>
-
+              <div>
+                <InputFields
+                  label="Town"
+                  name="town"
+                  value={values.town}
+                  onChange={(e) => setFieldValue("town", e.target.value)}
+                // error={touched.landmark && errors.landmark}
+                />
+                <ErrorMessage
+                  name="town"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
               <div>
                 <InputFields
                   label="Landmark"
@@ -928,12 +894,88 @@ export default function AddCompanyWithStepper() {
                   className="text-sm text-red-600 mb-1"
                 />
               </div>
+              <div>
+                <InputFields
+                  label="District"
+                  name="district"
+                  value={values.district}
+                  onChange={(e) => setFieldValue("district", e.target.value)}
+                // error={touched.landmark && errors.landmark}
+                />
+                <ErrorMessage
+                  name="district"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+              <div>
+                <InputFields
+                  label="Location"
+                  name="location"
+                  value={values.location}
+                  onChange={(e) => setFieldValue("location", e.target.value)}
+                // error={touched.landmark && errors.landmark}
+                />
+                <ErrorMessage
+                  name="location"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Outlet Name"
+                  name="outlet_id"
+                  options={channelOptions}
+                  value={values.outlet_id}
+                  onChange={(e) => setFieldValue("outlet_id", e.target.value)}
+                // error={touched.owner_name && errors.owner_name}
+                />
+                <ErrorMessage
+                  name="outlet_id"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Specify If Other Type"
+                  name="specify_if_other_type"
+                  value={values.specify_if_other_type}
+                  onChange={(e) => setFieldValue("specify_if_other_type", e.target.value)}
+                // error={touched.owner_name && errors.owner_name}
+                />
+                <ErrorMessage
+                  name="specify_if_other_type"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+
+            </div>
+          </ContainerCard>
+        );
+
+      case 2:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
               <div>
                 <InputFields
                   label="Existing Coolers"
                   name="existing_coolers"
+                  isSingle={false}
                   value={values.existing_coolers}
+                  options={[
+                    { value: "CC", label: "CC" },
+                    { value: "PC", label: "PC" },
+                    { value: "HI", label: "HI" },
+                    { value: "Own", label: "Own" },
+                    { value: "Other", label: "Other" },
+                  ]}
                   onChange={(e) =>
                     setFieldValue("existing_coolers", e.target.value)
                   }
@@ -941,6 +983,42 @@ export default function AddCompanyWithStepper() {
                 />
                 <ErrorMessage
                   name="existing_coolers"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+              <div>
+                <InputFields
+                  label="Stock Share With Competitor In %"
+                  name="stock_share_with_competitor"
+                  value={values.stock_share_with_competitor}
+                  onChange={(e) =>
+                    setFieldValue("stock_share_with_competitor", e.target.value)
+                  }
+                // error={touched.existing_coolers && errors.existing_coolers}
+                />
+                <ErrorMessage
+                  name="stock_share_with_competitor"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+
+              <div>
+                <InputFields
+                  label="Outlet Weekly Sale Volume Current"
+                  name="outlet_weekly_sale_volume_current"
+                  value={values.outlet_weekly_sale_volume_current}
+                  onChange={(e) =>
+                    setFieldValue("outlet_weekly_sale_volume_current", e.target.value)
+                  }
+                // error={
+                //   touched.outlet_weekly_sale_volume &&
+                //   errors.outlet_weekly_sale_volume
+                // }
+                />
+                <ErrorMessage
+                  name="outlet_weekly_sale_volume_current"
                   component="div"
                   className="text-sm text-red-600 mb-1"
                 />
@@ -985,6 +1063,23 @@ export default function AddCompanyWithStepper() {
 
               <div>
                 <InputFields
+                  label="Chiller Size Requested"
+                  name="chiller_size_requested"
+                  value={values.chiller_size_requested}
+                  onChange={(e) =>
+                    setFieldValue("chiller_size_requested", e.target.value)
+                  }
+                // error={touched.display_location && errors.display_location}
+                />
+                <ErrorMessage
+                  name="chiller_size_requested"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+
+              <div>
+                <InputFields
                   label="Chiller Safety Grill"
                   name="chiller_safty_grill"
                   value={values.chiller_safty_grill}
@@ -1001,87 +1096,7 @@ export default function AddCompanyWithStepper() {
                   className="text-sm text-red-600 mb-1"
                 />
               </div>
-            </div>
-          </ContainerCard>
-        );
 
-      case 2:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <InputFields
-                  required
-                  label="Warehouse"
-                  name="warehouse_id"
-                  value={values.warehouse_id.toString()}
-                  options={warehouseOptions}
-                  onChange={(e) =>
-                    setFieldValue("warehouse_id", e.target.value)
-                  }
-                // error={touched.warehouse_id && errors.warehouse_id}
-                />
-                <ErrorMessage
-                  name="warehouse_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Salesman"
-                  name="salesman_id"
-                  value={values.salesman_id.toString()}
-                  options={salesmanOptions}
-                  onChange={(e) => setFieldValue("salesman_id", e.target.value)}
-                // error={touched.salesman_id && errors.salesman_id}
-                />
-                <ErrorMessage
-                  name="salesman_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Outlet"
-                  name="outlet_id"
-                  value={values.outlet_id.toString()}
-                  options={outletOptions}
-                  onChange={(e) => setFieldValue("outlet_id", e.target.value)}
-                // error={touched.outlet_id && errors.outlet_id}
-                />
-                <ErrorMessage
-                  name="outlet_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Manager Sales Marketing"
-                  name="manager_sales_marketing"
-                  value={values.manager_sales_marketing.toString()}
-                  onChange={(e) =>
-                    setFieldValue("manager_sales_marketing", e.target.value)
-                  }
-                // error={
-                //   touched.manager_sales_marketing &&
-                //   errors.manager_sales_marketing
-                // }
-                />
-                <ErrorMessage
-                  name="manager_sales_marketing"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
             </div>
           </ContainerCard>
         );
@@ -1094,247 +1109,15 @@ export default function AddCompanyWithStepper() {
                 <InputFields
                   label="National ID"
                   name="national_id"
-                  value={values.national_id}
+                  options={[
+                    { value: "Yes", label: "Yes" },
+                    { value: "No", label: "No" },
+                  ]}
+                  value={typeof values.national_id === "string" ? values.national_id : ""}
                   onChange={(e) => setFieldValue("national_id", e.target.value)}
-                // error={touched.national_id && errors.national_id}
                 />
                 <ErrorMessage
                   name="national_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              {renderFileInput(
-                "outlet_stamp",
-                "Outlet Stamp",
-                values,
-                setFieldValue,
-                errors,
-                touched,
-                "image/*,.pdf"
-              )}
-
-              <div>
-                <InputFields
-                  label="Model"
-                  name="model"
-                  value={values.model}
-                  onChange={(e) => setFieldValue("model", e.target.value)}
-                // error={touched.model && errors.model}
-                />
-                <ErrorMessage
-                  name="model"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  label="HIL"
-                  name="hil"
-                  value={values.hil}
-                  onChange={(e) => setFieldValue("hil", e.target.value)}
-                // error={touched.hil && errors.hil}
-                />
-                <ErrorMessage
-                  name="hil"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  label="IR Reference No"
-                  name="ir_reference_no"
-                  value={values.ir_reference_no}
-                  onChange={(e) =>
-                    setFieldValue("ir_reference_no", e.target.value)
-                  }
-                // error={touched.ir_reference_no && errors.ir_reference_no}
-                />
-                <ErrorMessage
-                  name="ir_reference_no"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  label="Installation Done By"
-                  name="installation_done_by"
-                  value={values.installation_done_by}
-                  onChange={(e) =>
-                    setFieldValue("installation_done_by", e.target.value)
-                  }
-                // error={
-                //   touched.installation_done_by && errors.installation_done_by
-                // }
-                />
-                <ErrorMessage
-                  name="installation_done_by"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  type="date"
-                  label="Date Initial"
-                  name="date_lnitial"
-                  value={values.date_lnitial}
-                  onChange={(e) =>
-                    setFieldValue("date_lnitial", e.target.value)
-                  }
-                // error={touched.date_lnitial && errors.date_lnitial}
-                />
-                <ErrorMessage
-                  name="date_lnitial"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  type="date"
-                  label="Date Initial 2"
-                  name="date_lnitial2"
-                  value={values.date_lnitial2}
-                  onChange={(e) =>
-                    setFieldValue("date_lnitial2", e.target.value)
-                  }
-                // error={touched.date_lnitial2 && errors.date_lnitial2}
-                />
-                <ErrorMessage
-                  name="date_lnitial2"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              {renderFileInput(
-                "contract_attached",
-                "Contract Attached",
-                values,
-                setFieldValue,
-                errors,
-                touched
-              )}
-
-              <div>
-                <InputFields
-                  label="Machine Number"
-                  name="machine_number"
-                  value={values.machine_number}
-                  onChange={(e) =>
-                    setFieldValue("machine_number", e.target.value)
-                  }
-                // error={touched.machine_number && errors.machine_number}
-                />
-                <ErrorMessage
-                  name="machine_number"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  label="Brand"
-                  name="brand"
-                  value={values.brand}
-                  onChange={(e) => setFieldValue("brand", e.target.value)}
-                // error={touched.brand && errors.brand}
-                />
-                <ErrorMessage
-                  name="brand"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Asset Number"
-                  name="asset_number"
-                  value={values.asset_number}
-                  onChange={(e) =>
-                    setFieldValue("asset_number", e.target.value)
-                  }
-                // error={touched.asset_number && errors.asset_number}
-                />
-                <ErrorMessage
-                  name="asset_number"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-            </div>
-          </ContainerCard>
-        );
-
-      case 4:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderFileInput(
-                "lc_letter",
-                "LC Letter",
-                values,
-                setFieldValue,
-                errors,
-                touched
-              )}
-
-              {renderFileInput(
-                "trading_licence",
-                "Trading Licence",
-                values,
-                setFieldValue,
-                errors,
-                touched
-              )}
-
-              {renderFileInput(
-                "password_photo",
-                "Password Photo",
-                values,
-                setFieldValue,
-                errors,
-                touched,
-                "image/*"
-              )}
-
-              {renderFileInput(
-                "outlet_address_proof",
-                "Outlet Address Proof",
-                values,
-                setFieldValue,
-                errors,
-                touched
-              )}
-
-              <div>
-                <InputFields
-                  label="Chiller Asset Care Manager"
-                  name="chiller_asset_care_manager"
-                  value={values.chiller_asset_care_manager.toString()}
-                  onChange={(e) =>
-                    setFieldValue("chiller_asset_care_manager", e.target.value)
-                  }
-                // error={
-                //   touched.chiller_asset_care_manager &&
-                //   errors.chiller_asset_care_manager
-                // }
-                />
-                <ErrorMessage
-                  name="chiller_asset_care_manager"
                   component="div"
                   className="text-sm text-red-600 mb-1"
                 />
@@ -1349,6 +1132,24 @@ export default function AddCompanyWithStepper() {
                 touched
               )}
 
+              <div>
+                <InputFields
+                  label="Password Photo"
+                  name="password_photo"
+                  options={[
+                    { value: "Yes", label: "Yes" },
+                    { value: "No", label: "No" },
+                  ]}
+                  value={typeof values.password_photo === "string" ? values.password_photo : ""}
+                  onChange={(e) => setFieldValue("password_photo", e.target.value)}
+                />
+                <ErrorMessage
+                  name="password_photo"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+
               {renderFileInput(
                 "password_photo_file",
                 "Password Photo File",
@@ -1359,6 +1160,24 @@ export default function AddCompanyWithStepper() {
                 "image/*"
               )}
 
+              <div>
+                <InputFields
+                  label="Outlet Address Proof"
+                  name="outlet_address_proof"
+                  options={[
+                    { value: "Yes", label: "Yes" },
+                    { value: "No", label: "No" },
+                  ]}
+                  value={typeof values.outlet_address_proof === "string" ? values.outlet_address_proof : ""}
+                  onChange={(e) => setFieldValue("outlet_address_proof", e.target.value)}
+                />
+                <ErrorMessage
+                  name="outlet_address_proof"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+
               {renderFileInput(
                 "outlet_address_proof_file",
                 "Outlet Address Proof File",
@@ -1368,23 +1187,23 @@ export default function AddCompanyWithStepper() {
                 touched
               )}
 
-              {renderFileInput(
-                "trading_licence_file",
-                "Trading Licence File",
-                values,
-                setFieldValue,
-                errors,
-                touched
-              )}
-
-              {renderFileInput(
-                "lc_letter_file",
-                "LC Letter File",
-                values,
-                setFieldValue,
-                errors,
-                touched
-              )}
+              <div>
+                <InputFields
+                  label="Outlet Stamp"
+                  name="outlet_stamp"
+                  options={[
+                    { value: "Yes", label: "Yes" },
+                    { value: "No", label: "No" },
+                  ]}
+                  value={typeof values.outlet_stamp === "string" ? values.outlet_stamp : ""}
+                  onChange={(e) => setFieldValue("outlet_stamp", e.target.value)}
+                />
+                <ErrorMessage
+                  name="outlet_stamp"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
 
               {renderFileInput(
                 "outlet_stamp_file",
@@ -1396,129 +1215,59 @@ export default function AddCompanyWithStepper() {
                 "image/*,.pdf"
               )}
 
+              <div>
+                <InputFields
+                  label="LC Letter"
+                  name="lc_letter"
+                  options={[
+                    { value: "Yes", label: "Yes" },
+                    { value: "No", label: "No" },
+                  ]}
+                  value={typeof values.lc_letter === "string" ? values.lc_letter : ""}
+                  onChange={(e) => setFieldValue("lc_letter", e.target.value)}
+                />
+                <ErrorMessage
+                  name="lc_letter"
+                  component="div"
+                  className="text-sm text-red-600 mb-1"
+                />
+              </div>
+
               {renderFileInput(
-                "sign__customer_file",
-                "Customer Signature",
+                "lc_letter_file",
+                "LC Letter File",
                 values,
                 setFieldValue,
                 errors,
-                touched,
-                "image/*,.pdf"
+                touched
               )}
 
               <div>
                 <InputFields
-                  label="Chiller Manager ID"
-                  name="chiller_manager_id"
-                  value={values.chiller_manager_id.toString()}
-                  onChange={(e) =>
-                    setFieldValue("chiller_manager_id", e.target.value)
-                  }
-                // error={
-                //   touched.chiller_manager_id && errors.chiller_manager_id
-                // }
-                />
-                <ErrorMessage
-                  name="chiller_manager_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Is Merchandiser"
-                  name="is_merchandiser"
-                  value={values.is_merchandiser.toString()}
-                  onChange={(e) =>
-                    setFieldValue("is_merchandiser", e.target.value)
-                  }
+                  label="Trading Licence"
+                  name="trading_licence"
                   options={[
-                    { value: "1", label: "Yes" },
-                    { value: "0", label: "No" },
+                    { value: "Yes", label: "Yes" },
+                    { value: "No", label: "No" },
                   ]}
-                // error={touched.is_merchandiser && errors.is_merchandiser}
+                  value={typeof values.trading_licence === "string" ? values.trading_licence : ""}
+                  onChange={(e) => setFieldValue("trading_licence", e.target.value)}
                 />
                 <ErrorMessage
-                  name="is_merchandiser"
+                  name="trading_licence"
                   component="div"
                   className="text-sm text-red-600 mb-1"
                 />
               </div>
 
-              <div>
-                <InputFields
-                  required
-                  label="Status"
-                  name="status"
-                  value={values.status.toString()}
-                  onChange={(e) => setFieldValue("status", e.target.value)}
-                  options={[
-                    { value: "1", label: "Active" },
-                    { value: "0", label: "Inactive" },
-                  ]}
-                // error={touched.status && errors.status}
-                />
-                <ErrorMessage
-                  name="status"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Fridge Status"
-                  name="fridge_status"
-                  value={values.fridge_status.toString()}
-                  onChange={(e) =>
-                    setFieldValue("fridge_status", e.target.value)
-                  }
-                  options={[
-                    { value: "1", label: "Active" },
-                    { value: "0", label: "Inactive" },
-                  ]}
-                // error={touched.fridge_status && errors.fridge_status}
-                />
-                <ErrorMessage
-                  name="fridge_status"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="IRO ID"
-                  name="iro_id"
-                  value={values.iro_id.toString()}
-                  onChange={(e) => setFieldValue("iro_id", e.target.value)}
-                // error={touched.iro_id && errors.iro_id}
-                />
-                <ErrorMessage
-                  name="iro_id"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
-
-              <div className="col-span-1 md:col-span-2">
-                <InputFields
-                  label="Remark"
-                  name="remark"
-                  value={values.remark}
-                  onChange={(e) => setFieldValue("remark", e.target.value)}
-                // error={touched.remark && errors.remark}
-                />
-                <ErrorMessage
-                  name="remark"
-                  component="div"
-                  className="text-sm text-red-600 mb-1"
-                />
-              </div>
+              {renderFileInput(
+                "trading_licence",
+                "Trading Licence",
+                values,
+                setFieldValue,
+                errors,
+                touched
+              )}
             </div>
           </ContainerCard>
         );

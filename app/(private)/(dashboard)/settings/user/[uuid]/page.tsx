@@ -13,7 +13,7 @@ import {
   itemCategoryList,
   itemList,
   itemSubCategoryList,
-  outletChannelList,
+  channelList,
   regionList,
   registerAuthUser,
   routeList,
@@ -77,7 +77,7 @@ export default function UserAddEdit() {
   const {
     roleOptions,
     companyOptions
-  , ensureCompanyLoaded, ensureRolesLoaded} = useAllDropdownListData();
+    , ensureCompanyLoaded, ensureRolesLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -357,7 +357,7 @@ export default function UserAddEdit() {
             if (itemIds.length > 0) {
               setSkeleton((s) => ({ ...s, customerChannel: true }));
               try {
-                const resp = await outletChannelList({ item_id: itemIds.join(",") });
+                const resp = await channelList({ item_id: itemIds.join(",") });
                 const ch = resp?.data ?? [];
                 newOptions.customerChannel = mapToOptions(ch, (c: any) => ({ value: String(c.id), label: (c.outlet_channel_code || "") + (c.outlet_channel_code && c.outlet_channel ? " - " : "") + (c.outlet_channel || "") }));
               } catch (e) {
@@ -1154,7 +1154,7 @@ export default function UserAddEdit() {
                         }
                         setSkeleton((s) => ({ ...s, customerChannel: true }));
                         try {
-                          const items = await outletChannelList();
+                          const items = await channelList();
                           const options = items.data.map((item: { id: string; outlet_channel: string; outlet_channel_code: string }) => ({ value: String(item.id), label: (item.outlet_channel_code || "") + (item.outlet_channel_code && item.outlet_channel ? " - " : "") + (item.outlet_channel || "") })) ?? [];
                           setOptions((prev) => ({ ...prev, customerChannel: options, customerCategory: [], customerSubCategory: [], customer: [] }));
                         } catch (e: unknown) {
