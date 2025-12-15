@@ -45,30 +45,49 @@ const getColumns = (
         // {
         //     key: "region_id",
         //     label: "Region",
-        //     render: (row: any) =>
-        //         typeof row.region === "object" &&
-        //             row.region !== null &&
-        //             "code" in row.region
-        //             ? (row.region as { code?: string }).code || "-"
-        //             : "-",
+        //     render: (row: any) => {
+        //         let label = "-";
+        //         if (row.region && typeof row.region === "object" && "code" in row.region) {
+        //             label = row.region.code || "-";
+        //         } else {
+        //             const opt = regionOptions.find(o => String(o.value) === String(row.region_id));
+        //             if (opt) label = opt.label;
+        //             else if (row.region_id) label = String(row.region_id);
+        //         }
+        //         return <p>{label}</p>;
+        //     }
         // },
         // {
         //     key: "area_id",
         //     label: "Area",
-        //     render: (row: any) =>
-        //         typeof row.area === "object" &&
-        //             row.area !== null &&
-        //             "code" in row.area
-        //             ? (row.area as { code?: string }).code || "-"
-        //             : "-",
+        //     render: (row: any) => {
+        //         let label = "-";
+        //         if (row.area && typeof row.area === "object" && "code" in row.area) {
+        //             label = row.area.code || "-";
+        //         } else {
+        //             const opt = areaOptions.find(o => String(o.value) === String(row.area_id));
+        //             if (opt) label = opt.label;
+        //             else if (row.area_id) label = String(row.area_id);
+        //         }
+        //         return <p>{label}</p>;
+        //     }
         // },
 
         // {
         //     key: "warehouse_id",
         //     label: "Warehouse",
         //     render: (row: any) => {
-        //         const warehouse = warehouseOptions.find(w => w.value === String(row.warehouse_id));
-        //         return <p>{warehouse?.label || row.warehouse_id || "-"}</p>;
+        //         let label = "-";
+        //         // Try reading from object first (some APIs return 'warehouse' object)
+        //         if (row.warehouse && typeof row.warehouse === "object" && ("name" in row.warehouse || "code" in row.warehouse)) {
+        //             label = row.warehouse.name || row.warehouse.code || "-";
+        //         } else {
+        //             // Fallback to options
+        //             const opt = warehouseOptions.find(w => String(w.value) === String(row.warehouse_id));
+        //             if (opt) label = opt.label;
+        //             else if (row.warehouse_id) label = String(row.warehouse_id);
+        //         }
+        //         return <p>{label}</p>;
         //     },
         // },
         // {
@@ -84,30 +103,14 @@ const getColumns = (
 
         // },
         {
-            key: "technician",
-            label: "Code",
-            render: (row: any) => {
-                const code = row.technician?.code;
-                // const name = row.technician?.name;
-
-                if (code) return <p>{`${code} `}</p>;
-                if (code) return <p>{code}</p>;
-                // if (name) return <p>{name}</p>;
-                return <p>-</p>;
-            },
+            key: "technician_code",
+            label: "Technician Code",
+            render: (row: any) => <p>{row.technician?.code || "-"}</p>,
         },
         {
-            key: "technician",
-            label: "Name",
-            render: (row: any) => {
-                // const code = row.technician?.code;
-                const name = row.technician?.name;
-
-                if (name) return <p>{`${name}`}</p>;
-                // if (code) return <p>{code}</p>;
-                if (name) return <p>{name}</p>;
-                return <p>-</p>;
-            },
+            key: "technician_name",
+            label: "Technician Name",
+            render: (row: any) => <p>{row.technician?.name || "-"}</p>,
         },
         // {
         //     key: "created_at",

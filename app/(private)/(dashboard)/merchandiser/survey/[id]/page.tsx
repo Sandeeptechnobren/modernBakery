@@ -275,6 +275,13 @@ export default function AddSurveyTabs() {
           {} as Record<string, string>
         );
         actions.setErrors(errors);
+
+        // Mark all fields with errors as touched so the UI displays them
+        const touchedFields = Object.keys(errors).reduce((acc, key) => {
+          acc[key as keyof SurveyFormValues] = true;
+          return acc;
+        }, {} as Record<keyof SurveyFormValues, boolean>);
+        actions.setTouched(touchedFields);
       }
     } finally {
       actions.setSubmitting(false);

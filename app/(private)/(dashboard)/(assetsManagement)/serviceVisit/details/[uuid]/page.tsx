@@ -103,13 +103,13 @@ export default function ViewPage() {
                             data={[
                                 { key: "Technician Name", value: data?.technician?.name },
                                 { key: "Technician Code", value: data?.technician?.code },
-                                {
-                                    key: "Status",
-                                    value: "",
-                                    component: (
-                                        <StatusBtn isActive={data?.work_status === "Closed"} />
-                                    )
-                                },
+                                // {
+                                //     key: "Status",
+                                //     value: "",
+                                //     component: (
+                                //         <StatusBtn isActive={data?.work_status === "Closed"} />
+                                //     )
+                                // },
                             ]}
                         />
                     </ContainerCard>
@@ -227,17 +227,17 @@ export default function ViewPage() {
                             data={[
                                 {
                                     key: "Machine Working",
-                                    value: data?.is_machine_in_working || "-",
+                                    value: data?.is_machine_in_working ? "Machine Working View" : "-",
                                     component: renderViewImageBtn(data?.is_machine_in_working_img)
                                 },
                                 {
                                     key: "Cleanliness",
-                                    value: data?.cleanliness || "-",
+                                    value: data?.cleanliness ? "Cleanliness View" : "-",
                                     component: renderViewImageBtn(data?.cleanliness_img)
                                 },
                                 {
                                     key: "Condenser Coil Cleaned",
-                                    value: data?.condensor_coil_cleand || "-",
+                                    value: data?.condensor_coil_cleand ? "Condenser Coil Cleaned View" : "-",
                                     component: renderViewImageBtn(data?.condensor_coil_cleand_img)
                                 },
                                 {
@@ -262,7 +262,7 @@ export default function ViewPage() {
                                 },
                                 {
                                     key: "Stock Availability %",
-                                    value: data?.stock_availability_in || "-",
+                                    value: data?.stock_availability_in ? "Stock Availability View" : "-",
                                     component: renderViewImageBtn(data?.stock_availability_in_img)
                                 },
                             ]}

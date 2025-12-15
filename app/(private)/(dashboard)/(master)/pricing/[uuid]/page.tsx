@@ -363,15 +363,15 @@ export default function AddPricing() {
           label: `${c.outlet_channel || c.outlet_channel_name || c.channel_name || c.name || ''}`,
           value: String(c.id),
         })));
-      } catch (e) {}
+      } catch (e) { }
       try {
         const cat = await customerCategoryGlobalSearch({ per_page: "50" });
-        setCustomerCategoryOptions((cat?.data || []).map((c: any) => ({ label: `${c.customer_category_name  || ''}`, value: String(c.id) })));
-      } catch (e) {}
+        setCustomerCategoryOptions((cat?.data || []).map((c: any) => ({ label: `${c.customer_category_name || ''}`, value: String(c.id) })));
+      } catch (e) { }
       try {
         const ic = await itemCategory({ per_page: "50" });
         setItemCategoryOptions((ic?.data || []).map((c: any) => ({ label: c.category_name || c.name || "", value: String(c.id) })));
-      } catch (e) {}
+      } catch (e) { }
     })();
   }, []);
 
@@ -440,7 +440,7 @@ export default function AddPricing() {
     }
     fetchRoutes();
   }, [keyValue["Warehouse"]]);
-  
+
   const steps: StepperStep[] = [
     { id: 1, label: "Key Combination" },
     { id: 2, label: "Key Value" },
@@ -1031,7 +1031,7 @@ export default function AddPricing() {
           // allow empty query to return cached itemOptions
           if (!q || q.trim().length === 0) return itemOptions || [];
           try {
-            const params: any = { query: q};
+            const params: any = { query: q };
             // if item category is selected, filter items by category
             if (keyValue["Item Category"] && keyValue["Item Category"].length > 0) {
               params.item_category_id = keyValue["Item Category"].join(",");
@@ -1040,8 +1040,8 @@ export default function AddPricing() {
             params.per_page = "100000";
             const res = await itemGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
-            return data.map((it: any) => ({ 
-              value: String(it.id), 
+            return data.map((it: any) => ({
+              value: String(it.id),
               label: `${it.erp_code || ""}${it.name ? " - " + it.name : ""}`,
               itemData: {
                 id: it.id,
@@ -1066,91 +1066,91 @@ export default function AddPricing() {
                   <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
                     <div className="font-semibold text-lg mb-4">Location</div>
                     {keyCombo.Location.map((locKey) => (
-                    <div key={locKey} className="mb-4">
-                      <div className="mb-2 text-base font-medium">{locKey}</div>
-                      <AutoSuggestion
-                        key={`autosuggest-location-${locKey}`}
-                        name={locKey}
-                        placeholder={`Search ${locKey}`}
-                        multiple={true}
-                        initialSelected={(() => {
-                          const sel = keyValue[locKey] || [];
-                          const opts = locKey === "Company" ? companyOptions : locKey === "Region" ? regionOptions : locKey === "Area" ? areaOptions : locKey === "Warehouse" ? warehouseOptions : routeOptions;
-                          return opts.filter((o) => sel.includes(o.value));
-                        })()}
-                        onSearch={async (q: string) => {
-                          if (locKey === "Company") return await handleCompanySearch(q as string);
-                          if (locKey === "Region") return await handleRegionSearch(q as string);
-                          if (locKey === "Area") return await handleAreaSearch(q as string);
-                          if (locKey === "Warehouse") return await handleWarehouseSearch(q as string);
-                          if (locKey === "Route") return await handleRouteSearch(q as string);
-                          return [];
-                        }}
-                        onChangeSelected={(selected) => {
-                          setKeyValue((s) => ({ ...s, [locKey]: selected.map((o) => o.value) }));
-                        }}
-                        onSelect={(opt: { value: string }) => {
-                          // maintain backward compatibility: add selection if not present
-                          setKeyValue((s) => {
-                            const prev = s[locKey] || [];
-                            if (prev.includes(String(opt.value))) return s;
-                            return { ...s, [locKey]: [...prev, String(opt.value)] };
-                          });
-                        }}
-                        onClear={() => setKeyValue((s) => ({ ...s, [locKey]: [] }))}
-                        error={undefined}
-                        className="w-full"
-                      />
-                    </div>
-                  ))}
-                </ContainerCard>
-              </div>
+                      <div key={locKey} className="mb-4">
+                        <div className="mb-2 text-base font-medium">{locKey}</div>
+                        <AutoSuggestion
+                          key={`autosuggest-location-${locKey}`}
+                          name={locKey}
+                          placeholder={`Search ${locKey}`}
+                          multiple={true}
+                          initialSelected={(() => {
+                            const sel = keyValue[locKey] || [];
+                            const opts = locKey === "Company" ? companyOptions : locKey === "Region" ? regionOptions : locKey === "Area" ? areaOptions : locKey === "Warehouse" ? warehouseOptions : routeOptions;
+                            return opts.filter((o) => sel.includes(o.value));
+                          })()}
+                          onSearch={async (q: string) => {
+                            if (locKey === "Company") return await handleCompanySearch(q as string);
+                            if (locKey === "Region") return await handleRegionSearch(q as string);
+                            if (locKey === "Area") return await handleAreaSearch(q as string);
+                            if (locKey === "Warehouse") return await handleWarehouseSearch(q as string);
+                            if (locKey === "Route") return await handleRouteSearch(q as string);
+                            return [];
+                          }}
+                          onChangeSelected={(selected) => {
+                            setKeyValue((s) => ({ ...s, [locKey]: selected.map((o) => o.value) }));
+                          }}
+                          onSelect={(opt: { value: string }) => {
+                            // maintain backward compatibility: add selection if not present
+                            setKeyValue((s) => {
+                              const prev = s[locKey] || [];
+                              if (prev.includes(String(opt.value))) return s;
+                              return { ...s, [locKey]: [...prev, String(opt.value)] };
+                            });
+                          }}
+                          onClear={() => setKeyValue((s) => ({ ...s, [locKey]: [] }))}
+                          error={undefined}
+                          className="w-full"
+                        />
+                      </div>
+                    ))}
+                  </ContainerCard>
+                </div>
               )}
               {keyCombo.Customer.length > 0 && (
                 <div className="flex-1">
                   <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
                     <div className="font-semibold text-lg mb-4">Customer</div>
                     {keyCombo.Customer.map((custKey) => (
-                    <div key={custKey} className="mb-4">
-                      <div className="mb-2 text-base font-medium">{custKey}</div>
-                      <AutoSuggestion
-                        key={`autosuggest-customer-${custKey}`}
-                        label=""
-                        name={custKey}
-                        placeholder={`Search ${custKey}`}
-                        multiple={true}
-                        initialSelected={(() => {
-                          const sel = keyValue[custKey] || [];
-                          // for customer category we may not have a local cache; fall back to empty
-                          if (custKey === "Customer Category") return customerCategoryOptions.filter((o) => sel.includes(o.value));
-                          if (custKey === "Channel") return channelOptions.filter((o) => sel.includes(o.value));
-                          if (custKey === "Customer") return [];
-                          return [];
-                        })()}
-                        onSearch={async (q: string) => {
-                          if (custKey === "Channel") return await handleChannelSearch(q as string);
-                          if (custKey === "Customer Category") return await handleCustomerCategorySearch(q as string);
-                          if (custKey === "Customer") return await handleCustomerSearch(q as string);
-                          return [];
-                        }}
-                        onChangeSelected={(selected) => {
-                          setKeyValue((s) => ({ ...s, [custKey]: selected.map((o) => o.value) }));
-                        }}
-                        onSelect={(opt: { value: string }) => {
-                          setKeyValue((s) => {
-                            const prev = s[custKey] || [];
-                            if (prev.includes(String(opt.value))) return s;
-                            return { ...s, [custKey]: [...prev, String(opt.value)] };
-                          });
-                        }}
-                        onClear={() => setKeyValue((s) => ({ ...s, [custKey]: [] }))}
-                        error={undefined}
-                        className="w-full"
-                      />
-                    </div>
-                  ))}
-                </ContainerCard>
-              </div>
+                      <div key={custKey} className="mb-4">
+                        <div className="mb-2 text-base font-medium">{custKey}</div>
+                        <AutoSuggestion
+                          key={`autosuggest-customer-${custKey}`}
+                          label=""
+                          name={custKey}
+                          placeholder={`Search ${custKey}`}
+                          multiple={true}
+                          initialSelected={(() => {
+                            const sel = keyValue[custKey] || [];
+                            // for customer category we may not have a local cache; fall back to empty
+                            if (custKey === "Customer Category") return customerCategoryOptions.filter((o) => sel.includes(o.value));
+                            if (custKey === "Channel") return channelOptions.filter((o) => sel.includes(o.value));
+                            if (custKey === "Customer") return [];
+                            return [];
+                          })()}
+                          onSearch={async (q: string) => {
+                            if (custKey === "Channel") return await handleChannelSearch(q as string);
+                            if (custKey === "Customer Category") return await handleCustomerCategorySearch(q as string);
+                            if (custKey === "Customer") return await handleCustomerSearch(q as string);
+                            return [];
+                          }}
+                          onChangeSelected={(selected) => {
+                            setKeyValue((s) => ({ ...s, [custKey]: selected.map((o) => o.value) }));
+                          }}
+                          onSelect={(opt: { value: string }) => {
+                            setKeyValue((s) => {
+                              const prev = s[custKey] || [];
+                              if (prev.includes(String(opt.value))) return s;
+                              return { ...s, [custKey]: [...prev, String(opt.value)] };
+                            });
+                          }}
+                          onClear={() => setKeyValue((s) => ({ ...s, [custKey]: [] }))}
+                          error={undefined}
+                          className="w-full"
+                        />
+                      </div>
+                    ))}
+                  </ContainerCard>
+                </div>
               )}
               <div className="flex-1">
                 <ContainerCard className="bg-[#fff] border border-[#E5E7EB] rounded-xl p-6">
@@ -1169,8 +1169,8 @@ export default function AddPricing() {
                           if (itemKey === "Item") {
                             return selectedItemDetails
                               .filter((it) => sel.includes(String(it.id)))
-                              .map((it) => ({ 
-                                value: String(it.id || ""), 
+                              .map((it) => ({
+                                value: String(it.id || ""),
                                 label: `${it.erp_code || it.code || ""}${it.name || it.itemName ? " - " + (it.name || it.itemName) : ""}`,
                                 itemData: it
                               }));
@@ -1188,7 +1188,7 @@ export default function AddPricing() {
                             // Extract itemData from selected items and merge with existing items
                             const newItemDetails = selected.map((item: any) => item.itemData).filter(Boolean);
                             const selectedIds = selected.map((o) => o.value);
-                            
+
                             // Keep existing items that are still selected, add new items
                             setSelectedItemDetails((prev) => {
                               // Remove items that are no longer selected
@@ -1314,7 +1314,7 @@ export default function AddPricing() {
                     { label: "Primary", value: "Primary" },
                     { label: "Secondary", value: "Secondary" },
                   ]}
-                  onChange={(e) => setPromotion({...promotion, applicable_for: e.target.value})}
+                  onChange={(e) => setPromotion({ ...promotion, applicable_for: e.target.value })}
                   error={errors.applicable_for}
                 />
               </div>

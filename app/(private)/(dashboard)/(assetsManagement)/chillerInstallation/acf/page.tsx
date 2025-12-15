@@ -222,6 +222,7 @@ export default function CustomerInvoicePage() {
     } = useAllDropdownListData();
 
     const [refreshKey, setRefreshKey] = useState(0);
+    const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
     const [showDropdown, setShowDropdown] = useState(false);
 
     const handleChange = (name: string, value: string) => {
@@ -473,7 +474,9 @@ export default function CustomerInvoicePage() {
                                 label: "Selected Rows",
                                 onClick: (data, selectedRow) => {
                                     const rows = selectedRow?.map(i => data[i]) || [];
-                                    setSelectedRowsData(rows);   // <-- store selected rows for sidebar table
+                                    console.log('Selected rows:', rows);
+                                    setSelectedRowsData(rows);
+                                    setSidebarRefreshKey(k => k + 1);
                                     setShowSidebar(true);
                                 }
                             }
@@ -518,40 +521,35 @@ export default function CustomerInvoicePage() {
                         {/* TABLE INSIDE SIDEBAR */}
                         <div className="p-5">
                             <Table
+                                refreshKey={sidebarRefreshKey}
+                                data={selectedRowsData && selectedRowsData.length > 0 ? selectedRowsData : []}
                                 config={{
                                     columns: [
                                         {
                                             key: "osa_code",
                                             label: "Code",
                                             render: (row: any) =>
-                                                row?.chiller_request?.osa_code || "-",
+                                                row?.chiller_request?.osa_code || row?.osa_code || "-",
                                         },
                                         {
                                             key: "model",
                                             label: "Model Code",
                                             render: (row: any) =>
-                                                row?.chiller_request?.model || "-",
+                                                row?.chiller_request?.model || row?.model || "-",
                                         },
                                     ],
                                     pageSize: 5,
                                     rowSelection: false,
                                     footer: { pagination: false },
                                     header: { title: "", searchBar: false },
-                                    api: {
-                                        // Pass selected rows to table directly
-                                        filterBy: async () => ({
-                                            data: selectedRowsData, // <-- we fill this below
-                                            total: 1,
-                                            currentPage: 1,
-                                            pageSize: 5,
-                                        }),
-                                    },
                                 }}
                             />
+
                         </div>
                     </div>
                 </>
             )}
+
 
         </div>
     );

@@ -99,6 +99,7 @@ export type configType = {
     pageSize?: number;
     pageSizeOptions?: number[]; // yet to implement
     rowSelection?: boolean;
+    onRowSelectionChange?: (selectedRows: number[]) => void;
     dragableColumn?: boolean;
     floatingInfoBar?: {
         showByDefault?: boolean;
@@ -361,6 +362,12 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
         setSelectedRow([]);
     }, [data, refreshKey]);
 
+
+    useEffect(() => {
+        if (config.onRowSelectionChange) {
+            config.onRowSelectionChange(selectedRow);
+        }
+    }, [selectedRow, config.onRowSelectionChange]);
 
     const orderedColumns = (columnOrder || []).map((i) => config.columns[i]).filter(Boolean);
 
