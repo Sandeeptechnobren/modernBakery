@@ -1,12 +1,10 @@
 "use client";
 
-import React,{useEffect} from "react";
+import React,{ useEffect } from "react";
 import { ArrowLeft, FileText, Truck, Receipt, Calculator } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter,useSearchParams  } from "next/navigation";
 import { VerticalArrow } from "../approval/proccessFlow";
 import { orderProcessFlow } from "@/app/services/settingsAPI";
-import { useSearchParams } from "next/navigation";
-
 interface ProcessStep {
   id: string;
   title: string;
@@ -28,7 +26,7 @@ horizontalHeight?: string;
 
 const ProcessFlow = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
+    const searchParams = useSearchParams();
   const order_code = searchParams.get("order_code") || undefined;
 
   useEffect(() => {
@@ -43,7 +41,6 @@ const ProcessFlow = () => {
 
     if (order_code) fetchProcessFlow();
   }, [order_code]);
-
   const processSteps: ProcessStep[] = [
     {
       id: "order",
@@ -171,58 +168,55 @@ const ProcessFlow = () => {
     };
 
     return (
-      <div className="flex items-center w-full">
+      <div className="flex items-center">
         <div
-          className="group bg-white border border-gray-200 hover:border-blue-500 transition-colors duration-200 p-3 sm:p-4 shadow-sm min-w-[180px] sm:min-w-[200px] min-h-[160px] sm:min-h-[200px] w-full relative"
+          className="group bg-white border border-gray-200 hover:border-blue-500 transition-colors duration-200 p-4 shadow-sm min-w-[200px] min-h-[200px] relative"
           style={{ clipPath: "polygon(0 0, 100% 0, 100% 90%, 90% 100%, 0 100%)" }}
         >
-          <div className="mb-2 sm:mb-3">
-            <div className="font-medium text-gray-800 text-xs sm:text-sm">
-              {card.type} {card.number}
-            </div>
+        <div className="mb-3">
+          <div className="font-medium text-gray-800 text-sm">
+            {card.type} {card.number}
           </div>
-
-          <div className={`flex items-center gap-2 mb-1 sm:mb-2 ${getStatusColor(card.status)}`}>
-            <span className="text-base sm:text-lg">{getStatusIcon(card.status)}</span>
-            <span className="font-medium text-xs sm:text-sm">{card.status}</span>
-          </div>
-
-          <div className="text-gray-600 text-xs mb-0.5 sm:mb-1">{card.dateLabel}</div>
-          <div className="text-gray-800 text-xs font-medium mb-1 sm:mb-2">{card.date}</div>
-
-          {card.additionalInfo && (
-            <div className="text-gray-700 text-xs">{card.additionalInfo}</div>
-          )}
-          <div className="absolute bottom-0 right-0 w-0 h-0 
-            transform rotate-270 bg-[#fbf9fa]
-            border-l-[14px] sm:border-l-[18px] border-l-transparent
-            border-t-[14px] sm:border-t-[18px] border-t-gray-500 group-hover:border-t-blue-500 transition-colors duration-200" >
-          </div>
-          {/* Arrow tail for card */}
         </div>
-        <VerticalArrow rowType={card.rowType}  verticalHeight={card.verticalHeight}  horizontalHeight={card.horizontalHeight} />
+        
+        <div className={`flex items-center gap-2 mb-2 ${getStatusColor(card.status)}`}>
+          <span className="text-lg">{getStatusIcon(card.status)}</span>
+          <span className="font-medium text-sm">{card.status}</span>
+        </div>
+
+        <div className="text-gray-600 text-xs mb-1">{card.dateLabel}</div>
+        <div className="text-gray-800 text-xs font-medium mb-2">{card.date}</div>
+
+        {card.additionalInfo && (
+          <div className="text-gray-700 text-xs">{card.additionalInfo}</div>
+        )}
+<div className="absolute bottom-0 right-0 w-0 h-0 
+        transform rotate-270 bg-[#fbf9fa]
+      border-l-[18px] border-l-transparent
+      border-t-[18px] border-t-gray-500 group-hover:border-t-blue-500 transition-colors duration-200" >
+    </div>
+        {/* Arrow tail for card */}
       </div>
+       <VerticalArrow rowType={card.rowType}  verticalHeight={card.verticalHeight}  horizontalHeight={card.horizontalHeight} />
+      
+       </div>
     );
   };
 
   const renderStepIcon = (step: ProcessStep, index: number) => {
     const isCompleted = step.completed;
     return (
-      <div
-        className="flex flex-col items-center min-w-[64px] xs:min-w-[80px] sm:min-w-[100px] md:min-w-[120px] px-1 xs:px-2"
-      >
+      <div className="flex flex-col items-center">
         <div
-          className={`w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center border-2 transition-colors duration-200 ${
+          className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${
             isCompleted
-              ? "border-green-500 text-green-600 bg-white"
+              ? "border-green-500 text-green-600"
               : "bg-gray-100 border-gray-300 text-gray-400"
           }`}
         >
           {step.icon}
         </div>
-        <div
-          className="mt-1 xs:mt-1.5 sm:mt-2 text-[10px] xs:text-xs sm:text-sm md:text-base font-medium text-gray-700 text-center break-words max-w-[80px] sm:max-w-[120px]"
-        >
+        <div className="mt-2 text-sm font-medium text-gray-700 text-center">
           {step.title}
         </div>
       </div>
@@ -230,31 +224,29 @@ const ProcessFlow = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6 sm:mb-8 flex items-center gap-2 sm:gap-4">
+        <div className="mb-8 flex items-center gap-4">
           <button
             onClick={() => router.back()}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-lg sm:text-2xl font-semibold text-gray-800">Process Flow</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">Process Flow</h1>
         </div>
 
         {/* Process Steps Header */}
-        <div className="flex items-center justify-start sm:justify-center overflow-x-auto gap-2 sm:gap-0 mb-8 sm:mb-12 px-1 sm:px-0 scrollbar-thin scrollbar-thumb-gray-200">
+        <div className="flex items-center justify-center  mb-12">
           {processSteps.map((step, index) => (
             <React.Fragment key={step.id}>
               {renderStepIcon(step, index)}
               {index < processSteps.length - 1 && (
                 <div className="flex items-center ">
-                  <div className="hidden sm:flex w-32 h-0.5 bg-gray-300 items-center mb-10"></div>
-                  <div className="flex sm:hidden w-8 h-0.5 bg-gray-300 items-center mb-4"></div>
-                  <div className="text-2xl sm:text-3xl text-gray-600 font-light leading-none mb-4 sm:mb-10">»</div>
-                  <div className="hidden sm:flex w-32 h-0.5 bg-gray-300 items-center mb-10"></div>
-                  <div className="flex sm:hidden w-8 h-0.5 bg-gray-300 items-center mb-4"></div>
+                  <div className="flex w-32 h-0.5 bg-gray-300 items-center mb-10"></div>
+                  <div className="text-3xl text-gray-600 font-light leading-none mb-10">»</div>
+                  <div className="flex w-32 h-0.5 bg-gray-300 items-center mb-10"></div>
                 </div>
               )}
             </React.Fragment>
@@ -263,9 +255,9 @@ const ProcessFlow = () => {
 
         {/* Process Cards Flow */}
         <div className="relative">
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-stretch md:items-start">
+          <div className="flex gap-8 items-start">
             {/* Order Processing Column */}
-            <div className="flex-1 min-w-[220px] max-w-full">
+            <div className="flex-1 min-w-[250px]">
               <div className="space-y-4">
                 {orderProcessingCards.map((card, index) => (
                   <div key={index} className="flex">
@@ -276,7 +268,7 @@ const ProcessFlow = () => {
             </div>
 
             {/* Delivery Processing Column */}
-            <div className="flex-1 min-w-[220px] max-w-full">
+            <div className="flex-1 min-w-[250px]">
               <div className="space-y-4">
                 {deliveryProcessingCards.map((card, index) => (
                   <div key={index} className="flex">
@@ -287,7 +279,7 @@ const ProcessFlow = () => {
             </div>
 
             {/* Invoicing Column */}
-            <div className="flex-1 min-w-[220px] max-w-full">
+            <div className="flex-1 min-w-[250px]">
               <div className="space-y-4">
                 {invoicingCards.map((card, index) => (
                   <div key={index} className="flex">
@@ -298,7 +290,7 @@ const ProcessFlow = () => {
             </div>
 
             {/* Accounting Column */}
-            <div className="flex-1 min-w-[220px] max-w-full">
+            <div className="flex-1 min-w-[250px]">
               <div className="space-y-4">
                 {accountingCards.map((card, index) => (
                   <div key={index} className="flex">
@@ -308,6 +300,8 @@ const ProcessFlow = () => {
               </div>
             </div>
           </div>
+
+         
         </div>
       </div>
     </div>

@@ -7,15 +7,18 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
+import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
+import getExcise from "@/app/(private)/utils/excise";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import {  companyCustomersGlobalSearch, genearateCode, itemGlobalSearch, saveFinalCode } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, companyCustomersGlobalSearch, genearateCode, itemGlobalSearch, saveFinalCode } from "@/app/services/allApi";
 import { invoiceBatch, returnCreate, returnWarehouseStockByCustomer } from "@/app/services/companyTransaction";
 import { isValidDate } from "@/app/utils/formatDate";
 
@@ -118,9 +121,6 @@ export default function PurchaseOrderAddEditPage() {
     }
     return errors;
   };
-    
-
-  
 
   const validationSchema = Yup.object({
     // warehouse: Yup.string().required("Warehouse is required"),
@@ -136,12 +136,6 @@ export default function PurchaseOrderAddEditPage() {
     //   .required("Return No is required"),
     customer: Yup.string()
       .required("Customer is required"),
-    // delivery_date: Yup.string()
-    //   .required("Delivery date is required")
-    //   .test("is-date", "Delivery date must be a valid date", (val) => {
-    //     return Boolean(val && !Number.isNaN(new Date(val).getTime()));
-    //   }),
-    // warehouse: Yup.string().required("Warehouse is required"),
     // delivery_date: Yup.string()
     //   .required("Delivery date is required")
     //   .test("is-date", "Delivery date must be a valid date", (val) => {
@@ -195,9 +189,12 @@ export default function PurchaseOrderAddEditPage() {
     },
   ]);
 
+  // per-row validation errors for item rows (keyed by row index)
   const [itemErrors, setItemErrors] = useState<Record<number, Record<string, string>>>({});
+  // per-row touched tracking so we only show errors after interaction
   const [itemTouched, setItemTouched] = useState<Record<number, Record<string, boolean>>>({});
 
+  // per-row loading (for UOM / price) so UI can show skeletons while fetching
   const [itemLoading, setItemLoading] = useState<Record<number, { uom?: boolean; price?: boolean, Batch?: boolean }>>({});
   
   // Ref to track debounce timeouts for quantity changes per row
@@ -280,12 +277,9 @@ export default function PurchaseOrderAddEditPage() {
         validationErrors[err.path] = err.message;
       }
       // showSnackbar(`Row ${index + 1} has errors: ${Object.values(validationErrors).join(", ")}`, "error");
-      // showSnackbar(`Row ${index + 1} has errors: ${Object.values(validationErrors).join(", ")}`, "error");
       setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
     }
   };
-
-
 
   const markTouched = (index: number, field: string) => {
     setItemTouched((prev) => ({ ...prev, [index]: { ...(prev[index] || {}), [field]: true } }));
@@ -349,11 +343,9 @@ export default function PurchaseOrderAddEditPage() {
 
   const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
     markTouched(index, field);
-    markTouched(index, field);
     const newData = [...itemData];
     const item: ItemData = newData[index] as ItemData;
     (item as any)[field] = value;
-    validateRow(index, newData[index]);
     validateRow(index, newData[index]);
 
     // If user selects an item, update UI immediately and persist a label so selection survives searches
@@ -371,33 +363,15 @@ export default function PurchaseOrderAddEditPage() {
         item.Type = "";
         item.Reason = "";
         item.Expiry = "";
-        item.Type = "";
-        item.Reason = "";
-        item.Expiry = "";
       } else {
         const selectedOrder = orderData.find((order: FormData) => order.id.toString() === value);
-        // console.log(selectedOrder);
         // console.log(selectedOrder);
         item.item_id = selectedOrder ? String(selectedOrder.id || value) : value;
         item.item_name = selectedOrder?.name ?? "";
         item.UOM = selectedOrder?.item_uoms?.map(uom => ({ label: uom.name, value: uom.uom_id.toString(), price: uom.price })) || [];
         item.uom_id = selectedOrder?.item_uoms?.[0]?.uom_id ? String(selectedOrder.item_uoms[0].uom_id) : "";
         // item.Price = selectedOrder?.item_uoms?.[0]?.price ? String(selectedOrder.item_uoms[0].price) : "";
-        item.UOM = selectedOrder?.item_uoms?.map(uom => ({ label: uom.name, value: uom.uom_id.toString(), price: uom.price })) || [];
-        item.uom_id = selectedOrder?.item_uoms?.[0]?.uom_id ? String(selectedOrder.item_uoms[0].uom_id) : "";
-        // item.Price = selectedOrder?.item_uoms?.[0]?.price ? String(selectedOrder.item_uoms[0].price) : "";
         item.Quantity = "1";
-        item.Expiry = "";
-        // const initialExc = getExcise({
-        //   item: { ...selectedOrder, excies: 1 },
-        //   uom: Number(item.uom_id) || 0,
-        //   quantity: Number(item.Quantity) || 1,
-        //   itemPrice: Number(item.Price) || null,
-        //   orderType: 0,
-        // });
-        // const initialExcStr = (Math.round(initialExc * 100) / 100).toFixed(2);
-        // item.Excise = initialExcStr;
-        // console.log("Excise calculated:", item.Excise);
         item.Expiry = "";
         // const initialExc = getExcise({
         //   item: { ...selectedOrder, excies: 1 },
@@ -419,68 +393,6 @@ export default function PurchaseOrderAddEditPage() {
         }
       }
     }
-
-    if(field === "uom_id" || field === "item_id") {
-      const res = await returnWarehouseStockByCustomer({ customer_id: values?.customer, item_id: item.item_id, quantity: "1", uom: item.uom_id });
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to fetch warehouse", "error");
-        return;
-      }
-      if(res.data.in_stock === false){
-        item.in_stock = "0";
-        showSnackbar("Selected item is not in stock", "error");
-        return;
-      }
-      item.in_stock = "1";
-    }
-
-    if (field === "Expiry" || field === "Quantity" || (field === "uom_id" && item.Expiry)) {
-      if(!value) return;
-      if(item.in_stock === "0") return;
-      if(!item.Quantity || !item.Expiry) return;
-      if(field === "Expiry" && !isValidDate(new Date(value))) return;
-      if(field === "Quantity" && Number(value) <= 0) return;
-
-      setItemLoading((prev) => ({
-        ...prev,
-        [index]: { ...(prev[index] || {}), Batch: true },
-      }));
-      const res = await invoiceBatch({
-        customer_id: values?.customer,
-        item_id: item.item_id ?? "",
-        uom: item.uom_id ?? "",
-        quantity: item.Quantity ?? "",
-        expiry_date: item.Expiry.toString() || ""
-      });
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to fetch Batch", "error");
-      }
-      item.Batchs = res.data?.map((batch: { batch_number: string; batch_expiry_date: string; quantity: number; item_price: number; }) => {
-        return { label: batch.batch_number + " (Stock: " + batch.quantity + ")", value: batch.batch_number, price: batch.item_price }
-      }) ?? [];
-      item.Batch = (res.data?.[0] as { batch_number: string; batch_expiry_date: string; quantity: number; item_price: number } | undefined)?.batch_number || "";
-      setItemLoading((prev) => ({
-        ...prev,
-        [index]: { ...(prev[index] || {}), Batch: false },
-      }));
-
-    }
-
-    if(field === "Batch") {
-      const selectedBatch = item.Batchs?.find(b => b.value === value);
-      if(selectedBatch) {
-        item.Price = String(selectedBatch.price / 100);
-        item.Total = (String((Number(item.Quantity) || 0) * selectedBatch.price/100)).toString();
-        setFinalTotal(Number(item.Total));
-      }
-    }
-    
-    // const qty = Number(item.Quantity) || 0;
-    // const price = Number(item.Price) || 0;
-    // const total = qty * price;
-    // const vat = total - total / 1.18;
-    // const preVat = total - vat;
-    // const net = total - vat;
 
     if(field === "uom_id" || field === "item_id") {
       const res = await returnWarehouseStockByCustomer({ customer_id: values?.customer, item_id: item.item_id, quantity: "1", uom: item.uom_id });
@@ -569,38 +481,9 @@ export default function PurchaseOrderAddEditPage() {
     // // keep both `Excise` (existing row shape) and `excise` (table render key) in sync
     // item.Excise = excise;
     // console.log(item.Excise, (selectedOrder as any).item_category?.id);
-    // const selectedOrder = orderData.find((od) => String(od.id) === String(item.item_id));
-    // const exciseNumeric = getExcise({
-    //   item: selectedOrder
-    //     ? // normalize shape so `getExcise` can read `item_category` as a number
-    //     ({
-    //       ...selectedOrder,
-    //       excies: 1,
-    //       item_category: (selectedOrder as any).item_category?.id ?? (selectedOrder as any).category_id ?? (selectedOrder as any).category?.id ?? (selectedOrder as any).category ?? (selectedOrder as any).category_code ?? 0,
-    //     } as any)
-    //     : {
-    //       id: Number(item.item_id) || 0,
-    //       agent_excise: 0,
-    //       direct_sell_excise: 0,
-    //       base_uom_price: Number(item.Price) || 0,
-    //       item_category: 0,
-    //     },
-    //   uom: Number(item.uom_id) || 0,
-    //   quantity: Number(item.Quantity) || 1,
-    //   itemPrice: Number(item.Price) || null,
-    //   orderType: 0,
-    // });
-    // const excise = (Math.round(exciseNumeric * 100) / 100).toFixed(2);
-    // // keep both `Excise` (existing row shape) and `excise` (table render key) in sync
-    // item.Excise = excise;
-    // console.log(item.Excise, (selectedOrder as any).item_category?.id);
     // const discount = 0;
     // const gross = total;
 
-    // item.Total = total.toFixed(2);
-    // item.Vat = vat.toFixed(2);
-    // item.Net = net.toFixed(2);
-    // item.preVat = preVat.toFixed(2);
     // item.Total = total.toFixed(2);
     // item.Vat = vat.toFixed(2);
     // item.Net = net.toFixed(2);
@@ -609,7 +492,6 @@ export default function PurchaseOrderAddEditPage() {
     // item.Discount = discount.toFixed(2);
     // item.gross = gross.toFixed(2);
 
-    validateRow(index, newData[index]);
     validateRow(index, newData[index]);
     setItemData(newData);
   };
@@ -653,41 +535,13 @@ export default function PurchaseOrderAddEditPage() {
         },
       ]);
       setItemTouched({});
-      setItemTouched({});
       return;
     }
     const newRows = itemData.filter((_, i) => i !== index);
     setItemData(newRows);
     setItemTouched({});
   };
-    
 
-  // --- Compute totals for summary and payload
-  // const computeTotals = () => {
-  //   const grossTotal = itemData.reduce(
-  //     (sum, item) => sum + Number(item.Total || 0),
-  //     0
-  //   );
-  //   const totalVat = itemData.reduce(
-  //     (sum, item) => sum + Number(item.Vat || 0),
-  //     0
-  //   );
-  //   const netAmount = itemData.reduce(
-  //     (sum, item) => sum + Number(item.Net || 0),
-  //     0
-  //   );
-  //   const totalExcise = itemData.reduce(
-  //     (sum, item) => sum + Number(item.Excise || 0),
-  //     0
-  //   );
-  //   const discount = itemData.reduce(
-  //     (sum, item) => sum + Number(item.Discount || 0),
-  //     0
-  //   );
-  //   const finalTotalValue = netAmount + totalVat + totalExcise;
-
-  //   return { grossTotal, totalVat, netAmount, totalExcise, discount, finalTotal: finalTotalValue };
-  // };
   // --- Compute totals for summary and payload
   // const computeTotals = () => {
   //   const grossTotal = itemData.reduce(
@@ -716,10 +570,31 @@ export default function PurchaseOrderAddEditPage() {
   // };
 
   const generatePayload = (values?: FormikValues) => {
-    // const { grossTotal, totalVat, netAmount, totalExcise, discount, finalTotal: computedFinalTotal } = computeTotals();
-
-    // const { grossTotal, totalVat, netAmount, totalExcise, discount, finalTotal: computedFinalTotal } = computeTotals();
-
+    // Use the VAT formula from the order: vat = total - total / 1.18
+    
+    // Calculate total VAT and net for the payload
+    let totalVat = 0;
+    let totalNet = 0;
+    const details = itemData.map((item) => {
+      const total = Number(item.Total) || 0;
+      const vat = +(total - total / 1.18).toFixed(2);
+      const net = +(total - vat).toFixed(2);
+      totalVat += vat;
+      totalNet += net;
+      return {
+        item_id: Number(item.item_id) || null,
+        item_price: Number(item.Price) || 0,
+        quantity: Number(item.Quantity) || 0,
+        vat,
+        uom_id: Number(item.uom_id) || null,
+        net_total: net,
+        total,
+        batch_number: (item as any).Batch ?? "",
+        expiry_date: (item as any).Expiry ?? "",
+        type: (item as any).Type ?? "",
+        reason: (item as any).Reason ?? "",
+      };
+    });
     return {
       order_code: code,
       customer_id: Number(values?.customer) || null,
@@ -729,22 +604,11 @@ export default function PurchaseOrderAddEditPage() {
       contact_no: values?.contactNo || "",
       return_no: values?.returnNo || "",
       total: finalTotal,
+      vat: +totalVat.toFixed(2),
+      net: +totalNet.toFixed(2),
       comment: values?.note || "",
       status: 1,
-      details: itemData.map((item) => ({
-        item_id: Number(item.item_id) || null,
-        item_price: Number(item.Price) || 0,
-        quantity: Number(item.Quantity) || 0,
-        vat: Number(item.Vat) || 0,
-        uom_id: Number(item.uom_id) || null,
-        net_total: Number(item.Net) || 0,
-        total: Number(item.Total) || 0,
-        batch_number: (item as any).Batch ?? "",
-        expiry_date: (item as any).Expiry ?? "",
-        type: (item as any).Type ?? "",
-        reason: (item as any).Reason ?? "",
-        
-      })),
+      details,
     };
   };
 
@@ -753,11 +617,9 @@ export default function PurchaseOrderAddEditPage() {
       // validate item rows separately (they live in local state)
       const itemsSchema = Yup.array().of(itemRowSchema);
       // console.log("Validating rows", itemData);
-      // console.log("Validating rows", itemData);
       try {
         await itemsSchema.validate(itemData, { abortEarly: false });
       } catch (itemErr: any) {
-        
         const rowErrors = mapItemRowErrors(itemErr);
         if (Object.keys(rowErrors).length > 0) {
           setItemErrors(rowErrors);
@@ -808,9 +670,6 @@ export default function PurchaseOrderAddEditPage() {
   const keyValueData = [
     // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
     // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
-    // { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
-    // { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
-    // { key: "Excise", value: `${CURRENCY} ${toInternationalNumber(totalExcise)}` },
     // { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
     // { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
     // { key: "Excise", value: `${CURRENCY} ${toInternationalNumber(totalExcise)}` },
@@ -941,7 +800,6 @@ export default function PurchaseOrderAddEditPage() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-10">
                   {/* <div>
-                  {/* <div>
                     <InputFields
                       required
                       label="distributor"
@@ -960,7 +818,6 @@ export default function PurchaseOrderAddEditPage() {
                       }
                     />
                   </div> */}
-                  
                   <div>
                     <AutoSuggestion
                       required
@@ -1008,7 +865,28 @@ export default function PurchaseOrderAddEditPage() {
                       onChange={handleChange}
                     />
                   </div>
-                  
+                  <div>
+                    <InputFields
+                      required
+                      label="Contact Number"
+                      type="contact2"
+                      name="contactNo"
+                      value={values.contactNo}
+                      error={touched.contactNo && (errors.contactNo as string)}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  {/* <div>
+                    <InputFields
+                      required
+                      label="Delivery Date"
+                      type="date"
+                      name="delivery_date"
+                      value={values.delivery_date}
+                      min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+                      onChange={handleChange}
+                    />
+                  </div> */}
                 </div>
 
                 <Table
@@ -1016,7 +894,6 @@ export default function PurchaseOrderAddEditPage() {
                     ...row,
                     idx: idx.toString(),
                     UOM: Array.isArray(row.UOM) ? JSON.stringify(row.UOM) : "[]",
-                    Batchs: Array.isArray((row as any).Batchs) ? JSON.stringify((row as any).Batchs) : "[]",
                     item_id: String(row.item_id ?? ""),
                     Quantity: String(row.Quantity ?? ""),
                     Price: String(row.Price ?? ""),
@@ -1129,6 +1006,138 @@ export default function PurchaseOrderAddEditPage() {
                             </div>
                           );
                         },
+                      },
+                      {
+                        key: "Expiry",
+                        label: "Expiry",
+                        width: 150,
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const err = itemErrors[idx]?.Expiry;
+                          const touchedExpiry = itemTouched[idx]?.Expiry;
+                          return (
+                            <div>
+                              <InputFields
+                                label=""
+                                type="date"
+                                name="Expiry"
+                                // integerOnly={true}
+                                placeholder="Enter Expiry"
+                                value={row.Expiry}
+                                disabled={!row.uom_id || !values.customer || row.in_stock === "0"}
+                                onChange={(e) => {
+                                  if(e.target.value && !isValidDate(new Date(e.target.value))) {
+                                    return;
+                                  }
+                                  recalculateItem(Number(row.idx), "Expiry", e.target.value, values);
+                                }}
+                                // min={1}
+                                integerOnly={true}
+                                error={touchedExpiry ? err : undefined}
+                              />
+                            </div>
+                          );
+                        },
+                      },
+                      {
+                        key: "Batch",
+                        label: "Batch No",
+                        width: 150,
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const loading = Boolean(itemLoading[idx]?.Batch);
+                          const batchOptions = row.Batchs || [];
+                          const batch = String(row.Batch ?? "");
+                          const touchedBatch = itemTouched[idx]?.Batch;
+
+                          if (loading) {
+                            return <div className="flex justify-center items-center"><Icon className="text-gray-400 animate-spin" icon="mingcute:loading-fill" width={20} /></div>;
+                          }
+                          return <>
+                            <InputFields
+                              label=""
+                              type="text"
+                              name="Batchs"
+                              // placeholder="Enter Type"
+                              value={batch}
+                              disabled={!row.uom_id || !values.customer || row.in_stock === "0"}
+                              options={batchOptions}
+                              onChange={(e) => {
+                                recalculateItem(Number(row.idx), "Batch", e.target.value);
+                              }}
+                              integerOnly={true}
+                              width="w-[150px]"
+                              error={touchedBatch ? itemErrors[idx]?.Batch : undefined}
+                            />
+                          </>;
+                        }
+                      },
+                      {
+                        key: "Type",
+                        label: "Type",
+                        width: 100,
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const type = String(row.Type ?? "");
+                          const touchedType = itemTouched[idx]?.Type;
+                          return <>
+                            <InputFields
+                              label=""
+                              type="text"
+                              name="Type"
+                              // placeholder="Enter Type"
+                              value={row.Type}
+                              disabled={!row.uom_id || !values.customer || row.in_stock === "0"}
+                              options={[
+                                {label: "Good", value: "good"},
+                                {label: "Bad", value: "bad"}
+                              ]}
+                              onChange={(e) => {
+                                recalculateItem(Number(row.idx), "Type", e.target.value);
+                                recalculateItem(Number(row.idx), "Reason", "");
+                              }}
+                              integerOnly={true}
+                              width="w-[100px]"
+                              error={touchedType ? itemErrors[idx]?.Type : undefined}
+                            />
+                          </>;
+                        }
+                      },
+                      {
+                        key: "Reason",
+                        label: "Reason",
+                        width: 150,
+                        render: (row) => {
+                          const idx = Number(row.idx);
+                          const reason = String(row.Reason ?? "");
+                          const touchedReason = itemTouched[idx]?.Reason;
+                          return <>
+                            <InputFields
+                              label=""
+                              type="text"
+                              name="Reason"
+                              // placeholder="Enter Reason"
+                              value={row.Reason}
+                              disabled={!row.uom_id || !values.customer || row.in_stock === "0"}
+                              options={row.Type === "good" ? [
+                                {label: "Short Expiry", value: "1"},
+                                {label: "Non Moving", value: "2"},
+                                {label: "Replacement", value: "3"},
+                              ] : [
+                                {label: "Damaged", value: "1"},
+                                {label: "Quality Issue", value: "2"},
+                                {label: "Expired", value: "3"},
+                                {label: "Packing Issue", value: "4"},
+                              ]}
+                              onChange={(e) => {
+                                recalculateItem(Number(row.idx), "Reason", e.target.value);
+                              }}
+                              integerOnly={true}
+                              width="w-[150px]"
+                              error={touchedReason ? itemErrors[idx]?.Reason : undefined}
+                            />
+                          </>;
+                        }
                       },
                       {
                         key: "Price",
