@@ -123,3 +123,12 @@ export const updateBonus = async (uuid: string,body:object) => {
     return handleError(error);
   }
 };
+
+export const orderProcessFlow = async (params:Params) => {
+  try {
+    const res =  await API.get(`/api/master/approval/order-process-flow`, {params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

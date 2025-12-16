@@ -570,8 +570,31 @@ export default function PurchaseOrderAddEditPage() {
   // };
 
   const generatePayload = (values?: FormikValues) => {
-    // const { grossTotal, totalVat, netAmount, totalExcise, discount, finalTotal: computedFinalTotal } = computeTotals();
-
+    // Use the VAT formula from the order: vat = total - total / 1.18
+    
+    // Calculate total VAT and net for the payload
+    let totalVat = 0;
+    let totalNet = 0;
+    const details = itemData.map((item) => {
+      const total = Number(item.Total) || 0;
+      const vat = +(total - total / 1.18).toFixed(2);
+      const net = +(total - vat).toFixed(2);
+      totalVat += vat;
+      totalNet += net;
+      return {
+        item_id: Number(item.item_id) || null,
+        item_price: Number(item.Price) || 0,
+        quantity: Number(item.Quantity) || 0,
+        vat,
+        uom_id: Number(item.uom_id) || null,
+        net_total: net,
+        total,
+        batch_number: (item as any).Batch ?? "",
+        expiry_date: (item as any).Expiry ?? "",
+        type: (item as any).Type ?? "",
+        reason: (item as any).Reason ?? "",
+      };
+    });
     return {
       order_code: code,
       customer_id: Number(values?.customer) || null,
@@ -581,21 +604,11 @@ export default function PurchaseOrderAddEditPage() {
       contact_no: values?.contactNo || "",
       return_no: values?.returnNo || "",
       total: finalTotal,
+      vat: +totalVat.toFixed(2),
+      net: +totalNet.toFixed(2),
       comment: values?.note || "",
       status: 1,
-      details: itemData.map((item) => ({
-        item_id: Number(item.item_id) || null,
-        item_price: Number(item.Price) || 0,
-        quantity: Number(item.Quantity) || 0,
-        vat: Number(item.Vat) || 0,
-        uom_id: Number(item.uom_id) || null,
-        net_total: Number(item.Net) || 0,
-        total: Number(item.Total) || 0,
-        batch_number: (item as any).Batch ?? "",
-        expiry_date: (item as any).Expiry ?? "",
-        type: (item as any).Type ?? "",
-        reason: (item as any).Reason ?? "",
-      })),
+      details,
     };
   };
 

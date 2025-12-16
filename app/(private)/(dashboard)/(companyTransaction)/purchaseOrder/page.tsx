@@ -15,6 +15,7 @@ import { purchaseOrderExportCollapse, purchaseOrderExportHeader, purchaseOrderLi
 import { formatDate } from "../../(master)/salesTeam/details/[uuid]/page";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { downloadFile } from "@/app/services/allApi";
+import ProcessFlow from "../../settings/processFlow/page";
 
 const columns = [
     { key: "sap_id", label: "SAP", showByDefault: true, render: (row: TableDataType) => <span>{row.sap_id}</span> },
@@ -255,6 +256,12 @@ export default function CustomerInvoicePage() {
                                     router.push(
                                         `/purchaseOrder/details/${row.uuid}`
                                     ),
+                            },
+                            {
+                                icon: "uil:process",
+                                onClick: (row: TableDataType) => {
+                                    router.push(`/settings/processFlow?order_code=${row.order_code}`);
+                                }
                             }
                         ],
                         pageSize: 10,
