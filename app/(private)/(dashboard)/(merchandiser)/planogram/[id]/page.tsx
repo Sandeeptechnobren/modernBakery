@@ -371,11 +371,11 @@ export default function Planogram() {
       values.customer_ids.forEach((id) =>
         formData.append("customer_id", String(id))
       );
-      values.images[values.merchendiser_ids[0]][values.customer_ids[0]].forEach((image: ShelfImage) => {
-        if (image.image) {
-          formData.append("image", image.image);
-        }
-      });
+      // values.images[values.merchendiser_ids[0]][values.customer_ids[0]].forEach((image: ShelfImage) => {
+      //   if (image.image) {
+      //     formData.append("image", image.image);
+      //   }
+      // });
 
       const res = isEditMode
         ? await updatePlanogramById(String(id), formData)

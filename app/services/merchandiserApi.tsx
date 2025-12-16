@@ -387,7 +387,7 @@ export const competitorList = async (params?: Params) => {
 export const updatePlanogramById = async (uuid: string, data: FormData) => {
   try {
     console.log(uuid)
-    const res = await APIFormData.put(
+    const res = await APIFormData.post(
       `/api/merchendisher/planogram/update/${uuid}`,
       data
     );
