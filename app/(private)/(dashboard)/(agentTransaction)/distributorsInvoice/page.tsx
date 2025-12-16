@@ -18,6 +18,7 @@ import { formatDate } from "@/app/(private)/utils/date";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import FilterComponent from "@/app/components/filterComponent";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 
 
@@ -80,7 +81,12 @@ const columns = [
             } as FormatNumberOptions);
         },
     },
-
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
+    },
 ];
 
 export default function CustomerInvoicePage() {

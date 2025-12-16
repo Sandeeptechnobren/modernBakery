@@ -276,6 +276,21 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
         () => (config.columns || []).map((_, i) => i)
     );
 
+    const columnsSignature = useMemo(() => (config.columns || []).map(c => c.key).join(','), [config.columns]);
+
+    useEffect(() => {
+        const newOrder = (config.columns || []).map((_, i) => i);
+        setColumnOrder(newOrder);
+
+        const allByDefault = config.columns.map((data, index) => { return data.showByDefault ? index : -1 });
+        const filtered = allByDefault.filter((n) => n !== -1);
+        if (filtered.length > 0) {
+            setSelectedColumns(filtered);
+        } else {
+            setSelectedColumns(newOrder);
+        }
+    }, [columnsSignature]);
+
     async function checkForData() {
         // if data is passed, use default values
         if (data) {

@@ -1,87 +1,66 @@
 "use client";
 
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
+    configType,
     listReturnType,
-    searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
-import InputFields from "@/app/components/inputFields";
-import { exchangeList, exportExchangeData } from "@/app/services/agentTransaction";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import StatusBtn from "@/app/components/statusBtn2";
+import { StockTransferList } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { downloadFile } from "@/app/services/allApi";
 
-// 🔹 Table Columns
-const columns = [
-    {
-        key: "exchange_code",
-        label: "Code",
-        showByDefault: true,
-    },
-    {
-        key: "warehouse_code, warehouse_name",
-        label: "Distributors",
-        showByDefault: true,
-        render: (row: TableDataType) => {
-            const code = row.warehouse_code || "";
-            const name = row.warehouse_name || "";
-            if (!code && !name) return "-";
-            return `${code}${code && name ? " - " : ""}${name}`;
-        },
-    },
-    {
-        key: "customer_code, customer_name",
-        label: "Customer",
-        showByDefault: true,
-        render: (row: TableDataType) => {
-            const code = row.customer_code || "";
-            const name = row.customer_name || "";
-            if (!code && !name) return "-";
-            return `${code}${code && name ? " - " : ""}${name}`;
-        },
-    },
-];
-
-export default function StockTransfer() {
-    const { showSnackbar } = useSnackbar();
-    const { setLoading } = useLoading();
+export default function StockTransferPage() {
     const router = useRouter();
+    const { setLoading } = useLoading();
+    const { showSnackbar } = useSnackbar();
 
-    // 🔹 Depot states
-    const [warehouse1, setWarehouse1] = useState("");
-    const [warehouse2, setWarehouse2] = useState("");
-
-    const [threeDotLoading, setThreeDotLoading] = useState({
-        csv: false,
-        xlsx: false,
-    });
+    const {
+        regionOptions,
+        warehouseOptions,
+        routeOptions,
+        channelOptions,
+        itemCategoryOptions,
+        customerSubCategoryOptions,
+    } = useAllDropdownListData();
 
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // 🔹 Fetch data
-    const fetchInvoices = useCallback(
-        async (page: number = 1, pageSize: number = 50): Promise<listReturnType> => {
+    /* -------------------------------------------------------
+       FETCH LIST (TABLE API)
+    ------------------------------------------------------- */
+    const fetchStockTransferList = useCallback(
+        async (
+            page: number = 1,
+            pageSize: number = 50
+        ): Promise<listReturnType> => {
             try {
                 setLoading(true);
-                const result = await exchangeList({
-                    page: page.toString(),
-                    per_page: pageSize.toString(),
-                });
+
+                const params = {
+                    page: String(page),
+                    per_page: String(pageSize),
+                };
+
+                const res = await StockTransferList(params);
 
                 return {
-                    data: Array.isArray(result.data) ? result.data : [],
-                    total: result?.pagination?.totalPages || 1,
-                    currentPage: result?.pagination?.page || 1,
-                    pageSize: result?.pagination?.limit || pageSize,
+                    data: Array.isArray(res?.data) ? res.data : [],
+                    total: res?.meta?.last_page || 1,
+                    totalRecords: res?.meta?.total || 0,
+                    currentPage: res?.meta?.current_page || 1,
+                    pageSize: res?.meta?.per_page || pageSize,
                 };
             } catch (error) {
-                console.error(error);
-                showSnackbar("Failed to fetch data", "error");
+                showSnackbar("Failed to load stock transfer list", "error");
                 return {
                     data: [],
-                    total: 1,
+                    total: 0,
+                    totalRecords: 0,
                     currentPage: 1,
                     pageSize,
                 };
@@ -92,107 +71,144 @@ export default function StockTransfer() {
         [setLoading, showSnackbar]
     );
 
-    // 🔹 Search placeholder
-    const searchInvoices = useCallback(async (): Promise<searchReturnType> => {
-        return {
-            data: [],
-            currentPage: 1,
-            pageSize: 50,
-            total: 0,
-        };
-    }, []);
+    /* -------------------------------------------------------
+       FILTER API
+    ------------------------------------------------------- */
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, any>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            const params: Record<string, string> = {
+                page: String(payload.page ?? 1),
+                per_page: String(pageSize),
+            };
 
-    // 🔹 Export
-    const exportFile = async (format: "csv" | "xlsx" = "csv") => {
-        try {
-            setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
-            const response = await exportExchangeData({ format });
-            const url = response?.download_url || response?.url || response?.data?.url;
+            Object.keys(payload || {}).forEach((key) => {
+                if (key === "page") return;
+                const value = payload[key];
+                if (!value) return;
 
-            if (url) {
-                await downloadFile(url);
-                showSnackbar("File downloaded successfully", "success");
-            } else {
-                showSnackbar("Failed to get download file", "error");
-            }
-        } catch (error) {
-            console.error(error);
-            showSnackbar("Export failed", "error");
-        } finally {
-            setThreeDotLoading({ csv: false, xlsx: false });
-        }
-    };
+                if (Array.isArray(value)) {
+                    params[key] = value.join(",");
+                } else {
+                    params[key] = String(value);
+                }
+            });
+
+            const res = await StockTransferList(params);
+
+            return {
+                data: res?.data || [],
+                total: res?.meta?.last_page || 1,
+                totalRecords: res?.meta?.total || 0,
+                currentPage: res?.meta?.current_page || 1,
+                pageSize: res?.meta?.per_page || pageSize,
+            };
+        },
+        []
+    );
+
+    /* -------------------------------------------------------
+       TABLE COLUMNS
+    ------------------------------------------------------- */
+    const columns: configType["columns"] = [
+        {
+            key: "transfer_date",
+            label: "Transfer Date",
+        },
+        {
+            key: "source_warehouse",
+            label: "Source Warehouse",
+            render: (row: TableDataType) =>
+                row.source_warehouse
+                    ? `${row.source_warehouse.code} - ${row.source_warehouse.name}`
+                    : "-",
+        },
+        {
+            key: "destiny_warehouse",
+            label: "Destination Warehouse",
+            render: (row: TableDataType) =>
+                row.destiny_warehouse
+                    ? `${row.destiny_warehouse.code} - ${row.destiny_warehouse.name}`
+                    : "-",
+        },
+        {
+            key: "status",
+            label: "Status",
+            render: (row: TableDataType) => (
+                <StatusBtn isActive={row.status === 1} />
+            ),
+        },
+    ];
 
     return (
         <div className="flex flex-col h-full">
+            <div className="mb-4">
+                <h1 className="text-lg font-semibold">Stock Transfer</h1>
+            </div>
+
             <Table
                 refreshKey={refreshKey}
                 config={{
-                    api: { list: fetchInvoices, search: searchInvoices },
+                    api: {
+                        list: fetchStockTransferList,
+                        filterBy,
+                    },
                     header: {
-                        title: "Stock Transfer",
-                        columnFilter: true,
                         searchBar: false,
-                        threeDot: [
+                        columnFilter: true,
+                        filterByFields: [
+                            { key: "start_date", label: "From Date", type: "date" },
+                            { key: "end_date", label: "To Date", type: "date" },
                             {
-                                icon: threeDotLoading.csv
-                                    ? "eos-icons:three-dots-loading"
-                                    : "gala:file-document",
-                                label: "Export CSV",
-                                onClick: () =>
-                                    !threeDotLoading.csv && exportFile("csv"),
+                                key: "source_warehouse",
+                                label: "Source Warehouse",
+                                isSingle: false,
+                                multiSelectChips: true,
+                                options: warehouseOptions || [],
                             },
                             {
-                                icon: threeDotLoading.xlsx
-                                    ? "eos-icons:three-dots-loading"
-                                    : "gala:file-document",
-                                label: "Export Excel",
-                                onClick: () =>
-                                    !threeDotLoading.xlsx && exportFile("xlsx"),
+                                key: "destiny_warehouse",
+                                label: "Destination Warehouse",
+                                isSingle: false,
+                                multiSelectChips: true,
+                                options: warehouseOptions || [],
+                            },
+                            {
+                                key: "region_id",
+                                label: "Region",
+                                isSingle: false,
+                                multiSelectChips: true,
+                                options: regionOptions || [],
                             },
                         ],
-
-                        // ✅ DEPOT INPUTS IN HEADER (REPLACING ADD BUTTON)
                         actions: [
-                            <div
-                                key="depot-inputs"
-                                className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-[800px]"
-                            >
-                                <InputFields
-                                    name="warehouse1"
-                                    label="Select Warehp"
-                                    placeholder="Select Depot"
-                                    value={warehouse1}
-                                    onChange={(e) => setWarehouse1(e.target.value)}
-                                />
-                                <InputFields
-                                    name="warehouse2"
-                                    label="Select Sub Depot"
-                                    placeholder="Select Sub Depot"
-                                    value={warehouse2}
-                                    onChange={(e) => setWarehouse2(e.target.value)}
-                                />
-                            </div>,
+                            <SidebarBtn
+                                key="add"
+                                href="/stocktransfer/add"
+                                isActive
+                                leadingIcon="lucide:plus"
+                                label="Add"
+                                labelTw="hidden sm:block"
+                            />,
                         ],
                     },
-                    footer: { nextPrevBtn: true, pagination: true },
+                    localStorageKey: "stock-transfer-table",
+                    footer: { pagination: true, nextPrevBtn: true },
                     columns,
                     rowSelection: true,
-                    localStorageKey: "invoice-table",
                     rowActions: [
                         {
                             icon: "lucide:eye",
-                            onClick: (row: TableDataType) =>
-                                router.push(
-                                    `/distributorsExchange/details/${row.uuid}`
-                                ),
-                        },
-                        {
-                            icon: "lucide:download",
-                            onClick: () => exportFile(),
+                            onClick: (row) => {
+                                if (row.uuid) {
+                                    router.push(`/stocktransfer/details/${row.uuid}`);
+                                }
+                            },
                         },
                     ],
-                    pageSize: 10,
+                    pageSize: 50,
                 }}
             />
         </div>

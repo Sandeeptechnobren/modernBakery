@@ -1512,15 +1512,14 @@ export const updateSalesmanStatus = async (body: object) => {
   }
 };
 
-export const projectList = async (params: Params) => {
+export const projectList = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/projects-list`, {
+    const res = await API.get("/api/settings/projects-list", {
       params: params,
     });
     return res.data;
-  } catch (error) {
-    console.error("Project List failed ❌", error);
-    throw error;
+  } catch (error: unknown) {
+    return handleError(error);
   }
 };
 
@@ -2272,6 +2271,14 @@ export const agentCustomerGenerateCode = async () => {
 export const itemList = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/items/list", { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const itemListCategoryWise = async (params?: Params) => {
+  try {
+    const res = await API.get("api/master/items/category-wise-items", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3317,7 +3324,7 @@ export const promotionHeaderById = async (id: string) => {
 export const editPromotionHeader = async (id: string, payload: object) => {
   try {
     const res = await API.put(
-      `/api/master/promotion-headers/update/${id}`,
+      `/api/master/promotion-headers/${id}`,
       payload
     );
 
@@ -3720,18 +3727,7 @@ export const LocationById = async (uuid: string) => {
   }
 };
 
-export const editLocation = async (uuid: string, payload: object) => {
-  try {
-    const res = await API.put(
-      `/api/settings/locations/update/${uuid}`,
-      payload
-    );
 
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
 
 // export const editWarehouseStock = async (uuid: string, payload: object) => {
 //   try {
@@ -3793,3 +3789,57 @@ export const getWarehouseStockDetails = async (id: string) => {
     return handleError(error);
   }
 };
+
+
+//project
+
+export const addProject = async (body: object) => {
+  try {
+    const res = await API.post(`/api/settings/projects-list/add`, body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editLocation = async (uuid: string, payload: object) => {
+  try {
+    const res = await API.put(`/api/settings/location/${uuid}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editProject = async (uuid: string, payload: object) => {
+  try {
+    const res = await API.put(`/api/settings/projects-list/${uuid}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getProjectById = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/settings/projects-list/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+
+export const addRouteTransfer = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/route-transfer/transfer`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+

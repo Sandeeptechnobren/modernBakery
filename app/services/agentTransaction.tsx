@@ -707,3 +707,76 @@ export const linkageList = async (params: Params) => {
     return handleError(error);
   }
 };
+
+
+export const StockTransferTopOrders = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/warehouse-stocks/stock-transfer/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addStockTransfer = async (body: object) => {
+  try {
+    const res = await API.post(`/api/settings/warehouse-stocks/transfer`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const StockTransferList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/stock-transfer/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export type StockTransferData = {
+  id: number;
+  uuid: string;
+  osa_code: string;
+  region: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  area: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  warehouse: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  model_number: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  requestes_asset: number;
+  available_stock: number;
+  approved_qty: string | number;
+  allocate_asset: string | number;
+  status: number;
+  comment_reject: string | null;
+  created_at: string;
+};
+
+export const stockTransferByUUID = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/stock-transfer/${uuid}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+

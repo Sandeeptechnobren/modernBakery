@@ -257,6 +257,15 @@ export const returnWarehouseStockByCustomer = async (params?: Params) => {
   }
 };
 
+export const returnCreate = async (body: object) => {
+  try {
+    const res = await API.post(`/api/hariss_transaction/ht_returns/create`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 // Temporary Return Hariss Transaction APIs
 export const tempReturnList = async (params?: Params) => {
   try {

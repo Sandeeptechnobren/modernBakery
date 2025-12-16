@@ -9,6 +9,7 @@ import { Icon } from "@iconify-icon/react";
 import Logo from "@/app/components/logo";
 import ContainerCard from "@/app/components/containerCard";
 import ImagePreviewModal from "@/app/components/ImagePreviewModal";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 interface PaymentData {
   osa_code: string;
@@ -21,6 +22,7 @@ interface PaymentData {
   recipt_no: string;
   recipt_date: string;
   recipt_image: string | null;
+  request_step_id?: number;
   status: string;
 }
 
@@ -31,7 +33,8 @@ const PaymentDetails = () => {
   const [loading, setLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const API_BASE_URL = "https://api.coreexl.com/osa_productionV2/public";
+  const backBtnUrl = "/advancePayment";
+  // const API_BASE_URL = "https://api.coreexl.com/osa_productionV2/public";
 
   useEffect(() => {
     if (id && id !== "add") {
@@ -52,7 +55,7 @@ const PaymentDetails = () => {
           if (responseData.recipt_image) {
             receiptImageUrl = responseData.recipt_image.startsWith("http")
               ? responseData.recipt_image
-              : `${API_BASE_URL}/${responseData.recipt_image.replace(/^\//, "")}`;
+              : `${process.env.NEXT_PUBLIC_API_BASE_URL}/${responseData.recipt_image.replace(/^\//, "")}`;
           }
 
           const paymentData: PaymentData = {
@@ -96,9 +99,14 @@ const PaymentDetails = () => {
 
   return (
     <>
+      <WorkflowApprovalActions
+        requestStepId={data?.request_step_id}
+        redirectPath={backBtnUrl}
+        model="Load_Header"
+      />
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/advancePayment" className="text-gray-600 hover:text-gray-900">
+        <Link href={backBtnUrl} className="text-gray-600 hover:text-gray-900">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
         <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">

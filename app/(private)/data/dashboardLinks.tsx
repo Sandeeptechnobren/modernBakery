@@ -49,6 +49,13 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
+            href: "/routeTransfer",
+            label: "Route Transfer",
+            leadingIcon: "mdi-light:transfer",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
             href: "/fieldCustomer",
             label: "Field Customers",
             leadingIcon: "carbon:customer",

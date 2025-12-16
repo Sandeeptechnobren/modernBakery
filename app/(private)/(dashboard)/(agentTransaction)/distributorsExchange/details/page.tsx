@@ -13,6 +13,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 
 interface TableRow {
@@ -51,6 +52,7 @@ export default function OrderDetailPage() {
     const params = useParams();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
+    const backBtnUrl = "/distributorsExchange";
 
     const [showDropdown, setShowDropdown] = useState(false);
     interface ExchangeDetail {
@@ -59,6 +61,7 @@ export default function OrderDetailPage() {
         warehouse_name?: string;
         customer_code?: string;
         customer_name?: string;
+        request_step_id?: number;
         comment?: string;
         invoices?: Array<{
             item_code?: string;
@@ -177,6 +180,11 @@ export default function OrderDetailPage() {
 
     return (
         <>
+        <WorkflowApprovalActions
+            requestStepId={deliveryData?.request_step_id}
+            redirectPath={backBtnUrl}
+            model="Exchange_Header"
+        />
             <div className="flex justify-between items-center mb-[20px]">
                 <div className="flex items-center gap-[16px]">
                     <Icon

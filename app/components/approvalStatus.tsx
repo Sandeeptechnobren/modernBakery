@@ -22,7 +22,7 @@ export default function ApprovalStatus({ status }: { status: number | string }) 
     const inline = { color: style.text, backgroundColor: style.bg } as React.CSSProperties;
 
     return (
-        <span style={inline} className={`text-sm font-medium p-1 px-4 rounded-xl text-[12px]`}>
+        <span style={inline} className={`text-sm font-medium p-1 px-4 rounded-xl text-[12px] uppercase`}>
             {formatStatusText(String(status))}
         </span>
     );

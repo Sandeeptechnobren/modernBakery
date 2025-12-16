@@ -20,6 +20,7 @@ import { downloadFile } from "@/app/services/allApi";
 import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/utils/formatNumber";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import FilterComponent from "@/app/components/filterComponent";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 const dropdownDataList = [
     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -70,6 +71,12 @@ const columns = [
                 maximumFractionDigits: 2,
             } as FormatNumberOptions);
         },
+    },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
     // {
     //     key: "status",

@@ -94,6 +94,7 @@ export default function AddEditSalesman() {
   
   const [filteredRouteOptions, setFilteredRouteOptions] =
     useState(routeOptions);
+  const [extraTypeOption, setExtraTypeOption] = useState<{ value: string; label: string } | null>(null);
 
   // Load dropdown data
   useEffect(() => {
@@ -261,18 +262,26 @@ export default function AddEditSalesman() {
           const res = await getSalesmanById(salesmanId as string);
           if (res && !res.error && res.data) {
             const d = res.data;
-            console.log(d, "data")
+            const derivedType = d.salesman_type?.id?.toString() || d.type?.toString() || d.salesman_type_id?.toString() || "";
+            
+            if (d.salesman_type?.id && d.salesman_type?.salesman_type_name) {
+                setExtraTypeOption({
+                    value: d.salesman_type.id.toString(),
+                    label: d.salesman_type.salesman_type_name
+                });
+            }
+
             const idsWareHouses: string[] = []
             d.warehouses?.map((dta: any) => {
               console.log(dta.id, "warehouse id")
               idsWareHouses.push(dta.id.toString());
             })
-            console.log(d.salesman_type?.id?.toString(), "project type id")
+
             setInitialValues({
               osa_code: d.osa_code || "",
               name: d.name || "",
-              type: d.salesman_type?.id?.toString() || "",
-              sub_type: d.project_type?.id?.toString() || "",
+              type: derivedType,
+              sub_type: d.project_type?.id?.toString() || d.sub_type?.toString() || d.project_type_id?.toString() || "",
               designation: d.designation || "",
               route_id: d.route?.id?.toString() || "",
               password: "", // password is not returned from API → leave empty
@@ -480,7 +489,10 @@ export default function AddEditSalesman() {
                   label="Sales Team Type"
                   name="type"
                   value={values.type}
-                  options={salesmanTypeOptions}
+                  options={[
+                    ...salesmanTypeOptions.map((o: any) => ({ ...o, value: String(o.value) })),
+                    ...(extraTypeOption && !salesmanTypeOptions.find((o: any) => String(o.value) === extraTypeOption.value) ? [extraTypeOption] : [])
+                  ]}
                   onChange={(e) => {
                     const value = e.target.value;
                     setFieldValue("type", value);

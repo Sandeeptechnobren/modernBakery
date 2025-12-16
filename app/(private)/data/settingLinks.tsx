@@ -235,7 +235,7 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "fa-solid:coins",
             iconColor: "text-green-500",
           },
-          
+
         ],
       },
       {
@@ -313,6 +313,13 @@ export const initialLinkData: SidebarDataType[] = [
             isActive: false,
             href: "/settings/manageAssets/branding",
             label: "Branding",
+            leadingIcon: "mdi:map",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
+            href: "/settings/manageAssets/project",
+            label: "Project",
             leadingIcon: "mdi:map",
             iconColor: "text-yellow-400",
           },

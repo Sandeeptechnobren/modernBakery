@@ -15,6 +15,7 @@ import { downloadFile } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 export default function SalemanLoad() {
   const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions , ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
@@ -51,8 +52,13 @@ export default function SalemanLoad() {
 
         return `${code} - ${name}`;                  // both available
       },
-    }
-
+    },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
+    },
 
   ];
 

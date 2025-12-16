@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { downloadFile } from "@/app/services/allApi";
 import FilterComponent from "@/app/components/filterComponent";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 const dropdownDataList = [
     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -54,6 +55,12 @@ const columns = [
             if (!code && !name) return "-";
             return `${code}${code && name ? " - " : ""}${name}`;
         },
+    },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
 ];
 

@@ -210,7 +210,10 @@ export default function DeliveryAddEditPage() {
     delivery_date: new Date().toISOString().slice(0, 10),
   };
 
-  const { warehouseOptions } = useAllDropdownListData();
+  const { warehouseOptions, ensureWarehouseLoaded } = useAllDropdownListData();
+  useEffect(() => {
+    ensureWarehouseLoaded();
+  }, [ensureWarehouseLoaded]);
   const [deliveryData, setDeliveryData] = useState<OrderData[]>([]);
   const [searchedItem, setSearchedItem] = useState<FormData[] | null>(null);
   const [warehouseStocks, setWarehouseStocks] = useState<Record<string, WarehouseStock[]>>({});

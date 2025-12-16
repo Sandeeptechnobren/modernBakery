@@ -20,11 +20,13 @@ import { useParams } from "next/navigation";
 import { useEffect, useState, RefObject, useRef } from "react";
 import PrintButton from "@/app/components/printButton";
 import { downloadFile } from "@/app/services/allApi";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 interface CustomerItem {
   id: number;
   uuid: string;
   osa_code: string;
+  request_step_id: number;
   salesman_type: { id: number; code: string; name: string };
   warehouse: { id: number; code: string; name: string };
   route: { id: number; code: string; name: string };
@@ -113,6 +115,12 @@ export default function ViewPage() {
           {title}
         </h1>
       </div>
+
+      <WorkflowApprovalActions
+        requestStepId={customer?.request_step_id}
+        redirectPath={backBtnUrl}
+        model="Load_Header"
+      />
 
       {/* ---------- Main Card ---------- */}
       <div ref={targetRef}>
