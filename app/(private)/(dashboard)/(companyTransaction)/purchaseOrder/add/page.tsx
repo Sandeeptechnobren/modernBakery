@@ -11,8 +11,7 @@ import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import {  genearateCode, itemList, SalesmanListGlobalSearch, saveFinalCode, warehouseStockTopOrders } from "@/app/services/allApi";
-import { addAgentOrder } from "@/app/services/agentTransaction";
-import {getDirectCustomer} from "@/app/services/companyTransaction";
+import {getDirectCustomer,purchaseOrderAdd} from "@/app/services/companyTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -664,7 +663,7 @@ export default function PurchaseOrderAddEditPage() {
       formikHelpers.setSubmitting(true);
       const payload = generatePayload(values);
       // console.log("Submitting payload:", payload);
-      const res = await addAgentOrder(payload);
+      const res = await purchaseOrderAdd(payload);
       if (res.error) {
         showSnackbar(res.data.message || "Failed to create purchase order", "error");
         console.error("Create Purchase order error:", res);

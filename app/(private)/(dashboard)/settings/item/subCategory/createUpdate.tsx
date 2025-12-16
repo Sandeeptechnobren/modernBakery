@@ -26,11 +26,12 @@ export default function CreateUpdate({
     onRefresh: () => void
 }) {
     const { showSnackbar } = useSnackbar();
-    const { itemCategory } = useAllDropdownListData();
+    const { itemCategory,ensureItemCategoryLoaded } = useAllDropdownListData();
     const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
     const [defaultOption, setDefaultOption] = useState<number | undefined>(undefined);
 
     useEffect(() => {
+        ensureItemCategoryLoaded();
         const newOptions = itemCategory.map((category) => {
             return {
                 value: category.id?.toString() || "",

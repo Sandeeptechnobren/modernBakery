@@ -230,10 +230,15 @@ export default function RolesPermissionTable({
     // only emit changes to parent, do NOT call Formik here
     onRowsChange?: (rows: RoleRow[], permissionIds: number[]) => void;
 } = {}): JSX.Element {
-    const { permissions } = useAllDropdownListData();
+    const { permissions, ensurePermissionsLoaded } = useAllDropdownListData();
 
     const [rows, setRows] = useState<RoleRow[]>(Array.isArray(initialData) ? deepClone(initialData) : []);
     const [refreshKey, setRefreshKey] = useState<number>(0);
+
+    // Load permissions data
+    useEffect(() => {
+        ensurePermissionsLoaded();
+    }, [ensurePermissionsLoaded]);
 
     useEffect(() => {
         if (Array.isArray(initialData)) setRows(deepClone(initialData));

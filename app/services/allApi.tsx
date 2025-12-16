@@ -56,7 +56,8 @@ export const downloadFile = (fileurl: string, type?: string): void => {
 };
 
 export const login = async (credentials: {
-  email: string;
+  email?: string;
+  username?: string;
   password: string;
 }) => {
   try {

@@ -181,7 +181,7 @@ export default function AddEditCompany() {
   const { setLoading } = useLoading();
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [prefix, setPrefix] = useState("");
-  const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency } =
+  const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency,ensureCountryLoaded } =
     useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -190,6 +190,7 @@ export default function AddEditCompany() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  
   const ALLOWED_LOGO_TYPES = [
     "image/png",
     "image/jpeg",
@@ -219,6 +220,7 @@ export default function AddEditCompany() {
     status: "1",
   });
 
+  useEffect(()=>{ensureCountryLoaded();},[ensureCountryLoaded])
   // if editing and there's an existing logo URL, show preview
   useEffect(() => {
     if (initialValues.logo && typeof initialValues.logo === "string") {

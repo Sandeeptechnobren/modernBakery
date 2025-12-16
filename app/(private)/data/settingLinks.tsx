@@ -275,6 +275,13 @@ export const initialLinkData: SidebarDataType[] = [
       },
       {
         isActive: false,
+        href: "/settings/processFlow",
+        label: "Process Flow",
+        leadingIcon: "uil:process",
+        iconColor: "text-green-500",
+      },
+      {
+        isActive: false,
         href: "#",
         label: "Manage Assets",
         leadingIcon: "streamline-freehand:money-bag",
