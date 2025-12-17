@@ -1,5 +1,6 @@
 "use client";
 
+import ApprovalStatus from "@/app/components/approvalStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
     configType,
@@ -132,6 +133,12 @@ export default function StockTransferPage() {
                 row.destiny_warehouse
                     ? `${row.destiny_warehouse.code} - ${row.destiny_warehouse.name}`
                     : "-",
+        },
+        {
+            key: "approval_status",
+            label: "Approval Status",
+            showByDefault: true,
+            render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
         },
         {
             key: "status",

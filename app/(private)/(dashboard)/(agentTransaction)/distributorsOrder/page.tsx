@@ -348,6 +348,12 @@ export default function CustomerInvoicePage() {
                 icon: "lucide:download",
                 onClick: (row: TableDataType) => downloadPdf(row.uuid),
               },
+              {
+                                icon: "uil:process",
+                                onClick: (row: TableDataType) => {
+                                    router.push(`/settings/processFlow?order_code=${row.order_code}`);
+                                }
+              }
             ],
             pageSize: 10,
           }}

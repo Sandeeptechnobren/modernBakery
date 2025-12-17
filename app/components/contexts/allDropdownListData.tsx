@@ -132,6 +132,7 @@ interface DropdownDataContextType {
   fetchCustomerCategoryOptions: (outlet_channel_id: string | number) => Promise<void>;
   fetchCompanyCustomersOptions: (category_id: string | number) => Promise<void>;
   fetchItemOptions: (category_id: string | number) => Promise<void>;
+  fetchItemsCategoryWise: (category_id?: string | number) => Promise<Item[]>;
   getItemUoms: (item_id: string | number) => { id?: string; name?: string; uom_type?: string; price?: string; upc?: string }[];
   getPrimaryUom: (item_id: string | number) => { id?: string; name?: string; uom_type?: string; price?: string; upc?: string } | null;
   labelOptions: { value: string; label: string }[];
@@ -1325,6 +1326,48 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   }, []);
 
+  const fetchItemsCategoryWise = useCallback(async (category_id?: string | number) => {
+    setLoading(false);
+    try {
+      // call itemList with category_id to fetch items for this category
+      const res = await itemList({ category_id: String(category_id) ?? "" });
+      const normalize = (r: unknown): Item[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as Item[];
+        }
+        if (Array.isArray(r)) return r as Item[];
+        return [];
+      };
+      const filterNecessaryOject = (item: any) => {
+        return (Array.isArray(item) ? item : []).map((c: Item) => ({
+          value: String(c.id ?? ""),
+          label:
+            (c.item_code || (c as any).code) && c.name
+              ? `${c.item_code || (c as any).code} - ${c.name}`
+              : c.name ?? "",
+          uom: Array.isArray((c as any).uom)
+            ? (c as any).uom.map((u: any) => ({
+              id: Number(u.id ?? 0),
+              name: String(u.name ?? ""),
+              uom_type: String(u.uom_type ?? ""),
+              price: Number(u.price ?? 0),
+              upc: String(u.upc ?? ""),
+            }))
+            : [],
+        }));
+      }
+      const normalizeResult = normalize(res)
+      const result = filterNecessaryOject(normalizeResult)
+      return result
+    } catch (error) {
+      // setItem([]);
+      return []
+    } finally {
+      setLoading(false);
+    }
+  }, [])
+
   const fetchItemOptions = useCallback(async (category_id: string | number) => {
     // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
     setLoading(false);
@@ -1898,6 +1941,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         fetchCustomerCategoryOptions,
         fetchCompanyCustomersOptions,
         fetchItemOptions,
+        fetchItemsCategoryWise,
         fetchWarehouseOptions,
         roleOptions,
         projectOptions,

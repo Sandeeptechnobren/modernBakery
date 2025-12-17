@@ -1,5 +1,6 @@
 "use client";
 
+import ApprovalStatus from "@/app/components/approvalStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
   configType,
@@ -196,6 +197,12 @@ export default function SalesmanUnloadPage() {
     { key: "Salesman_type", label: "Sales Team Role" },
     { key: "unload_no", label: "Unload No." },
     { key: "unload_from", label: "Unload By" },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
+    },
     {
       key: "status",
       label: "Status",

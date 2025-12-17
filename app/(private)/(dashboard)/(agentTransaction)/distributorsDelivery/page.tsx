@@ -17,6 +17,7 @@ import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import FilterComponent from "@/app/components/filterComponent";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 // const dropdownDataList = [
 //     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -93,6 +94,12 @@ const columns = [
     // { key: "sap_id", label: "SAP ID" },
     // { key: "sap_status", label: "SAP Status" },
     { key: "total", label: "Amount", showByDefault: true, render: (row: TableDataType) => toInternationalNumber(Number(row.total) || 0) },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
+    },
     {
         key: "status",
         label: "Status",

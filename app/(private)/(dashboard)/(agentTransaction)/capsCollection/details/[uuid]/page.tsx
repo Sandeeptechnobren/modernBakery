@@ -13,6 +13,7 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import PrintButton from "@/app/components/printButton";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Logo from "@/app/components/logo";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 const title = "CAPS Collection Details";
 const backBtnUrl = "/capsCollection";
@@ -86,6 +87,11 @@ export default function ViewPage() {
         </Link>
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
+      <WorkflowApprovalActions
+        requestStepId={deliveryData?.request_step_id}
+        redirectPath={backBtnUrl}
+        model="Caps_Collection_Header"
+      />
 
       <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
         <div className="w-full flex flex-col">

@@ -19,7 +19,7 @@ import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import getExcise from "@/app/(private)/utils/excise";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { agentCustomerGlobalSearch, companyCustomersGlobalSearch, genearateCode, itemGlobalSearch, saveFinalCode } from "@/app/services/allApi";
-import { invoiceBatch, returnWarehouseStockByCustomer } from "@/app/services/companyTransaction";
+import { invoiceBatch, returnCreate, returnWarehouseStockByCustomer } from "@/app/services/companyTransaction";
 import { isValidDate } from "@/app/utils/formatDate";
 
 interface FormData {
@@ -85,27 +85,42 @@ interface ItemData {
 export default function PurchaseOrderAddEditPage() {
   const itemRowSchema = Yup.object({
     item_id: Yup.string()
-      .required("Please select an item"),
+      .required("required"),
     uom_id: Yup.string()
-      .required("Please select a UOM"),
+      .required("required"),
     Quantity: Yup.number()
-      .typeError("Quantity must be a number")
-      .min(1, "Quantity must be at least 1")
-      .required("Quantity is required"),
+      .typeError("invalid")
+      .min(1, "atleast 1")
+      .required("required"),
     Expiry: Yup.string()
-      .required("Expiry date is required")
-      .test("is-valid-date", "Expiry date must be valid", (value) => {
+      .required("required")
+      .test("is-valid-date", "invalid", (value) => {
         if (!value) return false;
         return !Number.isNaN(new Date(value).getTime());
       }),
     Type: Yup.string()
-      .required("Type is required")
-      .oneOf(["good", "bad"], "Type must be either good or bad"),
+      .required("required"),
     Reason: Yup.string()
-      .required("Reason is required"),
+      .required("required"),
     Batch: Yup.string()
-      .required("Batch number is required"),
+      .required("required"),
   });
+
+  // Map Yup array validation errors into per-row field errors for the table
+  const mapItemRowErrors = (err: any) => {
+    const errors: Record<number, Record<string, string>> = {};
+    if (err?.inner && Array.isArray(err.inner)) {
+      err.inner.forEach((e: any) => {
+        const match = typeof e.path === "string" ? e.path.match(/^\[(\d+)\]\.(.+)$/) : null;
+        if (match) {
+          const idx = Number(match[1]);
+          const field = match[2];
+          errors[idx] = { ...(errors[idx] || {}), [field]: e.message };
+        }
+      });
+    }
+    return errors;
+  };
 
   const validationSchema = Yup.object({
     // warehouse: Yup.string().required("Warehouse is required"),
@@ -127,8 +142,6 @@ export default function PurchaseOrderAddEditPage() {
     //     return Boolean(val && !Number.isNaN(new Date(val).getTime()));
     //   }),
     note: Yup.string().max(1000, "Note is too long"),
-    // Items are validated separately in handleSubmit using local state (itemData).
-    // Keeping this optional in Formik schema to avoid blocking submission due to Formik not holding item rows.
     items: Yup.mixed().notRequired(),
   });
 
@@ -178,6 +191,8 @@ export default function PurchaseOrderAddEditPage() {
 
   // per-row validation errors for item rows (keyed by row index)
   const [itemErrors, setItemErrors] = useState<Record<number, Record<string, string>>>({});
+  // per-row touched tracking so we only show errors after interaction
+  const [itemTouched, setItemTouched] = useState<Record<number, Record<string, boolean>>>({});
 
   // per-row loading (for UOM / price) so UI can show skeletons while fetching
   const [itemLoading, setItemLoading] = useState<Record<number, { uom?: boolean; price?: boolean, Batch?: boolean }>>({});
@@ -187,6 +202,7 @@ export default function PurchaseOrderAddEditPage() {
 
   // Debounced function for quantity changes (triggers batch fetch)
   const handleQuantityChange = (index: number, value: string, values: FormikValues) => {
+    setItemTouched((prev) => ({ ...prev, [index]: { ...(prev[index] || {}), Quantity: true } }));
     const newData = [...itemData];
     const item: ItemData = newData[index] as ItemData;
     (item as any)["Quantity"] = value;
@@ -213,6 +229,10 @@ export default function PurchaseOrderAddEditPage() {
       uom_id: String(rowData.uom_id ?? ""),
       Quantity: Number(rowData.Quantity) || 0,
       Price: Number(rowData.Price) || 0,
+      Expiry: String((rowData as any).Expiry ?? ""),
+      Type: String((rowData as any).Type ?? ""),
+      Reason: String((rowData as any).Reason ?? ""),
+      Batch: String((rowData as any).Batch ?? ""),
     };
     try {
       if (options?.skipUom) {
@@ -259,6 +279,10 @@ export default function PurchaseOrderAddEditPage() {
       // showSnackbar(`Row ${index + 1} has errors: ${Object.values(validationErrors).join(", ")}`, "error");
       setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
     }
+  };
+
+  const markTouched = (index: number, field: string) => {
+    setItemTouched((prev) => ({ ...prev, [index]: { ...(prev[index] || {}), [field]: true } }));
   };
 
   // Function for fetching Item
@@ -318,9 +342,11 @@ export default function PurchaseOrderAddEditPage() {
   }, []);
 
   const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
+    markTouched(index, field);
     const newData = [...itemData];
     const item: ItemData = newData[index] as ItemData;
     (item as any)[field] = value;
+    validateRow(index, newData[index]);
 
     // If user selects an item, update UI immediately and persist a label so selection survives searches
     if (field === "item_id") {
@@ -411,6 +437,7 @@ export default function PurchaseOrderAddEditPage() {
         ...prev,
         [index]: { ...(prev[index] || {}), Batch: false },
       }));
+
     }
 
     if (field === "Batch") {
@@ -465,9 +492,7 @@ export default function PurchaseOrderAddEditPage() {
     // item.Discount = discount.toFixed(2);
     // item.gross = gross.toFixed(2);
 
-    if (field !== "item_id") {
-      validateRow(index, newData[index]);
-    }
+    validateRow(index, newData[index]);
     setItemData(newData);
   };
 
@@ -509,9 +534,12 @@ export default function PurchaseOrderAddEditPage() {
           Total: "",
         },
       ]);
+      setItemTouched({});
       return;
     }
-    setItemData(itemData.filter((_, i) => i !== index));
+    const newRows = itemData.filter((_, i) => i !== index);
+    setItemData(newRows);
+    setItemTouched({});
   };
 
   // --- Compute totals for summary and payload
@@ -542,8 +570,31 @@ export default function PurchaseOrderAddEditPage() {
   // };
 
   const generatePayload = (values?: FormikValues) => {
-    // const { grossTotal, totalVat, netAmount, totalExcise, discount, finalTotal: computedFinalTotal } = computeTotals();
+    // Use the VAT formula from the order: vat = total - total / 1.18
 
+    // Calculate total VAT and net for the payload
+    let totalVat = 0;
+    let totalNet = 0;
+    const details = itemData.map((item) => {
+      const total = Number(item.Total) || 0;
+      const vat = +(total - total / 1.18).toFixed(2);
+      const net = +(total - vat).toFixed(2);
+      totalVat += vat;
+      totalNet += net;
+      return {
+        item_id: Number(item.item_id) || null,
+        item_price: Number(item.Price) || 0,
+        quantity: Number(item.Quantity) || 0,
+        vat,
+        uom_id: Number(item.uom_id) || null,
+        net_total: net,
+        total,
+        batch_number: (item as any).Batch ?? "",
+        expiry_date: (item as any).Expiry ?? "",
+        type: (item as any).Type ?? "",
+        reason: (item as any).Reason ?? "",
+      };
+    });
     return {
       order_code: code,
       customer_id: Number(values?.customer) || null,
@@ -553,21 +604,11 @@ export default function PurchaseOrderAddEditPage() {
       contact_no: values?.contactNo || "",
       return_no: values?.returnNo || "",
       total: finalTotal,
+      vat: +totalVat.toFixed(2),
+      net: +totalNet.toFixed(2),
       comment: values?.note || "",
       status: 1,
-      details: itemData.map((item) => ({
-        item_id: Number(item.item_id) || null,
-        item_price: Number(item.Price) || 0,
-        quantity: Number(item.Quantity) || 0,
-        vat: Number(item.Vat) || 0,
-        uom_id: Number(item.uom_id) || null,
-        net_total: Number(item.Net) || 0,
-        total: Number(item.Total) || 0,
-        batch_number: (item as any).Batch ?? "",
-        expiry_date: (item as any).Expiry ?? "",
-        type: (item as any).Type ?? "",
-        reason: (item as any).Reason ?? "",
-      })),
+      details,
     };
   };
 
@@ -579,10 +620,20 @@ export default function PurchaseOrderAddEditPage() {
       try {
         await itemsSchema.validate(itemData, { abortEarly: false });
       } catch (itemErr: any) {
-        // log detailed item validation errors and surface a friendly message
-        console.error("Item validation errors:", itemErr.inner || itemErr);
-        showSnackbar(itemErr.inner.map((err: any) => err.message).join(", "), "error");
-        // set a top-level form error to prevent submission
+        const rowErrors = mapItemRowErrors(itemErr);
+        if (Object.keys(rowErrors).length > 0) {
+          setItemErrors(rowErrors);
+          // mark errored fields as touched so messages are visible after submit
+          const touchedMap: Record<number, Record<string, boolean>> = {};
+          Object.entries(rowErrors).forEach(([rowIdx, fields]) => {
+            const idxNum = Number(rowIdx);
+            touchedMap[idxNum] = Object.keys(fields).reduce((acc, key) => {
+              acc[key] = true;
+              return acc;
+            }, {} as Record<string, boolean>);
+          });
+          setItemTouched(touchedMap);
+        }
         formikHelpers.setErrors({ items: "Item rows validation failed" } as any);
         return;
       }
@@ -590,7 +641,7 @@ export default function PurchaseOrderAddEditPage() {
       formikHelpers.setSubmitting(true);
       const payload = generatePayload(values);
       // console.log("Submitting payload:", payload);
-      const res = await addAgentOrder(payload);
+      const res = await returnCreate(payload);
       if (res.error) {
         showSnackbar(res.data.message || "Failed to create purchase order", "error");
         console.error("Create Purchase order error:", res);
@@ -604,7 +655,7 @@ export default function PurchaseOrderAddEditPage() {
           // Optionally handle error, but don't block success
         }
         showSnackbar("Order created successfully", "success");
-        router.push("/purchaseOrder");
+        router.push("/return");
       }
     } catch (err) {
       console.error(err);
@@ -616,15 +667,7 @@ export default function PurchaseOrderAddEditPage() {
     }
   };
 
-  const keyValueData = [
-    // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
-    // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
-    // { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
-    // { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
-    // { key: "Excise", value: `${CURRENCY} ${toInternationalNumber(totalExcise)}` },
-    // { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
-    // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
-  ];
+
 
   const fetchAgentCustomers = async (values: FormikValues, search: string) => {
     const res = await companyCustomersGlobalSearch({
@@ -706,6 +749,7 @@ export default function PurchaseOrderAddEditPage() {
           <Icon
             icon="lucide:arrow-left"
             width={24}
+            className="cursor-pointer"
             onClick={() => router.back()}
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
@@ -778,11 +822,13 @@ export default function PurchaseOrderAddEditPage() {
                         if (values.customer !== opt.value) {
                           setFieldValue("customer", opt.value);
                           setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
+                          setItemTouched({});
                         }
                       }}
                       onClear={() => {
                         setFieldValue("customer", "");
                         setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
+                        setItemTouched({});
                       }}
                       // disabled={values.warehouse === ""}
                       error={touched.customer && (errors.customer as string)}
@@ -859,6 +905,7 @@ export default function PurchaseOrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.item_id;
+                          const touchedItem = itemTouched[idx]?.item_id;
                           // Optimized: avoid mapping+filtering arrays on every render.
                           // Find the option for the current row (if still present) and fall back to stored label
                           // so the selection remains visible even when the option isn't returned by a search.
@@ -882,7 +929,7 @@ export default function PurchaseOrderAddEditPage() {
                                   recalculateItem(Number(row.idx), "item_id", "", values);
                                 }}
                                 disabled={!values.customer}
-                                error={err && err}
+                                error={touchedItem ? err : undefined}
                                 className="w-full"
                               />
                             </div>
@@ -896,6 +943,7 @@ export default function PurchaseOrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.uom_id;
+                          const touchedUom = itemTouched[idx]?.uom_id;
                           const options = JSON.parse(row.UOM ?? "[]");
                           return (
                             <div>
@@ -913,7 +961,7 @@ export default function PurchaseOrderAddEditPage() {
                                   const price = options.find((uom: { value: string }) => String(uom.value) === e.target.value)?.price || "0.00";
                                   recalculateItem(Number(row.idx), "Price", price, values);
                                 }}
-                                error={err && err}
+                                error={touchedUom ? err : undefined}
                               />
                             </div>
                           );
@@ -926,6 +974,7 @@ export default function PurchaseOrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.Quantity;
+                          const touchedQty = itemTouched[idx]?.Quantity;
                           return (
                             <div>
                               <InputFields
@@ -944,7 +993,7 @@ export default function PurchaseOrderAddEditPage() {
                                 }}
                                 min={1}
                                 integerOnly={true}
-                                error={err && err}
+                                error={touchedQty ? err : undefined}
                               />
                             </div>
                           );
@@ -956,7 +1005,8 @@ export default function PurchaseOrderAddEditPage() {
                         width: 150,
                         render: (row) => {
                           const idx = Number(row.idx);
-                          const err = itemErrors[idx]?.Quantity;
+                          const err = itemErrors[idx]?.Expiry;
+                          const touchedExpiry = itemTouched[idx]?.Expiry;
                           return (
                             <div>
                               <InputFields
@@ -975,7 +1025,7 @@ export default function PurchaseOrderAddEditPage() {
                                 }}
                                 // min={1}
                                 integerOnly={true}
-                                error={err && err}
+                                error={touchedExpiry ? err : undefined}
                               />
                             </div>
                           );
@@ -990,6 +1040,7 @@ export default function PurchaseOrderAddEditPage() {
                           const loading = Boolean(itemLoading[idx]?.Batch);
                           const batchOptions = row.Batchs || [];
                           const batch = String(row.Batch ?? "");
+                          const touchedBatch = itemTouched[idx]?.Batch;
 
                           if (loading) {
                             return <div className="flex justify-center items-center"><Icon className="text-gray-400 animate-spin" icon="mingcute:loading-fill" width={20} /></div>;
@@ -1008,6 +1059,7 @@ export default function PurchaseOrderAddEditPage() {
                               }}
                               integerOnly={true}
                               width="w-[150px]"
+                              error={touchedBatch ? itemErrors[idx]?.Batch : undefined}
                             />
                           </>;
                         }
@@ -1019,6 +1071,7 @@ export default function PurchaseOrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const type = String(row.Type ?? "");
+                          const touchedType = itemTouched[idx]?.Type;
                           return <>
                             <InputFields
                               label=""
@@ -1037,6 +1090,7 @@ export default function PurchaseOrderAddEditPage() {
                               }}
                               integerOnly={true}
                               width="w-[100px]"
+                              error={touchedType ? itemErrors[idx]?.Type : undefined}
                             />
                           </>;
                         }
@@ -1048,6 +1102,7 @@ export default function PurchaseOrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const reason = String(row.Reason ?? "");
+                          const touchedReason = itemTouched[idx]?.Reason;
                           return <>
                             <InputFields
                               label=""
@@ -1071,6 +1126,7 @@ export default function PurchaseOrderAddEditPage() {
                               }}
                               integerOnly={true}
                               width="w-[150px]"
+                              error={touchedReason ? itemErrors[idx]?.Reason : undefined}
                             />
                           </>;
                         }

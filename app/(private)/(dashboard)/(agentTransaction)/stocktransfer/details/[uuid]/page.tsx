@@ -53,6 +53,12 @@ export default function ViewPage() {
                 <h1 className="text-xl font-semibold">{title}</h1>
             </div>
 
+            <WorkflowApprovalActions
+                requestStepId={transferData?.request_step_id}
+                redirectPath={backBtnUrl}
+                model=""
+            />
+
             {/* SUMMARY CARDS */}
             <div className="flex flex-wrap gap-5">
                 <ContainerCard className="w-full lg:w-[350px]">

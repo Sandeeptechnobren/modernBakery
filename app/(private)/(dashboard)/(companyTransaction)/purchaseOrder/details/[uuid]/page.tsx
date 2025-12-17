@@ -18,6 +18,7 @@ import { downloadFile } from "@/app/services/allApi";
 import { purchaseOrderById, exportPurposeOrderViewPdf } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 const columns = [
     { key: "index", label: "#" },
@@ -39,6 +40,7 @@ interface OrderData {
     customer_code: string,
     customer_name: string,
     customer_email: string,
+    request_step_id: number,
     customer_town: string,
     customer_contact: string,
     customer_district: string,
@@ -155,6 +157,11 @@ export default function OrderDetailPage() {
 
     return (
         <>
+        <WorkflowApprovalActions
+                requestStepId={data?.request_step_id}
+                redirectPath={"/purchaseOrder"}
+                model="Distributor_Advance_Payment"
+              />
             {/* ---------- Header ---------- */}
             <div className="flex justify-between items-center mb-[20px]">
                 <div className="flex items-center gap-[16px]">

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, RefObject, useRef } from "react";
 import PrintButton from "@/app/components/printButton";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 interface CustomerItem {
   id: number;
@@ -23,6 +24,7 @@ interface CustomerItem {
   osa_code: string;
   unload_no: string;
   unload_date: string;
+  request_step_id: number;
   unload_time: string;
   sync_date: string;
   sync_time: string;
@@ -145,6 +147,12 @@ export default function ViewPage() {
         </Link>
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
+
+      <WorkflowApprovalActions
+        requestStepId={customer?.request_step_id}
+        redirectPath={backBtnUrl}
+        model="Unload_Header"
+      />
 
       {/* ---------- Main Card ---------- */}
       <div ref={targetRef}>

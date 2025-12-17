@@ -106,7 +106,11 @@ export default function AddEditSalesmanLoad() {
   const [isItemsLoaded, setIsItemsLoaded] = useState(false);
   const [itemOptions, setItemsOptions] = useState();
   const [orderData, setOrderData] = useState<FormData[]>([]);
-  const [skeleton, setSkeleton] = useState({});
+  const [skeleton, setSkeleton] = useState({
+    route: false,
+    salesman: false,
+    item: false
+  });
   const codeGeneratedRef = useRef(false);
 
   // ✅ Load items based on selected warehouse
@@ -135,6 +139,17 @@ export default function AddEditSalesmanLoad() {
                 return null;
               }
 
+              const stockUoms = Array.isArray(stockItem.uoms) ? stockItem.uoms : [];
+              const fallbackUoms = Array.isArray(fullItem.item_uoms) ? fullItem.item_uoms : [];
+              const sourceUoms = stockUoms.length ? stockUoms : fallbackUoms;
+
+              const normalizedUoms = sourceUoms.map((u: any) => ({
+                ...u,
+                name: u.name ?? u.uom_name ?? u.uom?.name ?? "",
+                uom_type: u.uom_type ?? u.type ?? u.uom?.uom_type ?? "",
+                uom_id: u.uom_id ?? u.uom?.id ?? u.id, // ensure uom_id exists for payload
+              }));
+
               return {
                 id: stockItem.item_id,
                 item_code: stockItem.item_code,
@@ -142,7 +157,7 @@ export default function AddEditSalesmanLoad() {
                 cse_qty: "",
                 pcs_qty: "",
                 status: 1,
-                uom: fullItem.item_uoms || [], // Use proper UOM data from full item
+                uom: normalizedUoms,
                 warehouse_stocks: [{
                   warehouse_id: Number(form.warehouse),
                   qty: Number(stockItem.stock_qty) || 0
@@ -242,16 +257,23 @@ export default function AddEditSalesmanLoad() {
               data?.projecttype?.id?.toString() || data?.project_type || "",
           });
 
-          // Populate CSE values from details array using item IDs
+          // Populate CSE / PCS values from details array using item IDs and UOM
           if (data?.details && Array.isArray(data.details)) {
             setItemData((prevItems) =>
               prevItems.map((item) => {
                 const existingDetail = data.details.find(
                   (detail: any) => detail.item?.id === item.id
                 );
-                return existingDetail
-                  ? { ...item, qty: existingDetail.qty?.toString() || "" }
-                  : item;
+                if (!existingDetail) return item;
+
+                const uomName = existingDetail.uom?.name?.toUpperCase?.() || existingDetail.uom_type?.toUpperCase?.() || "";
+                const uomType = existingDetail.uom?.uom_type?.toUpperCase?.() || existingDetail.uom_type?.toUpperCase?.() || "";
+                const isPcs = uomName.includes("PAC") || uomName.includes("PCS") || uomType.includes("SECONDARY");
+                return {
+                  ...item,
+                  cse_qty: isPcs ? item.cse_qty ?? "" : existingDetail.qty?.toString() || "",
+                  pcs_qty: isPcs ? existingDetail.qty?.toString() || "" : item.pcs_qty ?? "",
+                };
               })
             );
           }
@@ -304,40 +326,26 @@ export default function AddEditSalesmanLoad() {
         setSubmitting(false);
         return;
       }
-      const details: any = []
+      const details: any = [];
 
-      validItems.map((singleItems: any, index) => {
-        console.log(singleItems, "jkl")
-
-        singleItems.uom.map((singleUom: any) => {
-          console.log("UOM Name:", singleUom.name, "UOM Type:", singleUom.uom_type);
-
-          // Match PCS/PAC for pcs_qty, otherwise use cse_qty
-          const isPcs = singleUom.name?.toUpperCase().includes("PAC") ||
-            singleUom.name?.toUpperCase().includes("PCS") ||
-            singleUom.uom_type?.toUpperCase().includes("PAC") ||
-            singleUom.uom_type?.toUpperCase().includes("PCS");
-
+      validItems.flatMap((singleItems: any) => {
+        if (!Array.isArray(singleItems.uom)) return [];
+        return singleItems.uom.flatMap((singleUom: any) => {
+          const name = singleUom.name?.toUpperCase?.() || "";
+          const uomType = singleUom.uom_type?.toUpperCase?.() || "";
+          const isPcs = name.includes("CSE") || name.includes("PCS") || uomType.includes("OUT") || uomType.includes("BOX");
           const qty = isPcs ? singleItems.pcs_qty : singleItems.cse_qty;
 
-          console.log(`Item ${singleItems.id}, UOM ${singleUom.name}, isPcs: ${isPcs}, qty: ${qty}`);
-
-          // Only push detail if qty is provided and greater than 0
           if (qty && Number(qty) > 0) {
-            details.push({
+            return [{
               item_id: Number(singleItems.id),
-              qty: qty,
-              uom: singleUom.uom_id,
-            });
+              qty: Number(qty),
+              uom: singleUom.uom_id ?? singleUom.id ?? singleUom.uom?.id,
+            }];
           }
-        })
-
-
-      })
-
-
-
-
+          return [];
+        });
+      });
 
       const payload = {
         salesman_type: Number(form.salesman_type),
@@ -346,11 +354,8 @@ export default function AddEditSalesmanLoad() {
         route_id: Number(form.route),
         salesman_id: Number(form.salesman),
         status: 1,
-        details: details,
+        details: validItems,
       };
-
-
-      // console.log("📦 Final Payload:", JSON.stringify(payload, null, 2));
 
       let res;
       if (isEditMode && loadUUID) {
@@ -450,36 +455,39 @@ export default function AddEditSalesmanLoad() {
         <hr className="w-full text-[#D5D7DA]" />
 
         {/* --- Form Fields --- */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-10 mb-10 flex-wrap">
-          <div className="flex flex-col w-full sm:w-[30%]">
+        <div className="grid grid-cols-1 mt-6 mb-10 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <InputFields
+              required
               label="Sales Team Type"
               name="salesman_type"
               value={form.salesman_type}
               options={salesmanTypeOptions}
               onChange={(e) => handleChange("salesman_type", e.target.value)}
+              error={errors.salesman_type}
+              className="w-full"
             />
-            {errors.salesman_type && (
-              <p className="text-red-500 text-sm">{errors.salesman_type}</p>
-            )}
-          </div>
 
           {/* Show Project List only when salesman_type id = 36 */}
           {form.salesman_type === "6" && (
             <div className="flex flex-col w-full sm:w-[30%]">
               <InputFields
+                required
                 label="Project List"
                 value={form.project_type}
                 options={projectOptions}
                 onChange={(e) => handleChange("project_type", e.target.value)}
+                error={errors.project_type}
               />
             </div>
           )}
           <InputFields
+            required
             label="Distributor"
             name="warehouse"
             value={form.warehouse}
+            searchable={true}
             options={warehouseOptions}
+            error={errors.warehouse}
             onChange={(e) => {
               const val = e.target.value;
               handleChange("warehouse", val);
@@ -493,10 +501,14 @@ export default function AddEditSalesmanLoad() {
             }
           />
           <InputFields
+            required
             label="Route"
             name="route"
             value={form.route}
+            searchable={true}
             options={routeOptions}
+            error={errors.route}
+            showSkeleton={skeleton.route}
             onChange={(e) => {
               const val = e.target.value;
               handleChange("route", val);
@@ -509,10 +521,12 @@ export default function AddEditSalesmanLoad() {
             }}
           />
           <InputFields
-            label="Sales Team "
+            label="Sales Team"
             name="salesman"
             value={form.salesman}
+            searchable={true}
             options={salesmanOptions}
+            error={errors.salesman}
             onChange={(e) => handleChange("salesman", e.target.value)}
           />
         </div>
@@ -627,7 +641,7 @@ export default function AddEditSalesmanLoad() {
           </button>
           <SidebarBtn
             isActive={true}
-            label="Create Order"
+            label={submitting ? "Creating Load..." : "Create Load"}
             onClick={handleSubmit}
           />
         </div>

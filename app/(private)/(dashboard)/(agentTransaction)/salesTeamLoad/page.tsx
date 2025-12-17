@@ -14,6 +14,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { downloadFile } from "@/app/services/allApi";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 interface SalesmanLoadRow {
   osa_code?: string;
@@ -100,6 +101,12 @@ export default function SalemanLoad() {
 
         return "-";
       },
+    },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
     {
       key: "status",

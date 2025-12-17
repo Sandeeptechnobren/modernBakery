@@ -1,6 +1,5 @@
 "use client";
 
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
     listReturnType,
     searchReturnType,

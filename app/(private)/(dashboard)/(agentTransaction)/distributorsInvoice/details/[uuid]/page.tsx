@@ -19,6 +19,7 @@ import KeyValueData from "@/app/components/keyValueData";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import { isValidDate } from "@/app/utils/formatDate";
 import { downloadFile } from "@/app/services/allApi";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 // const CURRENCY = localStorage.getItem("country") || "";
 
 interface DeliveryDetail {
@@ -44,6 +45,7 @@ interface InvoiceData {
   invoice_code: string,
   currency_id: number,
   currency_name: string,
+  request_step_id?: number,
   company_id: number,
   order_number: string,
   order_code: string,
@@ -243,7 +245,12 @@ export default function OrderDetailPage() {
           </div> */}
         </div>
       </div>
-
+      <WorkflowApprovalActions
+        requestStepId={deliveryData?.request_step_id}
+        redirectPath="/distributorsInvoice"
+        model="Invoice_Header"
+        uuid={uuid}
+      />
       {/* ---------- Order Info Card ---------- */}
       <div ref={targetRef}>
         <ContainerCard className="rounded-[10px] space-y-[40px]">

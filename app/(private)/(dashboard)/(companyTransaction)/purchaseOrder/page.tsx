@@ -15,6 +15,7 @@ import { purchaseOrderExportCollapse, purchaseOrderExportHeader, purchaseOrderLi
 import { formatDate } from "../../(master)/salesTeam/details/[uuid]/page";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { downloadFile } from "@/app/services/allApi";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 const columns = [
     { key: "sap_id", label: "SAP", showByDefault: true, render: (row: TableDataType) => <span>{row.sap_id}</span> },
@@ -49,6 +50,12 @@ const columns = [
         key: "status", label: "Status", showByDefault: true, render: (row: TableDataType) => (
             <OrderStatus order_flag={row.status} />
         )
+    },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
 ];
 
@@ -255,7 +262,13 @@ export default function CustomerInvoicePage() {
                                     router.push(
                                         `/purchaseOrder/details/${row.uuid}`
                                     ),
-                            }
+                            },
+                            // {
+                            //     icon: "uil:process",
+                            //     onClick: (row: TableDataType) => {
+                            //         router.push(`/settings/processFlow?order_code=${row.order_code}`);
+                            //     }
+                            // }
                         ],
                         pageSize: 10,
                     }}

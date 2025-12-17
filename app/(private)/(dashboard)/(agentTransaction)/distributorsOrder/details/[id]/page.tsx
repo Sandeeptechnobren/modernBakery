@@ -35,6 +35,7 @@ import { formatWithPattern } from "@/app/(private)/utils/date";
 import Button from "@mui/material/Button";
 import InputFields from "@/app/components/inputFields";
 import { camelToTitleCase } from "@/app/(private)/utils/text";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 const columns = [
   { key: "index", label: "#" },
@@ -91,6 +92,7 @@ interface OrderData {
   warehouse_id: number;
   warehouse_code: string;
   warehouse_name: string;
+  request_step_id: number;
   warehouse_address: string;
   warehouse_number: string;
   warehouse_email: string;
@@ -145,6 +147,7 @@ export default function OrderDetailPage() {
   const UUID = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
   const CURRENCY = localStorage.getItem("country") || "";
   const PATH = `/distributorsOrder/details/`;
+  const backBtnUrl = "/distributorsOrder";
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -256,220 +259,220 @@ export default function OrderDetailPage() {
     fetchUsers();
   }, []);
 
-  const getCommentPrompt = (abortSignal?: AbortSignal) => {
-    return new Promise<void>((resolve, reject) => {
-      const check = () => {
-        // Check if the operation was aborted
-        if (abortSignal?.aborted) {
-          reject(new DOMException("Operation was aborted", "AbortError"));
-          return;
-        }
+  // const getCommentPrompt = (abortSignal?: AbortSignal) => {
+  //   return new Promise<void>((resolve, reject) => {
+  //     const check = () => {
+  //       // Check if the operation was aborted
+  //       if (abortSignal?.aborted) {
+  //         reject(new DOMException("Operation was aborted", "AbortError"));
+  //         return;
+  //       }
 
-        if (!commentRef.current.show) {
-          resolve();
-        } else {
-          setTimeout(check, 100);
-        }
-      };
-      setTimeout(check, 50);
-    });
-  };
+  //       if (!commentRef.current.show) {
+  //         resolve();
+  //       } else {
+  //         setTimeout(check, 100);
+  //       }
+  //     };
+  //     setTimeout(check, 50);
+  //   });
+  // };
 
-  const [loadingWorkflow, setLoadingWorkflow] = useState<{
-    approve: boolean;
-    reject: boolean;
-    returnBack: boolean;
-    editBeforeApproval: boolean;
-  }>({
-    approve: false,
-    reject: false,
-    returnBack: false,
-    editBeforeApproval: false,
-  });
-  const currentActionRef = useRef<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // const [loadingWorkflow, setLoadingWorkflow] = useState<{
+  //   approve: boolean;
+  //   reject: boolean;
+  //   returnBack: boolean;
+  //   editBeforeApproval: boolean;
+  // }>({
+  //   approve: false,
+  //   reject: false,
+  //   returnBack: false,
+  //   editBeforeApproval: false,
+  // });
+  // const currentActionRef = useRef<string | null>(null);
+  // const abortControllerRef = useRef<AbortController | null>(null);
 
-  const rawOrder = localStorage.getItem("workflow.order");
-  const order: { 
-    request_id: number; 
-    permissions: string[];
-    message?: string;
-    notification?: string;
-    confirmationMessage?: string;
-    step_title?: string;
-  } =
-    rawOrder && rawOrder !== "undefined"
-      ? JSON.parse(rawOrder)
-      : {};
+  // const rawOrder = localStorage.getItem("workflow.order");
+  // const order: { 
+  //   request_id: number; 
+  //   permissions: string[];
+  //   message?: string;
+  //   notification?: string;
+  //   confirmationMessage?: string;
+  //   step_title?: string;
+  // } =
+  //   rawOrder && rawOrder !== "undefined"
+  //     ? JSON.parse(rawOrder)
+  //     : {};
 
-  const workflowAction = async (action: string) => {
-    // Prevent double-clicking the same action
-    if (loadingWorkflow[action as keyof typeof loadingWorkflow]) {
-      return;
-    }
+  // const workflowAction = async (action: string) => {
+  //   // Prevent double-clicking the same action
+  //   if (loadingWorkflow[action as keyof typeof loadingWorkflow]) {
+  //     return;
+  //   }
 
-    // Allow switching between actions if only showing comment prompt
-    // But prevent switching during actual API execution
-    const isApiInProgress =
-      Object.values(loadingWorkflow).some((loading) => loading) &&
-      !comment.show;
-    if (isApiInProgress && currentActionRef.current !== action) {
-      showSnackbar("Please wait for the current action to complete", "warning");
-      return;
-    }
+  //   // Allow switching between actions if only showing comment prompt
+  //   // But prevent switching during actual API execution
+  //   const isApiInProgress =
+  //     Object.values(loadingWorkflow).some((loading) => loading) &&
+  //     !comment.show;
+  //   if (isApiInProgress && currentActionRef.current !== action) {
+  //     showSnackbar("Please wait for the current action to complete", "warning");
+  //     return;
+  //   }
 
-    // Cancel any existing workflow action if switching
-    if (abortControllerRef.current && currentActionRef.current !== action) {
-      abortControllerRef.current.abort();
+  //   // Cancel any existing workflow action if switching
+  //   if (abortControllerRef.current && currentActionRef.current !== action) {
+  //     abortControllerRef.current.abort();
 
-      // Clear the previous action's loading state
-      if (currentActionRef.current) {
-        setLoadingWorkflow((prev) => ({
-          ...prev,
-          [currentActionRef.current!]: false,
-        }));
-      }
-    }
+  //     // Clear the previous action's loading state
+  //     if (currentActionRef.current) {
+  //       setLoadingWorkflow((prev) => ({
+  //         ...prev,
+  //         [currentActionRef.current!]: false,
+  //       }));
+  //     }
+  //   }
 
-    // Set current action and create new AbortController
-    currentActionRef.current = action;
-    abortControllerRef.current = new AbortController();
-    const currentAbortController = abortControllerRef.current;
+  //   // Set current action and create new AbortController
+  //   currentActionRef.current = action;
+  //   abortControllerRef.current = new AbortController();
+  //   const currentAbortController = abortControllerRef.current;
 
-    // Set loading state immediately to prevent double-clicks
-    setLoadingWorkflow((prev) => ({ ...prev, [action]: true }));
+  //   // Set loading state immediately to prevent double-clicks
+  //   setLoadingWorkflow((prev) => ({ ...prev, [action]: true }));
 
-    // If comment is already shown for a different action, close it and start fresh
-    if (comment.show && comment.action !== action) {
-      setComment({ show: false, text: "", new_user_id: "", action: "" });
-      await new Promise((resolve) => setTimeout(resolve, 100));
+  //   // If comment is already shown for a different action, close it and start fresh
+  //   if (comment.show && comment.action !== action) {
+  //     setComment({ show: false, text: "", new_user_id: "", action: "" });
+  //     await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Check if this action was cancelled while waiting
-      if (
-        currentAbortController.signal.aborted ||
-        currentActionRef.current !== action
-      ) {
-        setLoadingWorkflow((prev) => ({ ...prev, [action]: false }));
-        return;
-      }
-    }
+  //     // Check if this action was cancelled while waiting
+  //     if (
+  //       currentAbortController.signal.aborted ||
+  //       currentActionRef.current !== action
+  //     ) {
+  //       setLoadingWorkflow((prev) => ({ ...prev, [action]: false }));
+  //       return;
+  //     }
+  //   }
 
-    const requireCommentActions = [
-      "reject",
-      "returnBack",
-    ];
-    if (requireCommentActions.includes(action)) {
-      setComment({ show: true, text: "", new_user_id: "", action });
-      await new Promise((resolve) => setTimeout(resolve, 100));
+  //   const requireCommentActions = [
+  //     "reject",
+  //     "returnBack",
+  //   ];
+  //   if (requireCommentActions.includes(action)) {
+  //     setComment({ show: true, text: "", new_user_id: "", action });
+  //     await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Check if cancelled before showing prompt
-      if (
-        currentAbortController.signal.aborted ||
-        currentActionRef.current !== action
-      ) {
-        setComment({ show: false, text: "", new_user_id: "", action: "" });
-        return;
-      }
+  //     // Check if cancelled before showing prompt
+  //     if (
+  //       currentAbortController.signal.aborted ||
+  //       currentActionRef.current !== action
+  //     ) {
+  //       setComment({ show: false, text: "", new_user_id: "", action: "" });
+  //       return;
+  //     }
 
-      try {
-        await getCommentPrompt(currentAbortController.signal);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          setComment({ show: false, text: "", new_user_id: "", action: "" });
-          return;
-        }
-        throw error;
-      }
+  //     try {
+  //       await getCommentPrompt(currentAbortController.signal);
+  //     } catch (error) {
+  //       if (error instanceof DOMException && error.name === "AbortError") {
+  //         setComment({ show: false, text: "", new_user_id: "", action: "" });
+  //         return;
+  //       }
+  //       throw error;
+  //     }
 
-      // Final check before proceeding with API call
-      if (
-        currentAbortController.signal.aborted ||
-        currentActionRef.current !== action
-      ) {
-        setComment({ show: false, text: "", new_user_id: "", action: "" });
-        return;
-      }
-    }
+  //     // Final check before proceeding with API call
+  //     if (
+  //       currentAbortController.signal.aborted ||
+  //       currentActionRef.current !== action
+  //     ) {
+  //       setComment({ show: false, text: "", new_user_id: "", action: "" });
+  //       return;
+  //     }
+  //   }
 
-    try {
-      const request_id = data?.request_Step_id || null;
-      const userId = localStorage.getItem("userId") || "";
-      let res;
+  //   try {
+  //     const request_id = data?.request_Step_id || null;
+  //     const userId = localStorage.getItem("userId") || "";
+  //     let res;
 
-      switch (action) {
-        case "approve":
-          res = await approveWorkflow({
-            request_step_id: request_id,
-            approver_id: userId,
-          });
-          break;
+  //     switch (action) {
+  //       case "approve":
+  //         res = await approveWorkflow({
+  //           request_step_id: request_id,
+  //           approver_id: userId,
+  //         });
+  //         break;
 
-        case "reject":
-          res = await rejectWorkflow({
-            request_step_id: request_id,
-            approver_id: userId,
-            comment: commentRef.current.text,
-          });
-          break;
+  //       case "reject":
+  //         res = await rejectWorkflow({
+  //           request_step_id: request_id,
+  //           approver_id: userId,
+  //           comment: commentRef.current.text,
+  //         });
+  //         break;
 
-        case "returnBack":
-          res = await returnBackWorkflow({
-            request_step_id: request_id,
-            approver_id: userId,
-            comment: commentRef.current.text,
-          });
-          break;
+  //       case "returnBack":
+  //         res = await returnBackWorkflow({
+  //           request_step_id: request_id,
+  //           approver_id: userId,
+  //           comment: commentRef.current.text,
+  //         });
+  //         break;
 
-        case "editBeforeApproval":
-          // Call the editBeforeApproval workflow API (if applicable) and then redirect to list on success
-          try {
-            res = await editBeforeApprovalWorkflow({
-              request_step_id: request_id,
-              approver_id: userId,
-            });
-          } catch (e) {
-            // fall through to final handling
-            res = (e as any) || null;
-          }
-          break;
+  //       case "editBeforeApproval":
+  //         // Call the editBeforeApproval workflow API (if applicable) and then redirect to list on success
+  //         try {
+  //           res = await editBeforeApprovalWorkflow({
+  //             request_step_id: request_id,
+  //             approver_id: userId,
+  //           });
+  //         } catch (e) {
+  //           // fall through to final handling
+  //           res = (e as any) || null;
+  //         }
+  //         break;
 
-        default:
-          break;
-      }
+  //       default:
+  //         break;
+  //     }
 
-      if (
-        currentAbortController.signal.aborted ||
-        currentActionRef.current !== action
-      ) {
-        return;
-      }
+  //     if (
+  //       currentAbortController.signal.aborted ||
+  //       currentActionRef.current !== action
+  //     ) {
+  //       return;
+  //     }
 
-      if (res && res.error) {
-        showSnackbar(res.data.message || "Action failed", "error");
-      } else {
-        showSnackbar("Action performed successfully", "success");
-        // After successful workflow action, redirect to list page
-        try {
-          router.push("/distributorsOrder");
-        } catch (e) {
-          // ignore navigation errors
-        }
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
+  //     if (res && res.error) {
+  //       showSnackbar(res.data.message || "Action failed", "error");
+  //     } else {
+  //       showSnackbar("Action performed successfully", "success");
+  //       // After successful workflow action, redirect to list page
+  //       try {
+  //         router.push("/distributorsOrder");
+  //       } catch (e) {
+  //         // ignore navigation errors
+  //       }
+  //     }
+  //   } catch (error) {
+  //     if (error instanceof DOMException && error.name === "AbortError") {
+  //       return;
+  //     }
 
-      showSnackbar("An error occurred while processing the action", "error");
-    } finally {
-      setLoadingWorkflow((prev) => ({ ...prev, [action]: false }));
-      setComment({ show: false, text: "", new_user_id: "", action: "" });
-      if (currentActionRef.current === action) {
-        currentActionRef.current = null;
-        abortControllerRef.current = null;
-      }
-    }
-  };
+  //     showSnackbar("An error occurred while processing the action", "error");
+  //   } finally {
+  //     setLoadingWorkflow((prev) => ({ ...prev, [action]: false }));
+  //     setComment({ show: false, text: "", new_user_id: "", action: "" });
+  //     if (currentActionRef.current === action) {
+  //       currentActionRef.current = null;
+  //       abortControllerRef.current = null;
+  //     }
+  //   }
+  // };
 
   const targetRef = useRef<HTMLDivElement | null>(null);
 
@@ -484,7 +487,6 @@ export default function OrderDetailPage() {
       return mappedRow;
     });
   }, [data?.details]);
-
   const memoizedColumns = useMemo(() => columns, []);
 
   return (
@@ -526,7 +528,7 @@ export default function OrderDetailPage() {
             className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]"
           />
         </div>
-{order?.permissions && order?.permissions.length > 0 && data?.request_Step_id != null &&
+{/* {order?.permissions && order?.permissions.length > 0 && data?.request_Step_id != null &&
   <div
           style={{ zIndex: 30 }}
           className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-md bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px]"
@@ -564,7 +566,6 @@ export default function OrderDetailPage() {
             </>
           )}
           
-          {/* Display message above buttons */}
          
              
               {order?.message && (
@@ -650,7 +651,13 @@ export default function OrderDetailPage() {
             )}
           </div>
         </div>
-}
+} */}
+
+<WorkflowApprovalActions
+        requestStepId={data?.request_step_id}
+        redirectPath={backBtnUrl}
+        model="Caps_Collection_Header"
+      />
 
         {/* Action Buttons */}
         <div className="flex gap-[12px] relative">
@@ -878,7 +885,7 @@ export default function OrderDetailPage() {
         </ContainerCard>
       </div>
 
-      {showDeletePopup && (
+      {/* {showDeletePopup && (
               <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                 <DeleteConfirmPopup
                   title={order?.confirmationMessage}
@@ -886,7 +893,7 @@ export default function OrderDetailPage() {
                   onConfirm={() => workflowAction(approvalName)}
                 />
               </div>
-            )}
+            )} */}
     </>
   );
 }

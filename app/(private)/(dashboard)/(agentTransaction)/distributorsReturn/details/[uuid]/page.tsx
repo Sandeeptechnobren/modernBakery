@@ -17,6 +17,7 @@ import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import PrintButton from "@/app/components/printButton";
 import KeyValueData from "@/app/components/keyValueData";
 import { downloadFile } from "@/app/services/allApi";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 interface DeliveryDetail {
   id: number; 
@@ -44,6 +45,7 @@ interface InvoiceData {
   company_id: number;
   order_number: string;
   order_code: string;
+  request_step_id: number;
   delivery_number: string;
   delivery_code: string;
   warehouse_id: number;
@@ -120,7 +122,7 @@ export default function OrderDetailPage() {
   const [deliveryData, setDeliveryData] = useState<InvoiceData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
   const CURRENCY = localStorage.getItem("country") || "";
-
+  const backBtnUrl = "/distributorsReturn";
   const uuid = params?.uuid as string;
 
   useEffect(() => {
@@ -220,7 +222,7 @@ export default function OrderDetailPage() {
           <Icon
             icon="lucide:arrow-left"
             width={24}
-            onClick={() => router.back()}
+            onClick={() => router.push(backBtnUrl)}
             className="cursor-pointer"
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
@@ -233,6 +235,12 @@ export default function OrderDetailPage() {
           {/* Put action buttons here if needed */}
         </div>
       </div>
+
+      <WorkflowApprovalActions
+        requestStepId={deliveryData?.request_step_id}
+        redirectPath={backBtnUrl}
+        model="Return_Header"
+      />
 
       {/* ---------- Order Info Card ---------- */}
       <div ref={targetRef}>

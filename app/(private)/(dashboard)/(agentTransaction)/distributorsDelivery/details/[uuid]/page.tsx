@@ -16,6 +16,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import PrintButton from "@/app/components/printButton";
 import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern, isValidDate } from "@/app/utils/formatDate";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 interface DeliveryDetail {
   id: number;
@@ -38,6 +39,7 @@ interface DeliveryDetail {
 interface DeliveryData {
   delivery_code?: string;
   delivery_date?: string;
+  request_step_id?: number | null;
   comment?: string;
   customer?: {
     name?: string;
@@ -244,13 +246,19 @@ export default function OrderDetailPage() {
           <BorderIconButton disabled={!deliveryData?.previous_uuid} onClick={deliveryData?.previous_uuid ? () => router.push(`${PATH}${deliveryData.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
           <BorderIconButton disabled={!deliveryData?.next_uuid} onClick={deliveryData?.next_uuid ? () => router.push(`${PATH}${deliveryData.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
         </div>
-
+        
         {/* Action Buttons */}
         <div className="flex gap-[12px] relative">
           {/* Uncomment if needed */}
         </div>
       </div>
       {/* < ref={targetRef}> */}
+      <WorkflowApprovalActions
+        requestStepId={deliveryData?.request_step_id}
+        redirectPath="/distributorsDelivery"
+        model="Agent_Delivery_Headers"
+        uuid={uuid}
+      />
 
       {/* ---------- Order Info Card ---------- */}
       <div ref={printRef}>

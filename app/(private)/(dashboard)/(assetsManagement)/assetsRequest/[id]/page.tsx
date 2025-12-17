@@ -439,7 +439,6 @@ export default function AddCompanyWithStepper() {
         setWarehouseOptions(warehouseOpts);
       }
 
-      // Fetch salesman data
       const salesmanRes = await salesmanList({});
       if (salesmanRes.status === "success") {
         const salesmanOpts = salesmanRes.data.map((salesman: {
@@ -453,7 +452,7 @@ export default function AddCompanyWithStepper() {
         setSalesmanOptions(salesmanOpts);
       }
 
-      // Fetch outlet data
+
       const outletRes = await channelList();
       if (outletRes.status === "success") {
         const outletOpts = outletRes.data.map((outlet: {
@@ -479,17 +478,17 @@ export default function AddCompanyWithStepper() {
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Check file size
+
       if (file.size > FILE_SIZE) {
         showSnackbar(
           `File size must be less than 10MB for ${fieldName}`,
           "error"
         );
-        event.target.value = ""; // Clear the input
+        event.target.value = "";
         return;
       }
 
-      // Check file type
+
       if (!SUPPORTED_FORMATS.includes(file.type)) {
         showSnackbar(
           `Unsupported file format for ${fieldName}. Supported formats: PDF, DOC, DOCX, JPG, PNG, GIF`,

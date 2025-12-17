@@ -1,5 +1,6 @@
 "use client";
 
+import ApprovalStatus from "@/app/components/approvalStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
   configType,
@@ -90,6 +91,12 @@ export default function PaymentListPage() {
       render: (row: TableDataType) => {
         return row.cheque_date || "-";
       },
+    },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
     // {
     //   key: "status",
