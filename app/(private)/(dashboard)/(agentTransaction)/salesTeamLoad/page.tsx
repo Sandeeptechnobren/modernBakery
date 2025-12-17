@@ -105,7 +105,6 @@ export default function SalemanLoad() {
     {
         key: "approval_status",
         label: "Approval Status",
-        showByDefault: true,
         render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
     {

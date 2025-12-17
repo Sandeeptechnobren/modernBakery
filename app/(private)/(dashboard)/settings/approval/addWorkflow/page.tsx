@@ -455,7 +455,7 @@ fetchUsersList();
                 <Link href="/settings/approval">
                     <Icon icon="lucide:arrow-left" width={24} />
                 </Link>
-                <h1 className="text-xl font-semibold text-gray-900">Create Approval Flow</h1>
+                <h1 className="text-xl font-semibold text-gray-900 mb-1">Create Approval Flow</h1>
             </div>
             <StepperForm
                 steps={steps.map((s) => ({ ...s, isCompleted: isStepCompleted(s.id) }))}

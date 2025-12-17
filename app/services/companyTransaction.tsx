@@ -399,3 +399,12 @@ export const getDirectCustomer = async (params?: Params) => {
     return handleError(error);
   }
 };
+
+export const driverList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/drivers/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

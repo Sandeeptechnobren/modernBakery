@@ -261,7 +261,7 @@ export default function AddSalesmanLoadUI() {
 
             <ContainerCard className="rounded-[10px]">
                 {/* -------- FORM -------- */}
-                <div className="flex flex-col w-full sm:w-[30%] gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
                     <InputFields
                         label="Distributor"
                         value={form.warehouse}
@@ -353,7 +353,7 @@ export default function AddSalesmanLoadUI() {
                 </div>
 
                 {/* -------- ACTIONS -------- */}
-                <hr className="my-6" />
+                <hr className="text-[#D5D7DA] my-6" />
 
                 <div className="flex justify-end gap-4">
                     <button

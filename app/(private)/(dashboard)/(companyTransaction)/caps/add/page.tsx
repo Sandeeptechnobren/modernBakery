@@ -13,7 +13,7 @@ import {
   updateCapsCollection,
 } from "@/app/services/agentTransaction";
 import { agentCustomerList, genearateCode, getCompanyCustomers, itemGlobalSearch, itemList, warehouseListGlobalSearch, warehouseStockTopOrders } from "@/app/services/allApi";
-import { capsByUUID, capsCreate } from "@/app/services/companyTransaction";
+import { capsByUUID, capsCreate, driverList } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -72,46 +72,28 @@ interface ItemOption {
 }
 
 // FormData interface for items (same structure as order page)
-interface FormData {
-  id: number;
-  erp_code?: string;
-  item_code?: string;
-  name?: string;
-  description?: string;
-  item_uoms?: {
-    id: number;
-    item_id: number;
-    uom_type: string;
-    name: string;
-    price: string;
-    is_stock_keeping?: boolean;
-    upc?: string;
-    enable_for?: string;
-  }[];
-  pricing?: {
-    buom_ctn_price?: string;
-    auom_pc_price?: string;
-  };
-  brand?: string;
-  image?: string;
-  category?: {
-    id: number;
-    name: string;
-    code: string;
-  };
-  itemSubCategory?: {
-    id: number;
-    name: string;
-    code: string;
-  };
-  shelf_life?: string;
-  commodity_goods_code?: string;
-  excise_duty_code?: string;
-  status?: number;
-  is_taxable?: boolean;
-  has_excies?: boolean;
-  item_weight?: string;
-  volume?: number;
+interface StockItem {
+  id: number,
+  item_id: number,
+  item_name: string
+  item_code: string,
+  erp_code: string,
+  stock_qty: string,
+  warehouse_id: number,
+  warehouse_name: string,
+  warehouse_code: string,
+  buom_ctn_price: string,
+  auom_pc_price: string,
+  uoms: {
+      id: number,
+      item_id: number,
+      name: string,
+      uom_type: string,
+      upc: string,
+      price: string
+  }[],
+  total_sold_qty: number,
+  purchase: number
 }
 
 interface ItemUOM {
@@ -129,9 +111,6 @@ interface ItemUOM {
 export default function CapsAddPage() {
   const {
     warehouseOptions,
-    agentCustomerOptions,
-    fetchAgentCustomerOptions,
-    itemOptions,
    ensureAgentCustomerLoaded, ensureItemLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
 
   // Load dropdown data
@@ -146,14 +125,40 @@ export default function CapsAddPage() {
   const { setLoading } = useLoading();
   const params = useParams();
   const loadUUID = params?.uuid as string | undefined;
-  const isEditMode = loadUUID && loadUUID !== "add";
+  // const isEditMode = loadUUID && loadUUID !== "add";
+  const backBtnUrl = "/caps";
+  const [driverOptions, setDriverOptions] = useState<{ label: string; value: string }[]>([]);
+
+  // Fetch driver options on mount
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        const response = await driverList();
+        const data = Array.isArray(response?.data) ? response.data : [];
+        const options = data.map((driver: Record<string, unknown>) => ({
+          value: String(driver['id'] ?? ""),
+          label: String(driver['driver_name'] + " (" + (driver['vehicle_code'] ?? "") + ")"),
+        }));
+        setDriverOptions(options);
+      } catch (error) {
+        console.error("Error fetching drivers:", error);
+        setDriverOptions([]);
+      }
+    };
+
+    fetchDrivers();
+  }, []);
 
   const [form, setForm] = useState({
-    code: "",
-    warehouse: "",
-    customer: "",
-    status: "1",
+    warehouse_id: "",
+    driver_id: "",
+    truck_no: "",
+    contact_no: "",
+    claim_no: "",
+    claim_date: "",
+    claim_amount: ""
   });
+  console.log("Form data:", form);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -164,7 +169,7 @@ export default function CapsAddPage() {
     customer: false,
     item: false,
   });
-  const [orderData, setOrderData] = useState<FormData[]>([]);
+  const [orderData, setOrderData] = useState<StockItem[]>([]);
   const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
   // Store items with UOM data for easy access (same as order page)
   const [itemsWithUOM, setItemsWithUOM] = useState<Record<string, { uoms: ItemUOM[], stock_qty?: string }>>({});
@@ -178,20 +183,20 @@ export default function CapsAddPage() {
 
 
   // AutoSuggestion search functions (same as return page)
-  const handleWarehouseSearch = async (searchText: string) => {
-    try {
-      const response = await warehouseListGlobalSearch({ query: searchText });
-      const data = Array.isArray(response?.data) ? response.data : [];
-      return data.map((warehouse: Warehouse) => ({
-        value: String(warehouse.id),
-        label: `${warehouse.code || warehouse.warehouse_code || ""} - ${warehouse.name || warehouse.warehouse_name || ""}`,
-        code: warehouse.code || warehouse.warehouse_code,
-        name: warehouse.name || warehouse.warehouse_name,
-      }));
-    } catch {
-      return [];
-    }
-  };
+  // const handleWarehouseSearch = async (searchText: string) => {
+  //   try {
+  //     const response = await warehouseListGlobalSearch({ query: searchText });
+  //     const data = Array.isArray(response?.data) ? response.data : [];
+  //     return data.map((warehouse: Warehouse) => ({
+  //       value: String(warehouse.id),
+  //       label: `${warehouse.code || warehouse.warehouse_code || ""} - ${warehouse.name || warehouse.warehouse_name || ""}`,
+  //       code: warehouse.code || warehouse.warehouse_code,
+  //       name: warehouse.name || warehouse.warehouse_name,
+  //     }));
+  //   } catch {
+  //     return [];
+  //   }
+  // };
 
   const handleCustomerSearch = async (searchText: string, warehouseId: string, customerType: string) => {
     if (!warehouseId) return [];
@@ -248,60 +253,60 @@ export default function CapsAddPage() {
       
       // Fetch warehouse stocks - this API returns all needed data including pricing and UOMs
       const stockRes = await warehouseStockTopOrders(warehouseId);
-      const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
+      const stocksArray: StockItem[] = stockRes.data?.stocks || stockRes.stocks || [];
 
       // Filter items with stock availability
-      const filteredStocks = stocksArray.filter((stock: any) => {
-        return Number(stock.stock_qty) > 0;
-      });
+      // const filteredStocks = stocksArray.filter((stock: any) => {
+      //   return Number(stock.stock_qty) > 0;
+      // });
 
       // Create items with UOM data map for easy access
-      const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty?: string }> = {};
+      // const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty?: string }> = {};
       
-      const processedItems = filteredStocks.map((stockItem: any) => {
-        const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
-          let price = uom.price;
-          // Override with specific pricing from the API response (same as order page)
-          if (uom?.uom_type === "primary") {
-            price = stockItem.buom_ctn_price || uom.price;
-          } else if (uom?.uom_type === "secondary") {
-            price = stockItem.auom_pc_price || uom.price;
-          }
-          return { 
-            ...uom, 
-            price,
-            id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
-            item_id: stockItem.item_id
-          };
-        }) : [];
+      // const processedItems = filteredStocks.map((stockItem: any) => {
+      //   const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
+      //     let price = uom.price;
+      //     // Override with specific pricing from the API response (same as order page)
+      //     if (uom?.uom_type === "primary") {
+      //       price = stockItem.buom_ctn_price || uom.price;
+      //     } else if (uom?.uom_type === "secondary") {
+      //       price = stockItem.auom_pc_price || uom.price;
+      //     }
+      //     return { 
+      //       ...uom, 
+      //       price,
+      //       id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
+      //       item_id: stockItem.item_id
+      //     };
+      //   }) : [];
 
-        // Store UOM data for this item
-        itemsUOMMap[stockItem.item_id] = {
-          uoms: item_uoms,
-          stock_qty: stockItem.stock_qty
-        };
+      //   // Store UOM data for this item
+      //   itemsUOMMap[stockItem.item_id] = {
+      //     uoms: item_uoms,
+      //     stock_qty: stockItem.stock_qty
+      //   };
 
-        return { 
-          id: stockItem.item_id,
-          name: stockItem.item_name,
-          item_code: stockItem.item_code,
-          erp_code: stockItem.erp_code,
-          item_uoms,
-          warehouse_stock: stockItem.stock_qty,
-          pricing: {
-            buom_ctn_price: stockItem.buom_ctn_price,
-            auom_pc_price: stockItem.auom_pc_price
-          }
-        };
-      });
+      //   return { 
+      //     id: stockItem.item_id,
+      //     name: stockItem.item_name,
+      //     item_code: stockItem.item_code,
+      //     erp_code: stockItem.erp_code,
+      //     item_uoms,
+      //     warehouse_stock: stockItem.stock_qty,
+      //     pricing: {
+      //       buom_ctn_price: stockItem.buom_ctn_price,
+      //       auom_pc_price: stockItem.auom_pc_price
+      //     }
+      //   };
+      // });
 
-      setItemsWithUOM(itemsUOMMap);
-      setOrderData(processedItems);
+      // setItemsWithUOM(itemsUOMMap);
+      setOrderData(stocksArray);
 
       // Create dropdown options
-      const options = processedItems.map((item: any) => ({
-        value: String(item.id),
-        label: `${item.erp_code || item.item_code || ''} - ${item.name || ''}`
+      const options = stocksArray.map((item: StockItem) => ({
+        value: String(item.item_id),
+        label: `${item.erp_code || item.item_code || ''} - ${item.item_name || ''}`
       }));
 
       setItemsOptions(options);
@@ -340,87 +345,119 @@ export default function CapsAddPage() {
   const [tableData, setTableData] = useState<TableDataType[]>([
     {
       id: "1",
-      item: "",
-      uom: "",
-      collectQty: "1",
-      price: "0",
-      total: "0",
+      item_id: "",
+      uom_id: "",
+      quantity: "1",
+      receive_qty: "0.00",
+      receive_amount: "0.00",
+      receive_date: "",
+      remarks: "",
+      remarks2: "",
     },
   ]);
 
   // 🧩 Fetch data in edit mode
-  useEffect(() => {
-    if (isEditMode && loadUUID) {
-      (async () => {
-        setLoading(true);
-        try {
-          const res = await capsByUUID(loadUUID);
-          const data = res?.data ?? res;
+  // useEffect(() => {
+  //   if (isEditMode && loadUUID) {
+  //     (async () => {
+  //       setLoading(true);
+  //       try {
+  //         const res = await capsByUUID(loadUUID);
+  //         const data = res?.data ?? res;
 
-          setForm({
-            code: data?.code || "",
-            warehouse: data?.warehouse_id ? String(data.warehouse_id) : "",
-            customer: data?.customer ? String(data.customer) : "",
-            status: data?.status ? String(data.status) : "1",
-          });
+  //         setForm({
+  //           code: data?.code || "",
+  //           warehouse: data?.warehouse_id ? String(data.warehouse_id) : "",
+  //           customer: data?.customer ? String(data.customer) : "",
+  //           status: data?.status ? String(data.status) : "1",
+  //         });
 
-          if (data?.warehouse_id) {
-            await fetchAgentCustomerOptions(String(data.warehouse_id));
-            setTimeout(() => {
-              const selectedCustomer = agentCustomerOptions.find(
-                (opt) => opt.value === String(data.customer)
-              );
-              setCustomerContactNo(selectedCustomer?.contact_no || "");
-            }, 200);
-          }
+  //         if (data?.warehouse_id) {
+  //           await fetchAgentCustomerOptions(String(data.warehouse_id));
+  //           setTimeout(() => {
+  //             const selectedCustomer = agentCustomerOptions.find(
+  //               (opt) => opt.value === String(data.customer)
+  //             );
+  //             setCustomerContactNo(selectedCustomer?.contact_no || "");
+  //           }, 200);
+  //         }
 
-          if (Array.isArray(data?.details)) {
-            const loadedRows = data.details.map((detail: Record<string, unknown>, idx: number) => {
-              const rowId = String(idx + 1);
-              const itemId = String(detail['item_id'] ?? "");
-              const selectedItem = itemOptions.find((item) => item.value === itemId);
-              let uomOpts: { value: string; label: string; price?: string }[] = [];
-              if (selectedItem?.uoms && Array.isArray(selectedItem.uoms) && selectedItem.uoms.length) {
-                uomOpts = selectedItem.uoms.map((uom) => {
-                  const uu = uom as Record<string, unknown>;
-                  return {
-                    value: String(uu['id'] ?? ""),
-                    label: String(uu['name'] ?? ""),
-                    price: String(uu['price'] ?? "0"),
-                  };
-                });
-                setRowUomOptions((prev) => ({ ...prev, [rowId]: uomOpts }));
-              }
+  //         if (Array.isArray(data?.details)) {
+  //           const loadedRows = data.details.map((detail: Record<string, unknown>, idx: number) => {
+  //             const rowId = String(idx + 1);
+  //             const itemId = String(detail['item_id'] ?? "");
+  //             const selectedItem = itemOptions.find((item) => item.value === itemId);
+  //             let uomOpts: { value: string; label: string; price?: string }[] = [];
+  //             if (selectedItem?.uoms && Array.isArray(selectedItem.uoms) && selectedItem.uoms.length) {
+  //               uomOpts = selectedItem.uoms.map((uom) => {
+  //                 const uu = uom as Record<string, unknown>;
+  //                 return {
+  //                   value: String(uu['id'] ?? ""),
+  //                   label: String(uu['name'] ?? ""),
+  //                   price: String(uu['price'] ?? "0"),
+  //                 };
+  //               });
+  //               setRowUomOptions((prev) => ({ ...prev, [rowId]: uomOpts }));
+  //             }
 
-              const selectedUom = uomOpts.find((u) => u.value === String(detail['uom_id'] ?? ""));
-              const price = selectedUom?.price || "0";
-              const qty = String(detail['collected_quantity'] ?? 0);
-              const total = String((parseFloat(price) || 0) * (parseFloat(qty) || 0));
+  //             const selectedUom = uomOpts.find((u) => u.value === String(detail['uom_id'] ?? ""));
+  //             const price = selectedUom?.price || "0";
+  //             const qty = String(detail['collected_quantity'] ?? 0);
+  //             const total = String((parseFloat(price) || 0) * (parseFloat(qty) || 0));
 
-              return {
-                id: rowId,
-                item: itemId,
-                uom: String(detail['uom_id'] ?? ""),
-                collectQty: qty,
-                price,
-                total,
-              };
-            });
-            setTableData(loadedRows);
-          }
-        } catch {
-          showSnackbar("Failed to fetch CAPS collection details", "error");
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-  }, [isEditMode, loadUUID]);
+  //             return {
+  //               id: rowId,
+  //               item: itemId,
+  //               uom: String(detail['uom_id'] ?? ""),
+  //               collectQty: qty,
+  //               price,
+  //               total,
+  //             };
+  //           });
+  //           setTableData(loadedRows);
+  //         }
+  //       } catch {
+  //         showSnackbar("Failed to fetch CAPS collection details", "error");
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     })();
+  //   }
+  // }, [isEditMode, loadUUID]);
 
   // 🧾 Validation
   const validationSchema = yup.object().shape({
-    warehouse: yup.string().required("Distributor is required"),
-    customer: yup.string().required("Customer is required"),
+    warehouse_id: yup.string().required("Distributor is required"),
+    driver_id: yup.string().required("Driver is required"),
+    truck_no: yup.string().required("Truck No. is required"),
+    contact_no: yup.string().required("Contact No. is required"),
+    claim_no: yup.string().required("Claim No. is required"),
+    claim_date: yup.string().required("Claim Date is required"),
+    claim_amount: yup
+      .number()
+      .min(0, "Claim Amount must be at least 0")
+      .typeError("Claim Amount must be a number")
+      .required("Claim Amount is required"),
+  });
+
+  const itemsValidationSchema = yup.object().shape({
+    item_id: yup.string().required("Item is required"),
+    uom_id: yup.string().required("UOM is required"),
+    quantity: yup
+      .number()
+      .typeError("Quantity must be a number")
+      .required("Quantity is required"),
+    receive_qty: yup
+      .number()
+      .typeError("Receive Qty must be a number")
+      .required("Receive Qty is required"),
+    receive_amount: yup
+      .number()
+      .typeError("Receive Amount must be a number")
+      .required("Receive Amount is required"),
+    receive_date: yup.string().required("Receive Date is required"),
+    remarks: yup.string().required("Remarks is required"),
+    remarks2: yup.string(), // Optional field
   });
 
   // 🪄 Handlers
@@ -429,52 +466,87 @@ export default function CapsAddPage() {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  const handleTableChange = (id: string, field: string, value: string) => {
-    setTableData((prev) =>
-      prev.map((row) => {
-        if (row.id === id) {
-          const updated = { ...row, [field]: value };
-          const qty =
-            parseFloat(field === "collectQty" ? value : updated.collectQty) || 0;
-          const price = parseFloat(field === "price" ? value : updated.price) || 0;
-          updated.total = String(qty * price);
-          return updated;
-        }
-        return row;
-      })
-    );
+  const handleTableChange = (idx: number, field: string, value: string) => {
+    const newData = [...tableData];
+    const item = newData[idx];
+    (item as any)[field] = value;
+
+    if(field === "item_id") {
+      const selectedItem = orderData.find((it) => it?.item_id?.toString() === value);
+      item.UOM = selectedItem?.uoms?.map((uom) => ({
+        value: String(uom.id ?? ""),
+        label: String(uom.name ?? ""),
+        upc: String(uom.upc ?? ""),
+      })) || [];
+      item.stock = selectedItem?.stock_qty || "0";
+      item.stockPerUpc = selectedItem?.stock_qty || "0";
+      (item as any)["uom_id"] = item.UOM[0]?.value || "";
+    }
+
+    if(field === "uom_id") {
+      const selectedUom = item.UOM.find((u: any) => u.value === value);
+      item.stockPerUpc = Math.floor(Number(item?.stock) / (selectedUom?.upc || 1));
+      item.quantity = "0";
+    }
+
+    console.log("Updated item:", newData);
+    setTableData(newData);
   };
 
   const handleAddRow = () => {
     const newId = String(tableData.length + 1);
     setTableData((prev) => [
       ...prev,
-      { id: newId, item: "", uom: "", collectQty: "1", price: "0", total: "0" },
+      { 
+        id: newId,
+        item_id: "",
+        uom_id: "",
+        quantity: "1",
+        receive_qty: "1",
+        receive_amount: "0.00",
+        receive_date: new Date().toISOString().split("T")[0],
+        remarks: "",
+        remarks2: ""
+      },
     ]);
   };
 
-  const handleRemoveRow = (id: string) => {
+  const handleRemoveRow = (idx: number) => {
     if (tableData.length <= 1) return;
-    setTableData((prev) => prev.filter((row) => row.id !== id));
+    setTableData((prev) => prev.filter((row) => Number(row.idx) !== idx));
   };
 
-  const fetchItem = async (searchTerm: string) => {
-    const res = await itemList({ name: searchTerm });
-    if (res.error) {
-      showSnackbar(res.data?.message || "Failed to fetch items", "error");
-      setSkeleton({ ...skeleton, item: false });
-      return;
-    }
-    const data = res?.data || [];
-    setOrderData(data);
-    const options = data.map((item: { id: number; name: string; }) => ({
-      value: String(item.id),
-      label: item.name
-    }));
-    setItemsOptions(options);
-    setSkeleton({ ...skeleton, item: false });
-    return options;
+  const resetTable = () => {
+    setTableData([{
+      id: "1",
+      item_id: "",
+      uom_id: "",
+      quantity: "1",
+      receive_qty: "1",
+      receive_amount: "0.00",
+      receive_date: new Date().toISOString().split("T")[0],
+      remarks: "",
+      remarks2: "",
+    }]);
   };
+
+  // const fetchItem = async (searchTerm: string) => {
+  //   const res = await itemList({ name: searchTerm });
+  //   if (res.error) {
+  //     showSnackbar(res.data?.message || "Failed to fetch items", "error");
+  //     setSkeleton({ ...skeleton, item: false });
+  //     return;
+  //   }
+  //   const data = res?.data || [];
+  //   setOrderData(data);
+  //   const options = data.map((item: { id: number; name: string; }) => ({
+  //     value: String(item.id),
+  //     label: item.name
+  //   }));
+  //   setItemsOptions(options);
+  //   setSkeleton({ ...skeleton, item: false });
+  //   return options;
+  // };
 
   const codeGeneratedRef = useRef(false);
   const [code, setCode] = useState("");
@@ -484,7 +556,7 @@ export default function CapsAddPage() {
       codeGeneratedRef.current = true;
       (async () => {
         const res = await genearateCode({
-          model_name: "caps_collections",
+          model_name: "hariss_caps_collections",
         });
         if (res?.code) {
           setCode(res.code);
@@ -498,39 +570,76 @@ export default function CapsAddPage() {
   // 🚀 Submit
   const handleSubmit = async () => {
     try {
+      // Validate form data
       await validationSchema.validate(form, { abortEarly: false });
       setErrors({});
 
-      const validRows = tableData.filter((r) => r.item && r.uom && r.collectQty);
+      // Filter out empty rows and validate items
+      const validRows = tableData.filter((r) => r.item_id && r.uom_id);
+      
       if (validRows.length === 0) {
         showSnackbar("Please add at least one valid item.", "error");
         return;
       }
 
+      // Validate each item
+      const itemValidationErrors: Record<number, Record<string, string>> = {};
+      let hasItemErrors = false;
+
+      for (let i = 0; i < validRows.length; i++) {
+        try {
+          await itemsValidationSchema.validate(validRows[i], { abortEarly: false });
+        } catch (err) {
+          if (err instanceof yup.ValidationError) {
+            const errors: Record<string, string> = {};
+            err.inner.forEach((e) => {
+              if (e.path) errors[e.path] = e.message;
+            });
+            itemValidationErrors[i] = errors;
+            hasItemErrors = true;
+          }
+        }
+      }
+
+      if (hasItemErrors) {
+        setItemErrors(itemValidationErrors);
+        showSnackbar("Please fix item validation errors", "error");
+        return;
+      }
+
+      setItemErrors({});
       setSubmitting(true);
+
+      // Build payload
       const payload = {
-        code: code || form.code,
-        warehouse_id: parseInt(form.warehouse),
-        customer: form.customer,
-        status: parseInt(form.status),
+        warehouse_id: form.warehouse_id,
+        driver_id: form.driver_id,
+        truck_no: form.truck_no,
+        contact_no: form.contact_no,
+        claim_no: form.claim_no,
+        claim_date: form.claim_date,
+        claim_amount: form.claim_amount,
         details: validRows.map((r) => ({
-          item_id: parseInt(r.item),
-          uom_id: parseInt(r.uom),
-          collected_quantity: parseFloat(r.collectQty),
-          status: 1,
+          item_id: parseInt(r.item_id),
+          uom_id: parseInt(r.uom_id),
+          quantity: parseFloat(r.quantity || "0"),
+          receive_qty: parseFloat(r.receive_qty || "0"),
+          receive_amount: parseFloat(r.receive_amount || "0"),
+          receive_date: r.receive_date,
+          remarks: r.remarks,
+          remarks2: r.remarks2 || "",
         })),
       };
 
-    //   const res = isEditMode
-    //     ? await updateCapsCollection(loadUUID!, payload)
-    //     : await createCapsCollection(payload);
+      console.log("Payload:", payload);
+
       const res = await capsCreate(payload);
 
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
-        showSnackbar( "CAPS Master Collection added successfully","success");
-        router.push("/capsCollection");
+        showSnackbar("CAPS Collection added successfully", "success");
+        router.push("/caps");
       }
     } catch (err: unknown) {
       if (err instanceof yup.ValidationError) {
@@ -539,6 +648,7 @@ export default function CapsAddPage() {
           if (e.path) formErrors[e.path] = e.message;
         });
         setErrors(formErrors);
+        showSnackbar("Please fix form validation errors", "error");
       } else {
         showSnackbar("Something went wrong while saving.", "error");
       }
@@ -552,11 +662,12 @@ export default function CapsAddPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/capsCollection">
+          <Link href={backBtnUrl}>
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Edit CAPS Master Collection" : "Add CAPS Master Collection"}
+          <h1 className="text-xl font-semibold text-gray-900 mb-1">
+            {/* {isEditMode ? "Edit Hariss Caps Collection" : "Add Hariss Caps Collection"} */}
+            Add Hariss Caps Collection
           </h1>
         </div>
       </div>
@@ -577,214 +688,271 @@ export default function CapsAddPage() {
 
         <hr className="my-6 w-full text-[#D5D7DA]" />
 
-        {/* Form */}
-        <h2 className="text-lg font-medium text-gray-800 mb-4">
-          CAPS Master Collection Details
-        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
           <div>
-            <AutoSuggestion
+            <InputFields
               required
               label="Distributor"
               name="warehouse"
               placeholder="Search Distributor"
-              initialValue={warehouseOptions.find(o => o.value === String(form.warehouse))?.label || ""}
-              onSearch={handleWarehouseSearch}
-              onSelect={(option: { value: string }) => {
-                handleChange("warehouse", option.value);
-                handleChange("customer", "");
-                if (option.value) {
-                  fetchAgentCustomerOptions(option.value);
-                  // Trigger warehouse items fetch (same as order page)
-                  handleWarehouseChange(option.value);
+              value={form.warehouse_id}
+              options={warehouseOptions}
+              searchable={true}
+              showSkeleton={warehouseOptions.length === 0}
+              onChange={(e) => {
+                if (form.warehouse_id !== e.target.value) {
+                  handleChange("warehouse_id", e.target.value);
+                  resetTable();
+                  handleWarehouseChange(e.target.value);
+                } else {
+                  handleChange("warehouse_id", e.target.value);
                 }
               }}
-              onClear={() => {
-                handleChange("warehouse", "");
-                // Clear items when warehouse is cleared
-                setItemsOptions([]);
-                setItemsWithUOM({});
-                setOrderData([]);
-              }}
-              error={errors.warehouse}
+              error={errors.warehouse as string}
             />
-           
           </div>
-
           <div>
-            <AutoSuggestion
+            <InputFields
               required
-              label="Customer"
-              name="customer"
-              placeholder="Search customer..."
-              initialValue={agentCustomerOptions.find(o => o.value === String(form.customer))?.label || ""}
-              onSearch={(searchText: string) => handleCustomerSearch(searchText, form.warehouse, "0")}
-              onSelect={(option: { value: string; contact_no?: string }) => {
-                handleChange("customer", option.value);
-                setCustomerContactNo(option.contact_no || "");
+              label="Driver"
+              name="driver_id"
+              value={form.driver_id}
+              placeholder="Select Driver"
+              searchable={true}
+              options={driverOptions}
+              onChange={(e) => {
+                handleChange("driver_id", e.target.value);
               }}
-              onClear={() => handleChange("customer", "")}
-              error={errors.customer}
-              disabled={!form.warehouse}
-              noOptionsMessage={!form.warehouse ? "Please select a warehouse first" : "No customers found"}
+              error={errors.driver_id as string}
             />
-            
           </div>
-
-          <InputFields
-            label="Contact No."
-            value={customerContactNo}
-            disabled
-            onChange={() => { }}
-          />
+          <div>
+            <InputFields
+              required
+              label="Truck No"
+              name="truck_no"
+              value={form.truck_no}
+              placeholder="Select Truck No."
+              onChange={(e) => {
+                handleChange("truck_no", e.target.value);
+              }}
+              error={errors.truck_no as string} 
+            />
+          </div>
+          <div>
+            <InputFields
+              required
+              type="contact2"
+              label="Contact No"
+              name="contact_no"
+              value={form.contact_no}
+              placeholder="Select Contact No."
+              onChange={(e) => {
+                handleChange("contact_no", e.target.value);
+              }}
+              error={errors.contact_no as string}
+            />
+          </div>
+          <div>
+            <InputFields
+              required
+              label="Claim No."
+              name="claim_no"
+              value={form.claim_no}
+              placeholder="Select Claim No."
+              onChange={(e) => {
+                handleChange("claim_no", e.target.value);
+              }} 
+              error={errors.claim_no as string}
+            />
+          </div>
+          <div>
+            <InputFields
+              required
+              type="date"
+              label="Claim Date"
+              name="claim_date"
+              value={form.claim_date}
+              placeholder="Select Claim Date"
+              onChange={(e) => {
+                handleChange("claim_date", e.target.value);
+              }}
+              error={errors.claim_date as string}
+            />
+          </div>
+          <div>
+            <InputFields
+              required
+              label="Claim Amount"
+              name="claim_amount"
+              type="number"
+              min={0}
+              value={form.claim_amount}
+              placeholder="Enter Claim Amount"
+              onChange={(e) => {
+                handleChange("claim_amount", e.target.value);
+              }}
+              trailingElement={localStorage.getItem("country") || null}
+              error={errors.claim_amount as string}
+            />
+          </div>
         </div>
-
-        <hr className="my-6 w-full text-[#D5D7DA]" />
 
         {/* Table */}
         <CustomTable
-          data={tableData}
+          data={tableData.map((row, idx) => ({ ...row, idx }))}
           config={{
-            header: { title: "Items" },
             columns: [
               {
-                key: "item",
-                label: "Item",
-                render: (row) => (
-                  <InputFields
-                    label=""
-                    name={`item_${row.id}`}
-                    value={row.item}
-                    searchable={true}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      handleTableChange(row.id, "item", value);
-
-                      if (!value) {
-                        // Clear selection
-                        setRowUomOptions((prev) => {
-                          const newOpts = { ...prev };
-                          delete newOpts[row.id];
-                          return newOpts;
-                        });
-                        handleTableChange(row.id, "uom", "");
-                        handleTableChange(row.id, "price", "0");
-                        return;
-                      }
-
-                      // Find the selected item from orderData (same as order page)
-                      const selectedOrder = orderData.find((order: FormData) => String(order.id) === value);
-                      const itemUOMData = itemsWithUOM[value];
-
-                      // Priority 1: Use itemUOMData from itemsWithUOM (populated by warehouseStockTopOrders)
-                      if (itemUOMData?.uoms && itemUOMData.uoms.length > 0) {
-                        const uomOpts = itemUOMData.uoms.map((uom: ItemUOM) => ({
-                          value: String(uom.id ?? ""),
-                          label: String(uom.name ?? ""),
-                          price: String(uom.price ?? "0"),
-                        }));
-                        setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
-                        const first = uomOpts[0];
-                        if (first) {
-                          handleTableChange(row.id, "uom", first.value);
-                          handleTableChange(row.id, "price", first.price || "0");
-                        }
-                        return;
-                      }
-
-                      // Priority 2: Use UOMs from selectedOrder with pricing (same as order page)
-                      if (selectedOrder && Array.isArray(selectedOrder.item_uoms)) {
-                        const uomOpts = selectedOrder.item_uoms.map((uom: any) => {
-                          let price = uom.price;
-                          // Override with specific pricing from the API response (same as order page)
-                          if (uom?.uom_type === "primary") {
-                            price = selectedOrder.pricing?.auom_pc_price || "-";
-                          } else if (uom?.uom_type === "secondary") {
-                            price = selectedOrder.pricing?.buom_ctn_price || "-";
-                          }
-                          return {
-                            value: String(uom.id ?? ""),
-                            label: String(uom.name ?? ""),
-                            price: String(price ?? "0"),
-                          };
-                        });
-
-                        setRowUomOptions((prev) => ({ ...prev, [row.id]: uomOpts }));
-
-                        // Set price based on first UOM (same as order page)
-                        const firstUom = selectedOrder.item_uoms[0];
-                        if (firstUom) {
-                          handleTableChange(row.id, "uom", String(firstUom.id || ""));
-                          let firstPrice = firstUom.price;
-                          if (firstUom.uom_type === "primary") {
-                            firstPrice = selectedOrder.pricing?.auom_pc_price || firstUom.price;
-                          } else if (firstUom.uom_type === "secondary") {
-                            firstPrice = selectedOrder.pricing?.buom_ctn_price || firstUom.price;
-                          }
-                          handleTableChange(row.id, "price", String(firstPrice || "0"));
-                        }
-                        return;
-                      }
-
-                      // Fallback: no UOM data available
-                      setRowUomOptions((prev) => ({ ...prev, [row.id]: [] }));
-                      handleTableChange(row.id, "uom", "");
-                      handleTableChange(row.id, "price", "0");
-                    }}
-                    options={itemsOptions}
-                    placeholder="Search item"
-                    disabled={!form.customer}
-                  />
-                ),
+                key: "item_id",
+                label: "Item Name",
+                width: 300,
+                render: (row) => {
+                  const idx = Number(row.idx);
+                  const err = itemErrors[idx]?.item_id;
+                  return (
+                    <div>
+                      <InputFields
+                        label=""
+                        name={`item_id_${row.idx}`}
+                        value={row.item_id}
+                        searchable={true}
+                        onChange={(e) => {
+                          handleTableChange(Number(row.idx), "item_id", e.target.value)
+                        }}
+                        options={itemsOptions}
+                        showSkeleton={skeleton.item}
+                        placeholder="Search item"
+                        disabled={!form.warehouse_id}
+                        error={err && err}
+                      />
+                    </div>
+                  );
+                },
               },
               {
-                key: "uom",
+                key: "uom_id",
                 label: "UOM",
                 render: (row) => {
-                  const opts = rowUomOptions[row.id] || [];
+                  const opts = row.UOM || [];
                   return (
                     <InputFields
                       options={opts}
-                      value={row.uom}
+                      value={row.uom_id}
                       placeholder="select UOM"
-                      disabled={opts.length === 0}
+                      disabled={opts.length === 0 || !row.item_id || !form.warehouse_id}
                       onChange={(e) => {
                         const val = e.target.value;
-                        handleTableChange(row.id, "uom", val);
-                        const selected = opts.find((o) => o.value === val);
-                        if (selected)
-                          handleTableChange(row.id, "price", selected.price || "0");
+                        handleTableChange(Number(row.idx), "uom_id", val);
                       }}
+                      width="100px"
                     />
                   );
                 },
               },
               {
-                key: "collectQty",
-                label: "Collect Qty",
+                key: "quantity",
+                label: "Quantity",
+                render: (row) => (
+                  <div className="flex flex-col pt-4">
+                  <InputFields
+                    type="number"
+                    min={0}
+                    max={row.stock || undefined}
+                    integerOnly={true}
+                    placeholder="Enter Quantity"
+                    value={row.quantity}
+                    disabled={!row.uom_id}
+                    onChange={(e) =>
+                      handleTableChange(Number(row.idx), "quantity", e.target.value)
+                    }
+                    width="100px"
+                  />
+                  <span className="text-xs text-gray-500 mt-1">
+                    Stock: {row.stockPerUpc || "0"}
+                  </span>
+                  </div>
+                ),
+              },
+              {
+                key: "receive_qty",
+                label: "Receive Quantity",
                 render: (row) => (
                   <InputFields
                     type="number"
-                    value={row.collectQty}
+                    min={0}
+                    integerOnly={true}
+                    placeholder="Enter Receive Quantity"
+                    value={row.receive_qty}
+                    disabled={!row.uom_id}
                     onChange={(e) =>
-                      handleTableChange(row.id, "collectQty", e.target.value)
+                      handleTableChange(Number(row.idx), "receive_qty", e.target.value)
+                    }
+                    width="120px"
+                  />
+                ),
+              },
+              {
+                key: "receive_amount",
+                label: "Receive Amount",
+                render: (row) => (
+                  <InputFields
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={row.receive_amount}
+                    disabled={!row.uom_id}
+                    onChange={(e) =>
+                      handleTableChange(Number(row.idx), "receive_amount", e.target.value)
+                    }
+                    trailingElement={localStorage.getItem("country") || null}
+
+                  />
+                ),
+              },
+              {
+                key: "receive_date",
+                label: "Receive Date",
+                render: (row) => (
+                  <InputFields
+                    type="date"
+                    value={row.receive_date || new Date().toISOString().split("T")[0]}
+                    disabled={!row.uom_id}
+                    onChange={(e) =>
+                      handleTableChange(Number(row.idx), "receive_date", e.target.value)
                     }
                   />
                 ),
               },
               {
-                key: "price",
-                label: "Price",
+                key: "remarks",
+                label: "Remarks",
                 render: (row) => (
-                  <span>{parseFloat(row.price || "0").toFixed(2)}</span>
+                  <InputFields
+                    type="text"
+                    placeholder="Enter Remark"
+                    disabled={!row.uom_id}
+                    value={row.remarks || ""}
+                    onChange={(e) =>
+                      handleTableChange(Number(row.idx), "remarks", e.target.value)
+                    }
+                  />
                 ),
               },
               {
-                key: "total",
-                label: "Total",
+                key: "remarks2",
+                label: "Another Remarks",
                 render: (row) => (
-                  <span>{parseFloat(row.total || "0").toFixed(2)}</span>
+                  <InputFields
+                    type="text"
+                    placeholder="Enter Another Remark"
+                    disabled={!row.uom_id}
+                    value={row.remarks2 || ""}
+                    onChange={(e) =>
+                      handleTableChange(Number(row.idx), "remarks2", e.target.value)
+                    }
+                  />
                 ),
               },
               {
@@ -793,8 +961,8 @@ export default function CapsAddPage() {
                 render: (row) => (
                   <button
                     type="button"
-                    className="text-red-500"
-                    onClick={() => handleRemoveRow(row.id)}
+                    className="text-red-500 flex items-center justify-center"
+                    onClick={() => handleRemoveRow(Number(row.idx))}
                     disabled={tableData.length <= 1}
                   >
                     <Icon icon="hugeicons:delete-02" width={20} />
@@ -803,7 +971,6 @@ export default function CapsAddPage() {
               },
             ],
             showNestedLoading: false,
-            footer: { pagination: false },
           }}
         />
         <div className="mt-4">
@@ -837,9 +1004,27 @@ export default function CapsAddPage() {
           </button>
           <SidebarBtn
             isActive={!submitting}
-            label={submitting ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update CAPS Collection" : "Create CAPS Collection")}
+            label={submitting ? "Creating..." : "Create CAPS Collection"}
+            // label={submitting ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update CAPS Collection" : "Create CAPS Collection")}
             onClick={handleSubmit}
-            disabled={submitting || !form.warehouse || !form.customer || tableData.some(row => !row.item || !row.uom)}
+            disabled={
+              submitting ||
+              !form.warehouse_id || 
+              !form.driver_id || 
+              !form.truck_no ||
+              !form.contact_no ||
+              !form.claim_no ||
+              !form.claim_date ||
+              !form.claim_amount ||
+              tableData.some(row => {
+                return !row.item_id || 
+                !row.uom_id ||
+                !row.quantity || 
+                !row.receive_qty || 
+                !row.receive_amount || 
+                !row.receive_date || 
+                !row.remarks;
+              })}
           />
         </div>
       </ContainerCard>

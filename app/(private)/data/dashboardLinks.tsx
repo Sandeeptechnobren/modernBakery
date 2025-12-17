@@ -341,7 +341,7 @@ export const initialLinkData: SidebarDataType[] = [
           {
             isActive: false,
             href: "/caps",
-            label: "CAPS Collection",
+            label: "CAPS Deposit",
             leadingIcon: "game-icons:bottle-cap",
             iconColor: "text-cyan-500"
           },

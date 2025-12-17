@@ -634,7 +634,7 @@ export default function AddEditAgentCustomer() {
                                 Customer
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="flex items-start gap-2 max-w-[406px]">
+                                <div>
                                     <InputFields
                                         label="OSA Code"
                                         name="osa_code"
@@ -740,6 +740,7 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Distributor"
                                         name="warehouse"
+                                        searchable={true}
                                         value={values?.warehouse || ""}
                                         options={isEditMode ? warehouseAllOptions :  warehouseOptions}
                                         disabled={isEditMode ? warehouseAllOptions.length === 0 : warehouseOptions.length === 0}
@@ -762,6 +763,7 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Route"
                                         name="route_id"
+                                        searchable={true}
                                         value={filteredRouteOptions.length === 0 ? "" : values.route_id?.toString()}
                                         onChange={(e) =>
                                             setFieldValue("route_id", e.target.value)
