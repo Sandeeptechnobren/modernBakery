@@ -38,9 +38,9 @@ type PlanogramFormValues = {
   name: string;
   valid_from: string;
   valid_to: string;
-  merchendiser_ids: number[];
+  merchendisher_ids: number[];
   customer_ids: number[];
-  images: Record<string, Record<string, ShelfImage[]>>;
+  images: File[] | string[] | null;
 };
 
 type MerchandiserResponse = { id: number; name: string };
@@ -48,12 +48,12 @@ type CustomerFromBackend = {
   id: number;
   customer_code: string;
   business_name: string;
-  merchendiser_ids?: string;
+  merchendisher_ids?: string;
 };
 type CustomerOption = {
   value: string;
   label: string;
-  merchendiser_ids: string;
+  merchendisher_ids: string;
   id: string;
 };
 type ShelfOption = {
@@ -77,7 +77,7 @@ const validationSchema = Yup.object({
       Yup.ref("valid_from"),
       "Valid To date cannot be before Valid From date"
     ),
-  merchendiser_ids: Yup.array()
+  merchendisher_ids: Yup.array()
     .of(Yup.number())
     .min(1, "Select at least one merchandiser"),
   customer_ids: Yup.array()
@@ -93,7 +93,7 @@ const stepSchemas = [
     valid_to: validationSchema.fields.valid_to,
   }),
   Yup.object().shape({
-    merchendiser_ids: validationSchema.fields.merchendiser_ids,
+    merchendisher_ids: validationSchema.fields.merchendisher_ids,
     customer_ids: validationSchema.fields.customer_ids,
   }),
 ];
@@ -102,7 +102,7 @@ const stepSchemas = [
 export default function Planogram() {
   const steps: StepperStep[] = [
     { id: 1, label: "Planogram Details" },
-    { id: 2, label: "Merchandiser & Customers" },
+    { id: 2, label: "Merchandisher & Customers" },
   ];
 
   const { id } = useParams<{ id?: string }>();
@@ -116,7 +116,7 @@ export default function Planogram() {
   >([]);
   const [shelfOptions, setShelfOptions] = useState<ShelfOption[]>([]);
   const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
-  const [existingImages, setExistingImages] = useState<Record<number, string>>(
+  const [existingImages, setExistingImages] = useState<Record<number, string | File>>(
     {}
   );
   const [planogramImageError, setPlanogramImageError] = useState<string | null>(null);
@@ -134,9 +134,9 @@ export default function Planogram() {
     name: "",
     valid_from: "",
     valid_to: "",
-    merchendiser_ids: [],
+    merchendisher_ids: [],
     customer_ids: [],
-    images: {},
+    images: [],
   });
 
   const {
@@ -156,7 +156,7 @@ export default function Planogram() {
   // Each image object
   type ImageObject = {
     shelf_id: number;
-    image: string;
+    image: File | string;
   };
 
   // Each custGroup is an array of ImageObjects
@@ -194,7 +194,7 @@ export default function Planogram() {
               planogramData.shelves?.map((s: { id: number }) => s.id) || [];
 
             // Store existing images for display
-            const imagesMap: Record<number, string> = {};
+            const imagesMap: Record<number, string | File> = {};
             if (planogramData.images && Array.isArray(planogramData.images)) {
               planogramData.images.forEach((merchGroup: MerchGroup) => {
                 console.log(merchGroup);
@@ -223,9 +223,9 @@ export default function Planogram() {
               valid_to: planogramData.valid_to
                 ? planogramData.valid_to.split("T")[0]
                 : "",
-              merchendiser_ids: merchIds,
+              merchendisher_ids: merchIds,
               customer_ids: custIds,
-              images: {},
+              images: [],
             });
           }
         } else {
@@ -252,38 +252,22 @@ export default function Planogram() {
         merchandiser_ids: merchIds.map(String),
       });
 
-      const payloadMap = new Map<string, string[]>();
-      response.data.forEach((customer: CustomerFromBackend) => {
-        if (!customer?.merchendiser_ids) return;
-        const merchIds = customer.merchendiser_ids
-          .split(",")
-          .map((id) => id.trim())
-          .filter(Boolean);
-        merchIds.forEach((merchId: string) => {
-          const existing = payloadMap.get(merchId) || [];
-          existing.push(customer.id.toString());
-          payloadMap.set(merchId, existing);
-        });
-      });
+      const customerOptions: CustomerOption[] = response.data.map(
+        (customer: CustomerFromBackend) => ({
+          value: String(customer.id),
+          label: formatCustomerLabel(customer),
+          merchendisher_ids: customer.merchendisher_ids || "",
+          id: String(customer.id),
+        })
+      );
 
-      const payload = Object.fromEntries(payloadMap);
-
-      if (response?.status && Array.isArray(response.data)) {
-        const formatted = response.data.map(
-          (customer: CustomerFromBackend) => ({
-            value: String(customer.id),
-            label: formatCustomerLabel(customer),
-          })
-        );
-        setCustomerOptions(formatted);
-      } else {
-        setCustomerOptions([]);
-      }
+      setCustomerOptions(customerOptions);
     } catch (err) {
       console.error(err);
-      setCustomerOptions([]);
+      showSnackbar("Unable to fetch customers", "error");
     }
   };
+
 
   // ---------------- STEP NAVIGATION ----------------
   const handleNext = async (
@@ -336,18 +320,18 @@ export default function Planogram() {
 
     const updatedImages = { ...values.images };
 
-    const existingIndex = updatedImages[values.merchendiser_ids[0]][values.customer_ids[0]].findIndex((item: ShelfImage) => item.image === file);
+    // const existingIndex = updatedImages[values.merchendisher_ids[]][values.customer_ids[0]].findIndex((item: ShelfImage) => item.image === file);
 
-    if (existingIndex >= 0) {
-      updatedImages[values.merchendiser_ids[0]][values.customer_ids[0]][existingIndex] =
-      {
-        image: file,
-      };
-    } else {
-      updatedImages[values.merchendiser_ids[0]][values.customer_ids[0]].push({
-        image: file,
-      });
-    }
+    // if (existingIndex >= 0) {
+    //   updatedImages[values.merchendisher_ids[0]][values.customer_ids[0]][existingIndex] =
+    //   {
+    //     image: file,
+    //   };
+    // } else {
+    //   updatedImages[values.merchendisher_ids[0]][values.customer_ids[0]].push({
+    //     image: file,
+    //   });
+    // }
 
     setFieldValue("images", updatedImages);
   };
@@ -365,13 +349,16 @@ export default function Planogram() {
       formData.append("valid_to", values.valid_to);
       formData.append("code", `PLN-${Date.now()}`);
 
-      values.merchendiser_ids.forEach((id) =>
-        formData.append("merchendisher_id", String(id))
+      formData.append(
+        "merchendisher_id",
+        JSON.stringify(values.merchendisher_ids)
       );
-      values.customer_ids.forEach((id) =>
-        formData.append("customer_id", String(id))
+
+      formData.append(
+        "customer_id",
+        JSON.stringify(values.customer_ids)
       );
-      // values.images[values.merchendiser_ids[0]][values.customer_ids[0]].forEach((image: ShelfImage) => {
+      // values.images[values.merchendisher_ids[0]][values.customer_ids[0]].forEach((image: ShelfImage) => {
       //   if (image.image) {
       //     formData.append("image", image.image);
       //   }
@@ -478,28 +465,28 @@ export default function Planogram() {
                   width="max-w-[500px]"
                   required
                   label="Merchandisers"
-                  name="merchendiser_ids"
-                  value={values.merchendiser_ids.map(String)}
+                  name="merchendisher_ids"
+                  value={values.merchendisher_ids.map(String)}
                   options={merchendiserOptions}
                   isSingle={false}
                   onChange={(e) => {
                     const selectedIds = (
                       Array.isArray(e.target.value) ? e.target.value : []
                     ).map(Number);
-                    setFieldValue("merchendiser_ids", selectedIds);
+                    setFieldValue("merchendisher_ids", selectedIds);
                     setFieldValue("customer_ids", []);
                     setFieldValue("images", {});
                     fetchCustomers(selectedIds);
                   }}
                   error={
-                    touched.merchendiser_ids &&
-                    (Array.isArray(errors.merchendiser_ids)
-                      ? errors.merchendiser_ids[0]
-                      : errors.merchendiser_ids)
+                    touched.merchendisher_ids &&
+                    (Array.isArray(errors.merchendisher_ids)
+                      ? errors.merchendisher_ids[0]
+                      : errors.merchendisher_ids)
                   }
                 />
                 {/* <ErrorMessage
-                  name="merchendiser_ids"
+                  name="merchendisher_ids"
                   component="span"
                   className="text-xs text-red-500"
                 /> */}
@@ -508,7 +495,7 @@ export default function Planogram() {
                 <InputFields
                   width="max-w-[500px]"
                   placeholder={
-                    values.merchendiser_ids.length === 0
+                    values.merchendisher_ids.length === 0
                       ? "A merchandiser must be selected"
                       : customerOptions.length === 0
                         ? "No customer found"
@@ -521,7 +508,7 @@ export default function Planogram() {
                   options={customerOptions}
                   isSingle={false}
                   disabled={
-                    values.merchendiser_ids.length === 0 ||
+                    values.merchendisher_ids.length === 0 ||
                     customerOptions.length === 0
                   }
                   onChange={(e) => {

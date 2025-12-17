@@ -64,11 +64,6 @@ interface AgentCustomerFormValues {
 
 interface contactCountry { name: string; code?: string; flag?: string; }
 
-const paymentTypeOptions = [
-    { value: "1", label: "Cash" },
-    { value: "2", label: "Cheque" },
-    { value: "3", label: "Transfer" },
-];
 
 export default function AddEditAgentCustomer() {
     const {
@@ -78,18 +73,18 @@ export default function AddEditAgentCustomer() {
         customerTypeOptions,
         channelOptions,
         // onlyCountryOptions
-     ensureChannelLoaded, ensureCustomerTypeLoaded, ensureWarehouseLoaded,ensureWarehouseAllLoaded} = useAllDropdownListData();
+        ensureChannelLoaded, ensureCustomerTypeLoaded, ensureWarehouseLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
     const params = useParams();
     const agentCustomerId = params?.uuid as string | undefined;
     const isEditMode =
         agentCustomerId !== undefined && agentCustomerId !== "new";
-  // Load dropdown data
-  useEffect(() => {
-    ensureChannelLoaded();
-    ensureCustomerTypeLoaded();
-    ensureWarehouseLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureChannelLoaded, ensureCustomerTypeLoaded, ensureWarehouseLoaded,ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureChannelLoaded();
+        ensureCustomerTypeLoaded();
+        ensureWarehouseLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureChannelLoaded, ensureCustomerTypeLoaded, ensureWarehouseLoaded, ensureWarehouseAllLoaded]);
     const [isOpen, setIsOpen] = useState(false);
     const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
     const [prefix, setPrefix] = useState("");
@@ -109,8 +104,8 @@ export default function AddEditAgentCustomer() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
-    
-    
+
+
     const steps: StepperStep[] = [
         { id: 1, label: "Customer" },
         { id: 2, label: "Location" },
@@ -195,7 +190,7 @@ export default function AddEditAgentCustomer() {
         const options = filteredOptions?.data || [];
         setFilteredCustomerCategoryOptions(options.map((category: { id: number; customer_category_code: string; customer_category_name: string }) => ({
             value: String(category.id),
-            label: category.customer_category_name ,
+            label: category.customer_category_name,
         })));
         setSkeleton({ ...skeleton, customerCategory: false });
     }
@@ -213,7 +208,7 @@ export default function AddEditAgentCustomer() {
         const options = filteredOptions?.data || [];
         setFilteredCustomerSubCategoryOptions(options.map((subCategory: { id: number; customer_sub_category_code: string; customer_sub_category_name: string }) => ({
             value: String(subCategory.id),
-            label: subCategory.customer_sub_category_name ,
+            label: subCategory.customer_sub_category_name,
         })));
         setSkeleton({ ...skeleton, customerSubCategory: false });
     }
@@ -268,12 +263,12 @@ export default function AddEditAgentCustomer() {
                         vat_no: data.vat_no ?? data.tin_no ?? null,
                         payment_type:
                             data.payment_type != null
-                                ? paymentTypeOptions.find((p) => p.label === String(data.payment_type))?.value || "1"
+                                ? String(data.payment_type)
                                 : "",
                         is_cash:
                             (data.payment_type != null
-                                ? paymentTypeOptions.find((p) => p.label === String(data.payment_type))?.value || "1"
-                                : "") === "1" ? "1" : "0",
+                                ? String(data.is_cash)
+                                : "1") ?? "1",
                         creditday:
                             data.creditday != null
                                 ? String(data.creditday)
@@ -528,10 +523,7 @@ export default function AddEditAgentCustomer() {
                 route_id: Number(values.route_id),
                 buyertype: Number(values.buyertype),
                 creditday: Number(values.creditday),
-                payment_type:
-                    paymentTypeOptions.find(
-                        (option) => option.value === String(values.payment_type)
-                    )?.value || "",
+                payment_type: Number(values.payment_type),
                 outlet_channel_id: Number(values.outlet_channel_id),
                 category_id: Number(values.category_id),
                 subcategory_id: Number(values.subcategory_id),
@@ -741,7 +733,7 @@ export default function AddEditAgentCustomer() {
                                         label="Distributor"
                                         name="warehouse"
                                         value={values?.warehouse || ""}
-                                        options={isEditMode ? warehouseAllOptions :  warehouseOptions}
+                                        options={isEditMode ? warehouseAllOptions : warehouseOptions}
                                         disabled={isEditMode ? warehouseAllOptions.length === 0 : warehouseOptions.length === 0}
                                         onChange={(e) => {
                                             setFieldValue("warehouse", e.target.value);
@@ -1026,7 +1018,11 @@ export default function AddEditAgentCustomer() {
                                             touched.payment_type &&
                                             errors.payment_type
                                         }
-                                        options={paymentTypeOptions}
+                                        options={[
+                                            { value: "1", label: "Cash" },
+                                            { value: "2", label: "Cheque" },
+                                            { value: "3", label: "Transfer" },
+                                        ]}
                                     />
                                 </div>
 
@@ -1153,6 +1149,7 @@ export default function AddEditAgentCustomer() {
                                     <InputFields
                                         required
                                         label="Enable Promo Txn"
+                                        type="radio"
                                         name="enable_promo_txn"
                                         value={
                                             values.enable_promotion?.toString() ??
