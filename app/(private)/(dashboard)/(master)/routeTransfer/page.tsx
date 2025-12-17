@@ -3,13 +3,13 @@
 import ContainerCard from "@/app/components/containerCard";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import InputFields from "@/app/components/inputFields";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { addRouteTransfer } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
 export default function StockTransfer() {
-    const { routeOptions } = useAllDropdownListData();
+    const { routeOptions = [], ensureRouteLoaded } = useAllDropdownListData();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
 
@@ -18,6 +18,9 @@ export default function StockTransfer() {
         destination_warehouse: "",
     });
 
+    useEffect(() => {
+        ensureRouteLoaded();
+    }, [ensureRouteLoaded]);
     /* -------------------------------------------------------------
        FILTER DESTINATION WAREHOUSE (EXCLUDE SOURCE)
     ------------------------------------------------------------- */

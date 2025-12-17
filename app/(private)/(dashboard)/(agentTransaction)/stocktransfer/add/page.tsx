@@ -4,7 +4,6 @@ import ContainerCard from "@/app/components/containerCard";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, { TableDataType } from "@/app/components/customTable";
 import InputFields from "@/app/components/inputFields";
-import { itemList, warehouseStockTopOrders } from "@/app/services/allApi";
 import { StockTransferTopOrders, addStockTransfer } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -12,10 +11,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 export default function StockTransfer() {
-    const { warehouseOptions } = useAllDropdownListData();
+    const { warehouseOptions = [], ensureWarehouseLoaded } = useAllDropdownListData();
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
+
+    useEffect(() => {
+        ensureWarehouseLoaded();
+    }, [ensureWarehouseLoaded]);
 
     const [form, setForm] = useState({
         source_warehouse: "",
@@ -24,18 +27,20 @@ export default function StockTransfer() {
 
     const [itemData, setItemData] = useState<TableDataType[]>([]);
 
-    /* ------------------------------------------------------------------
-       FILTER DESTINATION WAREHOUSE OPTIONS
-    ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------
+       FILTER DESTINATION WAREHOUSE (FIXED)
+    ------------------------------------------------------------ */
     const destinationWarehouseOptions = useMemo(() => {
+        if (!form.source_warehouse) return warehouseOptions;
+
         return warehouseOptions.filter(
-            (opt: any) => opt.value !== form.source_warehouse
+            (opt: any) => String(opt.value) !== String(form.source_warehouse)
         );
     }, [warehouseOptions, form.source_warehouse]);
 
-    /* ------------------------------------------------------------------
-       HANDLE FIELD CHANGE
-    ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------
+       HANDLE CHANGE
+    ------------------------------------------------------------ */
     const handleChange = (field: string, value: string) => {
         setForm((prev) => ({
             ...prev,
@@ -46,12 +51,9 @@ export default function StockTransfer() {
         }));
     };
 
-    /* ------------------------------------------------------------------
+    /* ------------------------------------------------------------
        LOAD ITEMS WHEN SOURCE WAREHOUSE CHANGES
-    ------------------------------------------------------------------ */
-    /* ------------------------------------------------------------------
-       LOAD ITEMS WHEN SOURCE WAREHOUSE CHANGES
-    ------------------------------------------------------------------ */
+    ------------------------------------------------------------ */
     useEffect(() => {
         if (!form.source_warehouse) {
             setItemData([]);
@@ -63,8 +65,7 @@ export default function StockTransfer() {
                 setLoading(true);
                 const res = await StockTransferTopOrders(form.source_warehouse);
 
-
-                const stocks = (Array.isArray(res) ? res : (res?.data || [])).filter(
+                const stocks = (res?.data || res || []).filter(
                     (row: any) => Number(row.qty) > 0
                 );
 
@@ -72,16 +73,15 @@ export default function StockTransfer() {
                     id: row.id,
                     item_code: row.item?.erp_code || "",
                     name: row.item?.name || "",
-                    uom: row.item?.uom ? row.item.uom : "N/A",
+                    uom: row.item?.uom || "N/A",
                     available_qty: row.qty,
                     transfer_qty: "",
-                    status: row.status,
-                    original_data: row
+                    original_data: row,
                 }));
 
                 setItemData(mappedData);
             } catch (error) {
-                console.error("Fetch items error:", error);
+                console.error(error);
                 showSnackbar("Failed to fetch items", "error");
             } finally {
                 setLoading(false);
@@ -91,68 +91,53 @@ export default function StockTransfer() {
         fetchItems();
     }, [form.source_warehouse, setLoading, showSnackbar]);
 
-
-    /* ------------------------------------------------------------------
+    /* ------------------------------------------------------------
        UPDATE ITEM QTY
-    ------------------------------------------------------------------ */
-    const recalculateItem = (
-        index: number,
-        field: string,
-        value: string
-    ) => {
+    ------------------------------------------------------------ */
+    const updateItemQty = (index: number, value: string) => {
         const updated = [...itemData];
-        updated[index][field] = value;
+        updated[index].transfer_qty = value;
         setItemData(updated);
     };
 
-    /* ------------------------------------------------------------------
+    /* ------------------------------------------------------------
        SUBMIT
-    ------------------------------------------------------------------ */
+    ------------------------------------------------------------ */
     const handleSubmit = async () => {
         if (!form.source_warehouse || !form.destination_warehouse) {
-            showSnackbar(
-                "Please select both source and destination warehouses",
-                "error"
-            );
+            showSnackbar("Select both warehouses", "error");
             return;
         }
 
-        const itemsToTransfer = itemData.filter(
-            (item: any) =>
-                item.transfer_qty && Number(item.transfer_qty) > 0
+        const items = itemData.filter(
+            (i: any) => Number(i.transfer_qty) > 0
         );
 
-        if (itemsToTransfer.length === 0) {
-            showSnackbar("Please enter transfer quantity for at least one item", "warning");
+        if (!items.length) {
+            showSnackbar("Enter transfer qty", "warning");
             return;
         }
 
         const payload = {
             from_warehouse: form.source_warehouse,
             to_warehouse: form.destination_warehouse,
-            items: itemsToTransfer.map((item: any) => ({
-                item_id: item.original_data?.item?.id,
-                qty: item.transfer_qty,
+            items: items.map((i: any) => ({
+                item_id: i.original_data?.item?.id,
+                qty: i.transfer_qty,
             })),
         };
 
         try {
             setLoading(true);
             const res = await addStockTransfer(payload);
+
             if (res?.error) {
-                // Check for validation errors object
-                if (res?.errors) {
-                    const errorMsg = Object.values(res.errors).flat().join(", ");
-                    showSnackbar(errorMsg || "Validation failed", "error");
-                } else {
-                    showSnackbar(res?.message || "Failed to create transfer", "error");
-                }
+                showSnackbar(res.message || "Failed", "error");
             } else {
-                showSnackbar("Stock Transfer Created Successfully ✅", "success");
+                showSnackbar("Stock Transfer Created ✅", "success");
                 router.push("/stocktransfer");
             }
-        } catch (error) {
-            console.error("Transfer error:", error);
+        } catch (err) {
             showSnackbar("Something went wrong", "error");
         } finally {
             setLoading(false);
@@ -160,111 +145,76 @@ export default function StockTransfer() {
     };
 
     return (
-        <ContainerCard className="rounded-[10px] p-6">
+        <ContainerCard className="p-6 rounded-lg">
             {/* HEADER */}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-[20px] font-semibold text-[#181D27] uppercase">
+            <div className="flex justify-between mb-6">
+                <h1 className="text-lg font-semibold uppercase">
                     Stock Transfer
                 </h1>
                 <button
-                    type="button"
                     onClick={() => router.back()}
-                    className="bg-[#10B981] text-white px-6 py-2 rounded-md font-medium hover:bg-[#059669]"
+                    className="bg-emerald-500 text-white px-5 py-2 rounded"
                 >
                     Back
                 </button>
             </div>
 
-            <hr className="mb-6" />
+            {/* WAREHOUSE SELECT */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <InputFields
+                    label="Source Warehouse"
+                    name="source_warehouse"
+                    value={form.source_warehouse}
+                    options={warehouseOptions}
+                    onChange={(e) =>
+                        handleChange("source_warehouse", e.target.value)
+                    }
+                />
 
-            {/* WAREHOUSE SELECTION */}
-            <div className="flex flex-col sm:flex-row gap-6 mb-6">
-                <div className="w-full sm:w-1/2">
-                    <InputFields
-                        label="Select Warehouse"
-                        name="source_warehouse"
-                        value={form.source_warehouse}
-                        options={warehouseOptions}
-                        onChange={(e) =>
-                            handleChange("source_warehouse", e.target.value)
-                        }
-                    />
-                </div>
-
-                <div className="w-full sm:w-1/2">
-                    <InputFields
-                        label="Select Sub Warehouse"
-                        name="destination_warehouse"
-                        value={form.destination_warehouse}
-                        options={destinationWarehouseOptions}
-                        onChange={(e) =>
-                            handleChange(
-                                "destination_warehouse",
-                                e.target.value
-                            )
-                        }
-                        disabled={!form.source_warehouse}
-                    />
-                </div>
+                <InputFields
+                    label="Destination Warehouse"
+                    name="destination_warehouse"
+                    value={form.destination_warehouse}
+                    options={destinationWarehouseOptions}
+                    disabled={!form.source_warehouse}
+                    onChange={(e) =>
+                        handleChange("destination_warehouse", e.target.value)
+                    }
+                />
             </div>
 
             {/* ITEMS TABLE */}
             <Table
-                key={`items-${itemData.length}`}
                 data={itemData.map((row, idx) => ({
                     ...row,
                     idx: idx.toString(),
                 }))}
                 config={{
-                    table: { height: 500 },
+                    table: { height: 450 },
                     columns: [
                         {
                             key: "item",
-                            label: "Item Code - Name",
-                            width: 300,
-                            render: (row: TableDataType) => (
-                                <span>
-                                    {row.item_code} - {row.name}
-                                </span>
-                            ),
+                            label: "Item",
+                            render: (row) =>
+                                `${row.item_code} - ${row.name}`,
                         },
-                        {
-                            key: "uom",
-                            label: "UOM",
-                            width: 100,
-                            render: (row: TableDataType) => (
-                                <span>{row.uom || "N/A"}</span>
-                            ),
-                        },
-                        {
-                            key: "available_qty",
-                            label: "Available Qty",
-                            width: 120,
-                            render: (row: TableDataType) => (
-                                <span className={Number(row.available_qty) === 0 ? "text-red-500" : ""}>
-                                    {row.available_qty}
-                                </span>
-                            ),
-                        },
+                        { key: "uom", label: "UOM" },
+                        { key: "available_qty", label: "Available" },
                         {
                             key: "transfer_qty",
                             label: "Transfer Qty",
-                            width: 120,
                             render: (row: any) => (
                                 <InputFields
                                     type="number"
-                                    name="transfer_qty"
                                     value={row.transfer_qty}
-                                    placeholder="Qty"
+                                    min={0}
+                                    max={row.available_qty}
                                     onChange={(e) =>
-                                        recalculateItem(
+                                        updateItemQty(
                                             Number(row.idx),
-                                            "transfer_qty",
                                             e.target.value
                                         )
                                     }
-                                    min={0}
-                                    max={Number(row.available_qty)}
                                 />
                             ),
                         },
@@ -273,11 +223,11 @@ export default function StockTransfer() {
                 }}
             />
 
-            {/* ACTION */}
+            {/* SUBMIT */}
             <div className="flex justify-end mt-6">
                 <button
                     onClick={handleSubmit}
-                    className="bg-[#2563EB] text-white px-8 py-2 rounded-md hover:bg-[#1D4ED8]"
+                    className="bg-blue-600 text-white px-8 py-2 rounded"
                 >
                     Submit
                 </button>

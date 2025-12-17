@@ -780,3 +780,69 @@ export const stockTransferByUUID = async (uuid: string, params?: Params) => {
 };
 
 
+export const salesTeamRecontionOrders = async (id: string) => {
+  try {
+    const res = await API.get(`/api/master/warehouse/warehouseSalesman/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const salesTeamRecontionOrdersTop = async (body: any) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/reconsile/get-data`, { params: body });
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addSalesTeamRecontionOrders = async (body: object) => {
+  try {
+    const res = await API.post(`/api/agent_transaction/reconsile/add`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const blockSalesTeamRecontionOrders = async (body: object) => {
+  try {
+    const res = await API.post(`/api/agent_transaction/reconsile/salesman-block`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const salesTeamRecontionOrdersList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/reconsile/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const salesTeamRecontionOrderByUuid = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/reconsile/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const salesTeamTracking = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/salesteam-tracking/track`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

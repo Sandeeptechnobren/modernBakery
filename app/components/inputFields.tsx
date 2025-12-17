@@ -34,16 +34,15 @@ type Props = {
   onChange: (e: any) => void;
   options?: Option[];
   type?:
-    | "text"
-    | "select"
-    | "file"
-    | "date"
-    | "dateChange"
-    | "radio"
-    | "number"
-    | "textarea"
-    | "contact"
-    | "contact2";
+  | "text"
+  | "select"
+  | "file"
+  | "date"
+  | "dateChange"
+  | "radio"
+  | "number"
+  | "textarea"
+  | "contact";
   /** If provided, used to determine whether the date was changed compared to original value */
   originalValue?: string | null;
   id?: string;
@@ -520,20 +519,17 @@ export default function InputFields({
           return (
             <div className="w-full relative">
               <input
-                  id={id ?? name}
-                  name={name}
-                  type="text"
-                  value={value ?? ""}
-                  onChange={safeOnChange}
-                  disabled={disabled}
-                  onBlur={onBlur}
-                  autoComplete="off"
-                  className={`box-border border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] ${
-                    leadingElement ? "pl-10" : "pl-3"
-                  } ${
-                    trailingElement ? "pr-10" : "pr-3"
-                  } mt-0 text-gray-900 placeholder:text-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${
-                    error ? "border-red-500" : "border-gray-300"
+                id={id ?? name}
+                name={name}
+                type="text"
+                value={value ?? ""}
+                onChange={safeOnChange}
+                disabled={disabled}
+                onBlur={onBlur}
+                autoComplete="off"
+                className={`box-border border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] ${leadingElement ? "pl-10" : "pl-3"
+                  } ${trailingElement ? "pr-10" : "pr-3"
+                  } mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"
                   }`}
                 placeholder={placeholder || `Enter ${label}`}
                 {...props}
@@ -575,11 +571,9 @@ export default function InputFields({
                     setDropdownOpen(true);
                   }
                 }}
-                className={`${
-                  showBorder === true && "border"
-                } h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer w-full ${
-                  error ? "border-red-500" : "border-gray-300"
-                } ${disabled ? "cursor-not-allowed bg-gray-100" : "bg-white"}`}
+                className={`${showBorder === true && "border"
+                  } h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer w-full ${error ? "border-red-500" : "border-gray-300"
+                  } ${disabled ? "bg-gray-100" : "bg-white"}`}
                 onClick={() => {
                   if (!loading && !isSearchable) {
                     computeDropdownProps();
@@ -933,11 +927,9 @@ export default function InputFields({
                     setDropdownOpen(true);
                   }
                 }}
-                className={`${
-                  showBorder === true && "border"
-                } h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0 flex items-center cursor-pointer min-w-0 ${
-                  error ? "border-red-500" : "border-gray-300"
-                } ${disabled ? "cursor-not-allowed bg-gray-100" : "bg-white"}`}
+                className={`${showBorder === true && "border"
+                  } h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"
+                  } ${disabled ? "bg-gray-200" : "bg-white"}`}
                 onClick={() => {
                   if (!loading && !isSearchable && !disabled) {
                     computeDropdownProps();
@@ -1198,7 +1190,7 @@ export default function InputFields({
           </div>
         );
 
-      case "contact2":
+      case "contact":
         return (
           <div className="relative mt-0 w-full">
             {(() => {
@@ -1232,9 +1224,8 @@ export default function InputFields({
 
               return (
                 <div
-                  className={`mx-auto border-[1px] ${
-                    error ? "border-red-500" : "border-gray-300"
-                  } rounded-md`}
+                  className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"
+                    } rounded-md`}
                   ref={dropdownRef}
                 >
                   <div className="flex items-center relative">

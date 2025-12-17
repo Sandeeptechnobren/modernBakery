@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback,useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Table, {
@@ -87,6 +87,7 @@ const columns = [
         showByDefault: true,
         render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
+
 ];
 
 export default function CustomerInvoicePage() {
@@ -97,17 +98,17 @@ export default function CustomerInvoicePage() {
         csv: false,
         xlsx: false,
     });
-    const { companyOptions, warehouseAllOptions, regionOptions, areaOptions, routeOptions, salesmanOptions , ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    const { companyOptions, warehouseAllOptions, regionOptions, areaOptions, routeOptions, salesmanOptions, ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureAreaLoaded();
-    ensureCompanyLoaded();
-    ensureRegionLoaded();
-    ensureRouteLoaded();
-    ensureSalesmanLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureAreaLoaded();
+        ensureCompanyLoaded();
+        ensureRegionLoaded();
+        ensureRouteLoaded();
+        ensureSalesmanLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
     const [filters, setFilters] = useState({
         fromDate: new Date().toISOString().split("T")[0],
         toDate: new Date().toISOString().split("T")[0],
