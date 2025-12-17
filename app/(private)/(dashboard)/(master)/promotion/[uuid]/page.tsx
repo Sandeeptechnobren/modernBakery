@@ -126,67 +126,67 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
 
 
 
-return (
-  <ContainerCard className="h-fit mt-[20px] flex flex-col gap-2 p-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none text-[#181D27]">
-    <div className="flex justify-between items-center mb-4">
-      <div className="font-semibold text-[20px]">Key Combination</div>
-      <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
-    </div>
-    <div className="grid grid-cols-3 gap-6">
-      {keysArray.map((group, index) => (
-        <div
-          key={index}
-          className="bg-white border border-[#E5E7EB] rounded-[12px] p-6 flex flex-col shadow-sm"
-        >
-          <div className="font-semibold text-[18px] mb-4 text-[#181D27]">
-            {group.type}
-            {(group.type === "Location" || group.type === "Item") && <span className="text-red-500 ml-1">*</span>}
-          </div>
-          <div className="flex flex-col gap-4">
-            {group.options.map((option, optionIndex) => (
-              <CustomCheckbox
-                key={optionIndex}
-                id={option.label + index}
-                label={option.label}
-                checked={option.isSelected}
-                onChange={() => onKeySelect(index, optionIndex)}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-    <ContainerCard className="mt-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none p-4 flex items-center gap-2">
-      <span className="font-semibold text-[#181D27] text-[16px]">Key</span>
-      <div className="flex flex-wrap items-center gap-2">
-        {(() => {
-          const loc = keyCombo.Location;
-          return loc ? (
-            <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{loc}</span>
-          ) : null;
-        })()}
-        {(() => {
-          const cust = keyCombo.Customer;
-          return cust ? (
-            <>
-              <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
-              <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{cust}</span>
-            </>
-          ) : null;
-        })()}
-        {(() => {
-          const item = keyCombo.Item;
-          return item ? (
-            <>
-              <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
-              <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{item}</span>
-            </>
-          ) : null;
-        })()}
+  return (
+    <ContainerCard className="h-fit mt-[20px] flex flex-col gap-2 p-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none text-[#181D27]">
+      <div className="flex justify-between items-center mb-4">
+        <div className="font-semibold text-[20px]">Key Combination</div>
+        <div className="text-sm text-gray-500"><span className="text-red-500">*</span> Required</div>
       </div>
+      <div className="grid grid-cols-3 gap-6">
+        {keysArray.map((group, index) => (
+          <div
+            key={index}
+            className="bg-white border border-[#E5E7EB] rounded-[12px] p-6 flex flex-col shadow-sm"
+          >
+            <div className="font-semibold text-[18px] mb-4 text-[#181D27]">
+              {group.type}
+              {(group.type === "Location" || group.type === "Item") && <span className="text-red-500 ml-1">*</span>}
+            </div>
+            <div className="flex flex-col gap-4">
+              {group.options.map((option, optionIndex) => (
+                <CustomCheckbox
+                  key={optionIndex}
+                  id={option.label + index}
+                  label={option.label}
+                  checked={option.isSelected}
+                  onChange={() => onKeySelect(index, optionIndex)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <ContainerCard className="mt-6 bg-white border border-[#E5E7EB] rounded-[12px] shadow-none p-4 flex items-center gap-2">
+        <span className="font-semibold text-[#181D27] text-[16px]">Key</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {(() => {
+            const loc = keyCombo.Location;
+            return loc ? (
+              <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{loc}</span>
+            ) : null;
+          })()}
+          {(() => {
+            const cust = keyCombo.Customer;
+            return cust ? (
+              <>
+                <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
+                <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{cust}</span>
+              </>
+            ) : null;
+          })()}
+          {(() => {
+            const item = keyCombo.Item;
+            return item ? (
+              <>
+                <span className="mx-1 text-[#A0A4AB] text-[18px] font-bold">/</span>
+                <span className="bg-[#F3F4F6] text-[#181D27] px-3 py-1 rounded-full text-[15px] border border-[#E5E7EB]">{item}</span>
+              </>
+            ) : null;
+          })()}
+        </div>
+      </ContainerCard>
     </ContainerCard>
-  </ContainerCard>
-);
+  );
 }
 
 
@@ -198,9 +198,9 @@ export default function AddPricing() {
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
   const isEditMode = id !== undefined && id !== "add" && id !== "";
   const {
-    companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions, 
-    customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions, 
-    fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, 
+    companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions,
+    customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions,
+    fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions,
     fetchCompanyCustomersOptions, fetchItemsCategoryWise, salesmanTypeOptions, projectOptions,
     ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureUomLoaded
   } = useAllDropdownListData();
@@ -281,11 +281,11 @@ export default function AddPricing() {
                 fetchItemsCategoryWise(categories.toString());
               }
               if (data.items && data.items.length > 0) {
-                 newKeyValue["Item"] = data.items.map(String);
+                newKeyValue["Item"] = data.items.map(String);
               }
             }
             if (newKeyCombo.Item === "Item") {
-               newKeyValue["Item"] = data.items?.map(String) || [];
+              newKeyValue["Item"] = data.items?.map(String) || [];
             }
           }
           setKeyValue(newKeyValue);
@@ -373,7 +373,7 @@ export default function AddPricing() {
       return allValid;
     }
     if (step === 3) {
-      if (promotion.promotionType === "percentage") {
+      if (promotion.promotionType === "percentage" || (promotion.bundle_combination === "slab" && promotion.promotionType === "quantity")) {
         // Validate Percentage Discount Table
         const isPercentageValid = percentageDiscounts.every(pd => pd.key && pd.percentage);
         if (!isPercentageValid) {
@@ -528,10 +528,10 @@ export default function AddPricing() {
     }
 
     // Validate Percentage Discounts before payload construction
-    if (promotion.promotionType === "percentage") {
+    if (promotion.promotionType === "percentage" || (promotion.bundle_combination === "slab" && promotion.promotionType === "quantity")) {
       const isPercentageValid = percentageDiscounts.every(pd => pd.key && pd.percentage);
       if (!isPercentageValid) {
-        showSnackbar("Please fill in all Item/Category and Percentage fields in the Percentage Discount table.", "error");
+        showSnackbar("Please fill in all Item/Category and Percentage/Quantity fields in the table.", "error");
         return;
       }
     }
@@ -586,14 +586,14 @@ export default function AddPricing() {
         // promotion_group_name: detail.promotionGroupName || "",
       })),
 
-            percentage_discounts: (promotion.promotionType === "percentage" 
-              ? percentageDiscounts.map(pd => ({
-                  percentage_item_id: keyCombo.Item === "Item" ? (pd.key || "") : null,
-                  percentage_item_category: keyCombo.Item === "Item Category" ? (pd.key || "") : null,
-                  percentage: Number(pd.percentage) || 0,
-                }))
-              : []
-            ),
+      percentage_discounts: ((promotion.promotionType === "percentage" || (promotion.bundle_combination === "slab" && promotion.promotionType === "quantity"))
+        ? percentageDiscounts.map(pd => ({
+          percentage_item_id: keyCombo.Item === "Item" ? (pd.key || "") : null,
+          percentage_item_category: keyCombo.Item === "Item Category" ? (pd.key || "") : null,
+          percentage: Number(pd.percentage) || 0,
+        }))
+        : []
+      ),
       offer_items: (offerDetails || []).flatMap(detail => {
         const itemCodes = Array.isArray(detail.itemCode) ? detail.itemCode : [detail.itemCode];
         return itemCodes.map(code => ({
@@ -636,6 +636,7 @@ export default function AddPricing() {
       // ✅ Validate payload-level required pieces (items)
       await pricingValidationSchema.validate(payload, { abortEarly: false });
       console.log(payload, "payload")
+      return
       setLoading(true);
 
       let res;
@@ -1126,7 +1127,7 @@ export default function AddPricing() {
           return (
             <div className="mb-6 mt-8">
               <div className="flex justify-between items-center mb-4">
-                <div className="font-semibold text-lg">Percentage Discount</div>
+                <div className="font-semibold text-lg">{promotion.bundle_combination === "slab" && promotion.promotionType === "quantity" ? "Quantity Discount" : "Percentage Discount"}</div>
               </div>
               <Table
                 data={percentageDiscounts}
@@ -1174,7 +1175,7 @@ export default function AddPricing() {
                       key: "percentage",
                       label: (
                         <span>
-                          Percentage
+                          {promotion.bundle_combination === "slab" && promotion.promotionType === "quantity" ? "Quantity" : "Percentage"}
                           <span className="text-red-500 ml-1">*</span>
                         </span>
                       ),
@@ -1183,32 +1184,36 @@ export default function AddPricing() {
                         <InputFields
                           label=""
                           type="number"
-                          placeholder="Percentage"
+                          placeholder={promotion.bundle_combination === "slab" && promotion.promotionType === "quantity" ? "Quantity" : "Percentage"}
                           value={String((row as Record<string, unknown>)['percentage'] ?? "")}
                           onChange={e => {
                             const val = e.target.value;
-                            // Clamp 0-100
-                            const n = Number(val);
-                            if (Number.isNaN(n)) return;
-                            const clamped = Math.max(0, Math.min(100, n));
-                            setPercentageDiscounts(prev => prev.map((p) => String(p.idx) === String((row as Record<string, unknown>)['idx']) ? { ...p, percentage: String(clamped) } : p));
+                            // Clamp 0-100 only if it's percentage type
+                            if (promotion.promotionType === "percentage") {
+                              const n = Number(val);
+                              if (Number.isNaN(n)) return;
+                              const clamped = Math.max(0, Math.min(100, n));
+                              setPercentageDiscounts(prev => prev.map((p) => String(p.idx) === String((row as Record<string, unknown>)['idx']) ? { ...p, percentage: String(clamped) } : p));
+                            } else {
+                              setPercentageDiscounts(prev => prev.map((p) => String(p.idx) === String((row as Record<string, unknown>)['idx']) ? { ...p, percentage: val } : p));
+                            }
                           }}
                           width="w-full"
-                          trailingElement={<span className="text-gray-500 font-semibold">%</span>}
+                          trailingElement={promotion.bundle_combination === "slab" && promotion.promotionType === "quantity" ? undefined : <span className="text-gray-500 font-semibold">%</span>}
                         />
                       ),
                     },
                     {
                       key: "action",
                       label: "Action",
-                      width: 50,
+                      width: 30,
                       render: (row) => (
                         <button
                           type="button"
-                          disabled={percentageDiscounts.length === 1 && String((row as Record<string, unknown>)['idx']) === "0"}
-                          className={`flex items-center justify-center w-full h-full ${percentageDiscounts.length === 1 && String((row as Record<string, unknown>)['idx']) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
+                          disabled={percentageDiscounts.length <= 1}
+                          className={`flex w-full h-full ${percentageDiscounts.length <= 1 ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
                           onClick={() => {
-                            if (percentageDiscounts.length === 1 && String((row as Record<string, unknown>)['idx']) === "0") return;
+                            if (percentageDiscounts.length <= 1) return;
                             setPercentageDiscounts(prev => prev.filter(p => String(p.idx) !== String((row as Record<string, unknown>)['idx'])));
                           }}
                         >
@@ -1220,7 +1225,7 @@ export default function AddPricing() {
                   pageSize: 10,
                 }}
               />
-              <div className="mt-4">
+              < div className="mt-4" >
                 <button
                   type="button"
                   className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
@@ -1231,8 +1236,8 @@ export default function AddPricing() {
                   <Icon icon="material-symbols:add-circle-outline" width={20} />
                   Add New Item
                 </button>
-              </div>
-            </div>
+              </div >
+            </div >
           );
         };
 
@@ -1346,7 +1351,7 @@ export default function AddPricing() {
                             <button
                               type="button"
                               disabled={String((row as Record<string, unknown>)['idx']) === "0"}
-                              className={`flex items-center justify-center w-full h-full ${String((row as Record<string, unknown>)['idx']) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
+                              className={`flex  w-full h-full ${String((row as Record<string, unknown>)['idx']) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
                               onClick={() => {
                                 if (String((row as Record<string, unknown>)['idx']) === "0") return;
                                 setOrderTables(tables => {
@@ -1513,25 +1518,29 @@ export default function AddPricing() {
 
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
-                <label className="block mb-1 font-medium">Name<span className="text-red-500 ml-1">*</span></label>
+                {/* <label className="block mb-1 font-medium">Name<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
                   type="text"
                   value={promotion.itemName}
-                  alt="Enter Name"
+                  label="Name"
+                  required={true}
                   placeholder="Enter Name"
                   onChange={e => setPromotion(s => ({ ...s, itemName: e.target.value }))}
                   width="w-full"
                 />
               </div>
               <div>
-                <label className="block mb-1 font-medium">Mode</label>
+                {/* <label className="block mb-1 font-medium">Mode</label> */}
                 <InputFields
                   isSingle={true}
                   options={[{ label: "Range", value: "range" }, { label: "Slab", value: "slab" }, { label: "Normal", value: "normal" }]}
                   value={promotion.bundle_combination}
+                  label="Mode"
+                  required={true}
                   onChange={e => {
                     const val = e.target.value;
                     setPromotion(s => ({ ...s, bundle_combination: val }));
+                    setPercentageDiscounts([{ key: "", percentage: "", idx: "0" }]);
                     if (val !== "range") {
                       // Reset to single row if not range
                       setOrderTables(tables => tables.map(arr => [arr[0]]));
@@ -1541,9 +1550,11 @@ export default function AddPricing() {
                 />
               </div>
               <div>
-                <label className="block mb-1 font-medium">Start Date<span className="text-red-500 ml-1">*</span></label>
+                {/* <label className="block mb-1 font-medium">Start Date<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
                   type="date"
+                  label="Start Date"
+                  required={true}
                   value={promotion.startDate}
                   max={promotion.endDate}
                   onChange={e => setPromotion(s => ({ ...s, startDate: e.target.value }))}
@@ -1551,8 +1562,10 @@ export default function AddPricing() {
                 />
               </div>
               <div>
-                <label className="block mb-1 font-medium">End Date<span className="text-red-500 ml-1">*</span></label>
+                {/* <label className="block mb-1 font-medium">End Date<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
+                  required={true}
+                  label="End Date"
                   type="date"
                   value={promotion.endDate}
                   min={promotion.startDate}
@@ -1563,11 +1576,14 @@ export default function AddPricing() {
 
 
               <div>
-                <label className="block mb-1 font-medium">Sales Team Type<span className="text-red-500 ml-1">*</span></label>
+                {/* <label className="block mb-1 font-medium">Sales Team Type<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
                   isSingle={false}
+                  required={true}
                   options={salesmanTypeOptions.map((o: any) => ({ ...o, value: String(o.value) }))}
                   value={Array.isArray(promotion.salesTeamType) ? promotion.salesTeamType : (promotion.salesTeamType ? [String(promotion.salesTeamType)] : [])}
+                  placeholder="Sales Team Type"
+                  label="Sales Team Type"
                   onChange={e => {
                     const val = e.target.value;
                     let selectedValues: string[];
@@ -1589,8 +1605,11 @@ export default function AddPricing() {
               {/* Show Project List only when salesTeamType includes id = 6 */}
               {(Array.isArray(promotion.salesTeamType) ? promotion.salesTeamType : [promotion.salesTeamType]).includes("6") && (
                 <div>
-                  <label className="block mb-1 font-medium">Project List<span className="text-red-500 ml-1">*</span></label>
+                  {/* <label className="block mb-1 font-medium">Project List<span className="text-red-500 ml-1">*</span></label> */}
                   <InputFields
+                    placeholder=""
+                    required={true}
+                    label="Project List"
                     isSingle={false}
                     options={projectOptions.map((o: any) => ({ ...o, value: String(o.value) }))}
                     value={Array.isArray(promotion.projectList) ? promotion.projectList : (promotion.projectList ? [String(promotion.projectList)] : [])}
@@ -1630,19 +1649,26 @@ export default function AddPricing() {
               </div> */}
               {promotion.bundle_combination === "slab" && (
                 <div>
-                  <label className="block mb-1 font-medium">Promotion Type<span className="text-red-500 ml-1">*</span></label>
+                  {/* <label className="block mb-1 font-medium">Promotion Type<span className="text-red-500 ml-1">*</span></label> */}
                   <InputFields
+                    required={true}
+                    label="Promotion Type"
                     isSingle={true}
                     options={[{ label: "Quantity", value: "quantity" }, { label: "Percentage", value: "percentage" },]}
                     value={promotion.promotionType}
-                    onChange={e => setPromotion(s => ({ ...s, promotionType: e.target.value }))}
+                    onChange={e => {
+                      setPromotion(s => ({ ...s, promotionType: e.target.value }));
+                      setPercentageDiscounts([{ key: "", percentage: "", idx: "0" }]);
+                    }}
                     width="w-full"
                   />
                 </div>
               )}
               <div>
-                <label className="block mb-1 font-medium">Status<span className="text-red-500 ml-1">*</span></label>
+                {/* <label className="block mb-1 font-medium">Status<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
+                  required={true}
+                  label="Status"
                   isSingle={true}
                   options={[{ label: "Active", value: "1" }, { label: "Inactive", value: "0" }]}
                   value={promotion.status}
@@ -1662,12 +1688,13 @@ export default function AddPricing() {
                   {((keyCombo.Item === "Item Category" && promotion.promotionType !== "percentage") || keyCombo.Item === "Item") && (
                     <>
                       <div>
-                        <div className="mb-2 text-base font-medium">
+                        {/* <div className="mb-2 text-base font-medium">
                           Item Category
                           <span className="text-red-500 ml-1">*</span>
-                        </div>
+                        </div> */}
                         <InputFields
-                          label=""
+                          label="Item Category"
+                          required={true}
                           type="select"
                           isSingle={false}
                           options={itemDropdownMap["Item Category"] ? [{ label: `Select Item Category`, value: "" }, ...itemDropdownMap["Item Category"]] : [{ label: `Select Item Category`, value: "" }]}
@@ -1695,7 +1722,8 @@ export default function AddPricing() {
                         <span className="text-red-500 ml-1">*</span>
                       </div>
                       <InputFields
-                        label=""
+                        label="Item"
+                        required={true}
                         type="select"
                         isSingle={false}
                         options={itemDropdownMap["Item"] ? [{ label: `Select Item`, value: "" }, ...itemDropdownMap["Item"]] : [{ label: `Select Item`, value: "" }]}
@@ -1717,13 +1745,11 @@ export default function AddPricing() {
                   )}
 
                   <div>
-                    <div className="mb-2 text-base font-medium">
-                      UOM
-                      <span className="text-red-500 ml-1">*</span>
-                    </div>
+
                     <InputFields
-                      label=""
+                      label="UOM"
                       type="select"
+                      required={true}
                       isSingle={true}
                       placeholder="Select UOM"
                       options={uomOptions}
@@ -1738,7 +1764,7 @@ export default function AddPricing() {
                   </div>
                 </div>
                 {renderOrderTables()}
-                {promotion.promotionType === "percentage" && renderPercentageDiscountTable()}
+                {(promotion.promotionType === "percentage" || (promotion.bundle_combination === "slab" && promotion.promotionType === "quantity")) && renderPercentageDiscountTable()}
 
               </ContainerCard>
 
@@ -1813,7 +1839,8 @@ export default function AddPricing() {
                                 width: 300,
                                 render: (row: any) => (
                                   <InputFields
-                                    label=""
+                                    label="Item"
+                                    required={true}
                                     type="select"
                                     isSingle={false}
                                     placeholder="Select Item"
@@ -1861,12 +1888,12 @@ export default function AddPricing() {
                               {
                                 key: "action",
                                 label: "Action",
-                                width: 50,
+                                width: 30,
                                 render: (row) => (
                                   <button
                                     type="button"
                                     disabled={String((row as Record<string, unknown>)['idx']) === "0"}
-                                    className={`flex items-center justify-center w-full h-full ${String((row as Record<string, unknown>)['idx']) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
+                                    className={`flex  w-full h-full ${String((row as Record<string, unknown>)['idx']) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
                                     onClick={() => {
                                       if (String((row as Record<string, unknown>)['idx']) === "0") return;
                                       setOfferItems((prev: OfferItemType[][] | any) => {
