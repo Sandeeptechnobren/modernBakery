@@ -4,7 +4,7 @@ import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepp
 import ContainerCard from "@/app/components/containerCard";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -51,40 +51,28 @@ const initialKeys: KeyGroup[] = [
   },
 ];
 
-function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyComboType; setKeyCombo: React.Dispatch<React.SetStateAction<KeyComboType>> }) {
-  const [keysArray, setKeysArray] = useState<KeyGroup[]>(() => {
-    return initialKeys.map(group => ({
-      ...group,
-      options: group.options.map(opt => ({
-        ...opt,
-        isSelected: keyCombo[group.type as keyof KeyComboType] === opt.label
-      }))
-    }));
-  });
+const steps: StepperStep[] = [
+  { id: 1, label: "Key Combination" },
+  { id: 2, label: "Key Value" },
+  { id: 3, label: "Promotion" },
+];
 
-  useEffect(() => {
-    setKeysArray(prev => {
-      const next = initialKeys.map(group => ({
-        ...group,
-        options: group.options.map(opt => ({
-          ...opt,
-          isSelected: keyCombo[group.type as keyof KeyComboType] === opt.label
-        }))
-      }));
-      const isSame = prev.every((group, i) =>
-        group.options.every((opt, j) => opt.isSelected === next[i].options[j].isSelected)
-      );
-      return isSame ? prev : next;
-    });
-  }, [keyCombo]);
+function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyComboType; setKeyCombo: React.Dispatch<React.SetStateAction<KeyComboType>> }) {
+  // Derive keysArray directly from props to avoid effect-based state sync cycles
+  const keysArray = useMemo(() => initialKeys.map(group => ({
+    ...group,
+    options: group.options.map(opt => ({
+      ...opt,
+      isSelected: keyCombo[group.type as keyof KeyComboType] === opt.label
+    }))
+  })), [keyCombo]);
 
   function onKeySelect(index: number, optionIndex: number) {
-    // 1. Calculate the new state based on the CURRENT keysArray state
+    // 1. Calculate the new state based on the DERIVED keysArray
     const newKeys = keysArray.map((group, i) => {
       if (i !== index) return group;
 
       // Determine if this group should be single-select
-      // Location, Customer and Item are single-select
       const isSingleSelectGroup = (group.type === "Location" || group.type === "Customer" || group.type === "Item");
 
       if (isSingleSelectGroup) {
@@ -92,9 +80,9 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
           ...group,
           options: group.options.map((opt, j) => {
             if (j === optionIndex) {
-              return { ...opt, isSelected: !opt.isSelected };
+              return { ...opt, isSelected: !opt.isSelected }; // Toggle current
             } else {
-              return { ...opt, isSelected: false };
+              return { ...opt, isSelected: false }; // Deselect others
             }
           }),
         };
@@ -109,11 +97,8 @@ function SelectKeyCombinationInline({ keyCombo, setKeyCombo }: { keyCombo: KeyCo
       }
     });
 
-    // 2. Update local state
-    setKeysArray(newKeys);
-
-    // 3. Update parent state
-    const selected: { Location: string; Customer: string; Item: string } = { Location: "", Customer: "", Item: "" };
+    // 2. Update parent state
+    const selected: KeyComboType = { Location: "", Customer: "", Item: "" };
     newKeys.forEach((group) => {
       if (group.type === "Location" || group.type === "Customer" || group.type === "Item") {
         const found = group.options.find((o) => o.isSelected);
@@ -239,16 +224,6 @@ export default function AddPricing() {
           }));
 
           // Determine Key Combo (prioritize percentage_discounts if present)
-          let newKeyComboItem = "";
-          if (Array.isArray(data.percentage_discounts) && data.percentage_discounts.length > 0) {
-            if (data.percentage_discounts[0].percentage_item_category) {
-              newKeyComboItem = "Item Category";
-            } else if (data.percentage_discounts[0].percentage_item_id) {
-              newKeyComboItem = "Item";
-            }
-          } else {
-            newKeyComboItem = data.item_category?.length > 0 ? "Item Category" : (data.items?.length > 0 ? "Item" : "");
-          }
           const keys = data.key || {};
           const newKeyCombo = {
             Location: keys.Location?.[0] || "",
@@ -358,11 +333,6 @@ export default function AddPricing() {
     }
     fetchEditData();
   }, [isEditMode, id]);
-  const steps: StepperStep[] = [
-    { id: 1, label: "Key Combination" },
-    { id: 2, label: "Key Value" },
-    { id: 3, label: "Promotion" },
-  ];
 
   const {
     currentStep,
@@ -503,48 +473,6 @@ export default function AddPricing() {
 
   const handleSubmit = async () => {
 
-    // const initialKeys = [
-    //   {
-    //     type: "Location",
-    //     options: [
-    //       { id: "1", label: "Company", isSelected: false },
-    //       { id: "2", label: "Region", isSelected: false },
-    //       { id: "3", label: "Warehouse", isSelected: false },
-    //       { id: "4", label: "Area", isSelected: false },
-    //     ],
-    //   },
-    //   {
-    //     type: "Customer",
-    //     options: [
-    //       { id: "6", label: "Channel", isSelected: false },
-    //       { id: "7", label: "Customer Category", isSelected: false },
-    //       { id: "8", label: "Customer", isSelected: false },
-    //     ],
-    //   },
-    //   {
-    //     type: "Item",
-    //     options: [
-    //       { id: "9", label: "Item Category", isSelected: false },
-    //       { id: "10", label: "Item", isSelected: false },
-    //     ],
-    //   },
-    // ];
-
-    // function getKeyId(type: string, label: string): string {
-    //   const group = initialKeys.find(g => g.type === type);
-    //   if (!group) return "";
-    //   const found = group.options.find(opt => opt.label === label);
-    //   return found ? found.id : label;
-    // }
-
-    // ✅ Fix: Join description IDs properly as comma-separated string
-    // const descriptionIds = [
-    //   getKeyId("Location", keyCombo.Location),
-    //   getKeyId("Customer", keyCombo.Customer),
-    //   getKeyId("Item", keyCombo.Item)
-    // ].filter(Boolean);
-    // const description = descriptionIds.join(",");
-
     let selectedItemIds = keyValue["Item"] || [];
 
     if (keyCombo.Item === "Item Category") {
@@ -573,7 +501,6 @@ export default function AddPricing() {
       promotionGroupName?: string;
     };
 
-    console.log(orderTables,"promotion Details")
     let promotionDetails: PromotionDetailInput[] = [];
     if (Array.isArray(orderTables) && orderTables.length > 0 && Array.isArray(orderTables[0])) {
       promotionDetails = (orderTables as unknown as PromotionDetailInput[][]).flat();
@@ -662,7 +589,6 @@ export default function AddPricing() {
 
       // ✅ Validate payload-level required pieces (items)
       await pricingValidationSchema.validate(payload, { abortEarly: false });
-      console.log(payload, "payload")
       setLoading(true);
 
       let res;
@@ -707,8 +633,6 @@ export default function AddPricing() {
         // setErrors(formErrors);
         // showSnackbar("Please fix validation errors before proceeding", "error");
 
-        // Log which fields failed for debugging
-        console.log("Validation errors:", formErrors);
       } else {
         console.error("Submit error:", err);
         showSnackbar(
@@ -733,8 +657,6 @@ export default function AddPricing() {
     itemName: "",
     startDate: "",
     endDate: "",
-    // type: "",
-    // discount_type: "",
     promotionType: "",
     bundle_combination: "range",
     status: "1",
@@ -744,8 +666,6 @@ export default function AddPricing() {
 
   const [selectedUom, setSelectedUom] = useState("");
   const [itemLoading, setItemLoading] = useState(false);
-  console.log(itemLoading, "itemLoading")
-  console.log(selectedUom, "selectedUom")
   type OrderItemType = {
     promotionGroupName: string;
     itemName: string;
@@ -785,6 +705,25 @@ export default function AddPricing() {
 
   const [page, setPage] = useState(1);
   const pageSize = 5;
+
+  // Memoize dropdown maps at top level to ensure stable references and follow hooks rules
+  const locationDropdownMap = useMemo(() => ({
+    Company: companyOptions,
+    Region: regionOptions,
+    Warehouse: warehouseOptions,
+    Area: areaOptions,
+  }), [companyOptions, regionOptions, warehouseOptions, areaOptions]);
+
+  const customerDropdownMap = useMemo(() => ({
+    Channel: channelOptions,
+    "Customer Category": customerCategoryOptions,
+    Customer: companyCustomersOptions,
+  }), [channelOptions, customerCategoryOptions, companyCustomersOptions]);
+
+  const itemDropdownMap = useMemo(() => ({
+    "Item Category": itemCategoryOptions,
+    Item: Array.isArray(itemOptions) ? itemOptions : [],
+  }), [itemCategoryOptions, itemOptions]);
 
   useEffect(() => {
     const companies = keyValue["Company"];
@@ -835,11 +774,9 @@ export default function AddPricing() {
 
   // When Channel selection changes, fetch customer categories for the first selected channel.
   useEffect(() => {
-    console.log(keyValue["Channel"], "keyValue")
     const channels = keyValue["Channel"];
     if (Array.isArray(channels) && channels.length > 0) {
       try {
-        console.log("fetchCustomerCategoryOptions")
         fetchCustomerCategoryOptions(channels[0]);
       } catch (err) {
         console.error("Failed to fetch customer category options for channel", channels[0], err);
@@ -941,11 +878,28 @@ export default function AddPricing() {
     });
   }, [itemOptions, itemLoading]);
 
+  // Filter percentageDiscounts when in Item mode and itemOptions changes
+  useEffect(() => {
+    if (itemLoading || keyCombo.Item !== "Item") return;
+
+    setPercentageDiscounts(prev => {
+      const validValues = new Set(itemOptions.map(o => String(o.value)));
+      // Check if any row has an invalid key (and key is not empty)
+      const hasInvalid = prev.some(p => p.key && !validValues.has(p.key));
+      if (!hasInvalid) return prev;
+
+      return prev.map(p => {
+        if (p.key && !validValues.has(p.key)) {
+          return { ...p, key: "" };
+        }
+        return p;
+      });
+    });
+  }, [itemOptions, itemLoading, keyCombo.Item]);
+
   // When Item Category selection changes, prefill category on existing table rows
   useEffect(() => {
     const itemCategories = keyValue["Item Category"];
-    console.log(itemCategories,"itemcategory")
-    console.log(orderTables,"keyValue[item]")
     if (Array.isArray(itemCategories) && itemCategories.length > 0) {
       const firstCat = itemCategories[0];
       // Prefill orderTables' promotionGroupName if empty
@@ -1003,24 +957,23 @@ export default function AddPricing() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <SelectKeyCombinationInline keyCombo={keyCombo} setKeyCombo={setKeyCombo} />;
+        return (
+          <SelectKeyCombinationInline
+            keyCombo={keyCombo}
+            setKeyCombo={(val) => {
+              setKeyCombo(prev => {
+                const newVal = typeof val === 'function' ? val(prev) : val;
+                // If Item type changes (Item <-> Item Category), reset percentageDiscounts
+                // because the keys (IDs) will be invalid for the new type.
+                if (prev.Item !== newVal.Item) {
+                  setPercentageDiscounts([{ key: "", percentage: "", idx: "0" }]);
+                }
+                return newVal;
+              });
+            }}
+          />
+        );
       case 2:
-        type DropdownOption = { label: string; value: string };
-        const locationDropdownMap: Record<string, DropdownOption[]> = {
-          Company: companyOptions,
-          Region: regionOptions,
-          Warehouse: warehouseOptions,
-          Area: areaOptions,
-        };
-        const customerDropdownMap: Record<string, DropdownOption[]> = {
-          Channel: channelOptions,
-          "Customer Category": customerCategoryOptions,
-          Customer: companyCustomersOptions,
-        };
-        // const itemDropdownMap: Record<string, DropdownOption[]> = {
-        //   "Item Category": itemCategoryOptions,
-        //   Item: itemOptions,
-        // };
         return (
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
             <div className="flex justify-between items-center mb-6">
@@ -1094,10 +1047,6 @@ export default function AddPricing() {
           </ContainerCard>
         );
       case 3:
-        const itemDropdownMap: Record<string, DropdownOption[]> = {
-          "Item Category": itemCategoryOptions,
-          Item: Array.isArray(itemOptions) ? itemOptions : [],
-        };
         // Helper to update orderItems by row index for a specific table so each row
         // can store independent values even when itemCode is empty or duplicated.
         function updateOrderItem(tableIdx: number, rowIdx: string | undefined, key: keyof OrderItemType, value: string) {
@@ -1106,12 +1055,6 @@ export default function AddPricing() {
             return arr.map((oi, i) => String(i) === String(rowIdx) ? { ...oi, [key]: value } : oi);
           }));
         }
-
-
-        // Options built from items selected in Step 2
-        const selectedItemOptions = itemOptions;
-
-
 
 
         // Helper to set itemCode for an offer row/table
@@ -1139,67 +1082,6 @@ export default function AddPricing() {
           const clamped = Math.max(0, Math.min(100, n));
           return String(clamped);
         }
-        // Build UOM options for a given table row using selectedItemDetails or provider `item`.
-        // Always returns an array of options so the UI can render a select dropdown.
-        // function getUomOptionsForRow(row: Record<string, unknown>) {
-        //   const codeOrName = String((row as Record<string, unknown>)['itemCode'] ?? (row as Record<string, unknown>)['itemName'] ?? "");
-        //   let itemObj: ItemDetail | undefined = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === codeOrName || String(it.name || it.itemName || it.label) === codeOrName);
-        //   if (!itemObj && Array.isArray(item)) {
-        //     itemObj = (item as ItemDetail[]).find((ci) => String((ci as Record<string, unknown>)['id'] ?? (ci as Record<string, unknown>)['code'] ?? '') === codeOrName || String((ci as Record<string, unknown>)['label'] ?? (ci as Record<string, unknown>)['name'] ?? '') === codeOrName);
-        //   }
-        //   const uoms = (itemObj ? ((itemObj as Record<string, unknown>)['uomSummary'] ?? (itemObj as Record<string, unknown>)['uom']) : undefined) ?? [];
-        //   // If no uoms available return a single placeholder option (so dropdown always shows)
-        //   if (!Array.isArray(uoms) || uoms.length === 0) {
-        //     const fallback = String(row.uom || "");
-        //     if (fallback) return [{ label: fallback, value: fallback, price: undefined }];
-        //     return [{ label: "-", value: "", price: undefined }];
-        //   }
-        //   return (uoms as Uom[]).map((u) => ({ label: `${u.name ?? u.uom ?? ""}${u.uom_type ? ` (${u.uom_type})` : ""}${u.price ? ` - ${u.price}` : ""}`, value: String(u.name ?? u.uom ?? ""), price: u.price }));
-        // }
-        // Helper to set item for the whole order table
-        // function selectItemForOrderTable(tableIdx: number, value: string) {
-        //   const providerItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
-        //   const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || providerItems.find((ci) => String((ci as Record<string, unknown>)['id'] ?? '') === String(value));
-
-        //   const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
-
-        //   // Get primary UOM
-        //   const uomList = (foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined) as unknown;
-        //   let uomName = "CTN";
-        //   let uomPrice = "";
-        //   if (Array.isArray(uomList) && uomList.length > 0) {
-        //     const uomArr = uomList as Uom[];
-        //     const primary = uomArr.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomArr[0];
-        //     uomName = String(primary?.name ?? primary?.uom ?? '');
-        //     uomPrice = primary && (primary.price !== undefined && primary.price !== null) ? String(primary.price) : '';
-        //   }
-
-        //   setOrderTables((tables) => tables.map((arr, idx) => {
-        //     if (idx !== tableIdx) return arr;
-
-        //     if (arr.length === 0) {
-        //       // Create a new row if empty
-        //       return [{
-        //         promotionGroupName: "",
-        //         itemName: name,
-        //         itemCode: value,
-        //         quantity: "",
-        //         toQuantity: "",
-        //         uom: uomName,
-        //         price: uomPrice,
-        //         free_qty: "",
-        //       }];
-        //     }
-
-        //     return arr.map((oi) => ({
-        //       ...oi,
-        //       itemCode: value,
-        //       itemName: name,
-        //       uom: uomName || oi.uom,
-        //       price: uomPrice || oi.price
-        //     }));
-        //   }));
-        // }
 
         const renderPercentageDiscountTable = () => {
           const isCategoryMode = keyCombo.Item === "Item Category";
@@ -1237,7 +1119,6 @@ export default function AddPricing() {
                         const filteredOptions = dropdownOptions.filter(opt =>
                           opt.value === "" || opt.value === currentVal || !otherSelectedValues.includes(opt.value)
                         );
-                        console.log(filteredOptions,"filtedOptions")
 
                         return (
                           <InputFields
@@ -1348,10 +1229,6 @@ export default function AddPricing() {
             // const currentItemCode = orderItems[0]?.itemCode || "";
             const totalPages = Math.ceil(itemsData.length / pageSize);
             const paginatedData = itemsData.slice((page - 1) * pageSize, page * pageSize);
-
-            // const firstItemId = keyValue["Item"]?.[0] || "";
-            // const uomOptions = getUomOptionsForRow({ itemCode: firstItemId });
-            // const currentUom = orderItems[0]?.uom || "";
 
             return (
               <React.Fragment key={tableIdx}>
@@ -1603,7 +1480,6 @@ export default function AddPricing() {
 
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
-                {/* <label className="block mb-1 font-medium">Name<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
                   type="text"
                   value={promotion.itemName}
@@ -1615,7 +1491,6 @@ export default function AddPricing() {
                 />
               </div>
               <div>
-                {/* <label className="block mb-1 font-medium">Mode</label> */}
                 <InputFields
                   isSingle={true}
                   options={[{ label: "Range", value: "range" }, { label: "Slab", value: "slab" }, { label: "Normal", value: "normal" }]}
@@ -1635,7 +1510,6 @@ export default function AddPricing() {
                 />
               </div>
               <div>
-                {/* <label className="block mb-1 font-medium">Start Date<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
                   type="date"
                   label="Start Date"
@@ -1647,7 +1521,6 @@ export default function AddPricing() {
                 />
               </div>
               <div>
-                {/* <label className="block mb-1 font-medium">End Date<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
                   required={true}
                   label="End Date"
@@ -1661,7 +1534,6 @@ export default function AddPricing() {
 
 
               <div>
-                {/* <label className="block mb-1 font-medium">Sales Team Type<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
                   isSingle={false}
                   required={true}
@@ -1690,7 +1562,6 @@ export default function AddPricing() {
               {/* Show Project List only when salesTeamType includes id = 6 */}
               {(Array.isArray(promotion.salesTeamType) ? promotion.salesTeamType : [promotion.salesTeamType]).includes("6") && (
                 <div>
-                  {/* <label className="block mb-1 font-medium">Project List<span className="text-red-500 ml-1">*</span></label> */}
                   <InputFields
                     placeholder=""
                     required={true}
@@ -1712,29 +1583,8 @@ export default function AddPricing() {
                   />
                 </div>
               )}
-              {/* <div>
-                <label className="block mb-1 font-medium">Type<span className="text-red-500 ml-1">*</span></label>
-                <InputFields
-                  isSingle={true}
-                  options={[ { label: "Range", value: "0" },{ label: "Slab", value: "1" },{ label: "Normal", value: "2" },]}
-                  value={promotion.type}
-                  onChange={e => setPromotion(s => ({ ...s, type: e.target.value }))}
-                  width="w-full"
-                />
-              </div> */}
-              {/* <div>
-                <label className="block mb-1 font-medium">Discount Type<span className="text-red-500 ml-1">*</span></label>
-                <InputFields
-                  isSingle={true}
-                  options={[ { label: "Fixed", value: "0" },{ label: "Percentage", value: "1" },]}
-                  value={promotion.discount_type}
-                  onChange={e => setPromotion(s => ({ ...s, discount_type: e.target.value }))}
-                  width="w-full"
-                />
-              </div> */}
               {promotion.bundle_combination === "slab" && (
                 <div>
-                  {/* <label className="block mb-1 font-medium">Promotion Type<span className="text-red-500 ml-1">*</span></label> */}
                   <InputFields
                     required={true}
                     label="Promotion Type"
@@ -1750,7 +1600,6 @@ export default function AddPricing() {
                 </div>
               )}
               <div>
-                {/* <label className="block mb-1 font-medium">Status<span className="text-red-500 ml-1">*</span></label> */}
                 <InputFields
                   required={true}
                   label="Status"
@@ -1773,10 +1622,6 @@ export default function AddPricing() {
                   {((keyCombo.Item === "Item Category" && promotion.bundle_combination !== "slab") || keyCombo.Item === "Item") && (
                     <>
                       <div>
-                        {/* <div className="mb-2 text-base font-medium">
-                          Item Category
-                          <span className="text-red-500 ml-1">*</span>
-                        </div> */}
                         <InputFields
                           label="Item Category"
                           required={true}
@@ -1802,10 +1647,6 @@ export default function AddPricing() {
                   )}
                   {keyCombo.Item === "Item" && promotion.bundle_combination !== "slab" && (
                     <div>
-                      {/* <div className="mb-2 text-base font-medium">
-                        Item
-                        <span className="text-red-500 ml-1">*</span>
-                      </div> */}
                       <InputFields
                         label="Item"
                         required={true}
@@ -1840,7 +1681,6 @@ export default function AddPricing() {
                       options={uomOptions}
                       value={selectedUom}
                       onChange={e => {
-                        console.log(e)
                         const val = e.target.value;
                         setSelectedUom(val);
                       }}
@@ -1897,7 +1737,6 @@ export default function AddPricing() {
                   }
                   const totalPages = Math.ceil(offerItemsData.length / pageSize);
                   const paginatedData = offerItemsData.slice((page - 1) * pageSize, page * pageSize);
-                  console.log(offerItemsData,"offerItemsData")
                   return (
                     <React.Fragment key={tableIdx}>
                       {tableIdx > 0 && (
@@ -1929,7 +1768,7 @@ export default function AddPricing() {
                                     isSingle={false}
                                     placeholder="Select Item"
                                     showSkeleton={itemLoading}
-                                    options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
+                                    options={[{ label: `Select Item`, value: "" }, ...itemOptions]}
                                     value={Array.isArray(row.itemCode) ? row.itemCode : (row.itemCode ? [String(row.itemCode)] : [])}
                                     onChange={e => {
                                       const val = e.target.value;
