@@ -32,6 +32,7 @@ export function handleError(error: unknown) {
     console?.error("API Error:", error, error?.response.data);
     if (error.status === 401) {
       // router.push('/login')
+      localStorage.removeItem("token");
       window.location.reload();
     }
     return { error: true, data: error.response.data };
@@ -2096,9 +2097,9 @@ export const warehouseLowStocksKpi = async (id: string) => {
   }
 };
 
-export const warehouseStockTopOrders = async (id: string) => {
+export const warehouseStockTopOrders = async (id: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/warehouse-stocks/${id}/stock-details`);
+    const res = await API.get(`/api/settings/warehouse-stocks/${id}/stock-details`, { params });
 
     return res.data;
   } catch (error: unknown) {

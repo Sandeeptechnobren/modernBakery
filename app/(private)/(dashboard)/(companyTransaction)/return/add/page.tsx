@@ -446,7 +446,8 @@ export default function PurchaseOrderAddEditPage() {
   }, []);
 
   const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
-    markTouched(index, field);
+    const nonAffectedFields = ["item_id", "uom_id"];
+    if(!nonAffectedFields.includes(field)) markTouched(index, field);
     const newData = [...itemData];
     const item: ItemData = newData[index] as ItemData;
     (item as any)[field] = value;
@@ -472,8 +473,10 @@ export default function PurchaseOrderAddEditPage() {
         // console.log(selectedOrder);
         item.item_id = selectedOrder ? String(selectedOrder.id || value) : value;
         item.item_name = selectedOrder?.name ?? "";
-        item.UOM = selectedOrder?.item_uoms?.map(uom => ({ label: uom.name, value: uom?.uom_id?.toString(), price: uom.price })) || [];
-        item.uom_id = selectedOrder?.item_uoms?.[0]?.uom_id ? String(selectedOrder.item_uoms[0].uom_id) : "";
+        item.UOM = selectedOrder?.item_uoms?.map(uom => ({ label: uom.name, value: uom?.id?.toString(), price: uom.price })) || [];
+        console.log(item.UOM);
+        item.uom_id = selectedOrder?.item_uoms?.[0]?.id ? String(selectedOrder.item_uoms[0].id) : "";
+        console.log(item.uom_id);
         // item.Price = selectedOrder?.item_uoms?.[0]?.price ? String(selectedOrder.item_uoms[0].price) : "";
         item.Quantity = "1";
         item.Expiry = "";
@@ -499,17 +502,18 @@ export default function PurchaseOrderAddEditPage() {
     }
 
     if (field === "uom_id" || field === "item_id") {
-      const res = await returnWarehouseStockByCustomer({ customer_id: values?.customer, item_id: item.item_id, quantity: "1", uom: item.uom_id });
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to fetch warehouse", "error");
-        return;
-      }
-      if (res.data.in_stock === false) {
-        item.in_stock = "0";
-        showSnackbar("Selected item is not in stock", "error");
-        return;
-      }
-      item.in_stock = "1";
+      returnWarehouseStockByCustomer({ customer_id: values?.customer, item_id: item.item_id, quantity: "1", uom: item.uom_id }).then((res) => {
+        if (res.error) {
+          showSnackbar(res.data?.message || "Failed to fetch warehouse", "error");
+          return;
+        }
+        if (res.data.in_stock === false) {
+          item.in_stock = "0";
+          showSnackbar("Selected item is not in stock", "error");
+          return;
+        }
+        item.in_stock = "1";
+      });
     }
 
     if (field === "Expiry" || field === "Quantity" || (field === "uom_id" && item.Expiry)) {
@@ -596,7 +600,7 @@ export default function PurchaseOrderAddEditPage() {
     // item.Discount = discount.toFixed(2);
     // item.gross = gross.toFixed(2);
 
-    validateRow(index, newData[index]);
+    if(!nonAffectedFields.includes(field)) validateRow(index, newData[index]);
     setItemData(newData);
   };
 
@@ -1039,7 +1043,7 @@ export default function PurchaseOrderAddEditPage() {
                                 value={row.item_id}
                                 searchable={true}
                                 onChange={(e) => {
-                                  recalculateItem(Number(row.idx), "item_id", e.target.value)
+                                  recalculateItem(Number(row.idx), "item_id", e.target.value, values)
                                 }}
                                 options={itemsOptions}
                                 placeholder="Search item"

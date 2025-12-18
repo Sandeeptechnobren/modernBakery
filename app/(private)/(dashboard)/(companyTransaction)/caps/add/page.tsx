@@ -1,5 +1,6 @@
 "use client";
 
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import ContainerCard from "@/app/components/containerCard";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -13,7 +14,7 @@ import {
   updateCapsCollection,
 } from "@/app/services/agentTransaction";
 import { agentCustomerList, genearateCode, getCompanyCustomers, itemGlobalSearch, itemList, warehouseListGlobalSearch, warehouseStockTopOrders } from "@/app/services/allApi";
-import { capsByUUID, capsCreate, driverList } from "@/app/services/companyTransaction";
+import { capsByUUID, capsCreate, capsQuantityCollected, driverList } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -252,7 +253,7 @@ export default function CapsAddPage() {
       setSkeleton(prev => ({ ...prev, item: true }));
       
       // Fetch warehouse stocks - this API returns all needed data including pricing and UOMs
-      const stockRes = await warehouseStockTopOrders(warehouseId);
+      const stockRes = await warehouseStockTopOrders(warehouseId, { is_promo: "true" });
       const stocksArray: StockItem[] = stockRes.data?.stocks || stockRes.stocks || [];
 
       // Filter items with stock availability
@@ -477,16 +478,27 @@ export default function CapsAddPage() {
         value: String(uom.id ?? ""),
         label: String(uom.name ?? ""),
         upc: String(uom.upc ?? ""),
+        price: uom.uom_type == "primary" ? String(selectedItem.auom_pc_price ?? "0") 
+        : uom.uom_type == "secondary" ? String(selectedItem.buom_ctn_price ?? "0") 
+        : null,
       })) || [];
-      item.stock = selectedItem?.stock_qty || "0";
-      item.stockPerUpc = selectedItem?.stock_qty || "0";
       (item as any)["uom_id"] = item.UOM[0]?.value || "";
+      item.qtyLoading = true;
+
+      capsQuantityCollected({ item_id: value, warehouse_id: form.warehouse_id }).then((res) => {
+        item.quantity = res?.quantity || "0";
+        item.qtyLoading = false;
+        setTableData(newData);
+      }).catch(() => {
+        item.quantity = "0";
+        item.qtyLoading = false;
+        setTableData(newData);
+      });
     }
 
     if(field === "uom_id") {
       const selectedUom = item.UOM.find((u: any) => u.value === value);
-      item.stockPerUpc = Math.floor(Number(item?.stock) / (selectedUom?.upc || 1));
-      item.quantity = "0";
+      item.price = selectedUom.price || "0";
     }
 
     console.log("Updated item:", newData);
@@ -501,12 +513,7 @@ export default function CapsAddPage() {
         id: newId,
         item_id: "",
         uom_id: "",
-        quantity: "1",
-        receive_qty: "1",
-        receive_amount: "0.00",
-        receive_date: new Date().toISOString().split("T")[0],
-        remarks: "",
-        remarks2: ""
+        quantity: "1"
       },
     ]);
   };
@@ -669,7 +676,7 @@ export default function CapsAddPage() {
           </Link>
           <h1 className="text-xl font-semibold text-gray-900 mb-1">
             {/* {isEditMode ? "Edit Hariss Caps Collection" : "Add Hariss Caps Collection"} */}
-            Add Hariss Caps Collection
+            Add Hariss Caps Deposit
           </h1>
         </div>
       </div>
@@ -682,7 +689,7 @@ export default function CapsAddPage() {
           </div>
           <div className="flex flex-col text-right">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-              CAPS COLLECTION
+              CAPS DEPOSIT
             </span>
             <span className="text-primary text-[14px] tracking-[10px]">#{code}</span>
           </div>
@@ -856,99 +863,38 @@ export default function CapsAddPage() {
               {
                 key: "quantity",
                 label: "Quantity",
-                render: (row) => (
-                  <div className="flex flex-col pt-4">
-                  <InputFields
-                    type="number"
-                    min={0}
-                    max={row.stock || undefined}
-                    integerOnly={true}
-                    placeholder="Enter Quantity"
-                    value={row.quantity}
-                    disabled={!row.uom_id}
-                    onChange={(e) =>
-                      handleTableChange(Number(row.idx), "quantity", e.target.value)
-                    }
-                    width="100px"
-                  />
-                  {/* <span className="text-xs text-gray-500 mt-1">
-                    Stock: {row.stockPerUpc || "0"}
-                  </span> */}
-                  </div>
-                ),
+                render: (row) => (row.qtyLoading ? <div className="flex justify-center items-center"><Icon className="text-gray-400 animate-spin" icon="mingcute:loading-fill" width={20} /></div> : row.quantity ?? "-"),
               },
               {
-                key: "quantity",
+                key: "deposit_qty",
                 label: "Deposit Quantity",
                 render: (row) => (
-                  <div className="flex flex-col pt-4">
+                  <div>
                   <InputFields
                     type="number"
                     min={0}
-                    max={row.stock || undefined}
+                    max={row.quantity || 0}
                     integerOnly={true}
                     placeholder="Enter Quantity"
-                    value={row.quantity}
-                    disabled={!row.uom_id}
+                    value={row.deposit_qty}
+                    disabled={!row.item_id || !row.uom_id || !row.quantity }
                     onChange={(e) =>
-                      handleTableChange(Number(row.idx), "quantity", e.target.value)
+                      handleTableChange(Number(row.idx), "deposit_qty", e.target.value)
                     }
                     width="100px"
                   />
-                  {/* <span className="text-xs text-gray-500 mt-1">
-                    Stock: {row.stockPerUpc || "0"}
-                  </span> */}
                   </div>
                 ),
               },
               {
-                key: "receive_amount",
-                label: "Receive Amount",
-                render: (row) => (
-                  <InputFields
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    integerOnly={true}
-                    value={row.receive_amount}
-                    disabled={!row.uom_id}
-                    onChange={(e) =>
-                      handleTableChange(Number(row.idx), "receive_amount", e.target.value)
-                    }
-                    trailingElement={localStorage.getItem("country") || null}
-
-                  />
-                ),
+                key: "price",
+                label: "Price",
+                render: (row) => (toInternationalNumber(row.price) ?? "-"),
               },
               {
-                key: "remarks",
-                label: "Remarks",
-                render: (row) => (
-                  <InputFields
-                    type="text"
-                    placeholder="Enter Remark"
-                    disabled={!row.uom_id}
-                    value={row.remarks || ""}
-                    onChange={(e) =>
-                      handleTableChange(Number(row.idx), "remarks", e.target.value)
-                    }
-                  />
-                ),
-              },
-              {
-                key: "remarks2",
-                label: "Another Remarks",
-                render: (row) => (
-                  <InputFields
-                    type="text"
-                    placeholder="Enter Another Remark"
-                    disabled={!row.uom_id}
-                    value={row.remarks2 || ""}
-                    onChange={(e) =>
-                      handleTableChange(Number(row.idx), "remarks2", e.target.value)
-                    }
-                  />
-                ),
+                key: "total",
+                label: "Total",
+                render: (row) => toInternationalNumber(Number(row.price ?? 0) * Number(row.deposit_qty ?? 0)),
               },
               {
                 key: "action",
@@ -1014,11 +960,7 @@ export default function CapsAddPage() {
               tableData.some(row => {
                 return !row.item_id || 
                 !row.uom_id ||
-                !row.quantity || 
-                !row.receive_qty || 
-                !row.receive_amount || 
-                !row.receive_date || 
-                !row.remarks;
+                !row.quantity;
               })}
           />
         </div>
