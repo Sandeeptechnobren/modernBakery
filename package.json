@@ -14,6 +14,8 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@hello-pangea/dnd": "^18.0.1",
+    "@iconify/react": "^6.0.2",
     "@mui/material": "^7.3.4",
     "@react-google-maps/api": "^2.20.7",
     "axios": "^1.12.0",
@@ -23,18 +25,30 @@
     "date-fns": "^4.1.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.12",
+<<<<<<< HEAD
     "leaflet": "^1.9.4",
     "leaflet-polylinedecorator": "^1.6.0",
     "leaflet-routing-machine": "^3.2.12",
     "lucide-react": "^0.554.0",
     "next": "^16.0.10",
     "react": "^19.2.3",
+=======
+    "highcharts": "^12.4.0",
+    "highcharts-react-official": "^3.2.3",
+    "lucide-react": "^0.554.0",
+    "next": "^15.5.3",
+    "react": "^19.1.1",
+>>>>>>> c361a65f70881397dcbf8ef7c92249cd7276de57
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.2.3",
     "react-draggable": "^4.5.0",
     "react-leaflet": "^5.0.0",
     "react-phone-input-2": "^2.15.1",
+<<<<<<< HEAD
     "reactflow": "^11.11.4",
+=======
+    "recharts": "^3.5.0",
+>>>>>>> c361a65f70881397dcbf8ef7c92249cd7276de57
     "tailwindcss": "^4.0.0",
     "yup": "^1.7.0"
   },
@@ -46,19 +60,29 @@
     "@eslint/eslintrc": "^3",
     "@iconify-icon/react": "^3.0.0",
     "@tailwindcss/postcss": "^4.1.16",
+<<<<<<< HEAD
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+=======
+    "@types/node": "^20.19.25",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19",
+>>>>>>> c361a65f70881397dcbf8ef7c92249cd7276de57
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
     "postcss": "^8.5.6",
     "tailwind-scrollbar": "^4.0.2",
+<<<<<<< HEAD
     "typescript": "^5"
   },
   "overrides": {
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3"
+=======
+    "typescript": "^5.9.3"
+>>>>>>> c361a65f70881397dcbf8ef7c92249cd7276de57
   }
 }
