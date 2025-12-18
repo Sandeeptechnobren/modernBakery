@@ -69,7 +69,6 @@ export default function Pricing() {
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar(); 
-    type TableRow = TableDataType & { uuid?: string };
 
     const fetchCountries = useCallback(
         async (
