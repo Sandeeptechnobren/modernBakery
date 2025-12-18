@@ -247,9 +247,9 @@ const ProcessFlow = () => {
               {renderStepIcon(step, index)}
               {index < processSteps.length - 1 && (
                 <div className="flex items-center ">
-                  <div className="flex w-32 h-0.5 bg-gray-300 items-center mb-10"></div>
+                  <div className="flex w-15 h-0.5 bg-gray-300 items-center mb-10"></div>
                   <div className="text-3xl text-gray-600 font-light leading-none mb-11">»</div>
-                  <div className="flex w-32 h-0.5 bg-gray-300 items-center mb-10"></div>
+                  <div className="flex w-15 h-0.5 bg-gray-300 items-center mb-10"></div>
                 </div>
               )}
             </React.Fragment>

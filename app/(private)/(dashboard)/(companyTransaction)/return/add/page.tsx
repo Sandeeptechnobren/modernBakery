@@ -861,7 +861,7 @@ export default function PurchaseOrderAddEditPage() {
                     <InputFields
                       required
                       label="Contact Number"
-                      type="contact"
+                      type="contact2"
                       name="contactNo"
                       value={values.contactNo}
                       error={touched.contactNo && (errors.contactNo as string)}

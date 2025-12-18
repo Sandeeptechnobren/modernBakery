@@ -2,7 +2,7 @@
 
 import { Icon } from "@iconify-icon/react";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLoading } from "../services/loadingContext";
 
@@ -52,6 +52,45 @@ export default function StepperForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { setLoading } = useLoading();
   const router = useRouter();
+
+  // Keyboard shortcuts: Ctrl+ArrowLeft for Back, Ctrl+ArrowRight for Next
+  useEffect(() => {
+    const isEditableTarget = (el: EventTarget | null) => {
+      const node = el as HTMLElement | null;
+      if (!node) return false;
+      const tag = node.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return true;
+      if ((node as HTMLElement).isContentEditable) return true;
+      return false;
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) return;
+      if (isEditableTarget(e.target)) return; // don't hijack text navigation inside fields
+
+      const isBack = e.key === "ArrowLeft" || e.key === "<";
+      const isNext = e.key === "ArrowRight" || e.key === ">";
+
+      if (isBack) {
+        e.preventDefault();
+        if (isSubmitting) return;
+        if (currentStep === 1) {
+          router.back();
+          return;
+        }
+        onBack && onBack();
+      } else if (isNext) {
+        e.preventDefault();
+        if (isSubmitting) return;
+        if (showNextButton && !isLastStep) {
+          onNext && onNext();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [currentStep, isLastStep, isSubmitting, onBack, onNext, router, showNextButton]);
 
 
   // Returns 'completed', 'active', or 'pending'

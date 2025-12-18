@@ -129,6 +129,7 @@ export default function InputFields({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
   const pointerDownRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedValues: string[] = Array.isArray(value) ? value : [];
@@ -151,8 +152,77 @@ export default function InputFields({
   ];
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [highlightedCountryIndex, setHighlightedCountryIndex] = useState(0);
   // const [selectedCountry, setSelectedCountry] = useState<{ name: string; code: string; flag?: string }>(defaultCountry);
   const [phone, setPhone] = useState(value);
+  const [countrySearch, setCountrySearch] = useState("");
+  
+  /**
+   * Creates a keyboard event handler for arrow key navigation in dropdowns
+   * @param filteredOptions - Array of options currently displayed in dropdown
+   * @param highlightedIndex - Current highlighted index state
+   * @param setHighlightedIndex - State setter for highlighted index
+   * @param onSelect - Callback function when Enter key is pressed
+   * @param isDropdownOpen - Current dropdown open state
+   * @param setDropdownOpen - State setter for dropdown open
+   * @returns Event handler function for onKeyDown
+   */
+  const createArrowKeyHandler = (
+    filteredOptions: any[],
+    highlightedIndex: number,
+    setHighlightedIndex: React.Dispatch<React.SetStateAction<number>>,
+    onSelect?: (option: any) => void,
+    isDropdownOpen: boolean = true,
+    setDropdownOpen?: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
+    return (e: React.KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        
+        // Open dropdown if not already open
+        if (!isDropdownOpen && setDropdownOpen) {
+          setDropdownOpen(true);
+          return;
+        }
+        
+        if (filteredOptions.length === 0) return;
+        
+        setHighlightedIndex((prev) => {
+          // If at the end, loop to beginning
+          if (prev >= filteredOptions.length - 1) {
+            return 0;
+          }
+          // Otherwise move to next
+          return prev + 1;
+        });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        
+        // Open dropdown if not already open
+        if (!isDropdownOpen && setDropdownOpen) {
+          setDropdownOpen(true);
+          return;
+        }
+        
+        if (filteredOptions.length === 0) return;
+        
+        setHighlightedIndex((prev) => {
+          // If at the beginning, loop to end
+          if (prev <= 0) {
+            return filteredOptions.length - 1;
+          }
+          // Otherwise move to previous
+          return prev - 1;
+        });
+      } else if (e.key === "Enter" && highlightedIndex >= 0) {
+        e.preventDefault();
+        if (onSelect && filteredOptions[highlightedIndex]) {
+          onSelect(filteredOptions[highlightedIndex]);
+        }
+      }
+    };
+  };
+  
   useEffect(() => {
     setPhone(value);
   }, [value]);
@@ -278,13 +348,34 @@ export default function InputFields({
       const label = opt.label?.toLowerCase();
       // Remove options like 'Select Region', 'Select Item', 'Select ...'
       if (label?.startsWith("select ")) return false;
+      // If search is empty or no search text, return all options
+      if (!search) return true;
       return label?.includes(search.toLowerCase());
     }) || [];
 
-  // Reset highlighted index when filtered options change
+  // Reset highlighted index only when search changes, not on render
   useEffect(() => {
-    setHighlightedIndex(-1);
-  }, [search, filteredOptions.length]);
+    setHighlightedIndex(0);
+  }, [search]);
+
+  // Reset highlighted index when dropdown opens
+  useEffect(() => {
+    if (!dropdownOpen) {
+      setHighlightedIndex(-1);
+    }
+  }, [dropdownOpen]);
+
+  // Scroll highlighted item into view when index changes
+  useEffect(() => {
+    if (highlightedIndex >= 0 && dropdownOpen) {
+      const highlightedElement = document.querySelector(
+        `.inputfields-dropdown-item-${highlightedIndex}`
+      ) as HTMLElement | null;
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+  }, [highlightedIndex, dropdownOpen]);
 
   // Debounced search callback
   useEffect(() => {
@@ -559,7 +650,7 @@ export default function InputFields({
           return isSingle === false ? (
             <div className="relative select-none w-full" ref={dropdownRef}>
               <div
-                tabIndex={0}
+                tabIndex={isSearchable ? -1 : 0}
                 onMouseDown={() => {
                   pointerDownRef.current = true;
                 }}
@@ -567,11 +658,29 @@ export default function InputFields({
                   pointerDownRef.current = false;
                 }}
                 onFocus={() => {
-                  if (!pointerDownRef.current && !disabled) {
+                  if (!pointerDownRef.current && !disabled && !isSearchable) {
                     computeDropdownProps();
                     setDropdownOpen(true);
                   }
                 }}
+                onBlur={(e) => {
+                  // Use setTimeout to allow focus to move to dropdown items before closing
+                  setTimeout(() => {
+                    const dropdownContent = document.querySelector('.inputfields-dropdown-content');
+                    const activeElement = document.activeElement;
+                    if (!dropdownContent || !dropdownContent.contains(activeElement)) {
+                      setDropdownOpen(false);
+                    }
+                  }, 0);
+                }}
+                onKeyDown={!isSearchable ? createArrowKeyHandler(
+                  filteredOptions,
+                  highlightedIndex,
+                  setHighlightedIndex,
+                  (opt) => handleCheckbox(opt.value),
+                  dropdownOpen,
+                  setDropdownOpen
+                ) : undefined}
                 className={`${showBorder === true && "border"
                   } h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer w-full ${error ? "border-red-500" : "border-gray-300"
                   } ${disabled ? "cursor-not-allowed bg-gray-100" : "bg-white"}`}
@@ -622,6 +731,7 @@ export default function InputFields({
                                     if (!disabled) handleCheckbox(s.value);
                                   }}
                                   className="ml-2 text-gray-500 hover:text-gray-700"
+                                  tabIndex={-1}
                                 >
                                   ×
                                 </button>
@@ -658,15 +768,14 @@ export default function InputFields({
                             style={
                               hasSelection ? { color: "#111827" } : undefined
                             }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                if (!loading && filteredOptions.length > 0) {
-                                  // select first match for searchable Enter
-                                  handleCheckbox(filteredOptions[0].value);
-                                }
-                              }
-                            }}
+                            onKeyDown={createArrowKeyHandler(
+                              filteredOptions,
+                              highlightedIndex,
+                              setHighlightedIndex,
+                              (opt) => handleCheckbox(opt.value),
+                              dropdownOpen,
+                              setDropdownOpen
+                            )}
                           />
                         </div>
                       );
@@ -697,15 +806,14 @@ export default function InputFields({
                           style={
                             hasSelection ? { color: "#111827" } : undefined
                           }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              if (!loading && filteredOptions.length > 0) {
-                                // select first match for searchable Enter
-                                handleCheckbox(filteredOptions[0].value);
-                              }
-                            }
-                          }}
+                          onKeyDown={createArrowKeyHandler(
+                            filteredOptions,
+                            highlightedIndex,
+                            setHighlightedIndex,
+                            (opt) => handleCheckbox(opt.value),
+                            dropdownOpen,
+                            setDropdownOpen
+                          )}
                         />
                       );
                     }
@@ -739,6 +847,7 @@ export default function InputFields({
                                     if (!disabled) handleCheckbox(s.value);
                                   }}
                                   className="ml-2 text-gray-500 hover:text-gray-700"
+                                  tabIndex={-1}
                                 >
                                   ×
                                 </button>
@@ -798,7 +907,7 @@ export default function InputFields({
                   </div>
                 )}
               </div>
-              {dropdownOpen && !loading && !disabled && dropdownProperties.width !== "0" && (
+              {dropdownOpen && !loading && !disabled && !showSkeleton && dropdownProperties.width !== "0" && (
                 <>
                   <div
                     style={{
@@ -807,9 +916,10 @@ export default function InputFields({
                       width: dropdownProperties.width,
                       maxHeight: dropdownProperties.maxHeight,
                     }}
+                    tabIndex={-1}
                     className="inputfields-dropdown-content fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-auto"
                   >
-                    {!isSearchable && filteredOptions.length > 0 && (
+                    {!isSearchable && showSearchInDropdown && (
                       <div className="px-3 py-2 h-9 flex items-center">
                         <svg
                           className="w-6 h-6 text-gray-400 mr-3"
@@ -869,8 +979,8 @@ export default function InputFields({
                           {filteredOptions.map((opt, idx) => (
                             <div
                               key={opt.value + idx}
-                              className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
+                              className={`inputfields-dropdown-item-${idx} flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""
+                                } ${highlightedIndex === idx ? "bg-blue-100" : ""}`}
                               onClick={(e) => {
                                 e.preventDefault();
                                 if (!disabled) handleCheckbox(opt.value);
@@ -915,7 +1025,7 @@ export default function InputFields({
           ) : (
             <div className={`relative select-none`} style={{ width }} ref={dropdownRef}>
               <div
-                tabIndex={0}
+                tabIndex={isSearchable ? -1 : 0}
                 onMouseDown={() => {
                   pointerDownRef.current = true;
                 }}
@@ -923,11 +1033,34 @@ export default function InputFields({
                   pointerDownRef.current = false;
                 }}
                 onFocus={() => {
-                  if (!pointerDownRef.current && !disabled) {
+                  if (!pointerDownRef.current && !disabled && !isSearchable) {
                     computeDropdownProps();
                     setDropdownOpen(true);
                   }
                 }}
+                onBlur={(e) => {
+                  // Use setTimeout to allow focus to move to dropdown items before closing
+                  setTimeout(() => {
+                    const dropdownContent = document.querySelector('.inputfields-dropdown-content');
+                    const activeElement = document.activeElement;
+                    if (!dropdownContent || !dropdownContent.contains(activeElement)) {
+                      setDropdownOpen(false);
+                    }
+                  }, 0);
+                }}
+                onKeyDown={!isSearchable ? createArrowKeyHandler(
+                  filteredOptions,
+                  highlightedIndex,
+                  setHighlightedIndex,
+                  (opt) => {
+                    safeOnChange(createSingleSelectEvent(opt.value));
+                    setDropdownOpen(false);
+                    setSearch("");
+                    onSearch("");
+                  },
+                  dropdownOpen,
+                  setDropdownOpen
+                ) : undefined}
                 className={`${showBorder === true && "border"
                   } h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"
                   } ${disabled ? "cursor-not-allowed bg-gray-100" : "bg-white"}`}
@@ -969,21 +1102,19 @@ export default function InputFields({
                         className={`w-full truncate outline-none border-none px-3 h-full placeholder:text-gray-400 ${hasSelection ? "text-gray-900" : "text-gray-400"
                           }`}
                         style={hasSelection ? { color: "#111827" } : undefined}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            if (!loading && filteredOptions.length > 0) {
-                              safeOnChange(
-                                createSingleSelectEvent(
-                                  filteredOptions[0].value
-                                )
-                              );
-                              setDropdownOpen(false);
-                              setSearch("");
-                              onSearch("");
-                            }
-                          }
-                        }}
+                        onKeyDown={createArrowKeyHandler(
+                          filteredOptions,
+                          highlightedIndex,
+                          setHighlightedIndex,
+                          (opt) => {
+                            safeOnChange(createSingleSelectEvent(opt.value));
+                            setDropdownOpen(false);
+                            setSearch("");
+                            onSearch("");
+                          },
+                          dropdownOpen,
+                          setDropdownOpen
+                        )}
                       />
                     );
                   })()
@@ -1021,7 +1152,7 @@ export default function InputFields({
                   </div>
                 )}
               </div>
-              {dropdownOpen && !disabled && !loading && dropdownProperties.width !== "0" && (
+              {dropdownOpen && !disabled && !loading && !showSkeleton && dropdownProperties.width !== "0" && (
                 <div
                   style={{
                     left: dropdownProperties.left,
@@ -1029,34 +1160,34 @@ export default function InputFields({
                     width: dropdownProperties.width,
                     maxHeight: dropdownProperties.maxHeight,
                   }}
+                  tabIndex={-1}
                   className="inputfields-dropdown-content transition-all ease-in-out fixed z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl overflow-auto"
                 >
-                  {showSearchInDropdown && (
-                    <div
-                      className="px-3 py-2 border-b flex items-center"
-                      style={{ borderBottomColor: "#9ca3af" }}
-                    >
-                      <svg
-                        className="w-4 h-4 text-gray-400 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="M21 21l-4.35-4.35" />
-                      </svg>
-                      <input
-                        type="text"
-                        placeholder="Search"
-                        value={search}
-                        onChange={(e) => {
-                          setSearch(e.target.value);
-                          onSearch(e.target.value);
-                        }}
-                        className="w-full border-none outline-none text-sm"
-                        autoFocus
-                      />
+                  {!isSearchable && showSearchInDropdown && (
+                      <div className="px-3 py-2 h-9 flex items-center">
+                        <svg
+                          className="w-6 h-6 text-gray-400 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <path d="M21 21l-4.35-4.35" />
+                        </svg>
+                        <input
+                          type="text"
+                          placeholder="Search"
+                          value={search}
+                          onChange={(e) => {
+                            setSearch(e.target.value);
+                            onSearch(
+                              e.target.value
+                            ); /*console.log("Search input changed:", e.target.value);*/
+                          }}
+                          className="w-full border-none outline-none"
+                          disabled={disabled}
+                        />
                     </div>
                   )}
                   <div>
@@ -1068,8 +1199,11 @@ export default function InputFields({
                       filteredOptions.map((opt, idx) => (
                         <div
                           key={opt.value + idx}
-                          className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${value === opt.value ? "bg-gray-50" : ""
-                            }`}
+                          className={`inputfields-dropdown-item-${idx} px-3 py-2 hover:bg-gray-100 cursor-pointer ${
+                            value === opt.value ? "bg-gray-50" : ""
+                          } ${
+                            highlightedIndex === idx ? "bg-blue-100" : ""
+                          }`}
                           onClick={() => {
                             safeOnChange(createSingleSelectEvent(opt.value));
                             setDropdownOpen(false);
@@ -1118,6 +1252,53 @@ export default function InputFields({
                     <button
                       type="button"
                       onClick={() => setDropdownOpen(!dropdownOpen)}
+                      onFocus={() => { if (!disabled) setDropdownOpen(true); setHighlightedCountryIndex(0); }}
+                      onKeyDown={(e) => {
+                        if (!disabled && e.key.length === 1 && /[a-zA-Z0-9+]/.test(e.key)) {
+                          setCountrySearch((prev) => prev + e.key);
+                          if (!dropdownOpen) setDropdownOpen(true);
+                          setHighlightedCountryIndex(0);
+                        } else if (e.key === 'Backspace') {
+                          setCountrySearch((prev) => prev.slice(0, -1));
+                        } else if (e.key === 'Escape') {
+                          setDropdownOpen(false);
+                          setCountrySearch("");
+                          setHighlightedCountryIndex(-1);
+                        } else if (e.key === 'ArrowDown' && dropdownOpen) {
+                          e.preventDefault();
+                          const filteredCount = countries.filter((c) => 
+                            !countrySearch || 
+                            c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                            c.code?.toLowerCase().includes(countrySearch.toLowerCase())
+                          ).length;
+                          setHighlightedCountryIndex((prev) => (prev < filteredCount - 1 ? prev + 1 : 0));
+                        } else if (e.key === 'ArrowUp' && dropdownOpen) {
+                          e.preventDefault();
+                          const filteredCount = countries.filter((c) => 
+                            !countrySearch || 
+                            c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                            c.code?.toLowerCase().includes(countrySearch.toLowerCase())
+                          ).length;
+                          setHighlightedCountryIndex((prev) => (prev > 0 ? prev - 1 : filteredCount - 1));
+                        } else if (e.key === 'Enter' && highlightedCountryIndex >= 0 && dropdownOpen) {
+                          e.preventDefault();
+                          const filtered = countries.filter((c) => 
+                            !countrySearch || 
+                            c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                            c.code?.toLowerCase().includes(countrySearch.toLowerCase())
+                          );
+                          if (filtered[highlightedCountryIndex]) {
+                            handleSelect(filtered[highlightedCountryIndex]);
+                            setCountrySearch("");
+                            setHighlightedCountryIndex(-1);
+                            setTimeout(() => phoneInputRef.current?.focus(), 0);
+                          }
+                        } else if (e.key === 'Tab') {
+                          setDropdownOpen(false);
+                          setCountrySearch("");
+                          setHighlightedCountryIndex(-1);
+                        }
+                      }}
                       className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 pr-[3px] text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none"
                     >
                       {selectedCountry?.flag} {selectedCountry?.code}
@@ -1125,6 +1306,7 @@ export default function InputFields({
                     {/* Dropdown List */}
                     {dropdownOpen && (
                       <div
+                        tabIndex={-1}
                         style={{
                           left: dropdownProperties.left,
                           top: dropdownProperties.top,
@@ -1133,23 +1315,26 @@ export default function InputFields({
                         }}
                         className="inputfields-dropdown-content fixed overflow-y-scroll z-30 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75 mt-[6px]"
                       >
+                        {countrySearch && (
+                          <div className="px-3 py-2 text-xs text-gray-500 border-b">
+                            Searching: {countrySearch}
+                          </div>
+                        )}
                         <ul className="py-2 text-sm text-gray-700">
-                          {countries.map(
-                            (
-                              country:
-                                | {
-                                  name?: string;
-                                  code?: string;
-                                  flag?: string;
-                                }
-                                | undefined,
-                              index
-                            ) => (
-                              <li key={index}>
+                          {countries.filter((c) => 
+                            !countrySearch || 
+                            c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                            c.code?.toLowerCase().includes(countrySearch.toLowerCase())
+                          ).map(
+                            (country, idx) => (
+                              <li key={idx}>
                                 <button
                                   type="button"
-                                  onClick={() => handleSelect(country)}
-                                  className="inline-flex w-full px-4 py-2 text-sm"
+                                  onClick={() => { handleSelect(country); setCountrySearch(""); setHighlightedCountryIndex(-1); }}
+                                  className={`inline-flex w-full px-4 py-2 text-sm ${
+                                    highlightedCountryIndex === idx ? "bg-blue-100" : "hover:bg-gray-100"
+                                  }`}
+                                  tabIndex={-1}
                                 >
                                   <span className="inline-flex items-center">
                                     {country?.flag} {country?.name} (
@@ -1171,9 +1356,10 @@ export default function InputFields({
                     </label>
                     <div className="relative w-full">
                       <input
+                        ref={phoneInputRef}
                         type="tel"
                         id="phone-input"
-                        placeholder={placeholder || "Enter phone number"}
+                        placeholder={placeholder ? placeholder : label ? `Enter ${label}` : "Enter phone number"}
                         className="tracking-[1px] block p-2.5 pl-[5px] w-full z-20 h-[44px] text-sm text-gray-900 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
                         value={phone}
                         onChange={handlePhoneChange}
@@ -1191,7 +1377,7 @@ export default function InputFields({
           </div>
         );
 
-      case "contact":
+      case "contact2":
         return (
           <div className="relative mt-0 w-full">
             {(() => {
@@ -1226,7 +1412,7 @@ export default function InputFields({
               return (
                 <div
                   className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"
-                    } rounded-md`}
+                    } rounded-md focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-black`}
                   ref={dropdownRef}
                 >
                   <div className="flex items-center relative">
@@ -1234,7 +1420,54 @@ export default function InputFields({
                     <button
                       type="button"
                       onClick={() => setDropdownOpen(!dropdownOpen)}
-                      className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 pr-[3px] text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none"
+                      onFocus={() => { if (!disabled) setDropdownOpen(true); setHighlightedCountryIndex(0); }}
+                      onKeyDown={(e) => {
+                        if (!disabled && e.key.length === 1 && /[a-zA-Z0-9+]/.test(e.key)) {
+                          setCountrySearch((prev) => prev + e.key);
+                          if (!dropdownOpen) setDropdownOpen(true);
+                          setHighlightedCountryIndex(0);
+                        } else if (e.key === 'Backspace') {
+                          setCountrySearch((prev) => prev.slice(0, -1));
+                        } else if (e.key === 'Escape') {
+                          setDropdownOpen(false);
+                          setCountrySearch("");
+                          setHighlightedCountryIndex(-1);
+                        } else if (e.key === 'ArrowDown' && dropdownOpen) {
+                          e.preventDefault();
+                          const filteredCount = countries.filter((c) => 
+                            !countrySearch || 
+                            c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                            c.code?.toLowerCase().includes(countrySearch.toLowerCase())
+                          ).length;
+                          setHighlightedCountryIndex((prev) => (prev < filteredCount - 1 ? prev + 1 : 0));
+                        } else if (e.key === 'ArrowUp' && dropdownOpen) {
+                          e.preventDefault();
+                          const filteredCount = countries.filter((c) => 
+                            !countrySearch || 
+                            c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                            c.code?.toLowerCase().includes(countrySearch.toLowerCase())
+                          ).length;
+                          setHighlightedCountryIndex((prev) => (prev > 0 ? prev - 1 : filteredCount - 1));
+                        } else if (e.key === 'Enter' && highlightedCountryIndex >= 0 && dropdownOpen) {
+                          e.preventDefault();
+                          const filtered = countries.filter((c) => 
+                            !countrySearch || 
+                            c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                            c.code?.toLowerCase().includes(countrySearch.toLowerCase())
+                          );
+                          if (filtered[highlightedCountryIndex]) {
+                            handleSelect2(filtered[highlightedCountryIndex]);
+                            setCountrySearch("");
+                            setHighlightedCountryIndex(-1);
+                            setTimeout(() => phoneInputRef.current?.focus(), 0);
+                          }
+                        } else if (e.key === 'Tab') {
+                          setDropdownOpen(false);
+                          setCountrySearch("");
+                          setHighlightedCountryIndex(-1);
+                        }
+                      }}
+                      className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 pr-[3px] text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none cursor-pointer"
                       disabled={disabled}
                     >
                       {selected?.flag} {selected?.code}
@@ -1242,6 +1475,7 @@ export default function InputFields({
                     {/* Dropdown List */}
                     {dropdownOpen && (
                       <div
+                        tabIndex={-1}
                         style={{
                           left: dropdownProperties.left,
                           top: dropdownProperties.top,
@@ -1250,14 +1484,25 @@ export default function InputFields({
                         }}
                         className="inputfields-dropdown-content fixed overflow-y-scroll z-30 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75 mt-[6px]"
                       >
+                        {countrySearch && (
+                          <div className="px-3 py-2 text-xs text-gray-500 border-b">
+                            Searching: {countrySearch}
+                          </div>
+                        )}
                         <ul className="py-2 text-sm text-gray-700">
-                          {countries.map((country, index) => (
-                            <li key={`${country?.code}-${index}`}>
+                          {countries.filter((c) => 
+                            !countrySearch || 
+                            c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                            c.code?.toLowerCase().includes(countrySearch.toLowerCase())
+                          ).map((country, idx) => (
+                            <li key={`${country?.code}-${idx}`}>
                               <button
                                 type="button"
-                                onClick={() => handleSelect2(country)}
-                                className="inline-flex w-full px-4 py-2 text-sm"
-                                disabled={disabled}
+                                onClick={() => { handleSelect2(country); setCountrySearch(""); setHighlightedCountryIndex(-1); }}
+                                className={`inline-flex w-full px-4 py-2 text-sm ${
+                                  highlightedCountryIndex === idx ? "bg-blue-100" : "hover:bg-gray-100"
+                                }`}
+                                tabIndex={-1}
                               >
                                 <span className="inline-flex items-center">
                                   {country?.flag} {country?.name} ({country?.code})
@@ -1269,22 +1514,24 @@ export default function InputFields({
                       </div>
                     )}
                     {/* Input Field */}
-                    <label
+                    {/* <label
                       htmlFor="phone-input2"
                       className="mb-2 text-sm font-medium text-gray-900 sr-only"
                     >
                       Phone number:
-                    </label>
+                    </label> */}
                     <div className="relative w-full">
                       <input
+                        ref={phoneInputRef}
                         type="tel"
                         id="phone-input2"
-                        placeholder={placeholder || "Enter phone number"}
-                        className="tracking-[1px] block p-2.5 pl-[5px] w-full z-20 h-[44px] text-sm text-gray-900 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
+                        placeholder={placeholder ? placeholder : label ? `Enter ${label}` : "Enter phone number"}
+                        className="tracking-[1px] placeholder:tracking-normal placeholder:text-[16px] block p-2.5 pl-[5px] w-full z-20 h-[44px] text-sm text-gray-800 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
                         value={parsedNumber}
                         onChange={handlePhoneChange2}
                         disabled={disabled}
                         required={required}
+                        // autoFocus={true}
                         onBlur={onBlur}
                         minLength={9}
                         maxLength={10}
@@ -1328,15 +1575,16 @@ export default function InputFields({
             max={max as any}
             className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"
               }`}
-            placeholder={`Enter ${label}`}
+            placeholder={placeholder ? placeholder : label ? `Enter ${label}` : undefined}
           />
         );
 
       case "number":
         return (
           <div
+            style={{width: width}}
             className={`flex border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0  ${error ? "border-red-500" : "border-gray-300"
-              } overflow-hidden`}
+              } overflow-hidden focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-black`}
           >
             <input
               id={id ?? name}
@@ -1349,8 +1597,9 @@ export default function InputFields({
               step={integerOnly ? 1 : step ? step : undefined}
               disabled={disabled}
               onBlur={onBlur}
-              className={`h-full w-full px-3 rounded-md text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100`}
-              placeholder={`Enter ${label}`}
+              className={`h-full w-full px-3 rounded-md text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 focus:outline-none`}
+              placeholder={placeholder ? placeholder : label ? `Enter ${label}` : undefined}
+              // autoFocus={true}
               maxLength={maxLength}
               min={min}
               max={max}
@@ -1373,7 +1622,7 @@ export default function InputFields({
             disabled={disabled}
             className={`border w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-[14px] py-[10px] mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"
               }`}
-            placeholder={placeholder || `Enter ${label}`}
+            placeholder={placeholder ? placeholder : label ? `Enter ${label}` : undefined}
             cols={textareaCols}
             rows={textareaRows}
             style={textareaResize === false ? { resize: "none" } : {}}

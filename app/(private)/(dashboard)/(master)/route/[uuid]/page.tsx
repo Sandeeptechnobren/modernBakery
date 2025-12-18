@@ -234,7 +234,7 @@ export default function AddEditRoute() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Route Code */}
-            <div className="flex items-start gap-2 max-w-[406px]">
+            <div>
               <InputFields
                 required
                 label="Route Code"
