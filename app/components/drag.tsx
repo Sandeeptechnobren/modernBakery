@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import axios from 'axios';
 import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';
-import TopBar from '../(private)/(dashboard)/topBar';
+import { useSnackbar } from '@/app/services/snackbarContext';
 
 
 // Define TypeScript interfaces
@@ -29,6 +29,7 @@ interface SearchTerms {
 }
 
 const SalesReportDashboard = () => {
+  const { showSnackbar } = useSnackbar();
   const [viewType, setViewType] = useState('');
   const [dateRange, setDateRange] = useState('dd-mm-yyyy - dd-mm-yyyy');
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -93,24 +94,24 @@ const SalesReportDashboard = () => {
   const fetchDashboardData = async () => {
     // Validate required fields
     if (!startDate || !endDate) {
-      alert('Please select a date range before loading dashboard data');
+      showSnackbar('Please select a date range before loading dashboard data', 'warning');
       return;
     }
 
     if (!searchType) {
-      alert('Please select the search type (Amount or Quantity)');
+      showSnackbar('Please select the search type (Amount or Quantity)', 'warning');
       return;
     }
 
     if (!displayQuantity) {
-      alert('Please select the display quantity (With Free Good or Without Free Good)');
+      showSnackbar('Please select the display quantity (With Free Good or Without Free Good)', 'warning');
       return;
     }
 
     // Check if at least one filter is selected
     const hasFilterSelections = Object.values(selectedChildItems).some(items => items.length > 0);
     if (!hasFilterSelections) {
-      alert('Please select at least one filter (Company, Region, Area, etc.) before loading dashboard data');
+      showSnackbar('Please select at least one filter (Company, Region, Area, etc.) before loading dashboard data', 'warning');
       return;
     }
 
@@ -158,7 +159,7 @@ const SalesReportDashboard = () => {
         ? error.response?.data?.detail || error.message
         : 'Failed to load dashboard data';
       setDashboardError(errorMessage);
-      alert(errorMessage);
+      showSnackbar(errorMessage, 'error');
     } finally {
       setIsLoadingDashboard(false);
     }
@@ -294,19 +295,19 @@ const data = await response.json();
   // Fetch Table Data function
   const handleTableView = async () => {
     if (!startDate || !endDate) {
-      alert('Please select a date range before loading table data');
+      showSnackbar('Please select a date range before loading table data', 'warning');
       return;
     }
 
     // Validate search type selection
     if (!searchType) {
-      alert('Please select the search type (Type by Price or Type by Quantity)');
+      showSnackbar('Please select the search type (Type by Price or Type by Quantity)', 'warning');
       return;
     }
 
     // Validate display quantity selection
     if (!displayQuantity) {
-      alert('Please select the display quantity (Free-Good or Without-Free-Good)');
+      showSnackbar('Please select the display quantity (Free-Good or Without-Free-Good)', 'warning');
       return;
     }
 
@@ -341,7 +342,7 @@ const data = await response.json();
       setTableData(data);
     } catch (error) {
       console.error('Table fetch failed:', error);
-      alert(error instanceof Error ? error.message : 'Failed to load table data');
+      showSnackbar(error instanceof Error ? error.message : 'Failed to load table data', 'error');
     } finally {
       setIsLoadingTable(false);
     }
@@ -350,7 +351,7 @@ const data = await response.json();
   // Export XLSX function
   const handleExportXLSX = async (selectedSearchType: string, selectedDisplayQuantity: string, dataview: string) => {
     if (!startDate || !endDate) {
-      alert('Please select a date range before exporting');
+      showSnackbar('Please select a date range before exporting', 'warning');
       return;
     }
 
@@ -415,7 +416,7 @@ const data = await response.json();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Export failed:', error);
-      alert(error instanceof Error ? error.message : 'Failed to export data');
+      showSnackbar(error instanceof Error ? error.message : 'Failed to export data', 'error');
     } finally {
       setIsExporting(false);
     }
@@ -1019,6 +1020,7 @@ const data = await response.json();
                   dashboardData={dashboardData}
                   isLoading={isLoadingDashboard}
                   error={dashboardError}
+                  searchType={searchType}
                 />
               ) : (
                 <div className="mt-4">

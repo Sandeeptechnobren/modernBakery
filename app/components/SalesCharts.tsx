@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import Highcharts from 'highcharts';
 import Highcharts3D from 'highcharts/highcharts-3d';
 import HighchartsReact from 'highcharts-react-official';
+import { useSnackbar } from '../services/snackbarContext';
 
 interface ChartData {
   salesTrend: { year: string; sales: number }[];
@@ -18,9 +19,11 @@ interface SalesChartsProps {
   dashboardData?: any;
   isLoading?: boolean;
   error?: string | null;
+  searchType?: string;
 }
 
-const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isLoading, error }) => {
+const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isLoading, error, searchType }) => {
+  const showSnackbar = useSnackbar();
   const [selectedMaxView, setSelectedMaxView] = useState<string | null>(null);
   const [selectedWarehouses, setSelectedWarehouses] = useState<string[]>([]);
   const [is3DLoaded, setIs3DLoaded] = useState(false);
@@ -81,33 +84,35 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   // Original color palettes for other charts
   const companyColors = [
     '#22d3ee', // cyan
+     '#fb7185', // rose
+    '#fbbf24', // yellow
     '#60a5fa', // blue
     '#818cf8', // indigo
     '#a78bfa', // violet
     '#f472b6', // pink
-    '#fb7185', // rose
-    '#fbbf24', // amber
+    // amber
     '#34d399'  // emerald
   ];
 
   const regionColors = [
-    '#38bdf8', // sky blue
+    '#38bdf8',
+    '#facc15', // sky blue
     '#4f46e5', // indigo
     '#22c55e', // green
-    '#facc15', // yellow
+     // yellow
     '#f97316'  // orange
   ];
 
   const areaColors = [
-    '#6366f1', '#8b5cf6', '#c084fc', '#e879f9', '#fb7185', '#f97316', '#facc15', '#4ade80', '#2dd4bf', '#38bdf8', '#60a5fa', '#22d3ee'
+    '#6366f1','#ff6ec7', '#8b5cf6', '#c084fc', '#e879f9', '#fb7185', '#f97316', '#facc15',  '#2dd4bf', '#38bdf8', '#60a5fa', '#22d3ee'
   ];
 
   const warehouseColors = [
-    '#00ffd5', '#00c2ff', '#2979ff', '#7c4dff', '#c77dff', '#ff6ec7'
+    '#00ffd5','#c77dff',  '#00c2ff', '#2979ff', '#7c4dff', '#ff6ec7'
   ];
 
   const salesmanColors = [
-    '#f87171', '#fb923c', '#facc15', '#4ade80', '#22d3ee', '#60a5fa', '#a78bfa', '#f472b6'
+    '#f60a0aff', '#fa7406ff', '#facc15', '#08f760ff', '#07d5f5ff', '#1f4068ff', '#a78bfa', '#c20b6aff'
   ];
 
   // 3D Column Chart Component
@@ -120,16 +125,21 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       );
     }
 
+    const isQuantity = searchType === 'quantity';
+    const yAxisLabel = isQuantity ? 'Quantity' : 'Sales Value (UGX)';
+    const valuePrefix = isQuantity ? '' : 'UGX ';
+    const valueSuffix = isQuantity ? ' Qty' : '';
+
     const options: Highcharts.Options = {
       chart: {
         type: 'column',
         backgroundColor: 'transparent',
         options3d: {
           enabled: true,
-          alpha: 15,
-          beta: 15,
+          alpha: 5,
+          beta: 5,
           depth: 50,
-          viewDistance: 25
+          viewDistance: 50
         },
         height: height
       },
@@ -143,6 +153,25 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       },
       credits: {
         enabled: false
+      },
+      legend: {
+        enabled: true,
+        align: 'center',
+        verticalAlign: 'top',
+        layout: 'horizontal',
+        itemStyle: {
+          fontSize: '10px',
+          fontWeight: 'normal',
+          color: '#4b5563'
+        },
+        itemHoverStyle: {
+          color: '#1f2937'
+        },
+        itemHiddenStyle: {
+          color: '#9ca3af'
+        },
+        y: 0,
+        margin: 15
       },
       xAxis: {
         categories: data.map((item: any) => item[xAxisKey]),
@@ -159,7 +188,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       },
       yAxis: {
         title: {
-          text: 'Sales Value (UGX)',
+          text: yAxisLabel,
           style: {
             color: '#4b5563'
           }
@@ -175,6 +204,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       },
       tooltip: {
         formatter: function() {
+          if (isQuantity) {
+            return `<b>${this.key}</b><br/>${this.y?.toLocaleString()} Qty`;
+          }
           return `<b>${this.key}</b><br/>UGX ${this.y?.toLocaleString()}`;
         },
         style: {
@@ -185,10 +217,11 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         column: {
           depth: 40,
           borderWidth: 0,
-          colorByPoint: true,
+          pointPadding: 0.1,
+          groupPadding: 0.1,
           dataLabels: {
-            enabled: true,
-            format: 'UGX {y:,.0f}',
+            // enabled: true,
+            format: isQuantity ? '{y:,.0f} Qty' : 'UGX {y:,.0f}',
             style: {
               fontSize: '10px',
               textOutline: 'none'
@@ -196,15 +229,13 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           }
         }
       },
-      series: [{
+      series: data.map((item: any, index: number) => ({
         type: 'column',
-        name: 'Sales',
-        data: data.map((item: any, index: number) => ({
-          name: item[xAxisKey],
-          y: item[yAxisKey],
-          color: item.color || colors[index % colors.length]
-        }))
-      }]
+        name: item[xAxisKey],
+        data: [item[yAxisKey]],
+        color: item.color || colors[index % colors.length],
+        showInLegend: true
+      }))
     };
 
     return (
@@ -351,6 +382,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       sliced: !!d.sliced,
     }));
 
+    const isQuantity = searchType === 'quantity';
+
     const options: any = {
       chart: {
         type: 'pie',
@@ -361,7 +394,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       credits: { enabled: false },
       title: { text: title || null },
       legend: { enabled: true, align: 'center', verticalAlign: 'top', layout: 'horizontal', itemStyle: { fontSize: '10px' }, y: 8 },
-      tooltip: { pointFormat: '<b>{point.percentage:.1f}%</b><br/>UGX {point.y:,.0f}' },
+      tooltip: { pointFormat: isQuantity ? '<b>{point.percentage:.1f}%</b><br/>{point.y:,.0f} Qty' : '<b>{point.percentage:.1f}%</b><br/>UGX {point.y:,.0f}' },
       plotOptions: {
         pie: {
           allowPointSelect: true,
@@ -518,6 +551,41 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
     );
   }
 
+  // Validation: Only show graphs for company, region, area, or warehouse levels
+  const validDataLevels = ['company', 'region', 'area', 'warehouse'];
+  if (!validDataLevels.includes(dataLevel)) {
+    // Show snackbar message
+    if (typeof window !== 'undefined') {
+      showSnackbar('Invalid filter selection! Dashboard can only be displayed with Company, Region, Area, or Warehouse filters. Please select one of these valid filters.', 'warning');
+    }
+    
+    return (
+      <div className="flex flex-col justify-center items-center py-20 mt-5">
+        <div className="bg-red-50 border-2 border-red-400 rounded-lg p-8 max-w-2xl mx-auto">
+          <div className="flex items-center justify-center mb-4">
+            <AlertCircle size={56} className="text-red-600" />
+          </div>
+          <h3 className="text-xl font-bold text-red-700 text-center mb-3">Dashboard Cannot Be Loaded</h3>
+          <p className="text-base text-red-600 text-center mb-4">
+            Invalid filter selection detected. Dashboard is not available for the current filter combination.
+          </p>
+          <div className="bg-white rounded-md p-4 border border-red-200">
+            <p className="text-sm font-semibold text-gray-700 mb-2">Required Filters:</p>
+            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+              <li>Company</li>
+              <li>Region</li>
+              <li>Area</li>
+              <li>Warehouse</li>
+            </ul>
+          </div>
+          <p className="text-xs text-gray-500 text-center mt-4">
+            Please select one of the valid filters above to view the dashboard
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const totalCompany = companyData.reduce((sum: number, item: any) => sum + item.value, 0);
   const totalRegion = regionData.reduce((sum: number, item: any) => sum + item.value, 0);
 
@@ -641,6 +709,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
 
   // Neon Trend Area Chart Component with White Background
   const NeonTrendAreaChart = ({ data, areas, title = 'Weekly Area Sales Trend' }: any) => {
+    const [hiddenAreas, setHiddenAreas] = useState<string[]>([]);
+
     if (!data || data.length === 0) {
       return (
         <div className="w-full h-full flex items-center justify-center text-gray-500">
@@ -648,6 +718,16 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         </div>
       );
     }
+
+    const handleLegendClick = (areaName: string) => {
+      setHiddenAreas(prev => 
+        prev.includes(areaName) 
+          ? prev.filter(a => a !== areaName)
+          : [...prev, areaName]
+      );
+    };
+
+    const isQuantity = searchType === 'quantity';
 
     return (
       <div className="w-full h-full">
@@ -706,7 +786,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               axisLine={{ stroke: '#d1d5db' }}
               tick={{ fill: '#4b5563', fontSize: 11 }}
               tickLine={{ stroke: '#d1d5db' }}
-              tickFormatter={(value) => `UGX ${(value / 1000000).toFixed(1)}M`}
+              tickFormatter={(value) => isQuantity ? `${value.toLocaleString()}` : `UGX ${(value / 1000000).toFixed(1)}M`}
             />
             
             {/* Custom tooltip with light theme */}
@@ -725,7 +805,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               }}
               formatter={(value: any, name: any) => [
                 <span key="value" style={{ color: neonAreaColors[areas.indexOf(name) % neonAreaColors.length]?.line || '#00f2fe' }}>
-                  UGX {value.toLocaleString()}
+                  {isQuantity ? `${value.toLocaleString()} Qty` : `UGX ${value.toLocaleString()}`}
                 </span>,
                 <span key="name" style={{ color: '#6b7280' }}>
                   {name}
@@ -735,7 +815,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               cursor={{ stroke: '#e5e7eb', strokeWidth: 1 }}
             />
             
-            {/* Custom legend with light colors */}
+            {/* Custom interactive legend */}
             <Legend 
               verticalAlign="top"
               align="right"
@@ -743,8 +823,14 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                 paddingBottom: '20px',
                 color: '#1f2937'
               }}
+              onClick={(e) => handleLegendClick(e.value)}
               formatter={(value) => (
-                <span style={{ color: '#4b5563', fontSize: '12px' }}>
+                <span style={{ 
+                  color: hiddenAreas.includes(value) ? '#9ca3af' : '#4b5563', 
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textDecoration: hiddenAreas.includes(value) ? 'line-through' : 'none'
+                }}>
                   {value}
                 </span>
               )}
@@ -775,6 +861,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                     stroke: '#ffffff',
                     strokeWidth: 2
                   }}
+                  hide={hiddenAreas.includes(areaName)}
                   // Add subtle animation
                   isAnimationActive={true}
                   animationBegin={index * 200}
@@ -1116,7 +1203,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                         <tr>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Rank</th>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Salesman Name</th>
-                          <th className="px-6 py-4 text-right font-semibold text-gray-700">Sales Value</th>
+                          <th className="px-6 py-4 text-right font-semibold text-gray-700">{searchType === 'quantity' ? 'Quantity' : 'Sales Value'}</th>
                           <th className="px-6 py-4 text-right font-semibold text-gray-700">Percentage</th>
                         </tr>
                       </thead>
@@ -1126,7 +1213,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{salesman.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              UGX {salesman.value?.toLocaleString()}
+                              {searchType === 'quantity' ? `${salesman.value?.toLocaleString()} Qty` : `UGX ${salesman.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((salesman.value / totalSalesmen) * 100).toFixed(2)}%
@@ -1155,7 +1242,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                         <tr>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Rank</th>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Warehouse Name</th>
-                          <th className="px-6 py-4 text-right font-semibold text-gray-700">Sales Value</th>
+                          <th className="px-6 py-4 text-right font-semibold text-gray-700">{searchType === 'quantity' ? 'Quantity' : 'Sales Value'}</th>
                           <th className="px-6 py-4 text-right font-semibold text-gray-700">Percentage</th>
                         </tr>
                       </thead>
@@ -1165,7 +1252,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{warehouse.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              UGX {warehouse.value?.toLocaleString()}
+                              {searchType === 'quantity' ? `${warehouse.value?.toLocaleString()} Qty` : `UGX ${warehouse.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((warehouse.value / totalWarehouses) * 100).toFixed(2)}%
@@ -1194,7 +1281,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                         <tr>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Rank</th>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Customer Name</th>
-                          <th className="px-6 py-4 text-right font-semibold text-gray-700">Sales Value</th>
+                          <th className="px-6 py-4 text-right font-semibold text-gray-700">{searchType === 'quantity' ? 'Quantity' : 'Sales Value'}</th>
                           <th className="px-6 py-4 text-right font-semibold text-gray-700">Percentage</th>
                         </tr>
                       </thead>
@@ -1204,7 +1291,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{customer.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              UGX {customer.value?.toLocaleString()}
+                              {searchType === 'quantity' ? `${customer.value?.toLocaleString()} Qty` : `UGX ${customer.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((customer.value / totalCustomers) * 100).toFixed(2)}%
@@ -1233,7 +1320,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                         <tr>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Rank</th>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Item Name</th>
-                          <th className="px-6 py-4 text-right font-semibold text-gray-700">Quantity</th>
+                          <th className="px-6 py-4 text-right font-semibold text-gray-700">{searchType === 'quantity' ? 'Quantity' : 'Sales Value'}</th>
                           <th className="px-6 py-4 text-right font-semibold text-gray-700">Percentage</th>
                         </tr>
                       </thead>
@@ -1243,7 +1330,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{item.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              {item.value?.toLocaleString()} Qty
+                              {searchType === 'quantity' ? `${item.value?.toLocaleString()} Qty` : `UGX ${item.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((item.value / totalItems) * 100).toFixed(2)}%
@@ -1520,7 +1607,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             </div>
           </div>
 
-          {/* Top Customers Chart (Pie) */}
+          {/* Top Customers Chart (Bar) */}
           <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800">Top Customers</h3>
@@ -1880,13 +1967,17 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   <AlertCircle size={16} className="mr-2" /> No data available
                 </div>
               ) : (
-                <ExplodedPieChart 
+                <Column3DChart 
                   data={(dashboardData?.tables?.top_customers || []).map((t: any, i: number) => ({ 
                     name: t.customer_name || t.name, 
                     value: t.value || 0, 
                     color: regionColors[i % regionColors.length] 
                   }))}
-                  outerRadius={80}
+                  title=""
+                  xAxisKey="name"
+                  yAxisKey="value"
+                  colors={regionColors}
+                  height="260px"
                 />
               )}
             </div>
@@ -2047,7 +2138,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             </div>
           </div>
 
-          {/* Top Customers Chart (Pie) */}
+          {/* Top Customers Chart (Bar) */}
           <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800">Top Customers</h3>
@@ -2059,7 +2150,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   <AlertCircle size={16} className="mr-2" /> No data available
                 </div>
               ) : (
-                <ExplodedPieChart data={topCustomersChartData} outerRadius={90} />
+                <Column3DChart data={topCustomersChartData} title="" xAxisKey="name" yAxisKey="value" colors={['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6', '#fb7185', '#fdba74', '#fde047']} height="280px" />
               )}
             </div>
           </div>
@@ -2238,7 +2329,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
 
       {/* Row 5: Top Customer + Top Item Pie Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Customer Pie Chart */}
+        {/* Top Customer Bar Chart */}
         {topCustomersChartData.length > 0 && (
           <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
@@ -2251,12 +2342,12 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               </button>
             </div>
             <div className="w-full h-[350px]">
-              <ExplodedPieChart data={topCustomersChartData} outerRadius={80} />
+              <Column3DChart data={topCustomersChartData} title="" xAxisKey="name" yAxisKey="value" colors={['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6', '#fb7185', '#fdba74', '#fde047']} height="310px" />
             </div>
           </div>
         )}
 
-        {/* Top Item Pie Chart */}
+        {/* Top Item Bar Chart */}
         {topItemsChartData.length > 0 && (
           <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
@@ -2269,7 +2360,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               </button>
             </div>
             <div className="w-full h-[300px]">
-              <ExplodedPieChart data={topItemsChartData} outerRadius={80} />
+              <Column3DChart data={topItemsChartData} title="" xAxisKey="name" yAxisKey="value" colors={['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#ec4899']} height="260px" />
             </div>
           </div>
         )}
@@ -2278,4 +2369,12 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   );
 };
 
-export default SalesCharts;
+export default React.memo(SalesCharts, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.dashboardData === nextProps.dashboardData &&
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.error === nextProps.error &&
+    prevProps.searchType === nextProps.searchType
+  );
+});

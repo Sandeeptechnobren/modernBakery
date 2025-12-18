@@ -14,7 +14,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import Table, { TableDataType } from "@/app/components/customTable";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import Image from "next/image";
-
+import { tabList } from "./tablelist";
 interface Item {
   id?: number;
   erp_code?: string;
@@ -67,17 +67,20 @@ interface UOM {
   enable_for: string;
 }
 
-export const tabList = [
-  { name: "Overview", key: "overview" },
-  { name: "UOM", key: "uom" },
-  { name: "Sales", key: "sales" },
-  { name: "Market Return", key: "return" }
-];
+// export const tabList = [
+//   { name: "Overview", key: "overview" },
+//   { name: "UOM", key: "uom" },
+//   { name: "Sales", key: "sales" },
+//   { name: "Market Return", key: "return" }
+// ];
 
 export default function Page() {
   const [uomList, setUomList] = useState<Item[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
-  const { id, tabName } = useParams();
+  // const { id, tabName } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params.id;
+
   const { setLoading } = useLoading();
   const [item, setItem] = useState<Item | null>(null);
   const { showSnackbar } = useSnackbar();
@@ -313,8 +316,8 @@ export default function Page() {
                 columns: [
                   { key: "invoice_code", label: "Invoice Code" },
                   { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</> },
-                  { key: "name", label: "UOM"},
-                  { key: "quantity", label: "Quantity", render: (row: TableDataType) => <>{toInternationalNumber(row.quantity, {maximumFractionDigits: 0})}</> },
+                  { key: "name", label: "UOM" },
+                  { key: "quantity", label: "Quantity", render: (row: TableDataType) => <>{toInternationalNumber(row.quantity, { maximumFractionDigits: 0 })}</> },
                   { key: "itemvalue", label: "Price", render: (row: TableDataType) => <>{toInternationalNumber(row.itemvalue)}</> }
                 ],
                 pageSize: 50
