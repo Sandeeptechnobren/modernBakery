@@ -571,7 +571,7 @@ export default function PurchaseOrderAddEditPage() {
 
   const generatePayload = (values?: FormikValues) => {
     // Use the VAT formula from the order: vat = total - total / 1.18
-    
+
     // Calculate total VAT and net for the payload
     let totalVat = 0;
     let totalNet = 0;
@@ -823,7 +823,7 @@ export default function PurchaseOrderAddEditPage() {
                           setFieldValue("customer", opt.value);
                           setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
                           setItemTouched({});
-                        } 
+                        }
                       }}
                       onClear={() => {
                         setFieldValue("customer", "");
@@ -1236,10 +1236,10 @@ export default function PurchaseOrderAddEditPage() {
                   >
                     Cancel
                   </button>
-                  <SidebarBtn 
-                    type="submit" isActive={true} 
-                    label={isSubmitting ? "Creating Return..." : "Create Return"} 
-                    disabled={isSubmitting || !values.customer || !values.turnman || !values.truckNo || !values.contactNo || !itemData || (itemData.length === 1 && !itemData[0].item_name)} 
+                  <SidebarBtn
+                    type="submit" isActive={true}
+                    label={isSubmitting ? "Creating Return..." : "Create Return"}
+                    disabled={isSubmitting || !values.customer || !values.turnman || !values.truckNo || !values.contactNo || !itemData || (itemData.length === 1 && !itemData[0].item_name)}
                     onClick={() => submitForm()}
                   />
                 </div>

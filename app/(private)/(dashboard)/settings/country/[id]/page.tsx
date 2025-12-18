@@ -27,7 +27,7 @@ export default function AddEditCountry() {
   const router = useRouter();
   const params = useParams();
   const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
   const [prefix, setPrefix] = useState('');
   const [code, setCode] = useState("");
   const codeGeneratedRef = useRef(false);
@@ -54,7 +54,7 @@ export default function AddEditCountry() {
       setLoading(true);
       (async () => {
         try {
-          const res = await countryById(String(params.id)); 
+          const res = await countryById(String(params.id));
           if (res?.data) {
             setInitialValues({
               country_code: res.data.country_code || "",
@@ -105,7 +105,7 @@ export default function AddEditCountry() {
       res = await addCountry(payload);
       try {
         await saveFinalCode({ reserved_code: values.country_code, model_name: "country" });
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (res.error) {
@@ -148,7 +148,7 @@ export default function AddEditCountry() {
         validationSchema={CountrySchema}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit, values, setFieldValue, errors, touched ,isSubmitting}) => (
+        {({ handleSubmit, values, setFieldValue, errors, touched, isSubmitting }) => (
           <Form onSubmit={handleSubmit}>
             <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
               <div className="p-6">
@@ -158,22 +158,22 @@ export default function AddEditCountry() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Country Code */}
-                  <div className="flex items-start gap-2 max-w-[406px]">
+                  <div>
                     <div className="w-full">
-             <InputFields
-  required
-  label="Country Code"
-  value={values.country_code}
-  onChange={(e) => setFieldValue("country_code", e.target.value)}
-  disabled={isEditMode || (codeMode === 'auto' && !isEditMode)}
-/>
+                      <InputFields
+                        required
+                        label="Country Code"
+                        value={values.country_code}
+                        onChange={(e) => setFieldValue("country_code", e.target.value)}
+                        disabled={isEditMode || (codeMode === 'auto' && !isEditMode)}
+                      />
                       <ErrorMessage
                         name="country_code"
                         component="span"
                         className="text-xs text-red-500"
                       />
                     </div>
-                    {!isEditMode && (
+                    {/* {!isEditMode && (
                       <>
                         <IconButton
                           bgClass="white"
@@ -197,7 +197,7 @@ export default function AddEditCountry() {
                           }}
                         />
                       </>
-                    )}
+                    )} */}
                   </div>
 
                   {/* Country Name */}
@@ -218,7 +218,7 @@ export default function AddEditCountry() {
                   </div>
 
                   {/* Status */}
-                  
+
 
                   {/* Currency */}
                   <div>
@@ -266,7 +266,7 @@ export default function AddEditCountry() {
                 Cancel
               </button>
               <SidebarBtn
-                label={isEditMode ? (isSubmitting?"Updating...":"Update") : (isSubmitting?"Submitting...":"Submit")}
+                label={isEditMode ? (isSubmitting ? "Updating..." : "Update") : (isSubmitting ? "Submitting..." : "Submit")}
                 isActive={true}
                 leadingIcon="mdi:check"
                 type="submit"

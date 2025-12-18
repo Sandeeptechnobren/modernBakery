@@ -29,7 +29,7 @@ const columns = [
   {
     key: "created_at",
     label: "Order Date",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) => (
       <span
         className="
@@ -48,7 +48,7 @@ const columns = [
   {
     key: "order_code",
     label: "Order Number",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) => (
       <span
         className="
@@ -63,7 +63,7 @@ const columns = [
   {
     key: "warehouse_name",
     label: "Distributor Name",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) => {
       const code = row.warehouse_code ?? "";
       const name = row.warehouse_name ?? "";
@@ -75,7 +75,7 @@ const columns = [
   {
     key: "customer_name",
     label: "Customer",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) => {
       const code = row.customer_code ?? "";
       const name = row.customer_name ?? "";
@@ -86,7 +86,7 @@ const columns = [
   {
     key: "salesman_name",
     label: "Sales Team",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) => {
       const code = row.salesman_code ?? "";
       const name = row.salesman_name ?? "";
@@ -97,7 +97,7 @@ const columns = [
   {
     key: "route_name",
     label: "Route",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) => {
       const code = row.route_code ?? "";
       const name = row.route_name ?? "";
@@ -118,7 +118,7 @@ const columns = [
   {
     key: "delivery_date",
     label: "Delivery Date",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) =>
       formatWithPattern(
         new Date(row.delivery_date),
@@ -134,13 +134,13 @@ const columns = [
   {
     key: "approval_status",
     label: "Approval Status",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
   },
   {
     key: "order_flag",
     label: "Status",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: TableDataType) => <OrderStatus order_flag={row.order_flag} />,
   },
 ];
@@ -158,7 +158,7 @@ export default function CustomerInvoicePage() {
     routeOptions,
     regionOptions,
     areaOptions,
-   ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -349,10 +349,10 @@ export default function CustomerInvoicePage() {
                 onClick: (row: TableDataType) => downloadPdf(row.uuid),
               },
               {
-                                icon: "uil:process",
-                                onClick: (row: TableDataType) => {
-                                    router.push(`/settings/processFlow?order_code=${row.order_code}`);
-                                }
+                icon: "uil:process",
+                onClick: (row: TableDataType) => {
+                  router.push(`/settings/processFlow?order_code=${row.order_code}`);
+                }
               }
             ],
             pageSize: 10,

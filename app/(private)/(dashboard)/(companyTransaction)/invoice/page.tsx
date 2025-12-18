@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback,useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
@@ -33,7 +33,7 @@ const columns = [
 
     },
     { key: "invoice_code", label: "Invoice Code", showByDefault: true },
-    { key: "order_code", label: "Order Code"},
+    { key: "order_code", label: "Order Code", showByDefault: true, },
     {
         key: "customer_code", label: "Customer", showByDefault: true, render: (row: TableDataType) => {
             const code = row.customer_code || "-";
@@ -98,17 +98,17 @@ export default function CustomerInvoicePage() {
         csv: false,
         xlsx: false,
     });
-    const { companyOptions, warehouseAllOptions, regionOptions, areaOptions, routeOptions, salesmanOptions , ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    const { companyOptions, warehouseAllOptions, regionOptions, areaOptions, routeOptions, salesmanOptions, ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureAreaLoaded();
-    ensureCompanyLoaded();
-    ensureRegionLoaded();
-    ensureRouteLoaded();
-    ensureSalesmanLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureAreaLoaded();
+        ensureCompanyLoaded();
+        ensureRegionLoaded();
+        ensureRouteLoaded();
+        ensureSalesmanLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
     const [filters, setFilters] = useState({
         fromDate: new Date().toISOString().split("T")[0],
         toDate: new Date().toISOString().split("T")[0],

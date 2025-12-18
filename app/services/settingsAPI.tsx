@@ -124,9 +124,9 @@ export const updateBonus = async (uuid: string,body:object) => {
   }
 };
 
-export const orderProcessFlow = async (params:Params) => {
+export const orderProcessFlow = async (body:object) => {
   try {
-    const res =  await API.get(`/api/master/approval/order-process-flow`, {params});
+    const res =  await API.post(`/api/master/approval/order-process-flow`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

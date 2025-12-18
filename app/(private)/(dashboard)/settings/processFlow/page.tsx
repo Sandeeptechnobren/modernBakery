@@ -20,9 +20,9 @@ interface ProcessCard {
   rowType?: string;
   verticalHeight?: string;
   horizontalHeight?: string;
-  status: "Completed" | "Shipped" | "Not Cleared";
-  date: string;
-  dateLabel: string;
+  status?: "Completed" | "Shipped" | "Not Cleared";
+  date?: string;
+  dateLabel?: string;
   additionalInfo?: any;
   netValue?: string;
 }
@@ -51,12 +51,13 @@ const ProcessFlow = () => {
   }, [order_code]);
 
   // Map API response to ProcessCard[] for each column
-  const orderProcessingCards: ProcessCard[] = processData?.order && Array.isArray(processData.order.steps)
-    ? [...processData.order.steps].reverse().map((step: any, idx: number): ProcessCard => ({
-        type: `Order`,
+  // Approval cards for each order step
+  const approvalCards: ProcessCard[] = processData?.order && Array.isArray(processData.order.steps)
+    ? [...processData.order.steps].map((step: any, idx: number): ProcessCard => ({
+        type: `Approval`,
         number: processData.order.order_code,
-        status: step.status === "APPROVED" ? "Completed" : "Not Cleared",
-        rowType: "both",
+        status: step.status === "APPROVED" ? "Completed" : step.status === "PENDING" ? "Not Cleared" : step.status,
+        rowType: idx === processData.order.steps.length - 1 ? "" : "down",
         verticalHeight: "100px",
         horizontalHeight: "100px",
         date: "",
@@ -64,13 +65,28 @@ const ProcessFlow = () => {
         additionalInfo: step.message,
       }))
     : [];
+  const orderProcessingCards: ProcessCard[] = processData?.order && processData.order.order_code
+    ? [{
+        type: `Order`,
+        number: processData.order.order_code,
+        rowType: "right",
+        verticalHeight: "100px",
+        horizontalHeight: "100px",
+        date: "",
+        dateLabel: "Order Placed",
+        additionalInfo: "",
+      }]
+    : [];
 
   const deliveryProcessingCards: ProcessCard[] = processData?.deliveries
     ? processData.deliveries.flatMap((d: any) =>
         Array.isArray(d.steps)
-          ? [...d.steps].reverse().map((step: any, idx: number): ProcessCard => ({
+          ? [...d.steps].map((step: any, idx: number): ProcessCard => ({
               type: "Delivery",
               number: d.delivery.delivery_code,
+              rowType: idx == [...d.steps].length -1 ? "" : "down",
+        verticalHeight: "100px",
+        horizontalHeight: "100px",
               status: step.status === "APPROVED" ? "Shipped" : "Not Cleared",
               date: "",
               dateLabel: step.title,
@@ -83,9 +99,12 @@ const ProcessFlow = () => {
   const invoicingCards: ProcessCard[] = processData?.invoices
     ? processData.invoices.flatMap((inv: any) =>
         Array.isArray(inv.steps)
-          ? [...inv.steps].reverse().map((step: any, idx: number): ProcessCard => ({
+          ? [...inv.steps].map((step: any, idx: number): ProcessCard => ({
               type: "Tax Invoice",
               number: inv.invoice.invoice_code,
+              rowType: idx == [...inv.steps].length -1 ? "" : "down",
+        verticalHeight: "100px",
+        horizontalHeight: "100px",
               status: step.status === "APPROVED" ? "Completed" : "Not Cleared",
               date: "",
               dateLabel: step.title,
@@ -102,6 +121,12 @@ const ProcessFlow = () => {
       title: "Order Processing",
       icon: <FileText className="w-6 h-6" />,
       completed: true,
+    },
+    {
+      id: "orderApproval",
+      title: "Order Approval",
+      icon: <FileText className="w-6 h-6" />,
+      completed: processData?.order.step?.filter((step: any) => step.status === "PENDING")?.length > 0 ? true : false,
     },
     {
       id: "delivery",
@@ -125,8 +150,9 @@ const ProcessFlow = () => {
 
 
 
-  const renderCard = (card: ProcessCard) => {
-    const getStatusColor = (status: string) => {
+  const renderCard = (card: ProcessCard,orderProcessingCards?:number,index?:number) => {
+    console.log("orderProcessingCards",orderProcessingCards,index);
+    const getStatusColor = (status?: string) => {
       switch (status) {
         case "Completed":
           return "text-green-600";
@@ -139,7 +165,7 @@ const ProcessFlow = () => {
       }
     };
 
-    const getStatusIcon = (status: string) => {
+    const getStatusIcon = (status?: string) => {
       switch (status) {
         case "Completed":
           return "✓";
@@ -153,9 +179,9 @@ const ProcessFlow = () => {
     };
 
     return (
-      <div className="flex items-center">
+      <div className={orderProcessingCards   == index  ? "flex items-center" : "flex flex-col items-center"}>
         <div
-          className="group bg-white border border-gray-200 hover:border-blue-500 transition-colors duration-200 p-4 shadow-sm min-w-[200px] min-h-[200px] relative"
+          className="group bg-white border border-gray-200 hover:border-blue-500 transition-colors duration-200 p-4 shadow-sm min-w-[250px] min-h-[250px] relative"
           style={{ clipPath: "polygon(0 0, 100% 0, 100% 90%, 90% 100%, 0 100%)" }}
         >
           <div className="mb-3">
@@ -163,8 +189,8 @@ const ProcessFlow = () => {
               {card.type} {card.number}
             </div>
           </div>
-          <div className={`flex items-center gap-2 mb-2 ${getStatusColor(card.status)}`}>
-            <span className="text-lg">{getStatusIcon(card.status)}</span>
+          <div className={`flex items-center gap-2 mb-2 ${getStatusColor(card?.status)}`}>
+            <span className="text-lg">{getStatusIcon(card?.status)}</span>
             <span className="font-medium text-sm">{card.status}</span>
           </div>
           <div className="text-gray-600 text-xs mb-1">{card.dateLabel}</div>
@@ -175,7 +201,7 @@ const ProcessFlow = () => {
             border-t-[18px] border-t-gray-500 group-hover:border-t-blue-500 transition-colors duration-200" >
           </div>
         </div>
-        <VerticalArrow rowType={card.rowType}  verticalHeight={card.verticalHeight}  horizontalHeight={card.horizontalHeight} />
+        <VerticalArrow rowType={card.rowType}  verticalHeight={card.verticalHeight}  horizontalHeight={card.horizontalHeight} status={card.status}/>
       </div>
     );
   };
@@ -222,7 +248,7 @@ const ProcessFlow = () => {
               {index < processSteps.length - 1 && (
                 <div className="flex items-center ">
                   <div className="flex w-32 h-0.5 bg-gray-300 items-center mb-10"></div>
-                  <div className="text-3xl text-gray-600 font-light leading-none mb-10">»</div>
+                  <div className="text-3xl text-gray-600 font-light leading-none mb-11">»</div>
                   <div className="flex w-32 h-0.5 bg-gray-300 items-center mb-10"></div>
                 </div>
               )}
@@ -238,7 +264,18 @@ const ProcessFlow = () => {
               <div className="space-y-4">
                 {orderProcessingCards.map((card: ProcessCard, index: number) => (
                   <div key={index} className="flex">
-                    {renderCard(card)}
+                    {renderCard(card,orderProcessingCards.length - 1,index)}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Approval Column */}
+            <div className="flex-1 min-w-[250px]">
+              <div className="space-y-4">
+                {approvalCards.map((card: ProcessCard, index: number) => (
+                  <div key={index} className="flex">
+                    {renderCard(card,approvalCards.length - 1,index)}
                   </div>
                 ))}
               </div>
@@ -249,7 +286,7 @@ const ProcessFlow = () => {
               <div className="space-y-4">
                 {deliveryProcessingCards.map((card: ProcessCard, index: number) => (
                   <div key={index} className="flex">
-                    {renderCard(card)}
+                    {renderCard(card,deliveryProcessingCards.length - 1,index)}
                   </div>
                 ))}
               </div>
@@ -260,7 +297,7 @@ const ProcessFlow = () => {
               <div className="space-y-4">
                 {invoicingCards.map((card: ProcessCard, index: number) => (
                   <div key={index} className="flex">
-                    {renderCard(card)}
+                    {renderCard(card,invoicingCards.length - 1,index)}
                   </div>
                 ))}
               </div>
@@ -271,14 +308,12 @@ const ProcessFlow = () => {
               <div className="space-y-4">
                 {accountingCards.map((card, index) => (
                   <div key={index} className="flex">
-                    {renderCard(card)}
+                    {renderCard(card,accountingCards.length - 1,index)}
                   </div>
                 ))}
               </div>
             </div>
           </div>
-
-         
         </div>
       </div>
     </div>

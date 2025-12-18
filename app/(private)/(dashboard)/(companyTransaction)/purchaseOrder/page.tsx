@@ -45,7 +45,7 @@ const columns = [
         },
     },
     { key: "delivery_date", label: "Delivery Date", showByDefault: true, render: (row: TableDataType) => formatWithPattern(new Date(row.delivery_date), "DD MMM YYYY", "en-GB").toLowerCase() || "-" },
-    { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
+    { key: "comment", label: "Comment", showByDefault: true, render: (row: TableDataType) => row.comment || "-" },
     {
         key: "status", label: "Status", showByDefault: true, render: (row: TableDataType) => (
             <OrderStatus order_flag={row.status} />
@@ -61,20 +61,20 @@ const columns = [
 
 export default function CustomerInvoicePage() {
     const { setLoading } = useLoading();
-    const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions , ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions, ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureAgentCustomerLoaded();
-    ensureAreaLoaded();
-    ensureChannelLoaded();
-    ensureCompanyLoaded();
-    ensureCustomerSubCategoryLoaded();
-    ensureRegionLoaded();
-    ensureRouteLoaded();
-    ensureSalesmanLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureAgentCustomerLoaded();
+        ensureAreaLoaded();
+        ensureChannelLoaded();
+        ensureCompanyLoaded();
+        ensureCustomerSubCategoryLoaded();
+        ensureRegionLoaded();
+        ensureRouteLoaded();
+        ensureSalesmanLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
     const [refreshKey, setRefreshKey] = useState(0);

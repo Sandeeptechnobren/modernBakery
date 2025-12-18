@@ -28,9 +28,9 @@ type WarehouseRow = TableDataType & {
   street?: string;
   branch_id?: string;
   town_village?: string;
-  region?: {code?:string; name?:string; region_name?: string;}
-  location?: {code?:string; name?:string; location_code?: string; location_name?:string;}
-  company?:{company_code?:string; company_name?:string};
+  region?: { code?: string; name?: string; region_name?: string; }
+  location?: { code?: string; name?: string; location_code?: string; location_name?: string; }
+  company?: { company_code?: string; company_name?: string };
   city?: string;
   landmark?: string;
   latitude?: string;
@@ -53,7 +53,7 @@ type WarehouseRow = TableDataType & {
 const columns = [
   // { key: "warehouse_code", label: "Warehouse Code", showByDefault: true, render: (row: WarehouseRow) =>(<span className="font-semibold text-[#181D27] text-[14px]">{ row.warehouse_code || "-"}</span>) },
   // { key: "registation_no", label: "Registration No.", render: (row: WarehouseRow) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.registation_no || "-" }</span>)},
-  { key: "warehouse_name", label: "Distributors Name", showByDefault: true, render: (row: WarehouseRow) => row.warehouse_code + " - " + row.warehouse_name || "-" },
+  { key: "warehouse_name", label: "Distributors Name", render: (row: WarehouseRow) => row.warehouse_code + " - " + row.warehouse_name || "-" },
   { key: "owner_name", label: "Owner Name", render: (row: WarehouseRow) => row.owner_name || "-" },
   { key: "owner_number", label: "Owner Contact No.", render: (row: WarehouseRow) => row.owner_number || "-" },
   // { key: "owner_email", label: "Owner Email", render: (row: WarehouseRow) => row.owner_email || "-" },
@@ -81,10 +81,10 @@ const columns = [
   //     return strValue || "-";
   //   }, },
   // { key: "region_id", label: "Region"},
-  { key: "tin_no", label: "TIN No.", showByDefault: true, render: (row: WarehouseRow) => row.tin_no || "-" },
+  { key: "tin_no", label: "TIN No.", render: (row: WarehouseRow) => row.tin_no || "-" },
   {
     label: 'Region',
-    showByDefault: true,
+    // showByDefault: true,
     key: 'region',
     render: (row: WarehouseRow) => {
       return row.region?.name || row.region?.region_name || '-';
@@ -92,25 +92,27 @@ const columns = [
   },
   {
     label: 'Area',
-    showByDefault: true,
+    // showByDefault: true,
     key: 'area',
     render: (row: WarehouseRow) => {
       return row.area?.name || row.area?.area_name || '-';
-     
+
     }
   },
   // { key: "sub_region_id", label: "Sub Region"},
-  { key: "city", label: "City", render: (row: WarehouseRow) => row.city || "-",showByDefault: true, },
-  { key: "location", label: "Location", showByDefault:true, render: (row: WarehouseRow) => {
-        return row.location?.name || row.location?.location_name ||  '-';
-      } },
+  { key: "city", label: "City", render: (row: WarehouseRow) => row.city || "-", },
+  {
+    key: "location", label: "Location", render: (row: WarehouseRow) => {
+      return row.location?.name || row.location?.location_name || '-';
+    }
+  },
   // { key: "town_village", label: "Town", render: (row: WarehouseRow) => row.town_village || "-" },
   // { key: "street", label: "Street", render: (row: WarehouseRow) => row.street || "-" },
   // { key: "landmark", label: "Landmark", render: (row: WarehouseRow) => row.landmark || "-" },
   // { key: "agreed_stock_capital", label: "Stock Capital", render: (row: WarehouseRow) => row.agreed_stock_capital || "-" },
   {
     key: "is_efris", label: "EFRIS",
-    showByDefault: true,
+    // showByDefault: true,
     render: (row: WarehouseRow) => {
       const value = row.is_efris;
       const strValue = value != null ? String(value) : "";
@@ -122,7 +124,7 @@ const columns = [
   {
     key: "status",
     label: "Status",
-    showByDefault: true,
+    // showByDefault: true,
     // isSortable: true,
     render: (row: WarehouseRow) => <StatusBtn isActive={String(row.status) > "0"} />,
   },

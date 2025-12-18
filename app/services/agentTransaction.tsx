@@ -836,3 +836,13 @@ export const salesTeamRecontionOrderByUuid = async (uuid: string) => {
     return handleError(error);
   }
 };
+
+
+export const salesTeamTracking = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/salesteam-tracking/track`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

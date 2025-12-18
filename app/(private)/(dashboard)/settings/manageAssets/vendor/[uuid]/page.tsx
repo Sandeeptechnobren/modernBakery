@@ -202,7 +202,7 @@ export default function AddEditVendor() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Vendor Code */}
-                <div className="flex items-start gap-2 max-w-[406px]">
+                <div>
                   <InputFields
                     label="Vendor Code"
                     name="vendor_code"

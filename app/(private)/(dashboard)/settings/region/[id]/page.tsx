@@ -2,7 +2,7 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState ,useRef} from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
@@ -37,7 +37,7 @@ export default function AddEditRegion() {
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const { showSnackbar } = useSnackbar();
-  const { companyOptions , ensureCompanyLoaded} = useAllDropdownListData();
+  const { companyOptions, ensureCompanyLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function AddEditRegion() {
 
   // Code logic
   const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
   const [prefix, setPrefix] = useState('');
   const [code, setCode] = useState("");
   const codeGeneratedRef = useRef(false);
@@ -123,7 +123,7 @@ export default function AddEditRegion() {
         await addRegion(payload);
         try {
           await saveFinalCode({ reserved_code: values.region_code, model_name: "Region" });
-        } catch (e) {}
+        } catch (e) { }
         showSnackbar("Region added successfully ✅", "success");
       }
       router.push("/settings/region");
@@ -158,14 +158,14 @@ export default function AddEditRegion() {
         validationSchema={RegionSchema}
         onSubmit={handleSubmit}
       >
-  {({ values, setFieldValue, isSubmitting, touched, errors }) => (
+        {({ values, setFieldValue, isSubmitting, touched, errors }) => (
           <Form>
             <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
               <div className="p-6">
                 <h2 className="text-lg font-medium text-gray-800 mb-4">Region Details</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Region Code (auto-generated, disabled, with settings icon/popup) */}
-                  <div className="flex items-start gap-2 max-w-[406px]">
+                  <div >
                     <InputFields
                       label="Region Code"
                       name="region_code"
@@ -174,7 +174,7 @@ export default function AddEditRegion() {
                       disabled={codeMode === 'auto'}
                       error={touched?.region_code && errors?.region_code}
                     />
-                    {!isEditMode && (
+                    {/* {!isEditMode && (
                       <>
                         <IconButton
                           bgClass="white"
@@ -198,7 +198,7 @@ export default function AddEditRegion() {
                           }}
                         />
                       </>
-                    )}
+                    )} */}
                   </div>
                   <div>
                     <InputFields
@@ -250,8 +250,8 @@ export default function AddEditRegion() {
             </div>
             <div className="flex justify-end gap-4 mt-6">
               <button
-              onClick={() => router.push("/settings/region")}
- type="button"
+                onClick={() => router.push("/settings/region")}
+                type="button"
                 // type="reset"
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >

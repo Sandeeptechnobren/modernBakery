@@ -47,16 +47,33 @@ body {
 
 /* Loader spin keyframes used by Tailwind-based loader component */
 @keyframes spin-clock {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
+
 @keyframes spin-anticlock {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(-360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-360deg);
+  }
 }
+
 .loader-spin {
   animation: spin-clock 1s linear infinite;
 }
+
 .loader-spin-reverse {
   animation: spin-anticlock 0.85s linear infinite;
+}
+
+.leaflet-routing-container {
+  display: none !important;
 }

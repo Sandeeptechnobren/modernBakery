@@ -274,8 +274,15 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/salesTeamRecosite",
-            label: "Sales Team Reconsite",
+            href: "/salesTeamTracking",
+            label: "Sales Team Tracking",
+            leadingIcon: "mdi:package-variant",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/salesTeamReconcile",
+            label: "Sales Team Reconcile",
             leadingIcon: "mdi:package-variant",
             iconColor: "text-cyan-500"
           },
@@ -334,7 +341,7 @@ export const initialLinkData: SidebarDataType[] = [
           {
             isActive: false,
             href: "/caps",
-            label: "CAPS Collection",
+            label: "CAPS Deposit",
             leadingIcon: "game-icons:bottle-cap",
             iconColor: "text-cyan-500"
           },

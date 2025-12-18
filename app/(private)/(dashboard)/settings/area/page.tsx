@@ -176,6 +176,9 @@ export default function SubRegion() {
               ],
             },
             localStorageKey: "area",
+            table: {
+              height: 400,
+            },
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,

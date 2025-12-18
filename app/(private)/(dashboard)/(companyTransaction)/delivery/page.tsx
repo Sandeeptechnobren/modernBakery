@@ -50,6 +50,7 @@ const columns = [
   {
     key: "customer",
     label: "Customer",
+    showByDefault: true,
     render: (row: TableDataType) => {
       const customer =
         typeof row.customer === "string"
@@ -64,6 +65,7 @@ const columns = [
   {
     key: "route",
     label: "Route",
+    showByDefault: true,
     render: (row: TableDataType) => {
       const route =
         typeof row.route === "string"
@@ -78,6 +80,7 @@ const columns = [
   {
     key: "warehouse",
     label: "Distributor",
+    showByDefault: true,
     render: (row: TableDataType) => {
       const warehouse =
         typeof row.warehouse === "string"
@@ -92,6 +95,7 @@ const columns = [
   {
     key: "salesman",
     label: "Sales Team",
+    showByDefault: true,
     render: (row: TableDataType) => {
       const salesman =
         typeof row.salesman === "string"
@@ -111,6 +115,7 @@ const columns = [
   {
     key: "status",
     label: "Status",
+    showByDefault: true,
     render: (row: TableDataType) => {
       // Treat status 1 or 'active' (case-insensitive) as active
       const isActive =
@@ -119,7 +124,7 @@ const columns = [
           row.status.toLowerCase() === "active");
       return <StatusBtn isActive={isActive} />;
     },
-    showByDefault: true,
+    // showByDefault: true,
   },
 ];
 
@@ -142,7 +147,7 @@ export default function CustomerInvoicePage() {
     routeOptions,
     regionOptions,
     areaOptions,
-   ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -306,50 +311,50 @@ export default function CustomerInvoicePage() {
                 label: "End Date",
                 type: "date",
               },
-            //   {
-            //     key: "company_id",
-            //     label: "Company",
-            //     isSingle: false,
-            //     multiSelectChips: true,
-            //     options: Array.isArray(companyOptions) ? companyOptions : [],
-            //   },
-            //   {
-            //     key: "warehouse_id",
-            //     label: "Warehouse",
-            //     isSingle: false,
-            //     multiSelectChips: true,
-            //     options: Array.isArray(warehouseAllOptions)
-            //       ? warehouseAllOptions
-            //       : [],
-            //   },
-            //   {
-            //     key: "region_id",
-            //     label: "Region",
-            //     isSingle: false,
-            //     multiSelectChips: true,
-            //     options: Array.isArray(regionOptions) ? regionOptions : [],
-            //   },
-            //   {
-            //     key: "sub_region_id",
-            //     label: "Sub Region",
-            //     isSingle: false,
-            //     multiSelectChips: true,
-            //     options: Array.isArray(areaOptions) ? areaOptions : [],
-            //   },
-            //   {
-            //     key: "route_id",
-            //     label: "Route",
-            //     isSingle: false,
-            //     multiSelectChips: true,
-            //     options: Array.isArray(routeOptions) ? routeOptions : [],
-            //   },
-            //   {
-            //     key: "salesman_id",
-            //     label: "Sales Team",
-            //     isSingle: false,
-            //     multiSelectChips: true,
-            //     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-            //   },
+              //   {
+              //     key: "company_id",
+              //     label: "Company",
+              //     isSingle: false,
+              //     multiSelectChips: true,
+              //     options: Array.isArray(companyOptions) ? companyOptions : [],
+              //   },
+              //   {
+              //     key: "warehouse_id",
+              //     label: "Warehouse",
+              //     isSingle: false,
+              //     multiSelectChips: true,
+              //     options: Array.isArray(warehouseAllOptions)
+              //       ? warehouseAllOptions
+              //       : [],
+              //   },
+              //   {
+              //     key: "region_id",
+              //     label: "Region",
+              //     isSingle: false,
+              //     multiSelectChips: true,
+              //     options: Array.isArray(regionOptions) ? regionOptions : [],
+              //   },
+              //   {
+              //     key: "sub_region_id",
+              //     label: "Sub Region",
+              //     isSingle: false,
+              //     multiSelectChips: true,
+              //     options: Array.isArray(areaOptions) ? areaOptions : [],
+              //   },
+              //   {
+              //     key: "route_id",
+              //     label: "Route",
+              //     isSingle: false,
+              //     multiSelectChips: true,
+              //     options: Array.isArray(routeOptions) ? routeOptions : [],
+              //   },
+              //   {
+              //     key: "salesman_id",
+              //     label: "Sales Team",
+              //     isSingle: false,
+              //     multiSelectChips: true,
+              //     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+              //   },
             ],
           },
           footer: { nextPrevBtn: true, pagination: true },

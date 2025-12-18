@@ -32,7 +32,7 @@ const columns = [
     {
         key: "delivery_date",
         label: "Delivery Date",
-        // showByDefault: true,
+        showByDefault: true,
         render: (row: TableDataType) => {
             if (!row.delivery_date) return "-";
             const date = new Date(row.delivery_date as string);
@@ -124,20 +124,20 @@ export default function CustomerInvoicePage() {
         csv: false,
         xlsx: false,
     });
-    const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions , ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions, ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureAgentCustomerLoaded();
-    ensureAreaLoaded();
-    ensureChannelLoaded();
-    ensureCompanyLoaded();
-    ensureCustomerSubCategoryLoaded();
-    ensureRegionLoaded();
-    ensureRouteLoaded();
-    ensureSalesmanLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureAgentCustomerLoaded();
+        ensureAreaLoaded();
+        ensureChannelLoaded();
+        ensureCompanyLoaded();
+        ensureCustomerSubCategoryLoaded();
+        ensureRegionLoaded();
+        ensureRouteLoaded();
+        ensureSalesmanLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
 
     const fetchDelivery = useCallback(async (
         page: number = 1,

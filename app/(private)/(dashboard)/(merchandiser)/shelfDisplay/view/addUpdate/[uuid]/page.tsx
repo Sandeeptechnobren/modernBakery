@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import * as yup from "yup";
 
 export default function AddEditRoute() {
-    const { routeTypeOptions, itemOptions, shelvesOptions } =
+    const { routeTypeOptions, itemOptions, shelvesOptions, ensureRouteTypeLoaded, ensureItemLoaded, ensureShelvesLoaded } =
         useAllDropdownListData();
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
@@ -69,6 +69,12 @@ export default function AddEditRoute() {
         }
     }, [isEditMode, routeId]);
 
+    useEffect(() => {
+        ensureRouteTypeLoaded();
+        ensureItemLoaded();
+        ensureShelvesLoaded();
+    }, []);
+
     // Validation schema
     const validationSchema = yup.object().shape({
         shelf_id: yup.string().required("Shelf ID is required"),
@@ -112,7 +118,7 @@ export default function AddEditRoute() {
                     isEditMode ? "Model Stock updated successfully" : "Model Stock added successfully",
                     "success"
                 );
-                router.push(`/shelfDisplay/view/${routeId}`);
+                router.back();
             }
         } catch (err) {
             if (err instanceof yup.ValidationError) {

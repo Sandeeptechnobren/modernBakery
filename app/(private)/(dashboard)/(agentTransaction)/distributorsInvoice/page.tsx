@@ -19,6 +19,7 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import FilterComponent from "@/app/components/filterComponent";
 import ApprovalStatus from "@/app/components/approvalStatus";
+// import ApprovalStatus from "@/app/components/approvalStatus";
 
 
 
@@ -39,7 +40,7 @@ const columns = [
         showByDefault: true,
     },
     { key: "invoice_code", label: "Invoice Code", showByDefault: true },
-    { key: "order_code", label: "Order Code" },
+    { key: "order_code", label: "Order Code", showByDefault: true },
     {
         key: "customer_code", label: "Customer", showByDefault: true, render: (row: TableDataType) => {
             const code = row.customer_code || "-";

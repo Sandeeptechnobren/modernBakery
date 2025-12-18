@@ -16,16 +16,16 @@ import { useCallback, useEffect, useState } from "react";
 import { getPaymentType } from "../keyCustomer/details/[uuid]/page";
 
 export default function AgentCustomer() {
-    const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseAllOptions, routeOptions , ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseAllOptions, routeOptions, ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureChannelLoaded();
-    ensureCustomerSubCategoryLoaded();
-    ensureItemCategoryLoaded();
-    ensureRouteLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureChannelLoaded();
+        ensureCustomerSubCategoryLoaded();
+        ensureItemCategoryLoaded();
+        ensureRouteLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded]);
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [channelId, setChannelId] = useState<string>("");
@@ -39,7 +39,7 @@ export default function AgentCustomer() {
                     {`${row.osa_code || ""} - ${row.name || ""}` || "-"}
                 </span>
             ),
-            showByDefault: true,
+            // showByDefault: true,
         },
         { key: "owner_name", label: "Owner Name" },
         {
@@ -76,7 +76,7 @@ export default function AgentCustomer() {
                 },
                 selectedValue: warehouseId,
             },
-            showByDefault: true,
+            // showByDefault: true,
         },
         {
             key: "route",
@@ -101,7 +101,7 @@ export default function AgentCustomer() {
                 selectedValue: routeId,
             },
 
-            showByDefault: true,
+            // showByDefault: true,
         },
         {
             key: "outlet_channel",
@@ -123,7 +123,7 @@ export default function AgentCustomer() {
                 selectedValue: channelId,
             },
 
-            showByDefault: true,
+            // showByDefault: true,
         },
         {
             key: "category",
@@ -135,7 +135,7 @@ export default function AgentCustomer() {
                     ? (row.category as { customer_category_name?: string })
                         .customer_category_name || "-"
                     : "-",
-            showByDefault: true
+            // showByDefault: true
         },
         {
             key: "customer_type",
@@ -170,7 +170,7 @@ export default function AgentCustomer() {
                         row.status.toLowerCase() === "active");
                 return <StatusBtn isActive={isActive} />;
             },
-            showByDefault: true,
+            // showByDefault: true,
         },
     ];
 

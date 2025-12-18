@@ -13,7 +13,7 @@ import { salesmanUnloadList } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { useCallback, useState,useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 
 export default function SalesmanUnloadPage() {
   const { setLoading } = useLoading();
@@ -26,7 +26,7 @@ export default function SalesmanUnloadPage() {
     channelOptions,
     itemCategoryOptions,
     customerSubCategoryOptions,
-   ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+    ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -198,10 +198,10 @@ export default function SalesmanUnloadPage() {
     { key: "unload_no", label: "Unload No." },
     { key: "unload_from", label: "Unload By" },
     {
-        key: "approval_status",
-        label: "Approval Status",
-        showByDefault: true,
-        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
+      key: "approval_status",
+      label: "Approval Status",
+      // showByDefault: true,
+      render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
     {
       key: "status",

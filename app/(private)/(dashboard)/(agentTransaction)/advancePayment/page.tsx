@@ -39,7 +39,7 @@ interface Payment {
 
 export default function PaymentListPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>("");
-      const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions , ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+  const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions, ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -50,20 +50,20 @@ export default function PaymentListPage() {
     ensureSalesmanLoaded();
     ensureWarehouseLoaded();
   }, [ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded]);
-  
+
   const columns: configType["columns"] = [
-    { key: "osa_code", label: "OSA Code", showByDefault: true },
-    { key: "payment_type_text", label: "Payment Type", showByDefault: true },
-    { key: "bank_name", label: "Bank Name", showByDefault: true },
-    { key: "branch", label: "Branch", showByDefault: true },
-    { key: "account_number", label: "Account Number", showByDefault: true },
-    { key: "amount", label: "Amount", showByDefault: true },
-    { key: "recipt_no", label: "Receipt Number", showByDefault: true },
-    { key: "recipt_date", label: "Receipt Date", showByDefault: true },
+    { key: "osa_code", label: "OSA Code", },
+    { key: "payment_type_text", label: "Payment Type", },
+    { key: "bank_name", label: "Bank Name", },
+    { key: "branch", label: "Branch", },
+    { key: "account_number", label: "Account Number", },
+    { key: "amount", label: "Amount", },
+    { key: "recipt_no", label: "Receipt Number", },
+    { key: "recipt_date", label: "Receipt Date", },
     {
       key: "Agent_bank_name",
       label: "Agent Bank",
-      showByDefault: true,
+      // showByDefault: true,
       render: (row: TableDataType) => {
         return row.Agent_bank_name || "-";
       },
@@ -71,7 +71,7 @@ export default function PaymentListPage() {
     {
       key: "bank_account_number",
       label: "Agent Account",
-      showByDefault: false,
+      // showByDefault: false,
       render: (row: TableDataType) => {
         return row.bank_account_number || "-";
       },
@@ -79,7 +79,7 @@ export default function PaymentListPage() {
     {
       key: "cheque_no",
       label: "Cheque Number",
-      showByDefault: false,
+      // showByDefault: false,
       render: (row: TableDataType) => {
         return row.cheque_no || "-";
       },
@@ -87,16 +87,16 @@ export default function PaymentListPage() {
     {
       key: "cheque_date",
       label: "Cheque Date",
-      showByDefault: false,
+      // showByDefault: false,
       render: (row: TableDataType) => {
         return row.cheque_date || "-";
       },
     },
     {
-        key: "approval_status",
-        label: "Approval Status",
-        showByDefault: true,
-        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
+      key: "approval_status",
+      label: "Approval Status",
+      // showByDefault: true,
+      render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
     // {
     //   key: "status",
@@ -200,9 +200,9 @@ export default function PaymentListPage() {
     }
   }
 
-      useEffect(() => {
-        setRefreshKey(k => k+1);
-    }, [companyOptions, regionOptions, areaOptions, warehouseOptions, routeOptions, salesmanOptions]);
+  useEffect(() => {
+    setRefreshKey(k => k + 1);
+  }, [companyOptions, regionOptions, areaOptions, warehouseOptions, routeOptions, salesmanOptions]);
 
   return (
     <>
@@ -214,60 +214,60 @@ export default function PaymentListPage() {
             header: {
               title: "Advance Payments",
               filterByFields: [
-                                {
-                                    key: "start_date",
-                                    label: "Start Date",
-                                    type: "date"
-                                },
-                                {
-                                    key: "end_date",
-                                    label: "End Date",
-                                    type: "date"
-                                },
-                                {
-                                    key: "company",
-                                    label: "Company",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(companyOptions) ? companyOptions : [],
-                                },
-                                {
-                                    key: "region",
-                                    label: "Region",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(regionOptions) ? regionOptions : [],
-                                },
-                                {
-                                    key: "area",
-                                    label: "Area",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(areaOptions) ? areaOptions : [],
-                                },
-                                {
-                                    key: "warehouse",
-                                    label: "Warehouse",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                                },
-                                {
-                                    key: "route_id",
-                                    label: "Route",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(routeOptions) ? routeOptions : [],
-                                },
-                                 {
-                                    key: "salesman",
-                                    label: "Sales Team",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                                },
-                                
-                            ],
+                {
+                  key: "start_date",
+                  label: "Start Date",
+                  type: "date"
+                },
+                {
+                  key: "end_date",
+                  label: "End Date",
+                  type: "date"
+                },
+                {
+                  key: "company",
+                  label: "Company",
+                  isSingle: false,
+                  multiSelectChips: true,
+                  options: Array.isArray(companyOptions) ? companyOptions : [],
+                },
+                {
+                  key: "region",
+                  label: "Region",
+                  isSingle: false,
+                  multiSelectChips: true,
+                  options: Array.isArray(regionOptions) ? regionOptions : [],
+                },
+                {
+                  key: "area",
+                  label: "Area",
+                  isSingle: false,
+                  multiSelectChips: true,
+                  options: Array.isArray(areaOptions) ? areaOptions : [],
+                },
+                {
+                  key: "warehouse",
+                  label: "Warehouse",
+                  isSingle: false,
+                  multiSelectChips: true,
+                  options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                },
+                {
+                  key: "route_id",
+                  label: "Route",
+                  isSingle: false,
+                  multiSelectChips: true,
+                  options: Array.isArray(routeOptions) ? routeOptions : [],
+                },
+                {
+                  key: "salesman",
+                  label: "Sales Team",
+                  isSingle: false,
+                  multiSelectChips: true,
+                  options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                },
+
+              ],
               threeDot: [
                 {
                   icon: "gala:file-document",

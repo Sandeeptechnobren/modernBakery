@@ -111,7 +111,7 @@ export default function AddEditCustomerSubCategory() {
               status: String(res.data.status ?? "1"),
               customer_sub_category_code: res.data.customer_sub_category_code ?? "",
             });
-          } 
+          }
         } catch (error) {
           showSnackbar("Failed to fetch sub category", "error");
         } finally {
@@ -208,16 +208,16 @@ export default function AddEditCustomerSubCategory() {
         validationSchema={CustomerSubCategorySchema}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit, values, setFieldValue, errors, touched ,isSubmitting}) => (
+        {({ handleSubmit, values, setFieldValue, errors, touched, isSubmitting }) => (
           <Form onSubmit={handleSubmit}>
             <ContainerCard>
               <h2 className="text-lg font-medium text-gray-800 mb-4">
-                Customer Sub Category 
+                Customer Sub Category
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Sub Category Code */}
-                <div className="flex items-start gap-2 max-w-[406px]">
+                <div>
                   <div className="w-full">
                     <InputFields
                       required
@@ -238,7 +238,7 @@ export default function AddEditCustomerSubCategory() {
                       className="text-xs text-red-500"
                     />
                   </div>
-                  {!isEditMode && (
+                  {/* {!isEditMode && (
                     <>
                       <IconButton
                         bgClass="white"
@@ -262,7 +262,7 @@ export default function AddEditCustomerSubCategory() {
                         }}
                       />
                     </>
-                  )}
+                  )} */}
                 </div>
 
                 {/* Category Dropdown */}
@@ -276,7 +276,7 @@ export default function AddEditCustomerSubCategory() {
                     onChange={(e) => setFieldValue("customer_category_id", e.target.value)}
                     error={touched.customer_category_id && errors.customer_category_id}
                   />
-               
+
                 </div>
 
                 {/* Sub Category Name */}
@@ -293,7 +293,7 @@ export default function AddEditCustomerSubCategory() {
                       errors.customer_sub_category_name
                     }
                   />
-              
+
                 </div>
 
                 {/* Status */}
@@ -319,14 +319,14 @@ export default function AddEditCustomerSubCategory() {
               <button
                 type="button"
                 // onClick={() => router.back()}
-              onClick={() => router.push("/settings/customer/customerSubCategory")}
+                onClick={() => router.push("/settings/customer/customerSubCategory")}
 
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Cancel
               </button>
               <SidebarBtn
-                label={isEditMode ? (isSubmitting?"Updating..." :"Update" ): (isSubmitting?"Submiting...":"Submit")}
+                label={isEditMode ? (isSubmitting ? "Updating..." : "Update") : (isSubmitting ? "Submiting..." : "Submit")}
                 isActive={true}
                 leadingIcon="mdi:check"
                 type="submit"

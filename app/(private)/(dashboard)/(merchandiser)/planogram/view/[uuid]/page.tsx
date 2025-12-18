@@ -23,7 +23,7 @@ interface Customer {
   uuid: number;
   customer_code: string;
   customer_type: string;
-  owner_name: string;
+  business_name: string;
 }
 
 interface Merchandiser {
@@ -60,7 +60,7 @@ export default function Page() {
   const onTabClick = (index: number) => setActiveTab(index);
 
   const title = "Planogram Details";
-  const backBtnUrl = "/merchandiser/planogram/";
+  const backBtnUrl = "/planogram/";
 
   useEffect(() => {
     if (!uuid) return;
@@ -129,7 +129,7 @@ export default function Page() {
               {planogramData.customers &&
                 planogramData.customers.length > 0 && (
                   <span className="text-sm text-gray-700 font-medium">
-                    Owner: {planogramData.customers[0].owner_name}
+                    Owner: {planogramData.customers[0].business_name}
                   </span>
                 )}
             </div>

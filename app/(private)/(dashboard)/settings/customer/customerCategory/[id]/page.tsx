@@ -124,7 +124,7 @@ export default function AddCustomerCategory() {
                 reserved_code: values.customer_category_code,
                 model_name: "customer_categories",
               });
-            } catch (e) {}
+            } catch (e) { }
             showSnackbar("Customer category added successfully ✅", "success");
             resetForm();
             router.push("/settings/customer/customerCategory");
@@ -177,7 +177,7 @@ export default function AddCustomerCategory() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Customer Category Code (auto-generated, disabled, with settings icon/popup) */}
-            <div className="flex items-start gap-2 max-w-[406px]">
+            <div >
               <InputFields
                 label="Customer Category Code"
                 name="customer_category_code"
@@ -189,7 +189,7 @@ export default function AddCustomerCategory() {
                   formik.errors.customer_category_code
                 }
               />
-              {!isEditMode && (
+              {/* {!isEditMode && (
                 <IconButton
                   bgClass="white"
                   className="  cursor-pointer text-[#252B37] pt-12"
@@ -213,7 +213,7 @@ export default function AddCustomerCategory() {
                     }
                   }}
                 />
-              )}
+              )} */}
             </div>
 
             <InputFields
@@ -267,9 +267,9 @@ export default function AddCustomerCategory() {
             Cancel
           </button>
           <SidebarBtn
-            label={isEditMode ?(formik.isSubmitting ?"Updating":"Update") : (formik.isSubmitting?"Submitting...":"Submit")}
+            label={isEditMode ? (formik.isSubmitting ? "Updating" : "Update") : (formik.isSubmitting ? "Submitting..." : "Submit")}
             isActive={true}
-            leadingIcon={ "mdi:check"}
+            leadingIcon={"mdi:check"}
             type="submit"
             disabled={formik.isSubmitting}
           />

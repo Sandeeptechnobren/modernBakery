@@ -30,7 +30,7 @@ export default function AddEditSalesmanLoad() {
     fetchRouteOptions,
     fetchSalesmanByRouteOptions,
     projectOptions,
-   ensureProjectLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureSalesmanTypeLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+    ensureProjectLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureSalesmanTypeLoaded, ensureWarehouseLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -456,16 +456,16 @@ export default function AddEditSalesmanLoad() {
 
         {/* --- Form Fields --- */}
         <div className="grid grid-cols-1 mt-6 mb-10 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <InputFields
-              required
-              label="Sales Team Type"
-              name="salesman_type"
-              value={form.salesman_type}
-              options={salesmanTypeOptions}
-              onChange={(e) => handleChange("salesman_type", e.target.value)}
-              error={errors.salesman_type}
-              className="w-full"
-            />
+          <InputFields
+            required
+            label="Sales Team Type"
+            name="salesman_type"
+            value={form.salesman_type}
+            options={salesmanTypeOptions}
+            onChange={(e) => handleChange("salesman_type", e.target.value)}
+            error={errors.salesman_type}
+            className="w-full"
+          />
 
           {/* Show Project List only when salesman_type id = 36 */}
           {form.salesman_type === "6" && (

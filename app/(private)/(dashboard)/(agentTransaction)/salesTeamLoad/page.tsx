@@ -29,7 +29,7 @@ interface SalesmanLoadRow {
 
 export default function SalemanLoad() {
 
-  const { regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions , ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+  const { regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions, ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -103,10 +103,10 @@ export default function SalemanLoad() {
       },
     },
     {
-        key: "approval_status",
-        label: "Approval Status",
-        showByDefault: true,
-        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
+      key: "approval_status",
+      label: "Approval Status",
+      // showByDefault: true,
+      render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
     {
       key: "status",

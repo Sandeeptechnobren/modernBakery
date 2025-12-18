@@ -56,80 +56,80 @@ export default function AddAssetsCategory() {
   });
 
   // ✅ Fetch Customer Categories
-  
+
 
   // ✅ Fetch data if editing or generate code if adding
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-      // Run this only once
-      if (!codeGeneratedRef.current) {
-        codeGeneratedRef.current = true;
+        // Run this only once
+        if (!codeGeneratedRef.current) {
+          codeGeneratedRef.current = true;
 
-        const res = await genearateCode({ model_name: "ast_code" });
+          const res = await genearateCode({ model_name: "ast_code" });
 
-        if (res?.code) {
-          setInitialValues((prev) => ({ ...prev, osa_code: res.code }));
+          if (res?.code) {
+            setInitialValues((prev) => ({ ...prev, osa_code: res.code }));
+          }
+
+          if (res?.prefix) {
+            setPrefix(res.prefix);
+          }
         }
-
-        if (res?.prefix) {
-          setPrefix(res.prefix);
-        }
+      } catch (err) {
+        console.error("Error generating code", err);
+        showSnackbar("Failed to generate code", "error");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error generating code", err);
-      showSnackbar("Failed to generate code", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchData();
-}, [showSnackbar]);
+    fetchData();
+  }, [showSnackbar]);
 
 
   const handleSubmit = async (
-  values: AssetsTypeFormValues,
-  { setSubmitting }: FormikHelpers<AssetsTypeFormValues>
-) => {
-  const payload = {
-    name: values.name,
-    status: Number(values.status),
-    osa_code: values.osa_code,
-  };
+    values: AssetsTypeFormValues,
+    { setSubmitting }: FormikHelpers<AssetsTypeFormValues>
+  ) => {
+    const payload = {
+      name: values.name,
+      status: Number(values.status),
+      osa_code: values.osa_code,
+    };
 
-  let res: any;
+    let res: any;
 
-  try {
-    // ---- ADD FLOW ----
-    res = await addAssetsType(payload);
-
-    // Save code
     try {
-      await saveFinalCode({
-        reserved_code: values.osa_code,
-        model_name: "ast_code",
-      });
-    } catch (e) {
-      console.error("Code reservation failed", e);
-    }
+      // ---- ADD FLOW ----
+      res = await addAssetsType(payload);
 
-    // Handle response
-    if (res?.error) {
-      showSnackbar(res?.data?.message || "Failed to submit form", "error");
-    } else {
-      showSnackbar("Asset Type Added Successfully ✅", "success");
-      router.push("/settings/manageAssets/assetsType");
+      // Save code
+      try {
+        await saveFinalCode({
+          reserved_code: values.osa_code,
+          model_name: "ast_code",
+        });
+      } catch (e) {
+        console.error("Code reservation failed", e);
+      }
+
+      // Handle response
+      if (res?.error) {
+        showSnackbar(res?.data?.message || "Failed to submit form", "error");
+      } else {
+        showSnackbar("Asset Type Added Successfully ✅", "success");
+        router.push("/settings/manageAssets/assetsType");
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      showSnackbar("Something went wrong while submitting", "error");
+    } finally {
+      setSubmitting(false);
     }
-  } catch (error) {
-    console.error("Form submission error:", error);
-    showSnackbar("Something went wrong while submitting", "error");
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
 
 
@@ -147,7 +147,7 @@ export default function AddAssetsCategory() {
     <div className="w-full h-full overflow-x-hidden p-4">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/settings/manageAssets/assetsType">
+          <Link href="/settings/manageAssets/assetsCategory">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
@@ -162,11 +162,11 @@ export default function AddAssetsCategory() {
         validationSchema={AssetsCategorySchema}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit, values, setFieldValue, errors, touched ,isSubmitting}) => (
+        {({ handleSubmit, values, setFieldValue, errors, touched, isSubmitting }) => (
           <Form onSubmit={handleSubmit}>
             <ContainerCard>
               <h2 className="text-lg font-medium text-gray-800 mb-4">
-                Assets Type Details 
+                Assets Type Details
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -207,7 +207,7 @@ export default function AddAssetsCategory() {
                       errors.name
                     }
                   />
-              
+
                 </div>
 
                 {/* Status */}
@@ -233,14 +233,14 @@ export default function AddAssetsCategory() {
               <button
                 type="button"
                 // onClick={() => router.back()}
-              onClick={() => router.push("/settings/manageAssets/assetsType")}
+                onClick={() => router.push("/settings/manageAssets/assetsCategory")}
 
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Cancel
               </button>
               <SidebarBtn
-                label={ (isSubmitting?"Submiting...":"Submit")}
+                label={(isSubmitting ? "Submiting..." : "Submit")}
                 isActive={true}
                 leadingIcon="mdi:check"
                 type="submit"

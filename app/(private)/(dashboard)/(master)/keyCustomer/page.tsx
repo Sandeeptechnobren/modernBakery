@@ -51,9 +51,9 @@ export default function CompanyCustomers() {
   // const [showDeletePopup, setShowDeletePopup] = useState(false);
   // const [selectedRow, setSelectedRow] = useState<CustomerItem | null>(null);
   const [threeDotLoading, setThreeDotLoading] = useState({
-        csv: false,
-        xlsx: false,
-    });
+    csv: false,
+    xlsx: false,
+  });
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -94,21 +94,21 @@ export default function CompanyCustomers() {
   /* ---------- Column Configuration ---------- */
   const columns = [
     {
-      key: "osa_code", label: "Customer Code", showByDefault: true, render: (row: TableDataType) => (
+      key: "osa_code", label: "Customer Code", render: (row: TableDataType) => (
         <span className="font-semibold text-[#181D27] text-[14px]">
           {row.osa_code}
         </span>
       )
     },
     {
-      key: "sap_code", label: "SAP Code", showByDefault: true, render: (row: TableDataType) => (
+      key: "sap_code", label: "SAP Code", render: (row: TableDataType) => (
         <span className="font-semibold text-[#181D27] text-[14px]">
           {row.sap_code}
         </span>
       ),
     },
-    { key: "business_name", label: "Business Name", showByDefault: true },
-    { key: "district", label: "District", showByDefault: true },
+    { key: "business_name", label: "Business Name", },
+    { key: "district", label: "District", },
     { key: "creditlimit", label: "Credit Limit" },
     { key: "totalcreditlimit", label: "Total Credit Limit" },
     {
@@ -130,25 +130,25 @@ export default function CompanyCustomers() {
       render: (row: TableDataType) => {
         return <StatusBtn isActive={String(row.status) > "0"} />;
       },
-      showByDefault: true,
+      // showByDefault: true,
     },
   ];
 
   const exportFile = async (format: string) => {
     try {
-            setThreeDotLoading((prev) => ({ ...prev, [format]: true }))
+      setThreeDotLoading((prev) => ({ ...prev, [format]: true }))
       const response = await exportCompanyCustomerData({ format });
       if (response && typeof response === 'object' && response.url) {
         await downloadFile(response.url);
         showSnackbar("File downloaded successfully ", "success");
       } else {
         showSnackbar("Failed to get download URL", "error");
-            setThreeDotLoading((prev) => ({ ...prev, [format]: false }))
+        setThreeDotLoading((prev) => ({ ...prev, [format]: false }))
 
       }
     } catch (error) {
       showSnackbar("Failed to download distributor data", "error");
-            setThreeDotLoading((prev) => ({ ...prev, [format]: false }))
+      setThreeDotLoading((prev) => ({ ...prev, [format]: false }))
 
     }
   }
@@ -210,7 +210,7 @@ export default function CompanyCustomers() {
               ],
             },
             floatingInfoBar: {
-              showByDefault: true,
+              // showByDefault: true,
               showSelectedRow: true,
               buttons: [
                 {
@@ -256,7 +256,7 @@ export default function CompanyCustomers() {
                   },
                 },
               ]
-            }, 
+            },
             localStorageKey: "company-customers-table",
             footer: { nextPrevBtn: true, pagination: true },
             columns,

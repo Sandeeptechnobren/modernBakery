@@ -110,9 +110,9 @@ export default function AddEditBrand() {
         res = await addBrand(payload);
         // Save the final code
         try {
-          await saveFinalCode({ 
-            reserved_code: values.osa_code, 
-            model_name: "brand" 
+          await saveFinalCode({
+            reserved_code: values.osa_code,
+            model_name: "brand"
           });
         } catch (e) {
           console.error("Failed to save final code", e);
@@ -190,7 +190,7 @@ export default function AddEditBrand() {
                         className="text-xs text-red-500"
                       />
                     </div>
-                    {!isEditMode && (
+                    {/* {!isEditMode && (
                       <>
                         <IconButton
                           bgClass="white"
@@ -214,7 +214,7 @@ export default function AddEditBrand() {
                           }}
                         />
                       </>
-                    )}
+                    )} */}
                   </div>
 
                   {/* Brand Name */}
@@ -246,7 +246,7 @@ export default function AddEditBrand() {
                 </button>
               </Link>
               <SidebarBtn
-                label={isEditMode ? (isSubmitting?"Updating...":"Update") : (isSubmitting?"Submitting...":"Submit")}
+                label={isEditMode ? (isSubmitting ? "Updating..." : "Update") : (isSubmitting ? "Submitting..." : "Submit")}
                 isActive={true}
                 leadingIcon="mdi:check"
                 type="submit"

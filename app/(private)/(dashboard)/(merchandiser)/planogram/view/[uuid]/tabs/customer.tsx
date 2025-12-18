@@ -11,14 +11,14 @@ import Loading from "@/app/components/Loading";
 // --- Type Definitions ---
 type Customer = {
   uuid?: string;
-  customer_code?: string;
+  osa_code?: string;
   owner_name?: string;
   business_name?: string;
 };
 
 type Merchandiser = {
   uuid?: string;
-  code?: string;
+  osa_code?: string;
   name?: string;
 };
 
@@ -97,7 +97,7 @@ export const CustomerData = () => {
                     key={index}
                     className="border-b-gray-300 border-b last:border-b-0 hover:bg-gray-50 transition"
                   >
-                    <td className="px-4 text-left py-3">{item?.code || "-"}</td>
+                    <td className="px-4 text-left py-3">{item?.osa_code || "-"}</td>
                     <td className="px-4 text-right py-3">
                       {item?.name || "-"}
                     </td>
@@ -136,10 +136,10 @@ export const CustomerData = () => {
                     className="border-b-gray-300 border-b last:border-b-0 hover:bg-gray-50 transition"
                   >
                     <td className="px-4 text-left py-3">
-                      {item?.customer_code || "-"}
+                      {item?.osa_code || "-"}
                     </td>
                     <td className="px-4 text-right py-3">
-                      {item?.owner_name || "-"}
+                      {item?.business_name || "-"}
                     </td>
                   </tr>
                 ))}

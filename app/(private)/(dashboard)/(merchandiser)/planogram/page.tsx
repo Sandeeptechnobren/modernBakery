@@ -52,7 +52,7 @@ export default function Planogram() {
   const fetchPlanogram = useCallback(
     async (
       page: number = 1,
-      pageSize: number = 10
+      pageSize: number = 50
     ): Promise<listReturnType> => {
       setLoading(true);
 
@@ -274,7 +274,7 @@ export default function Planogram() {
             //   },
             // },
           ],
-          pageSize: 10,
+          pageSize: 50,
         }}
       />
     </div>

@@ -23,13 +23,13 @@ type OutletChannel = {
   status: string; // "active" | "inactive"
 };
 
-  export default function AddEditOutletChannel() {
+export default function AddEditOutletChannel() {
 
-const { showSnackbar } = useSnackbar();
+  const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
   const [prefix, setPrefix] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -73,9 +73,9 @@ const { showSnackbar } = useSnackbar();
         } else {
           showSnackbar(
             res.message ||
-              (isEditMode
-                ? "Channel Updated Successfully"
-                : "Channel Created Successfully"),
+            (isEditMode
+              ? "Channel Updated Successfully"
+              : "Channel Created Successfully"),
             "success"
           );
           router.push("/settings/outlet-channel");
@@ -153,7 +153,7 @@ const { showSnackbar } = useSnackbar();
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Outlet Channel Code (pattern-matched UI) */}
-              <div className="flex items-start gap-2 max-w-[406px]">
+              <div>
                 <InputFields
                   label="Outlet Channel Code"
                   name="outlet_channel_code"
@@ -161,31 +161,7 @@ const { showSnackbar } = useSnackbar();
                   onChange={formik.handleChange}
                   disabled={codeMode === 'auto'}
                 />
-                {!isEditMode && (
-                  <>
-                    <IconButton
-                      bgClass="white"
-                       className="  cursor-pointer text-[#252B37] pt-12"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Outlet Channel Code"
-                      prefix={prefix}
-                      setPrefix={setPrefix}
-                      onSave={(mode, code) => {
-                        setCodeMode(mode);
-                        if (mode === 'auto' && code) {
-                          formik.setFieldValue('outlet_channel_code', code);
-                        } else if (mode === 'manual') {
-                          formik.setFieldValue('outlet_channel_code', '');
-                        }
-                      }}
-                    />
-                  </>
-                )}
+
               </div>
               {/* Outlet Channel Name */}
               <InputFields

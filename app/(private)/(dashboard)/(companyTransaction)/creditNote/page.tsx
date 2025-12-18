@@ -44,6 +44,7 @@ const columns = [
     {
         key: "salesman_name",
         label: "Salesman",
+        showByDefault: true,
         render: (row: TableDataType) => {
             const code = row.salesman_code ?? "";
             const name = row.salesman_name ?? "";
@@ -54,6 +55,7 @@ const columns = [
     {
         key: "route_name",
         label: "Route",
+        showByDefault: true,
         render: (row: TableDataType) => {
             const code = row.route_code ?? "";
             const name = row.route_name ?? "";
@@ -61,10 +63,10 @@ const columns = [
             return `${code}${code && name ? " - " : ""}${name}`;
         },
     },
-    { key: "payment_method", label: "Payment Method", render: (row: TableDataType) => row.payment_method || "-" },
-    { key: "order_source", label: "Order Source", render: (row: TableDataType) => row.order_source || "-" },
+    { key: "payment_method", label: "Payment Method", showByDefault: true, render: (row: TableDataType) => row.payment_method || "-" },
+    { key: "order_source", label: "Order Source", showByDefault: true, render: (row: TableDataType) => row.order_source || "-" },
     { key: "delivery_date", label: "Delivery Date", showByDefault: true, render: (row: TableDataType) => formatWithPattern(new Date(row.delivery_date), "DD MMM YYYY", "en-GB").toLowerCase() || "-" },
-    { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
+    { key: "comment", label: "Comment", showByDefault: true, render: (row: TableDataType) => row.comment || "-" },
     {
         key: "status", label: "Status", showByDefault: true, render: (row: TableDataType) => (
             <OrderStatus order_flag={row.status} />
@@ -74,20 +76,20 @@ const columns = [
 
 export default function CustomerInvoicePage() {
     const { setLoading } = useLoading();
-    const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions , ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions, ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureAgentCustomerLoaded();
-    ensureAreaLoaded();
-    ensureChannelLoaded();
-    ensureCompanyLoaded();
-    ensureCustomerSubCategoryLoaded();
-    ensureRegionLoaded();
-    ensureRouteLoaded();
-    ensureSalesmanLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureAgentCustomerLoaded();
+        ensureAreaLoaded();
+        ensureChannelLoaded();
+        ensureCompanyLoaded();
+        ensureCustomerSubCategoryLoaded();
+        ensureRegionLoaded();
+        ensureRouteLoaded();
+        ensureSalesmanLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
     const [refreshKey, setRefreshKey] = useState(0);

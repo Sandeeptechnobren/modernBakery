@@ -137,7 +137,7 @@ export default function AddEditCompany() {
   const { setLoading } = useLoading();
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [prefix, setPrefix] = useState("");
-  const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency,ensureCountryLoaded } =
+  const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency, ensureCountryLoaded } =
     useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -146,7 +146,7 @@ export default function AddEditCompany() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  
+
   const ALLOWED_LOGO_TYPES = [
     "image/png",
     "image/jpeg",
@@ -176,7 +176,7 @@ export default function AddEditCompany() {
     status: "1",
   });
 
-  useEffect(()=>{ensureCountryLoaded();},[ensureCountryLoaded])
+  useEffect(() => { ensureCountryLoaded(); }, [ensureCountryLoaded])
   // if editing and there's an existing logo URL, show preview
   useEffect(() => {
     if (initialValues.logo && typeof initialValues.logo === "string") {
@@ -390,7 +390,7 @@ export default function AddEditCompany() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div className="flex items-start gap-2 max-w-[406px]">
+              <div >
                 <InputFields
                   label="Company Code"
                   name="company_code"
@@ -400,31 +400,7 @@ export default function AddEditCompany() {
                   }
                   disabled={codeMode === "auto"}
                 />
-                {/* {!isEditMode && (
-                  <>
-                    <IconButton
-                      bgClass="white"
-                      className="cursor-pointer text-[#252B37] pt-12"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Company Code"
-                      prefix={prefix}
-                      setPrefix={setPrefix}
-                      onSave={(mode, code) => {
-                        setCodeMode(mode);
-                        if (mode === "auto" && code) {
-                          setFieldValue("company_code", code);
-                        } else if (mode === "manual") {
-                          setFieldValue("company_code", "");
-                        }
-                      }}
-                    />
-                  </>
-                )} */}
+
               </div>
               <div>
                 <InputFields
