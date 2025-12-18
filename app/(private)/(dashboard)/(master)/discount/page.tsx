@@ -116,11 +116,12 @@ const columns = [
         key: "discount_type",
         label: "Discount Type",
         render: (data: TableDataType) => {
-            const discountObj =
-                typeof data.discount_type === "string"
-                    ? JSON.parse(data.discount_type)
-                    : data.discount_type;
-            return discountObj?.discount_name || "-";
+            // const discountObj =
+                // typeof data.discount_type === "string"
+                //     ? JSON.parse(data.discount_type)
+                //     : data.discount_type;
+            // return discountObj?.discount_name || "-";
+            return "";
         },
     },
     { key: "min_quantity", label: "Min Quantity" },

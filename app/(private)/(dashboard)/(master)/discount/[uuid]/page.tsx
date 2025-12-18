@@ -1,601 +1,370 @@
 "use client";
-
-import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
-import ContainerCard from "@/app/components/containerCard";
-import InputFields from "@/app/components/inputFields";
-import {
-  addDiscount,
-  updateDiscount,
-  getDiscountById,
-  genearateCode,
-  saveFinalCode,
-} from "@/app/services/allApi";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { useParams, useRouter } from "next/navigation";
-import * as Yup from "yup";
-import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { useEffect, useRef, useState } from "react";
-import SettingPopUp from "@/app/components/settingPopUp";
-import IconButton from "@/app/components/iconButton";
+import { useParams, useRouter } from "next/navigation";
+import { Icon } from "@iconify-icon/react";
+import * as yup from "yup";
+
+import StepperForm, { useStepperForm } from "@/app/components/stepperForm";
 import Loading from "@/app/components/Loading";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { addDiscount, updateDiscount, saveFinalCode } from "@/app/services/allApi";
 
-// ---------------- Types -----------------
-interface DiscountFormValues {
-  discount_code: string;
-  item_id: string;
-  category_id: string;
-  customer_id: string;
-  customer_channel_id: string;
-  discount_type: string;
-  discount_value: string;
-  min_quantity: string;
-  min_order_value: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-}
+import { useDiscountForm } from "./hooks/useDiscountForm";
+import { useDiscountData } from "./hooks/useDiscountData";
+import { steps } from "./utils/constants";
+import { discountValidationSchema } from "./utils/validation";
 
-// ---------------- Validation Schema -----------------
-const DiscountSchema = Yup.object().shape({
-  item_id: Yup.string().required("Item ID is required"),
-  category_id: Yup.string().required("Category ID is required"),
-  customer_id: Yup.string().required("Customer ID is required"),
-  customer_channel_id: Yup.string().required("Customer Channel ID is required"),
-  discount_type: Yup.string().required("Discount type is required"),
-  discount_value: Yup.string().required("Discount value is required"),
-  min_quantity: Yup.string().required("Minimum quantity is required"),
-  min_order_value: Yup.string().required("Minimum order value is required"),
-  start_date: Yup.string().required("Start date is required"),
-  end_date: Yup.string().required("End date is required"),
-  status: Yup.string().required("Status is required"),
-});
+import StepKeyCombination from "./components/StepKeyCombination";
+import StepKeyValue from "./components/StepKeyValue";
+import StepDiscount from "./components/StepDiscount";
 
-// Step-wise schemas
-const stepSchemas = [
-  Yup.object({
-    item_id: Yup.string().required("Item ID is required"),
-    category_id: Yup.string().required("Category ID is required"),
-    customer_id: Yup.string().required("Customer ID is required"),
-    customer_channel_id: Yup.string().required("Customer Channel ID is required"),
-  }),
-  Yup.object({
-    discount_type: Yup.string().required("Discount type is required"),
-    discount_value: Yup.string().required("Discount value is required"),
-    min_quantity: Yup.string().required("Minimum quantity is required"),
-    min_order_value: Yup.string().required("Minimum order value is required"),
-  }),
-  Yup.object({
-    start_date: Yup.string().required("Start date is required"),
-    end_date: Yup.string().required("End date is required"),
-    status: Yup.string().required("Status is required"),
-  }),
-];
+export default function AddDiscount() {
+  const params = useParams();
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
+  
+  const paramsTyped = params as { uuid?: string | string[]; id?: string | string[] } | undefined;
+  const rawParam = (paramsTyped?.uuid ?? paramsTyped?.id) as string | string[] | undefined;
+  const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
+  const isEditMode = id !== undefined && id !== "add" && id !== "";
 
-// ---------------- Component -----------------
-export default function AddDiscountWithStepper() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
-  const [prefix, setPrefix] = useState("");
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // 1. Logic & State Hook
+  const {
+    keyCombo, setKeyCombo,
+    keyValue, setKeyValue,
+    discount, setDiscount,
+  } = useDiscountForm();
 
-  const [initialValues, setInitialValues] = useState<DiscountFormValues>({
-    discount_code: "",
-    item_id: "",
-    category_id: "",
-    customer_id: "",
-    customer_channel_id: "",
-    discount_type: "",
-    discount_value: "",
-    min_quantity: "",
-    min_order_value: "",
-    start_date: "",
-    end_date: "",
-    status: "1",
+  // 2. Data Fetching Hook
+  const {
+    companyOptions, regionOptions, warehouseOptions, areaOptions, channelOptions,
+    customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions,
+    fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions,
+    fetchCompanyCustomersOptions, fetchItemsCategoryWise, discountTypeOptions, salesmanTypeOptions, projectOptions,
+    ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureDiscountTypeLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureItemLoaded
+  } = useAllDropdownListData();
+
+  const { loading: dataLoading } = useDiscountData({
+    isEditMode, id, setDiscount, setKeyCombo, setKeyValue, fetchItemsCategoryWise
   });
 
-  const params = useParams<{ uuid?: string | string[] }>();
-  const uuid = Array.isArray(params?.uuid) ? params.uuid[0] : params?.uuid;
+  const [itemOptions, setItemOptions] = useState<any[]>([]);
+  const [itemLoading, setItemLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
 
-  const {
-    itemCategoryOptions,
-    itemOptions,
-    discountTypeOptions,
-    channelOptions,
-    agentCustomerOptions,
-   ensureAgentCustomerLoaded, ensureChannelLoaded, ensureDiscountTypeLoaded, ensureItemCategoryLoaded, ensureItemLoaded} = useAllDropdownListData();
+  // 3. Derived Data (Memoized Maps)
+  const locationDropdownMap = useMemo(() => ({
+    Company: companyOptions,
+    Region: regionOptions,
+    Warehouse: warehouseOptions,
+    Area: areaOptions,
+  }), [companyOptions, regionOptions, warehouseOptions, areaOptions]);
 
-  // Load dropdown data
+  const customerDropdownMap = useMemo(() => ({
+    Channel: channelOptions,
+    "Customer Category": customerCategoryOptions,
+    Customer: companyCustomersOptions,
+  }), [channelOptions, customerCategoryOptions, companyCustomersOptions]);
+
+  const itemDropdownMap = useMemo(() => ({
+    "Item Category": itemCategoryOptions,
+    Item: Array.isArray(itemOptions) ? itemOptions : [],
+  }), [itemCategoryOptions, itemOptions]);
+
+  // 4. Effects
   useEffect(() => {
-    ensureAgentCustomerLoaded();
+    ensureCompanyLoaded();
     ensureChannelLoaded();
-    ensureDiscountTypeLoaded();
     ensureItemCategoryLoaded();
+    ensureDiscountTypeLoaded();
+    ensureSalesmanTypeLoaded();
+    ensureProjectLoaded();
     ensureItemLoaded();
-  }, [ensureAgentCustomerLoaded, ensureChannelLoaded, ensureDiscountTypeLoaded, ensureItemCategoryLoaded, ensureItemLoaded]);
+  }, [ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureDiscountTypeLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureItemLoaded]);
 
-  const { showSnackbar } = useSnackbar();
-  const router = useRouter();
-  const codeGeneratedRef = useRef(false);
-
-  const steps: StepperStep[] = [
-    { id: 1, label: "General Information" },
-    { id: 2, label: "Discount Details" },
-    { id: 3, label: "Schedule & Status" },
-  ];
-
-  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
-    useStepperForm(steps.length);
-
-  // -------- Load data (Edit or Add mode) ----------
   useEffect(() => {
-    const fetchData = async () => {
+    fetchRegionOptions("")
+    fetchAreaOptions("");
+    fetchWarehouseOptions("");
+    fetchRouteOptions("")
+    fetchCustomerCategoryOptions("");
+    fetchCompanyCustomersOptions("")
+  }, [fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions])
+
+  // Item Category -> Items
+  useEffect(() => {
+    async function fetchItemsCategory(itemCategories: string[]) {
+      setItemLoading(true);
       try {
-        if (uuid && uuid !== "add") {
-          setIsEditMode(true);
-          const res = await getDiscountById(uuid);
-
-          if (res && !res.error && res.data) {
-            const d = res.data;
-            setInitialValues({
-              discount_code: d.osa_code || "",
-              item_id: d.item?.id?.toString() || "",
-              category_id: d.item_category?.id?.toString() || "",
-              customer_id: d.customer?.id?.toString() || "",
-              customer_channel_id: d.outlet_channel?.id?.toString() || "",
-              discount_type: d.discount_type?.id?.toString() || "",
-              discount_value: d.discount_value?.toString() || "",
-              min_quantity: d.min_quantity?.toString() || "",
-              min_order_value: d.min_order_value?.toString() || "",
-              start_date: d.start_date ? d.start_date.split("T")[0] : "",
-              end_date: d.end_date ? d.end_date.split("T")[0] : "",
-              status: d.status?.toString() || "1",
-            });
-          }
-        } else if (!codeGeneratedRef.current) {
-          codeGeneratedRef.current = true;
-          const res = await genearateCode({ model_name: "discounts" });
-          if (res?.code)
-            setInitialValues((prev) => ({ ...prev, discount_code: res.code }));
-          if (res?.prefix) setPrefix(res.prefix);
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        showSnackbar("Failed to load data", "error");
+        const result = await fetchItemsCategoryWise(itemCategories.toString());
+        setItemOptions(result);
+      } catch (error) {
+        console.warn(error);
       } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [uuid]);
-
-  // -------- Step validation ----------
-  // const handleNext = async (
-  //   values: DiscountFormValues,
-  //   actions: FormikHelpers<DiscountFormValues>
-  // ) => {
-  //   try {
-  //     const schema = stepSchemas[currentStep - 1];
-  //     await schema.validate(values, { abortEarly: false });
-  //     markStepCompleted(currentStep);
-  //     nextStep();
-  //   } catch (err: unknown) {
-  //     if (err instanceof Yup.ValidationError) {
-  //       const fields = err.inner.map((e) => e.path);
-  //       actions.setTouched(
-  //         fields.reduce((acc, key) => ({ ...acc, [key!]: true }), {} as Record<string, boolean>)
-  //       );
-  //       actions.setErrors(
-  //         err.inner.reduce(
-  //           (acc: Partial<Record<keyof DiscountFormValues, string>>, curr) => ({
-  //             ...acc,
-  //             [curr.path as keyof DiscountFormValues]: curr.message,
-  //           }),
-  //           {}
-  //         )
-  //       );
-  //     }
-  //     showSnackbar("Please fix validation errors before proceeding", "error");
-  //   }
-  // };
-
-  const handleNext = async (
-    values: DiscountFormValues,
-    actions: FormikHelpers<DiscountFormValues>
-  ) => {
-    try {
-      // Validate only the current step's fields
-      const schema = stepSchemas[currentStep - 1];
-      await schema.validate(values, { abortEarly: false });
-      markStepCompleted(currentStep);
-      nextStep();
-    } catch (err: unknown) {
-      if (err instanceof Yup.ValidationError) {
-        // Only touch fields in the current step
-        const fields = err.inner.map((e) => e.path);
-        actions.setTouched(
-          fields.reduce(
-            (acc, key) => ({ ...acc, [key!]: true }),
-            {} as Record<string, boolean>
-          )
-        );
-        actions.setErrors(
-          err.inner.reduce(
-            (
-              acc: Partial<
-                Record<keyof DiscountFormValues, string>
-              >,
-              curr
-            ) => ({
-              ...acc,
-              [curr.path as keyof DiscountFormValues]:
-                curr.message,
-            }),
-            {}
-          )
-        );
+        setItemLoading(false);
       }
     }
+
+    const itemCategories = keyValue["Item Category"];
+    if (Array.isArray(itemCategories) && itemCategories.length > 0) {
+      try {
+        fetchItemsCategory(itemCategories ?? []);
+      } catch (err) {
+        console.error("Failed to fetch item options for category", itemCategories, err);
+      }
+    } else {
+      setItemOptions([]);
+    }
+  }, [keyValue["Item Category"], fetchItemsCategoryWise]);
+
+  // Filter keyValue["Item"]
+  useEffect(() => {
+    if (itemLoading) return;
+    setKeyValue(prev => {
+      const currentSelectedItems = prev["Item"] || [];
+      if (currentSelectedItems.length === 0) return prev;
+      const validItemIds = new Set(itemOptions.map(opt => String(opt.value)));
+      const newSelectedItems = currentSelectedItems.filter(id => validItemIds.has(String(id)));
+      if (newSelectedItems.length === currentSelectedItems.length) return prev;
+      return { ...prev, "Item": newSelectedItems };
+    });
+  }, [itemOptions, itemLoading, setKeyValue]);
+
+  // Filter discountItems
+  useEffect(() => {
+    if (itemLoading || keyCombo.Item !== "Item") return;
+    setDiscount(prev => {
+      const validValues = new Set(itemOptions.map(o => String(o.value)));
+      const hasInvalid = prev.discountItems.some(p => p.key && !validValues.has(String(p.key)));
+      if (!hasInvalid) return prev;
+      return {
+        ...prev,
+        discountItems: prev.discountItems.map(p => {
+          if (p.key && !validValues.has(String(p.key))) return { ...p, key: "" };
+          return p;
+        })
+      };
+    });
+  }, [itemOptions, itemLoading, keyCombo.Item, setDiscount]);
+
+  // Sync Discount Items with KeyValue
+  useEffect(() => {
+    if (discount.scope === "details") {
+      const validKeys = discount.discountItems.map(di => di.key).filter(k => k && k.trim() !== "");
+      const uniqueKeys = Array.from(new Set(validKeys));
+
+      if (keyCombo.Item === "Item Category") {
+        setKeyValue(prev => {
+          const current = prev["Item Category"] || [];
+          const sortedCurrent = [...current].sort();
+          const sortedNew = [...uniqueKeys].sort();
+          if (JSON.stringify(sortedCurrent) === JSON.stringify(sortedNew)) return prev;
+          return { ...prev, "Item Category": uniqueKeys };
+        });
+      } else if (keyCombo.Item === "Item") {
+        setKeyValue(prev => {
+          const current = prev["Item"] || [];
+          const sortedCurrent = [...current].sort();
+          const sortedNew = [...uniqueKeys].sort();
+          if (JSON.stringify(sortedCurrent) === JSON.stringify(sortedNew)) return prev;
+          return { ...prev, "Item": uniqueKeys };
+        });
+      }
+    }
+  }, [discount.discountItems, discount.scope, keyCombo.Item, setKeyValue]);
+
+
+  // 5. Validation & Submit
+  const {
+    currentStep,
+    nextStep,
+    prevStep,
+    markStepCompleted,
+    isStepCompleted,
+    isLastStep
+  } = useStepperForm(steps.length);
+
+  const validateStep = (step: number) => {
+    if (step === 1) {
+      return !!keyCombo.Location && !!keyCombo.Item && !!keyCombo.Customer;
+    }
+    if (step === 2) {
+      let allValid = true;
+      if (keyCombo.Location) {
+        if (!keyValue[keyCombo.Location] || keyValue[keyCombo.Location].length === 0) allValid = false;
+      }
+      if (keyCombo.Customer) {
+        if (!keyValue[keyCombo.Customer] || keyValue[keyCombo.Customer].length === 0) allValid = false;
+      }
+      return allValid;
+    }
+    if (step === 3) {
+      // Basic validation for new fields
+      if (keyCombo.Item === "Item" && (!keyValue["Item Category"] || keyValue["Item Category"].length === 0)) return false;
+      if (!discount.name || !discount.startDate || !discount.endDate || discount.salesTeam.length === 0) return false;
+      if (discount.isProjectSpecific && discount.projects.length === 0) return false;
+      if (discount.scope === "header" && !discount.headerRate) return false;
+      if (discount.scope === "details") {
+        if (discount.discountItems.length === 0) return false;
+        // Check if every row has a key and a rate
+        const allRowsValid = discount.discountItems.every(item => item.key && item.key !== "" && item.rate && item.rate !== "");
+        if (!allRowsValid) return false;
+      }
+      return true;
+    }
+    return true;
   };
 
-  // -------- Form submission ----------
-  const handleSubmit = async (
-    values: DiscountFormValues,
-    { setSubmitting }: FormikHelpers<DiscountFormValues>,
-    actions?: Pick<
-      FormikHelpers<DiscountFormValues>,
-      "setErrors" | "setTouched" | "setSubmitting"
-    >
-  ) => {
-    try {
-      await DiscountSchema.validate(values, { abortEarly: false });
-      const formData = new FormData();
-      (Object.keys(values) as (keyof DiscountFormValues)[]).forEach((key) =>
-        formData.append(key, values[key] ?? "")
-      );
-
-      let res;
-      if (isEditMode) res = await updateDiscount(uuid as string, formData);
-      else res = await addDiscount(formData);
-
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to submit form", "error");
-      } else {
-        showSnackbar(
-          isEditMode ? "Discount Updated Successfully" : "Discount Created Successfully",
-          "success"
-        );
-        if (!isEditMode) {
-          await saveFinalCode({
-            reserved_code: values.discount_code,
-            model_name: "discounts",
-          }).catch(() => { });
-        }
-        router.push("/discount");
-      }
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        console.error("Yup ValidationError:", err);
-
-        // Map inner errors to { fieldName: message }
-        const fieldErrors = err.inner.reduce<Record<string, string>>(
-          (acc, e) => {
-            if (e.path) acc[e.path] = e.message;
-            return acc;
-          },
-          {}
-        );
-
-        // If caller provided Formik helpers, set field errors + touched so UI shows per-field messages
-        if (actions?.setErrors) {
-          actions.setErrors(
-            fieldErrors as FormikErrors<DiscountFormValues>
-          );
-        }
-        if (actions?.setTouched) {
-          const touchedMap = Object.keys(fieldErrors).reduce<
-            Record<string, boolean>
-          >((acc, k) => {
-            acc[k] = true;
-            return acc;
-          }, {});
-          actions.setTouched(
-            touchedMap as FormikTouched<DiscountFormValues>
-          );
-        }
-
+  const handleNext = () => {
+    if (currentStep === 1) {
+      const missing = [];
+      if (!keyCombo.Location) missing.push("Location");
+      if (!keyCombo.Item) missing.push("Item");
+      if (!keyCombo.Customer) missing.push("Customer");
+      
+      if (missing.length > 0) {
+        showSnackbar(`Please select ${missing.join(", ")} before proceeding.`, "warning");
         return;
       }
-
-      // fallback for non-Yup errors
-      console.error("Submit error:", err);
-      showSnackbar(
-        isEditMode
-          ? "Update Agent Customer failed"
-          : "Add Agent Customer failed",
-        "error"
-      );
-    } finally {
-      setSubmitting(false);
+    } else if (!validateStep(currentStep)) {
+      showSnackbar("Please fill in all required fields before proceeding.", "warning");
+      return;
+    }
+    markStepCompleted(currentStep);
+    if (!isLastStep) {
+      nextStep();
     }
   };
 
-  // -------- Step UI Renderer ----------
-  const renderStepContent = (
-    values: DiscountFormValues,
-    setFieldValue: (field: keyof DiscountFormValues, value: string) => void,
-    errors: FormikErrors<DiscountFormValues>,
-    touched: FormikTouched<DiscountFormValues>
-  ) => {
+  const handleSubmit = async () => {
+    // Validate final step
+    if (!validateStep(3)) {
+       showSnackbar("Please fill in all required fields.", "error");
+       return;
+    }
+
+    setSubmitLoading(true);
+    try {
+        const payload = new FormData();
+        
+        // ... Logic to map new state to payload ...
+        // Using placeholder logic for now as API might not support new fields yet
+        if (keyCombo.Item === "Item" && keyValue["Item"]?.[0]) payload.append("item_id", keyValue["Item"][0]);
+        if (keyCombo.Item === "Item Category" && keyValue["Item Category"]?.[0]) payload.append("category_id", keyValue["Item Category"][0]);
+        
+        if (keyCombo.Customer === "Customer" && keyValue["Customer"]?.[0]) payload.append("customer_id", keyValue["Customer"][0]);
+        if (keyCombo.Customer === "Channel" && keyValue["Channel"]?.[0]) payload.append("customer_channel_id", keyValue["Channel"][0]);
+        
+        payload.append("discount_code", discount.discount_code);
+        // Map new fields to legacy if possible or send as is
+        // payload.append("name", discount.name);
+        payload.append("start_date", discount.startDate);
+        payload.append("end_date", discount.endDate);
+        payload.append("status", discount.status);
+
+        let res;
+        if (isEditMode && id) {
+            res = await updateDiscount(String(id), payload);
+        } else {
+            res = await addDiscount(payload);
+        }
+
+        if (res.error) {
+            showSnackbar(res.data?.message || "Failed to submit form", "error");
+        } else {
+            showSnackbar(
+                isEditMode ? "Discount Updated Successfully" : "Discount Created Successfully",
+                "success"
+            );
+            if (!isEditMode) {
+                await saveFinalCode({
+                    reserved_code: discount.discount_code,
+                    model_name: "discounts",
+                }).catch(() => { });
+            }
+            router.push("/discount");
+        }
+
+    } catch (err) {
+        console.error("Submit error:", err);
+        showSnackbar("An error occurred during submission", "error");
+    } finally {
+        setSubmitLoading(false);
+    }
+  };
+
+  const renderStepContent = () => {
     switch (currentStep) {
-      // ---------------- Step 1 ----------------
       case 1:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Discount Code */}
-              <div className="flex items-start gap-2 max-w-[406px]">
-                <InputFields
-                  label="Discount Code"
-                  name="discount_code"
-                  value={values.discount_code}
-                  onChange={(e) => setFieldValue("discount_code", e.target.value)}
-                  disabled={codeMode === "auto"}
-                />
-                {/* {!isEditMode && (
-                  <>
-                    <IconButton
-                      bgClass="white"
-                      className="cursor-pointer text-[#252B37] pt-12"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Discount Code"
-                      prefix={prefix}
-                      setPrefix={setPrefix}
-                      onSave={(mode, code) => {
-                        setCodeMode(mode);
-                        if (mode === "auto" && code) setFieldValue("discount_code", code);
-                        if (mode === "manual") setFieldValue("discount_code", "");
-                      }}
-                    />
-                  </>
-                )} */}
-              </div>
-
-              {/* Item */}
-              <div>
-                <InputFields
-                required
-                  label="Item"
-                  name="item_id"
-                  value={values.item_id}
-                  onChange={(e) => setFieldValue("item_id", e.target.value)}
-                  options={itemOptions}
-                  error={touched.item_id && errors.item_id}
-
-                />
-               
-              </div>
-
-              {/* Item Category */}
-              <div>
-                <InputFields
-                required
-                  label="Item Category"
-                  name="category_id"
-                  value={values.category_id}
-                  onChange={(e) => setFieldValue("category_id", e.target.value)}
-                  options={itemCategoryOptions}
-                  error={touched.category_id && errors.category_id}
-
-                />
-              
-              </div>
-
-              {/* Customer */}
-              <div>
-                <InputFields
-                required
-                  label="Customer"
-                  name="customer_id"
-                  value={values.customer_id}
-                  onChange={(e) => setFieldValue("customer_id", e.target.value)}
-                  options={agentCustomerOptions}
-                  error={touched.customer_id && errors.customer_id}
-
-                />
-               
-              </div>
-
-              {/* Customer Channel */}
-              <div>
-                <InputFields
-                required
-                  label="Customer Channel"
-                  name="customer_channel_id"
-                  value={values.customer_channel_id}
-                  onChange={(e) => setFieldValue("customer_channel_id", e.target.value)}
-                  options={channelOptions}
-                  error={touched.customer_channel_id && errors.customer_channel_id}
-
-                />
-               
-              </div>
-            </div>
-          </ContainerCard>
-        );
-
-      // ---------------- Step 2 ----------------
+        return <StepKeyCombination keyCombo={keyCombo} setKeyCombo={setKeyCombo} />;
       case 2:
         return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <InputFields
-                required
-                  label="Discount Type"
-                  name="discount_type"
-                  value={values.discount_type}
-                  onChange={(e) => setFieldValue("discount_type", e.target.value)}
-                  options={discountTypeOptions}
-                  error={touched.discount_type && errors.discount_type}
-
-                />
-               
-              </div>
-
-              <div>
-                <InputFields
-                required
-                  label="Discount Value"
-                  name="discount_value"
-                  value={values.discount_value}
-                  onChange={(e) => setFieldValue("discount_value", e.target.value)}
-                  error={touched.discount_value && errors.discount_value}
-
-                />
-              
-              </div>
-
-              <div>
-                <InputFields
-                required
-                  label="Minimum Quantity"
-                  name="min_quantity"
-                  value={values.min_quantity}
-                  onChange={(e) => setFieldValue("min_quantity", e.target.value)}
-                  error={touched.min_quantity && errors.min_quantity}
-
-                />
-               
-              </div>
-
-              <div>
-                <InputFields
-                required
-                  label="Minimum Order Value"
-                  name="min_order_value"
-                  value={values.min_order_value}
-                  onChange={(e) => setFieldValue("min_order_value", e.target.value)}
-                  error={touched.min_order_value && errors.min_order_value}
-
-                />
-               
-              </div>
-            </div>
-          </ContainerCard>
+          <StepKeyValue
+            keyCombo={keyCombo}
+            keyValue={keyValue}
+            setKeyValue={setKeyValue}
+            locationDropdownMap={locationDropdownMap}
+            customerDropdownMap={customerDropdownMap}
+          />
         );
-
-      // ---------------- Step 3 ----------------
       case 3:
         return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <InputFields
-                required
-                  label="Start Date"
-                  name="start_date"
-                  type="date"
-                  value={values.start_date}
-                  onChange={(e) => setFieldValue("start_date", e.target.value)}
-                  error={touched.start_date && errors.start_date}
-
-                />
-                {errors?.start_date && touched?.start_date && (
-                  <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>
-                )}
-              </div>
-
-              <div>
-                <InputFields
-                required
-                  label="End Date"
-                  name="end_date"
-                  type="date"
-                  value={values.end_date}
-                  onChange={(e) => setFieldValue("end_date", e.target.value)}
-                  error={touched.end_date && errors.end_date}
-
-                />
-               
-              </div>
-
-              <div>
-                <InputFields
-                  label="Status"
-                  name="status"
-                  type="radio"
-                  value={values.status}
-                  onChange={(e) => setFieldValue("status", e.target.value)}
-                  options={[
-                    { value: "1", label: "Active" },
-                    { value: "0", label: "Inactive" },
-                  ]}
-                />
-               
-              </div>
-            </div>
-          </ContainerCard>
+          <StepDiscount
+            discount={discount}
+            setDiscount={setDiscount}
+            salesmanTypeOptions={salesmanTypeOptions}
+            projectOptions={projectOptions}
+            keyCombo={keyCombo}
+            itemDropdownMap={itemDropdownMap}
+            keyValue={keyValue}
+            setKeyValue={setKeyValue}
+            itemLoading={itemLoading}
+          />
         );
-
       default:
         return null;
     }
   };
 
-  // -------- Render ----------
-  if (loading) return <Loading />;
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/discount">
-            <Icon icon="lucide:arrow-left" width={24} />
-          </Link>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Discount" : "Add New Discount"}
-          </h1>
-        </div>
+    <>
+      {(dataLoading || submitLoading) && <Loading />}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => {
+            if (currentStep > 1) {
+              prevStep();
+            } else {
+              router.push("/discount");
+            }
+          }}
+          className="p-1 rounded-full hover:bg-gray-100"
+          aria-label="Go back"
+        >
+          <Icon icon="lucide:arrow-left" width={24} />
+        </button>
+        <h1 className="text-xl font-semibold text-gray-900">
+          {isEditMode ? "Update Discount" : "Add New Discount"}
+        </h1>
       </div>
-
-      <Formik initialValues={initialValues} validationSchema={DiscountSchema} enableReinitialize onSubmit={handleSubmit}>
-        {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit, setErrors, setTouched,isSubmitting: issubmitting }) => (
-          <Form>
-            <StepperForm
-              steps={steps.map((s) => ({ ...s, isCompleted: isStepCompleted(s.id) }))}
-              currentStep={currentStep}
-              onBack={prevStep}
-              onNext={() =>
-                handleNext(values, { setErrors, setTouched } as FormikHelpers<DiscountFormValues>)
-              }
-              onSubmit={() => formikSubmit()}
-              showSubmitButton={isLastStep}
-              showNextButton={!isLastStep}
-              nextButtonText="Save & Next"
-              submitButtonText={
-                                issubmitting
-                                    ? (isEditMode ? "Updating..." : "Submitting...")
-                                    : isEditMode
-                                    ? "Update"
-                                    : "Submit"
-                            }
-
-            >
-              {renderStepContent(values, setFieldValue, errors, touched)}
-            </StepperForm>
-          </Form>
-        )}
-      </Formik>
-    </div>
+      <div className="flex justify-between items-center mb-6 pb-6">
+        <StepperForm
+          steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
+          currentStep={currentStep}
+          onStepClick={() => { }}
+          onBack={prevStep}
+          onNext={handleNext}
+          onSubmit={handleSubmit}
+          showSubmitButton={isLastStep}
+          showNextButton={!isLastStep}
+          nextButtonText="Save & Next"
+          submitButtonText={isEditMode ? "Update" : "Submit"}
+        >
+          {renderStepContent()}
+        </StepperForm>
+      </div>
+    </>
   );
 }

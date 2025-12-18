@@ -132,7 +132,7 @@ interface DropdownDataContextType {
   fetchCustomerCategoryOptions: (outlet_channel_id: string | number) => Promise<void>;
   fetchCompanyCustomersOptions: (category_id: string | number) => Promise<void>;
   fetchItemOptions: (category_id: string | number) => Promise<void>;
-  fetchItemsCategoryWise: (category_id?: string | number) => Promise<Item[]>;
+  fetchItemsCategoryWise: (category_id?: string | number) => Promise<{ value: string; label: string; status?: string | number; uom?: { id?: string; name?: string; uom_type?: string; price?: string; upc?: string }[]; }[]>;
   getItemUoms: (item_id: string | number) => { id?: string; name?: string; uom_type?: string; price?: string; upc?: string }[];
   getPrimaryUom: (item_id: string | number) => { id?: string; name?: string; uom_type?: string; price?: string; upc?: string } | null;
   labelOptions: { value: string; label: string }[];
