@@ -403,7 +403,7 @@ export default function AddEditVehicleWithStepper() {
           <ContainerCard>
             <h2 className="mb-6 text-lg font-semibold">Vehicle Details</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="flex max-w-[406px] items-start gap-2">
+              <div>
                 <InputFields
                   label="Vehicle Code"
                   name="vehicle_code"

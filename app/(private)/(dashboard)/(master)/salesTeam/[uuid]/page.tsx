@@ -489,6 +489,8 @@ export default function AddEditSalesman() {
                   label="Sales Team Type"
                   name="type"
                   value={values.type}
+                  // showSearchInDropdown={true}
+                  // searchable={true}
                   options={[
                     ...salesmanTypeOptions.map((o: any) => ({ ...o, value: String(o.value) })),
                     ...(extraTypeOption && !salesmanTypeOptions.find((o: any) => String(o.value) === extraTypeOption.value) ? [extraTypeOption] : [])
@@ -569,6 +571,7 @@ export default function AddEditSalesman() {
                   options={isEditMode ? warehouseAllOptions : warehouseOptions}
                   disabled={isEditMode ? warehouseAllOptions.length === 0 : warehouseOptions.length === 0}
                   isSingle={false}
+                  searchable={true}
                   onChange={(e: any) => {
                     if (values.type === "6") {
                       let selectedValues: string[] = [];
@@ -628,6 +631,8 @@ export default function AddEditSalesman() {
                   options={isEditMode ? warehouseAllOptions : warehouseOptions}
                   disabled={isEditMode ? warehouseAllOptions.length === 0 : warehouseOptions.length === 0}
                   isSingle={true}
+                  // showSearchInDropdown={true}
+                  searchable={true}
                   onChange={(e) => {
                     setFieldValue("warehouse_id", e.target.value);
                     if (values.warehouse_id !== e.target.value) {

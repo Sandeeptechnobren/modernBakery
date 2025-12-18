@@ -2,11 +2,11 @@
 
 export  function VerticalArrow({rowType,verticalHeight,horizontalHeight,status}: {rowType?:string,verticalHeight?:string,horizontalHeight?:string,status?:string}) {
   return (
-    <div className="flex flex-col h-full items-center">
+    <div className="flex flex-col h-full items-center  justify-center">
       {/* Top Arrow */}
       {rowType === "right" ? (
       <div className="flex items-center">
-        <div className="h-[2px] w-21 bg-gray-400"></div>
+        <div className="h-[2px] w-[15px] bg-gray-400"></div>
         <div className="w-0 h-0 border-t-[6px] border-b-[6px] border-l-[10px] border-t-transparent border-b-transparent border-l-gray-400"></div>
       </div>
       ):""}

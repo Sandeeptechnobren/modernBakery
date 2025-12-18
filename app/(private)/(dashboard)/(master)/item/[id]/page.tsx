@@ -214,7 +214,7 @@ export default function AddEditItem() {
 
   const fetchSubCategory = async (categoryId: string) => {
     setSkeleton({ ...skeleton, itemSubCategory: true });
-    const res = await itemSubCategoryList({ item_category_id: categoryId, dropdown: "true" });
+    const res = await itemSubCategoryList({ category_id: categoryId, dropdown: "true" });
     if (res.error) {
       showSnackbar("Failed to fetch sub categories", "error");
       throw new Error("Failed to fetch sub categories");
