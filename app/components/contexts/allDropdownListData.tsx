@@ -509,8 +509,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   // Lazy load functions - only fetch if not already fetched or fetching
   const ensureCompanyLoaded = useCallback(() => {
-    if (fetchedRef.current.has('company') || fetchingRef.current.has('company')) return;
-    fetchingRef.current.add('company');
+    // if (fetchedRef.current.has('company') || fetchingRef.current.has('company')) return;
+    // fetchingRef.current.add('company');
     companyList().then(res => {
       setCompanyListData(normalizeResponse(res) as CompanyItem[]);
       fetchedRef.current.add('company');
@@ -522,8 +522,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureCountryLoaded = useCallback(() => {
-    if (fetchedRef.current.has('country') || fetchingRef.current.has('country')) return;
-    fetchingRef.current.add('country');
+    // if (fetchedRef.current.has('country') || fetchingRef.current.has('country')) return;
+    // fetchingRef.current.add('country');
     countryList().then(res => {
       setCountryListData(normalizeResponse(res) as CountryItem[]);
       fetchedRef.current.add('country');
@@ -535,8 +535,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureRegionLoaded = useCallback(() => {
-    if (fetchedRef.current.has('region') || fetchingRef.current.has('region')) return;
-    fetchingRef.current.add('region');
+    // if (fetchedRef.current.has('region') || fetchingRef.current.has('region')) return;
+    // fetchingRef.current.add('region');
     regionList().then(res => {
       setRegionListData(normalizeResponse(res) as RegionItem[]);
       fetchedRef.current.add('region');
@@ -548,8 +548,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureSurveyLoaded = useCallback(() => {
-    if (fetchedRef.current.has('survey') || fetchingRef.current.has('survey')) return;
-    fetchingRef.current.add('survey');
+    // if (fetchedRef.current.has('survey') || fetchingRef.current.has('survey')) return;
+    // fetchingRef.current.add('survey');
     SurveyList().then(res => {
       setSurveyListData(normalizeResponse(res) as SurveyItem[]);
       fetchedRef.current.add('survey');
@@ -561,8 +561,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureRouteLoaded = useCallback(() => {
-    if (fetchedRef.current.has('route') || fetchingRef.current.has('route')) return;
-    fetchingRef.current.add('route');
+    // if (fetchedRef.current.has('route') || fetchingRef.current.has('route')) return;
+    // fetchingRef.current.add('route');
     routeList({}).then(res => {
       setRouteListData(normalizeResponse(res) as RouteItem[]);
       fetchedRef.current.add('route');
@@ -574,8 +574,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureWarehouseLoaded = useCallback(() => {
-    if (fetchedRef.current.has('warehouse') || fetchingRef.current.has('warehouse')) return;
-    fetchingRef.current.add('warehouse');
+    // if (fetchedRef.current.has('warehouse') || fetchingRef.current.has('warehouse')) return;
+    // fetchingRef.current.add('warehouse');
     getAllActiveWarehouse().then(res => {
       setWarehouseListData(normalizeResponse(res) as WarehouseItem[]);
       fetchedRef.current.add('warehouse');
@@ -587,8 +587,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureWarehouseAllLoaded = useCallback(() => {
-    if (fetchedRef.current.has('warehouseAll') || fetchingRef.current.has('warehouseAll')) return;
-    fetchingRef.current.add('warehouseAll');
+    // if (fetchedRef.current.has('warehouseAll') || fetchingRef.current.has('warehouseAll')) return;
+    // fetchingRef.current.add('warehouseAll');
     warehouseList({ dropdown: 'true' }).then(res => {
       setWarehouseAllList(normalizeResponse(res) as WarehouseAll[]);
       fetchedRef.current.add('warehouseAll');
@@ -600,8 +600,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureRouteTypeLoaded = useCallback(() => {
-    if (fetchedRef.current.has('routeType') || fetchingRef.current.has('routeType')) return;
-    fetchingRef.current.add('routeType');
+    // if (fetchedRef.current.has('routeType') || fetchingRef.current.has('routeType')) return;
+    // fetchingRef.current.add('routeType');
     routeType({ dropdown: 'true' }).then(res => {
       setRouteTypeData(normalizeResponse(res) as RouteTypeItem[]);
       fetchedRef.current.add('routeType');
@@ -613,8 +613,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureAreaLoaded = useCallback(() => {
-    if (fetchedRef.current.has('area') || fetchingRef.current.has('area')) return;
-    fetchingRef.current.add('area');
+    // if (fetchedRef.current.has('area') || fetchingRef.current.has('area')) return;
+    // fetchingRef.current.add('area');
     getSubRegion().then(res => {
       setAreaListData(normalizeResponse(res) as AreaItem[]);
       fetchedRef.current.add('area');
@@ -626,8 +626,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureCompanyCustomersLoaded = useCallback(() => {
-    if (fetchedRef.current.has('companyCustomers') || fetchingRef.current.has('companyCustomers')) return;
-    fetchingRef.current.add('companyCustomers');
+    // if (fetchedRef.current.has('companyCustomers') || fetchingRef.current.has('companyCustomers')) return;
+    // fetchingRef.current.add('companyCustomers');
     getCompanyCustomers({ dropdown: 'true' }).then(res => {
       setCompanyCustomersData(normalizeResponse(res) as CustomerItem[]);
       fetchedRef.current.add('companyCustomers');
@@ -639,8 +639,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureCompanyCustomersTypeLoaded = useCallback(() => {
-    if (fetchedRef.current.has('companyCustomersType') || fetchingRef.current.has('companyCustomersType')) return;
-    fetchingRef.current.add('companyCustomersType');
+    // if (fetchedRef.current.has('companyCustomersType') || fetchingRef.current.has('companyCustomersType')) return;
+    // fetchingRef.current.add('companyCustomersType');
     getCompanyCustomersType().then(res => {
       setCompanyCustomersTypeData(normalizeResponse(res) as CustomerTypeItem[]);
       fetchedRef.current.add('companyCustomersType');
@@ -652,8 +652,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureItemCategoryLoaded = useCallback(() => {
-    if (fetchedRef.current.has('itemCategory') || fetchingRef.current.has('itemCategory')) return;
-    fetchingRef.current.add('itemCategory');
+      // if (fetchedRef.current.has('itemCategory') || fetchingRef.current.has('itemCategory')) return;
+      // fetchingRef.current.add('itemCategory');
     itemCategory({ dropdown: 'true' }).then(res => {
       setItemCategoryData(normalizeResponse(res) as ItemCategoryItem[]);
       fetchedRef.current.add('itemCategory');
@@ -665,8 +665,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureItemSubCategoryLoaded = useCallback(() => {
-    if (fetchedRef.current.has('itemSubCategory') || fetchingRef.current.has('itemSubCategory')) return;
-    fetchingRef.current.add('itemSubCategory');
+    // if (fetchedRef.current.has('itemSubCategory') || fetchingRef.current.has('itemSubCategory')) return;
+    // fetchingRef.current.add('itemSubCategory');
     itemSubCategory({ dropdown: 'true' }).then(res => {
       setItemSubCategoryData(normalizeResponse(res) as ItemSubCategoryItem[]);
       fetchedRef.current.add('itemSubCategory');
@@ -678,8 +678,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureChannelLoaded = useCallback(() => {
-    if (fetchedRef.current.has('channel') || fetchingRef.current.has('channel')) return;
-    fetchingRef.current.add('channel');
+    // if (fetchedRef.current.has('channel') || fetchingRef.current.has('channel')) return;
+    // fetchingRef.current.add('channel');
     channelList().then(res => {
       setChannelListData(normalizeResponse(res) as ChannelItem[]);
       fetchedRef.current.add('channel');
@@ -691,8 +691,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureCustomerTypeLoaded = useCallback(() => {
-    if (fetchedRef.current.has('customerType') || fetchingRef.current.has('customerType')) return;
-    fetchingRef.current.add('customerType');
+    // if (fetchedRef.current.has('customerType') || fetchingRef.current.has('customerType')) return;
+    // fetchingRef.current.add('customerType');
     getCustomerType().then(res => {
       setCustomerTypeData(normalizeResponse(res) as CustomerType[]);
       fetchedRef.current.add('customerType');
@@ -704,8 +704,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureSalesmanTypeLoaded = useCallback(() => {
-    if (fetchedRef.current.has('salesmanType') || fetchingRef.current.has('salesmanType')) return;
-    fetchingRef.current.add('salesmanType');
+    // if (fetchedRef.current.has('salesmanType') || fetchingRef.current.has('salesmanType')) return;
+    // fetchingRef.current.add('salesmanType');
     salesmanTypeList({}).then(res => {
       setSalesmanTypesData(normalizeResponse(res) as SalesmanType[]);
       fetchedRef.current.add('salesmanType');
@@ -717,8 +717,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureVehicleListLoaded = useCallback(() => {
-    if (fetchedRef.current.has('vehicleList') || fetchingRef.current.has('vehicleList')) return;
-    fetchingRef.current.add('vehicleList');
+    // if (fetchedRef.current.has('vehicleList') || fetchingRef.current.has('vehicleList')) return;
+    // fetchingRef.current.add('vehicleList');
     vehicleListData().then(res => {
       setVehicleList(normalizeResponse(res) as VehicleListItem[]);
       fetchedRef.current.add('vehicleList');
@@ -730,8 +730,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureCustomerCategoryLoaded = useCallback(() => {
-    if (fetchedRef.current.has('customerCategory') || fetchingRef.current.has('customerCategory')) return;
-    fetchingRef.current.add('customerCategory');
+    // if (fetchedRef.current.has('customerCategory') || fetchingRef.current.has('customerCategory')) return;
+    // fetchingRef.current.add('customerCategory');
     customerCategoryList().then(res => {
       setCustomerCategory(normalizeResponse(res) as CustomerCategory[]);
       fetchedRef.current.add('customerCategory');
@@ -743,8 +743,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureCustomerSubCategoryLoaded = useCallback(() => {
-    if (fetchedRef.current.has('customerSubCategory') || fetchingRef.current.has('customerSubCategory')) return;
-    fetchingRef.current.add('customerSubCategory');
+    // if (fetchedRef.current.has('customerSubCategory') || fetchingRef.current.has('customerSubCategory')) return;
+    // fetchingRef.current.add('customerSubCategory');
     customerSubCategoryList().then(res => {
       setCustomerSubCategory(normalizeResponse(res) as CustomerSubCategory[]);
       fetchedRef.current.add('customerSubCategory');
@@ -756,8 +756,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureItemLoaded = useCallback(() => {
-    if (fetchedRef.current.has('item') || fetchingRef.current.has('item')) return;
-    fetchingRef.current.add('item');
+    // if (fetchedRef.current.has('item') || fetchingRef.current.has('item')) return;
+    // fetchingRef.current.add('item');
     itemList().then(res => {
       setItem(normalizeResponse(res) as Item[]);
       fetchedRef.current.add('item');
@@ -769,8 +769,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureDiscountTypeLoaded = useCallback(() => {
-    if (fetchedRef.current.has('discountType') || fetchingRef.current.has('discountType')) return;
-    fetchingRef.current.add('discountType');
+    // if (fetchedRef.current.has('discountType') || fetchingRef.current.has('discountType')) return;
+    // fetchingRef.current.add('discountType');
     getDiscountTypeList().then(res => {
       setDiscountType(normalizeResponse(res) as DiscountType[]);
       fetchedRef.current.add('discountType');
@@ -782,8 +782,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureMenuListLoaded = useCallback(() => {
-    if (fetchedRef.current.has('menuList') || fetchingRef.current.has('menuList')) return;
-    fetchingRef.current.add('menuList');
+    // if (fetchedRef.current.has('menuList') || fetchingRef.current.has('menuList')) return;
+    // fetchingRef.current.add('menuList');
     getMenuList().then(res => {
       setMenuList(normalizeResponse(res) as MenuList[]);
       fetchedRef.current.add('menuList');
@@ -795,8 +795,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureVendorLoaded = useCallback(() => {
-    if (fetchedRef.current.has('vendor') || fetchingRef.current.has('vendor')) return;
-    fetchingRef.current.add('vendor');
+    // if (fetchedRef.current.has('vendor') || fetchingRef.current.has('vendor')) return;
+    // fetchingRef.current.add('vendor');
     vendorList().then(res => {
       setVendor(normalizeResponse(res) as VendorList[]);
       fetchedRef.current.add('vendor');
@@ -808,8 +808,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureSalesmanLoaded = useCallback(() => {
-    if (fetchedRef.current.has('salesman') || fetchingRef.current.has('salesman')) return;
-    fetchingRef.current.add('salesman');
+    // if (fetchedRef.current.has('salesman') || fetchingRef.current.has('salesman')) return;
+    // fetchingRef.current.add('salesman');
     salesmanList().then(res => {
       setSalesman(normalizeResponse(res) as SalesmanList[]);
       fetchedRef.current.add('salesman');
@@ -821,8 +821,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureAgentCustomerLoaded = useCallback(() => {
-    if (fetchedRef.current.has('agentCustomer') || fetchingRef.current.has('agentCustomer')) return;
-    fetchingRef.current.add('agentCustomer');
+    // if (fetchedRef.current.has('agentCustomer') || fetchingRef.current.has('agentCustomer')) return;
+    // fetchingRef.current.add('agentCustomer');
     agentCustomerList().then(res => {
       setAgentCustomer(normalizeResponse(res) as AgentCustomerList[]);
       fetchedRef.current.add('agentCustomer');
@@ -834,8 +834,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureShelvesLoaded = useCallback(() => {
-    if (fetchedRef.current.has('shelves') || fetchingRef.current.has('shelves')) return;
-    fetchingRef.current.add('shelves');
+    // if (fetchedRef.current.has('shelves') || fetchingRef.current.has('shelves')) return;
+    // fetchingRef.current.add('shelves');
     shelvesList().then(res => {
       setShelves(normalizeResponse(res) as ShelvesList[]);
       fetchedRef.current.add('shelves');
@@ -847,8 +847,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureSubmenuLoaded = useCallback(() => {
-    if (fetchedRef.current.has('submenu') || fetchingRef.current.has('submenu')) return;
-    fetchingRef.current.add('submenu');
+    // if (fetchedRef.current.has('submenu') || fetchingRef.current.has('submenu')) return;
+    // fetchingRef.current.add('submenu');
     submenuList().then(res => {
       setSubmenu(normalizeResponse(res) as submenuList[]);
       fetchedRef.current.add('submenu');
@@ -860,8 +860,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensurePermissionsLoaded = useCallback(() => {
-    if (fetchedRef.current.has('permissions') || fetchingRef.current.has('permissions')) return;
-    fetchingRef.current.add('permissions');
+    // if (fetchedRef.current.has('permissions') || fetchingRef.current.has('permissions')) return;
+    // fetchingRef.current.add('permissions');
     permissionList().then(res => {
       setPermissions(normalizeResponse(res) as permissionsList[]);
       fetchedRef.current.add('permissions');
@@ -873,8 +873,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureLabelsLoaded = useCallback(() => {
-    if (fetchedRef.current.has('labels') || fetchingRef.current.has('labels')) return;
-    fetchingRef.current.add('labels');
+    // if (fetchedRef.current.has('labels') || fetchingRef.current.has('labels')) return;
+    // fetchingRef.current.add('labels');
     labelList().then(res => {
       setLabels(normalizeResponse(res) as LabelItem[]);
       fetchedRef.current.add('labels');
@@ -886,8 +886,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureRolesLoaded = useCallback(() => {
-    if (fetchedRef.current.has('roles') || fetchingRef.current.has('roles')) return;
-    fetchingRef.current.add('roles');
+    // if (fetchedRef.current.has('roles') || fetchingRef.current.has('roles')) return;
+    // fetchingRef.current.add('roles');
     roleList().then(res => {
       setRoles(normalizeResponse(res) as Role[]);
       fetchedRef.current.add('roles');
@@ -899,8 +899,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureProjectLoaded = useCallback(() => {
-    if (fetchedRef.current.has('project') || fetchingRef.current.has('project')) return;
-    fetchingRef.current.add('project');
+    // if (fetchedRef.current.has('project') || fetchingRef.current.has('project')) return;
+    // fetchingRef.current.add('project');
     projectList({}).then(res => {
       setProject(normalizeResponse(res) as Project[]);
       fetchedRef.current.add('project');
@@ -912,8 +912,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureCompanyTypeLoaded = useCallback(() => {
-    if (fetchedRef.current.has('companyType') || fetchingRef.current.has('companyType')) return;
-    fetchingRef.current.add('companyType');
+    // if (fetchedRef.current.has('companyType') || fetchingRef.current.has('companyType')) return;
+    // fetchingRef.current.add('companyType');
     companyTypeList().then(res => {
       setComapanyType(normalizeResponse(res) as CompanyType[]);
       fetchedRef.current.add('companyType');
@@ -925,8 +925,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureUomLoaded = useCallback(() => {
-    if (fetchedRef.current.has('uom') || fetchingRef.current.has('uom')) return;
-    fetchingRef.current.add('uom');
+    // if (fetchedRef.current.has('uom') || fetchingRef.current.has('uom')) return;
+    // fetchingRef.current.add('uom');
     uomList().then(res => {
       setUom(normalizeResponse(res) as UOM[]);
       fetchedRef.current.add('uom');
@@ -938,8 +938,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureLocationLoaded = useCallback(() => {
-    if (fetchedRef.current.has('location') || fetchingRef.current.has('location')) return;
-    fetchingRef.current.add('location');
+    // if (fetchedRef.current.has('location') || fetchingRef.current.has('location')) return;
+    // fetchingRef.current.add('location');
     locationList().then(res => {
       setLocation(normalizeResponse(res) as LocationItem[]);
       fetchedRef.current.add('location');
@@ -951,8 +951,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureAssetsTypeLoaded = useCallback(() => {
-    if (fetchedRef.current.has('assetsType') || fetchingRef.current.has('assetsType')) return;
-    fetchingRef.current.add('assetsType');
+    // if (fetchedRef.current.has('assetsType') || fetchingRef.current.has('assetsType')) return;
+    // fetchingRef.current.add('assetsType');
     assetsTypeList().then(res => {
       setAssetsType(normalizeResponse(res) as AssetsType[]);
       fetchedRef.current.add('assetsType');
@@ -964,8 +964,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureManufacturerLoaded = useCallback(() => {
-    if (fetchedRef.current.has('manufacturer') || fetchingRef.current.has('manufacturer')) return;
-    fetchingRef.current.add('manufacturer');
+    // if (fetchedRef.current.has('manufacturer') || fetchingRef.current.has('manufacturer')) return;
+    // fetchingRef.current.add('manufacturer');
     manufacturerList().then(res => {
       setManufacturer(normalizeResponse(res) as Manufacturer[]);
       fetchedRef.current.add('manufacturer');
@@ -977,8 +977,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureAssetsModelLoaded = useCallback(() => {
-    if (fetchedRef.current.has('assetsModel') || fetchingRef.current.has('assetsModel')) return;
-    fetchingRef.current.add('assetsModel');
+    // if (fetchedRef.current.has('assetsModel') || fetchingRef.current.has('assetsModel')) return;
+    // fetchingRef.current.add('assetsModel');
     assetsModelList().then(res => {
       setAssetsModel(normalizeResponse(res) as AssetsModel[]);
       fetchedRef.current.add('assetsModel');
@@ -990,8 +990,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureBrandLoaded = useCallback(() => {
-    if (fetchedRef.current.has('brand') || fetchingRef.current.has('brand')) return;
-    fetchingRef.current.add('brand');
+    // if (fetchedRef.current.has('brand') || fetchingRef.current.has('brand')) return;
+    // fetchingRef.current.add('brand');
     BrandList().then(res => {
       setBrandList(normalizeResponse(res) as Brand[]);
       fetchedRef.current.add('brand');
@@ -1003,8 +1003,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureBrandingLoaded = useCallback(() => {
-    if (fetchedRef.current.has('branding') || fetchingRef.current.has('branding')) return;
-    fetchingRef.current.add('branding');
+    // if (fetchedRef.current.has('branding') || fetchingRef.current.has('branding')) return;
+    // fetchingRef.current.add('branding');
     brandingList().then(res => {
       setBrandingList(normalizeResponse(res) as Branding[]);
       fetchedRef.current.add('branding');

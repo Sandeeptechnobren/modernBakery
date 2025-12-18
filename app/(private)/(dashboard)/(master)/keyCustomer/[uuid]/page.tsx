@@ -479,7 +479,7 @@ export default function AddCompanyCustomer() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="flex items-start gap-2 max-w-[406px]">
+              <div>
                 <InputFields
                   label="Customer Code"
                   name="osa_code"

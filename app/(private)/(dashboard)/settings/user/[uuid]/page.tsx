@@ -76,8 +76,10 @@ export default function UserAddEdit() {
 
   const {
     roleOptions,
-    companyOptions
-    , ensureCompanyLoaded, ensureRolesLoaded } = useAllDropdownListData();
+    companyOptions, 
+    ensureCompanyLoaded, 
+    ensureRolesLoaded 
+  } = useAllDropdownListData();
 
   // Load dropdown data - runs every time page opens
   useEffect(() => {

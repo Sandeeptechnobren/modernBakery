@@ -96,6 +96,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
   };
 
   const [form, setForm] = useState<any>({
+    title: "",
     formType: [],
     condition: "",
     targetType: "",
@@ -226,6 +227,15 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
       <div className="bg-white shadow-md rounded-2xl p-6 space-y-5">
         <div className="grid grid-cols-2 gap-4">
           {/* New Form Type */}
+          {/* <InputFields
+            width="full"
+            placeholder="Enter Step Name"
+            label="Step Name"
+            value={form.title}
+            onChange={(e) =>
+              setForm({ ...form, title: (e as React.ChangeEvent<HTMLInputElement>).target.value })
+            }
+          /> */}
           <InputFields
             required
             label="Permissions"
@@ -330,7 +340,6 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
               setForm({ ...form, condition: e.target.value })
             }
           /> : ""}
-        </div>
         {/* {form.targetType?   <div className="grid grid-cols-2 gap-4">
 
         <InputFields
@@ -398,7 +407,6 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
         </div> */}
 
         {/* Messages */}
-        <div className="grid grid-cols-2 gap-4">
           <InputFields
             required
             width="full"
@@ -537,7 +545,7 @@ function SortableRow({
       </td>
       <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? "Role" : "User"}</td>
-  <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1"?
+  <td className="px-[24px] py-[12px] bg-white w-[400px]">{step.targetType === "1"?
               // <InputFields
               //   value={step.selectedRole}
               //   isSingle={false}
@@ -545,9 +553,9 @@ function SortableRow({
               //   width="full"
               //   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {}}
               // />
-              step.selectedRole?.map((role: any) => role.label).join(", ")
+              step.selectedRole?.map((role: any) => roleOptions.find(r => r.value === role)?.label).join(", ")
               :"-"}</td>
-                <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "2"?
+                <td className="px-[24px] py-[12px] bg-white w-[400px]">{step.targetType === "2"?
               //     <InputFields
               //   value={step.selectedCustomer}
               //   isSingle={false}
@@ -555,7 +563,7 @@ function SortableRow({
               //   width="full"
               //   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {}}
               // />
-              step.selectedCustomer?.map((user: any) => user.label).join(", ")
+              step.selectedCustomer?.map((user: any) => userOptions.find(u => u.value === user)?.label).join(", ")
               :"-"}</td>
 
       <td className="px-[24px] py-[12px] bg-white   ">{step.condition}</td>

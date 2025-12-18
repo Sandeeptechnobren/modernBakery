@@ -351,7 +351,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                 const elapsed = Date.now() - start;
                 const wait = Math.max(0, MIN_LOADING_MS - elapsed);
                 if (wait > 0) {
-                    await new Promise((res) => setTimeout(res, wait));
+                    await new Promise((res) => setTimeout(res, wait + 500));
                 }
                 setNestedLoading(false);
             }
@@ -382,6 +382,8 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                     return;
                 }
                 setSelectedColumns(config.columns?.map((_, index) => index));
+            } else {
+                setSelectedColumns(saved ? JSON.parse(saved) : []);
             }
         } catch (err) {
             // If reading localStorage fails, fall back to select all
