@@ -562,6 +562,23 @@ export const initialLinkData: SidebarDataType[] = [
 
         ],
       },
+      {
+        isActive: false,
+        href: "#",
+        label: "Sales Report Dashboard",
+        leadingIcon: "ri:dashboard-line",
+        iconColor: "text-green-500",
+        trailingIcon: "mdi-light:chevron-right",
+        children: [
+          {
+            isActive: false,
+            href: "/salesReportDashboard",
+            label: "Dashboard",
+            leadingIcon: "mdi:adjust",
+            iconColor: "text-cyan-500",
+          },
+        ],
+      },
     ],
   },
 ];

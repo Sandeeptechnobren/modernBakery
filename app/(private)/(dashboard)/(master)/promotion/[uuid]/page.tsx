@@ -490,9 +490,19 @@ export default function AddPricing() {
     <>
       {(dataLoading || submitLoading) && <Loading />}
       <div className="flex items-center gap-2">
-        <Link href="/promotion">
+        <button
+          onClick={() => {
+            if (currentStep > 1) {
+              prevStep();
+            } else {
+              router.push("/promotion");
+            }
+          }}
+          className="p-1 rounded-full hover:bg-gray-100"
+          aria-label="Go back"
+        >
           <Icon icon="lucide:arrow-left" width={24} />
-        </Link>
+        </button>
         <h1 className="text-xl font-semibold text-gray-900">
           {isEditMode ? "Update Promotion" : "Add Promotion"}
         </h1>

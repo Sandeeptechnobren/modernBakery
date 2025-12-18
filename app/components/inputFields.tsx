@@ -1594,7 +1594,7 @@ export default function InputFields({
               onChange={safeOnChange}
               onKeyDown={handleNumberKeyDown}
               inputMode={integerOnly ? "numeric" : undefined}
-              step={integerOnly ? 1 : step ? step : undefined}
+              step={step ? step : undefined}
               disabled={disabled}
               onBlur={onBlur}
               className={`h-full w-full px-3 rounded-md text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 focus:outline-none`}

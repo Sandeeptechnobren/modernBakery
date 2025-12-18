@@ -198,7 +198,7 @@ export default function OrderItemsTable({ orderTables, setOrderTables, updateOrd
                         />
                       ),
                     },
-                    {
+                    ...(promotion.bundle_combination === "range" ? [{
                       key: "action",
                       label: "Action",
                       width: 20,
@@ -224,7 +224,7 @@ export default function OrderItemsTable({ orderTables, setOrderTables, updateOrd
                           <Icon icon="lucide:trash-2" width={20} />
                         </button>
                       ),
-                    },
+                    }] : []),
                   ], pageSize,
                 }}
               />

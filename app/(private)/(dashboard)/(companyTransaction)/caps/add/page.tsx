@@ -511,9 +511,11 @@ export default function CapsAddPage() {
     ]);
   };
 
-  const handleRemoveRow = (idx: number) => {
+  const handleRemoveRow = (id: number) => {
     if (tableData.length <= 1) return;
-    setTableData((prev) => prev.filter((row) => Number(row.idx) !== idx));
+    setTableData((prev) => prev.filter((row) => {
+      return (Number(row.id) !== id);
+    }));
   };
 
   const resetTable = () => {
@@ -869,28 +871,34 @@ export default function CapsAddPage() {
                     }
                     width="100px"
                   />
-                  <span className="text-xs text-gray-500 mt-1">
+                  {/* <span className="text-xs text-gray-500 mt-1">
                     Stock: {row.stockPerUpc || "0"}
-                  </span>
+                  </span> */}
                   </div>
                 ),
               },
               {
-                key: "receive_qty",
-                label: "Receive Quantity",
+                key: "quantity",
+                label: "Deposit Quantity",
                 render: (row) => (
+                  <div className="flex flex-col pt-4">
                   <InputFields
                     type="number"
                     min={0}
+                    max={row.stock || undefined}
                     integerOnly={true}
-                    placeholder="Enter Receive Quantity"
-                    value={row.receive_qty}
+                    placeholder="Enter Quantity"
+                    value={row.quantity}
                     disabled={!row.uom_id}
                     onChange={(e) =>
-                      handleTableChange(Number(row.idx), "receive_qty", e.target.value)
+                      handleTableChange(Number(row.idx), "quantity", e.target.value)
                     }
-                    width="120px"
+                    width="100px"
                   />
+                  {/* <span className="text-xs text-gray-500 mt-1">
+                    Stock: {row.stockPerUpc || "0"}
+                  </span> */}
+                  </div>
                 ),
               },
               {
@@ -901,6 +909,7 @@ export default function CapsAddPage() {
                     type="number"
                     min={0}
                     step={0.01}
+                    integerOnly={true}
                     value={row.receive_amount}
                     disabled={!row.uom_id}
                     onChange={(e) =>
@@ -908,20 +917,6 @@ export default function CapsAddPage() {
                     }
                     trailingElement={localStorage.getItem("country") || null}
 
-                  />
-                ),
-              },
-              {
-                key: "receive_date",
-                label: "Receive Date",
-                render: (row) => (
-                  <InputFields
-                    type="date"
-                    value={row.receive_date || new Date().toISOString().split("T")[0]}
-                    disabled={!row.uom_id}
-                    onChange={(e) =>
-                      handleTableChange(Number(row.idx), "receive_date", e.target.value)
-                    }
                   />
                 ),
               },
@@ -961,7 +956,7 @@ export default function CapsAddPage() {
                 render: (row) => (
                   <button
                     type="button"
-                    className="text-red-500 flex items-center justify-center"
+                    className="text-red-500 flex items-center justify-center cursor-pointer"
                     onClick={() => handleRemoveRow(Number(row.idx))}
                     disabled={tableData.length <= 1}
                   >
@@ -973,10 +968,10 @@ export default function CapsAddPage() {
             showNestedLoading: false,
           }}
         />
-        <div className="mt-4">
+        <div className="mt-4 mb-48">
           {(() => {
             // Disable add when there's already an empty/incomplete item row
-            const hasEmptyRow = tableData.some(row => !row.item || !row.uom);
+            const hasEmptyRow = tableData.some(row => !row.item_id);
             return (
               <button
                 type="button"
@@ -997,14 +992,14 @@ export default function CapsAddPage() {
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            className="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-100"
-            onClick={() => router.push("/capsCollection")}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+            onClick={() => router.push(backBtnUrl)}
           >
             Cancel
           </button>
           <SidebarBtn
             isActive={!submitting}
-            label={submitting ? "Creating..." : "Create CAPS Collection"}
+            label={submitting ? "Creating CAPS Collection..." : "Create CAPS Collection"}
             // label={submitting ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update CAPS Collection" : "Create CAPS Collection")}
             onClick={handleSubmit}
             disabled={

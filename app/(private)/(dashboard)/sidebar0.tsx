@@ -97,6 +97,7 @@ export default function Sidebar({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [setIsOpen]);
+  console.log(data, 'data in sidebar');
 
   return (
     <div className="group peer" ref={wrapperRef}>
@@ -145,7 +146,7 @@ export default function Sidebar({
                           labelTw={`${isOpen ? "block" : "hidden" } group-hover:block text-sm`}
                           leadingIcon={link.leadingIcon}
                           leadingIconSize={20}
-                          trailingIcon={trailingIcon}
+                          {...(trailingIcon && { trailingIcon })}
                           trailingIconTw={`${isOpen ? "block" : "hidden" } group-hover:block`}
                           // className={isOpen ? "" : "justify-center"}
                           onClick={() => handleClick(link.href, link.label, hasChildren)}

@@ -136,7 +136,7 @@ export default function OfferItemsTable({ offerItems, setOfferItems, selectItemF
                           <span className="text-red-500 ml-1">*</span>
                         </span>
                       ),
-                      width: 300,
+                      width: 200,
                       render: (row: any) => (
                         <InputFields
                           type="select"
@@ -144,7 +144,7 @@ export default function OfferItemsTable({ offerItems, setOfferItems, selectItemF
                           placeholder="Select Item"
                           showSkeleton={itemLoading}
                           options={[{ label: `Select Item`, value: "" }, ...itemOptions]}
-                          value={Array.isArray(row.itemCode) ? row.itemCode : (row.itemCode ? [String(row.itemCode)] : [])}
+                          value={Array.isArray(row.itemCode) ? row.itemCode : (row.itemCode ? [String(row.itemCode)] : [""])}
                           onChange={e => {
                             const val = e.target.value;
                             let selectedValues: string[];
@@ -171,7 +171,6 @@ export default function OfferItemsTable({ offerItems, setOfferItems, selectItemF
                       render: (row: any) => {
                         return (
                           <InputFields
-                            label=""
                             type="select"
                             isSingle={true}
                             placeholder="Select UOM"
@@ -183,33 +182,39 @@ export default function OfferItemsTable({ offerItems, setOfferItems, selectItemF
                         );
                       }
                     },
+                    // {
+                    //   key: "action",
+                    //   label: "Action",
+                    //   width: 30,
+                    //   render: (row: any) => (
+                    //     <button
+                    //       type="button"
+                    //       disabled={String(row.idx) === "0"}
+                    //       className={`flex  w-full h-full ${String(row.idx) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
+                    //       onClick={() => {
+                    //         if (String(row.idx) === "0") return;
+                    //         setOfferItems((prev: OfferItemType[][]) => {
+                    //           const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev : [prev as unknown as OfferItemType[]];
+                    //           return tables.flatMap((arr, idx) => {
+                    //             if (idx !== tableIdx) return [arr];
+                    //             const newArr = arr.filter((oi, i) => String(i) !== String(row.idx));
+                    //             if (newArr.length === 0 && tables.length > 1) {
+                    //               return [];
+                    //             }
+                    //             return [newArr];
+                    //           });
+                    //         });
+                    //       }}
+                    //     >
+                    //       <Icon icon="lucide:trash-2" width={20} />
+                    //     </button>
+                    //   ),
+                    // },
                     {
-                      key: "action",
-                      label: "Action",
-                      width: 30,
-                      render: (row: any) => (
-                        <button
-                          type="button"
-                          disabled={String(row.idx) === "0"}
-                          className={`flex  w-full h-full ${String(row.idx) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
-                          onClick={() => {
-                            if (String(row.idx) === "0") return;
-                            setOfferItems((prev: OfferItemType[][]) => {
-                              const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev : [prev as unknown as OfferItemType[]];
-                              return tables.flatMap((arr, idx) => {
-                                if (idx !== tableIdx) return [arr];
-                                const newArr = arr.filter((oi, i) => String(i) !== String(row.idx));
-                                if (newArr.length === 0 && tables.length > 1) {
-                                  return [];
-                                }
-                                return [newArr];
-                              });
-                            });
-                          }}
-                        >
-                          <Icon icon="lucide:trash-2" width={20} />
-                        </button>
-                      ),
+                      key: "empty",
+                      label: "",
+                      width: 150, // Small width for visual spacing
+                      render: () => null, // Renders nothing
                     },
                   ],
                   pageSize,
