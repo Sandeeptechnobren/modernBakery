@@ -39,6 +39,7 @@ import {
   uomList,
   vehicleListData,
   warehouseList,
+  getUserList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -78,6 +79,7 @@ interface DropdownDataContextType {
   assetsModelList: AssetsModel[];
   BrandList: Brand[];
   brandingList: Branding[];
+  userList: UserItem[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -117,6 +119,7 @@ interface DropdownDataContextType {
   assetsModelOptions: { value: string; label: string }[];
   brandOptions: { value: string; label: string }[];
   brandingOptions: { value: string; label: string }[];
+  userOptions: { value: string; label: string }[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   refreshDropdown: (name: string, params?: any) => Promise<void>;
@@ -178,6 +181,7 @@ interface DropdownDataContextType {
   ensureAssetsModelLoaded: () => void;
   ensureBrandLoaded: () => void;
   ensureBrandingLoaded: () => void;
+  ensureUserLoaded: () => void;
 }
 
 // Minimal interfaces reflecting the expected fields returned by API for dropdown lists
@@ -439,6 +443,12 @@ interface Manufacturer {
   osa_code: string;
 }
 
+interface UserItem {
+  id: number;
+  name: string;
+  uuid: string;
+}
+
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
 
 export const useAllDropdownListData = () => {
@@ -491,6 +501,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [assetsModel, setAssetsModel] = useState<AssetsModel[]>([]);
   const [brandList, setBrandList] = useState<Brand[]>([]);
   const [brandingListState, setBrandingList] = useState<Branding[]>([]);
+  const [userListState, setUserList] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Track which dropdowns have been fetched using useRef to avoid re-renders
@@ -652,8 +663,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, [normalizeResponse]);
 
   const ensureItemCategoryLoaded = useCallback(() => {
-      // if (fetchedRef.current.has('itemCategory') || fetchingRef.current.has('itemCategory')) return;
-      // fetchingRef.current.add('itemCategory');
+    // if (fetchedRef.current.has('itemCategory') || fetchingRef.current.has('itemCategory')) return;
+    // fetchingRef.current.add('itemCategory');
     itemCategory({ dropdown: 'true' }).then(res => {
       setItemCategoryData(normalizeResponse(res) as ItemCategoryItem[]);
       fetchedRef.current.add('itemCategory');
@@ -784,7 +795,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureMenuListLoaded = useCallback(() => {
     // if (fetchedRef.current.has('menuList') || fetchingRef.current.has('menuList')) return;
     // fetchingRef.current.add('menuList');
-    getMenuList().then(res => {
+    getMenuList({ dropdown: 'true' }).then(res => {
       setMenuList(normalizeResponse(res) as MenuList[]);
       fetchedRef.current.add('menuList');
       fetchingRef.current.delete('menuList');
@@ -849,7 +860,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureSubmenuLoaded = useCallback(() => {
     // if (fetchedRef.current.has('submenu') || fetchingRef.current.has('submenu')) return;
     // fetchingRef.current.add('submenu');
-    submenuList().then(res => {
+    submenuList({ dropdown: 'true' }).then(res => {
       setSubmenu(normalizeResponse(res) as submenuList[]);
       fetchedRef.current.add('submenu');
       fetchingRef.current.delete('submenu');
@@ -888,7 +899,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureRolesLoaded = useCallback(() => {
     // if (fetchedRef.current.has('roles') || fetchingRef.current.has('roles')) return;
     // fetchingRef.current.add('roles');
-    roleList().then(res => {
+    roleList({ dropdown: 'true' }).then(res => {
       setRoles(normalizeResponse(res) as Role[]);
       fetchedRef.current.add('roles');
       fetchingRef.current.delete('roles');
@@ -1012,6 +1023,17 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }).catch(() => {
       setBrandingList([]);
       fetchingRef.current.delete('branding');
+    });
+  }, [normalizeResponse]);
+
+  const ensureUserLoaded = useCallback(() => {
+    getUserList({ dropdown: 'true' }).then(res => {
+      setUserList(normalizeResponse(res) as UserItem[]);
+      fetchedRef.current.add('user');
+      fetchingRef.current.delete('user');
+    }).catch(() => {
+      setUserList([]);
+      fetchingRef.current.delete('user');
     });
   }, [normalizeResponse]);
 
@@ -1236,6 +1258,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const submenuOptions = (Array.isArray(submenu) ? submenu : []).map((c: submenuList) => ({
     value: String(c.id ?? ''),
     label: c.name ?? ''
+  }));
+
+  const userOptions = (Array.isArray(userListState) ? userListState : []).map((c: UserItem) => ({
+    value: String(c.id ?? ''),
+    label: c.name ?? '',
   }));
 
   const permissionsOptions = (Array.isArray(permissions) ? permissions : []).map((c: permissionsList) => ({
@@ -1897,6 +1924,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         assetsModelList: assetsModel,
         BrandList: brandList,
         brandingList: brandingListState,
+        userList: userListState,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
@@ -1955,6 +1983,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         assetsModelOptions,
         brandOptions,
         brandingOptions,
+        userOptions,
         loading,
         ensureCompanyLoaded,
         ensureCountryLoaded,
@@ -1995,6 +2024,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         ensureAssetsModelLoaded,
         ensureBrandLoaded,
         ensureBrandingLoaded,
+        ensureUserLoaded,
       }}
     >
       {children}

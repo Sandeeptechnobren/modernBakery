@@ -37,9 +37,9 @@ export const getTierDetails = async (uuid: string) => {
   }
 };
 
-export const updateTier = async (uuid: string,body:object) => {
+export const updateTier = async (uuid: string, body: object) => {
   try {
-    const res = await API.put(`/api/settings/tiers/update/${uuid}`,body);
+    const res = await API.put(`/api/settings/tiers/update/${uuid}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -76,7 +76,7 @@ export const getRewardDetails = async (uuid: string) => {
   }
 };
 
-export const updateReward = async (uuid: string,body:object) => {
+export const updateReward = async (uuid: string, body: object) => {
   try {
     const res =
       body instanceof FormData
@@ -115,18 +115,40 @@ export const getBonusDetails = async (uuid: string) => {
   }
 };
 
-export const updateBonus = async (uuid: string,body:object) => {
+export const updateBonus = async (uuid: string, body: object) => {
   try {
-    const res =  await API.put(`/api/settings/bonus/update/${uuid}`, body);
+    const res = await API.put(`/api/settings/bonus/update/${uuid}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const orderProcessFlow = async (body:object) => {
+export const orderProcessFlow = async (body: object) => {
   try {
-    const res =  await API.post(`/api/master/approval/order-process-flow`, body);
+    const res = await API.post(`/api/master/approval/order-process-flow`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const auditTrailList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/Logs_Audit/logs/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const getAuditTrailDetails = async (id: string) => {
+  try {
+    const res = await API.get(`/api/Logs_Audit/logs/show/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
