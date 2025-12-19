@@ -109,6 +109,93 @@ interface ItemUOM {
   uom_id?: number;
 }
 
+// Calculate how much quantity remains for a given row when the same item/uom is used in multiple rows.
+// Remaining = row.quantity - sum(otherRows.deposit_qty for same item_id + uom_id)
+const getRemainingQtyForRow = (
+  rows: any[],
+  rowIdx: number,
+  itemId: string,
+  uomId: string,
+  totalQty: number
+) => {
+  if (!itemId || !uomId) return Math.max(0, totalQty);
+
+  const usedByOthers = rows.reduce((sum, r, i) => {
+    if (i === rowIdx) return sum;
+    if (String(r?.item_id ?? "") !== String(itemId)) return sum;
+    if (String(r?.uom_id ?? "") !== String(uomId)) return sum;
+    const v = Number(r?.deposit_qty ?? 0);
+    return sum + (Number.isFinite(v) ? v : 0);
+  }, 0);
+
+  return Math.max(0, totalQty - usedByOthers);
+};
+
+// Convert a row's entered deposit_qty into base unit (PCS) usage.
+// - primary UOM: deposit_qty PCS
+// - secondary UOM: deposit_qty * UPC PCS
+const getRowDepositQtyInBase = (row: any) => {
+  const raw = Number(row?.deposit_qty ?? 0);
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+  const selected = row?.UOM?.find?.((u: any) => String(u?.value ?? "") === String(row?.uom_id ?? ""));
+  if (String(selected?.uom_type ?? "") === "secondary") {
+    return raw * getUpcForSelectedUom(row);
+  }
+  return raw;
+};
+
+// Remaining stock for a row when the same item is used across multiple rows (even with different UOMs).
+// RemainingBase = totalBaseQty - sum(otherRows.deposit_qty converted to base PCS)
+const getRemainingBaseQtyForRow = (
+  rows: any[],
+  rowIdx: number,
+  itemId: string,
+  totalBaseQty: number
+) => {
+  if (!itemId) return Math.max(0, totalBaseQty);
+  const usedByOthersBase = rows.reduce((sum, r, i) => {
+    if (i === rowIdx) return sum;
+    if (String(r?.item_id ?? "") !== String(itemId)) return sum;
+    return sum + getRowDepositQtyInBase(r);
+  }, 0);
+  return Math.max(0, totalBaseQty - usedByOthersBase);
+};
+
+// Remaining quantity in the row's currently selected UOM, but accounting for other rows' usage in base.
+const getRemainingQtyForRowMixedUom = (
+  rows: any[],
+  rowIdx: number,
+  itemId: string,
+  totalBaseQty: number,
+  row: any
+) => {
+  const remainingBase = getRemainingBaseQtyForRow(rows, rowIdx, itemId, totalBaseQty);
+  const selected = row?.UOM?.find?.((u: any) => String(u?.value ?? "") === String(row?.uom_id ?? ""));
+  if (String(selected?.uom_type ?? "") === "secondary") {
+    return Math.floor(remainingBase / getUpcForSelectedUom(row));
+  }
+  return remainingBase;
+};
+
+const getUpcForSelectedUom = (row: any) => {
+  const selected = row?.UOM?.find?.((u: any) => String(u?.value ?? "") === String(row?.uom_id ?? ""));
+  const upc = Number(selected?.upc ?? 1);
+  return Number.isFinite(upc) && upc > 0 ? upc : 1;
+};
+
+// `quantity` value returned by API is assumed to be in base unit (PCS).
+// When secondary UOM (e.g., CSE) is selected, show/limit quantity in that UOM by dividing by UPC.
+const getDisplayQuantityByUom = (row: any) => {
+  const baseQty = Number(row?.quantity ?? 0);
+  if (!Number.isFinite(baseQty)) return 0;
+  const selected = row?.UOM?.find?.((u: any) => String(u?.value ?? "") === String(row?.uom_id ?? ""));
+  if (String(selected?.uom_type ?? "") === "secondary") {
+    // Only full secondary units (e.g., full cases). Remainder stays in primary.
+    return Math.floor(baseQty / getUpcForSelectedUom(row));
+  }
+  return baseQty;
+};
+
 export default function CapsAddPage() {
   const {
     warehouseOptions,
@@ -444,21 +531,11 @@ export default function CapsAddPage() {
   const itemsValidationSchema = yup.object().shape({
     item_id: yup.string().required("Item is required"),
     uom_id: yup.string().required("UOM is required"),
-    quantity: yup
+    deposit_qty: yup
       .number()
-      .typeError("Quantity must be a number")
-      .required("Quantity is required"),
-    receive_qty: yup
-      .number()
-      .typeError("Receive Qty must be a number")
-      .required("Receive Qty is required"),
-    receive_amount: yup
-      .number()
-      .typeError("Receive Amount must be a number")
-      .required("Receive Amount is required"),
-    receive_date: yup.string().required("Receive Date is required"),
-    remarks: yup.string().required("Remarks is required"),
-    remarks2: yup.string(), // Optional field
+      .typeError("Deposit Quantity must be a number")
+      .min(0, "Deposit Quantity must be at least 0")
+      .required("Deposit Quantity is required"),
   });
 
   // 🪄 Handlers
@@ -470,13 +547,41 @@ export default function CapsAddPage() {
   const handleTableChange = (idx: number, field: string, value: string) => {
     const newData = [...tableData];
     const item = newData[idx];
-    (item as any)[field] = value;
+    // For numeric fields, enforce constraints at state level (HTML max/min can be bypassed via typing/paste)
+    if (field === "deposit_qty") {
+        const baseTotal = Number(item?.quantity ?? 0);
+        const maxQty = getRemainingQtyForRowMixedUom(
+          newData,
+          idx,
+          String(item.item_id ?? ""),
+          Number.isFinite(baseTotal) ? baseTotal : 0,
+          item
+        );
+      const raw = value ?? "";
+
+      // Allow empty while typing
+      if (raw === "") {
+        (item as any)[field] = "";
+      } else {
+        let next = Number(raw);
+        if (Number.isNaN(next)) next = 0;
+        // prevent negative
+        next = Math.max(0, next);
+        // clamp to available quantity
+        next = Math.min(next, Math.max(0, maxQty));
+        // keep it as string to match other table fields
+        (item as any)[field] = String(next);
+      }
+    } else {
+      (item as any)[field] = value;
+    }
 
     if(field === "item_id") {
       const selectedItem = orderData.find((it) => it?.item_id?.toString() === value);
       item.UOM = selectedItem?.uoms?.map((uom) => ({
         value: String(uom.id ?? ""),
         label: String(uom.name ?? ""),
+        uom_type: String(uom.uom_type ?? ""),
         upc: String(uom.upc ?? ""),
         price: uom.uom_type == "primary" ? String(selectedItem.auom_pc_price ?? "0") 
         : uom.uom_type == "secondary" ? String(selectedItem.buom_ctn_price ?? "0") 
@@ -485,24 +590,84 @@ export default function CapsAddPage() {
       (item as any)["uom_id"] = item.UOM[0]?.value || "";
       item.qtyLoading = true;
 
-      capsQuantityCollected({ item_id: value, warehouse_id: form.warehouse_id }).then((res) => {
-        item.quantity = res?.quantity || "0";
-        item.qtyLoading = false;
-        setTableData(newData);
-      }).catch(() => {
-        item.quantity = "0";
-        item.qtyLoading = false;
-        setTableData(newData);
-      });
+      // Use functional updates so we don't rely on stale references and we always clear qtyLoading.
+      const currentRowId = String(item.id ?? idx);
+      const warehouseId = form.warehouse_id;
+      capsQuantityCollected({ item_id: value, warehouse_id: warehouseId })
+        .then((res) => {
+          const qty = String(res?.data?.quantity ?? "0");
+          setTableData((prev) =>
+            prev.map((r: any) =>
+              String(r.id) === currentRowId
+                ? { ...r, quantity: qty, qtyLoading: false }
+                : r
+            )
+          );
+        })
+        .catch(() => {
+          setTableData((prev) =>
+            prev.map((r: any) =>
+              String(r.id) === currentRowId
+                ? { ...r, quantity: "0", qtyLoading: false }
+                : r
+            )
+          );
+        });
     }
+    // capsQuantityCollected({ item_id: value, warehouse_id: form.warehouse_id }).then((res) => {
+    //     item.quantity = res?.quantity || "0";
+    //     item.qtyLoading = false;
+    //     setTableData(newData);
+    //   }).catch(() => {
+    //     item.quantity = "0";
+    //     item.qtyLoading = false;
+    //     setTableData(newData);
+    //   });
+    // }
 
     if(field === "uom_id") {
       const selectedUom = item.UOM.find((u: any) => u.value === value);
       item.price = selectedUom.price || "0";
+
+      // When switching UOM, ensure deposit_qty remains within the new max
+      const baseTotal = Number(item?.quantity ?? 0);
+      const nextRow = { ...item, uom_id: value };
+      const maxQty = getRemainingQtyForRowMixedUom(
+        newData,
+        idx,
+        String(item.item_id ?? ""),
+        Number.isFinite(baseTotal) ? baseTotal : 0,
+        nextRow
+      );
+      const currentDeposit = Number(item.deposit_qty ?? 0);
+      if (Number.isFinite(currentDeposit)) {
+        item.deposit_qty = String(Math.min(Math.max(0, currentDeposit), Math.max(0, maxQty)));
+      }
     }
 
     console.log("Updated item:", newData);
     setTableData(newData);
+
+    // Clear stale validation errors for this row/field once user edits.
+    setItemErrors((prev) => {
+      if (!prev?.[idx]) return prev;
+      if (!field) return prev;
+      const nextRowErr = { ...prev[idx] };
+      if (nextRowErr[field]) delete nextRowErr[field];
+      // If the edited field affects validation of dependent fields, also clear them.
+      if (field === "item_id") {
+        delete nextRowErr.uom_id;
+        delete nextRowErr.deposit_qty;
+      }
+      if (field === "uom_id") {
+        delete nextRowErr.deposit_qty;
+      }
+      if (Object.keys(nextRowErr).length === 0) {
+        const { [idx]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [idx]: nextRowErr };
+    });
   };
 
   const handleAddRow = () => {
@@ -513,7 +678,7 @@ export default function CapsAddPage() {
         id: newId,
         item_id: "",
         uom_id: "",
-        quantity: "1"
+        quantity: ""
       },
     ]);
   };
@@ -559,7 +724,34 @@ export default function CapsAddPage() {
 
   const codeGeneratedRef = useRef(false);
   const [code, setCode] = useState("");
-  useEffect(() => {
+  // useEffect(() => {
+  //   // generate code
+  //   if (!codeGeneratedRef.current) {
+  //     codeGeneratedRef.current = true;
+  //     let mounted = true;
+  //     (async () => {
+  //       setLoading(true);
+  //       try {
+  //         const res = await genearateCode({
+  //           model_name: "hariss_caps_collections",
+  //         });
+  //         if (mounted && res?.code) {
+  //           setCode(res.code);
+  //         }
+  //       } finally {
+  //         if (mounted) setLoading(false);
+  //       }
+  //     })();
+
+  //     return () => {
+  //       mounted = false;
+  //     };
+  //   }
+  // }, [setLoading]);
+
+
+  // 🚀 Submit
+   useEffect(() => {
     // generate code
     if (!codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
@@ -574,19 +766,19 @@ export default function CapsAddPage() {
       })();
     }
   }, []);
-
-
-  // 🚀 Submit
   const handleSubmit = async () => {
+    setLoading(true);
     try {
       // Validate form data
       await validationSchema.validate(form, { abortEarly: false });
       setErrors({});
 
-      // Filter out empty rows and validate items
-      const validRows = tableData.filter((r) => r.item_id && r.uom_id);
+      // Filter out empty rows and validate items. Keep original indexes so errors show on the right row.
+      const validRowEntries = tableData
+        .map((r, idx) => ({ row: r, idx }))
+        .filter(({ row }) => row.item_id && row.uom_id);
       
-      if (validRows.length === 0) {
+      if (validRowEntries.length === 0) {
         showSnackbar("Please add at least one valid item.", "error");
         return;
       }
@@ -595,16 +787,17 @@ export default function CapsAddPage() {
       const itemValidationErrors: Record<number, Record<string, string>> = {};
       let hasItemErrors = false;
 
-      for (let i = 0; i < validRows.length; i++) {
+      for (let i = 0; i < validRowEntries.length; i++) {
+        const { row, idx } = validRowEntries[i];
         try {
-          await itemsValidationSchema.validate(validRows[i], { abortEarly: false });
+          await itemsValidationSchema.validate(row, { abortEarly: false });
         } catch (err) {
           if (err instanceof yup.ValidationError) {
             const errors: Record<string, string> = {};
             err.inner.forEach((e) => {
               if (e.path) errors[e.path] = e.message;
             });
-            itemValidationErrors[i] = errors;
+            itemValidationErrors[idx] = errors;
             hasItemErrors = true;
           }
         }
@@ -613,6 +806,42 @@ export default function CapsAddPage() {
       if (hasItemErrors) {
         setItemErrors(itemValidationErrors);
         showSnackbar("Please fix item validation errors", "error");
+        return;
+      }
+
+      // Cross-row stock validation (mixed UOM): total deposited per item (converted to base PCS) must not exceed available base qty.
+      const mixedStockErrors: Record<number, Record<string, string>> = { ...itemValidationErrors };
+      let hasMixedStockErrors = false;
+
+      // Group rows by item_id and validate against an item's base quantity.
+      const rowsByItem: Record<string, Array<{ row: any; idx: number }>> = {};
+      validRowEntries.forEach(({ row, idx }) => {
+        const id = String(row?.item_id ?? "");
+        if (!id) return;
+        if (!rowsByItem[id]) rowsByItem[id] = [];
+        rowsByItem[id].push({ row, idx });
+      });
+
+      Object.entries(rowsByItem).forEach(([itemId, entries]) => {
+        // Base available qty (PCS) from API; assumed to be same for the same item across rows.
+        const baseTotal = Number(entries[0]?.row?.quantity ?? 0);
+        const safeBaseTotal = Number.isFinite(baseTotal) ? baseTotal : 0;
+        const totalUsedBase = entries.reduce((sum, e) => sum + getRowDepositQtyInBase(e.row), 0);
+
+        if (totalUsedBase > safeBaseTotal) {
+          hasMixedStockErrors = true;
+          entries.forEach(({ idx }) => {
+            mixedStockErrors[idx] = {
+              ...(mixedStockErrors[idx] || {}),
+              deposit_qty: "Deposit quantity exceeds available stock for this item.",
+            };
+          });
+        }
+      });
+
+      if (hasMixedStockErrors) {
+        setItemErrors(mixedStockErrors);
+        showSnackbar("Please adjust quantities (stock exceeded)", "error");
         return;
       }
 
@@ -628,15 +857,15 @@ export default function CapsAddPage() {
         claim_no: form.claim_no,
         claim_date: form.claim_date,
         claim_amount: form.claim_amount,
-        details: validRows.map((r) => ({
+        details: validRowEntries.map(({ row: r }) => ({
           item_id: parseInt(r.item_id),
           uom_id: parseInt(r.uom_id),
           quantity: parseFloat(r.quantity || "0"),
           receive_qty: parseFloat(r.receive_qty || "0"),
           receive_amount: parseFloat(r.receive_amount || "0"),
-          receive_date: r.receive_date,
-          remarks: r.remarks,
-          remarks2: r.remarks2 || "",
+          receive_date: form.claim_date,
+          // remarks: r.remarks,
+          // remarks2: r.remarks2 || "",
         })),
       };
 
@@ -663,6 +892,7 @@ export default function CapsAddPage() {
       }
     } finally {
       setSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -676,7 +906,7 @@ export default function CapsAddPage() {
           </Link>
           <h1 className="text-xl font-semibold text-gray-900 mb-1">
             {/* {isEditMode ? "Edit Hariss Caps Collection" : "Add Hariss Caps Collection"} */}
-            Add Hariss Caps Deposit
+            Add Caps Deposit
           </h1>
         </div>
       </div>
@@ -863,7 +1093,25 @@ export default function CapsAddPage() {
               {
                 key: "quantity",
                 label: "Quantity",
-                render: (row) => (row.qtyLoading ? <div className="flex justify-center items-center"><Icon className="text-gray-400 animate-spin" icon="mingcute:loading-fill" width={20} /></div> : row.quantity ?? "-"),
+                render: (row) => {
+                  if (row.qtyLoading) {
+                    return (
+                      <div className="flex justify-center items-center">
+                        <Icon className="text-gray-400 animate-spin" icon="mingcute:loading-fill" width={20} />
+                      </div>
+                    );
+                  }
+                  const baseQty = Number(row.quantity ?? 0);
+                  if (!Number.isFinite(baseQty)) return row.quantity ?? "-";
+
+                  const selected = row?.UOM?.find?.((u: any) => String(u?.value ?? "") === String(row?.uom_id ?? ""));
+                  const isSecondary = String(selected?.uom_type ?? "") === "secondary";
+                  const upc = Number(selected?.upc ?? 1);
+                  const safeUpc = Number.isFinite(upc) && upc > 0 ? upc : 1;
+                  // Secondary (e.g. CSE): show only full units. Remainder stays in primary (PCS).
+                  const displayQty = isSecondary ? Math.floor(baseQty / safeUpc) : baseQty;
+                  return String(displayQty);
+                },
               },
               {
                 key: "deposit_qty",
@@ -873,7 +1121,22 @@ export default function CapsAddPage() {
                   <InputFields
                     type="number"
                     min={0}
-                    max={row.quantity || 0}
+                    max={getRemainingQtyForRow(
+                      tableData.map((r, i) => ({ ...r, idx: i })),
+                      Number(row.idx),
+                      String(row.item_id ?? ""),
+                      String(row.uom_id ?? ""),
+                      (() => {
+                        const baseQty = Number(row.quantity ?? 0);
+                        if (!Number.isFinite(baseQty)) return 0;
+                        const selected = row?.UOM?.find?.((u: any) => String(u?.value ?? "") === String(row?.uom_id ?? ""));
+                        const isSecondary = String(selected?.uom_type ?? "") === "secondary";
+                        const upc = Number(selected?.upc ?? 1);
+                        const safeUpc = Number.isFinite(upc) && upc > 0 ? upc : 1;
+                        // Secondary (e.g. CSE): limit to full units only.
+                        return isSecondary ? Math.floor(baseQty / safeUpc) : baseQty;
+                      })()
+                    )}
                     integerOnly={true}
                     placeholder="Enter Quantity"
                     value={row.deposit_qty}
@@ -945,7 +1208,7 @@ export default function CapsAddPage() {
           </button>
           <SidebarBtn
             isActive={!submitting}
-            label={submitting ? "Creating CAPS Collection..." : "Create CAPS Collection"}
+            label={submitting ? "Creating CAPS Deposit..." : "Create CAPS Deposit"}
             // label={submitting ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update CAPS Collection" : "Create CAPS Collection")}
             onClick={handleSubmit}
             disabled={

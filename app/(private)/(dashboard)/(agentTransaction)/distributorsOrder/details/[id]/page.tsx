@@ -656,7 +656,7 @@ export default function OrderDetailPage() {
 <WorkflowApprovalActions
         requestStepId={data?.request_step_id}
         redirectPath={backBtnUrl}
-        model="Caps_Collection_Header"
+        model="order"
       />
 
         {/* Action Buttons */}

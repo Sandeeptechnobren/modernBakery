@@ -3,7 +3,7 @@ import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import TabBtn from "@/app/components/tabBtn";
 import Container from "@mui/material/Container";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 // import {warehouseOptions} from "@/app/data/warehouseOptions";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table from "@/app/components/customTable";
@@ -86,7 +86,7 @@ const OverallPerformance: React.FC = () => {
   })
 
   const [selectedWarehouse, setSelectedWarehouse] = useState("")
-  const { warehouseOptions } = useAllDropdownListData();
+  const { warehouseOptions,ensureWarehouseLoaded } = useAllDropdownListData();
 
   const options = ["Last 12h", "Last 24h", "Last 20h"];
 
@@ -132,6 +132,9 @@ const OverallPerformance: React.FC = () => {
       isUp: true,
     },
   ];
+  useEffect(()=>{
+    ensureWarehouseLoaded();
+  },[ensureWarehouseLoaded])
   async function callAllKpisData(id: string) {
     try {
       setLoading(true)
