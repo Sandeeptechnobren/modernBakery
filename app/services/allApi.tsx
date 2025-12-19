@@ -2089,7 +2089,7 @@ export const warehouseStocksKpi = async (id: string) => {
 
 export const warehouseLowStocksKpi = async (id: string) => {
   try {
-    const res = await API.get(`/api/settings/warehouse-stocks/46/low-items`);
+    const res = await API.get(`/api/settings/warehouse-stocks/${id}/low-items`);
 
     return res.data;
   } catch (error: unknown) {

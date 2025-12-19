@@ -8,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { RefObject, useEffect, useRef, useState } from "react";
 // import KeyValueData from "../master/customer/[customerId]/keyValueData";
 import { formatWithPattern } from "@/app/(private)/utils/date";
-import BorderIconButton from "@/app/components/borderIconButton";
+import InputFields from "@/app/components/inputFields";
 import PrintButton from "@/app/components/printButton";
 import { capsByUUID, purchaseOrderById, exportCapsViewPdf } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
@@ -18,11 +18,14 @@ import { downloadFile } from "@/app/services/allApi";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
-const columns = [
+const baseColumns = [
     { key: "index", label: "#" },
     { key: "item_name", label: "Item Name", render: (value: TableDataType) => <>{value.item_code ? `${value.item_code}` : ""} {value.item_code && value.item_name ? " - " : ""} {value.item_name ? value.item_name : ""}</> },
     { key: "uom_name", label: "UOM" },
-    { key: "quantity", label: "Collected Quantity" },
+    { key: "quantity", label: "Quantity" },
+    { key: "receive_qty", label: "Collected Quantity" },
+    { key: "receive_amount", label: "Received Amount",render:(value: TableDataType) => <>{value.receive_amount ? parseFloat(value.receive_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}</> },
+    { key: "remarks", label: "Remarks" },
 ];
 
 interface CapsDetail {
@@ -71,6 +74,8 @@ export default function CapsDetailPage() {
     const { showSnackbar } = useSnackbar();
     const [data, setData] = useState<CapsDetail | null>(null);
     const [loading, setLoadingState] = useState<boolean>(false);
+    const [isEditApproveMode, setIsEditApproveMode] = useState(false);
+    const [editValues, setEditValues] = useState<Record<string, { receive_qty: string; remarks: string }>>({});
     const params = useParams();
     const UUID = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid ?? "";
     const CURRENCY = localStorage.getItem("country") || "";
@@ -93,6 +98,43 @@ export default function CapsDetailPage() {
     useEffect(() => {
         fetchOrder();
     }, [UUID]);
+
+    // Initialize editable values whenever details load.
+    useEffect(() => {
+        if (!data?.details) return;
+        const next: Record<string, { receive_qty: string; remarks: string }> = {};
+        data.details.forEach((d: any) => {
+            const id = String(d?.id ?? d?.uuid ?? "");
+            if (!id) return;
+            next[id] = {
+                receive_qty: String(d?.receive_qty ?? ""),
+                remarks: String(d?.remarks ?? ""),
+            };
+        });
+        setEditValues(next);
+    }, [data?.details]);
+
+    const setRowEditValue = (rowKey: string, field: "receive_qty" | "remarks", value: string) => {
+        setEditValues((prev) => ({
+            ...prev,
+            [rowKey]: {
+                receive_qty: prev?.[rowKey]?.receive_qty ?? "",
+                remarks: prev?.[rowKey]?.remarks ?? "",
+                [field]: value,
+            },
+        }));
+    };
+
+    const clampReceiveQty = (raw: string, maxQty: number) => {
+        if (raw === "") return "";
+        let n = Number(raw);
+        if (Number.isNaN(n)) n = 0;
+        n = Math.max(0, n);
+        if (Number.isFinite(maxQty)) n = Math.min(n, Math.max(0, maxQty));
+        // Collected qty should be integer
+        n = Math.floor(n);
+        return String(n);
+    };
 
     const exportFile = async () => {
         try {
@@ -120,7 +162,7 @@ export default function CapsDetailPage() {
         <>
             {/* ---------- Header ---------- */}
             <div className="flex justify-between items-center mb-[20px]">
-                {/* <div className="flex items-center gap-[16px]">
+                <div className="flex items-center gap-[16px]">
                     <Icon
                         icon="lucide:arrow-left"
                         width={24}
@@ -128,11 +170,11 @@ export default function CapsDetailPage() {
                         className="cursor-pointer"
                     />
                     <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
-                        Caps Collection #{data?.order_code || "-"}
+                        Caps Deposit 
                     </h1>
-                    <BorderIconButton disabled={!data?.previous_uuid} onClick={data?.previous_uuid ? () => router.push(`${PATH}${data.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
-                    <BorderIconButton disabled={!data?.next_uuid} onClick={data?.next_uuid ? () => router.push(`${PATH}${data.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
-                </div> */}
+                    {/* <BorderIconButton disabled={!data?.previous_uuid} onClick={data?.previous_uuid ? () => router.push(`${PATH}${data.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
+                    <BorderIconButton disabled={!data?.next_uuid} onClick={data?.next_uuid ? () => router.push(`${PATH}${data.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" /> */}
+                </div>
 
                 {/* Action Buttons */}
                 <div className="flex gap-[12px] relative">
@@ -143,6 +185,14 @@ export default function CapsDetailPage() {
                 requestStepId={data?.request_step_id}
                 redirectPath={backBtnUrl}
                 model="Ht_Caps_Header"
+                onApproveIntercept={() => {
+                    if (!isEditApproveMode) {
+                        setIsEditApproveMode(true);
+                        // return true;
+                    }
+                    // Second click will proceed to confirmation popup.
+                    return false;
+                }}
             />
 
             <div ref={targetRef}>
@@ -153,8 +203,8 @@ export default function CapsDetailPage() {
                         </div>
 
                         <div className="flex flex-col items-end">
-                            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Caps Collection</span>
-                            {/* <span className="text-primary text-[14px] tracking-[8px]">#{data?.order_code || "-"}</span> */}
+                            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Caps Deposit</span>
+                            <span className="text-primary text-[14px] tracking-[8px]">#{data?.osa_code || "-"}</span>
                         </div>
                     </div>
 
@@ -194,6 +244,9 @@ export default function CapsDetailPage() {
                                 {data?.truck_no && <div className="mt-2">
                                     Truck: <span className="font-bold">{data?.truck_no || ""}</span>
                                 </div>}
+                                {data?.claim_no && <div className="mt-2">
+                                    Claim No: <span className="font-bold">{data?.claim_no}</span>
+                                </div>}
                                 {data?.claim_date && isValidDate(new Date(data?.claim_date)) && <div className="mt-2">
                                     Claim Date: <span className="font-bold">{formatWithPattern(new Date(data?.claim_date), "DD MMM YYYY", "en-GB").toLowerCase() || ""}</span>
                                 </div>}
@@ -203,16 +256,81 @@ export default function CapsDetailPage() {
 
                     {/* ---------- Order Table ---------- */}
                     <Table
+                    
                         data={(data?.details || []).map((row, index) => {
                             const mappedRow: Record<string, string> = { index: String(index + 1) };
                             Object.keys(row).forEach((key) => {
                                 const value = (row as any)[key];
                                 mappedRow[key] = value === null || value === undefined ? "" : String(value);
                             });
+                            // Override editable fields from local state when in edit mode.
+                            const rowKey = String((row as any)?.id ?? (row as any)?.uuid ?? "");
+                            if (isEditApproveMode && rowKey && editValues[rowKey]) {
+                                mappedRow.receive_qty = editValues[rowKey].receive_qty;
+                                mappedRow.remarks = editValues[rowKey].remarks;
+                            }
                             return mappedRow;
                         })}
                         config={{
-                            columns: columns,
+                            showNestedLoading:false,
+                            columns: baseColumns.map((c: any) => {
+                                if (c.key === "receive_qty") {
+                                    return {
+                                        ...c,
+                                        render: (value: TableDataType) => {
+                                            const rowKey = String((value as any)?.id ?? (value as any)?.uuid ?? "");
+                                            const display = (value as any)?.receive_qty ?? "";
+                                            if (!isEditApproveMode) return <>{display}</>;
+
+                                            const maxQty = Number((value as any)?.quantity ?? 0);
+                                            const safeMax = Number.isFinite(maxQty) ? maxQty : 0;
+
+                                            return (
+                                                <div className="w-[120px] min-w-[120px] max-w-[120px]">
+                                                    <InputFields
+                                                        type="number"
+                                                        min={0}
+                                                        max={safeMax}
+                                                        integerOnly={true}
+                                                        placeholder="Collected qty"
+                                                        value={editValues[rowKey]?.receive_qty ?? String(display ?? "")}
+                                                        onChange={(e) =>
+                                                            setRowEditValue(
+                                                                rowKey,
+                                                                "receive_qty",
+                                                                clampReceiveQty(e.target.value, safeMax)
+                                                            )
+                                                        }
+                                                        width="100%"
+                                                    />
+                                                </div>
+                                            );
+                                        },
+                                    };
+                                }
+                                if (c.key === "remarks") {
+                                    return {
+                                        ...c,
+                                        render: (value: TableDataType) => {
+                                            const rowKey = String((value as any)?.id ?? (value as any)?.uuid ?? "");
+                                            const display = (value as any)?.remarks ?? "";
+                                            if (!isEditApproveMode) return <>{display ? display : "-"}</>;
+                                            return (
+                                                <div className="w-[220px] min-w-[220px] max-w-[220px] overflow-hidden">
+                                                    <InputFields
+                                                        type="text"
+                                                        placeholder="Remarks"
+                                                        value={editValues[rowKey]?.remarks ?? String(display ?? "")}
+                                                        onChange={(e) => setRowEditValue(rowKey, "remarks", e.target.value)}
+                                                        width="100%"
+                                                    />
+                                                </div>
+                                            );
+                                        },
+                                    };
+                                }
+                                return c;
+                            }),
                         }}
                     />
 

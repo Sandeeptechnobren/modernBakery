@@ -155,7 +155,7 @@ export default function CapsPage() {
           config={{
             api: { list: fetchOrders, filterBy: filterBy },
             header: {
-              title: "Company Caps Collections",
+              title: "CAPS Deposit",
               searchBar: false,
               columnFilter: true,
               //   threeDot: [

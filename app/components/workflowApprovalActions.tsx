@@ -26,6 +26,11 @@ interface WorkflowApprovalActionsProps {
   model?: string;
   uuid?: string;
   onSuccess?: () => void;
+  /**
+   * Optional hook to intercept an approve click.
+   * If it returns true, default approve confirmation + API call will be skipped.
+   */
+  onApproveIntercept?: () => boolean | Promise<boolean>;
 }
 
 const requireCommentActions = ["reject", "returnBack"] as const;
@@ -49,7 +54,8 @@ export default function WorkflowApprovalActions({
   redirectPath,
   onSuccess,
   model,
-  uuid = ""
+  uuid = "",
+  onApproveIntercept,
 }: WorkflowApprovalActionsProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -265,8 +271,14 @@ export default function WorkflowApprovalActions({
             label={"Approve"}
             labelTw="font-medium text-[12px]"
             onClick={() => {
-              setApprovalName("approve");
-              setShowDeletePopup(true);
+              (async () => {
+                if (onApproveIntercept) {
+                  const intercepted = await onApproveIntercept();
+                  if (intercepted) return;
+                }
+                setApprovalName("approve");
+                setShowDeletePopup(true);
+              })();
             }}
             disabled={
               loadingWorkflow.approve ||
