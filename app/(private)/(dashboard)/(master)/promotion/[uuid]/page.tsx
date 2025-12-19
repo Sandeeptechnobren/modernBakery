@@ -25,7 +25,7 @@ export default function AddPricing() {
   const params = useParams();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  
+
   const paramsTyped = params as { uuid?: string | string[]; id?: string | string[] } | undefined;
   const rawParam = (paramsTyped?.uuid ?? paramsTyped?.id) as string | string[] | undefined;
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
@@ -468,41 +468,44 @@ export default function AddPricing() {
 
   return (
     <>
-      {(dataLoading || submitLoading) && <Loading />}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => {
-            if (currentStep > 1) {
-              prevStep();
-            } else {
-              router.push("/promotion");
-            }
-          }}
-          className="p-1 rounded-full hover:bg-gray-100"
-          aria-label="Go back"
-        >
-          <Icon icon="lucide:arrow-left" width={24} />
-        </button>
-        <h1 className="text-xl font-semibold text-gray-900">
-          {isEditMode ? "Update Promotion" : "Add Promotion"}
-        </h1>
-      </div>
-      <div className="flex justify-between items-center mb-6 pb-6">
-        <StepperForm
-          steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
-          currentStep={currentStep}
-          onStepClick={() => { }}
-          onBack={prevStep}
-          onNext={handleNext}
-          onSubmit={handleSubmit}
-          showSubmitButton={isLastStep}
-          showNextButton={!isLastStep}
-          nextButtonText="Save & Next"
-          submitButtonText={isEditMode ? "Update" : "Submit"}
-        >
-          {renderStepContent()}
-        </StepperForm>
-      </div>
+      {(dataLoading || submitLoading) ? <Loading /> :
+        <>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (currentStep > 1) {
+                  prevStep();
+                } else {
+                  router.push("/promotion");
+                }
+              }}
+              className="p-1 rounded-full hover:bg-gray-100"
+              aria-label="Go back"
+            >
+              <Icon icon="lucide:arrow-left" width={24} />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900">
+              {isEditMode ? "Update Promotion" : "Add Promotion"}
+            </h1>
+          </div>
+          <div className="flex justify-between items-center mb-6 pb-6">
+            <StepperForm
+              steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
+              currentStep={currentStep}
+              onStepClick={() => { }}
+              onBack={prevStep}
+              onNext={handleNext}
+              onSubmit={handleSubmit}
+              showSubmitButton={isLastStep}
+              showNextButton={!isLastStep}
+              nextButtonText="Save & Next"
+              submitButtonText={isEditMode ? "Update" : "Submit"}
+            >
+              {renderStepContent()}
+            </StepperForm>
+          </div>
+        </>
+      }
     </>
   );
 }
