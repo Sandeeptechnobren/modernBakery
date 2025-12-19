@@ -51,15 +51,8 @@ const columns = [
     },
   },
   {
-    key: "truckname",
-    label: "Truck Name",
-    showByDefault: true,
-    render: (row: TableDataType) => {
-      const code = row.truckno ?? "";
-      const name = row.truckname ?? "";
-      if (!code && !name) return "-";
-      return `${code}${code && name ? " - " : ""}${name}`;
-    },
+    key: "truck_no",
+    label: "Truck Number",
   },
   { key: "message", label: "Message", showByDefault: true },
 ];

@@ -780,7 +780,7 @@ export default function PurchaseOrderAddEditPage() {
       };
     });
     return {
-      order_code: code,
+      return_code: code,
       customer_id: Number(values?.customer) || null,
       turnman: values?.turnman || "",
       truck_no: values?.truckNo || "",
@@ -788,7 +788,7 @@ export default function PurchaseOrderAddEditPage() {
       // return_no: values?.returnNo || "",
       warehouse_id: Number(values?.warehouse) || null,
       // driver_id: Number(values?.driver) || null,
-      driver_id: 0,
+      driver_id: null,
       total: finalTotal,
       vat: +totalVat.toFixed(2),
       net: +totalNet.toFixed(2),
@@ -829,8 +829,8 @@ export default function PurchaseOrderAddEditPage() {
       // console.log("Submitting payload:", payload);
       const res = await returnCreate(payload);
       if (res.error) {
-        showSnackbar(res.data.message || "Failed to create purchase order", "error");
-        console.error("Create Purchase order error:", res);
+        showSnackbar(res.data.message || "Failed to create Return", "error");
+        console.error("Create Return error:", res);
       } else {
         try {
           await saveFinalCode({
@@ -840,12 +840,12 @@ export default function PurchaseOrderAddEditPage() {
         } catch (e) {
           // Optionally handle error, but don't block success
         }
-        showSnackbar("Order created successfully", "success");
+        showSnackbar("Return created successfully", "success");
         router.push("/return");
       }
     } catch (err) {
       console.error(err);
-      showSnackbar("Failed to submit order", "error");
+      showSnackbar("Failed to submit return", "error");
     } finally {
       if (formikHelpers && typeof formikHelpers.setSubmitting === "function") {
         formikHelpers.setSubmitting(false);
