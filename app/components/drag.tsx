@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Calendar, BarChart3, Table } from 'lucide-react';
-import { Icon } from "@iconify/react";
+import { Icon } from "@iconify-icon/react";
 import axios from 'axios';
 import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';

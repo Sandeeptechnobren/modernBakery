@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Icon } from "@iconify/react";
+import { Icon } from "@iconify-icon/react";
 import { ChevronDown } from 'lucide-react';
 
 interface ExportButtonsProps {
