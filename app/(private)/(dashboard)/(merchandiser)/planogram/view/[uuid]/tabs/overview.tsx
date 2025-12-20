@@ -29,6 +29,8 @@ export const OverviewTab = () => {
   const [imageObjects, setImageObject] = useState<
     { shelf_id: number; image: string }[]
   >([]);
+  const [images, setImages] = useState<string[]>([]);
+
 
   useEffect(() => {
     if (!uuid) return;
@@ -38,25 +40,16 @@ export const OverviewTab = () => {
         setLoading(true);
         const response = await getPlanogramById(uuid);
         const data = response?.data?.data || response?.data;
-        const imageObjects =
-          data.images
-            ?.flat(2)
-            ?.filter(
-              (item: {
-                shelf_id: number;
-                image: string;
-              }): item is { shelf_id: number; image: string } =>
-                !!item?.shelf_id && !!item?.image
-            ) || [];
 
-        setImageObject(imageObjects);
+        setImages(data?.images || []);
         setShelfData(data);
       } catch (error) {
-        console.error("Error fetching shelf data:", error);
+        console.error("Error fetching planogram data:", error);
       } finally {
         setLoading(false);
       }
     };
+
 
     fetchPlanogramfData();
   }, [uuid]);
@@ -91,27 +84,22 @@ export const OverviewTab = () => {
           />
         </ContainerCard>
         <ContainerCard>
-          {imageObjects && imageObjects.length > 0 ? (
-            imageObjects.map(
-              (
-                data: {
-                  shelf_id: number;
-                  image: string;
-                },
-                index: number
-              ) => (
+          {images.length > 0 ? (
+            <div className="flex gap-4 flex-wrap">
+              {images.map((url, index) => (
                 <img
                   key={index}
-                  src={`https://api.coreexl.com/osa_productionV2/public${data.image}`}
-                  alt={`Shelf ${data.shelf_id}`}
+                  src={url}
+                  alt={`Planogram image ${index + 1}`}
                   className="w-48 h-48 object-cover rounded-lg border border-gray-300"
                 />
-              )
-            )
+              ))}
+            </div>
           ) : (
             <p className="text-gray-500 text-sm">No images available.</p>
           )}
         </ContainerCard>
+
       </div>
     </div>
   );

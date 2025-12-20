@@ -41,7 +41,7 @@ type PlanogramFormValues = {
   valid_to: string;
   merchendisher_ids: number[];
   customer_ids: number[];
-  images: File | string | null;
+  images: File[];
 };
 
 type MerchandiserResponse = { id: number; name: string };
@@ -117,10 +117,8 @@ export default function Planogram() {
   >([]);
   const [shelfOptions, setShelfOptions] = useState<ShelfOption[]>([]);
   const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
-  const [existingImages, setExistingImages] = useState<Record<number, string | File>>(
-    {}
-  );
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [planogramImageError, setPlanogramImageError] = useState<string | null>(null);
   const ALLOWED_LOGO_TYPES = [
@@ -139,7 +137,7 @@ export default function Planogram() {
     valid_to: "",
     merchendisher_ids: [],
     customer_ids: [],
-    images: null,
+    images: [],
   });
 
   const {
@@ -197,15 +195,10 @@ export default function Planogram() {
               planogramData.shelves?.map((s: { id: number }) => s.id) || [];
 
             // Store existing images for display
-            const imagesMap: Record<number, string | File> = {};
             if (Array.isArray(planogramData.images)) {
-              planogramData.images.forEach((imgObj: ImageObject) => {
-                imagesMap[imgObj.shelf_id] = imgObj.image;
-              });
+              setExistingImages(planogramData.images); // string[]
             }
 
-
-            setExistingImages(imagesMap);
 
             if (merchIds.length > 0) {
               await fetchCustomers(merchIds);
@@ -221,7 +214,7 @@ export default function Planogram() {
                 : "",
               merchendisher_ids: merchIds,
               customer_ids: custIds,
-              images: null,
+              images: [],
             });
           }
         } else {
@@ -265,13 +258,12 @@ export default function Planogram() {
   };
 
   useEffect(() => {
-    if (isEditMode && Object.values(existingImages)[0]) {
-      const img = Object.values(existingImages)[0];
-      if (typeof img === "string") {
-        setLogoPreview(img);
-      }
+    if (isEditMode && existingImages.length > 0) {
+      setImagePreviews(existingImages);
     }
   }, [existingImages, isEditMode]);
+
+
 
 
 
@@ -348,9 +340,10 @@ export default function Planogram() {
         formData.append("customer_id[]", id.toString());
       });
 
-      if (values.images) {
-        formData.append("images[]", values.images);
-      }
+      values.images.forEach((file) => {
+        formData.append("images[]", file);
+      });
+
 
 
       const res = isEditMode
@@ -522,67 +515,68 @@ export default function Planogram() {
               </div>
               <div className="relative">
                 <InputFields
-                  required
-                  label="Planogram Image"
+                  label="Planogram Images"
                   name="images"
                   type="file"
+                  multiple={true}
                   onChange={(e) => {
-                    const file = (e.target as HTMLInputElement).files?.[0] ?? null;
+                    const files = Array.from(
+                      (e.target as HTMLInputElement).files || []
+                    );
+
                     setPlanogramImageError(null);
 
-                    // user removed file
-                    if (!file) {
-                      setFieldValue("images", null);
-                      setLogoPreview(null);
+                    if (!files.length) {
+                      setFieldValue("images", []);
+                      setImagePreviews([]);
                       return;
                     }
 
-                    // type validation
-                    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
-                      setPlanogramImageError("Unsupported file type");
-                      setFieldValue("images", null);
-                      setLogoPreview(null);
-                      return;
-                    }
+                    const validFiles: File[] = [];
+                    const previews: string[] = [];
 
-                    // size validation
-                    if (file.size > MAX_LOGO_SIZE) {
-                      setPlanogramImageError("File too large. Max 1MB");
-                      setFieldValue("images", null);
-                      setLogoPreview(null);
-                      return;
-                    }
-
-                    // valid file
-                    setFieldValue("images", file);
-
-                    try {
-                      if (logoPreview?.startsWith("blob:")) {
-                        URL.revokeObjectURL(logoPreview);
+                    for (const file of files) {
+                      if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+                        setPlanogramImageError("Unsupported file type detected");
+                        continue;
                       }
-                      setLogoPreview(URL.createObjectURL(file));
-                    } catch {
-                      setLogoPreview(null);
-                    }
-                  }}
 
+                      if (file.size > MAX_LOGO_SIZE) {
+                        setPlanogramImageError("One or more files exceed 1MB");
+                        continue;
+                      }
+
+                      validFiles.push(file);
+                      previews.push(URL.createObjectURL(file));
+                    }
+
+                    setFieldValue("images", validFiles);
+                    setImagePreviews(previews);
+                  }}
                 />
 
-                {logoPreview && (
+
+                {imagePreviews.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setIsImageModalOpen(true)}
-                    className="absolute right-1 top-0 p-1 hover:text-blue-600 hover:cursor-pointer"
-                    aria-label="View logo"
+                    className="absolute ps-75 top-0 p-1 hover:text-blue-600"
                   >
                     <div className="flex items-center gap-[2px]">
-                      <span className="text-[10px]">View Logo</span>
+                      <span className="text-[10px]">
+                        View Images ({imagePreviews.length})
+                      </span>
                       <Icon icon="mdi:eye" width={18} />
                     </div>
                   </button>
                 )}
 
-                {planogramImageError && <div className="text-xs text-red-500 mt-1">{planogramImageError}</div>}
+                {planogramImageError && (
+                  <div className="text-xs text-red-500 mt-1">
+                    {planogramImageError}
+                  </div>
+                )}
+
               </div>
             </div>
           </ContainerCard>
@@ -651,7 +645,7 @@ export default function Planogram() {
 
               {/* ✅ modal MUST live inside render-prop */}
               <ImagePreviewModal
-                images={logoPreview ? [logoPreview] : []}
+                images={imagePreviews}
                 isOpen={isImageModalOpen}
                 onClose={() => setIsImageModalOpen(false)}
               />
