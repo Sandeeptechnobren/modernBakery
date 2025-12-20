@@ -77,7 +77,7 @@ const columns = [
 ];
 
 const DiscountPage = () => {
-    const { can, permissions } = usePagePermissions("/discount");
+    const { can, permissions } = usePagePermissions();
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);

@@ -41,7 +41,7 @@ interface LocalTableDataType {
 
 export default function Item() {
   const { setLoading } = useLoading();
-  const { can, permissions } = usePagePermissions("/item");
+  const { can, permissions } = usePagePermissions();
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Refresh table when permissions load

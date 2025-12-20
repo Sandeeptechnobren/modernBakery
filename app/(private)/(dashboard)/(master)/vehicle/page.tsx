@@ -113,7 +113,7 @@ const columns = [
 ];
 
 export default function VehiclePage() {
-  const { can, permissions } = usePagePermissions("/vehicle");
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [refreshKey, setRefreshKey] = useState(0);
 

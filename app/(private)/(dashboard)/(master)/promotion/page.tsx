@@ -53,7 +53,7 @@ const columns = [
 ];
 
 export default function Pricing() {
-    const { can, permissions } = usePagePermissions("/promotion");
+    const { can, permissions } = usePagePermissions();
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { getSubmenuBasedPermissions } from "@/app/services/allApi";
 import { usePermissionManager } from "@/app/components/contexts/usePermission";
 import { LinkDataType } from "@/app/(private)/data/dashboardLinks";
@@ -8,17 +9,21 @@ import { LinkDataType } from "@/app/(private)/data/dashboardLinks";
 /**
  * Custom hook to handle page-level permissions.
  * Centralizes the logic for finding menu IDs and fetching permissions.
+ * @param path - Optional path to check permissions for. Defaults to current pathname.
  */
-export const usePagePermissions = (path: string) => {
+export const usePagePermissions = (path?: string) => {
+  const pathname = usePathname();
+  const targetPath = path || pathname;
+  
   const { filteredMenu } = usePermissionManager();
   const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const findMenuId = useCallback((menus: LinkDataType[], targetPath: string): number | string | undefined => {
+  const findMenuId = useCallback((menus: LinkDataType[], target: string): number | string | undefined => {
     for (const menu of menus) {
-      if (menu.href === targetPath) return menu.id;
+      if (menu.href === target) return menu.id;
       if (menu.children) {
-        const id = findMenuId(menu.children, targetPath);
+        const id = findMenuId(menu.children, target);
         if (id) return id;
       }
     }
@@ -28,7 +33,7 @@ export const usePagePermissions = (path: string) => {
   useEffect(() => {
     if (!filteredMenu) return;
 
-    const menuId = findMenuId(filteredMenu as LinkDataType[], path);
+    const menuId = findMenuId(filteredMenu as LinkDataType[], targetPath);
     if (menuId) {
       setLoading(true);
       getSubmenuBasedPermissions(menuId).then((res: any) => {
@@ -42,7 +47,7 @@ export const usePagePermissions = (path: string) => {
     } else {
       setLoading(false);
     }
-  }, [filteredMenu, path, findMenuId]);
+  }, [filteredMenu, targetPath, findMenuId]);
 
   /**
    * Helper function to check if a user has a specific permission.

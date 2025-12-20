@@ -46,8 +46,7 @@ interface CustomerItem {
 }
 
 export default function CompanyCustomers() {
-  const { can, permissions } = usePagePermissions("/keyCustomer");
-  // const [customers, setCustomers] = useState<CustomerItem[]>([]);
+  const { can, permissions } = usePagePermissions();
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Refresh table when permissions load

@@ -17,7 +17,7 @@ import { getPaymentType } from "../keyCustomer/details/[uuid]/page";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function AgentCustomer() {
-    const { can, permissions } = usePagePermissions("/fieldCustomer");
+    const { can, permissions } = usePagePermissions();
     const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseAllOptions, routeOptions, ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
     // Load dropdown data

@@ -36,16 +36,7 @@ const columns = [
 ];
 
 export default function RouteVisits() {
-  interface RouteVisitItem {
-    uuid?: string;
-    id?: number | string;
-    from_date?: string;
-    to_date?: string;
-    customer_type?: string;
-    status?: string;
-  }
-
-  const { can, permissions } = usePagePermissions("/routeVisit");
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [refreshKey, setRefreshKey] = useState(0);
 

@@ -21,7 +21,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const SalesmanPage = () => {
-  const { can, permissions } = usePagePermissions("/salesTeam");
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();

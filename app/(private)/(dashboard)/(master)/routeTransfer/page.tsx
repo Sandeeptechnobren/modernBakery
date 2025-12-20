@@ -10,7 +10,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function StockTransfer() {
-    const { can } = usePagePermissions("/routeTransfer");
+    const { can } = usePagePermissions();
     const { routeOptions = [], ensureRouteLoaded } = useAllDropdownListData();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
