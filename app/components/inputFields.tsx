@@ -51,6 +51,7 @@ type Props = {
   error?: string | false;
   disabled?: boolean;
   isSingle?: boolean;
+
   required?: boolean;
   loading?: boolean;
   searchable?: boolean | string;
@@ -156,7 +157,7 @@ export default function InputFields({
   // const [selectedCountry, setSelectedCountry] = useState<{ name: string; code: string; flag?: string }>(defaultCountry);
   const [phone, setPhone] = useState(value);
   const [countrySearch, setCountrySearch] = useState("");
-  
+
   /**
    * Creates a keyboard event handler for arrow key navigation in dropdowns
    * @param filteredOptions - Array of options currently displayed in dropdown
@@ -178,15 +179,15 @@ export default function InputFields({
     return (e: React.KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        
+
         // Open dropdown if not already open
         if (!isDropdownOpen && setDropdownOpen) {
           setDropdownOpen(true);
           return;
         }
-        
+
         if (filteredOptions.length === 0) return;
-        
+
         setHighlightedIndex((prev) => {
           // If at the end, loop to beginning
           if (prev >= filteredOptions.length - 1) {
@@ -197,15 +198,15 @@ export default function InputFields({
         });
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        
+
         // Open dropdown if not already open
         if (!isDropdownOpen && setDropdownOpen) {
           setDropdownOpen(true);
           return;
         }
-        
+
         if (filteredOptions.length === 0) return;
-        
+
         setHighlightedIndex((prev) => {
           // If at the beginning, loop to end
           if (prev <= 0) {
@@ -222,7 +223,7 @@ export default function InputFields({
       }
     };
   };
-  
+
   useEffect(() => {
     setPhone(value);
   }, [value]);
@@ -1165,30 +1166,30 @@ export default function InputFields({
                   className="inputfields-dropdown-content transition-all ease-in-out fixed z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl overflow-auto"
                 >
                   {!isSearchable && showSearchInDropdown && (
-                      <div className="px-3 py-2 h-9 flex items-center">
-                        <svg
-                          className="w-6 h-6 text-gray-400 mr-3"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle cx="11" cy="11" r="8" />
-                          <path d="M21 21l-4.35-4.35" />
-                        </svg>
-                        <input
-                          type="text"
-                          placeholder="Search"
-                          value={search}
-                          onChange={(e) => {
-                            setSearch(e.target.value);
-                            onSearch(
-                              e.target.value
-                            ); /*console.log("Search input changed:", e.target.value);*/
-                          }}
-                          className="w-full border-none outline-none"
-                          disabled={disabled}
-                        />
+                    <div className="px-3 py-2 h-9 flex items-center">
+                      <svg
+                        className="w-6 h-6 text-gray-400 mr-3"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Search"
+                        value={search}
+                        onChange={(e) => {
+                          setSearch(e.target.value);
+                          onSearch(
+                            e.target.value
+                          ); /*console.log("Search input changed:", e.target.value);*/
+                        }}
+                        className="w-full border-none outline-none"
+                        disabled={disabled}
+                      />
                     </div>
                   )}
                   <div>
@@ -1200,11 +1201,9 @@ export default function InputFields({
                       filteredOptions.map((opt, idx) => (
                         <div
                           key={opt.value + idx}
-                          className={`inputfields-dropdown-item-${idx} px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                            value === opt.value ? "bg-gray-50" : ""
-                          } ${
-                            highlightedIndex === idx ? "bg-blue-100" : ""
-                          }`}
+                          className={`inputfields-dropdown-item-${idx} px-3 py-2 hover:bg-gray-100 cursor-pointer ${value === opt.value ? "bg-gray-50" : ""
+                            } ${highlightedIndex === idx ? "bg-blue-100" : ""
+                            }`}
                           onClick={() => {
                             safeOnChange(createSingleSelectEvent(opt.value));
                             setDropdownOpen(false);
@@ -1268,24 +1267,24 @@ export default function InputFields({
                           setHighlightedCountryIndex(-1);
                         } else if (e.key === 'ArrowDown' && dropdownOpen) {
                           e.preventDefault();
-                          const filteredCount = countries.filter((c) => 
-                            !countrySearch || 
+                          const filteredCount = countries.filter((c) =>
+                            !countrySearch ||
                             c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
                             c.code?.toLowerCase().includes(countrySearch.toLowerCase())
                           ).length;
                           setHighlightedCountryIndex((prev) => (prev < filteredCount - 1 ? prev + 1 : 0));
                         } else if (e.key === 'ArrowUp' && dropdownOpen) {
                           e.preventDefault();
-                          const filteredCount = countries.filter((c) => 
-                            !countrySearch || 
+                          const filteredCount = countries.filter((c) =>
+                            !countrySearch ||
                             c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
                             c.code?.toLowerCase().includes(countrySearch.toLowerCase())
                           ).length;
                           setHighlightedCountryIndex((prev) => (prev > 0 ? prev - 1 : filteredCount - 1));
                         } else if (e.key === 'Enter' && highlightedCountryIndex >= 0 && dropdownOpen) {
                           e.preventDefault();
-                          const filtered = countries.filter((c) => 
-                            !countrySearch || 
+                          const filtered = countries.filter((c) =>
+                            !countrySearch ||
                             c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
                             c.code?.toLowerCase().includes(countrySearch.toLowerCase())
                           );
@@ -1323,8 +1322,8 @@ export default function InputFields({
                           </div>
                         )}
                         <ul className="py-2 text-sm text-gray-700">
-                          {countries.filter((c) => 
-                            !countrySearch || 
+                          {countries.filter((c) =>
+                            !countrySearch ||
                             c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
                             c.code?.toLowerCase().includes(countrySearch.toLowerCase())
                           ).map(
@@ -1333,9 +1332,8 @@ export default function InputFields({
                                 <button
                                   type="button"
                                   onClick={() => { handleSelect(country); setCountrySearch(""); setHighlightedCountryIndex(-1); }}
-                                  className={`inline-flex w-full px-4 py-2 text-sm ${
-                                    highlightedCountryIndex === idx ? "bg-blue-100" : "hover:bg-gray-100"
-                                  }`}
+                                  className={`inline-flex w-full px-4 py-2 text-sm ${highlightedCountryIndex === idx ? "bg-blue-100" : "hover:bg-gray-100"
+                                    }`}
                                   tabIndex={-1}
                                 >
                                   <span className="inline-flex items-center">
@@ -1436,24 +1434,24 @@ export default function InputFields({
                           setHighlightedCountryIndex(-1);
                         } else if (e.key === 'ArrowDown' && dropdownOpen) {
                           e.preventDefault();
-                          const filteredCount = countries.filter((c) => 
-                            !countrySearch || 
+                          const filteredCount = countries.filter((c) =>
+                            !countrySearch ||
                             c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
                             c.code?.toLowerCase().includes(countrySearch.toLowerCase())
                           ).length;
                           setHighlightedCountryIndex((prev) => (prev < filteredCount - 1 ? prev + 1 : 0));
                         } else if (e.key === 'ArrowUp' && dropdownOpen) {
                           e.preventDefault();
-                          const filteredCount = countries.filter((c) => 
-                            !countrySearch || 
+                          const filteredCount = countries.filter((c) =>
+                            !countrySearch ||
                             c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
                             c.code?.toLowerCase().includes(countrySearch.toLowerCase())
                           ).length;
                           setHighlightedCountryIndex((prev) => (prev > 0 ? prev - 1 : filteredCount - 1));
                         } else if (e.key === 'Enter' && highlightedCountryIndex >= 0 && dropdownOpen) {
                           e.preventDefault();
-                          const filtered = countries.filter((c) => 
-                            !countrySearch || 
+                          const filtered = countries.filter((c) =>
+                            !countrySearch ||
                             c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
                             c.code?.toLowerCase().includes(countrySearch.toLowerCase())
                           );
@@ -1492,8 +1490,8 @@ export default function InputFields({
                           </div>
                         )}
                         <ul className="py-2 text-sm text-gray-700">
-                          {countries.filter((c) => 
-                            !countrySearch || 
+                          {countries.filter((c) =>
+                            !countrySearch ||
                             c.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
                             c.code?.toLowerCase().includes(countrySearch.toLowerCase())
                           ).map((country, idx) => (
@@ -1501,9 +1499,8 @@ export default function InputFields({
                               <button
                                 type="button"
                                 onClick={() => { handleSelect2(country); setCountrySearch(""); setHighlightedCountryIndex(-1); }}
-                                className={`inline-flex w-full px-4 py-2 text-sm ${
-                                  highlightedCountryIndex === idx ? "bg-blue-100" : "hover:bg-gray-100"
-                                }`}
+                                className={`inline-flex w-full px-4 py-2 text-sm ${highlightedCountryIndex === idx ? "bg-blue-100" : "hover:bg-gray-100"
+                                  }`}
                                 tabIndex={-1}
                               >
                                 <span className="inline-flex items-center">
@@ -1584,7 +1581,7 @@ export default function InputFields({
       case "number":
         return (
           <div
-            style={{width: width}}
+            style={{ width: width }}
             className={`flex border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0  ${error ? "border-red-500" : "border-gray-300"
               } overflow-hidden focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-black`}
           >
