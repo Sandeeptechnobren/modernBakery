@@ -12,6 +12,7 @@ import StatusBtn from "@/app/components/statusBtn2";
 
 interface Project {
     id: number;
+    uuid?: string;
     name: string;
     osa_code: string;
     status: number;
@@ -79,7 +80,7 @@ export default function Page() {
                                 onClick: (row: object) => {
                                     const r = row as TableDataType;
                                     router.push(
-                                        `/settings/manageAssets/project/add?id=${r.id}`
+                                        `/settings/manageAssets/project/add?uuid=${r.uuid}`
                                     );
                                 },
                             },
@@ -92,6 +93,7 @@ export default function Page() {
                                     const formatted: Project[] = (res.data || []).map(
                                         (s: Project) => ({
                                             id: s.id,
+                                            uuid: (s as any)?.uuid || (s as any)?.id,
                                             osa_code: s.osa_code,
                                             name: s.name,
                                             status: s.status,
@@ -100,6 +102,7 @@ export default function Page() {
 
                                     const tableData: TableDataType[] = formatted.map((c) => ({
                                         id: String(c.id),
+                                        uuid: c.uuid,
                                         name: c.name,
                                         osa_code: c.osa_code,
                                         status: c.status === 1 ? "Active" : "Inactive",

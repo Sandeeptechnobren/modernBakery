@@ -366,8 +366,11 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     }
 
     useEffect(() => {
-        checkForData();
         setConfig(config);
+    }, [config]);
+
+    useEffect(() => {
+        checkForData();
 
         // Only initialize "select all" when there is no saved selection in localStorage.
         // If a saved array exists we leave it to ColumnFilter's localStorage loader to restore it.

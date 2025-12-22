@@ -3,6 +3,7 @@
 import ContainerCard from "@/app/components/containerCard";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, { TableDataType } from "@/app/components/customTable";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import { StockTransferTopOrders, addStockTransfer } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
@@ -12,9 +13,17 @@ import { useEffect, useMemo, useState } from "react";
 
 export default function StockTransfer() {
     const { warehouseOptions, ensureWarehouseLoaded } = useAllDropdownListData();
+    const [warehouseLoading, setWarehouseLoading] = useState(true);
     useEffect(() => {
         ensureWarehouseLoaded();
     }, [ensureWarehouseLoaded]);
+
+    // Turn off skeleton once warehouse options arrive
+    useEffect(() => {
+        if (warehouseOptions && warehouseOptions.length > 0) {
+            setWarehouseLoading(false);
+        }
+    }, [warehouseOptions]);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
@@ -61,7 +70,8 @@ export default function StockTransfer() {
 
         const fetchItems = async () => {
             try {
-                setLoading(true);
+                // Clear current rows so the table can show its skeleton while fetching
+                setItemData([]);
                 const res = await StockTransferTopOrders(form.source_warehouse);
 
                 const stocks = (res?.data || res || []).filter(
@@ -83,12 +93,12 @@ export default function StockTransfer() {
                 // console.error(error);
                 showSnackbar("Failed to fetch items", "error");
             } finally {
-                setLoading(false);
+                // no global loader; table skeleton handles the fetch state
             }
         };
 
         fetchItems();
-    }, [form.source_warehouse, setLoading, showSnackbar]);
+    }, [form.source_warehouse, showSnackbar]);
 
     /* ------------------------------------------------------------
        UPDATE ITEM QTY
@@ -152,7 +162,7 @@ export default function StockTransfer() {
                 </h1>
                 <button
                     onClick={() => router.back()}
-                    className="bg-emerald-500 text-white px-5 py-2 rounded"
+                    className="bg-red-500 text-white px-5 py-2 rounded"
                 >
                     Back
                 </button>
@@ -161,17 +171,21 @@ export default function StockTransfer() {
             {/* WAREHOUSE SELECT */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                 <InputFields
-                    label="Source Warehouse"
+                    label="Source Distributor"
                     name="source_warehouse"
                     value={form.source_warehouse}
                     options={warehouseOptions}
                     onChange={(e) =>
                         handleChange("source_warehouse", e.target.value)
                     }
+                    searchable={true}
+                    showSearchInDropdown={true}
+                    placeholder="Search distributor"
+                    // showSkeleton={warehouseLoading}
                 />
 
                 <InputFields
-                    label="Destination Warehouse"
+                    label="Destination Distributor"
                     name="destination_warehouse"
                     value={form.destination_warehouse}
                     options={destinationWarehouseOptions}
@@ -179,6 +193,10 @@ export default function StockTransfer() {
                     onChange={(e) =>
                         handleChange("destination_warehouse", e.target.value)
                     }
+                    searchable={true}
+                    showSearchInDropdown={true}
+                    placeholder="Search distributor"
+                    showSkeleton={warehouseLoading}
                 />
             </div>
 
@@ -219,8 +237,8 @@ export default function StockTransfer() {
                         },
                     ],
                     pageSize: itemData.length || 10,
-                    showNestedLoading: false
-                }}
+                    showNestedLoading: true
+                }} 
 
             />
 
@@ -228,10 +246,11 @@ export default function StockTransfer() {
             <div className="flex justify-end mt-6">
                 <button
                     onClick={handleSubmit}
-                    className="bg-blue-600 text-white px-8 py-2 rounded"
+                    className="bg-red-600 text-white px-8 py-2 rounded-md"
                 >
                     Submit
                 </button>
+                
             </div>
         </ContainerCard>
     );
