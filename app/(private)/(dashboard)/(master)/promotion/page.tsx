@@ -18,9 +18,9 @@ import {
     pricingDetailGlobalSearch,
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext"; 
 import { useLoading } from "@/app/services/loadingContext";
-import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 interface DropdownItem {
     icon: string;
@@ -53,20 +53,20 @@ const columns = [
 ];
 
 export default function Pricing() {
-    const { can, permissions } = usePagePermissions();
+    interface PricingItem {
+
+        uuid?: string;
+        id?: number | string;
+        ose_code?: string;
+        country_name?: string;
+        currency?: string;
+    }
+
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [selectedRow, setSelectedRow] = useState<PricingItem | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
-
-    // Refresh table when permissions load
-    useEffect(() => {
-        if (permissions.length > 0) {
-            setRefreshKey((prev) => prev + 1);
-        }
-    }, [permissions]);
-
     const router = useRouter();
     const { showSnackbar } = useSnackbar(); 
 
@@ -198,7 +198,7 @@ export default function Pricing() {
                             ],
                             searchBar: true,
                             columnFilter: true,
-                            actions: can("create") ? [
+                            actions: [
                                 <SidebarBtn
                                     key={0}
                                     href="/promotion/add"
@@ -207,13 +207,13 @@ export default function Pricing() {
                                     label="Add Promotion"
                                     labelTw="hidden sm:block"
                                 />,
-                            ] : [],
+                            ],
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
                         rowActions: [
-                            ...(can("edit") ? [{
+                            {
                                 icon: "lucide:edit-2",
                                 onClick: (row: object) => {
                                     const r = row as TableDataType & { uuid?: string };
@@ -222,7 +222,7 @@ export default function Pricing() {
                                     if (!targetId) return;
                                     router.push(`/promotion/${encodeURIComponent(targetId)}`);
                                 },
-                            }] : []),
+                            },
                         ],
                         pageSize: 50,
                     }}
