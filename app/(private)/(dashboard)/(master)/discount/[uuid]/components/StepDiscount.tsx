@@ -63,11 +63,11 @@ export default function StepDiscount({
 
 
 
-    ? (itemDropdownMap["Item Category"] ? [{ label: `Select ${dropdownLabel}`, value: "" }, ...itemDropdownMap["Item Category"]] : [])
+    ? (itemDropdownMap["Item Category"] ? [...itemDropdownMap["Item Category"]] : [])
 
 
 
-    : (itemDropdownMap["Item"] ? [{ label: `Select ${dropdownLabel}`, value: "" }, ...itemDropdownMap["Item"]] : []);
+    : (itemDropdownMap["Item"] ? [...itemDropdownMap["Item"]] : []);
 
   const getFilteredOptions = (currentKey: string) => {
 
@@ -424,6 +424,8 @@ export default function StepDiscount({
                 <InputFields
 
                   required
+                  multiSelectChips={true}
+                  searchable={true}
 
                   label="Category"
 
@@ -472,6 +474,7 @@ export default function StepDiscount({
                       <InputFields
                         type="select"
                         isSingle={true}
+                        searchable={true}
                         showSkeleton={itemLoading}
                         options={getFilteredOptions(row.key)}
                         value={row.key}

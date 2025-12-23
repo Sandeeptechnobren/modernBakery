@@ -43,15 +43,15 @@ export default function AddDiscount() {
     ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureDiscountTypeLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureItemLoaded
   } = useAllDropdownListData();
 
-    const { loading: dataLoading } = useDiscountData({
-
-      isEditMode, id, setDiscount, setKeyCombo, setKeyValue, fetchItemsCategoryWise, router, showSnackbar
-
-    });
-
   const [itemOptions, setItemOptions] = useState<any[]>([]);
   const [itemLoading, setItemLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
+
+    const { loading: dataLoading } = useDiscountData({
+
+      isEditMode, id, setDiscount, setKeyCombo, setKeyValue, setItemLoading, fetchItemsCategoryWise, router, showSnackbar
+
+    });
 
   // Wrapper for user interactions to trigger resets
   const handleKeyComboChangeWrapper: React.Dispatch<React.SetStateAction<any>> = (value) => {
@@ -129,9 +129,11 @@ export default function AddDiscount() {
           fetchItemsCategory(itemCategories ?? []);
         } catch (err) {
           console.error("Failed to fetch item options for category", itemCategories, err);
+          setItemLoading(false);
         }
       } else {
         setItemOptions([]);
+        setItemLoading(false);
       }
     }
 
@@ -140,6 +142,9 @@ export default function AddDiscount() {
   // Filter keyValue["Item"]
   useEffect(() => {
     if (itemLoading) return;
+    const itemCategories = keyValue["Item Category"] || [];
+    if (itemOptions.length === 0 && itemCategories.length > 0) return;
+
     setKeyValue(prev => {
       const currentSelectedItems = prev["Item"] || [];
       if (currentSelectedItems.length === 0) return prev;
@@ -148,11 +153,14 @@ export default function AddDiscount() {
       if (newSelectedItems.length === currentSelectedItems.length) return prev;
       return { ...prev, "Item": newSelectedItems };
     });
-  }, [itemOptions, itemLoading, setKeyValue]);
+  }, [itemOptions, itemLoading, setKeyValue, keyValue]);
 
   // Filter discountItems
   useEffect(() => {
     if (itemLoading || keyCombo.Item !== "Item") return;
+    const itemCategories = keyValue["Item Category"] || [];
+    if (itemOptions.length === 0 && itemCategories.length > 0) return;
+
     setDiscount(prev => {
       const validValues = new Set(itemOptions.map(o => String(o.value)));
       const hasInvalid = prev.discountItems.some(p => p.key && !validValues.has(String(p.key)));
@@ -165,7 +173,7 @@ export default function AddDiscount() {
         })
       };
     });
-  }, [itemOptions, itemLoading, keyCombo.Item, setDiscount]);
+  }, [itemOptions, itemLoading, keyCombo.Item, setDiscount, keyValue]);
 
   // Sync Discount Items with KeyValue
   useEffect(() => {
