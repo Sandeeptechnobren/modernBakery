@@ -495,9 +495,9 @@ export const saveRouteVisit = async (body: object) => {
   }
 };
 
-export const merchandiserData = async () => {
+export const merchandiserData = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/route-visits/salesmen");
+    const res = await API.get("/api/master/route-visits/salesmen",{params});
     return res.data;
   } catch (error) {
     return handleError(error);
@@ -3850,6 +3850,24 @@ export const getProjectById = async (uuid: string) => {
 export const addRouteTransfer = async (body: object) => {
   try {
     const res = await API.post(`/api/master/route-transfer/transfer`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const outletChannelList = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/outlet-channels/get-outlet-based`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const custCatByChId = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/outlet-channels/get-outlet-based`,{params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

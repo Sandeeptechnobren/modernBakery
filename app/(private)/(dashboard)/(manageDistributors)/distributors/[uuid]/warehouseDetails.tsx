@@ -23,13 +23,17 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             region_id: false,
             area_id: false,
         });
-    const { companyOptions, agentCustomerOptions, companyCustomersOptions, fetchAreaOptions , ensureAgentCustomerLoaded, ensureCompanyCustomersLoaded, ensureCompanyLoaded} = useAllDropdownListData();
+    const { companyOptions, allCompanyOptions,allCompanyCustomerOptions, companyCustomersOptions, fetchAreaOptions , ensureAgentCustomerLoaded, ensureCompanyCustomersLoaded, ensureCompanyLoaded,ensureAllCompanyCustomersLoaded,ensureAllCompanyOptionsLoaded} = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
     ensureAgentCustomerLoaded();
     ensureCompanyCustomersLoaded();
     ensureCompanyLoaded();
+    if(isEditMode){
+        ensureAllCompanyCustomersLoaded();
+        ensureAllCompanyOptionsLoaded();
+    }
   }, [ensureAgentCustomerLoaded, ensureCompanyCustomersLoaded, ensureCompanyLoaded]);
     const [isOpen, setIsOpen] = React.useState(false);
     const [codeMode, setCodeMode] = React.useState<'auto' | 'manual'>('auto');
@@ -39,7 +43,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="flex items-start gap-2 max-w-[406px]">
+            <div className="flex flex-col gap-2">
                 <InputFields
                     required
                     label="Distributor Code"
@@ -80,8 +84,9 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     required
                     label={values.warehouse_type === "Company Outlet" ? "Select Company Customer" : "Select Distributor"}
                     name="agent_customer"
+                    searchable="true"
                     value={values.agent_customer}
-                    options={companyCustomersOptions}
+                    options={isEditMode ? allCompanyCustomerOptions : companyCustomersOptions}
                     onChange={async (e) => {
                         const val = (e.target as HTMLSelectElement).value;
                         handleChange(e);
@@ -128,7 +133,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     label="Company"
                     name="company"
                     value={values.company}
-                    options={companyOptions}
+                    options={isEditMode ? allCompanyOptions : companyOptions}
                     onChange={handleChange}
                     error={errors?.company && touched?.company ? errors.company : false}
                 />

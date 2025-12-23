@@ -12,6 +12,7 @@ import {
   saveFinalCode,
   updateRoute,
   vehicleListData,
+  warehouseList
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -20,16 +21,22 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as yup from "yup";
 
+interface Warehouse {
+  id: number;
+  warehouse_name: string;
+  warehouse_code: string;
+}
+
 export default function AddEditRoute() {
   const { routeTypeOptions, warehouseAllOptions, vehicleListOptions , ensureRouteTypeLoaded, ensureVehicleListLoaded, ensureWarehouseAllLoaded} =
     useAllDropdownListData();
-
+  const [warehouses, setWarehouses] = useState<{ value: string; label: string }[]>([]);
   // Load dropdown data
   useEffect(() => {
     ensureRouteTypeLoaded();
-    ensureVehicleListLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureRouteTypeLoaded, ensureVehicleListLoaded, ensureWarehouseAllLoaded]);
+    // ensureVehicleListLoaded();
+    // ensureWarehouseAllLoaded();
+  }, [ensureRouteTypeLoaded]);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const params = useParams();
@@ -62,10 +69,17 @@ export default function AddEditRoute() {
     setFilteredRouteOptions([]); // clear old list first
     if (!warehouseId) return;
     setSkeleton(true);
-    const filteredOptions = await vehicleListData({
-      warehouse_id: warehouseId,
-      per_page: "10",
-    });
+    let filteredOptions;
+            if (!isEditMode) {
+              filteredOptions = await vehicleListData({ dropdown: "true",warehouse_id: warehouseId });
+            } else {
+              filteredOptions = await vehicleListData({warehouse_id: warehouseId,
+      per_page: "50",});
+            }
+    // const filteredOptions = await vehicleListData({
+    //   warehouse_id: warehouseId,
+    //   per_page: "50",
+    // });
     setSkeleton(false);
 
     if (filteredOptions.error) {
@@ -131,6 +145,26 @@ export default function AddEditRoute() {
     }
   }, [isEditMode, routeId]);
 
+    useEffect(() => {
+      const fetchWarehouses = async () => {
+        try {
+          let res;
+          if (!isEditMode) {
+            res = await warehouseList({ dropdown: "true" });
+          } else {
+            res = await warehouseList();
+          }
+          if (res?.data && Array.isArray(res.data)) {
+            const options = res.data.map((w: Warehouse) => ({ value: w.id?.toString(), label: `${w.warehouse_code} - ${w.warehouse_name}` }));
+            setWarehouses(options);
+          }
+          console.log(res?.data, "Warehouse List");
+        } catch (err) {
+          showSnackbar("Failed to fetch warehouses", "error");
+        }
+      };
+      fetchWarehouses();
+    }, [showSnackbar, isEditMode]);
   // Validation schema
   const validationSchema = yup.object().shape({
     routeCode: yup.string().required("Route Code is required"),
@@ -204,7 +238,7 @@ export default function AddEditRoute() {
     }
   };
 
-  if ((isEditMode && loading) || !warehouseAllOptions || !routeTypeOptions) {
+  if ((isEditMode && loading) || !warehouses || !routeTypeOptions) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <Loading />
@@ -303,7 +337,7 @@ export default function AddEditRoute() {
                 label="Distributor"
                 // isSingle={false}
                 value={form.warehouse}
-                options={warehouseAllOptions}
+                options={warehouses}
                 onChange={(e) => {
                   const newWarehouse = e.target.value;
                   handleChange("warehouse", newWarehouse);

@@ -1,3 +1,5 @@
+
+ 
 "use client";
 import {
   agentCustomerList,
@@ -95,6 +97,7 @@ interface DropdownDataContextType {
   companyCustomersOptions: { value: string; label: string }[];
   companyCustomersTypeOptions: { value: string; label: string }[];
   itemCategoryOptions: { value: string; label: string }[];
+  itemCategoryAllOptions: { value: string; label: string }[];
   itemSubCategoryOptions: { value: string; label: string }[];
   channelOptions: { value: string; label: string }[];
   customerTypeOptions: { value: string; label: string }[];
@@ -108,9 +111,13 @@ interface DropdownDataContextType {
   vendorOptions: { value: string; label: string }[];
   salesmanOptions: { value: string; label: string }[];
   agentCustomerOptions: { value: string; label: string; contact_no?: string }[];
+  // added to match provider values for "all" lists
+  allCompanyOptions: { value: string; label: string }[];
+  allAgentCustomerOptions: { value: string; label: string; contact_no?: string }[];
   shelvesOptions: { value: string; label: string }[];
   submenuOptions: { value: string; label: string }[];
   projectOptions: { value: string; label: string }[];
+  allCompanyCustomerOptions: { value: string; label: string }[];
   companyTypeOptions: { value: string; label: string }[];
   uomOptions: { value: string; label: string }[];
   locationOptions: { value: string; label: string }[];
@@ -118,6 +125,8 @@ interface DropdownDataContextType {
   manufacturerOptions: { value: string; label: string }[];
   assetsModelOptions: { value: string; label: string }[];
   brandOptions: { value: string; label: string }[];
+  allCustomerTypeOptions: { value: string; label: string }[];
+  allCompanyTypeOptions: { value: string; label: string }[];
   brandingOptions: { value: string; label: string }[];
   userOptions: { value: string; label: string }[];
   permissions: permissionsList[];
@@ -154,6 +163,7 @@ interface DropdownDataContextType {
   ensureCompanyCustomersLoaded: () => void;
   ensureCompanyCustomersTypeLoaded: () => void;
   ensureItemCategoryLoaded: () => void;
+  ensureAllItemCategoryLoaded: () => void;
   ensureItemSubCategoryLoaded: () => void;
   ensureChannelLoaded: () => void;
   ensureCustomerTypeLoaded: () => void;
@@ -161,6 +171,8 @@ interface DropdownDataContextType {
   ensureVehicleListLoaded: () => void;
   ensureCustomerCategoryLoaded: () => void;
   ensureCustomerSubCategoryLoaded: () => void;
+  ensureAllAgentCustomersLoaded: () => void;
+  ensureAllCompanyOptionsLoaded: () => void;
   ensureItemLoaded: () => void;
   ensureDiscountTypeLoaded: () => void;
   ensureMenuListLoaded: () => void;
@@ -182,6 +194,9 @@ interface DropdownDataContextType {
   ensureBrandLoaded: () => void;
   ensureBrandingLoaded: () => void;
   ensureUserLoaded: () => void;
+  ensureAllCompanyCustomersLoaded: () => void;
+  ensureAllCustomerTypesLoaded: () => void;
+  ensureAllCompanyTypesLoaded: () => void;
 }
 
 // Minimal interfaces reflecting the expected fields returned by API for dropdown lists
@@ -460,6 +475,131 @@ export const useAllDropdownListData = () => {
 };
 
 export const AllDropdownListDataProvider = ({ children }: { children: ReactNode }) => {
+  // Track which dropdowns have been fetched using useRef to avoid re-renders
+  const fetchedRef = useRef<Set<string>>(new Set());
+  const fetchingRef = useRef<Set<string>>(new Set());
+  // State for all company types
+  const [allCompanyTypes, setAllCompanyTypes] = useState<CompanyType[]>([]);
+
+  // Ensure method for all company types
+  const ensureAllCompanyTypesLoaded = useCallback(() => {
+    companyTypeList().then(res => {
+      setAllCompanyTypes(Array.isArray(res?.data) ? res.data : []);
+      fetchedRef.current.add('allCompanyTypes');
+      fetchingRef.current.delete('allCompanyTypes');
+    }).catch(() => {
+      setAllCompanyTypes([]);
+      fetchingRef.current.delete('allCompanyTypes');
+    });
+  }, [setAllCompanyTypes, fetchedRef, fetchingRef]);
+  // Options for all company types
+  const allCompanyTypeOptions = (Array.isArray(allCompanyTypes) ? allCompanyTypes : []).map((c: CompanyType) => ({
+    value: String(c.id ?? ''),
+    label: c.name ? `${c.name}` : (c.name ?? '')
+  }));
+  // State for all customer types
+   
+  const [allCustomerTypes, setAllCustomerTypes] = useState<CustomerType[]>([]);
+
+  // Ensure method for all customer types
+  const ensureAllCustomerTypesLoaded = useCallback(() => {
+    getCustomerType().then(res => {
+      setAllCustomerTypes(Array.isArray(res?.data) ? res.data : []);
+      fetchedRef.current.add('allCustomerTypes');
+      fetchingRef.current.delete('allCustomerTypes');
+    }).catch(() => {
+      setAllCustomerTypes([]);
+      fetchingRef.current.delete('allCustomerTypes');
+    });
+  }, [setAllCustomerTypes, fetchedRef, fetchingRef]);
+  // Options for all customer types
+  const allCustomerTypeOptions = (Array.isArray(allCustomerTypes) ? allCustomerTypes : []).map((c: CustomerType) => ({
+    value: String(c.id ?? ''),
+    label: c.name ? `${c.name}` : (c.name ?? '')
+  }));
+  // Track which dropdowns have been fetched using useRef to avoid re-renders
+ 
+
+  // State for all company customers
+  const [allCompanyCustomers, setAllCompanyCustomers] = useState<CustomerItem[]>([]);
+
+  // Ensure method for all company customers
+  const ensureAllCompanyCustomersLoaded = useCallback(() => {
+    getCompanyCustomers().then(res => {
+      setAllCompanyCustomers(Array.isArray(res?.data) ? res.data : []);
+      fetchedRef.current.add('allCompanyCustomers');
+      fetchingRef.current.delete('allCompanyCustomers');
+    }).catch(() => {
+      setAllCompanyCustomers([]);
+      fetchingRef.current.delete('allCompanyCustomers');
+    });
+  }, [setAllCompanyCustomers, fetchedRef, fetchingRef]);
+  // Track which dropdowns have been fetched using useRef to avoid re-renders
+
+  // State for all company customers
+
+  // Ensure method for all company customers
+  // State for all company customers
+  // const [allCompanyCustomers, setAllCompanyCustomers] = useState<CustomerItem[]>([]);
+
+  // // Ensure method for all company customers
+  // const ensureAllCompanyCustomersLoaded = useCallback(() => {
+  //   getCompanyCustomers({ dropdown: 'true' }).then(res => {
+  //     setAllCompanyCustomers(Array.isArray(res?.data) ? res.data : []);
+  //     fetchedRef.current.add('allCompanyCustomers');
+  //     fetchingRef.current.delete('allCompanyCustomers');
+  //   }).catch(() => {
+  //     setAllCompanyCustomers([]);
+  //     fetchingRef.current.delete('allCompanyCustomers');
+  //   });
+  // }, [setAllCompanyCustomers, fetchedRef, fetchingRef]);
+  // Options for all company customers
+  
+  // State for all agent customers and all companies
+  
+  const [allAgentCustomers, setAllAgentCustomers] = useState<AgentCustomerList[]>([]);
+  const [allCompanies, setAllCompanies] = useState<CompanyItem[]>([]);
+
+  // Track which dropdowns have been fetched using useRef to avoid re-renders
+  // const fetchedRef = useRef<Set<string>>(new Set());
+  // const fetchingRef = useRef<Set<string>>(new Set());
+
+  // Track which dropdowns have been fetched using useRef to avoid re-renders
+
+  // Ensure methods for all agent customers and all companies (must be after refs)
+
+  // Track which dropdowns have been fetched using useRef to avoid re-renders
+
+  // Ensure methods for all agent customers and all companies (must be after refs)
+
+  // Ensure methods for all agent customers and all companies
+  const ensureAllAgentCustomersLoaded = useCallback(() => {
+    // if (fetchedRef.current.has('allAgentCustomers') || fetchingRef.current.has('allAgentCustomers')) return;
+    // fetchingRef.current.add('allAgentCustomers');
+    agentCustomerList().then(res => {
+      setAllAgentCustomers(Array.isArray(res?.data) ? res.data : []);
+      fetchedRef.current.add('allAgentCustomers');
+      fetchingRef.current.delete('allAgentCustomers');
+    }).catch(() => {
+      setAllAgentCustomers([]);
+      fetchingRef.current.delete('allAgentCustomers');
+    });
+  }, [setAllAgentCustomers, fetchedRef,fetchingRef]);
+
+  const ensureAllCompanyOptionsLoaded = useCallback(() => {
+    // if (fetchedRef.current.has('allCompanies') || fetchingRef.current.has('allCompanies')) return;
+    // fetchingRef.current.add('allCompanies');
+    companyList().then(res => {
+      setAllCompanies(Array.isArray(res?.data) ? res.data : []);
+      fetchedRef.current.add('allCompanies');
+      fetchingRef.current.delete('allCompanies');
+    }).catch(() => {
+      setAllCompanies([]);
+      fetchingRef.current.delete('allCompanies');
+    });
+  }, [setAllCompanies, fetchedRef,fetchingRef]);
+  // Options for all agent customers and all companies
+  
   // define typed state for each dropdown list
   const [companyListData, setCompanyListData] = useState<CompanyItem[]>([]);
   const [countryListData, setCountryListData] = useState<CountryItem[]>([]);
@@ -474,6 +614,15 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [companyCustomersData, setCompanyCustomersData] = useState<CustomerItem[]>([]);
   const [companyCustomersTypeData, setCompanyCustomersTypeData] = useState<CustomerTypeItem[]>([]);
   const [itemCategoryData, setItemCategoryData] = useState<ItemCategoryItem[]>([]);
+  const [itemCategoryAllData, setItemCategoryAllData] = useState<ItemCategoryItem[]>([]);
+  // Fetch all item categories for all options (dropdown:true)
+  useEffect(() => {
+    itemCategory().then(res => {
+      setItemCategoryAllData(Array.isArray(res?.data) ? res.data : []);
+    }).catch(() => {
+      setItemCategoryAllData([]);
+    });
+  }, []);
   const [itemSubCategoryData, setItemSubCategoryData] = useState<ItemSubCategoryItem[]>([]);
   const [channelListData, setChannelListData] = useState<ChannelItem[]>([]);
   const [customerTypeData, setCustomerTypeData] = useState<CustomerType[]>([]);
@@ -505,8 +654,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [loading, setLoading] = useState(false);
 
   // Track which dropdowns have been fetched using useRef to avoid re-renders
-  const fetchedRef = useRef<Set<string>>(new Set());
-  const fetchingRef = useRef<Set<string>>(new Set());
+  
 
   // Helper to normalize API responses
   const normalizeResponse = useCallback((r: unknown): unknown[] => {
@@ -522,7 +670,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureCompanyLoaded = useCallback(() => {
     // if (fetchedRef.current.has('company') || fetchingRef.current.has('company')) return;
     // fetchingRef.current.add('company');
-    companyList().then(res => {
+    companyList({dropdown:"true"}).then(res => {
       setCompanyListData(normalizeResponse(res) as CompanyItem[]);
       fetchedRef.current.add('company');
       fetchingRef.current.delete('company');
@@ -600,7 +748,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureWarehouseAllLoaded = useCallback(() => {
     // if (fetchedRef.current.has('warehouseAll') || fetchingRef.current.has('warehouseAll')) return;
     // fetchingRef.current.add('warehouseAll');
-    warehouseList({ dropdown: 'true' }).then(res => {
+    warehouseList().then(res => {
       setWarehouseAllList(normalizeResponse(res) as WarehouseAll[]);
       fetchedRef.current.add('warehouseAll');
       fetchingRef.current.delete('warehouseAll');
@@ -675,6 +823,18 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     });
   }, [normalizeResponse]);
 
+   // Lazy load function for all item categories (for itemCategoryAllOptions)
+  const ensureAllItemCategoryLoaded = useCallback(() => {
+    itemCategory().then(res => {
+      setItemCategoryAllData(Array.isArray(res?.data) ? res.data : []);
+      fetchedRef.current.add('itemCategoryAll');
+      fetchingRef.current.delete('itemCategoryAll');
+    }).catch(() => {
+      setItemCategoryAllData([]);
+      fetchingRef.current.delete('itemCategoryAll');
+    });
+  }, []);
+
   const ensureItemSubCategoryLoaded = useCallback(() => {
     // if (fetchedRef.current.has('itemSubCategory') || fetchingRef.current.has('itemSubCategory')) return;
     // fetchingRef.current.add('itemSubCategory');
@@ -704,7 +864,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureCustomerTypeLoaded = useCallback(() => {
     // if (fetchedRef.current.has('customerType') || fetchingRef.current.has('customerType')) return;
     // fetchingRef.current.add('customerType');
-    getCustomerType().then(res => {
+    getCustomerType({dropdown:"true"}).then(res => {
       setCustomerTypeData(normalizeResponse(res) as CustomerType[]);
       fetchedRef.current.add('customerType');
       fetchingRef.current.delete('customerType');
@@ -925,7 +1085,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureCompanyTypeLoaded = useCallback(() => {
     // if (fetchedRef.current.has('companyType') || fetchingRef.current.has('companyType')) return;
     // fetchingRef.current.add('companyType');
-    companyTypeList().then(res => {
+    companyTypeList({dropdown:"true"}).then(res => {
       setComapanyType(normalizeResponse(res) as CompanyType[]);
       fetchedRef.current.add('companyType');
       fetchingRef.current.delete('companyType');
@@ -1116,6 +1276,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.category_name ? `${c.category_name}` : (c.category_name ?? '')
   }));
 
+  const itemCategoryAllOptions = (Array.isArray(itemCategoryAllData) ? itemCategoryAllData : []).map((c: ItemCategoryItem) => ({
+    value: String(c.id ?? ''),
+    label: c.category_name ? `${c.category_name}` : (c.category_name ?? '')
+  }));
+
   const itemSubCategoryOptions = (Array.isArray(itemSubCategoryData) ? itemSubCategoryData : []).map((c: ItemSubCategoryItem) => ({
     value: String(c.id ?? ''),
     label: c.sub_category_name ? `${c.sub_category_name}` : (c.sub_category_name ?? '')
@@ -1128,6 +1293,16 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const customerTypeOptions = (Array.isArray(customerTypeData) ? customerTypeData : []).map((c: CustomerType) => ({
     value: String(c.id ?? ''),
     label: c.name ? `${c.name}` : (c.name ?? '')
+  }));
+  const allAgentCustomerOptions = (Array.isArray(allAgentCustomers) ? allAgentCustomers : []).map((c: AgentCustomerList) => ({
+    value: String(c.id ?? ''),
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? ''),
+    contact_no: c.contact_no ?? ''
+  }));
+
+  const allCompanyOptions = (Array.isArray(allCompanies) ? allCompanies : []).map((c: CompanyItem) => ({
+    value: String(c.id ?? ''),
+    label: c.company_code && c.company_name ? `${c.company_code} - ${c.company_name}` : (c.company_name ?? '')
   }));
 
   const salesmanTypeOptions = (Array.isArray(salesmanTypesData) ? salesmanTypesData : []).map((c: SalesmanType) => ({
@@ -1282,6 +1457,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const locationOptions = (Array.isArray(location) ? location : []).map((l: LocationItem) => ({
     value: String(l.id ?? ''),
     label: l.name ?? ''
+  }));
+
+  const allCompanyCustomerOptions = (Array.isArray(allCompanyCustomers) ? allCompanyCustomers : []).map((c: CustomerItem) => ({
+    value: String(c.id ?? ''),
+    label: c.osa_code && c.business_name ? `${c.osa_code} - ${c.business_name}` : (c.business_name ?? '')
   }));
 
 
@@ -1943,10 +2123,13 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         areaOptions,
         companyCustomersOptions,
         companyCustomersTypeOptions,
-        itemCategoryOptions,
+      itemCategoryOptions,
+      itemCategoryAllOptions,
         itemSubCategoryOptions,
         channelOptions,
         customerTypeOptions,
+        allAgentCustomerOptions,
+        allCompanyOptions,
         salesmanTypeOptions,
         vehicleListOptions,
         customerCategoryOptions,
@@ -1965,6 +2148,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         refreshDropdown,
         fetchAreaOptions,
         fetchRouteOptions,
+        allCompanyCustomerOptions,
         fetchRoutebySalesmanOptions,
         fetchCustomerCategoryOptions,
         fetchCompanyCustomersOptions,
@@ -1982,6 +2166,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         manufacturerOptions,
         assetsModelOptions,
         brandOptions,
+        allCustomerTypeOptions,
+        allCompanyTypeOptions,
         brandingOptions,
         userOptions,
         loading,
@@ -1997,10 +2183,14 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         ensureCompanyCustomersLoaded,
         ensureCompanyCustomersTypeLoaded,
         ensureItemCategoryLoaded,
+        ensureAllItemCategoryLoaded,
         ensureItemSubCategoryLoaded,
         ensureChannelLoaded,
         ensureCustomerTypeLoaded,
         ensureSalesmanTypeLoaded,
+        ensureAllCompanyCustomersLoaded,
+        ensureAllCustomerTypesLoaded,
+        ensureAllCompanyTypesLoaded,
         ensureVehicleListLoaded,
         ensureCustomerCategoryLoaded,
         ensureCustomerSubCategoryLoaded,
@@ -2025,6 +2215,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         ensureBrandLoaded,
         ensureBrandingLoaded,
         ensureUserLoaded,
+        ensureAllAgentCustomersLoaded,
+        ensureAllCompanyOptionsLoaded,
       }}
     >
       {children}

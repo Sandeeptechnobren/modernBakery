@@ -128,6 +128,7 @@ export default function InputFields({
   const [dropdownPropertiesString, setDropdownPropertiesString] = useState("");
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedOptionsDropdownOpen, showSelectedOptionsDropdown] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
@@ -428,12 +429,13 @@ export default function InputFields({
       if (dropdownRef.current && event.target instanceof Node) {
         if (!dropdownRef.current.contains(event.target)) {
           setDropdownOpen(false);
+          showSelectedOptionsDropdown(false);
         }
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [dropdownOpen]);
+  }, [dropdownOpen, selectedOptionsDropdownOpen]);
 
   // When dropdown is open, compute and keep its fixed position in sync with the trigger
   useEffect(() => {
@@ -711,12 +713,44 @@ export default function InputFields({
                     // If multiSelectChips is enabled, render chips before the input
                     if (multiSelectChips) {
                       return (
-                        <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
-                          {selected.length === 0 && (
+                        <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0" onClick={(e) => { e.stopPropagation(); showSelectedOptionsDropdown(false); }}>
+                          {/* {selected.length === 0 && (
                             <span className="text-gray-400">{`Search ${label}`}</span>
-                          )}
+                          )} */}
+                          
+                          <input
+                            type="text"
+                            placeholder={placeholder ? placeholder : label ? `Search ${label}` : "Search"}
+                            // value={displayValue}
+                            onChange={(e) => {
+                              const v = (e.target as HTMLInputElement).value;
+                              console.log("Search input changed:", v);
+                              setSearch(v);
+                              // onSearch(v);
+                              if (!dropdownOpen) setDropdownOpen(true);
+                              // if (v === "") {
+                              //   // user cleared the input -> clear selected values for multi-select
+                              //   safeOnChange(createMultiSelectEvent([]));
+                              // }
+                            }}
+                            onFocus={() => { setDropdownOpen(true); showSelectedOptionsDropdown(false); }}
+                            className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? "text-gray-900" : "text-gray-400"
+                              }`}
+                            style={
+                              hasSelection ? { color: "#111827" } : undefined
+                            }
+                            onKeyDown={createArrowKeyHandler(
+                              filteredOptions,
+                              highlightedIndex,
+                              setHighlightedIndex,
+                              (opt) => handleCheckbox(opt.value),
+                              dropdownOpen,
+                              setDropdownOpen
+                            )}
+                          />
+
                           {selected.map((s, idx) => {
-                            if (idx >= 2) return null;
+                            if (idx >= 1) return null;
                             return (
                               <span
                                 key={s.value}
@@ -740,44 +774,10 @@ export default function InputFields({
                             );
                           })}
                           {selected.length > 2 && (
-                            <span className="text-sm text-gray-700 ml-1">
-                              +{selected.length - 2}
+                            <span className="inline-flex items-center bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-sm font-medium cursor-pointer">
+                              +{selected.length - 1}
                             </span>
                           )}
-                          <input
-                            type="text"
-                            placeholder={
-                              selected.length === 0
-                                ? `Search ${label}`
-                                : undefined
-                            }
-                            value={displayValue}
-                            onChange={(e) => {
-                              const v = (e.target as HTMLInputElement).value;
-                              console.log("Search input changed:", v);
-                              setSearch(v);
-                              // onSearch(v);
-                              if (!dropdownOpen) setDropdownOpen(true);
-                              if (v === "") {
-                                // user cleared the input -> clear selected values for multi-select
-                                safeOnChange(createMultiSelectEvent([]));
-                              }
-                            }}
-                            onFocus={() => setDropdownOpen(true)}
-                            className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? "text-gray-900" : "text-gray-400"
-                              }`}
-                            style={
-                              hasSelection ? { color: "#111827" } : undefined
-                            }
-                            onKeyDown={createArrowKeyHandler(
-                              filteredOptions,
-                              highlightedIndex,
-                              setHighlightedIndex,
-                              (opt) => handleCheckbox(opt.value),
-                              dropdownOpen,
-                              setDropdownOpen
-                            )}
-                          />
                         </div>
                       );
                     } else {
@@ -1022,6 +1022,54 @@ export default function InputFields({
                   </div>
                 </>
               )}
+
+              {selectedOptionsDropdownOpen && !loading && !disabled && !showSkeleton && dropdownProperties.width !== "0" && (() => {
+                const selected = options?.filter((opt) => selectedValues.includes(opt.value)).map((o) => ({ value: o.value, label: o.label })) || [];
+                return <>
+                  <div
+                    style={{
+                      left: dropdownProperties.left,
+                      top: dropdownProperties.top,
+                      width: dropdownProperties.width,
+                      maxHeight: dropdownProperties.maxHeight,
+                    }}
+                    tabIndex={-1}
+                    className="inputfields-dropdown-content fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-auto"
+                  >
+                      {selected.length === 0 ? (
+                        <div className="px-3 py-5 text-gray-600 text-center">
+                          No Selected options
+                        </div>
+                      ) : (
+                        <>
+                          {selected.map((opt, idx) => (
+                            <div
+                              key={opt.value + idx}
+                              className={`inputfields-dropdown-item-${idx} flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""
+                                } ${highlightedIndex === idx ? "bg-blue-100" : ""}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (!disabled) handleCheckbox(opt.value);
+                              }}
+                            >
+                              <CustomCheckbox
+                                label={opt.label}
+                                labelTw="!text-sm"
+                                width={20}
+                                checked={selectedValues.includes(opt.value)}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  if (!disabled) handleCheckbox(opt.value);
+                                }}
+                                disabled={disabled}
+                              />
+                            </div>
+                          ))}
+                        </>
+                      )}
+                  </div>
+                </>
+              })()}
             </div>
           ) : (
             <div className={`relative select-none`} style={{ width }} ref={dropdownRef}>

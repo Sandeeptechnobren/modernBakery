@@ -10,6 +10,7 @@ import TabBtn from "@/app/components/tabBtn";
 import { isVerify, updateAuthUser, countryList, roleList } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
+import ResetPasswordSidebar from "@/app/components/ResetPasswordSidebar";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -29,6 +30,10 @@ export default function ProfilePage() {
       street: "",
       city: "",
       zip: "",
+      // Password fields for ResetPasswordSidebar
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
     onSubmit: async (values) => {
       await handleProfileUpdate(values);
@@ -821,47 +826,13 @@ export default function ProfilePage() {
             </ContainerCard>
           )}
 
-          {showSidebar && (
-            <>
-              {/* ✅ Proper Blur + Light Black Overlay */}
-              <div
-                className=" h-full fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
-                onClick={() => setShowSidebar(false)}
-              />
-
-              {/* ✅ Sidebar */}
-              <div className="fixed top-0 right-0 h-full w-1/3 bg-white z-50 shadow-lg transform transition-transform duration-300 translate-x-0">
-
-                <div className="flex items-center justify-between p-5 border-b">
-                  <h2 className="text-lg font-semibold">Reset Password</h2>
-                  <button onClick={() => setShowSidebar(false)}>
-                    <Icon icon="lucide:x" width={22} />
-                  </button>
-                </div>
-
-                <form onSubmit={formik.handleSubmit} className="p-7 space-y-6">
-                  <InputFields required label="Old Password"
-                    onChange={e => setFieldValue("oldPassword", e.target.value)}
-                  />
-                  <InputFields required label="New Password"
-                    onChange={e => setFieldValue("newPassword", e.target.value)}
-                  />
-                  <InputFields required label="Confirm Password"
-                    onChange={e => setFieldValue("confirmPassword", e.target.value)}
-                  />
-
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      className="bg-red-600 text-white w-[160px] py-3 rounded-lg"
-                    >
-                      Update Password
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </>
-          )}
+          <ResetPasswordSidebar
+            show={showSidebar}
+            onClose={() => setShowSidebar(false)}
+            onSubmit={formik.handleSubmit}
+            setFieldValue={setFieldValue}
+            values={values}
+          />
 
 
           {/* </ContainerCard> */}

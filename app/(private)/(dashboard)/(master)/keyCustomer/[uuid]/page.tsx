@@ -177,9 +177,10 @@ export default function AddCompanyCustomer() {
     regionOptions,
     areaOptions,
     companyTypeOptions,
+    allCompanyTypeOptions,
     channelOptions,
     fetchAreaOptions,
-   ensureAreaLoaded, ensureChannelLoaded, ensureCompanyTypeLoaded, ensureRegionLoaded} = useAllDropdownListData();
+   ensureAreaLoaded, ensureChannelLoaded, ensureCompanyTypeLoaded, ensureRegionLoaded,ensureAllCompanyTypesLoaded} = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -187,6 +188,9 @@ export default function AddCompanyCustomer() {
     ensureChannelLoaded();
     ensureCompanyTypeLoaded();
     ensureRegionLoaded();
+    if(!isEditMode){
+      ensureAllCompanyTypesLoaded();
+    }
   }, [ensureAreaLoaded, ensureChannelLoaded, ensureCompanyTypeLoaded, ensureRegionLoaded]);
   const [skeleton, setSkeleton] = useState({
     area_id: false,
@@ -557,7 +561,7 @@ export default function AddCompanyCustomer() {
                   onChange={(e) =>
                     setFieldValue("company_type", e.target.value)
                   }
-                  options={companyTypeOptions}
+                  options={isEditMode ? allCompanyTypeOptions : companyTypeOptions}
                   error={touched.company_type && errors.company_type}
                 />
               </div>

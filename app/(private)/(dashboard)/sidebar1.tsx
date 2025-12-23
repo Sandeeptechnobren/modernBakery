@@ -9,6 +9,7 @@ import NotificationPopover from "@/app/components/notificationPopover";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/services/allApi";
+import ResetPasswordSidebar from "@/app/components/ResetPasswordSidebar";
 import SidebarBtn1 from "@/app/components/iconButton1";
 import { on } from "events";
 import usePermissionManager from "@/app/components/contexts/usePermission";
@@ -38,6 +39,23 @@ export default function Sidebar({
     ];
   })();
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [showResetPasswordSidebar, setShowResetPasswordSidebar] = useState(false);
+  const [resetPasswordValues, setResetPasswordValues] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const handleResetPasswordField = (field: string, value: any) => {
+    setResetPasswordValues(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleResetPasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // TODO: Implement password update logic here (API call etc.)
+    setShowResetPasswordSidebar(false);
+    setResetPasswordValues({ oldPassword: "", newPassword: "", confirmPassword: "" });
+  };
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -328,7 +346,8 @@ export default function Sidebar({
                           label: "Change Password",
                           onClick: () => {
                             setIsOpen(false);
-                            router.push("/settings/changePassword");
+                            setShowDropdown(false);
+                            setShowResetPasswordSidebar(true);
                           },
                         },
                         {
@@ -360,6 +379,15 @@ export default function Sidebar({
           })}
         </div>
       </div>
+
+      {/* Reset Password Sidebar */}
+      <ResetPasswordSidebar
+        show={showResetPasswordSidebar}
+        onClose={() => setShowResetPasswordSidebar(false)}
+        onSubmit={handleResetPasswordSubmit}
+        setFieldValue={handleResetPasswordField}
+        values={resetPasswordValues}
+      />
 
       {/* second sidebar */}
       <div

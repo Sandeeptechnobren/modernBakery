@@ -12,6 +12,7 @@ import NotificationPopover from "@/app/components/notificationPopover";
 import { logout } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { initialLinkData } from "../data/dashboardLinks";
+import ResetPasswordSidebar from "@/app/components/ResetPasswordSidebar";
 
 export default function TopBar({
     horizontalSidebar,
@@ -29,6 +30,23 @@ export default function TopBar({
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
+    const [showResetPasswordSidebar, setShowResetPasswordSidebar] = useState(false);
+    const [resetPasswordValues, setResetPasswordValues] = useState({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+    });
+
+    const handleResetPasswordField = (field: string, value: any) => {
+        setResetPasswordValues(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleResetPasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        // TODO: Implement password update logic here (API call etc.)
+        setShowResetPasswordSidebar(false);
+        setResetPasswordValues({ oldPassword: "", newPassword: "", confirmPassword: "" });
+    };
     const [searchBarValue, setSearchBarValue] = useState("");
 
     const paddingIfOpen = isOpen ? "pl-[250px]" : "pl-[80px]";
@@ -169,9 +187,7 @@ export default function TopBar({
                                                 label: "Change Password",
                                                 onClick: () => {
                                                     setIsOpenDropdown(false);
-                                                    router.push(
-                                                        "/settings/changePassword"
-                                                    );
+                                                    setShowResetPasswordSidebar(true);
                                                 },
                                             },
                                             {
@@ -204,6 +220,14 @@ export default function TopBar({
                     onClickHandler={(href) => router.push(href)}
                 />
             )}
+        {/* Reset Password Sidebar */}
+        <ResetPasswordSidebar
+            show={showResetPasswordSidebar}
+            onClose={() => setShowResetPasswordSidebar(false)}
+            onSubmit={handleResetPasswordSubmit}
+            setFieldValue={handleResetPasswordField}
+            values={resetPasswordValues}
+        />
         </div>
     );
 }
