@@ -13,6 +13,8 @@ import StatusBtn from "@/app/components/statusBtn2";
 import { ServiceVisitList } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import { useEffect } from "react";
 
 // ✅ SERVICE VISIT ROW TYPE
 interface ServiceVisitRow {
@@ -71,11 +73,19 @@ interface ServiceVisitRow {
 }
 
 export default function ServiceVisit() {
+    const { can, permissions } = usePagePermissions();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
 
-    const [refreshKey] = useState(1);
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
 
     // ✅ COLUMNS
     const columns = useMemo(
@@ -205,7 +215,7 @@ export default function ServiceVisit() {
                         title: "Service Visit",
                         columnFilter: false,
                         searchBar: false,
-                        actions: [
+                        actions: can("create") ? [
                             // <SidebarBtn
                             //     key="add"
                             //     href="/serviceVisit/add"
@@ -214,7 +224,7 @@ export default function ServiceVisit() {
                             //     labelTw="hidden lg:block"
                             //     isActive
                             // />,
-                        ],
+                        ] : [],
                     },
 
                     columns,
@@ -227,12 +237,14 @@ export default function ServiceVisit() {
                                 router.push(`/serviceVisit/details/${(row as ServiceVisitRow).uuid}`);
                             },
                         },
-                        // {
-                        //     icon: "lucide:edit",
-                        //     onClick: (row: any) => {
-                        //         router.push(`/serviceVisit/${(row as ServiceVisitRow).uuid}`);
-                        //     },
-                        // },
+                        ...(can("edit") ? [
+                            // {
+                            //     icon: "lucide:edit",
+                            //     onClick: (row: any) => {
+                            //         router.push(`/serviceVisit/${(row as ServiceVisitRow).uuid}`);
+                            //     },
+                            // },
+                        ] : [])
                     ],
 
                     footer: { nextPrevBtn: true, pagination: true },

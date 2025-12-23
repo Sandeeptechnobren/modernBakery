@@ -11,6 +11,7 @@ import StatusBtn from "@/app/components/statusBtn2";
 import { petitClaimList,exportPetitData } from "@/app/services/claimManagement";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import ImageThumbnail from "@/app/components/ImageThumbnail";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 
@@ -80,8 +81,17 @@ const columns = [
   },
 ];
 export default function VehiclePage() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const [threeDotLoading, setThreeDotLoading] = useState<{ [key: string]: boolean }>({ csv: false, xlsx: false });
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -166,7 +176,7 @@ export default function VehiclePage() {
 
               // searchBar: true,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/petitClaim/add"
@@ -175,7 +185,7 @@ export default function VehiclePage() {
                   label="Add"
                   labelTw="hidden sm:block"
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "vehicle-table",
             footer: { nextPrevBtn: true, pagination: true },

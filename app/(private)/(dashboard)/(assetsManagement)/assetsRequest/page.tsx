@@ -19,6 +19,7 @@ import {
   deleteChillerRequest,
 } from "@/app/services/assetsApi";
 import StatusBtn from "@/app/components/statusBtn2";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -26,6 +27,7 @@ const dropdownDataList = [
 ];
 
 export default function Page() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
@@ -33,6 +35,13 @@ export default function Page() {
     null
   );
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -166,16 +175,16 @@ export default function Page() {
               ],
               searchBar: false,
               columnFilter: true,
-              // actions: [
-              //   <SidebarBtn
-              //     key="name"
-              //     href="/assets/chillerRequest/add"
-              //     leadingIcon="lucide:plus"
-              //     label="Add"
-              //     labelTw="hidden lg:block"
-              //     isActive
-              //   />,
-              // ],
+              actions: can("create") ? [
+                <SidebarBtn
+                  key="name"
+                  href="/assetsRequest/add"
+                  leadingIcon="lucide:plus"
+                  label="Add"
+                  labelTw="hidden lg:block"
+                  isActive
+                />,
+              ] : [],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
@@ -260,12 +269,12 @@ export default function Page() {
                   router.push(`/assetsRequest/view/${data.uuid}`);
                 },
               },
-              {
+              ...(can("edit") ? [{
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
                   router.push(`/assetsRequest/${data.uuid}`);
                 },
-              },
+              }] : []),
 
             ],
             pageSize: 10,

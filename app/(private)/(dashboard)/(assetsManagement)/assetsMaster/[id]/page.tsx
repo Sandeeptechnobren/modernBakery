@@ -75,7 +75,7 @@ export default function AddOrEditChiller() {
     assetsTypeOptions,
     assetsModelOptions,
     brandingOptions,
-   ensureAssetsModelLoaded, ensureAssetsTypeLoaded, ensureBrandingLoaded, ensureCountryLoaded, ensureManufacturerLoaded, ensureVendorLoaded} = useAllDropdownListData();
+    ensureAssetsModelLoaded, ensureAssetsTypeLoaded, ensureBrandingLoaded, ensureCountryLoaded, ensureManufacturerLoaded, ensureVendorLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -454,6 +454,7 @@ export default function AddOrEditChiller() {
                 required
                 label="Status"
                 name="status"
+                type="radio"
                 options={assetsStatusOptions}
                 value={values.status}
                 onChange={(e) => setFieldValue("status", e.target.value)}

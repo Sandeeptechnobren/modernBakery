@@ -21,6 +21,7 @@ import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/util
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import FilterComponent from "@/app/components/filterComponent";
 import ApprovalStatus from "@/app/components/approvalStatus";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const dropdownDataList = [
     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -95,6 +96,7 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+    const { can, permissions } = usePagePermissions();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -107,6 +109,13 @@ export default function CustomerInvoicePage() {
     });
 
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
     const [showDropdown, setShowDropdown] = useState(false);
     const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions , ensureAgentCustomerLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
 
@@ -316,7 +325,7 @@ export default function CustomerInvoicePage() {
                             </div>
                         ],
                         searchBar: false,
-                        actions: [
+                        actions: can("create") ? [
                             <SidebarBtn
                                 key={1}
                                 href="/distributorsReturn/add"
@@ -325,7 +334,7 @@ export default function CustomerInvoicePage() {
                                 label="Add"
                                 labelTw="hidden lg:block"
                             />
-                        ]
+                        ] : []
                     },
                     footer: { nextPrevBtn: true, pagination: true },
                     columns,

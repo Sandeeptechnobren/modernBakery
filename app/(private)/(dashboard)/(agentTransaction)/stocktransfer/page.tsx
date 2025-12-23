@@ -13,9 +13,11 @@ import { StockTransferList } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function StockTransferPage() {
+    const { can, permissions } = usePagePermissions();
     const router = useRouter();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
@@ -30,6 +32,13 @@ export default function StockTransferPage() {
     } = useAllDropdownListData();
 
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
 
     /* -------------------------------------------------------
        FETCH LIST (TABLE API)
@@ -194,7 +203,7 @@ export default function StockTransferPage() {
                                 options: regionOptions || [],
                             },
                         ],
-                        actions: [
+                        actions: can("create") ? [
                             <SidebarBtn
                                 key="add"
                                 href="/stocktransfer/add"
@@ -203,7 +212,7 @@ export default function StockTransferPage() {
                                 label="Add"
                                 labelTw="hidden sm:block"
                             />,
-                        ],
+                        ] : [],
                     },
                     localStorageKey: "stock-transfer-table",
                     footer: { pagination: true, nextPrevBtn: true },

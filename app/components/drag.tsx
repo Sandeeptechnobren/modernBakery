@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Calendar, BarChart3, Table } from 'lucide-react';
 import { Icon } from "@iconify-icon/react";
 import axios from 'axios';
 import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';
 import { useSnackbar } from '@/app/services/snackbarContext';
+import { usePagePermissions } from '@/app/(private)/utils/usePagePermissions';
 
 
 // Define TypeScript interfaces
@@ -29,6 +30,7 @@ interface SearchTerms {
 }
 
 const SalesReportDashboard = () => {
+  const { can, permissions } = usePagePermissions();
   const { showSnackbar } = useSnackbar();
   const [viewType, setViewType] = useState('');
   const [dateRange, setDateRange] = useState('dd-mm-yyyy - dd-mm-yyyy');
@@ -165,6 +167,19 @@ const SalesReportDashboard = () => {
     } finally {
       setIsLoadingDashboard(false);
     }
+  };
+
+  const handleDashboardClick = () => {
+    const searchByIds = ['salesman', 'route'];
+    const moreFilterIds = moreFilters.map(f => f.id);
+    const blockedIds = [...searchByIds, ...moreFilterIds];
+    const hasBlockedSelection = blockedIds.some(id => (selectedChildItems[id] || []).length > 0);
+    if (hasBlockedSelection) {
+      showSnackbar('Dashboard not allowed with Search By/More filters. Clear them to view the dashboard.', 'warning');
+      return;
+    }
+    setViewType('graph');
+    fetchDashboardData();
   };
 
   // Fetch filters from API
@@ -601,6 +616,34 @@ const data = await response.json();
     fetchFiltersData();
   }, []);
 
+  // Close dropdowns when clicking outside any dropdown or trigger
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+
+      // If clicked inside any open dropdown, do nothing
+      const dropdowns = document.querySelectorAll('.filter-dropdown');
+      for (const d of Array.from(dropdowns)) {
+        if (d.contains(target)) return;
+      }
+
+      // If clicked inside any trigger (buttons that open dropdowns), do nothing
+      const triggers = document.querySelectorAll('.dropdown-trigger');
+      for (const t of Array.from(triggers)) {
+        if (t.contains(target)) return;
+      }
+
+      // Otherwise close all dropdowns
+      setOpenDropdown(null);
+      setShowMoreFilters(false);
+      setSearchbyclose(false);
+      setShowDatePicker(false);
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [openDropdown, showMoreFilters, searchbyopen, showDatePicker]);
+
   // Refetch when selections change with hierarchical logic
   useEffect(() => {
     if (droppedFilters.length > 0) {
@@ -714,6 +757,27 @@ const data = await response.json();
 
   const getSelectedCount = (filterId: string): number => (selectedChildItems[filterId] || []).length;
 
+  // Return ids of currently visible (filtered) child items for a filter
+  const getVisibleChildIds = (filterId: string): string[] => {
+    return getFilteredChildData(filterId).map(d => d.id);
+  };
+
+  const handleSelectAll = (filterId: string, ids: string[]) => {
+    setSelectedChildItems(prev => {
+      const current = prev[filterId] || [];
+      const allSelected = ids.length > 0 && ids.every(id => current.includes(id));
+      const newState = { ...prev, [filterId]: allSelected ? [] : ids };
+
+      // Clear dependent filters when selection changes
+      const dependentFilters = filterHierarchy[filterId] || [];
+      dependentFilters.forEach(dependentId => {
+        if (newState[dependentId]) newState[dependentId] = [];
+      });
+
+      return newState;
+    });
+  };
+
   // Organize filters into groups
   const visibleFilters = availableFilters.filter(f => ['company', 'region', 'area', 'warehouse'].includes(f.id));
   const searchby = availableFilters.filter(f => ['salesman', 'route'].includes(f.id));
@@ -758,7 +822,7 @@ const data = await response.json();
         <section className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
           <div className="mb-6">
             <h1 className="text-xl lg:text-2xl flex gap-2 lg:gap-4 font-semibold items-center text-gray-900">
-              <Icon icon="lucide:arrow-left" width="20" height="20" className="lg:w-6 lg:h-6" />
+              {/* <Icon icon="lucide:arrow-left" width="20" height="20" className="lg:w-6 lg:h-6" /> */}
               Sales Report Dashboard
             </h1>
           </div>
@@ -772,7 +836,7 @@ const data = await response.json();
                   <input type="text" value={dateRange} className="border-none outline-none text-sm cursor-pointer bg-transparent w-full" readOnly />
                 </div>
                 {showDatePicker && (
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 w-full sm:w-80">
+                  <div id="date-picker-dropdown" className="filter-dropdown absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 w-full sm:w-80">
                     <div className="flex flex-col gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
@@ -821,10 +885,7 @@ const data = await response.json();
 
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button 
-                onClick={() => {
-                  setViewType('graph');
-                  fetchDashboardData();
-                }} 
+                onClick={handleDashboardClick}
                 disabled={isLoadingDashboard}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg flex-1 sm:flex-none justify-center ${viewType === 'graph' ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
               >
@@ -857,12 +918,14 @@ const data = await response.json();
           <div className="bg-white w-full rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 border-b border-[#E9EAEB] gap-3">
               <h2 className="font-semibold text-lg text-[#181D27]">Sales Reports</h2>
-              <ExportButtons 
-                onExportXLSX={handleExportXLSX}
-                isLoading={isExporting}
-                searchType={searchType}
-                displayQuantity={displayQuantity}
-              />
+              {can("export") && (
+                <ExportButtons 
+                  onExportXLSX={handleExportXLSX}
+                  isLoading={isExporting}
+                  searchType={searchType}
+                  displayQuantity={displayQuantity}
+                />
+              )}
             </div>
 
             <div className="p-4 border border-[#E9EAEB]">
@@ -910,11 +973,11 @@ const data = await response.json();
                 
                            {searchby.length > 0 && (
                       <div className="relative">
-                        <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setSearchbyclose(!searchbyopen)}>
+                        <button className="dropdown-trigger flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setSearchbyclose(!searchbyopen)}>
                           Search by <ChevronDown size={14} />
                         </button>
                         {searchbyopen && (
-                          <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+                          <div id="searchby-dropdown" className="filter-dropdown absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
                             <div className="p-2">
                               {searchby.map(filter => (
                                 <div key={filter.id} draggable onDragStart={(e) => handleDragStart(e, filter)} className="flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 cursor-grab">
@@ -932,11 +995,11 @@ const data = await response.json();
                     )}
  {moreFilters.length > 0 && (
                       <div className="relative">
-                        <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setShowMoreFilters(!showMoreFilters)}>
+                        <button className="dropdown-trigger flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setShowMoreFilters(!showMoreFilters)}>
                           More <ChevronDown size={14} />
                         </button>
                         {showMoreFilters && (
-                          <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+                          <div id="morefilters-dropdown" className="filter-dropdown absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
                             <div className="p-2">
                               {moreFilters.map(filter => {
                                 const isUndraggable = viewType === 'table' && ['items', 'item-category'].includes(filter.id);
@@ -961,6 +1024,7 @@ const data = await response.json();
                       </div>
                     )}
                     
+                    
                   </div>
                 </div>
 
@@ -978,7 +1042,7 @@ const data = await response.json();
                             const selectedCount = getSelectedCount(filter.id);
                             return (
                               <div key={filter.id} className="relative w-full sm:w-auto">
-                                <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#414651] rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => setOpenDropdown(openDropdown === filter.id ? null : filter.id)}>
+                                <div className="dropdown-trigger flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#414651] rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => setOpenDropdown(openDropdown === filter.id ? null : filter.id)}>
                                   <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
                                   <span className="text-xs sm:text-sm font-medium text-[#414651] whitespace-nowrap">
                                     {filter.name}
@@ -991,7 +1055,7 @@ const data = await response.json();
                                 </div>
 
                                 {openDropdown === filter.id && (
-                                  <div className="absolute top-full left-0 mt-1 w-full min-w-[200px] sm:w-[240px] bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                  <div id={`filter-dropdown-${filter.id}`} className="filter-dropdown absolute top-full left-0 mt-1 w-full min-w-[200px] sm:w-[240px] bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                                     <div className="p-3">
                                       <input type="text" placeholder="Search here..." value={searchTerms[filter.id] || ''} onChange={(e) => setSearchTerms(prev => ({ ...prev, [filter.id]: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                     </div>
@@ -1000,6 +1064,27 @@ const data = await response.json();
                                         <div className="text-center text-sm text-gray-500 py-4">No items found</div>
                                       ) : (
                                         <div className="space-y-1 p-2">
+                                          {/* Select All checkbox */}
+                                          {(() => {
+                                            const visible = getFilteredChildData(filter.id);
+                                            const visibleIds = visible.map(v => v.id);
+                                            const selected = selectedChildItems[filter.id] || [];
+                                            const allSelected = visibleIds.length > 0 && visibleIds.every(id => selected.includes(id));
+                                            const someSelected = visibleIds.length > 0 && visibleIds.some(id => selected.includes(id));
+                                            return (
+                                              <label key="__select_all__" className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                                <input
+                                                  ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                                                  type="checkbox"
+                                                  checked={allSelected}
+                                                  onChange={() => handleSelectAll(filter.id, visibleIds)}
+                                                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-700 font-medium">Select All</span>
+                                              </label>
+                                            );
+                                          })()}
+
                                           {getFilteredChildData(filter.id).map(childItem => {
                                             const isSelected = (selectedChildItems[filter.id] || []).includes(childItem.id);
                                             return (

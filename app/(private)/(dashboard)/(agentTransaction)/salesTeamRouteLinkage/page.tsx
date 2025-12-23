@@ -20,6 +20,7 @@ type TableDataTypeFixed = Omit<TableDataType, "salesman"> & {
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { linkageList } from "@/app/services/agentTransaction";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const columns = [
   {
@@ -116,6 +117,7 @@ const columns = [
 
 
 export default function CustomerInvoicePage() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   // const { setLoading } = useLoading();
 
@@ -132,6 +134,13 @@ export default function CustomerInvoicePage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
   const [threeDotLoading, setThreeDotLoading] = useState({
     csv: false,
     xlsx: false,

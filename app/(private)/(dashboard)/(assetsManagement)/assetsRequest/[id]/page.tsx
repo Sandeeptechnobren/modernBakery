@@ -72,7 +72,7 @@ const validationSchema = Yup.object({
     .required("Outlet Name is required")
     .max(100, "Outlet Name cannot exceed 100 characters"),
   contact_number: Yup.string()
-    .matches(/^\d{10}$/, "Contact Number must be exactly 10 digits")
+    .matches(/^\d{9}$/, "Contact Number must be exactly 10 digits")
     .required("Contact Number is required"),
   landmark: Yup.string()
     .trim()
@@ -291,7 +291,7 @@ export default function AddCompanyWithStepper() {
   const [isLoading, setIsLoading] = useState(true);
   const [existingData, setExistingData] = useState<Chiller | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { agentCustomerOptions, channelOptions } = useAllDropdownListData();
+  const { agentCustomerOptions, channelOptions, ensureAgentCustomerLoaded, ensureChannelLoaded } = useAllDropdownListData();
 
   const params = useParams();
   const uuid = params?.id;
@@ -314,6 +314,11 @@ export default function AddCompanyWithStepper() {
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
+
+  useEffect(() => {
+    ensureAgentCustomerLoaded();
+    ensureChannelLoaded();
+  }, []);
 
   useEffect(() => {
     const checkEditMode = async () => {
@@ -939,7 +944,6 @@ export default function AddCompanyWithStepper() {
               </div>
               <div>
                 <InputFields
-                  required
                   label="Specify If Other Type"
                   name="specify_if_other_type"
                   value={values.specify_if_other_type}

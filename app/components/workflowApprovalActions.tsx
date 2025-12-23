@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Draggable from "react-draggable";
 import BorderIconButton from "@/app/components/borderIconButton";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import InputFields from "@/app/components/inputFields";
@@ -31,6 +32,7 @@ interface WorkflowApprovalActionsProps {
    * If it returns true, default approve confirmation + API call will be skipped.
    */
   onApproveIntercept?: () => boolean | Promise<boolean>;
+  setIsUserHavePermission?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const requireCommentActions = ["reject", "returnBack"] as const;
@@ -56,6 +58,7 @@ export default function WorkflowApprovalActions({
   model,
   uuid = "",
   onApproveIntercept,
+  setIsUserHavePermission
 }: WorkflowApprovalActionsProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -70,6 +73,7 @@ export default function WorkflowApprovalActions({
   const [loadingWorkflow, setLoadingWorkflow] = useState<LoadingState>(defaultLoading);
   const currentActionRef = useRef<ActionType | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const dragNodeRef = useRef<HTMLDivElement>(null);
 
   // Keep comment ref in sync
   useEffect(() => {
@@ -222,15 +226,23 @@ export default function WorkflowApprovalActions({
   };
 
   const hasPermissions = effectivePermissions && effectivePermissions.length > 0;
+  useEffect(() => {
+    if (setIsUserHavePermission) {
+      setIsUserHavePermission(hasPermissions);
+    }
+  }, [hasPermissions, setIsUserHavePermission]);
+
   if (!hasPermissions || !effectiveRequestId) {
     return null;
   }
 
   return (
-    <div
-      style={{ zIndex: 30 }}
-      className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-md bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px]"
-    >
+    <Draggable nodeRef={dragNodeRef} cancel="button, input, textarea, select">
+      <div
+        ref={dragNodeRef}
+        style={{ zIndex: 30 }}
+        className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-md bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px] cursor-grab active:cursor-grabbing"
+      >
       {comment.show && (
         <div className="w-full p-5 bg-white rounded-lg mb-4 opacity-100">
           <form
@@ -240,7 +252,7 @@ export default function WorkflowApprovalActions({
               setComment({ ...comment, show: false });
             }}
           >
-            <span className="mbs-5">{camelToTitleCase(comment.action || "")}</span>
+            <span className="mb-5">{camelToTitleCase(comment.action || "")}</span>
             <InputFields
               type="textarea"
               label="Comment"
@@ -343,6 +355,7 @@ export default function WorkflowApprovalActions({
           />
         </div>
       )}
-    </div>
+      </div>
+    </Draggable>
   );
 }

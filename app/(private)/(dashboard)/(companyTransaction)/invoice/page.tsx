@@ -12,6 +12,8 @@ import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/util
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import { invoiceExportHeader, invoiceList } from "@/app/services/companyTransaction";
+import ApprovalStatus from "@/app/components/approvalStatus";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 
@@ -91,6 +93,7 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+    const { can, permissions } = usePagePermissions();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -117,6 +120,13 @@ export default function CustomerInvoicePage() {
     });
 
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
 
     const exportFile = async (format: 'csv' | 'xlsx' = 'csv') => {
         try {
@@ -216,7 +226,7 @@ export default function CustomerInvoicePage() {
                     api: { list: fetchInvoices, filterBy: filterBy },
                     header: {
                         title: "Company Invoices",
-                        threeDot: [
+                        threeDot: can("export") ? [
                             {
                                 icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
                                 label: "Export CSV",
@@ -229,7 +239,7 @@ export default function CustomerInvoicePage() {
                                 labelTw: "text-[12px] hidden sm:block",
                                 onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
                             },
-                        ],
+                        ] : [],
                         columnFilter: true,
                         filterByFields: [
                             {

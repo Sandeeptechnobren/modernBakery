@@ -15,6 +15,7 @@ import Link from "next/link";
 import { OverviewTab } from "./tabs/overview";
 import { CustomerData } from "./tabs/customer";
 import { differenceInDays, parseISO } from "date-fns";
+import { PlanogramPost } from "./tabs/planogramPost";
 
 // import { PlanogramTab } from "./tabs/planogram";
 
@@ -47,6 +48,7 @@ interface Planogram {
 export const tabs = [
   { name: "Overview", url: "overview", component: <OverviewTab /> },
   { name: "Customer", url: "customer", component: <CustomerData /> },
+  { name: "Planogram Post", url: "planogramPost", component: <PlanogramPost /> }
 ];
 
 export default function Page() {

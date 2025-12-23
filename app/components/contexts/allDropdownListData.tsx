@@ -955,7 +955,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureMenuListLoaded = useCallback(() => {
     // if (fetchedRef.current.has('menuList') || fetchingRef.current.has('menuList')) return;
     // fetchingRef.current.add('menuList');
-    getMenuList({ dropdown: 'true' }).then(res => {
+    getMenuList().then(res => {
       setMenuList(normalizeResponse(res) as MenuList[]);
       fetchedRef.current.add('menuList');
       fetchingRef.current.delete('menuList');
@@ -1537,7 +1537,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call itemList with category_id to fetch items for this category
-      const res = await itemList({ category_id: String(category_id) ?? "" });
+      const res = await itemList({ category_id: String(category_id) ?? "", dropdown: "true" });
       const normalize = (r: unknown): Item[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;

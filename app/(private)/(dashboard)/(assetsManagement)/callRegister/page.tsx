@@ -8,6 +8,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const dropdownDataList = [
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -15,9 +16,17 @@ const dropdownDataList = [
 ];
 
 export default function CallRegister() {
+    const { can, permissions } = usePagePermissions();
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
 
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
@@ -89,7 +98,7 @@ export default function CallRegister() {
 
                             searchBar: false,
                             columnFilter: true,
-                            actions: [
+                            actions: can("create") ? [
                                 <SidebarBtn
                                     key="name"
                                     href="/callRegister/add"
@@ -98,7 +107,7 @@ export default function CallRegister() {
                                     labelTw="hidden lg:block"
                                     isActive
                                 />,
-                            ],
+                            ] : [],
                         },
                         localStorageKey: "call-register-table",
                         table: {
@@ -152,12 +161,12 @@ export default function CallRegister() {
                                     router.push(`/callRegister/details/${data.uuid}`);
                                 },
                             },
-                            {
+                            ...(can("edit") ? [{
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {
                                     router.push(`/callRegister/${data.uuid}`);
                                 },
-                            },
+                            }] : []),
                         ],
                         pageSize: 10,
                     }}

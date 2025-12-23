@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +21,7 @@ import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import StatusBtn from "@/app/components/statusBtn2";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 // 🔹 API response type
 interface Discount {
@@ -76,11 +77,19 @@ const columns = [
 ];
 
 const DiscountPage = () => {
+    const { can, permissions } = usePagePermissions();
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [selectedRow, setSelectedRow] = useState<Discount | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
 
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
@@ -211,7 +220,7 @@ const DiscountPage = () => {
               ],
                             searchBar: true,
                             columnFilter: true,
-                            actions: [
+                            actions: can("create") ? [
                                 <SidebarBtn
                                     key={0}
                                     href="/discount/add"
@@ -220,20 +229,20 @@ const DiscountPage = () => {
                                     label="Add"
                                     labelTw="hidden sm:block"
                                 />,
-                            ],
+                            ] : [],
                         },
                         localStorageKey: "discount-table",
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: true,
                         rowActions: [
-                            {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(`/discount/details/${data.uuid}`);
-                },
-              },
-                            {
+            //                 {
+            //     icon: "lucide:eye",
+            //     onClick: (data: TableDataType) => {
+            //       router.push(`/discount/details/${data.uuid}`);
+            //     },
+            //   },
+                            ...(can("edit") ? [{
                                 icon: "lucide:edit-2",
                                 onClick: (row: object) => {
                                     const r = row as TableDataType;
@@ -241,7 +250,7 @@ const DiscountPage = () => {
                                         `/discount/${r.uuid}`
                                     );
                                 },
-                            },
+                            }] : []),
                             // {
                             //     icon: "lucide:trash-2",
                             //     onClick: (row: object) => {

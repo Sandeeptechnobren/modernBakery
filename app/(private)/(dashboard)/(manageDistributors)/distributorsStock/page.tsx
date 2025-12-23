@@ -14,6 +14,7 @@ import { warehouseLowStocksKpi, warehouseStocksKpi, warehouseStockTopOrders } fr
 import { CustomTableSkelton } from "@/app/components/customSkeleton";
 import Skeleton from "@mui/material/Skeleton";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 type CardItem = {
@@ -67,6 +68,7 @@ const itemColumns = [
 
 
 const OverallPerformance: React.FC = () => {
+  const { can, permissions } = usePagePermissions();
   const [openMenu, setOpenMenu] = useState(false);
   const [selected, setSelected] = useState("Last 24h");
   const [activeTab, setActiveTab] = useState("overview");

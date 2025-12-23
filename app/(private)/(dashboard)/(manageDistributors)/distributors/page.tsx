@@ -9,6 +9,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 type WarehouseRow = TableDataType & {
@@ -131,8 +132,17 @@ const columns = [
 ];
 
 export default function Warehouse() {
+  const { can, permissions } = usePagePermissions("/distributors");
   const { setLoading } = useLoading();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   type TableRow = TableDataType & { id?: string };
   // typed row for warehouse table
@@ -373,7 +383,7 @@ export default function Warehouse() {
               title: "Distributors",
               searchBar: true,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/distributors/add"
@@ -382,7 +392,7 @@ export default function Warehouse() {
                   label="Add"
                   labelTw="hidden sm:block"
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "master-warehouse-table",
             footer: { nextPrevBtn: true, pagination: true },
@@ -397,13 +407,13 @@ export default function Warehouse() {
                 },
               },
 
-              {
+              ...(can("edit") ? [{
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   router.push(`/distributors/${row.uuid}`);
                 },
-              },
+              }] : []),
 
             ],
             pageSize: 50,

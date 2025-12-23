@@ -14,6 +14,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 interface Payment {
   id: number;
@@ -38,8 +39,18 @@ interface Payment {
 }
 
 export default function PaymentListPage() {
+  const { can, permissions } = usePagePermissions();
   const [selectedPayment, setSelectedPayment] = useState<string>("");
   const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions, ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded } = useAllDropdownListData();
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
 
   // Load dropdown data
   useEffect(() => {
@@ -111,7 +122,6 @@ export default function PaymentListPage() {
   ];
 
   const { setLoading } = useLoading();
-  const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [isExporting, setIsExporting] = useState(false);
@@ -294,7 +304,7 @@ export default function PaymentListPage() {
               ],
               searchBar: false,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/advancePayment/add"
@@ -303,7 +313,7 @@ export default function PaymentListPage() {
                   label="Add"
                   labelTw="hidden sm:block"
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "payment-table",
             footer: { nextPrevBtn: true, pagination: true },

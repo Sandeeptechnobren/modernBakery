@@ -17,9 +17,8 @@ import {
     pricingDetailGlobalSearch,
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 interface DropdownItem {
     icon: string;
@@ -55,19 +54,18 @@ const columns = [
 ];
 
 export default function Pricing() {
-    interface PricingItem {
-        uuid?: string;
-        id?: number | string;
-        code?: string;
-        name?: string;
-        start_date?: string;
-        end_date?: string;
-        status?: string;
-    }
-
+    const { can, permissions } = usePagePermissions();
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const router = useRouter();
 
     type TableRow = TableDataType & { uuid?: string };
@@ -179,7 +177,7 @@ export default function Pricing() {
                             ],
                             searchBar: true,
                             columnFilter: true,
-                            actions: [
+                            actions: can("create") ? [
                                 <SidebarBtn
                                     key={0}
                                     href="/pricing/add"
@@ -188,7 +186,7 @@ export default function Pricing() {
                                     label="Add"
                                     labelTw="hidden sm:block"
                                 />,
-                            ],
+                            ] : [],
                         },
                         localStorageKey: "pricing-table",
                         table: { height: 500 },
@@ -201,13 +199,13 @@ export default function Pricing() {
                                 onClick: (row: TableDataType) =>
                                     router.push(`/pricing/details/${row.uuid}`),
                             },
-                            {
+                            ...(can("edit") ? [{
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
                                     router.push(`/pricing/${row.uuid}`);
                                 },
-                            },
+                            }] : []),
                         ],
                         pageSize: 50,
                     }}

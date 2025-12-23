@@ -127,9 +127,9 @@ export const shelvesListById = async (id: string, params?: Params) => {
   }
 };
 
-export const modelStockList = async (params?: Params) => {
+export const modelStockListBySelf = async (shelf_uuid: string, params?: Params) => {
   try {
-    const res = await API.get("/api/merchendisher/shelve_item/list", { params });
+    const res = await API.get(`/api/merchendisher/shelve_item/list/${shelf_uuid}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -180,27 +180,27 @@ export const modelStockById = async (uuid: string, params?: Params) => {
   }
 };
 
-export const viewStockList = async (params?: Params) => {
+export const viewStockListBySelf = async (shelf_uuid: string, params?: Params) => {
   try {
-    const res = await API.get("/api/merchendisher/shelve_item/viewstock-list", { params });
+    const res = await API.get(`/api/merchendisher/shelve_item/viewstock-list/${shelf_uuid}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const damageList = async (params?: Params) => {
+export const damageListBySelf = async (shelf_uuid: string, params?: Params) => {
   try {
-    const res = await API.get("/api/merchendisher/shelve_item/damage-list", { params });
+    const res = await API.get(`/api/merchendisher/shelve_item/damage-list/${shelf_uuid}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const expiryList = async (params?: Params) => {
+export const expiryListBySelf = async (shelf_uuid: string, params?: Params) => {
   try {
-    const res = await API.get("/api/merchendisher/shelve_item/expiry-list", { params });
+    const res = await API.get(`/api/merchendisher/shelve_item/expiry-list/${shelf_uuid}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -474,6 +474,50 @@ export const exportCompetitor = async (params?: Params) => {
     const res = await API.get("/api/merchendisher/competitor-info/exportfile", {
       params,
     });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const getPlanogramPost = async (planogram_uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/merchendisher/planogram-post/list/${planogram_uuid}`, {
+      params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const stockInStoreList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/stockinstore/list", {
+      params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const stockInStoreById = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/merchendisher/stockinstore/show/${uuid}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addStockInStore = async (body: object) => {
+  try {
+    const res = await APIFormData.post(
+      "/api/merchendisher/stockinstore/create",
+      body
+    );
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

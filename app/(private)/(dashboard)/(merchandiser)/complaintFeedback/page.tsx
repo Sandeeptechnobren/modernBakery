@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 
@@ -14,24 +14,51 @@ import {
   complaintFeedbackList,
   exportCmplaintFeedback,
 } from "@/app/services/merchandiserApi";
+import { formatDate } from "../../(master)/salesTeam/details/[uuid]/page";
+import ImagePreviewModal from "@/app/components/ImagePreviewModal";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 export default function Complaint() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [popupImages, setPopupImages] = useState<string[]>([]);
 
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const IMAGE_BASE_URL =
+    "https://api.coreexl.com/osa_developmentV2/public";
+
+  /* ================= IMAGE MODAL STATE ================= */
+  const [imageModal, setImageModal] = useState<{
+    images: string[];
+    index: number;
+  } | null>(null);
+
+  const openImageModal = (images: string[], index = 0) => {
+    setImageModal({ images, index });
+  };
+
+  const closeImageModal = () => {
+    setImageModal(null);
+  };
 
   // Fetch Table Data
   const fetchComplainedFeedback = useCallback(
-    async (pageNo = 1, pageSize = 10): Promise<listReturnType> => {
+    async (pageNo = 1, pageSize = 50): Promise<listReturnType> => {
       setLoading(true);
       try {
         const res = await complaintFeedbackList({
@@ -52,7 +79,7 @@ export default function Complaint() {
           data: res?.data || [],
           currentPage: res?.pagination?.current_page,
           pageSize: res?.pagination?.per_page,
-          total: res?.pagination?.last_page, 
+          total: res?.pagination?.last_page,
         };
       } catch (err) {
         setLoading(false);
@@ -129,9 +156,9 @@ export default function Complaint() {
           config={{
             api: { list: fetchComplainedFeedback },
             header: {
-   title: "Complaint Feedback",
+              title: "Complaint Feedback",
 
-  threeDot: [
+              threeDot: [
                 {
                   icon: "gala:file-document",
                   label: "Export CSV",
@@ -146,9 +173,9 @@ export default function Complaint() {
                     handleExport("xlsx")
                   },
                 },
-            
+
               ],
-            
+
               searchBar: false,
               columnFilter: true,
               // actions: [
@@ -165,43 +192,74 @@ export default function Complaint() {
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
               { key: "complaint_code", label: "Complaint Code" },
+              { key: "created_at", label: "Date", render: (row) => formatDate(row.created_at) },
               { key: "complaint_title", label: "Title" },
               {
-                key: "merchendiser",
+                key: "merchendiser_name",
                 label: "Merchendiser",
-                render: (row) =>
-                  typeof row.merchendiser === "object" &&
-                  row.merchendiser !== null &&
-                  "name" in row.merchendiser
-                    ? (row.merchendiser as { name?: string })?.name || "-"
-                    : "-",
               },
               {
-                key: "item",
+                key: "customer_name",
+                label: "Customer",
+              },
+              {
+                key: "item_name",
                 label: "Item",
-                render: (row) =>
-                  typeof row.item === "object" &&
-                  row.item !== null &&
-                  "item_name" in row.item
-                    ? (row.item as { item_name?: string }).item_name || "-"
-                    : "-",
               },
               { key: "type", label: "Type" },
-            
-            ],
-            rowSelection: true,
-            rowActions: [
+              { key: "complaint", label: "Complaint" },
               {
-                icon: "lucide:eye",
-                onClick: (data) => {
-                  router.push(
-                    `/merchandiser/complaintFeedback/view/${data.uuid}`
+                key: "image",
+                label: "Images",
+                render: (row) => {
+                  const images =
+                    row?.image && typeof row.image === "object"
+                      ? Object.values(row.image)
+                        .filter((img): img is string => typeof img === "string")
+                        .map((img) => `${IMAGE_BASE_URL}${img}`)
+                      : [];
+
+
+                  if (images.length === 0) {
+                    return (
+                      <span className="text-gray-400">
+                        No images
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <button
+                      onClick={() =>
+                        openImageModal(images, 0)
+                      }
+                      className="text-blue-600 font-medium hover:underline"
+                    >
+                      View Images ({images.length})
+                    </button>
                   );
                 },
               },
             ],
-            pageSize: 10,
+            rowSelection: true,
+            // rowActions: [
+            //   {
+            //     icon: "lucide:eye",
+            //     onClick: (data) => {
+            //       router.push(
+            //         `/complaintFeedback/view/${data.uuid}`
+            //       );
+            //     },
+            //   },
+            // ],
+            pageSize: 50,
           }}
+        />
+        <ImagePreviewModal
+          images={imageModal?.images ?? []}
+          isOpen={!!imageModal}
+          onClose={closeImageModal}
+          startIndex={imageModal?.index ?? 0}
         />
       </div>
 

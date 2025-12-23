@@ -1,5 +1,6 @@
 "use client";
 
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import ContainerCard from "@/app/components/containerCard";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -772,6 +773,8 @@ export default function AddEditCapsCollection() {
                   <InputFields
                     type="number"
                     value={row.collectQty}
+                    min={0}
+                    integerOnly={true}
                     onChange={(e) =>
                       handleTableChange(row.id, "collectQty", e.target.value)
                     }
@@ -782,14 +785,14 @@ export default function AddEditCapsCollection() {
                 key: "price",
                 label: "Price",
                 render: (row) => (
-                  <span>{parseFloat(row.price || "0").toFixed(2)}</span>
+                  <span>{toInternationalNumber(parseFloat(row.price || "0"))}</span>
                 ),
               },
               {
                 key: "total",
                 label: "Total",
                 render: (row) => (
-                  <span>{parseFloat(row.total || "0").toFixed(2)}</span>
+                  <span>{toInternationalNumber(parseFloat(row.total || "0"))}</span>
                 ),
               },
               {

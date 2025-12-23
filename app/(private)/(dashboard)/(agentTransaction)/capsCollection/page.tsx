@@ -16,9 +16,20 @@ import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snac
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import ApprovalStatus from "@/app/components/approvalStatus";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function SalemanLoad() {
+  const { can, permissions } = usePagePermissions();
   const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions, ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded } = useAllDropdownListData();
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
 
   // Load dropdown data
   useEffect(() => {
@@ -62,7 +73,6 @@ export default function SalemanLoad() {
   ];
 
   const { setLoading } = useLoading();
-  const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [threeDotLoading, setThreeDotLoading] = useState({
@@ -333,7 +343,7 @@ export default function SalemanLoad() {
               title: "CAPS Master Collection",
               searchBar: false,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/capsCollection/add"
@@ -342,7 +352,7 @@ export default function SalemanLoad() {
                   label="Add"
                   labelTw="hidden sm:block"
                 />
-              ],
+              ] : [],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns,

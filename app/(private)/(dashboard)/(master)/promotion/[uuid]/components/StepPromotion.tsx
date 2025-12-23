@@ -188,8 +188,10 @@ export default function StepPromotion({
                   <InputFields
                     label="Item Category"
                     required={true}
+                    multiSelectChips={true}
                     type="select"
                     isSingle={false}
+                    searchable={true}
                     options={itemDropdownMap["Item Category"] ? [{ label: `Select Item Category`, value: "" }, ...itemDropdownMap["Item Category"]] : [{ label: `Select Item Category`, value: "" }]}
                     value={keyValue["Item Category"] || []}
                     onChange={e => {
@@ -212,6 +214,8 @@ export default function StepPromotion({
                 <InputFields
                   label="Item"
                   required={true}
+                  searchable={true}
+                  multiSelectChips={true}
                   type="select"
                   isSingle={false}
                   options={itemDropdownMap["Item"] ? [{ label: `Select Item`, value: "" }, ...itemDropdownMap["Item"]] : [{ label: `Select Item`, value: "" }]}

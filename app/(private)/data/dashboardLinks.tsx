@@ -6,6 +6,7 @@ export type SidebarDataType = {
 };
 
 export type LinkDataType = {
+  id?: number | string;
   isActive: boolean;
   href: string;
   label: string;
@@ -437,19 +438,18 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "hugeicons:chat-feedback",
             iconColor: "text-yellow-400",
           },
-
-          {
-            isActive: false,
-            href: "/competitor",
-            label: "Competitor Info",
-            leadingIcon: "akar-icons:info",
-            iconColor: "text-yellow-400",
-          },
           {
             isActive: false,
             href: "/stockinstore",
             label: "Stock in Store",
             leadingIcon: "vaadin:stock",
+            iconColor: "text-yellow-400",
+          },
+          {
+            isActive: false,
+            href: "/competitor",
+            label: "Competitor Info",
+            leadingIcon: "akar-icons:info",
             iconColor: "text-yellow-400",
           },
         ],

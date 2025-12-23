@@ -16,6 +16,7 @@ import { formatDate } from "../../(master)/salesTeam/details/[uuid]/page";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { downloadFile } from "@/app/services/allApi";
 import ApprovalStatus from "@/app/components/approvalStatus";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const columns = [
     { key: "sap_id", label: "SAP", showByDefault: true, render: (row: TableDataType) => <span>{row.sap_id}</span> },
@@ -60,6 +61,7 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+    const { can, permissions } = usePagePermissions();
     const { setLoading } = useLoading();
     const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions, ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
@@ -241,7 +243,7 @@ export default function CustomerInvoicePage() {
                                 //     options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
                                 // }
                             ],
-                            actions: [
+                            actions: can("create") ? [
                                 <SidebarBtn
                                     key={1}
                                     href="/purchaseOrder/add"
@@ -250,7 +252,7 @@ export default function CustomerInvoicePage() {
                                     label="Add"
                                     labelTw="hidden lg:block"
                                 />
-                            ],
+                            ] : [],
                         },
                         rowSelection: true,
                         footer: { nextPrevBtn: true, pagination: true },
@@ -263,6 +265,9 @@ export default function CustomerInvoicePage() {
                                         `/purchaseOrder/details/${row.uuid}`
                                     ),
                             },
+                            ...(can("edit") ? [
+                                // Add edit action here if applicable
+                            ] : [])
                             // {
                             //     icon: "uil:process",
                             //     onClick: (row: TableDataType) => {

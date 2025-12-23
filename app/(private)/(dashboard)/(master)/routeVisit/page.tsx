@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import StatusBtn from "@/app/components/statusBtn2";
 import { useCallback, useEffect, useState } from "react";
 import { formatDate, formatWithPattern } from "@/app/(private)/utils/date";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const columns = [
   { key: "osa_code", label: "Code" },
@@ -35,17 +36,17 @@ const columns = [
 ];
 
 export default function RouteVisits() {
-  interface RouteVisitItem {
-    uuid?: string;
-    id?: number | string;
-    from_date?: string;
-    to_date?: string;
-    customer_type?: string;
-    status?: string;
-  }
-
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const [filters, setFilters] = useState({
     from_date: null as string | null,
     to_date: null as string | null,
@@ -189,7 +190,7 @@ export default function RouteVisits() {
               ],
               searchBar: true,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/routeVisit/add"
@@ -198,7 +199,7 @@ export default function RouteVisits() {
                   label="Add"
                   labelTw="hidden sm:block"
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "route-visits-table",
             table: {
@@ -210,7 +211,7 @@ export default function RouteVisits() {
             },
             columns,
             rowSelection: false, // Set to true if you need row selection
-            rowActions: [
+            rowActions: can("edit") ? [
               // {
               //   icon: "lucide:eye",
               //   onClick: (data: object) => {
@@ -225,7 +226,7 @@ export default function RouteVisits() {
                   router.push(`/routeVisit/${row.uuid}`);
                 },
               },
-            ],
+            ] : [],
             pageSize: 50,
           }}
         />

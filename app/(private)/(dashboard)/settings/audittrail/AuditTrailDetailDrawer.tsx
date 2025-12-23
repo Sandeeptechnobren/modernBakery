@@ -14,6 +14,7 @@ type AuditTrailData = {
     menu_id: string;
     sub_menu_id: string;
     user_name: string;
+    user_role: string;
     previous_data: any;
     current_data: any;
     created_at: string;
@@ -70,8 +71,9 @@ export default function AuditTrailDetailDrawer({ uuid, onClose }: AuditTrailDeta
                             { value: auditData?.menu_id || "-", key: "Menu ID" },
                             { value: auditData?.sub_menu_id || "-", key: "Sub Menu ID" },
                             { value: auditData?.user_name?.toString() || "-", key: "User ID" },
+                            { value: auditData?.user_role?.toString() || "-", key: "User Role" },
                             { value: auditData?.mode || "-", key: "Mode" },
-                            { value: auditData?.created_at || "-", key: "Created At" },
+                            // { value: auditData?.created_at || "-", key: "Created At" },
                         ]}
                     />
                 </ContainerCard>

@@ -141,9 +141,11 @@ export default function OfferItemsTable({ offerItems, setOfferItems, selectItemF
                         <InputFields
                           type="select"
                           isSingle={false}
+                          searchable={true}
+                          multiSelectChips={true}
                           placeholder="Select Item"
                           showSkeleton={itemLoading}
-                          options={[{ label: `Select Item`, value: "" }, ...itemOptions]}
+                          options={itemOptions}
                           value={Array.isArray(row.itemCode) ? row.itemCode : (row.itemCode ? [String(row.itemCode)] : [])}
                           onChange={e => {
                             const val = e.target.value;

@@ -2746,6 +2746,22 @@ export const permissionList = async (params?: Params) => {
   }
 };
 
+export interface SubmenuPermission {
+  id: number;
+  name: string;
+}
+
+export const getSubmenuBasedPermissions = async (submenu_id: number | string) => {
+  try {
+    const res = await API.get(`/api/settings/permissions/submenubasedpermissons`, {
+      params: { submenu_id },
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const permissionListById = async (id: string, params?: Params) => {
   try {
     const res = await API.get(`/api/settings/permissions/${id}`, { params });

@@ -23,6 +23,7 @@ import { formatWithPattern } from "@/app/utils/formatDate";
 import ApprovalStatus from "@/app/components/approvalStatus";
 import InputFields from "@/app/components/inputFields";
 import FilterComponent from "@/app/components/filterComponent";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 // import { useLoading } from "@/app/services/loadingContext";
 
 const columns = [
@@ -146,7 +147,9 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
+
   // const { setLoading } = useLoading();
 
   const {
@@ -174,6 +177,14 @@ export default function CustomerInvoicePage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const [threeDotLoading, setThreeDotLoading] = useState({
     csv: false,
     xlsx: false,
@@ -324,7 +335,7 @@ export default function CustomerInvoicePage() {
                 },
               ],
               filterRenderer: FilterComponent,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={1}
                   href="/distributorsOrder/add"
@@ -333,7 +344,7 @@ export default function CustomerInvoicePage() {
                   label="Add"
                   labelTw="hidden lg:block"
                 />,
-              ],
+              ] : [],
             },
             rowSelection: true,
             footer: { nextPrevBtn: true, pagination: true },

@@ -11,6 +11,8 @@ import { SurveyList, surveyGlobalSearch } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import { useEffect } from "react";
 
 interface SurveyItem {
   id: number;
@@ -45,6 +47,7 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 export default function Survey() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -52,9 +55,16 @@ export default function Survey() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   // ✅ Fetch Surveys (List)
   const fetchSurveys = useCallback(
-    async (page: number = 1, pageSize: number = 10): Promise<listReturnType> => {
+    async (page: number = 1, pageSize: number = 50): Promise<listReturnType> => {
       setLoading(true);
       try {
         const res: SurveyApiResponse = await SurveyList({
@@ -95,12 +105,12 @@ export default function Survey() {
   // ✅ Global Search (no any)
   const searchSurvey = useCallback(
     async (searchQuery: string): Promise<searchReturnType> => {
-    
+
       setLoading(true);
       try {
         const res: SurveyApiResponse = await surveyGlobalSearch({
           search: searchQuery,
-       
+
         });
 
         setLoading(false);
@@ -127,7 +137,7 @@ export default function Survey() {
       } catch (error) {
         setLoading(false);
         showSnackbar((error as Error).message, "error");
-        return { data: [], total: 0, currentPage: 1, pageSize: 10 };
+        return { data: [], total: 0, currentPage: 1, pageSize: 50 };
       }
     },
     [setLoading, showSnackbar]
@@ -188,33 +198,22 @@ export default function Survey() {
                 )}
               </div>,
             ],
-            actions: [
+            actions: can("create") ? [
               <SidebarBtn
                 key="add-survey"
-                href="/merchandiser/survey/add"
+                href="/survey/add"
                 leadingIcon="lucide:plus"
                 label="Add"
                 labelTw="hidden sm:block"
                 isActive
               />,
-            ],
+            ] : [],
           },
           footer: { nextPrevBtn: true, pagination: true },
           columns,
           rowSelection: true,
-          rowActions: [
-            // {
-            //   icon: "lucide:eye",
-            //   onClick: (data: TableDataType) =>
-            //     router.push(`/merchandiser/survey/view/${data.id}`),
-            // },
-            {
-              icon: "lucide:edit-2",
-              onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/survey/${data.id}`),
-            },
-          ],
-          pageSize: 10,
+
+          pageSize: 50,
         }}
       />
     </div>

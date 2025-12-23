@@ -17,11 +17,21 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import { useCallback, useEffect, useState } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 export default function Tier() {
+    const { can, permissions } = usePagePermissions();
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const { setLoading } = useLoading();
     const router = useRouter();
     const { showSnackbar } = useSnackbar();

@@ -64,6 +64,7 @@ export function usePromotionForm() {
   return {
     keyCombo,
     setKeyCombo: handleKeyComboChange,
+    setRawKeyCombo: setKeyCombo,
     keyValue,
     setKeyValue,
     promotion,

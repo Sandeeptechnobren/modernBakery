@@ -14,9 +14,20 @@ import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snac
 import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/utils/formatNumber";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function SalemanLoad() {
+    const { can, permissions } = usePagePermissions();
     const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions , ensureAgentCustomerLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
 
   // Load dropdown data
   useEffect(() => {
@@ -77,7 +88,6 @@ export default function SalemanLoad() {
     ];
 
     const { setLoading } = useLoading();
-    const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
     type TableRow = TableDataType & { id?: string };

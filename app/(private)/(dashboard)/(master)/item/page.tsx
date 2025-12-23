@@ -15,6 +15,8 @@ import Drawer from "@mui/material/Drawer";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import ItemPage from "./itemPopup";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+
 interface DropdownItem {
   icon: string;
   label: string;
@@ -39,10 +41,19 @@ interface LocalTableDataType {
 
 export default function Item() {
   const { setLoading } = useLoading();
+  const { can, permissions } = usePagePermissions();
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   // const [showDropdown, setShowDropdown] = useState(false);
   // const [showDeletePopup, setShowDeletePopup] = useState(false);
   // const [selectedRow, setSelectedRow] = useState<LocalTableDataType | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [selectedId, setSelectedId] = useState<string>('');
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -277,7 +288,7 @@ export default function Item() {
                 }
               ],
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/item/add"
@@ -286,7 +297,7 @@ export default function Item() {
                   label="Add"
                   labelTw="hidden sm:block"
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "item-table",
             table: {
@@ -301,11 +312,11 @@ export default function Item() {
                 onClick: (row: LocalTableDataType) =>
                   router.push(`/item/details/${row.uuid}`),
               },
-              {
+              ...(can("edit") ? [{
                 icon: "lucide:edit-2",
                 onClick: (row: LocalTableDataType) =>
                   router.push(`/item/${row.uuid}`),
-              },
+              }] : []),
             ],
             pageSize: 50,
           }}

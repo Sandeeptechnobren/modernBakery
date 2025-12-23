@@ -12,10 +12,12 @@ import { StockTransferList, salesTeamRecontionOrdersList } from "@/app/services/
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 // import 
 
 export default function SalesTeamReconciliationPage() {
+    const { can, permissions } = usePagePermissions();
     const router = useRouter();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
@@ -25,6 +27,13 @@ export default function SalesTeamReconciliationPage() {
     } = useAllDropdownListData();
 
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
 
     /* -------------------------------------------------------
        FETCH LIST (TABLE API)
@@ -177,7 +186,7 @@ export default function SalesTeamReconciliationPage() {
                                 options: warehouseOptions || [],
                             },
                         ],
-                        actions: [
+                        actions: can("create") ? [
                             <SidebarBtn
                                 key="add"
                                 href="/salesTeamReconcile/add"
@@ -186,7 +195,7 @@ export default function SalesTeamReconciliationPage() {
                                 label="Add"
                                 labelTw="hidden sm:block"
                             />,
-                        ],
+                        ] : [],
                     },
                     localStorageKey: "sales-team-reconciliation-table",
                     footer: { pagination: true, nextPrevBtn: true },

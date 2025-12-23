@@ -11,6 +11,7 @@ import { formatWithPattern } from "@/app/utils/formatDate";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 // 🔹 Dropdown menu data
@@ -97,8 +98,17 @@ const columns = [
 ];
 
 export default function CompailedClaim() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const [threeDotLoading, setThreeDotLoading] = useState<{ [key: string]: boolean }>({ csv: false, xlsx: false });
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -183,7 +193,7 @@ export default function CompailedClaim() {
 
               // searchBar: true,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/compiledClaims/add"
@@ -192,7 +202,7 @@ export default function CompailedClaim() {
                   label="Add"
                   labelTw="hidden sm:block"
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "vehicle-table",
             footer: { nextPrevBtn: true, pagination: true },

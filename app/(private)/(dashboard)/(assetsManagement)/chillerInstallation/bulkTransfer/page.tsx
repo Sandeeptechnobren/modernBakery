@@ -12,6 +12,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 // ✅ TYPE FOR BULK TRANSFER API ITEM
@@ -92,6 +93,7 @@ const columns = [
 
 
 export default function BulkTransferListPage() {
+    const { can, permissions } = usePagePermissions();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -108,6 +110,13 @@ export default function BulkTransferListPage() {
   }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
 
     // -----------------------------------------
     // 🔥 FETCH FUNCTION FOR TABLE
@@ -194,7 +203,7 @@ export default function BulkTransferListPage() {
                         title: "Bulk Transfer",
                         columnFilter: true,
                         searchBar: false,
-                        actions: [
+                        actions: can("create") ? [
                             <SidebarBtn
                                 key="add"
                                 href="/chillerInstallation/bulkTransfer/add"
@@ -211,7 +220,7 @@ export default function BulkTransferListPage() {
                                 labelTw="hidden lg:block"
                                 isActive
                             />,
-                        ],
+                        ] : [],
 
                         // 🔥 FILTER FIELDS THAT MATCH YOUR API
                         filterByFields: [

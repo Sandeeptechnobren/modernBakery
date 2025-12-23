@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Drawer from "@mui/material/Drawer";
 import ServiceTerritoryDetailsDrawer from "./ServiceTerritoryDetailsDrawer";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 // ✅ TYPE FOR SERVICE TERRITORY API ITEM
@@ -120,6 +121,7 @@ const getColumns = (
 
 
 export default function ServiceTerritoryListPage() {
+    const { can, permissions } = usePagePermissions();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -136,6 +138,14 @@ export default function ServiceTerritoryListPage() {
   }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
 
@@ -241,7 +251,7 @@ export default function ServiceTerritoryListPage() {
                         title: "Service Territory",
                         columnFilter: true,
                         searchBar: false,
-                        actions: [
+                        actions: can("create") ? [
                             <SidebarBtn
                                 key="add"
                                 href="/serviceTerritory/add"
@@ -258,7 +268,7 @@ export default function ServiceTerritoryListPage() {
                             //     labelTw="hidden lg:block"
                             //     isActive
                             // />,
-                        ],
+                        ] : [],
 
                         // 🔥 FILTER FIELDS THAT MATCH YOUR API
                         filterByFields: [

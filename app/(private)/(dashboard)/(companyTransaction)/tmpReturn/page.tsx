@@ -15,6 +15,8 @@ import {
   tempReturnList,
 } from "@/app/services/companyTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import { useLoading } from "@/app/services/loadingContext";
 
 const columns = [
   { key: "return_code", label: "Return Code", showByDefault: true },
@@ -66,9 +68,19 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+  const { can, permissions } = usePagePermissions();
+  const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   //   const [threeDotLoading, setThreeDotLoading] = useState({
   //     csv: false,
   //     xlsx: false,

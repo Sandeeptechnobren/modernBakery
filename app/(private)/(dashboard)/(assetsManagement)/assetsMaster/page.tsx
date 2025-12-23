@@ -12,6 +12,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { chillerList, deleteChiller, deleteServiceTypes, serviceTypesList } from "@/app/services/assetsApi";
 import StatusBtn from "@/app/components/statusBtn2";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -19,9 +20,17 @@ const dropdownDataList = [
 ];
 
 export default function ShelfDisplay() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -93,7 +102,7 @@ export default function ShelfDisplay() {
 
               searchBar: false,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key="name"
                   href="/assetsMaster/add"
@@ -102,7 +111,7 @@ export default function ShelfDisplay() {
                   labelTw="hidden lg:block"
                   isActive
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "assetsMasterTable",
             table: {
@@ -184,12 +193,12 @@ export default function ShelfDisplay() {
                   router.push(`/assetsMaster/view/${data.uuid}`);
                 },
               },
-              {
+              ...(can("edit") ? [{
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
                   router.push(`/assetsMaster/${data.uuid}`);
                 },
-              },
+              }] : []),
             ],
             pageSize: 10,
           }}

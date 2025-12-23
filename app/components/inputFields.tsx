@@ -122,6 +122,7 @@ export default function InputFields({
     width: "0",
     top: "0",
     left: "0",
+    bottom: "auto", // added
     maxHeight: "0px",
     placement: "bottom" as "bottom" | "top",
   });
@@ -245,68 +246,39 @@ export default function InputFields({
     const spaceAbove = Math.max(0, rect.top - margin);
     const MAX_DROPDOWN = Math.floor(Math.min(400, viewportHeight * 0.6));
 
-    // prefer below if there's enough space below or below has more space than above
     let placement: "bottom" | "top" = "bottom";
-    // maxHeight is only an upper bound; the actual dropdown will size to its content
-    // when content is smaller than maxHeight. We initially pick a reasonable max,
-    // then measure the actual rendered dropdown height (if available) and correct
-    // the top for top-placement so very small lists (1-2 items) don't get pushed
-    // far away because of a large maxHeight.
     let maxHeight = Math.min(MAX_DROPDOWN, Math.max(40, spaceBelow));
     if (spaceBelow < 160 && spaceAbove > spaceBelow) {
       placement = "top";
       maxHeight = Math.min(MAX_DROPDOWN, Math.max(40, spaceAbove));
     }
 
-    // visual gap between input and dropdown when placed on top
-    const gap = 8; // px
+    const gap = 8;
 
-    // initial top (will be corrected after measurement if possible)
-    const top =
-      placement === "bottom"
-        ? inputBottom
-        : Math.max(margin, inputTop - maxHeight - gap);
-
-    setDropdownProperties({
-      width: `${w}px`,
-      top: `${top}px`,
-      left: `${l}px`,
-      maxHeight: `${maxHeight}px`,
-      placement,
-    });
-    setDropdownPropertiesString(
-      `!w-[${w}px] !top-[${Math.floor(top)}px] !left-[${l}px]`
-    );
-
-    // Try to measure the actual dropdown content height (render happens right after open).
-    // If available, compute a more accurate top for top-placement so small content sits
-    // directly above the trigger with a small gap instead of being offset by the maxHeight.
-    setTimeout(() => {
-      try {
-        const contentEl = document.querySelector(
-          ".inputfields-dropdown-content"
-        ) as HTMLElement | null;
-        if (contentEl) {
-          const contentHeight = Math.min(contentEl.offsetHeight, maxHeight);
-          const accurateTop =
-            placement === "bottom"
-              ? inputBottom
-              : Math.max(margin, inputTop - contentHeight - gap);
-          setDropdownProperties({
-            width: `${w}px`,
-            top: `${accurateTop}px`,
-            left: `${l}px`,
-            maxHeight: `${maxHeight}px`,
-            placement,
-          });
-          setDropdownPropertiesString(
-            `!w-[${w}px] !top-[${Math.floor(accurateTop)}px] !left-[${l}px]`
-          );
-        }
-      } catch (err) {
-        // measurement is best-effort; ignore errors silently
-      }
-    }, 0);
+    if (placement === "bottom") {
+      const top = inputBottom;
+      setDropdownProperties({
+        width: `${w}px`,
+        top: `${top}px`,
+        left: `${l}px`,
+        bottom: "auto",
+        maxHeight: `${maxHeight}px`,
+        placement,
+      });
+      setDropdownPropertiesString(`!w-[${w}px] !top-[${Math.floor(top)}px] !left-[${l}px]`);
+    } else {
+      // For top placement, anchor using bottom to avoid blinking
+      const bottom = viewportHeight - inputTop + gap;
+      setDropdownProperties({
+        width: `${w}px`,
+        top: "auto",
+        left: `${l}px`,
+        bottom: `${bottom}px`,
+        maxHeight: `${maxHeight}px`,
+        placement,
+      });
+      setDropdownPropertiesString(`!w-[${w}px] !bottom-[${Math.floor(bottom)}px] !left-[${l}px]`);
+    }
   };
   const handleSelect: (country?: {
     name?: string;
@@ -418,6 +390,7 @@ export default function InputFields({
       setDropdownProperties({
         width: `${w}px`,
         top: `${t}px`,
+        bottom: "auto",
         left: `${l}px`,
         maxHeight: `${defaultMax}px`,
         placement: "bottom",
@@ -439,7 +412,7 @@ export default function InputFields({
 
   // When dropdown is open, compute and keep its fixed position in sync with the trigger
   useEffect(() => {
-    if (!dropdownOpen) return;
+    if (!dropdownOpen && !selectedOptionsDropdownOpen) return;
     // initial compute
     computeDropdownProps();
     const onResize = () => computeDropdownProps();
@@ -449,7 +422,7 @@ export default function InputFields({
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onResize, true);
     };
-  }, [dropdownOpen, (options || []).length]);
+  }, [dropdownOpen, selectedOptionsDropdownOpen, (options || []).length, search]);
 
   // useEffect(()=>{
   //   setDefaultCountry(selectedCountry)
@@ -713,10 +686,7 @@ export default function InputFields({
                     // If multiSelectChips is enabled, render chips before the input
                     if (multiSelectChips) {
                       return (
-                        <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0" onClick={(e) => { e.stopPropagation(); showSelectedOptionsDropdown(false); }}>
-                          {/* {selected.length === 0 && (
-                            <span className="text-gray-400">{`Search ${label}`}</span>
-                          )} */}
+                        <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
                           
                           <input
                             type="text"
@@ -727,13 +697,25 @@ export default function InputFields({
                               console.log("Search input changed:", v);
                               setSearch(v);
                               // onSearch(v);
-                              if (!dropdownOpen) setDropdownOpen(true);
+                              if (!dropdownOpen) {
+                                showSelectedOptionsDropdown(false);
+                                setDropdownOpen(true);
+                              }
                               // if (v === "") {
                               //   // user cleared the input -> clear selected values for multi-select
                               //   safeOnChange(createMultiSelectEvent([]));
                               // }
                             }}
-                            onFocus={() => { setDropdownOpen(true); showSelectedOptionsDropdown(false); }}
+                            onFocus={(e) => {  
+                              e.stopPropagation(); 
+                              showSelectedOptionsDropdown(false);
+                              setDropdownOpen(true); 
+                            }}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              showSelectedOptionsDropdown(false);
+                              setDropdownOpen(true); 
+                            }}
                             className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? "text-gray-900" : "text-gray-400"
                               }`}
                             style={
@@ -773,8 +755,23 @@ export default function InputFields({
                               </span>
                             );
                           })}
-                          {selected.length > 2 && (
-                            <span className="inline-flex items-center bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-sm font-medium cursor-pointer">
+                          {selected.length > 1 && (
+                            <span 
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (selectedOptionsDropdownOpen) {
+                                  showSelectedOptionsDropdown(false);
+                                } else {
+                                  setDropdownOpen(false);
+                                  // Wait for state update before computing props
+                                  setTimeout(() => {
+                                    computeDropdownProps();
+                                    showSelectedOptionsDropdown(true);
+                                  }, 0);
+                                }
+                              }}
+                              className="inline-flex items-center bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-sm font-medium cursor-pointer hover:bg-gray-300"
+                            >
                               +{selected.length - 1}
                             </span>
                           )}
@@ -795,7 +792,10 @@ export default function InputFields({
                             setSearch(v);
                             onSearch(v);
                             // console.log("Search input changed:", v);
-                            if (!dropdownOpen) setDropdownOpen(true);
+                            if (!dropdownOpen) {
+                              showSelectedOptionsDropdown(false);
+                              setDropdownOpen(true);
+                            }
                             if (v === "") {
                               // user cleared the input -> clear selected values for multi-select
                               safeOnChange(createMultiSelectEvent([]));
@@ -804,9 +804,7 @@ export default function InputFields({
                           onFocus={() => setDropdownOpen(true)}
                           className={`flex-1 truncate outline-none border-none h-full placeholder-gray-400 ${hasSelection ? "text-gray-900" : "text-gray-400"
                             }`}
-                          style={
-                            hasSelection ? { color: "#111827" } : undefined
-                          }
+                          style={hasSelection ? { color: "#111827" } : undefined}
                           onKeyDown={createArrowKeyHandler(
                             filteredOptions,
                             highlightedIndex,
@@ -913,7 +911,8 @@ export default function InputFields({
                   <div
                     style={{
                       left: dropdownProperties.left,
-                      top: dropdownProperties.top,
+                      top: dropdownProperties.placement === "top" ? undefined : dropdownProperties.top,
+                      bottom: dropdownProperties.placement === "top" ? dropdownProperties.bottom : undefined,
                       width: dropdownProperties.width,
                       maxHeight: dropdownProperties.maxHeight,
                     }}
@@ -1025,50 +1024,52 @@ export default function InputFields({
 
               {selectedOptionsDropdownOpen && !loading && !disabled && !showSkeleton && dropdownProperties.width !== "0" && (() => {
                 const selected = options?.filter((opt) => selectedValues.includes(opt.value)).map((o) => ({ value: o.value, label: o.label })) || [];
-                return <>
+                return (
                   <div
                     style={{
                       left: dropdownProperties.left,
-                      top: dropdownProperties.top,
+                      top: dropdownProperties.placement === "top" ? undefined : dropdownProperties.top,
+                      bottom: dropdownProperties.placement === "top" ? dropdownProperties.bottom : undefined,
                       width: dropdownProperties.width,
                       maxHeight: dropdownProperties.maxHeight,
                     }}
                     tabIndex={-1}
                     className="inputfields-dropdown-content fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-auto"
                   >
-                      {selected.length === 0 ? (
-                        <div className="px-3 py-5 text-gray-600 text-center">
-                          No Selected options
-                        </div>
-                      ) : (
-                        <>
-                          {selected.map((opt, idx) => (
-                            <div
-                              key={opt.value + idx}
-                              className={`inputfields-dropdown-item-${idx} flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""
-                                } ${highlightedIndex === idx ? "bg-blue-100" : ""}`}
-                              onClick={(e) => {
-                                e.preventDefault();
+                    {selected.length === 0 ? (
+                      <div className="px-3 py-5 text-gray-600 text-center">
+                        No Selected options
+                      </div>
+                    ) : (
+                      <>
+                        {selected.map((opt, idx) => (
+                          <div
+                            key={opt.value + idx}
+                            className={`inputfields-dropdown-item-${idx} flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!disabled) handleCheckbox(opt.value);
+                            }}
+                          >
+                            <CustomCheckbox
+                              label={opt.label}
+                              labelTw="!text-sm"
+                              width={20}
+                              checked={selectedValues.includes(opt.value)}
+                              onChange={(e) => {
+                                e.stopPropagation();
                                 if (!disabled) handleCheckbox(opt.value);
                               }}
-                            >
-                              <CustomCheckbox
-                                label={opt.label}
-                                labelTw="!text-sm"
-                                width={20}
-                                checked={selectedValues.includes(opt.value)}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  if (!disabled) handleCheckbox(opt.value);
-                                }}
-                                disabled={disabled}
-                              />
-                            </div>
-                          ))}
-                        </>
-                      )}
+                              disabled={disabled}
+                            />
+                          </div>
+                        ))}
+                      </>
+                    )}
                   </div>
-                </>
+                );
               })()}
             </div>
           ) : (
@@ -1206,7 +1207,8 @@ export default function InputFields({
                 <div
                   style={{
                     left: dropdownProperties.left,
-                    top: dropdownProperties.top,
+                    top: dropdownProperties.placement === "top" ? undefined : dropdownProperties.top,
+                    bottom: dropdownProperties.placement === "top" ? dropdownProperties.bottom : undefined,
                     width: dropdownProperties.width,
                     maxHeight: dropdownProperties.maxHeight,
                   }}

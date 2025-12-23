@@ -18,6 +18,7 @@ import {
 } from "@/app/services/companyTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import ApprovalStatus from "@/app/components/approvalStatus";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const columns = [
   { key: "osa_code", label: "Code", showByDefault: true },
@@ -63,9 +64,18 @@ const columns = [
 ];
 
 export default function CapsPage() {
+  const { can, permissions } = usePagePermissions();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   //   const [threeDotLoading, setThreeDotLoading] = useState({
   //     csv: false,
   //     xlsx: false,
@@ -188,7 +198,7 @@ export default function CapsPage() {
                   type: "date",
                 },
               ],
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={1}
                   href="/caps/add"
@@ -197,7 +207,7 @@ export default function CapsPage() {
                   label="Add"
                   labelTw="hidden lg:block"
                 />,
-              ],
+              ] : [],
             },
             rowSelection: false,
             footer: { nextPrevBtn: true, pagination: true },
@@ -208,6 +218,9 @@ export default function CapsPage() {
                 onClick: (row: TableDataType) =>
                   router.push(`/caps/details/${row.uuid}`),
               },
+              ...(can("edit") ? [
+                  // Add edit action if needed
+              ] : [])
             ],
             pageSize: 10,
           }}

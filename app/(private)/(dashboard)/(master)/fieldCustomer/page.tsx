@@ -14,8 +14,10 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { getPaymentType } from "../keyCustomer/details/[uuid]/page";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function AgentCustomer() {
+    const { can, permissions } = usePagePermissions();
     const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseAllOptions, routeOptions, ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
     // Load dropdown data
@@ -30,6 +32,14 @@ export default function AgentCustomer() {
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [channelId, setChannelId] = useState<string>("");
     const [routeId, setRouteId] = useState<string>("");
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
     const columns: configType["columns"] = [
         {
             key: "osa_code, name",
@@ -175,7 +185,6 @@ export default function AgentCustomer() {
     ];
 
     const { setLoading } = useLoading();
-    const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
     type TableRow = TableDataType & { id?: string };
@@ -371,7 +380,7 @@ export default function AgentCustomer() {
                             ],
                             searchBar: true,
                             columnFilter: true,
-                            actions: [
+                            actions: can("create") ? [
                                 <SidebarBtn
                                     key={0}
                                     href="/fieldCustomer/new"
@@ -380,7 +389,7 @@ export default function AgentCustomer() {
                                     label="Add"
                                     labelTw="hidden sm:block"
                                 />,
-                            ],
+                            ] : [],
                         },
                         localStorageKey: "agentCustomer-table",
                         footer: { nextPrevBtn: true, pagination: true },
@@ -395,7 +404,7 @@ export default function AgentCustomer() {
                                     router.push(`/fieldCustomer/details/${row.uuid}`);
                                 },
                             },
-                            {
+                            ...(can("edit") ? [{
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
@@ -403,7 +412,7 @@ export default function AgentCustomer() {
                                         `/fieldCustomer/${row.uuid}`
                                     );
                                 },
-                            },
+                            }] : []),
                         ],
                         pageSize: 50,
                     }}

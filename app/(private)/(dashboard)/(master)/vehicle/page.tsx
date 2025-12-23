@@ -10,6 +10,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import { formatWithPattern } from "@/app/utils/formatDate";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 // 🔹 API response type
 interface Vehicle {
@@ -112,8 +113,17 @@ const columns = [
 ];
 
 export default function VehiclePage() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const [threeDotLoading, setThreeDotLoading] = useState<{ [key: string]: boolean }>({ csv: false, xlsx: false });
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -280,7 +290,7 @@ export default function VehiclePage() {
               title: "Vehicle",
               searchBar: true,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/vehicle/add"
@@ -289,7 +299,7 @@ export default function VehiclePage() {
                   label="Add"
                   labelTw="hidden sm:block"
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "vehicle-table",
             footer: { nextPrevBtn: true, pagination: true },
@@ -303,7 +313,7 @@ export default function VehiclePage() {
                   router.push(`/vehicle/details/${data.uuid}`);
                 },
               },
-              {
+              ...(can("edit") ? [{
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
@@ -311,7 +321,7 @@ export default function VehiclePage() {
                     `/vehicle/${r.uuid}`
                   );
                 },
-              },
+              }] : []),
               // {
               //   icon: "lucide:trash-2",
               //   onClick: (row: object) => {

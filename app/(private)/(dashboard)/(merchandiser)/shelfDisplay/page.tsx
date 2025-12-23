@@ -19,6 +19,7 @@ import {
   shelvesList,
 } from "@/app/services/merchandiserApi";
 import { useLoading } from "@/app/services/loadingContext";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 interface ShelfDisplayItem {
   uuid: string;
@@ -35,12 +36,20 @@ const dropdownDataList = [
 ];
 
 export default function ShelfDisplay() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<ShelfDisplayItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -97,7 +106,7 @@ export default function ShelfDisplay() {
   const fetchShelfDisplay = useCallback(
     async (
       pageNo: number = 1,
-      pageSize: number = 10
+      pageSize: number = 50
     ): Promise<listReturnType> => {
       setLoading(true);
       const res = await shelvesList({
@@ -167,7 +176,7 @@ export default function ShelfDisplay() {
               ],
               searchBar: false,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key="name"
                   href="/shelfDisplay/add"
@@ -176,7 +185,7 @@ export default function ShelfDisplay() {
                   labelTw="hidden lg:block"
                   isActive
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "shelf-display-table",
             footer: { nextPrevBtn: true, pagination: true },
@@ -215,13 +224,13 @@ export default function ShelfDisplay() {
                   router.push(`/shelfDisplay/view/${row.uuid}`);
                 },
               },
-              {
+              ...(can("edit") ? [{
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableDataType;
                   router.push(`/shelfDisplay/${row.uuid}`);
                 },
-              },
+              }] : []),
               // {
               //   icon: "lucide:trash-2",
               //   onClick: (data: object) => {
@@ -231,7 +240,7 @@ export default function ShelfDisplay() {
               //   },
               // },
             ],
-            pageSize: 10,
+            pageSize: 50,
           }}
         />
       </div>

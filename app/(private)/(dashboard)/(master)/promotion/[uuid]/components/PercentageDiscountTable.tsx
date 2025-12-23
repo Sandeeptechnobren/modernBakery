@@ -16,8 +16,8 @@ export default function PercentageDiscountTable({ percentageDiscounts, setPercen
   const isCategoryMode = keyCombo.Item === "Item Category";
   const dropdownLabel = isCategoryMode ? "Item Category" : "Item";
   const dropdownOptions = isCategoryMode
-    ? (itemDropdownMap["Item Category"] ? [{ label: `Select ${dropdownLabel}`, value: "" }, ...itemDropdownMap["Item Category"]] : [])
-    : (itemDropdownMap["Item"] ? [{ label: `Select ${dropdownLabel}`, value: "" }, ...itemDropdownMap["Item"]] : []);
+    ? (itemDropdownMap["Item Category"] ? [ ...itemDropdownMap["Item Category"]] : [])
+    : (itemDropdownMap["Item"] ? [ ...itemDropdownMap["Item"]] : []);
 
   return (
     <div className="mb-6 mt-8">
@@ -53,6 +53,7 @@ export default function PercentageDiscountTable({ percentageDiscounts, setPercen
                   <InputFields
                     label=""
                     type="select"
+                    searchable={true}
                     isSingle={true}
                     placeholder={`Select ${dropdownLabel}`}
                     options={filteredOptions}

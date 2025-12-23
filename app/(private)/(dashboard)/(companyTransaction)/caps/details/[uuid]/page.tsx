@@ -10,7 +10,7 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import { formatWithPattern } from "@/app/(private)/utils/date";
 import InputFields from "@/app/components/inputFields";
 import PrintButton from "@/app/components/printButton";
-import { capsByUUID, purchaseOrderById, exportCapsViewPdf } from "@/app/services/companyTransaction";
+import { capsByUUID, purchaseOrderById, exportCapsViewPdf, capsUpdate } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { isValidDate } from "@/app/utils/formatDate";
@@ -24,7 +24,7 @@ const baseColumns = [
     { key: "uom_name", label: "UOM" },
     { key: "quantity", label: "Quantity" },
     { key: "receive_qty", label: "Collected Quantity" },
-    { key: "receive_amount", label: "Received Amount",render:(value: TableDataType) => <>{value.receive_amount ? parseFloat(value.receive_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}</> },
+    // { key: "receive_amount", label: "Received Amount",render:(value: TableDataType) => <>{value.receive_amount ? parseFloat(value.receive_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}</> },
     { key: "remarks", label: "Remarks" },
 ];
 
@@ -75,7 +75,8 @@ export default function CapsDetailPage() {
     const [data, setData] = useState<CapsDetail | null>(null);
     const [loading, setLoadingState] = useState<boolean>(false);
     const [isEditApproveMode, setIsEditApproveMode] = useState(false);
-    const [editValues, setEditValues] = useState<Record<string, { receive_qty: string; remarks: string }>>({});
+    // Keep edited values aligned with details order (array)
+    const [editValues, setEditValues] = useState<Array<{ receive_qty: string; remarks: string }>>([]);
     const params = useParams();
     const UUID = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid ?? "";
     const CURRENCY = localStorage.getItem("country") || "";
@@ -102,27 +103,20 @@ export default function CapsDetailPage() {
     // Initialize editable values whenever details load.
     useEffect(() => {
         if (!data?.details) return;
-        const next: Record<string, { receive_qty: string; remarks: string }> = {};
-        data.details.forEach((d: any) => {
-            const id = String(d?.id ?? d?.uuid ?? "");
-            if (!id) return;
-            next[id] = {
-                receive_qty: String(d?.receive_qty ?? ""),
-                remarks: String(d?.remarks ?? ""),
-            };
-        });
+        const next: Array<{ receive_qty: string; remarks: string }> = data.details.map((d: any) => ({
+            receive_qty: String(d?.receive_qty ?? ""),
+            remarks: String(d?.remarks ?? ""),
+        }));
         setEditValues(next);
     }, [data?.details]);
 
-    const setRowEditValue = (rowKey: string, field: "receive_qty" | "remarks", value: string) => {
-        setEditValues((prev) => ({
-            ...prev,
-            [rowKey]: {
-                receive_qty: prev?.[rowKey]?.receive_qty ?? "",
-                remarks: prev?.[rowKey]?.remarks ?? "",
-                [field]: value,
-            },
-        }));
+    const setRowEditValue = (rowIndex: number, field: "receive_qty" | "remarks", value: string) => {
+        setEditValues((prev) => {
+            const copy = [...prev];
+            const current = copy[rowIndex] || { receive_qty: "", remarks: "" };
+            copy[rowIndex] = { ...current, [field]: value };
+            return copy;
+        });
     };
 
     const clampReceiveQty = (raw: string, maxQty: number) => {
@@ -166,7 +160,7 @@ export default function CapsDetailPage() {
                     <Icon
                         icon="lucide:arrow-left"
                         width={24}
-                        onClick={() => router.push("/caps")}
+                        onClick={() => router.push(backBtnUrl)}
                         className="cursor-pointer"
                     />
                     <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
@@ -185,14 +179,23 @@ export default function CapsDetailPage() {
                 requestStepId={data?.request_step_id}
                 redirectPath={backBtnUrl}
                 model="Ht_Caps_Header"
-                onApproveIntercept={() => {
-                    if (!isEditApproveMode) {
-                        setIsEditApproveMode(true);
-                        // return true;
+                onApproveIntercept={async () => {
+                    // Build details payload as array with ids + edited values
+                    const detailsPayload = (data?.details || []).map((d: any, idx: number) => ({
+                        ...d,
+                        receive_qty: Number(editValues[idx]?.receive_qty ?? d?.receive_qty ?? 0),
+                        remarks: String(editValues[idx]?.remarks ?? d?.remarks ?? ""),
+                    }));
+                    try {
+                        await capsUpdate(UUID, { details: detailsPayload });
+                    } catch (e) {
+                        showSnackbar("Failed to update Caps Collection details", "error");
+                        return true;
                     }
-                    // Second click will proceed to confirmation popup.
+                    showSnackbar("Caps Collection details updated successfully", "success");
                     return false;
                 }}
+                setIsUserHavePermission={setIsEditApproveMode}
             />
 
             <div ref={targetRef}>
@@ -263,11 +266,10 @@ export default function CapsDetailPage() {
                                 const value = (row as any)[key];
                                 mappedRow[key] = value === null || value === undefined ? "" : String(value);
                             });
-                            // Override editable fields from local state when in edit mode.
-                            const rowKey = String((row as any)?.id ?? (row as any)?.uuid ?? "");
-                            if (isEditApproveMode && rowKey && editValues[rowKey]) {
-                                mappedRow.receive_qty = editValues[rowKey].receive_qty;
-                                mappedRow.remarks = editValues[rowKey].remarks;
+                            // Override editable fields from local state when in edit mode (by index)
+                            if (isEditApproveMode && editValues[index]) {
+                                mappedRow.receive_qty = editValues[index].receive_qty;
+                                mappedRow.remarks = editValues[index].remarks;
                             }
                             return mappedRow;
                         })}
@@ -278,7 +280,7 @@ export default function CapsDetailPage() {
                                     return {
                                         ...c,
                                         render: (value: TableDataType) => {
-                                            const rowKey = String((value as any)?.id ?? (value as any)?.uuid ?? "");
+                                            const idx = Math.max(0, Number((value as any)?.index) - 1);
                                             const display = (value as any)?.receive_qty ?? "";
                                             if (!isEditApproveMode) return <>{display}</>;
 
@@ -293,10 +295,10 @@ export default function CapsDetailPage() {
                                                         max={safeMax}
                                                         integerOnly={true}
                                                         placeholder="Collected qty"
-                                                        value={editValues[rowKey]?.receive_qty ?? String(display ?? "")}
+                                                        value={editValues[idx]?.receive_qty ?? String(display ?? "")}
                                                         onChange={(e) =>
                                                             setRowEditValue(
-                                                                rowKey,
+                                                                idx,
                                                                 "receive_qty",
                                                                 clampReceiveQty(e.target.value, safeMax)
                                                             )
@@ -312,7 +314,7 @@ export default function CapsDetailPage() {
                                     return {
                                         ...c,
                                         render: (value: TableDataType) => {
-                                            const rowKey = String((value as any)?.id ?? (value as any)?.uuid ?? "");
+                                            const idx = Math.max(0, Number((value as any)?.index) - 1);
                                             const display = (value as any)?.remarks ?? "";
                                             if (!isEditApproveMode) return <>{display ? display : "-"}</>;
                                             return (
@@ -320,8 +322,8 @@ export default function CapsDetailPage() {
                                                     <InputFields
                                                         type="text"
                                                         placeholder="Remarks"
-                                                        value={editValues[rowKey]?.remarks ?? String(display ?? "")}
-                                                        onChange={(e) => setRowEditValue(rowKey, "remarks", e.target.value)}
+                                                        value={editValues[idx]?.remarks ?? String(display ?? "")}
+                                                        onChange={(e) => setRowEditValue(idx, "remarks", e.target.value)}
                                                         width="100%"
                                                     />
                                                 </div>

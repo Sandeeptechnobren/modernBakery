@@ -212,6 +212,15 @@ export const returnList = async (params?: Params) => {
   }
 };
 
+export const returnQuickView = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/hariss_transaction/temp_returns/gettemp`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const returnByUUID = async (uuid: string, params?: Params) => {
   try {
     const res = await API.get(`/api/hariss_transaction/ht_returns/show/${uuid}`, { params });
@@ -307,6 +316,15 @@ export const capsByUUID = async (uuid: string, params?: Params) => {
 export const capsCreate = async (body: object) => {
   try {
     const res = await API.post(`/api/hariss_transaction/ht_caps/create`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const capsUpdate = async (uuid: string, body: object) => {
+  try {
+    const res = await API.put(`/api/hariss_transaction/ht_caps/update/${uuid}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

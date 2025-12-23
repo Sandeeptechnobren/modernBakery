@@ -17,6 +17,9 @@ import { planogramList } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { exportPlanogram } from "@/app/services/merchandiserApi";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import { useEffect } from "react";
+
 interface PlanogramItem {
   id: number | string;
   uuid: string; // <--- add this
@@ -37,12 +40,21 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 export default function Planogram() {
+  const { can, permissions } = usePagePermissions();
   const router = useRouter();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   // const [showDeletePopup, setShowDeletePopup] = useState(false);
   // const [deleteSelectedRow, setDeleteSelectedRow] = useState<string | null>(null);
 
@@ -239,7 +251,7 @@ export default function Planogram() {
                 />
               </div>,
             ],
-            actions: [
+            actions: can("create") ? [
               <SidebarBtn
                 key="add-planogram"
                 href="/planogram/add"
@@ -248,7 +260,7 @@ export default function Planogram() {
                 labelTw="hidden sm:block"
                 isActive
               />,
-            ],
+            ] : [],
           },
           footer: { nextPrevBtn: true, pagination: true },
           columns,
@@ -259,11 +271,11 @@ export default function Planogram() {
               onClick: (data: TableDataType) =>
                 router.push(`/planogram/view/${data.uuid}`),
             },
-            {
+            ...(can("edit") ? [{
               icon: "lucide:edit-2",
               onClick: (data: TableDataType) =>
                 router.push(`/planogram/${data.uuid}`),
-            },
+            }] : []),
             // {
             //   icon: "lucide:trash-2",
             //   onClick: (data: TableDataType) => {

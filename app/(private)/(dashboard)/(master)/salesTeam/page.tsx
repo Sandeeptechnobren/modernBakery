@@ -18,14 +18,24 @@ import {
 } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const SalesmanPage = () => {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const { warehouseOptions, routeOptions , ensureRouteLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
 
   // Load dropdown data
@@ -295,7 +305,7 @@ const SalesmanPage = () => {
               ],
               searchBar: true,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key={0}
                   href="/salesTeam/add"
@@ -304,7 +314,7 @@ const SalesmanPage = () => {
                   label="Add"
                   labelTw="hidden sm:block"
                 />,
-              ],
+              ] : [],
             },
             localStorageKey: "salesman-table",
             footer: { nextPrevBtn: true, pagination: true },
@@ -317,13 +327,13 @@ const SalesmanPage = () => {
                   router.push(`/salesTeam/details/${data.uuid}`);
                 },
               },
-              {
+              ...(can("edit") ? [{
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
                   router.push(`/salesTeam/${r.uuid}`);
                 },
-              },
+              }] : []),
             ],
             pageSize: 50,
           }}

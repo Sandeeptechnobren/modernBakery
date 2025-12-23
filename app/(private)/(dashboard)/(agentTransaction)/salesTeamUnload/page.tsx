@@ -14,11 +14,23 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useEffect } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function SalesmanUnloadPage() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const {
     regionOptions,
     warehouseOptions,
@@ -38,7 +50,6 @@ export default function SalesmanUnloadPage() {
     ensureWarehouseLoaded();
   }, [ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseLoaded]);
 
-  const [refreshKey, setRefreshKey] = useState(0);
   const [isFiltered, setIsFiltered] = useState(false);
 
   const [form, setForm] = useState({
@@ -286,7 +297,7 @@ export default function SalesmanUnloadPage() {
                   : [],
               },
             ],
-            actions: [
+            actions: can("create") ? [
               <SidebarBtn
                 key={0}
                 href="/salesTeamUnload/add"
@@ -295,7 +306,7 @@ export default function SalesmanUnloadPage() {
                 label="Add"
                 labelTw="hidden sm:block"
               />,
-            ],
+            ] : [],
           },
           localStorageKey: "salesmanUnload-table",
           footer: { nextPrevBtn: true, pagination: true },

@@ -24,6 +24,19 @@ let allowedDashboardPaths = new Set<string>();
 export function filterMenuByPermissions(allMenus: LinkDataType[] = [], role: any): LinkDataType[] {
   if (!role || !Array.isArray(allMenus)) return [];
   const allowedMenus = (role?.menus || []).map((m: any) => m.menu?.name).filter(Boolean);
+  
+  // Create a map of submenu name to ID for easy lookup
+  const submenuIdMap = new Map<string, number | string>();
+  (role?.menus || []).forEach((m: any) => {
+      if (Array.isArray(m.submenu)) {
+          m.submenu.forEach((s: any) => {
+              if (s.name && s.id) {
+                  submenuIdMap.set(s.name, s.id);
+              }
+          });
+      }
+  });
+
   const allowedSubMenus = (role?.menus || []).flatMap((m: any) => {
     const hrefs = Array.isArray(m.submenu) ? m.submenu.map((s: { path: string}) => s.path) : [];
     allowedDashboardPaths = new Set([...allowedDashboardPaths, ...hrefs]);
@@ -35,7 +48,12 @@ export function filterMenuByPermissions(allMenus: LinkDataType[] = [], role: any
     .map((menu) => {
       if (menu.children && menu.children.length > 0) {
         const children = menu.children as any[];
-        const filteredChildren = children.filter((child: any) => allowedSubMenus.includes(child.label));
+        const filteredChildren = children
+            .filter((child: any) => allowedSubMenus.includes(child.label))
+            .map((child: any) => ({
+                ...child,
+                id: submenuIdMap.get(child.label)
+            }));
         return { ...menu, children: filteredChildren };
       }
       return menu;

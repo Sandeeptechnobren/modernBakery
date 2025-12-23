@@ -13,7 +13,8 @@ import {
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 interface CustomerItem {
   id: number;
@@ -45,8 +46,16 @@ interface CustomerItem {
 }
 
 export default function CompanyCustomers() {
-  // const [customers, setCustomers] = useState<CustomerItem[]>([]);
+  const { can, permissions } = usePagePermissions();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const { setLoading } = useLoading();
   // const [showDeletePopup, setShowDeletePopup] = useState(false);
   // const [selectedRow, setSelectedRow] = useState<CustomerItem | null>(null);
@@ -198,7 +207,7 @@ export default function CompanyCustomers() {
               ],
               searchBar: true,
               columnFilter: true,
-              actions: [
+              actions: can("create") ? [
                 <SidebarBtn
                   key="add-company-customer"
                   href="/keyCustomer/add"
@@ -207,7 +216,7 @@ export default function CompanyCustomers() {
                   labelTw="hidden sm:block"
                   isActive
                 />,
-              ],
+              ] : [],
             },
             floatingInfoBar: {
               // showByDefault: true,
@@ -268,7 +277,7 @@ export default function CompanyCustomers() {
                   router.push(`/keyCustomer/details/${data.uuid}`);
                 },
               },
-              {
+              ...(can("edit") ? [{
                 icon: "lucide:edit-2",
                 onClick: (row: TableDataType) => {
                   console.log(row)
@@ -276,7 +285,7 @@ export default function CompanyCustomers() {
                     `/keyCustomer/${row.uuid}`
                   )
                 }
-              },
+              }] : []),
               // {
               //   icon: "lucide:trash-2",
               //   onClick: (row: TableDataType) => {

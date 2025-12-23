@@ -18,6 +18,7 @@ import { formatWithPattern } from "@/app/(private)/utils/date";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import FilterComponent from "@/app/components/filterComponent";
 import ApprovalStatus from "@/app/components/approvalStatus";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 // const dropdownDataList = [
 //     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -116,10 +117,19 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+    const { can, permissions } = usePagePermissions();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
     const [refreshKey, setRefreshKey] = useState<number>(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const [threeDotLoading, setThreeDotLoading] = useState({
         csv: false,
         xlsx: false,
@@ -269,16 +279,7 @@ export default function CustomerInvoicePage() {
                                 onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
                             },
                         ],
-                        actions: [
-                            // <SidebarBtn
-                            //     key={0}
-                            //     href="#"
-                            //     isActive
-                            //     leadingIcon="mdi:download"
-                            //     label="Download"
-                            //     labelTw="hidden lg:block"
-                            //     onClick={exportFile}
-                            // />,
+                        actions: can("create") ? [
                             <SidebarBtn
                                 key={1}
                                 href="/distributorsDelivery/add"
@@ -287,7 +288,7 @@ export default function CustomerInvoicePage() {
                                 label="Add"
                                 labelTw="hidden lg:block"
                             />
-                        ],
+                        ] : [],
                         filterRenderer: FilterComponent,
                     },
                     footer: { nextPrevBtn: true, pagination: true },

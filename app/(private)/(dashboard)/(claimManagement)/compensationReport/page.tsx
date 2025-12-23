@@ -17,6 +17,7 @@ import {
   compensationReportList,
 } from "@/app/services/companyTransaction";
 import { toInternationalNumber } from "@/app/(private)/utils/formatNumber";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 // const dropdownDataList = [
 //     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -81,9 +82,18 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+  const { can, permissions } = usePagePermissions();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const [refreshKey, setRefreshKey] = useState<number>(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
+
   const [threeDotLoading, setThreeDotLoading] = useState({
     csv: false,
     xlsx: false,

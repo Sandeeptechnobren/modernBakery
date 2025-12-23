@@ -15,6 +15,8 @@ import { useCallback, useState } from "react";
 import { downloadFile } from "@/app/services/allApi";
 import FilterComponent from "@/app/components/filterComponent";
 import ApprovalStatus from "@/app/components/approvalStatus";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import { useEffect } from "react";
 
 const dropdownDataList = [
     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -65,9 +67,19 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+    const { can, permissions } = usePagePermissions();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const [threeDotLoading, setThreeDotLoading] = useState({
         csv: false,
         xlsx: false,
@@ -79,7 +91,6 @@ export default function CustomerInvoicePage() {
         routeCode: "",
     });
 
-    const [refreshKey, setRefreshKey] = useState(0);
     const [showDropdown, setShowDropdown] = useState(false);
 
     const handleChange = (name: string, value: string) => {
@@ -183,15 +194,7 @@ export default function CustomerInvoicePage() {
                                 onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
                             },],
 
-                        actions: [
-                            //   <SidebarBtn
-                            //       key={0}
-                            //       href="#"
-                            //       isActive
-                            //       leadingIcon="mdi:download"
-                            //       label="Download"
-                            //       labelTw="hidden lg:block"
-                            //   />,
+                        actions: can("create") ? [
                             <SidebarBtn
                                 key={1}
                                 href="/distributorsExchange/add"
@@ -200,7 +203,7 @@ export default function CustomerInvoicePage() {
                                 label="Add"
                                 labelTw="hidden lg:block"
                             />
-                        ],
+                        ] : [],
                         filterRenderer: FilterComponent,
                     },
                     footer: { nextPrevBtn: true, pagination: true },

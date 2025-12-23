@@ -7,16 +7,31 @@ import { useMemo, useState, useEffect } from "react";
 import { addRouteTransfer } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { useRouter, useParams, useSearchParams } from "next/navigation"; import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function StockTransfer() {
+    const { can } = usePagePermissions();
     const { routeOptions = [], ensureRouteLoaded } = useAllDropdownListData();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
+    const router = useRouter();
+    const [routeoptions, setRouteOptions] = useState(true);
 
     const [form, setForm] = useState({
         source_warehouse: "",
         destination_warehouse: "",
     });
+
+    const [errors, setErrors] = useState({
+        source_warehouse: "",
+        destination_warehouse: "",
+    });
+
+    useEffect(() => {
+        if (routeOptions && routeOptions.length > 0) {
+            setRouteOptions(false);
+        }
+    }, [routeOptions]);
 
     useEffect(() => {
         ensureRouteLoaded();
@@ -41,14 +56,28 @@ export default function StockTransfer() {
                 ? { destination_warehouse: "" }
                 : {}),
         }));
+
+        setErrors((prev) => ({
+            ...prev,
+            [field]: "",
+            ...(field === "source_warehouse"
+                ? { destination_warehouse: "" }
+                : {}),
+        }));
     };
 
     /* -------------------------------------------------------------
        HANDLE SUBMIT
     ------------------------------------------------------------- */
     const handleSubmit = async () => {
-        if (!form.source_warehouse || !form.destination_warehouse) {
-            showSnackbar("Please select both origin and destination routes", "error");
+        const newErrors = {
+            source_warehouse: form.source_warehouse ? "" : "Please select origin route",
+            destination_warehouse: form.destination_warehouse ? "" : "Please select destination route",
+        };
+
+        setErrors(newErrors);
+
+        if (newErrors.source_warehouse || newErrors.destination_warehouse) {
             return;
         }
 
@@ -70,6 +99,7 @@ export default function StockTransfer() {
             } else {
                 showSnackbar("Route Transfer Successful ✅", "success");
                 setForm({ source_warehouse: "", destination_warehouse: "" });
+                setErrors({ source_warehouse: "", destination_warehouse: "" });
             }
         } catch (error) {
             console.error("Route transfer error:", error);
@@ -100,6 +130,10 @@ export default function StockTransfer() {
                             handleChange("source_warehouse", e.target.value)
                         }
                         searchable={true}
+                        showSearchInDropdown={true}
+                        placeholder="Search route"
+                        error={errors.source_warehouse}
+                    //    showSkeleton={routeoptions}
                     />
                 </div>
                 <div className="mb-0">
@@ -114,19 +148,35 @@ export default function StockTransfer() {
                         }
                         disabled={!form.source_warehouse}
                         searchable={true}
+                        showSearchInDropdown={true}
+                        placeholder="Search sub route"
+                        error={errors.destination_warehouse}
+                        showSkeleton={routeoptions}
                     />
                 </div>
             </div>
 
+
             {/* ACTION */}
-            <div className="flex justify-end mt-6">
-                <button
-                    onClick={handleSubmit}
-                    className="bg-[#2563EB] text-white px-8 py-2 rounded-md hover:bg-[#1D4ED8]"
-                >
-                    Submit
-                </button>
-            </div>
+            {can("create") && (
+                <div className="flex justify-end mt-6 gap-4">
+                    {/* <button
+    onClick={() => router.push("/routeTransfer")}
+    type="button"
+    className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+  >
+    Cancel
+  </button> */}
+
+                    <button
+                        onClick={handleSubmit}
+                        className="px-6 py-2 bg-red-600 text-white rounded-md"
+                    >
+                        Submit
+                    </button>
+                </div>
+
+            )}
         </ContainerCard>
     );
 }

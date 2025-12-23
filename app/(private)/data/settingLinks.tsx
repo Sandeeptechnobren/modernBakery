@@ -43,13 +43,6 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/settings/user",
-            label: "Users",
-            leadingIcon: "mdi:account",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
             href: "/settings/role",
             label: "Roles",
             leadingIcon: "mdi:account-tie",

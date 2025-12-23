@@ -21,19 +21,30 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 export default function Route() {
+    const { can, permissions } = usePagePermissions();
     const { warehouseAllOptions , ensureWarehouseAllLoaded} = useAllDropdownListData();
-
+    console.log(permissions)
   // Load dropdown data
   useEffect(() => {
     ensureWarehouseAllLoaded();
   }, [ensureWarehouseAllLoaded]);
+
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [selectedRowId, setSelectedRowId] = useState<number | undefined>();
     const [showDeletePopup, setShowDeletePopup] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const { setLoading } = useLoading();
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
@@ -278,7 +289,7 @@ export default function Route() {
                             ],
                             searchBar: true,
                             columnFilter: true,
-                            actions: [
+                            actions: can("create") ? [
                                 <SidebarBtn
                                     key={0}
                                     href="/route/add"
@@ -294,7 +305,7 @@ export default function Route() {
                                 //     label="Download CSV"
                                 //     labelTw="hidden sm:block"
                                 // />
-                            ],
+                            ] : [],
                         },
                         localStorageKey: "route-table",
                         footer: {
@@ -303,14 +314,14 @@ export default function Route() {
                         },
                         columns: columns,
                         rowSelection: true,
-                        rowActions: [
+                        rowActions: can("edit") ? [
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {
                                     router.push(`/route/${data.uuid}`);
                                 },
                             },
-                        ],
+                        ] : [],
                         pageSize: 50,
                     }}
                 />

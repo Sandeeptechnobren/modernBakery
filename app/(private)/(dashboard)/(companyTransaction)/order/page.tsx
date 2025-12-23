@@ -16,6 +16,7 @@ import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/utils/formatDate";
 import { orderExportCollapse, orderExportHeader, orderList } from "@/app/services/companyTransaction";
 import ApprovalStatus from "@/app/components/approvalStatus";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const columns = [
     { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
@@ -80,6 +81,7 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
+    const { can, permissions } = usePagePermissions();
     const { customerSubCategoryOptions, companyOptions, salesmanOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions , ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
 
   // Load dropdown data
@@ -96,6 +98,14 @@ export default function CustomerInvoicePage() {
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const [threeDotLoading, setThreeDotLoading] = useState({
         csv: false,
         xlsx: false,

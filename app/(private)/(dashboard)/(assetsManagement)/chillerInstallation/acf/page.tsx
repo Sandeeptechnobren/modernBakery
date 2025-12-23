@@ -18,6 +18,7 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 import InputFields from "@/app/components/inputFields";
 // import { Icon } from "lucide-react";
 import { Icon } from "@iconify-icon/react";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 // Type definitions for the ACF API response
 interface ChillerRequest {
@@ -187,6 +188,7 @@ const columns = [
 ]
 
 export default function CustomerInvoicePage() {
+    const { can, permissions } = usePagePermissions();
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -231,6 +233,14 @@ export default function CustomerInvoicePage() {
   }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
     const [showDropdown, setShowDropdown] = useState(false);
 
@@ -432,6 +442,7 @@ export default function CustomerInvoicePage() {
                             },
                         ],
                         actionsWithData: (data: TableDataType[], selectedRow?: number[]) => {
+                            if (!can("create")) return [];
                             // gets the ids of the selected rows with type narrowing
                             const ids = selectedRow
                                 ?.map((index) => {
