@@ -7,6 +7,7 @@ import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.share
 type UsePromotionDataProps = {
   isEditMode: boolean;
   id: string | string[] | undefined;
+  copyFromId?: string | null;
   setPromotion: React.Dispatch<React.SetStateAction<PromotionState>>;
   setKeyCombo: React.Dispatch<React.SetStateAction<KeyComboType>>;
   setKeyValue: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
@@ -20,7 +21,7 @@ type UsePromotionDataProps = {
 };
 
 export function usePromotionData({
-  isEditMode, id, setPromotion, setKeyCombo, setKeyValue, 
+  isEditMode, id, copyFromId, setPromotion, setKeyCombo, setKeyValue, 
   setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, setItemLoading, fetchItemsCategoryWise,router
 }: UsePromotionDataProps) {
   
@@ -29,11 +30,14 @@ export function usePromotionData({
 
   useEffect(() => {
     async function fetchEditData() {
-      if (!isEditMode || !id) return;
+      const targetId = copyFromId || id;
+      const shouldFetch = isEditMode || !!copyFromId;
+      
+      if (!shouldFetch || !targetId) return;
       setLoading(true);
       try {
         // Fix: Accepts only string; if array, take first element
-        const headerRes = await promotionHeaderById(Array.isArray(id) ? id[0] : id);
+        const headerRes = await promotionHeaderById(Array.isArray(targetId) ? targetId[0] : targetId);
         if (headerRes && typeof headerRes === "object") {
           const data = headerRes.data;
           
@@ -167,7 +171,7 @@ export function usePromotionData({
       setLoading(false);
     }
     fetchEditData();
-  }, [isEditMode, id]); // Intentionally not including setters in deps to avoid loops
+  }, [isEditMode, id, copyFromId]); // Intentionally not including setters in deps to avoid loops
 
   return { loading };
 }

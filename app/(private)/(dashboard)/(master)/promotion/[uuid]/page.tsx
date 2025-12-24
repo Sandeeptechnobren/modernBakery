@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 import * as yup from "yup";
 
@@ -24,6 +24,9 @@ import StepPromotion from "./components/StepPromotion";
 export default function AddPricing() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const copyFromId = searchParams.get('copy_from');
+
   const { showSnackbar } = useSnackbar();
 
   const paramsTyped = params as { uuid?: string | string[]; id?: string | string[] } | undefined;
@@ -58,7 +61,7 @@ export default function AddPricing() {
   const [submitLoading, setSubmitLoading] = useState(false);
 
   const { loading: dataLoading } = usePromotionData({
-    isEditMode, id, setPromotion, setKeyCombo: setRawKeyCombo, setKeyValue,
+    isEditMode, id, copyFromId, setPromotion, setKeyCombo: setRawKeyCombo, setKeyValue,
     setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, 
     setItemLoading, fetchItemsCategoryWise, router
   });

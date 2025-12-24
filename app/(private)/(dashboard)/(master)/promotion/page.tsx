@@ -233,6 +233,15 @@ export default function Pricing() {
                                     router.push(`/promotion/${encodeURIComponent(targetId)}`);
                                 },
                             },
+                            {
+                                icon: "lucide:copy",
+                                onClick: (row: object) => {
+                                    const r = row as TableDataType & { uuid?: string };
+                                    const targetId = String(r.uuid ?? (r as any).id ?? "");
+                                    if (!targetId) return;
+                                    router.push(`/promotion/add?copy_from=${encodeURIComponent(targetId)}`);
+                                },
+                            },
                         ],
                         pageSize: 50,
                     }}
