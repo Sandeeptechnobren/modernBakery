@@ -514,7 +514,7 @@ export const stockInStoreById = async (uuid: string, params?: Params) => {
 
 export const addStockInStore = async (body: object) => {
   try {
-    const res = await APIFormData.post(
+    const res = await API.post(
       "/api/merchendisher/stockinstore/create",
       body
     );
@@ -527,7 +527,7 @@ export const addStockInStore = async (body: object) => {
 export const updateStockInStore = async (uuid: string, body: object) => {
   try {
     console.log(uuid)
-    const res = await APIFormData.put(
+    const res = await API.put(
       `/api/merchendisher/stockinstore/update/${uuid}`,
       body
     );

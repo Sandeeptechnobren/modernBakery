@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Formik, FormikValues } from "formik";
 import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
@@ -11,11 +11,7 @@ import InputFields from "@/app/components/inputFields";
 import Table from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 
-import {
-    genearateCode,
-    itemGlobalSearch,
-    saveFinalCode,
-} from "@/app/services/allApi";
+import { genearateCode, itemGlobalSearch } from "@/app/services/allApi";
 import {
     addStockInStore,
     updateStockInStore,
@@ -37,23 +33,28 @@ interface ItemRow {
     UOM: { label: string; value: string }[];
 }
 
+interface FormikForm {
+    code: string;
+    activity_name: string;
+    from: string;
+    to: string;
+    customer: string[];
+}
+
 /* -------------------------------------------------------------------------- */
-/*                              VALIDATION SCHEMA                             */
+/*                              VALIDATION                                    */
 /* -------------------------------------------------------------------------- */
 
 const itemRowSchema = Yup.object({
-    item_id: Yup.string().required("Item is required"),
-    uom_id: Yup.string().required("UOM is required"),
-    capacity: Yup.number()
-        .typeError("Capacity must be a number")
-        .min(1)
-        .required(),
+    item_id: Yup.string().required(),
+    uom_id: Yup.string().required(),
+    capacity: Yup.number().min(1).required(),
 });
 
 const validationSchema = Yup.object({
-    activity_name: Yup.string().required(),
-    from: Yup.string().required(),
-    to: Yup.string().required(),
+    activity_name: Yup.string().required("Required"),
+    from: Yup.string().required("Required"),
+    to: Yup.string().required("Required"),
     customer: Yup.array().min(1, "Select at least one customer"),
 });
 
@@ -64,23 +65,14 @@ const validationSchema = Yup.object({
 export default function StockInStoreAddPage() {
     const router = useRouter();
     const { id } = useParams<{ id?: string }>();
-    // Only treat as edit if id exists and is not 'add'
-    const isEditMode = Boolean(id && id !== 'add');
+    const isEditMode = Boolean(id && id !== "add");
 
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
-const [itemUomMap, setItemUomMap] = useState<Record<string, any[]>>({});
 
-const [searchedItemOptions, setSearchedItemOptions] = useState<any[]>([]);
+    const { companyCustomersOptions, ensureCompanyCustomersLoaded } =
+        useAllDropdownListData();
 
-    const {
-        companyCustomersOptions,
-        itemOptions,
-        ensureItemLoaded,
-        ensureCompanyCustomersLoaded,
-    } = useAllDropdownListData();
-
-    const formikRef = useRef<any>(null);
     const codeGeneratedRef = useRef(false);
 
     const [code, setCode] = useState("");
@@ -88,67 +80,87 @@ const [searchedItemOptions, setSearchedItemOptions] = useState<any[]>([]);
         { item_id: "", uom_id: "", capacity: "", UOM: [] },
     ]);
 
+    const [searchedItemOptions, setSearchedItemOptions] = useState<any[]>([]);
+    const [itemUomMap, setItemUomMap] = useState<Record<string, any[]>>({});
+
+    const [initialFormikValues, setInitialFormikValues] =
+        useState<FormikForm>({
+            code: "",
+            activity_name: "",
+            from: "",
+            to: "",
+            customer: [],
+        });
+
     /* -------------------------------------------------------------------------- */
     /*                                  EFFECTS                                   */
     /* -------------------------------------------------------------------------- */
 
     useEffect(() => {
         ensureCompanyCustomersLoaded();
-        ensureItemLoaded();
-    }, [ensureCompanyCustomersLoaded, ensureItemLoaded]);
+    }, [ensureCompanyCustomersLoaded]);
 
     // Generate code (ADD only)
     useEffect(() => {
         if (isEditMode || codeGeneratedRef.current) return;
 
         codeGeneratedRef.current = true;
+
         (async () => {
-            try {
-                const res = await genearateCode({ model_name: "stock_code" });
-                if (res?.code) setCode(res.code);
-            } catch (e) {
-                console.error(e);
-            }
+            const res = await genearateCode({ model_name: "stock_code" });
+            if (res?.code) setCode(res.code);
         })();
     }, [isEditMode]);
 
-    const handleCodeChange = (value: string) => {
-        setCode(value);
-    };
-
-
     // Load edit data
     useEffect(() => {
-        if (!isEditMode) return;
+        if (!isEditMode || !id) return;
+
+        setLoading(true);
 
         (async () => {
             try {
-                setLoading(true);
-                const res = await stockInStoreById(id as string);
-
-                if (!res?.data) return;
-
+                const res = await stockInStoreById(id);
                 const data = res.data;
-                setCode(data.code);
 
-                formikRef.current?.setValues({
-                    activity_name: data.activity_name,
-                    from: data.date_range.from,
-                    to: data.date_range.to,
-                    customer: data.assign_customers.map((c: any) => String(c.id)),
+                setCode(data.code ?? "");
+
+                // hydrate formik
+                setInitialFormikValues({
+                    code: data.code ?? "",
+                    activity_name: data.activity_name ?? "",
+                    from: data.date_range?.from ?? "",
+                    to: data.date_range?.to ?? "",
+                    customer: data?.assign_customers?.map((c: any) => ({
+                        label: c.name,
+                        value: c.id,
+                    })) ?? [],
                 });
 
-                setItemData(
-                    data.inventories.map((inv: any) => ({
-                        item_id: String(inv.item.id),
-                        uom_id: String(inv.item_uom.id),
-                        capacity: String(inv.capacity),
-                        UOM: inv.item.uoms.map((u: any) => ({
-                            label: u.uom,
-                            value: String(u.id),
-                        })),
-                    }))
-                );
+                // hydrate table rows + UOMs
+                const rows: ItemRow[] =
+                    data.inventories?.map((inv: any) => {
+                        const uoms = inv.item?.item_uoms || [];
+
+                        setItemUomMap((prev) => ({
+                            ...prev,
+                            [String(inv.item?.id)]: uoms,
+                        }));
+
+                        return {
+                            item_id: String(inv.item?.id ?? ""),
+                            uom_id: String(inv.item_uom?.id ?? ""),
+                            capacity: String(inv.capacity ?? ""),
+                            UOM: uoms.map((u: any) => ({
+                                label: u.name,
+                                value: String(u.id),
+                            })),
+                        };
+                    }) || [];
+
+                setItemData(rows.length ? rows : itemData);
+            } catch {
+                showSnackbar("Failed to load stock data", "error");
             } finally {
                 setLoading(false);
             }
@@ -167,26 +179,23 @@ const [searchedItemOptions, setSearchedItemOptions] = useState<any[]>([]);
         });
     };
 
-const handleItemChange = (index: number, itemId: string) => {
-  setItemData(prev => {
-    const copy = [...prev];
+    const handleItemChange = (index: number, itemId: string) => {
+        const uoms = itemUomMap[itemId] || [];
 
-    const uoms = itemUomMap[itemId] || [];
-
-    copy[index] = {
-      ...copy[index],
-      item_id: itemId,
-      uom_id: "",
-      UOM: uoms.map((u: any) => ({
-        label: u.name,        // PCS / BOX
-        value: String(u.uom)  // uom id
-      })),
+        setItemData((prev) => {
+            const copy = [...prev];
+            copy[index] = {
+                ...copy[index],
+                item_id: itemId,
+                uom_id: "",
+                UOM: uoms.map((u: any) => ({
+                    label: u.name,
+                    value: String(u.id),
+                })),
+            };
+            return copy;
+        });
     };
-
-    return copy;
-  });
-};
-
 
     const addNewItem = () => {
         setItemData((prev) => [
@@ -201,35 +210,37 @@ const handleItemChange = (index: number, itemId: string) => {
     };
 
     /* -------------------------------------------------------------------------- */
-    /*                                ITEM SEARCH                                 */
+    /*                               ITEM SEARCH                                  */
     /* -------------------------------------------------------------------------- */
 
-const fetchItems = async (search: string) => {
-  const res = await itemGlobalSearch({ query: search, per_page: "50" });
-  if (res?.error) return [];
+    const fetchItems = useCallback(async (search = "") => {
+        const res = await itemGlobalSearch({ qsearch: search, per_page: "50" });
 
-  const mapped = res.data.map((item: any) => {
-    // 🔥 store uoms separately
-    setItemUomMap(prev => ({
-      ...prev,
-      [String(item.id)]: item.item_uoms || [],
-    }));
+        const options =
+            res?.data?.map((item: any) => {
+                setItemUomMap((prev) => ({
+                    ...prev,
+                    [String(item.id)]: item.item_uoms || [],
+                }));
 
-    return {
-      value: String(item.id),
-      label: `${item.item_code} - ${item.name}`,
-    };
-  });
+                return {
+                    label: item.erp_code
+                        ? `${item.erp_code} - ${item.name}`
+                        : item.name,
+                    value: String(item.id),
+                };
+            }) || [];
 
-  setSearchedItemOptions(mapped);
-  return mapped;
-};
+        setSearchedItemOptions(options);
+        return options;
+    }, []);
 
-
-
+    useEffect(() => {
+        fetchItems("");
+    }, [fetchItems]);
 
     /* -------------------------------------------------------------------------- */
-    /*                                SUBMIT                                      */
+    /*                                 SUBMIT                                     */
     /* -------------------------------------------------------------------------- */
 
     const handleSubmit = async (values: FormikValues) => {
@@ -248,7 +259,7 @@ const fetchItems = async (search: string) => {
                 assign_customers: values.customer.map(Number),
                 assign_inventory: itemData.map((i) => ({
                     item_id: Number(i.item_id),
-                    item_uom: Number(i.uom_id),
+                    item_uom: String(i.uom_id),
                     capacity: Number(i.capacity),
                 })),
             };
@@ -259,23 +270,15 @@ const fetchItems = async (search: string) => {
 
             if (res?.error) {
                 showSnackbar("Failed to save stock", "error");
-                return;
+            } else {
+                showSnackbar(
+                    isEditMode ? "Stock updated" : "Stock added",
+                    "success"
+                );
+                router.push("/stockinstore");
             }
-
-            if (!isEditMode) {
-                await saveFinalCode({
-                    reserved_code: code,
-                    model_name: "stock_code",
-                });
-            }
-
-            showSnackbar(
-                `Stock ${isEditMode ? "updated" : "created"} successfully`,
-                "success"
-            );
-            router.push("/stockInStore");
-        } catch (err: any) {
-            showSnackbar(err?.message || "Validation failed", "error");
+        } catch {
+            showSnackbar("Something went wrong", "error");
         } finally {
             setLoading(false);
         }
@@ -301,14 +304,8 @@ const fetchItems = async (search: string) => {
 
             <ContainerCard>
                 <Formik
-                    innerRef={formikRef}
                     enableReinitialize
-                    initialValues={{
-                        activity_name: "",
-                        from: "",
-                        to: "",
-                        customer: [],
-                    }}
+                    initialValues={initialFormikValues}
                     validationSchema={validationSchema}
                     onSubmit={handleSubmit}
                 >
@@ -316,10 +313,9 @@ const fetchItems = async (search: string) => {
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                                 <InputFields
-                                    required
                                     label="Code"
-                                    value={code}
-                                    onChange={(e) => handleCodeChange(e.target.value)}
+                                    value={values.code}
+                                    onChange={handleChange}
                                     disabled
                                 />
                                 <InputFields
@@ -365,24 +361,22 @@ const fetchItems = async (search: string) => {
                                 <Table
                                     data={itemData.map((r, i) => ({ ...r, idx: i }))}
                                     config={{
-                                        showNestedLoading:false,
                                         columns: [
-                                           {
-  key: "item_id",
-  label: "Item",
-  render: (row) => (
-    <InputFields
-      searchable
-      options={searchedItemOptions.length ? searchedItemOptions : itemOptions}
-      onSearch={fetchItems}
-      value={row.item_id}
-           onChange={(e) => {
-    handleItemChange(row.idx, e.target.value);
-  }}
-    />
-  ),
-},
-
+                                            {
+                                                key: "item_id",
+                                                label: "Item",
+                                                render: (row) => (
+                                                    <InputFields
+                                                        searchable
+                                                        options={searchedItemOptions}
+                                                        value={row.item_id}
+                                                        onSearch={fetchItems}
+                                                        onChange={(e) =>
+                                                            handleItemChange(row.idx, e.target.value)
+                                                        }
+                                                    />
+                                                ),
+                                            },
                                             {
                                                 key: "uom_id",
                                                 label: "UOM",
@@ -392,7 +386,11 @@ const fetchItems = async (search: string) => {
                                                         options={row.UOM}
                                                         value={row.uom_id}
                                                         onChange={(e) =>
-                                                            updateItem(row.idx, "uom_id", e.target.value)
+                                                            updateItem(
+                                                                row.idx,
+                                                                "uom_id",
+                                                                e.target.value
+                                                            )
                                                         }
                                                     />
                                                 ),
@@ -405,7 +403,11 @@ const fetchItems = async (search: string) => {
                                                         type="number"
                                                         value={row.capacity}
                                                         onChange={(e) =>
-                                                            updateItem(row.idx, "capacity", e.target.value)
+                                                            updateItem(
+                                                                row.idx,
+                                                                "capacity",
+                                                                e.target.value
+                                                            )
                                                         }
                                                     />
                                                 ),
@@ -418,7 +420,10 @@ const fetchItems = async (search: string) => {
                                                         className="text-red-500"
                                                         onClick={() => removeItem(row.idx)}
                                                     >
-                                                        <Icon icon="hugeicons:delete-02" width={20} />
+                                                        <Icon
+                                                            icon="hugeicons:delete-02"
+                                                            width={20}
+                                                        />
                                                     </button>
                                                 ),
                                             },
@@ -432,12 +437,19 @@ const fetchItems = async (search: string) => {
                                 className="text-red-500 mt-4 flex items-center gap-2"
                                 onClick={addNewItem}
                             >
-                                <Icon icon="material-symbols:add-circle-outline" width={20} />
+                                <Icon
+                                    icon="material-symbols:add-circle-outline"
+                                    width={20}
+                                />
                                 Add Item
                             </button>
 
                             <div className="flex justify-end mt-6">
-                                <SidebarBtn label="Submit" isActive onClick={submitForm} />
+                                <SidebarBtn
+                                    label="Submit"
+                                    isActive
+                                    onClick={submitForm}
+                                />
                             </div>
                         </>
                     )}

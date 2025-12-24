@@ -1,5 +1,5 @@
 
- 
+
 "use client";
 import {
   agentCustomerList,
@@ -498,7 +498,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.name ? `${c.name}` : (c.name ?? '')
   }));
   // State for all customer types
-   
+
   const [allCustomerTypes, setAllCustomerTypes] = useState<CustomerType[]>([]);
 
   // Ensure method for all customer types
@@ -518,7 +518,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.name ? `${c.name}` : (c.name ?? '')
   }));
   // Track which dropdowns have been fetched using useRef to avoid re-renders
- 
+
 
   // State for all company customers
   const [allCompanyCustomers, setAllCompanyCustomers] = useState<CustomerItem[]>([]);
@@ -554,9 +554,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   //   });
   // }, [setAllCompanyCustomers, fetchedRef, fetchingRef]);
   // Options for all company customers
-  
+
   // State for all agent customers and all companies
-  
+
   const [allAgentCustomers, setAllAgentCustomers] = useState<AgentCustomerList[]>([]);
   const [allCompanies, setAllCompanies] = useState<CompanyItem[]>([]);
 
@@ -584,7 +584,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setAllAgentCustomers([]);
       fetchingRef.current.delete('allAgentCustomers');
     });
-  }, [setAllAgentCustomers, fetchedRef,fetchingRef]);
+  }, [setAllAgentCustomers, fetchedRef, fetchingRef]);
 
   const ensureAllCompanyOptionsLoaded = useCallback(() => {
     // if (fetchedRef.current.has('allCompanies') || fetchingRef.current.has('allCompanies')) return;
@@ -597,9 +597,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setAllCompanies([]);
       fetchingRef.current.delete('allCompanies');
     });
-  }, [setAllCompanies, fetchedRef,fetchingRef]);
+  }, [setAllCompanies, fetchedRef, fetchingRef]);
   // Options for all agent customers and all companies
-  
+
   // define typed state for each dropdown list
   const [companyListData, setCompanyListData] = useState<CompanyItem[]>([]);
   const [countryListData, setCountryListData] = useState<CountryItem[]>([]);
@@ -654,7 +654,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [loading, setLoading] = useState(false);
 
   // Track which dropdowns have been fetched using useRef to avoid re-renders
-  
+
 
   // Helper to normalize API responses
   const normalizeResponse = useCallback((r: unknown): unknown[] => {
@@ -670,7 +670,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureCompanyLoaded = useCallback(() => {
     // if (fetchedRef.current.has('company') || fetchingRef.current.has('company')) return;
     // fetchingRef.current.add('company');
-    companyList({dropdown:"true"}).then(res => {
+    companyList({ dropdown: "true" }).then(res => {
       setCompanyListData(normalizeResponse(res) as CompanyItem[]);
       fetchedRef.current.add('company');
       fetchingRef.current.delete('company');
@@ -823,7 +823,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     });
   }, [normalizeResponse]);
 
-   // Lazy load function for all item categories (for itemCategoryAllOptions)
+  // Lazy load function for all item categories (for itemCategoryAllOptions)
   const ensureAllItemCategoryLoaded = useCallback(() => {
     itemCategory().then(res => {
       setItemCategoryAllData(Array.isArray(res?.data) ? res.data : []);
@@ -864,7 +864,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureCustomerTypeLoaded = useCallback(() => {
     // if (fetchedRef.current.has('customerType') || fetchingRef.current.has('customerType')) return;
     // fetchingRef.current.add('customerType');
-    getCustomerType({dropdown:"true"}).then(res => {
+    getCustomerType({ dropdown: "true" }).then(res => {
       setCustomerTypeData(normalizeResponse(res) as CustomerType[]);
       fetchedRef.current.add('customerType');
       fetchingRef.current.delete('customerType');
@@ -938,6 +938,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       fetchingRef.current.delete('item');
     });
   }, [normalizeResponse]);
+  console.log("item", item)
 
   const ensureDiscountTypeLoaded = useCallback(() => {
     // if (fetchedRef.current.has('discountType') || fetchingRef.current.has('discountType')) return;
@@ -1085,7 +1086,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureCompanyTypeLoaded = useCallback(() => {
     // if (fetchedRef.current.has('companyType') || fetchingRef.current.has('companyType')) return;
     // fetchingRef.current.add('companyType');
-    companyTypeList({dropdown:"true"}).then(res => {
+    companyTypeList({ dropdown: "true" }).then(res => {
       setComapanyType(normalizeResponse(res) as CompanyType[]);
       fetchedRef.current.add('companyType');
       fetchingRef.current.delete('companyType');
@@ -1360,22 +1361,27 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.osa_code && c.name ? `${c.name}` : (c.name ?? '')
   }))
 
-  const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
-    value: String(c.id ?? ""),
-    label:
-      (c.item_code || (c as any).code) && c.name
-        ? `${c.item_code || (c as any).code} - ${c.name}`
-        : c.name ?? "",
-    uom: Array.isArray((c as any).uom)
-      ? (c as any).uom.map((u: any) => ({
-        id: Number(u.id ?? 0),
-        name: String(u.name ?? ""),
-        uom_type: String(u.uom_type ?? ""),
-        price: Number(u.price ?? 0),
-        upc: String(u.upc ?? ""),
-      }))
-      : [],
-  }));
+  const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => (
+
+    {
+
+      value: String(c.id ?? ""),
+      label:
+        (c.item_code || (c as any).code) && c.name
+          ? `${c.item_code || (c as any).code} - ${c.name}`
+          : c.name ?? "",
+      uom: Array.isArray((c as any).uom)
+        ? (c as any).uom.map((u: any) => ({
+          id: Number(u.id ?? 0),
+          name: String(u.name ?? ""),
+          uom_type: String(u.uom_type ?? ""),
+          price: Number(u.price ?? 0),
+          upc: String(u.upc ?? ""),
+        }))
+        : [],
+    }));
+  console.log("itemOptions", itemOptions)
+
 
 
   const getItemUoms = (item_id: string | number) => {
@@ -2123,8 +2129,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         areaOptions,
         companyCustomersOptions,
         companyCustomersTypeOptions,
-      itemCategoryOptions,
-      itemCategoryAllOptions,
+        itemCategoryOptions,
+        itemCategoryAllOptions,
         itemSubCategoryOptions,
         channelOptions,
         customerTypeOptions,
