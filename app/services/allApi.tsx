@@ -3898,3 +3898,12 @@ export const changePassword = async (body?: Object) => {
     return handleError(error);
   }
 };
+
+export const warehouseStock = async (id:string,params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/warehouse-stocks/warehouseStockInfo/${id}`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

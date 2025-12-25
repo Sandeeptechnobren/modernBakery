@@ -21,6 +21,15 @@ export type listReturnType = {
     total: number;
     totalRecords?: number;
 };
+
+// New type for data prop with pagination
+export type TableDataWithPagination = {
+    data: TableDataType[];
+    currentPage: number;
+    pageSize: number;
+    total: number;
+    totalRecords?: number;
+};
 export type searchReturnType = listReturnType;
 export type FilterField = {
     key: string;
@@ -216,7 +225,8 @@ const TableDetails = createContext<tableDetailsContextType>(
 
 interface TableProps {
     refreshKey?: number;
-    data?: TableDataType[];
+    // Accept either array or object with pagination
+    data?: TableDataType[] | TableDataWithPagination;
     config: configType;
 }
 
@@ -250,13 +260,9 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <Config.Provider value={{ config, setConfig }}>
-            <ColumnFilterConfig.Provider
-                value={{ selectedColumns, setSelectedColumns }}
-            >
+            <ColumnFilterConfig.Provider value={{ selectedColumns, setSelectedColumns }}>
                 <SelectedRow.Provider value={{ selectedRow, setSelectedRow }}>
-                    <TableDetails.Provider
-                        value={{ tableDetails, setTableDetails, nestedLoading, setNestedLoading, initialTableData, setInitialTableData, searchState, setSearchState, filterState, setFilterState }}
-                    >
+                    <TableDetails.Provider value={{ tableDetails, setTableDetails, nestedLoading, setNestedLoading, initialTableData, setInitialTableData, searchState, setSearchState, filterState, setFilterState }}>
                         {children}
                     </TableDetails.Provider>
                 </SelectedRow.Provider>
@@ -297,182 +303,141 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
         if (data) {
             const date = new Date();
             setNestedLoading(true);
-            setTableDetails({
-                data,
-                total: Math.ceil(
-                    data.length / (config.pageSize || defaultPageSize)
-                ),
-                currentPage: 0,
-                pageSize: config.pageSize || defaultPageSize,
-            });
-            setDisplayedData(data);
-            try {
-                setInitialTableData({
+            // If data is an array, wrap in pagination object
+            let tableDataWithPagination: TableDataWithPagination;
+            if (Array.isArray(data)) {
+                tableDataWithPagination = {
                     data,
                     total: Math.ceil(
                         data.length / (config.pageSize || defaultPageSize)
                     ),
                     currentPage: 0,
                     pageSize: config.pageSize || defaultPageSize,
-                });
-            } catch (err) {
-                /* ignore */
-            }
-            setTimeout(() => setNestedLoading(false), Math.max(0, 1000 - (new Date().getTime() - date.getTime())));
-        }
-
-        // if api is passed, use default values
-        else if (config.api?.list) {
-            const MIN_LOADING_MS = 1000; // ensure nested loading lasts at least 1s
-            const start = Date.now();
-            try {
-                setNestedLoading(true);
-                const result = await config.api.list(
-                    1,
-                    config.pageSize || defaultPageSize
-                );
-                const resolvedResult =
-                    result instanceof Promise ? await result : result;
-                const { data, total, currentPage } = resolvedResult;
-                const tableInit = {
-                    data,
-                    total,
-                    currentPage: currentPage - 1,
-                    pageSize: config.pageSize || defaultPageSize,
                 };
-                setTableDetails(tableInit);
-                setDisplayedData(data);
-                try {
-                    setInitialTableData(tableInit);
-                } catch (err) {
-                    /* ignore */
-                }
-            } finally {
-                // guarantee minimum display time for nested loading
-                const elapsed = Date.now() - start;
-                const wait = Math.max(0, MIN_LOADING_MS - elapsed);
-                if (wait > 0) {
-                    await new Promise((res) => setTimeout(res, wait + 500));
-                }
-                setNestedLoading(false);
-            }
-        }
-
-        // nothing is passed
-        else {
-            throw new Error(
-                "Either pass data or list API function in Table config prop"
-            );
-        }
-    }
-
-    useEffect(() => {
-        setConfig(config);
-    }, [config]);
-
-    useEffect(() => {
-        checkForData();
-
-        // Only initialize "select all" when there is no saved selection in localStorage.
-        // If a saved array exists we leave it to ColumnFilter's localStorage loader to restore it.
-        try {
-            const key = config?.localStorageKey;
-            const saved = key ? localStorage.getItem(key) : null;
-            if (!saved) {
-                const allByDefault = config.columns.map((data, index) => { return data.showByDefault ? index : -1 });
-                const filtered = allByDefault.filter((n) => n !== -1);
-                if (filtered.length > 0) {
-                    setSelectedColumns(filtered);
-                    return;
-                }
-                setSelectedColumns(config.columns?.map((_, index) => index));
             } else {
-                setSelectedColumns(saved ? JSON.parse(saved) : []);
+                tableDataWithPagination = data;
             }
-        } catch (err) {
-            // If reading localStorage fails, fall back to select all
-            setSelectedColumns(config.columns?.map((_, index) => index));
-        }
-        setSelectedRow([]);
-    }, [data, refreshKey]);
-
-
-    useEffect(() => {
-        if (config.onRowSelectionChange) {
-            config.onRowSelectionChange(selectedRow);
-        }
-    }, [selectedRow, config.onRowSelectionChange]);
-
-    const orderedColumns = (columnOrder || []).map((i) => config.columns[i]).filter(Boolean);
-
-    return (
-        <>
-            {(config.header?.title || config.header?.wholeTableActions || config.header?.tableActions) && (
-                <div className="flex justify-between items-center mb-[20px] h-[34px]">
-                    {config.header?.title && (
-                        <h1 className="text-[18px] font-semibold text-[#181D27]">
-                            {config.header.title}
-                        </h1>
-                    )}
-
-                    <div className="flex gap-[8px]">
-                        {config.header?.tableActions && config.header?.tableActions?.map((action) => action)}
-
-                        {selectedRow.length > 0 &&
-                            config.header?.wholeTableActions?.map(
-                                (action) => action
-                            )}
-
-                        {config.header?.threeDot &&
-                            <div className="flex gap-[12px] relative">
-                                <DismissibleDropdown
-                                    isOpen={showDropdown}
-                                    setIsOpen={setShowDropdown}
-                                    button={
-                                        <BorderIconButton icon="ic:sharp-more-vert" />
-                                    }
-                                    dropdown={
-                                        <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                                            <CustomDropdown>
-                                                {config.header?.threeDot?.map((option, idx) => {
-                                                    const shouldShow = option.showOnSelect ? selectedRow.length > 0 : option.showWhen ? option.showWhen(displayedData, selectedRow) : true;
-                                                    if (!shouldShow) return null;
-                                                    return (
-                                                        <div
-                                                            key={idx}
-                                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA] cursor-pointer"
-                                                            onClick={() => option.onClick && option.onClick(displayedData, selectedRow)}
-                                                        >
-                                                            {option?.icon && (
-                                                                <Icon
-                                                                    icon={option.icon}
-                                                                    width={option.iconWidth || 20}
-                                                                    className="text-[#717680]"
-                                                                />
-                                                            )}
-                                                            <span className={`text-[#181D27] font-[500] text-[16px] ${option?.labelTw}`}>
-                                                                {option.label}
-                                                            </span>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </CustomDropdown>
-                                        </div>
-                                    }
-                                />
-                            </div>
+            setTableDetails(tableDataWithPagination);
+            setDisplayedData(tableDataWithPagination.data);
+            try {
+                                setInitialTableData(tableDataWithPagination);
+                            } catch (err) {
+                                /* ignore */
+                            }
+                            setTimeout(() => setNestedLoading(false), Math.max(0, 1000 - (new Date().getTime() - date.getTime())));
                         }
-                    </div>
-                </div>
-            )}
-            <div className="flex flex-col bg-white w-full border-[1px] border-[#E9EAEB] rounded-[8px] overflow-hidden">
-                <TableHeader />
-                <TableBody orderedColumns={orderedColumns} setColumnOrder={setColumnOrder} />
-                <TableFooter />
-            </div>
-        </>
-    );
-}
+
+                        // if api is passed, use default values
+                        else if (config.api?.list) {
+                            const MIN_LOADING_MS = 1000; // ensure nested loading lasts at least 1s
+                            const start = Date.now();
+                            try {
+                                setNestedLoading(true);
+                                const result = await config.api.list(
+                                    1,
+                                    config.pageSize || defaultPageSize
+                                );
+                                const resolvedResult =
+                                    result instanceof Promise ? await result : result;
+                                const { data, total, currentPage } = resolvedResult;
+                                const tableInit = {
+                                    data,
+                                    total,
+                                    currentPage: currentPage - 1,
+                                    pageSize: config.pageSize || defaultPageSize,
+                                };
+                                setTableDetails(tableInit);
+                                setDisplayedData(data);
+                                try {
+                                    setInitialTableData(tableInit);
+                                } catch (err) {
+                                    /* ignore */
+                                }
+                            } finally {
+                                // guarantee minimum display time for nested loading
+                                const elapsed = Date.now() - start;
+                                const wait = Math.max(0, MIN_LOADING_MS - elapsed);
+                                if (wait > 0) {
+                                    await new Promise((res) => setTimeout(res, wait + 500));
+                                }
+                                setNestedLoading(false);
+                            }
+                        }
+
+                        // nothing is passed
+                        else {
+                            throw new Error(
+                                "Either pass data or list API function in Table config prop"
+                            );
+                        }
+                    }
+
+                    useEffect(() => {
+                        setConfig(config);
+                    }, [config]);
+
+                    useEffect(() => {
+                        checkForData();
+
+                        // Only initialize "select all" when there is no saved selection in localStorage.
+                        // If a saved array exists we leave it to ColumnFilter's localStorage loader to restore it.
+                        try {
+                            const key = config?.localStorageKey;
+                            const saved = key ? localStorage.getItem(key) : null;
+                            if (!saved) {
+                                const allByDefault = config.columns.map((data, index) => { return data.showByDefault ? index : -1 });
+                                const filtered = allByDefault.filter((n) => n !== -1);
+                                if (filtered.length > 0) {
+                                    setSelectedColumns(filtered);
+                                    return;
+                                }
+                                setSelectedColumns(config.columns?.map((_, index) => index));
+                            } else {
+                                setSelectedColumns(saved ? JSON.parse(saved) : []);
+                            }
+                        } catch (err) {
+                            // If reading localStorage fails, fall back to select all
+                            setSelectedColumns(config.columns?.map((_, index) => index));
+                        }
+                        setSelectedRow([]);
+                    }, [data, refreshKey]);
+
+
+                    useEffect(() => {
+                        if (config.onRowSelectionChange) {
+                            config.onRowSelectionChange(selectedRow);
+                        }
+                    }, [selectedRow, config.onRowSelectionChange]);
+
+                    const orderedColumns = (columnOrder || []).map((i) => config.columns[i]).filter(Boolean);
+
+                    return (
+                        <>
+                            {(config.header?.title || config.header?.wholeTableActions || config.header?.tableActions) && (
+                                <div className="flex justify-between items-center mb-[20px] h-[34px]">
+                                    {config.header?.title && (
+                                        <h1 className="text-[18px] font-semibold text-[#181D27]">
+                                            {config.header.title}
+                                        </h1>
+                                    )}
+                                    <div className="flex gap-[8px]">
+                                        {config.header?.tableActions && config.header?.tableActions?.map((action) => action)}
+                                        {selectedRow.length > 0 &&
+                                            config.header?.wholeTableActions?.map(
+                                                (action) => action
+                                            )}
+                                        {/* If you want to add threeDot dropdown, do it in the correct place in header */}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex flex-col bg-white w-full border-[1px] border-[#E9EAEB] rounded-[8px] overflow-hidden">
+                                <TableHeader />
+                                <TableBody orderedColumns={orderedColumns} setColumnOrder={setColumnOrder} />
+                                <TableFooter />
+                            </div>
+                        </>
+                    );
+                }
 
 function TableHeader() {
     const { config } = useContext(Config);

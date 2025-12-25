@@ -177,6 +177,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         },
         y: 0,
         margin: 15,
+        // Add a custom class for Tailwind min-h-[40px]
+        className: 'min-h-[40px]',
       },
       xAxis: {
         categories: data.map((item: any) => item[xAxisKey]),

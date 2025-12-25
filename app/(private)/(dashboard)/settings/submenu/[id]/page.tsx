@@ -63,7 +63,7 @@ export default function AddShelfDisplay() {
     ID = ID[0] || "";
   }
 
-  const { submenuOptions, menuOptions, ensureMenuListLoaded, ensureSubmenuLoaded, } = useAllDropdownListData();
+  const { submenuOptions, menuOptions, ensureMenuListLoaded, ensureSubmenuLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -190,11 +190,7 @@ export default function AddShelfDisplay() {
                     onChange={(e) => { setFieldValue("menu", e.target.value) }}
                     error={touched.menu && errors.menu}
                   />
-                  <ErrorMessage
-                    name="menu"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
+                 
                 </div>
 
                 {/* parent */}
@@ -208,11 +204,7 @@ export default function AddShelfDisplay() {
                     onChange={(e) => setFieldValue("parent", e.target.value)}
                     error={touched.parent && errors.parent}
                   />
-                  <ErrorMessage
-                    name="parent"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
+                  
                 </div>
 
                 {/* url */}
@@ -225,11 +217,7 @@ export default function AddShelfDisplay() {
                     onChange={(e) => setFieldValue("url", e.target.value)}
                     error={touched.url && errors.url}
                   />
-                  <ErrorMessage
-                    name="url"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
+                  
                 </div>
 
                 {/* display_order */}
@@ -242,11 +230,7 @@ export default function AddShelfDisplay() {
                     onChange={(e) => setFieldValue("display_order", e.target.value)}
                     error={touched.display_order && errors.display_order}
                   />
-                  <ErrorMessage
-                    name="display_order"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
+                 
                 </div>
 
                 {/* action_type */}
@@ -259,11 +243,7 @@ export default function AddShelfDisplay() {
                     onChange={(e) => setFieldValue("action_type", e.target.value)}
                     error={touched.action_type && errors.action_type}
                   />
-                  <ErrorMessage
-                    name="action_type"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
+                 
                 </div>
 
                 {/* is_visible */}
@@ -280,11 +260,7 @@ export default function AddShelfDisplay() {
                     onChange={(e) => setFieldValue("is_visible", e.target.value)}
                     error={touched.is_visible && errors.is_visible}
                   />
-                  <ErrorMessage
-                    name="is_visible"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
+                 
                 </div>
               </div>
             </ContainerCard>
