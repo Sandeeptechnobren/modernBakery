@@ -18,54 +18,20 @@ import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import getExcise from "@/app/(private)/utils/excise";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { agentCustomerGlobalSearch, companyCustomersGlobalSearch, genearateCode, itemGlobalSearch, saveFinalCode, warehouseStockTopOrders } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, companyCustomersGlobalSearch, genearateCode, itemGlobalSearch, saveFinalCode, warehouseStock, warehouseStockTopOrders } from "@/app/services/allApi";
 import { invoiceBatch, returnCreate, returnWarehouseStockByCustomer } from "@/app/services/companyTransaction";
 import { isValidDate } from "@/app/utils/formatDate";
 
 interface FormData {
-  id: number,
+  item_id: number,
+  item_name: string,
   erp_code: string,
-  item_code: string,
-  name: string,
-  auom_pc_price: string,
-  buom_ctn_price: string,
-  description: string,
-  item_uoms: {
-    id: number,
-    uom_id: number,
-    item_id: number,
-    uom_type: string,
-    name: string,
-    price: string,
-    is_stock_keeping: boolean,
+  stock_qty: string,
+  uoms: {
     upc: string,
-    enable_for: string
-  }[],
-  pricing: {
-    buom_ctn_price: string,
-    auom_pc_price: string
-  },
-  brand: string,
-  image: string,
-  category: {
-    id: number,
     name: string,
-    code: string
-  },
-  itemSubCategory: {
-    id: number,
-    name: string,
-    code: string
-  },
-  shelf_life: string,
-  commodity_goods_code: string,
-  excise_duty_code: string,
-  status: number,
-  is_taxable: boolean,
-  has_excies: boolean,
-  item_weight: string,
-  volume: number;
-  warehouse_stock: string;
+    uom_id: number
+  }[]
 }
 interface WarehouseStock {
   item_id: number;
@@ -87,17 +53,29 @@ interface ItemUOM {
 
 interface ItemData {
   item_id: string;
-  UOM: { label: string; value: string, price: string, upc: string }[];
+  UOM: { label: string; value: string, upc: string }[];
   uom_id?: string;
   Quantity: string;
   Price: string;
   Total: string;
   Type: string;
+  SapId: number | string;
   Reason: string;
   Expiry: string;
   Batch: string;
-  Batchs?: { label: string; value: string; price?: string, upc?: string }[];
-  [key: string]: string | { label: string; value: string, price?: string, upc?: string }[] | undefined;
+  Batchs?: { label: string; value: string; upc?: string }[];
+  [key: string]: string | number | { label: string; value: string, upc?: string }[] | undefined;
+}
+
+interface BatchData {
+    header_id: number,
+    batch_number: string,
+    inv_position_no: string,
+    quantity: string,
+    batch_expiry_date: string,
+    invoice_number: string,
+    sap_id: number,
+    item_price: string
 }
 
 export const reasonObj = {
@@ -166,8 +144,8 @@ export default function PurchaseOrderAddEditPage() {
       .required("Contact is required"),
     // returnNo: Yup.string()
     //   .required("Return No is required"),
-    customer: Yup.string()
-      .required("Customer is required"),
+    // customer: Yup.string()
+    //   .required("Customer is required"),
     // delivery_date: Yup.string()
     //   .required("Delivery date is required")
     //   .test("is-date", "Delivery date must be a valid date", (val) => {
@@ -215,6 +193,7 @@ export default function PurchaseOrderAddEditPage() {
         Quantity: "1",
         Expiry: "",
         Batch: "",
+        SapId: "",
         Type: "",
         Reason: "",
         Price: "",
@@ -242,7 +221,7 @@ export default function PurchaseOrderAddEditPage() {
   const getBaseStockForItem = useCallback((itemId: string) => {
     if (!itemId) return 0;
     const stockFromWarehouse = itemsWithUOM[itemId]?.stock_qty;
-    const stockFromOrder = orderData.find((od) => String(od.id) === String(itemId))?.warehouse_stock;
+    const stockFromOrder = orderData.find((od) => String(od.item_id) === String(itemId))?.stock_qty;
     const parsed = Number(stockFromWarehouse ?? stockFromOrder ?? 0);
     return Number.isFinite(parsed) ? parsed : 0;
   }, [itemsWithUOM, orderData]);
@@ -253,8 +232,8 @@ export default function PurchaseOrderAddEditPage() {
     const fromMap = itemsWithUOM[itemId]?.uomDetails?.[uomKey]?.upc;
     const fromRow = Array.isArray(row?.UOM) ? row?.UOM.find((u: any) => String(u.value) === uomKey)?.upc : undefined;
     const fromOrder = orderData
-      .find((od) => String(od.id) === String(itemId))
-      ?.item_uoms?.find((u) => String(u.uom_id) === uomKey)?.upc;
+      .find((od) => String(od.item_id) === String(itemId))
+      ?.uoms?.find((u) => String(u.uom_id) === uomKey)?.upc;
     const parsed = Number(fromMap ?? fromRow ?? fromOrder ?? 1);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
   }, [itemsWithUOM, orderData]);
@@ -406,79 +385,17 @@ export default function PurchaseOrderAddEditPage() {
         setSkeleton(prev => ({ ...prev, item: true }));
         
         // Fetch warehouse stocks - this API returns all needed data including pricing and UOMs
-        const stockRes = await warehouseStockTopOrders(warehouseId);
-        const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
+        const stockRes = await warehouseStock({warehouse_id: warehouseId});
+
+        console.log(stockRes.data)
   
-        // Store warehouse stocks for validation
-        setWarehouseStocks(prev => ({
-          ...prev,
-          [warehouseId]: stocksArray
-        }));
-  
-        // Filter items based on search term and stock availability
-        const filteredStocks = stocksArray.filter((stock: any) => {
-          if (Number(stock.stock_qty) <= 0) return false;
-          if (!searchTerm) return true;
-          const searchLower = searchTerm.toLowerCase();
-          return stock.item_name?.toLowerCase().includes(searchLower) ||
-                 stock.item_code?.toLowerCase().includes(searchLower);
-        });
-  
-        // Create items with UOM data map for easy access
-        const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty: string, uomDetails: Record<string, { upc: string }> }> = {};
-        
-        const processedItems = filteredStocks.map((stockItem: any) => {
-          const uomDetailsMap: Record<string, { upc: string }> = {};
-          
-          const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
-            let price = uom.price;
-            // Override with specific pricing from the API response
-            if (uom?.uom_type === "primary") {
-              price = stockItem.buom_ctn_price || "-";
-            } else if (uom?.uom_type === "secondary") {
-              price = stockItem.auom_pc_price || "-";
-            }
-            
-            // Store UPC for each UOM
-            const uomId = uom.id || `${stockItem.item_id}_${uom.uom_type}`;
-            uomDetailsMap[String(uomId)] = { upc: String(uom.upc || "1") };
-            
-            return { 
-              ...uom, 
-              price,
-              id: uomId,
-              item_id: stockItem.item_id
-            };
-          }) : [];
-  
-          // Store UOM data for this item
-          itemsUOMMap[stockItem.item_id] = {
-            uoms: item_uoms,
-            stock_qty: stockItem.stock_qty,
-            uomDetails: uomDetailsMap
-          };
-  
-          return { 
-            id: stockItem.item_id,
-            name: stockItem.item_name,
-            item_code: stockItem.item_code,
-            erp_code: stockItem.erp_code,
-            item_uoms,
-            warehouse_stock: stockItem.stock_qty,
-            pricing: {
-              buom_ctn_price: stockItem.buom_ctn_price,
-              auom_pc_price: stockItem.auom_pc_price
-            }
-          };
-        });
-  
-        setItemsWithUOM(itemsUOMMap);
-        setOrderData(processedItems);
+        // setItemsWithUOM(itemsUOMMap);
+        setOrderData(stockRes.data);
   
         // Create dropdown options
-        const options = processedItems.map((item: any) => ({
-          value: String(item.id),
-          label: `${item.erp_code || item.item_code || ''} - ${item.name || ''} (Stock: ${item.warehouse_stock})`
+        const options = stockRes.data.map((item: any) => ({
+          value: String(item.item_id),
+          label: `${item.erp_code || item.item_code || ''} - ${item.item_name || ''} (Stock: ${item.stock_qty})`
         }));
   
         setItemsOptions(options);
@@ -563,33 +480,34 @@ export default function PurchaseOrderAddEditPage() {
         setItemData(balanced);
         return;
       } else {
-        const selectedOrder = orderData.find((order: FormData) => order.id.toString() === value);
+        const selectedOrder = orderData.find((order: FormData) => order.item_id.toString() === value);
         // console.log(selectedOrder);
-        item.item_id = selectedOrder ? String(selectedOrder.id || value) : value;
-        item.UOM = selectedOrder?.item_uoms?.map(uom => ({ 
+        item.item_id = selectedOrder ? String(selectedOrder.item_id || value) : value;
+        item.UOM = selectedOrder?.uoms?.map(uom => ({ 
           label: uom.name, 
           value: uom?.uom_id?.toString(), 
-          price: uom.uom_type == "primary" ? String(selectedOrder.pricing.auom_pc_price ?? "0") 
-            : uom.uom_type == "secondary" ? String(selectedOrder.pricing.buom_ctn_price ?? "0") 
-            : "-",
+          // price: uom.uom_type == "primary" ? String(selectedOrder.pricing.auom_pc_price ?? "0") 
+          //   : uom.uom_type == "secondary" ? String(selectedOrder.pricing.buom_ctn_price ?? "0") 
+          //   : "-",
           upc: uom.upc
         })) || [];
+          console.log(item.UOM, selectedOrder);
         console.log(item.UOM, selectedOrder)
-        item.uom_id = selectedOrder?.item_uoms?.[0]?.uom_id ? String(selectedOrder.item_uoms[0].uom_id) : "";
-        item.Price = item.UOM[0]?.price || "0";
+        item.uom_id = selectedOrder?.uoms?.[0]?.uom_id ? String(selectedOrder.uoms[0].uom_id) : "";
+        // item.Price = item.UOM[0]?.price || "0";
         // availableStock(item.item_id, item.uom_id);
         const baseStock = getBaseStockForItem(item.item_id);
         const upc = getUomMultiplier(item.item_id, item.uom_id, item);
         item.inStock = String(Math.floor(baseStock / upc));
         item.Quantity = "1";
-        item.Expiry = new Date().toISOString().slice(0, 10);
-        item.Type = "good";
-        item.Reason = "1";
-        item.Total = (Number(item.Price) * Number(item.Quantity)).toString();
-        item.Vat = String(Number(item.Total) - Number(item.Total) / 1.18);
-        item.Net = String(Number(item.Total) - Number(item.Vat));
+        // item.Expiry = new Date().toISOString().slice(0, 10);
+        // item.Type = "good";
+        // item.Reason = "1";
+        // item.Total = (Number(item.Price) * Number(item.Quantity)).toString();
+        // item.Vat = String(Number(item.Total) - Number(item.Total) / 1.18);
+        // item.Net = String(Number(item.Total) - Number(item.Vat));
 
-        const computedLabel = selectedOrder ? `${selectedOrder.item_code ?? selectedOrder.erp_code ?? ''}${selectedOrder.item_code || selectedOrder.erp_code ? ' - ' : ''}${selectedOrder.name ?? ''}` : "";
+        const computedLabel = selectedOrder ? `${selectedOrder.erp_code ?? ''}${selectedOrder.erp_code ? ' - ' : ''}${selectedOrder.item_name ?? ''}` : "";
         item.item_label = computedLabel;
         if (item.item_label) {
           setItemsOptions((prev: { label: string; value: string }[] = []) => {
@@ -606,27 +524,27 @@ export default function PurchaseOrderAddEditPage() {
         setItemData(balanced);
         return;
       }
-      returnWarehouseStockByCustomer({ customer_id: values?.customer, item_id: item.item_id, quantity: "1", uom: item.uom_id }).then((res) => {
-        if (res.error) {
-          showSnackbar(res.data?.message || "Failed to fetch warehouse", "error");
-          return;
-        }
+      // returnWarehouseStockByCustomer({ customer_id: values?.customer, item_id: item.item_id, quantity: "1", uom: item.uom_id }).then((res) => {
+      //   if (res.error) {
+      //     showSnackbar(res.data?.message || "Failed to fetch warehouse", "error");
+      //     return;
+      //   }
         
         // Update the state immediately with the stock status
-        setItemData((prevData) => {
-          const updatedData = [...prevData];
-          const targetItem = updatedData[index];
-          if (targetItem) {
-            if (res.data.in_stock === false) {
-              targetItem.availableInStock = "0";
-              showSnackbar("Selected item is not in stock", "error");
-            } else {
-              targetItem.availableInStock = "1";
-            }
-          }
-          return updatedData;
-        });
-      });
+      //   setItemData((prevData) => {
+      //     const updatedData = [...prevData];
+      //     const targetItem = updatedData[index];
+      //     if (targetItem) {
+      //       if (res.data.in_stock === false) {
+      //         targetItem.availableInStock = "0";
+      //         showSnackbar("Selected item is not in stock", "error");
+      //       } else {
+      //         targetItem.availableInStock = "1";
+      //       }
+      //     }
+      //     return updatedData;
+      //   });
+      // });
     }
 
     if (field === "Expiry" || field === "Quantity" || (field === "uom_id" && item.Expiry)) {
@@ -642,7 +560,8 @@ export default function PurchaseOrderAddEditPage() {
         [index]: { ...(prev[index] || {}), Batch: true },
       }));
       const res = await invoiceBatch({
-        customer_id: values?.customer,
+        // customer_id: values?.customer,
+        warehouse_id: values?.warehouse,
         item_id: item.item_id ?? "",
         uom: item.uom_id ?? "",
         quantity: item.Quantity ?? "",
@@ -659,8 +578,14 @@ export default function PurchaseOrderAddEditPage() {
         // return { label: batch.batch_number + " (Stock: " + batch.quantity + ")", value: batch.batch_number, price: batch.item_price }
         return { label: batch.batch_number, value: batch.batch_number, price: batch.item_price }
       }) ?? [];
-      item.Batch = (res.data?.[0] as { batch_number: string; batch_expiry_date: string; quantity: number; item_price: number } | undefined)?.batch_number || "";
+      item.SapId = (res.data?.[0] as BatchData | undefined)?.sap_id || "";
+      item.Batch = (res.data?.[0] as BatchData | undefined)?.batch_number || "";
+      item.Price = (res.data?.[0] as BatchData | undefined)?.item_price?.toString() || "0";
       item.Total = (Number(item.Price) * Number(item.Quantity)).toString();
+      // item.Total = (Number(item.Price) * Number(item.Quantity)).toString();
+      item.Vat = String(Number(item.Total) - Number(item.Total) / 1.18);
+      item.Net = String(Number(item.Total) - Number(item.Vat));
+
       setItemLoading((prev) => ({
         ...prev,
         [index]: { ...(prev[index] || {}), Batch: false },
@@ -685,6 +610,7 @@ export default function PurchaseOrderAddEditPage() {
         Quantity: "1",
         Expiry: "",
         Batch: "",
+        SapId: "",
         Type: "",
         Reason: "",
         Price: "",
@@ -702,6 +628,7 @@ export default function PurchaseOrderAddEditPage() {
           uom_id: "",
           Quantity: "1",
           Expiry: "",
+          SapId: "",
           Batch: "",
           Type: "",
           Reason: "",
@@ -726,6 +653,7 @@ export default function PurchaseOrderAddEditPage() {
         uom_id: "",
         Quantity: "1",
         Expiry: "",
+        SapId: "",
         Batch: "",
         Type: "",
         Reason: "",
@@ -779,6 +707,10 @@ export default function PurchaseOrderAddEditPage() {
       const net = +(total - vat).toFixed(2);
       totalVat += vat;
       totalNet += net;
+      // Ensure sap_id is a number or null, not an empty string
+      let sapIdValue = (item as ItemData).SapId;
+      if (sapIdValue === "" || sapIdValue === undefined) sapIdValue = "";
+      else sapIdValue = Number(sapIdValue);
       return {
         item_id: Number(item.item_id) || null,
         item_price: Number(item.Price) || 0,
@@ -787,10 +719,11 @@ export default function PurchaseOrderAddEditPage() {
         vat,
         net_total: net,
         total,
-        batch_number: (item as any).Batch ?? "",
-        expiry_date: (item as any).Expiry ?? "",
-        type: (item as any).Type ?? "",
-        reason: (item as any).Reason ?? "",
+        sap_id: sapIdValue,
+        batch_number: (item as ItemData).Batch ?? "",
+        expiry_date: (item as ItemData).Expiry ?? "",
+        type: (item as ItemData).Type ?? "",
+        reason: (item as ItemData).Reason ?? "",
       };
     });
     return {
@@ -1015,7 +948,7 @@ export default function PurchaseOrderAddEditPage() {
                       error={touched.warehouse && (errors.warehouse as string)}
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <AutoSuggestion
                       required
                       label="Customer"
@@ -1039,7 +972,7 @@ export default function PurchaseOrderAddEditPage() {
                       error={touched.customer && (errors.customer as string)}
                       className="w-full"
                     />
-                  </div>
+                  </div> */}
                   <div>
                     <InputFields
                       required
@@ -1123,7 +1056,7 @@ export default function PurchaseOrderAddEditPage() {
                                 showSkeleton={skeleton.item}
                                 options={itemsOptions}
                                 placeholder="Search item"
-                                disabled={!values.customer}
+                                disabled={!values.warehouse}
                                 error={err && err}
                               />
                             </div>
@@ -1148,7 +1081,7 @@ export default function PurchaseOrderAddEditPage() {
                                 width="max-w-[150px]"
                                 options={options}
                                 searchable={true}
-                                disabled={options.length === 0 || !values.customer || !row.item_id}
+                                disabled={options.length === 0 || !row.item_id}
                                 showSkeleton={Boolean(itemLoading[idx]?.uom)}
                                 onChange={(e) => {
                                   recalculateItem(Number(row.idx), "uom_id", e.target.value, values)
@@ -1180,7 +1113,7 @@ export default function PurchaseOrderAddEditPage() {
                                 integerOnly={true}
                                 placeholder="Enter Qty"
                                 value={row.Quantity}
-                                disabled={!row.uom_id || !values.customer || row.availableInStock === "0"}
+                                disabled={!row.uom_id}
                                 onChange={(e) => {
                                   const raw = (e.target as HTMLInputElement).value;
                                   const intPart = raw.split('.')[0];
@@ -1213,7 +1146,7 @@ export default function PurchaseOrderAddEditPage() {
                                 // integerOnly={true}
                                 placeholder="Enter Expiry"
                                 value={row.Expiry}
-                                disabled={!row.uom_id || !values.customer || row.availableInStock === "0"}
+                                disabled={!row.uom_id}
                                 onChange={(e) => {
                                   if (e.target.value && !isValidDate(new Date(e.target.value))) {
                                     return;
@@ -1251,7 +1184,7 @@ export default function PurchaseOrderAddEditPage() {
                               type="text"
                               name="Batchs"
                               value={batch}
-                              // disabled={!row.uom_id || !values.customer || row.availableInStock === "0"}
+                              // disabled={!row.uom_id}
                               disabled={true}
                               options={batchOptions}
                               onChange={(e) => {
@@ -1279,14 +1212,14 @@ export default function PurchaseOrderAddEditPage() {
                               name="Type"
                               // placeholder="Enter Type"
                               value={row.Type}
-                              disabled={!row.uom_id || !values.customer || row.availableInStock === "0"}
+                              disabled={!row.uom_id}
                               options={[
                                 { label: "Good", value: "good" },
                                 { label: "Bad", value: "bad" }
                               ]}
                               onChange={(e) => {
                                 recalculateItem(Number(row.idx), "Type", e.target.value);
-                                recalculateItem(Number(row.idx), "Reason", "");
+                                // recalculateItem(Number(row.idx), "Reason", "");
                               }}
                               integerOnly={true}
                               width="w-[100px]"
@@ -1310,7 +1243,7 @@ export default function PurchaseOrderAddEditPage() {
                               name="Reason"
                               // placeholder="Enter Reason"
                               value={reason}
-                              disabled={!row.uom_id || !values.customer || row.availableInStock === "0"}
+                              disabled={!row.uom_id}
                               options={row.Type === "good" ? reasonObj.good : reasonObj.bad}
                               onChange={(e) => {
                                 recalculateItem(Number(row.idx), "Reason", e.target.value);
@@ -1430,7 +1363,7 @@ export default function PurchaseOrderAddEditPage() {
                   <SidebarBtn
                     type="submit" isActive={true}
                     label={isSubmitting ? "Creating Return..." : "Create Return"}
-                    disabled={isSubmitting || !values.customer || !values.turnman || !values.truckNo || !values.contactNo || !itemData || itemData.some(it => !it.item_id || !it.uom_id)}
+                    disabled={isSubmitting || !values.turnman || !values.truckNo || !values.contactNo || !itemData || itemData.some(it => !it.item_id || !it.uom_id)}
                     onClick={() => submitForm()}
                   />
                 </div>
