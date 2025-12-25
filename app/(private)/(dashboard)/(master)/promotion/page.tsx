@@ -19,8 +19,9 @@ import {
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext"; 
+import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 interface DropdownItem {
     icon: string;
@@ -42,14 +43,14 @@ const columns = [
     // { key: "description", label: "Description" },
     { key: "from_date", label: "From Date" },
     { key: "to_date", label: "To Date" },
-  
+
     {
-            key: "status",
-            label: "Status",
-            render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status ? true : false} />
-            ),
-        },
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => (
+            <StatusBtn isActive={row.status ? true : false} />
+        ),
+    },
 ];
 
 export default function Pricing() {
@@ -64,11 +65,20 @@ export default function Pricing() {
 
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<PricingItem | null>(null);
-    const [refreshKey, setRefreshKey] = useState(0);
+    const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
+    const [selectedRow, setSelectedRow] = useState<TableDataType | null>(null);
+    const [refreshKey, setRefreshKey] = useState<number>(0);
+    const { can, permissions } = usePagePermissions();
+
+    // Refresh table when permissions load
+    useEffect(() => {
+        if (permissions.length > 0) {
+            setRefreshKey((prev) => prev + 1);
+        }
+    }, [permissions]);
+
     const router = useRouter();
-    const { showSnackbar } = useSnackbar(); 
+    const { showSnackbar } = useSnackbar();
 
     const fetchCountries = useCallback(
         async (
@@ -76,7 +86,7 @@ export default function Pricing() {
             pageSize: number = 50
         ): Promise<listReturnType> => {
             try {
-              setLoading(true);
+                setLoading(true);
                 const listRes = await promotionHeaderList({
                     // limit: pageSize.toString(),
                     limit: pageSize.toString(),
@@ -84,9 +94,9 @@ export default function Pricing() {
                 setLoading(false);
                 return {
                     data: listRes.data || [],
-                    total: listRes.pagination.totalPages ,
-                    currentPage: listRes.pagination.page ,
-                    pageSize: listRes.pagination.limit ,
+                    total: listRes.pagination.totalPages,
+                    currentPage: listRes.pagination.page,
+                    pageSize: listRes.pagination.limit,
                 };
             } catch (error: unknown) {
                 console.error("API Error:", error);
@@ -229,7 +239,7 @@ export default function Pricing() {
                 />
             </div>
 
-            {showDeletePopup && (
+            {/* {showDeletePopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                     <DeleteConfirmPopup
                         title="Promotion"
@@ -237,7 +247,7 @@ export default function Pricing() {
                         onConfirm={handleConfirmDelete}
                     />
                 </div>
-            )}
+            )} */}
         </>
     );
 }

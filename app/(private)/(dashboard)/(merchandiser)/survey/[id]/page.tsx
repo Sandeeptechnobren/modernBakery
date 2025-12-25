@@ -336,7 +336,7 @@ export default function AddSurveyTabs() {
       }
 
       showSnackbar("All questions added successfully", "success");
-      router.push("/merchandiser/survey");
+      router.push("/survey");
     } catch (err) {
       showSnackbar("Please check all question fields carefully.", "error");
     } finally {
@@ -398,7 +398,7 @@ export default function AddSurveyTabs() {
       setQuestions((prev) => prev.map((qq) => ({ ...qq, editable: false })));
       setIsPreviewMode(true);
       if (redirectAfter) {
-        router.push("/merchandiser/survey");
+        router.push("/survey");
       }
       return true;
     } catch (err) {
@@ -578,9 +578,9 @@ export default function AddSurveyTabs() {
                 <InputFields
                   label="Status"
                   name="status"
+                  type="radio"
                   value={values.status}
                   onChange={(e) => setFieldValue("status", e.target.value)}
-                  type="select"
                   options={[
                     { value: "1", label: "Active" },
                     { value: "0", label: "Inactive" },
@@ -593,7 +593,7 @@ export default function AddSurveyTabs() {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 type="button"
-                onClick={() => router.push("/merchandiser/survey")}
+                onClick={() => router.push("/survey")}
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Cancel
@@ -666,42 +666,7 @@ export default function AddSurveyTabs() {
                   </span>
                 </p>
               </div>
-
-              {!isPreviewMode ? (
-                <button
-                  type="button"
-                  onClick={() => handleSaveQuestions(values)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium"
-                  disabled={savingAll}
-                >
-                  {savingAll ? (
-                    <span className="flex items-center gap-2">
-                      <Icon icon="lucide:loader" width={16} height={16} className="animate-spin" />
-                      {isEditMode ? "Updating..." : "Saving..."}
-                    </span>
-                  ) : (
-                    <div className="flex items-center">
-                      <Icon icon="mdi:check" width={22} height={22} className="mr-2" />
-                      <span>Submit</span>
-                    </div>
-                  )}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const ok = await handleSaveQuestions(values, true);
-                    if (ok) {
-                      // router.push handled inside handleSaveQuestions when redirectAfter=true
-                    }
-                  }}
-                  className="bg-white border border-gray-300 px-4 py-2 rounded-lg font-medium"
-                >
-                  Submit
-                </button>
-              )}
             </div>
-
             <div className="space-y-6">
               {questions.map((q, index) => (
                 <div key={index} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
@@ -778,32 +743,6 @@ export default function AddSurveyTabs() {
                     <>
                       <div className="flex items-start justify-between">
                         <h3 className="text-base font-semibold mb-4">Question {index + 1}</h3>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleSaveSingleQuestion(index, values)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm"
-                            disabled={savingQuestionIndex === index}
-                          >
-                            {savingQuestionIndex === index ? (
-                              <span className="flex items-center gap-2">
-                                <Icon icon="lucide:loader" width={14} height={14} className="animate-spin" />
-                                {"Saving"}
-                              </span>
-                            ) : (
-                              "Save"
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteQuestion(index)}
-                            className="bg-white border border-gray-300 px-3 py-1 rounded-lg text-sm text-red-600 hover:bg-red-50"
-                            disabled={savingQuestionIndex === index || savingAll}
-                          >
-                            Delete
-                          </button>
-                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -862,6 +801,32 @@ export default function AddSurveyTabs() {
                             <div className="text-sm text-red-600 mt-1">{questionErrors[index].questionType}</div>
                           )}
                         </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3 ps-163">
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSingleQuestion(index, values)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm"
+                          disabled={savingQuestionIndex === index}
+                        >
+                          {savingQuestionIndex === index ? (
+                            <span className="flex items-center gap-2">
+                              <Icon icon="lucide:loader" width={14} height={14} className="animate-spin" />
+                              {"Saving"}
+                            </span>
+                          ) : (
+                            "Save"
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteQuestion(index)}
+                          className="bg-white border border-gray-300 px-3 py-1 rounded-lg text-sm text-red-600 hover:bg-red-50"
+                          disabled={savingQuestionIndex === index || savingAll}
+                        >
+                          Delete
+                        </button>
                       </div>
 
                       {/*  Dynamic Options / Preview */}
@@ -946,14 +911,51 @@ export default function AddSurveyTabs() {
                 </div>
               ))}
 
-              <button
-                type="button"
-                onClick={handleAddNewQuestion}
-                className="flex items-center gap-1 text-red-600 font-medium hover:underline"
-              >
-                <Icon icon="lucide:plus-circle" width={18} height={18} />
-                Add New Question
-              </button>
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  type="button"
+                  onClick={handleAddNewQuestion}
+                  className="flex items-center gap-1 text-red-600 font-medium hover:underline"
+                >
+                  <Icon icon="lucide:plus-circle" width={18} height={18} />
+                  Add New Question
+                </button>
+
+
+                {!isPreviewMode ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSaveQuestions(values)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium"
+                    disabled={savingAll}
+                  >
+                    {savingAll ? (
+                      <span className="flex items-center gap-2">
+                        <Icon icon="lucide:loader" width={16} height={16} className="animate-spin" />
+                        {isEditMode ? "Updating..." : "Saving..."}
+                      </span>
+                    ) : (
+                      <div className="flex items-center">
+                        <Icon icon="mdi:check" width={22} height={22} className="mr-2" />
+                        <span>Submit</span>
+                      </div>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = await handleSaveQuestions(values, true);
+                      if (ok) {
+                        // router.push handled inside handleSaveQuestions when redirectAfter=true
+                      }
+                    }}
+                    className="bg-white border border-gray-300 px-4 py-2 rounded-lg font-medium"
+                  >
+                    Submit
+                  </button>
+                )}
+              </div>
             </div>
           </ContainerCard>
         );
@@ -966,7 +968,7 @@ export default function AddSurveyTabs() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/merchandiser/survey">
+        <Link href="/survey">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
         <h1 className="text-xl font-semibold">{isEditMode ? "Update Survey" : "Add New Survey"}</h1>

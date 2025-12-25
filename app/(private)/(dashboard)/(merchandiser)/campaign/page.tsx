@@ -2,57 +2,57 @@
 
 import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Icon } from "@iconify-icon/react";
 
 import Table, { TableDataType } from "@/app/components/customTable";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import BorderIconButton from "@/app/components/borderIconButton";
-import CustomDropdown from "@/app/components/customDropdown";
+import ImagePreviewModal from "@/app/components/ImagePreviewModal";
 
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { campaignInformationList,exportCompaignData } from "@/app/services/merchandiserApi";
-import { div } from "framer-motion/client";
+import {
+  campaignInformationList,
+  exportCompaignData,
+} from "@/app/services/merchandiserApi";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
-
-
-
-const dropdownDataList = [
-  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
 
 export default function CampaignPage() {
   const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showExportDropdown, setShowExportDropdown] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // Refresh table when permissions load
-  useEffect(() => {
-    if (permissions.length > 0) {
-      setRefreshKey((prev) => prev + 1);
-    }
-  }, [permissions]);
-
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // ✅ Fetch Table Data
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const IMAGE_BASE_URL =
+    "https://api.coreexl.com/osa_developmentV2/public";
+
+  /* ================= IMAGE MODAL STATE ================= */
+  const [imageModal, setImageModal] = useState<{
+    images: string[];
+    index: number;
+  } | null>(null);
+
+  const openImageModal = (images: string[], index = 0) => {
+    setImageModal({ images, index });
+  };
+
+  const closeImageModal = () => {
+    setImageModal(null);
+  };
+
+  /* ================= FETCH TABLE DATA ================= */
   const fetchComplaintFeedback = useCallback(
-    async (pageNo = 1, pageSize = 10) => {
+    async (pageNo = 1, pageSize = 50) => {
       setLoading(true);
       try {
         const res = await campaignInformationList({
           page: String(pageNo),
           per_page: String(pageSize),
         });
-        setLoading(false);
 
         const dataArray: TableDataType[] = Array.isArray(res?.data)
           ? res.data
           : [];
+
         const pagination = res?.pagination;
 
         return {
@@ -62,34 +62,33 @@ export default function CampaignPage() {
           total: pagination.last_page,
         };
       } catch (err) {
-        setLoading(false);
-        showSnackbar("Failed to fetch campaign list", "error");
         console.error(err);
+        showSnackbar("Failed to fetch campaign list", "error");
         return {
-          data: [] as TableDataType[],
+          data: [],
           currentPage: 1,
           pageSize,
           total: 0,
         };
+      } finally {
+        setLoading(false);
       }
     },
     [setLoading, showSnackbar]
   );
 
+  /* ================= EXPORT ================= */
   const handleExport = async (fileType: "csv" | "xlsx") => {
     try {
       setLoading(true);
 
       const res = await exportCompaignData({ file_type: fileType });
-      console.log("Export API Response:", res);
 
       let downloadUrl = "";
 
-      if (res?.url && res.url.startsWith("blob:")) {
+      if (res?.url?.startsWith("http")) {
         downloadUrl = res.url;
-      } else if (res?.url && res.url.startsWith("http")) {
-        downloadUrl = res.url;
-      } else if (typeof res === "string" && res.includes(",")) {
+      } else if (typeof res === "string") {
         const blob = new Blob([res], {
           type:
             fileType === "csv"
@@ -98,11 +97,10 @@ export default function CampaignPage() {
         });
         downloadUrl = URL.createObjectURL(blob);
       } else {
-        showSnackbar("No valid file or URL returned from server", "error");
+        showSnackbar("No valid file returned", "error");
         return;
       }
 
-      // ⬇️ Trigger browser download
       const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = `campaign_info_export.${fileType}`;
@@ -111,80 +109,103 @@ export default function CampaignPage() {
       document.body.removeChild(link);
 
       showSnackbar(
-        `Download started for ${fileType.toUpperCase()} file`,
+        `${fileType.toUpperCase()} download started`,
         "success"
       );
-    } catch (error) {
-      console.error("Export error:", error);
-      showSnackbar("Failed to export campaign data", "error");
+    } catch (err) {
+      console.error(err);
+      showSnackbar("Export failed", "error");
     } finally {
       setLoading(false);
-      setShowExportDropdown(false);
     }
   };
 
+  /* ================= RENDER ================= */
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-  
-
-      {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
           refreshKey={refreshKey}
           config={{
             api: { list: fetchComplaintFeedback },
             header: {
-              title:"Campaigns Information",
-                threeDot: [
+              title: "Campaigns Information",
+              threeDot: [
                 {
                   icon: "gala:file-document",
                   label: "Export CSV",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    handleExport("csv")
-                  },
+                  onClick: () => handleExport("csv"),
                 },
                 {
                   icon: "gala:file-document",
                   label: "Export Excel",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    handleExport("xlsx")
-                  },
+                  onClick: () => handleExport("xlsx"),
                 },
-            
               ],
               searchBar: false,
-              columnFilter: true,
             },
             footer: { nextPrevBtn: true, pagination: true },
+            rowSelection: true,
+            pageSize: 50,
+            table: {
+              height: "400px"
+            },
             columns: [
-              { key: "code", label: "Campaign Code" },
               {
-                key: "merchendiser",
+                key: "code",
+                label: "Campaign Code",
+              },
+              {
+                key: "merchandiser",
                 label: "Merchandiser",
-                render: (row) =>
-                  typeof row.merchendiser === "object" &&
-                  row.merchendiser !== null &&
-                  "name" in row.merchendiser
-                    ? (row.merchendiser as { name?: string })?.name || "-"
-                    : "-",
+                render: (row) => row?.merchandiser?.name ?? "-",
               },
               {
                 key: "customer",
                 label: "Customer",
-                render: (row) =>
-                  typeof row.customer === "object" &&
-                  row.customer !== null &&
-                  "owner_name" in row.customer
-                    ? (row.customer as { owner_name?: string })?.owner_name ||
-                      "-"
-                    : "-",
+                render: (row) => row?.customer?.owner_name ?? "-",
               },
-              { key: "feedback", label: "Feedback" },
+              {
+                key: "feedback",
+                label: "Feedback",
+                render: (row) => row?.feedback ?? "-",
+              },
+              {
+                key: "images",
+                label: "Images",
+                render: (row) => {
+                  const images =
+                    row?.images && typeof row.images === "object"
+                      ? Object.values(row.images)
+                        .filter((img): img is string => typeof img === "string")
+                        .map((img) => `${IMAGE_BASE_URL}${img}`)
+                      : [];
+
+                  if (images.length === 0) {
+                    return <span className="text-gray-400">No images</span>;
+                  }
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => openImageModal(images, 0)}
+                      className="text-blue-600 font-medium hover:underline"
+                    >
+                      View Images ({images.length})
+                    </button>
+                  );
+                },
+              }
             ],
-            rowSelection: true,
-            pageSize: 10,
           }}
+        />
+
+        {/* 🔥 IMAGE PREVIEW MODAL */}
+        <ImagePreviewModal
+          images={imageModal?.images ?? []}
+          isOpen={!!imageModal}
+          onClose={closeImageModal}
+          startIndex={imageModal?.index ?? 0}
         />
       </div>
     </div>

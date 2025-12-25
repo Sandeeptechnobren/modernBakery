@@ -8,7 +8,6 @@ import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
 import { useRouter } from "next/navigation";
 import { usePermissionManager } from "@/app/components/contexts/usePermission";
 
-
 export default function Sidebar({
   onClickHandler,
   isOpen,

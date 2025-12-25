@@ -94,7 +94,8 @@ export type configType = {
         actionsWithData?: (data: TableDataType[], selectedRow?: number[]) => React.ReactNode[];
     };
     rowActions?: {
-        icon: string;
+        icon?: string;
+        label?: string;
         onClick?: (data: TableDataType) => void;
     }[];
     table?: {
@@ -366,8 +367,11 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     }
 
     useEffect(() => {
-        checkForData();
         setConfig(config);
+    }, [config]);
+
+    useEffect(() => {
+        checkForData();
 
         // Only initialize "select all" when there is no saved selection in localStorage.
         // If a saved array exists we leave it to ColumnFilter's localStorage loader to restore it.
@@ -895,13 +899,7 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
                             {/* actions */}
                             {rowActions && selectedColumns.length > 0 && (
                                 <th
-                                    className="
-                                sm:sticky right-0 z-[10]
-                                px-[24px] py-[12px] font-[500] text-left
-                                border-[#E9EAEB]
-                                bg-[#FAFAFA] whitespace-nowrap
-                                before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]
-                                "
+                                    className="sm:sticky right-0 z-[10] px-[24px] py-[12px] font-[500] text-left border-[#E9EAEB] bg-[#FAFAFA] whitespace-nowrap before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]"
                                 //  className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]"
                                 >
                                     <div className="flex items-center gap-[4px] whitespace-nowrap">
@@ -979,27 +977,24 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
                                                 <div className="flex items-center gap-[4px]">
                                                     {rowActions.map(
                                                         (action, index) => (
-                                                            <Icon
-                                                                key={index}
-                                                                icon={
-                                                                    action.icon
-                                                                }
-                                                                width={20}
-                                                                className="
-                                                    p-[10px] cursor-pointer
-                                                    text-[#5E5E5E]
-                                                    transition-all duration-200 ease-in-out
-                                                    hover:text-[#EA0A2A]
-                                                    hover:scale-110
-                                                "
-                                                                onClick={() =>
-                                                                    action.onClick &&
-                                                                    action.onClick(
-                                                                        row
-                                                                    )
-                                                                }
-                                                            />
-                                                        )
+                                                            <div 
+                                                                key={index} 
+                                                                onClick={() => {
+                                                                    if (action.onClick) {
+                                                                        action.onClick(row);
+                                                                    }
+                                                                }}
+                                                                className="flex p-[10px] cursor-pointer text-[#5E5E5E] transition-all duration-200 ease-in-out hover:text-[#EA0A2A] hover:scale-110"
+                                                            >
+                                                            {action.icon 
+                                                                ? <Icon
+                                                                    key={index}
+                                                                    icon={action.icon}
+                                                                    width={20}
+                                                                /> 
+                                                                : <span>{action.label}</span>
+                                                            }
+                                                        </div>)
                                                     )}
                                                 </div>
                                             </td>

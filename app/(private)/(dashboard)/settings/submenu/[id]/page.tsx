@@ -34,8 +34,8 @@ const menuSchema = Yup.object().shape({
 
 type submenuIncomingType = {
   name: string,
-  menu: {id: number} | null,
-  parent: {id: number} | null,
+  menu: { id: number } | null,
+  parent: { id: number } | null,
   url: string,
   display_order: number,
   action_type: number,
@@ -59,11 +59,11 @@ export default function AddShelfDisplay() {
   const id = params?.id || "";
   const isEditMode = id !== "add" && id !== "";
   let ID = (isEditMode) ? id : null;
-  if(ID && Array.isArray(ID)){
-      ID = ID[0] || "";
+  if (ID && Array.isArray(ID)) {
+    ID = ID[0] || "";
   }
 
-  const { submenuOptions, menuOptions , ensureMenuListLoaded, ensureSubmenuLoaded} = useAllDropdownListData();
+  const { submenuOptions, menuOptions, ensureMenuListLoaded, ensureSubmenuLoaded, } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -78,15 +78,15 @@ export default function AddShelfDisplay() {
   useEffect(() => {
     if (!isEditMode) return;
     const fetchPermission = async () => {
-        setLoading(true);
-        const res = await submenuByUUID(id as string);
-        setLoading(false);
-        if(res.error) {
-            showSnackbar(res.data.message || "Unable to Submenu", "error");
-            throw new Error("Unable to Submenu");
-        } else {
-          setMenu(res.data);
-        }
+      setLoading(true);
+      const res = await submenuByUUID(id as string);
+      setLoading(false);
+      if (res.error) {
+        showSnackbar(res.data.message || "Unable to Submenu", "error");
+        throw new Error("Unable to Submenu");
+      } else {
+        setMenu(res.data);
+      }
     }
     fetchPermission();
   }, []);
@@ -98,8 +98,8 @@ export default function AddShelfDisplay() {
     // If API explicitly returns parent: null => select "None" (value 0).
     parent: menu
       ? (menu.parent === null
-          ? 0
-          : (menu.parent?.id ?? (submenuOptions.length > 0 ? parseInt(submenuOptions[0]?.value) : 0)))
+        ? 0
+        : (menu.parent?.id ?? (submenuOptions.length > 0 ? parseInt(submenuOptions[0]?.value) : 0)))
       : (submenuOptions.length > 0 ? parseInt(submenuOptions[0]?.value) : 0),
     url: menu?.url ?? "",
     display_order: menu?.display_order ?? 0,
@@ -130,7 +130,7 @@ export default function AddShelfDisplay() {
     }
     setLoading(false);
 
-    if(res.error) {
+    if (res.error) {
       showSnackbar(res.data.message, "error");
       throw new Error("Unable to add submenu");
     } else {
@@ -139,7 +139,7 @@ export default function AddShelfDisplay() {
     }
     setSubmitting(false);
   };
-  
+
   return (
     <div className="w-full h-full p-4">
       <div className="flex items-center gap-4 mb-6">
@@ -187,7 +187,7 @@ export default function AddShelfDisplay() {
                     name="menu"
                     value={values.menu.toString()}
                     options={menuOptions}
-                    onChange={(e) => {setFieldValue("menu", e.target.value)}}
+                    onChange={(e) => { setFieldValue("menu", e.target.value) }}
                     error={touched.menu && errors.menu}
                   />
                   <ErrorMessage
@@ -204,7 +204,7 @@ export default function AddShelfDisplay() {
                     label="Parent"
                     name="parent"
                     value={values.parent.toString()}
-                    options={[{label: "None", value: "0"}, ...submenuOptions]}
+                    options={[{ label: "None", value: "0" }, ...submenuOptions]}
                     onChange={(e) => setFieldValue("parent", e.target.value)}
                     error={touched.parent && errors.parent}
                   />
@@ -273,8 +273,8 @@ export default function AddShelfDisplay() {
                     label="Is Visible"
                     name="is_visible"
                     options={[
-                      {label: "Yes", value: "1"},
-                      {label: "No", value: "0"},
+                      { label: "Yes", value: "1" },
+                      { label: "No", value: "0" },
                     ]}
                     value={values.is_visible.toString()}
                     onChange={(e) => setFieldValue("is_visible", e.target.value)}
@@ -292,9 +292,9 @@ export default function AddShelfDisplay() {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 // type="reset"
-                 type="button"
+                type="button"
                 // onClick={() => router.back()}
-              onClick={() => router.push("/settings/submenu")}
+                onClick={() => router.push("/settings/submenu")}
 
                 className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
               >
@@ -302,7 +302,7 @@ export default function AddShelfDisplay() {
               </button>
               <SidebarBtn
                 type="submit"
-                label={ isEditMode ? (isSubmitting?"Updating...":"Update" ): (isSubmitting?"Submitting...":"Submit")}
+                label={isEditMode ? (isSubmitting ? "Updating..." : "Update") : (isSubmitting ? "Submitting..." : "Submit")}
                 isActive
                 leadingIcon="mdi:check"
                 disabled={isSubmitting}

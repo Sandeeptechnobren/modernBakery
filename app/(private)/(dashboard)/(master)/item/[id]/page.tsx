@@ -120,7 +120,7 @@ const StepSchemas = [
 ];
 
 export default function AddEditItem() {
-  const { itemCategoryOptions, uomOptions, ensureItemCategoryLoaded, ensureUomLoaded } = useAllDropdownListData();
+  const { itemCategoryOptions,itemCategoryAllOptions, uomOptions, ensureItemCategoryLoaded, ensureUomLoaded,ensureAllItemCategoryLoaded } = useAllDropdownListData();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -136,7 +136,11 @@ export default function AddEditItem() {
   useEffect(() => {
     ensureItemCategoryLoaded();
     ensureUomLoaded();
-  }, [ensureItemCategoryLoaded, ensureUomLoaded]);
+    if(isEditMode){
+    ensureAllItemCategoryLoaded();
+    // console.log("ensured all item category loaded",itemCategoryAllOptions);
+    }
+  }, [ensureItemCategoryLoaded, ensureUomLoaded,ensureAllItemCategoryLoaded]);
 
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Details" },
@@ -214,7 +218,11 @@ export default function AddEditItem() {
 
   const fetchSubCategory = async (categoryId: string) => {
     setSkeleton({ ...skeleton, itemSubCategory: true });
-    const res = await itemSubCategoryList({ category_id: categoryId, dropdown: "true" });
+    let res;
+    if(!isEditMode){ res = await itemSubCategoryList({ category_id: categoryId, dropdown: "true" });}
+    else{
+       res = await itemSubCategoryList({ category_id: categoryId });
+    }
     if (res.error) {
       showSnackbar("Failed to fetch sub categories", "error");
       throw new Error("Failed to fetch sub categories");
@@ -675,7 +683,7 @@ export default function AddEditItem() {
                     setFieldValue("itemCategory", e.target.value);
                     fetchSubCategory(e.target.value);
                   }}
-                  options={itemCategoryOptions}
+                  options={isEditMode ? itemCategoryAllOptions : itemCategoryOptions}
                   error={touched.itemCategory && errors.itemCategory}
                 />
               </div>
@@ -688,7 +696,7 @@ export default function AddEditItem() {
                   value={values.itemSubCategory}
                   onChange={(e) => setFieldValue("itemSubCategory", e.target.value)}
                   options={filteredSubCategoryOptions}
-                  disabled={filteredSubCategoryOptions.length === 0}
+                  disabled={filteredSubCategoryOptions.length === 0 }
                   error={touched.itemSubCategory && errors.itemSubCategory}
                 />
               </div>

@@ -100,6 +100,20 @@ interface ItemData {
   [key: string]: string | { label: string; value: string, price?: string, upc?: string }[] | undefined;
 }
 
+export const reasonObj = {
+  good: [
+    { label: "Short Expiry", value: "1" },
+    { label: "Non Moving", value: "2" },
+    { label: "Replacement", value: "3" },
+  ],
+  bad: [
+    { label: "Damaged", value: "1" },
+    { label: "Quality Issue", value: "2" },
+    { label: "Expired", value: "3" },
+    { label: "Packing Issue", value: "4" },
+  ]
+};
+
 export default function PurchaseOrderAddEditPage() {
   const itemRowSchema = Yup.object({
     item_id: Yup.string()
@@ -1297,16 +1311,7 @@ export default function PurchaseOrderAddEditPage() {
                               // placeholder="Enter Reason"
                               value={reason}
                               disabled={!row.uom_id || !values.customer || row.availableInStock === "0"}
-                              options={row.Type === "good" ? [
-                                { label: "Short Expiry", value: "1" },
-                                { label: "Non Moving", value: "2" },
-                                { label: "Replacement", value: "3" },
-                              ] : [
-                                { label: "Damaged", value: "1" },
-                                { label: "Quality Issue", value: "2" },
-                                { label: "Expired", value: "3" },
-                                { label: "Packing Issue", value: "4" },
-                              ]}
+                              options={row.Type === "good" ? reasonObj.good : reasonObj.bad}
                               onChange={(e) => {
                                 recalculateItem(Number(row.idx), "Reason", e.target.value);
                               }}

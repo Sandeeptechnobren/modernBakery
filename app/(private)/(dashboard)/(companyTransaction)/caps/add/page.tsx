@@ -246,7 +246,6 @@ export default function CapsAddPage() {
     claim_date: "",
     claim_amount: ""
   });
-  console.log("Form data:", form);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -572,6 +571,8 @@ export default function CapsAddPage() {
         // keep it as string to match other table fields
         (item as any)[field] = String(next);
       }
+
+      item.total = Number(item.price || "0") * Number(item.deposit_qty || "0");
     } else {
       (item as any)[field] = value;
     }
@@ -687,10 +688,10 @@ export default function CapsAddPage() {
     ]);
   };
 
-  const handleRemoveRow = (id: number) => {
+  const handleRemoveRow = (index: number) => {
     if (tableData.length <= 1) return;
-    setTableData((prev) => prev.filter((row) => {
-      return (Number(row.id) !== id);
+    setTableData((prev) => prev.filter((row, idx) => {
+      return (idx !== index);
     }));
   };
 
@@ -863,7 +864,7 @@ export default function CapsAddPage() {
           item_id: parseInt(r.item_id),
           uom_id: parseInt(r.uom_id),
           quantity: parseFloat(r.quantity || "0"),
-          receive_qty: parseFloat(r.receive_qty || "0"),
+          receive_qty: parseFloat(r.deposit_qty || "0"),
           receive_amount: parseFloat(r.receive_amount || "0"),
           receive_date: form.claim_date,
           // remarks: r.remarks,
@@ -1112,18 +1113,14 @@ export default function CapsAddPage() {
                   const safeUpc = Number.isFinite(upc) && upc > 0 ? upc : 1;
                   // Secondary (e.g. CSE): show only full units. Remainder stays in primary (PCS).
                   const displayQty = isSecondary ? Math.floor(baseQty / safeUpc) : baseQty;
-                  return String(displayQty);
+                  return toInternationalNumber(String(displayQty), {minimumFractionDigits: 0});
                 },
               },
               {
                 key: "deposit_qty",
                 label: "Deposit Quantity",
-                render: (row) => (
-                  <div>
-                  <InputFields
-                    type="number"
-                    min={0}
-                    max={getRemainingQtyForRow(
+                render: (row) => {
+                  const max = getRemainingQtyForRow(
                       tableData.map((r, i) => ({ ...r, idx: i })),
                       Number(row.idx),
                       String(row.item_id ?? ""),
@@ -1138,7 +1135,12 @@ export default function CapsAddPage() {
                         // Secondary (e.g. CSE): limit to full units only.
                         return isSecondary ? Math.floor(baseQty / safeUpc) : baseQty;
                       })()
-                    )}
+                    );
+                  return <div className="pt-5">
+                  <InputFields
+                    type="number"
+                    min={0}
+                    max={max}
                     integerOnly={true}
                     placeholder="Enter Quantity"
                     value={row.deposit_qty}
@@ -1148,8 +1150,11 @@ export default function CapsAddPage() {
                     }
                     width={"200px"}
                   />
+                  <span className="text-xs text-gray-500 mt-1">
+                    In Stock: {max ? toInternationalNumber(String(max), {minimumFractionDigits: 0}) : "0"}
+                  </span>
                   </div>
-                ),
+                },
               },
               {
                 key: "price",
@@ -1159,7 +1164,7 @@ export default function CapsAddPage() {
               {
                 key: "total",
                 label: "Total",
-                render: (row) => toInternationalNumber(Number(row.total) ?? "0" ) ?? "-",
+                render: (row) => row.total ? toInternationalNumber(row.total) ?? "-" : "-",
               },
               {
                 key: "action",

@@ -14,15 +14,15 @@ import { useEffect, useState } from "react";
 type FormValues = {
   complaint_code: string;
   complaint_title: string;
-  merchendiser: { name: string } ;
-  item: {item_name: string};
+  merchendiser: { name: string };
+  item: { item_name: string };
   type: string;
   description: string;
   status?: number;
 };
 
 const title = "Complaint Feedback Details";
-const backBtnUrl = "/merchandiser/complaintFeedback";
+const backBtnUrl = "/complaintFeedback";
 
 export default function ViewPage() {
   const params = useParams();

@@ -10,7 +10,7 @@ import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { damageList, deleteModelStock, expiryList, getShelfById, modelStockList, viewStockList } from "@/app/services/merchandiserApi";
+import { damageListBySelf, deleteModelStock, expiryListBySelf, getShelfById, modelStockListBySelf, viewStockListBySelf } from "@/app/services/merchandiserApi";
 
 import Loading from "@/app/components/Loading";
 import KeyValueData from "@/app/components/keyValueData";
@@ -320,7 +320,7 @@ export default function Page() {
           config={{
             api: {
               list: async (page: number = 1, pageSize: number = 50) => {
-                const res = await modelStockList({
+                const res = await modelStockListBySelf(uuid, {
                   page: page.toString(),
                   per_page: pageSize.toString(),
                 });
@@ -407,7 +407,7 @@ export default function Page() {
           config={{
             api: {
               list: async (page: number = 1, pageSize: number = 50) => {
-                const res = await viewStockList({
+                const res = await viewStockListBySelf(uuid, {
                   page: page.toString(),
                   per_page: pageSize.toString(),
                 });
@@ -469,7 +469,7 @@ export default function Page() {
           config={{
             api: {
               list: async (page: number = 1, pageSize: number = 50) => {
-                const res = await damageList({
+                const res = await damageListBySelf(uuid, {
                   page: page.toString(),
                   per_page: pageSize.toString(),
                 });
@@ -529,7 +529,7 @@ export default function Page() {
           config={{
             api: {
               list: async (page: number = 1, pageSize: number = 50) => {
-                const res = await expiryList({
+                const res = await expiryListBySelf(uuid, {
                   page: page.toString(),
                   per_page: pageSize.toString(),
                 });

@@ -15,27 +15,36 @@ import KeyValueData from "@/app/components/keyValueData";
 import PrintButton from "@/app/components/printButton";
 import { agentOrderExport } from "@/app/services/agentTransaction";
 import { downloadFile } from "@/app/services/allApi";
-import { purchaseOrderById, returnByUUID, tempReturnByUUID, exportReturnViewPdf } from "@/app/services/companyTransaction";
+import { purchaseOrderById, returnByUUID, tempReturnByUUID, exportReturnViewPdf, returnQuickView } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import Drawer from "@mui/material/Drawer";
+import { reasonObj } from "../../add/page";
 
 const columns = [
     { key: "index", label: "#" },
     { key: "item_name", label: "Item Name", render: (value: TableDataType) => <>{value.item_code ? `${value.item_code}` : ""} {value.item_code && value.item_name ? " - " : ""} {value.item_name ? value.item_name : ""}</> },
     { key: "uom_name", label: "UOM" },
-    { key: "quantity", label: "Quantity" },
-    { key: "item_price", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.item_price) || '0.00'}</> },
-    { key: "excise", label: "Excise", render: (value: TableDataType) => <>{toInternationalNumber(value.excise) || '0.00'}</> },
-    { key: "net_total", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.net_total) || '0.00'}</> },
-    { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.vat) || '0.00'}</> },
+    { key: "qty", label: "Quantity", render: (value: TableDataType) => <>{toInternationalNumber(value.quantity) || '0'}</> },
+    { key: "return_type", label: "Return Type"},
+    { key: "reason", label: "Return Reason", render: (value: TableDataType) => <>{value.return_type === "good" ? reasonObj.good?.find(it => it.value === value.reason)?.label : reasonObj.bad?.find(it => it.value === value.reason)?.label}</> },
+    // { key: "net_total", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.net_total) || '0.00'}</> },
+    // { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.vat) || '0.00'}</> },
+    { key: "item_value", label: "Price", render: (value: TableDataType) => <>{toInternationalNumber(value.item_value) || '0.00'}</> },
     { key: "total", label: "Total", render: (value: TableDataType) => <>{toInternationalNumber(value.total) || '0.00'}</> },
 ];
 
-interface OrderData {
+interface ReturnData {
     id: number,
     uuid: string,
     return_code: string,
+    company_name: string,
+    company_code: string,
+    turnman: string,
+    truck_no: string,
     customer_id: number,
+    net: number,
+    vat: number,
     customer_code: string,
     customer_name: string,
     customer_email: string,
@@ -46,6 +55,8 @@ interface OrderData {
     salesman_name: string,
     customer_city: string,
     delivery_date: string,
+    driver_code: string,
+    driver_name: string,
     truck_name: string,
     comment: string,
     created_at: string,
@@ -81,7 +92,7 @@ export default function OrderDetailPage() {
     const router = useRouter();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
-    const [data, setData] = useState<OrderData | null>(null);
+    const [data, setData] = useState<ReturnData | null>(null);
     const [loading, setLoadingState] = useState<boolean>(false);
     const params = useParams();
     const UUID = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid ?? "";
@@ -105,34 +116,34 @@ export default function OrderDetailPage() {
         fetchOrder();
     }, [UUID]);
 
-    const grossTotal = data?.details?.reduce(
-        (sum, item) => sum + Number(item.total || 0),
-        0
-    ) ?? 0;
-    const totalVat = data?.details?.reduce(
-        (sum, item) => sum + Number(item.vat || 0),
-        0
-    ) ?? 0;
-    const netAmount = data?.details?.reduce(
-        (sum, item) => sum + Number(item.net || 0),
-        0
-    ) ?? 0;
+    // const grossTotal = data?.details?.reduce(
+    //     (sum, item) => sum + Number(item.total || 0),
+    //     0
+    // ) ?? 0;
+    // const totalVat = data?.details?.reduce(
+    //     (sum, item) => sum + Number(item.vat || 0),
+    //     0
+    // ) ?? 0;
+    // const netAmount = data?.details?.reduce(
+    //     (sum, item) => sum + Number(item.net || 0),
+    //     0
+    // ) ?? 0;
 
-    const excise = data?.details?.reduce(
-        (sum, item) => sum + Number(item.excise || 0),
-        0
-    ) ?? 0;
-    const preVat = totalVat ? grossTotal - totalVat : grossTotal;
-    const discount = data?.details?.reduce(
-        (sum, item) => sum + Number(item.discount || 0),
-        0
-    ) ?? 0;
-    const finalTotal = netAmount + totalVat + excise;
+    // const excise = data?.details?.reduce(
+    //     (sum, item) => sum + Number(item.excise || 0),
+    //     0
+    // ) ?? 0;
+    // const preVat = totalVat ? grossTotal - totalVat : grossTotal;
+    // const discount = data?.details?.reduce(
+    //     (sum, item) => sum + Number(item.discount || 0),
+    //     0
+    // ) ?? 0;
+    // const finalTotal = netAmount + totalVat + excise;
 
     const keyValueData = [
-        { key: "Excise", value: CURRENCY + " " + toInternationalNumber(excise ?? 0) },
-        { key: "Vat", value: CURRENCY + " " + toInternationalNumber(totalVat ?? 0) },
-        { key: "Net Total", value: CURRENCY + " " + toInternationalNumber(netAmount ?? 0) },
+        // { key: "Excise", value: CURRENCY + " " + toInternationalNumber(data?. ?? 0) },
+        { key: "VAT", value: CURRENCY + " " + toInternationalNumber(data?.vat ?? 0) },
+        { key: "Net Total", value: CURRENCY + " " + toInternationalNumber(data?.net ?? 0) },
     ];
 
     // const exportFile = async () => {
@@ -183,7 +194,7 @@ export default function OrderDetailPage() {
                         className="cursor-pointer"
                     />
                     <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
-                        Temporary Return
+                        Return
                     </h1>
                     {/* <BorderIconButton disabled={!data?.previous_uuid} onClick={data?.previous_uuid ? () => router.push(`${PATH}${data.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
                     <BorderIconButton disabled={!data?.next_uuid} onClick={data?.next_uuid ? () => router.push(`${PATH}${data.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" /> */}
@@ -202,7 +213,7 @@ export default function OrderDetailPage() {
                         </div>
 
                         <div className="flex flex-col items-end">
-                            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Temporary Return</span>
+                            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Return</span>
                             <span className="text-primary text-[14px] tracking-[8px]">#{data?.return_code || "-"}</span>
                         </div>
                     </div>
@@ -229,7 +240,7 @@ export default function OrderDetailPage() {
                             <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
                                 <span>Buyer</span>
                                 <div className="flex flex-col space-y-[10px]">
-                                    <span className="font-semibold">{data?.salesman_code && data?.salesman_name ? `${data?.salesman_code} - ${data?.salesman_name}` : "-"}</span>
+                                    <span className="font-semibold">{data?.company_code && data?.company_name ? `${data?.company_code} - ${data?.company_name}` : "-"}</span>
                                 </div>
                             </div>
                         </div>
@@ -237,9 +248,20 @@ export default function OrderDetailPage() {
                         {/* Dates / meta - right column */}
                         <div className="flex md:justify-end">
                             <div className="text-primary-bold text-[14px] md:text-right">
-                                {data?.truck_name && <div>
-                                    Truck Name: <span className="font-bold">{data?.truck_name}</span>
-                                </div>}
+                                <div>
+                                    <span className={"font-bold"}>Driver Name: {" "}</span>
+                                    {data?.driver_code && data?.driver_code}
+                                    {data?.driver_code && data?.driver_name && " - "}
+                                    {data?.driver_code && data?.driver_name}
+                                </div>
+                                <div>
+                                    <span className={"font-bold"}>Truck No: {" "}</span>
+                                    {data?.truck_no || "-"}
+                                </div>
+                                <div>
+                                    <span className={"font-bold"}>Turnman Name: {" "}</span>
+                                    {data?.turnman || "-"}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -258,6 +280,7 @@ export default function OrderDetailPage() {
                             columns: columns,
                         }}
                     />
+
 
                     {/* ---------- Order Summary ---------- */}
                     <div className="flex justify-between text-primary">
@@ -287,7 +310,7 @@ export default function OrderDetailPage() {
                                 <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                                     <span>Total</span>
                                     {/* <span>AED {toInternationalNumber(finalTotal) || 0}</span> */}
-                                    <span>{CURRENCY} {toInternationalNumber(Number(finalTotal)) || "0.00"}</span>
+                                    <span>{CURRENCY} {toInternationalNumber(Number(Number(data?.vat ?? 0) + Number(data?.net ?? 0))) || "0.00"}</span>
                                 </div>
                             </div>
 

@@ -64,7 +64,7 @@ export default function Survey() {
 
   // ✅ Fetch Surveys (List)
   const fetchSurveys = useCallback(
-    async (page: number = 1, pageSize: number = 10): Promise<listReturnType> => {
+    async (page: number = 1, pageSize: number = 50): Promise<listReturnType> => {
       setLoading(true);
       try {
         const res: SurveyApiResponse = await SurveyList({
@@ -105,12 +105,12 @@ export default function Survey() {
   // ✅ Global Search (no any)
   const searchSurvey = useCallback(
     async (searchQuery: string): Promise<searchReturnType> => {
-    
+
       setLoading(true);
       try {
         const res: SurveyApiResponse = await surveyGlobalSearch({
           search: searchQuery,
-       
+
         });
 
         setLoading(false);
@@ -137,7 +137,7 @@ export default function Survey() {
       } catch (error) {
         setLoading(false);
         showSnackbar((error as Error).message, "error");
-        return { data: [], total: 0, currentPage: 1, pageSize: 10 };
+        return { data: [], total: 0, currentPage: 1, pageSize: 50 };
       }
     },
     [setLoading, showSnackbar]
@@ -201,7 +201,7 @@ export default function Survey() {
             actions: can("create") ? [
               <SidebarBtn
                 key="add-survey"
-                href="/merchandiser/survey/add"
+                href="/survey/add"
                 leadingIcon="lucide:plus"
                 label="Add"
                 labelTw="hidden sm:block"
@@ -212,19 +212,8 @@ export default function Survey() {
           footer: { nextPrevBtn: true, pagination: true },
           columns,
           rowSelection: true,
-          rowActions: [
-            // {
-            //   icon: "lucide:eye",
-            //   onClick: (data: TableDataType) =>
-            //     router.push(`/merchandiser/survey/view/${data.id}`),
-            // },
-            ...(can("edit") ? [{
-              icon: "lucide:edit-2",
-              onClick: (data: TableDataType) =>
-                router.push(`/merchandiser/survey/${data.id}`),
-            }] : []),
-          ],
-          pageSize: 10,
+
+          pageSize: 50,
         }}
       />
     </div>

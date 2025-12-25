@@ -236,12 +236,12 @@ const DiscountPage = () => {
                         columns,
                         rowSelection: true,
                         rowActions: [
-                            {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(`/discount/details/${data.uuid}`);
-                },
-              },
+            //                 {
+            //     icon: "lucide:eye",
+            //     onClick: (data: TableDataType) => {
+            //       router.push(`/discount/details/${data.uuid}`);
+            //     },
+            //   },
                             ...(can("edit") ? [{
                                 icon: "lucide:edit-2",
                                 onClick: (row: object) => {

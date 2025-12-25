@@ -14,13 +14,14 @@ type UsePromotionDataProps = {
   setSelectedUom: React.Dispatch<React.SetStateAction<string>>;
   setOrderTables: React.Dispatch<React.SetStateAction<OrderItemType[][]>>;
   setOfferItems: React.Dispatch<React.SetStateAction<OfferItemType[][]>>;
+  setItemLoading: React.Dispatch<React.SetStateAction<boolean>>;
   fetchItemsCategoryWise: (categories: string) => Promise<any>;
   router: AppRouterInstance;
 };
 
 export function usePromotionData({
   isEditMode, id, setPromotion, setKeyCombo, setKeyValue, 
-  setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, fetchItemsCategoryWise,router
+  setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, setItemLoading, fetchItemsCategoryWise,router
 }: UsePromotionDataProps) {
   
   const [loading, setLoading] = useState(false);
@@ -73,6 +74,7 @@ export function usePromotionData({
               percentage: String(pd.percentage || ""),
               idx: String(Math.random())
             }));
+            console.log(mappedPercentageDiscounts,"mappedPercentageDiscounts")
             setPercentageDiscounts(mappedPercentageDiscounts);
           }
 
@@ -82,8 +84,14 @@ export function usePromotionData({
           
           const isPercentageDriven = Array.isArray(data.percentage_discounts) && data.percentage_discounts.length > 0;
           
-          if (isPercentageDriven && newKeyCombo.Item === "Item" && data.item_category?.length > 0) {
+          // Always try to populate Item Category from data if available, regardless of mode
+          if (data.item_category && data.item_category.length > 0) {
              newKeyValue["Item Category"] = data.item_category.map(String);
+             setItemLoading(true);
+          }
+
+          if (isPercentageDriven && newKeyCombo.Item === "Item" && (!data.item_category || data.item_category.length === 0)) {
+             console.warn("Edit Mode: Percentage Driven Item mode but no item_category found. Items might not load in dropdown.");
           }
 
           if (!isPercentageDriven) {

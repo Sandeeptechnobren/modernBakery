@@ -9,13 +9,14 @@ type UseDiscountDataProps = {
   setDiscount: React.Dispatch<React.SetStateAction<DiscountState>>;
   setKeyCombo: React.Dispatch<React.SetStateAction<KeyComboType>>;
   setKeyValue: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
+  setItemLoading: React.Dispatch<React.SetStateAction<boolean>>;
   fetchItemsCategoryWise: (categories: string) => Promise<any>;
   router: AppRouterInstance;
   showSnackbar: (message: string, type: "success" | "error" | "info" | "warning") => void;
 };
 
 export function useDiscountData({
-  isEditMode, id, setDiscount, setKeyCombo, setKeyValue, fetchItemsCategoryWise, router, showSnackbar
+  isEditMode, id, setDiscount, setKeyCombo, setKeyValue, setItemLoading, fetchItemsCategoryWise, router, showSnackbar
 }: UseDiscountDataProps) {
 
   const [loading, setLoading] = useState(false);
@@ -71,16 +72,17 @@ export function useDiscountData({
             if (newKeyCombo.Customer && Array.isArray(d.customer)) {
               newValues[newKeyCombo.Customer] = d.customer.map(String);
             }
+            
+            // Always try to populate Item Category if present
+            if (Array.isArray(d.item_category) && d.item_category.length > 0) {
+               newValues["Item Category"] = d.item_category.map(String);
+               setItemLoading(true);
+            }
+
             if (newKeyCombo.Item) {
               if (newKeyCombo.Item === "Item" && Array.isArray(d.items)) {
                 newValues["Item"] = d.items.map(String);
-                // Also populate category if present
-                if (Array.isArray(d.item_category)) {
-                  newValues["Item Category"] = d.item_category.map(String);
-                }
-              } else if (newKeyCombo.Item === "Item Category" && Array.isArray(d.item_category)) {
-                newValues["Item Category"] = d.item_category.map(String);
-              }
+              } 
             }
 
             setKeyValue(newValues);

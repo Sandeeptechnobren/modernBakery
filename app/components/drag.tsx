@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Calendar, BarChart3, Table } from 'lucide-react';
 import { Icon } from "@iconify-icon/react";
 import axios from 'axios';
@@ -6,8 +6,8 @@ import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';
 import { useSnackbar } from '@/app/services/snackbarContext';
 import { usePagePermissions } from '@/app/(private)/utils/usePagePermissions';
-
-
+import { useLoading } from '../services/loadingContext';
+import Loading from './Loading'
 // Define TypeScript interfaces
 interface FilterChildItem {
   id: string;
@@ -30,13 +30,14 @@ interface SearchTerms {
 }
 
 const SalesReportDashboard = () => {
+  const { setLoading: setGlobalLoading } = useLoading();
   const { can, permissions } = usePagePermissions();
   const { showSnackbar } = useSnackbar();
   const [viewType, setViewType] = useState('');
   const [dateRange, setDateRange] = useState('dd-mm-yyyy - dd-mm-yyyy');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [searchbyopen, setSearchbyclose] = useState(false);
 
@@ -51,12 +52,13 @@ const SalesReportDashboard = () => {
   const [availableFilters, setAvailableFilters] = useState<Filter[]>([]);
   const [isLoadingFilters, setIsLoadingFilters] = useState(false);
   const [filterError, setFilterError] = useState<string | null>(null);
+  const [loadingFilterIds, setLoadingFilterIds] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
   const [tableData, setTableData] = useState<any>(null);
   const [isLoadingTable, setIsLoadingTable] = useState(false);
   const [selectedDataview, setSelectedDataview] = useState('default');
-  const [searchType, setSearchType] = useState(''); // 'amount' or 'quantity'
-  const [displayQuantity, setDisplayQuantity] = useState(''); // 'Free-Good' or 'Without-Free-Good'
+  const [searchType, setSearchType] = useState('quantity'); // 'amount' or 'quantity'
+  const [displayQuantity, setDisplayQuantity] = useState('with_free_good'); // 'Free-Good' or 'Without-Free-Good'
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 50; // pagination size
   
@@ -64,6 +66,7 @@ const SalesReportDashboard = () => {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const lastChangedFilterRef = useRef<string | null>(null);
 
   // Filter metadata (static)
   const filterMetadata: Record<string, { name: string; icon: string }> = {
@@ -81,6 +84,20 @@ const SalesReportDashboard = () => {
     'display-quantity': { name: 'Display Quantity', icon: 'mdi:numeric' },
     amount: { name: 'Amount', icon: 'mdi:currency-usd' }
   };
+
+  const hierarchyOrder = [
+    'company',
+    'region',
+    'area',
+    'warehouse',
+    'route',
+    'salesman',
+    'item-category',
+    'items',
+    'channel-categories',
+    'customer-category',
+    'customer'
+  ];
 
   // Filter hierarchy - defines which filters should be cleared when parent changes
   const filterHierarchy: Record<string, string[]> = {
@@ -169,10 +186,43 @@ const SalesReportDashboard = () => {
     }
   };
 
+  const handleDashboardClick = () => {
+    const searchByIds = ['salesman', 'route'];
+    const moreFilterIds = moreFilters.map(f => f.id);
+    const blockedIds = [...searchByIds, ...moreFilterIds];
+    const hasBlockedSelection = blockedIds.some(id => (selectedChildItems[id] || []).length > 0);
+    if (hasBlockedSelection) {
+      showSnackbar('Dashboard not allowed with Search By/More filters. Clear them to view the dashboard.', 'warning');
+      return;
+    }
+    setViewType('graph');
+    fetchDashboardData();
+  };
+
   // Fetch filters from API
-  const fetchFiltersData = async () => {
-    setIsLoadingFilters(true);
+  const fetchFiltersData = async (currentFilterId?: string) => {
     setFilterError(null);
+
+    // Determine which filters need to be loaded based on selections
+    const filtersToLoad = new Set<string>();
+    let hierarchyReached = false;
+    hierarchyOrder.filter(filterId => {
+      if (!hierarchyReached && currentFilterId && filterId === currentFilterId) {
+        hierarchyReached = true;
+        return false;
+      }
+      if(hierarchyReached) {
+        if (droppedFilters.find(f => f.id === filterId)) {
+          filtersToLoad.add(filterId);
+        }
+        return true;
+      }
+    });
+
+    if(availableFilters.length > 0 && filtersToLoad.size === 0) return;
+    // Set loading state for specific filters
+    setLoadingFilterIds(filtersToLoad);
+    if(availableFilters.length <= 0) setIsLoadingFilters(true);
 
     try {
       // Build query params
@@ -200,26 +250,24 @@ const SalesReportDashboard = () => {
       if (selectedChildItems['channel-categories']?.length) {
         const channelIds = selectedChildItems['channel-categories'].join(',');
         params.append('channel_category_ids', channelIds);
-        params.append('customer_channel_ids', channelIds); // Send both parameters for channel-based customer filtering
+        params.append('customer_channel_ids', channelIds);
       }
       if (selectedChildItems['customer-category']?.length) {
         params.append('customer_category_ids', selectedChildItems['customer-category'].join(','));
       }
 
-   const queryString = params.toString();
-const url = `http://172.16.6.205:8001/api/filters${queryString ? `?${queryString}` : ''}`;
+      const queryString = params.toString();
+      const url = `http://172.16.6.205:8001/api/filters${queryString ? `?${queryString}` : ''}`;
 
-const response = await fetch(url, {
-  method: 'GET',
-  // ❌ DO NOT SEND HEADERS in GET unless needed
-});
+      const response = await fetch(url, {
+        method: 'GET',
+      });
 
-if (!response.ok) {
-  throw new Error(`HTTP error! status: ${response.status}`);
-}
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-const data = await response.json();
-
+      const data = await response.json();
 
       // Transform API response to Filter format
       const transformedFilters: Filter[] = [];
@@ -229,10 +277,9 @@ const data = await response.json();
         regions: 'region',
         areas: 'area',
         warehouses: 'warehouse',
-      
         item_categories: 'item-category',
         items: 'items',
-          routes: 'route',
+        routes: 'route',
         salesmen: 'salesman',
         channel_categories: 'channel-categories',
         customer_categories: 'customer-category',
@@ -244,9 +291,8 @@ const data = await response.json();
         const metadata = filterMetadata[filterId];
         
         if (metadata && Array.isArray(items)) {
-          // Debug logging for route, salesman and channel categories data
           if (apiKey === 'routes' || apiKey === 'salesmen' || apiKey === 'channel_categories') {
-            console.log(`${apiKey} data from API:`, items.slice(0, 2)); // Log first 2 items
+            console.log(`${apiKey} data from API:`, items.slice(0, 2));
           }
           
           transformedFilters.push({
@@ -254,13 +300,11 @@ const data = await response.json();
             name: metadata.name,
             icon: metadata.icon,
             childData: items.map((item: any) => {
-              // Extract ID from various possible field names
               const id = item.company_id || item.region_id || item.area_id || item.warehouse_id || 
                          item.route_id || item.salesman_id || item.item_category_id || item.item_id ||
                          item.channel_category_id || item.customer_category_id || item.customer_id ||
                          item.id || item.code || item.route_code || item.salesman_code;
               
-              // Extract Name/Label with comprehensive field checking
               let name = item.company_name || item.region_name || item.area_name || item.warehouse_name ||
                          item.route_name || item.route_label || item.route_title || 
                          item.salesman_name || item.salesman_label || item.salesman_title ||
@@ -269,7 +313,6 @@ const data = await response.json();
                          item.customer_category_name || item.customer_name || 
                          item.name || item.label || item.title;
               
-              // Additional fallback for route/salesman/channel_categories
               if (!name && (apiKey === 'routes' || apiKey === 'salesmen' || apiKey === 'channel_categories')) {
                 name = item.description || item.full_name || item.display_name;
                 console.warn(`${apiKey} missing standard name field, using fallback:`, item);
@@ -284,17 +327,48 @@ const data = await response.json();
         }
       });
 
-    
-
       setAvailableFilters(transformedFilters);
+      setLoadingFilterIds(new Set());
+      if(availableFilters.length <= 0) setIsLoadingFilters(false);
     } catch (error) {
       console.error('Failed to fetch filters:', error);
       setFilterError(error instanceof Error ? error.message : 'Failed to load filters');
       setAvailableFilters([]);
-    } finally {
-      setIsLoadingFilters(false);
+      setLoadingFilterIds(new Set());
+      if(availableFilters.length <= 0) setIsLoadingFilters(false);
     }
   };
+
+  // Debounce wrapper for fetchFiltersData to avoid rapid consecutive requests
+  const filtersFetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedFetchFiltersData = (currentFilterId?: string, delay = 400) => {
+    if (filtersFetchDebounceRef.current) {
+      clearTimeout(filtersFetchDebounceRef.current);
+    }
+    filtersFetchDebounceRef.current = setTimeout(() => {
+      fetchFiltersData(currentFilterId);
+    }, delay);
+  };
+
+  // Cleanup pending debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (filtersFetchDebounceRef.current) {
+        clearTimeout(filtersFetchDebounceRef.current);
+      }
+    };
+  }, []);
+
+  // Watch for selection changes and trigger debounced fetch
+  useEffect(() => {
+    if (droppedFilters.length > 0 && lastChangedFilterRef.current) {
+      const hasSelections = Object.values(selectedChildItems).some(items => items.length > 0);
+      if (hasSelections || lastChangedFilterRef.current) {
+        debouncedFetchFiltersData(lastChangedFilterRef.current);
+      }
+      lastChangedFilterRef.current = null;
+    }
+  }, [selectedChildItems, droppedFilters.length]);
 
   // Fetch Table Data function
   const handleTableView = async (page?: number) => {
@@ -460,13 +534,11 @@ const data = await response.json();
       if (selectedChildItems['channel-categories']?.length > 0) {
         // API may return channel category under several keys; prefer the explicit key used elsewhere
         columns.push({ label: 'Channel Name', field: 'channel_category_name' });
-        columns.push({ label: 'Customer Name', field: 'customer_name' });
       }
       if (selectedChildItems['customer-category']?.length > 0) {
         columns.push({ label: 'Customer Category', field: 'customer_category_name' });
-        columns.push({ label: 'Customer Name', field: 'customer_name' });
       }
-      if (selectedChildItems['customer']?.length > 0) {
+      if (selectedChildItems['customer']?.length > 0 || selectedChildItems['customer-category']?.length > 0 || selectedChildItems['channel-categories']?.length > 0) {
         columns.push({ label: 'Customer Name', field: 'customer_name' });
       }
       
@@ -558,6 +630,8 @@ const data = await response.json();
           payload.customer_category_ids = selectedChildItems['customer-category'].map(id => parseInt(id));
           break;
         case 'customer':
+          payload.customer_channel_ids = selectedChildItems['channel-categories']?.map(id => parseInt(id));
+          payload.customer_category_ids = selectedChildItems['customer-category'].map(id => parseInt(id));
           payload.customer_ids = selectedChildItems['customer'].map(id => parseInt(id));
           break;
       }
@@ -603,17 +677,45 @@ const data = await response.json();
     fetchFiltersData();
   }, []);
 
-  // Refetch when selections change with hierarchical logic
+  // Close dropdowns when clicking outside any dropdown or trigger
   useEffect(() => {
-    if (droppedFilters.length > 0) {
-      // Only refetch if there are actual selections
-      const hasSelections = Object.values(selectedChildItems).some(items => items.length > 0);
-      if (hasSelections) {
-        const timer = setTimeout(() => fetchFiltersData(), 300);
-        return () => clearTimeout(timer);
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+
+      // If clicked inside any open dropdown, do nothing
+      const dropdowns = document.querySelectorAll('.filter-dropdown');
+      for (const d of Array.from(dropdowns)) {
+        if (d.contains(target)) return;
       }
-    }
-  }, [selectedChildItems, droppedFilters.length]);
+
+      // If clicked inside any trigger (buttons that open dropdowns), do nothing
+      const triggers = document.querySelectorAll('.dropdown-trigger');
+      for (const t of Array.from(triggers)) {
+        if (t.contains(target)) return;
+      }
+
+      // Otherwise close all dropdowns
+      setOpenDropdown(null);
+      setShowMoreFilters(false);
+      setSearchbyclose(false);
+      setShowDatePicker(false);
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [openDropdown, showMoreFilters, searchbyopen, showDatePicker]);
+
+  // Refetch when selections change with hierarchical logic
+  // useEffect(() => {
+  //   if (droppedFilters.length > 0) {
+  //     // Only refetch if there are actual selections
+  //     const hasSelections = Object.values(selectedChildItems).some(items => items.length > 0);
+  //     if (hasSelections) {
+  //       const timer = setTimeout(() => fetchFiltersData(), 300);
+  //       return () => clearTimeout(timer);
+  //     }
+  //   }
+  // }, [selectedChildItems, droppedFilters.length]);
 
   const chartData = {
     salesTrend: Array.from({length: 5}, (_, i) => ({ year: `${2021+i}`, sales: [2, 6, 3, 8, 6][i] })),
@@ -648,6 +750,9 @@ const data = await response.json();
       // Close the dropdowns after dropping
       setShowMoreFilters(false);
       setSearchbyclose(false);
+
+      const index = hierarchyOrder.findIndex(id => id === draggedFilter.id) - 1;
+      fetchFiltersData( index >= 0 ? hierarchyOrder[index] : undefined );
     }
   };
 
@@ -676,29 +781,45 @@ const data = await response.json();
   };
 
   const handleClearAllFilters = () => {
-    setAvailableFilters([...availableFilters, ...droppedFilters]);
+    // Don't add dropped filters back to available filters
     setDroppedFilters([]);
     setSelectedChildItems({});
     setSearchTerms({});
     setOpenDropdown(null);
+    // Refetch filters to reset to initial state
+    fetchFiltersData();
   };
 
   const handleChildItemToggle = (filterId: string, childItemId: string) => {
+    lastChangedFilterRef.current = filterId;
     setSelectedChildItems(prev => {
       const current = prev[filterId] || [];
       const newValue = current.includes(childItemId) ? current.filter(id => id !== childItemId) : [...current, childItemId];
-      
       // Create new state with updated filter
-      const newState = { ...prev, [filterId]: newValue };
-      
-      // Clear all dependent filters based on hierarchy
-      const dependentFilters = filterHierarchy[filterId] || [];
-      dependentFilters.forEach(dependentId => {
-        if (newState[dependentId]) {
-          newState[dependentId] = [];
-        }
-      });
-      
+      let newState = { ...prev, [filterId]: newValue };
+
+      // Custom hierarchy reset for company, region, area
+      if (filterId === 'company') {
+        // Reset region, area, warehouse
+        ['region', 'area', 'warehouse'].forEach(dep => { if (newState[dep]) newState[dep] = []; });
+      } else if (filterId === 'region') {
+        // Reset area, warehouse
+        ['area', 'warehouse'].forEach(dep => { if (newState[dep]) newState[dep] = []; });
+      } else if (filterId === 'area') {
+        // Reset warehouse
+        if (newState['warehouse']) newState['warehouse'] = [];
+      } else if (filterId === 'item-category') {
+        // Reset items
+        if (newState['items']) newState['items'] = [];
+      } else {
+        // Default: Clear all dependent filters based on hierarchy
+        const dependentFilters = filterHierarchy[filterId] || [];
+        dependentFilters.forEach(dependentId => {
+          if (newState[dependentId]) {
+            newState[dependentId] = [];
+          }
+        });
+      }
       return newState;
     });
   };
@@ -716,10 +837,33 @@ const data = await response.json();
 
   const getSelectedCount = (filterId: string): number => (selectedChildItems[filterId] || []).length;
 
+  // Return ids of currently visible (filtered) child items for a filter
+  const getVisibleChildIds = (filterId: string): string[] => {
+    return getFilteredChildData(filterId).map(d => d.id);
+  };
+
+  const handleSelectAll = (filterId: string, ids: string[]) => {
+    lastChangedFilterRef.current = filterId;
+    setSelectedChildItems(prev => {
+      const current = prev[filterId] || [];
+      const allSelected = ids.length > 0 && ids.every(id => current.includes(id));
+      const newState = { ...prev, [filterId]: allSelected ? [] : ids };
+
+      // Clear dependent filters when selection changes
+      const dependentFilters = filterHierarchy[filterId] || [];
+      dependentFilters.forEach(dependentId => {
+        if (newState[dependentId]) newState[dependentId] = [];
+      });
+
+      return newState;
+    });
+  };
+
   // Organize filters into groups
   const visibleFilters = availableFilters.filter(f => ['company', 'region', 'area', 'warehouse'].includes(f.id));
   const searchby = availableFilters.filter(f => ['salesman', 'route'].includes(f.id));
   // const searchtype = availableFilters.filter(f => ['display-quantity', 'amount'].includes(f.id));
+  // Show all moreFilters, but mark 'customer' as disabled unless 'customer-category' is dropped
   const moreFilters = availableFilters.filter(f => 
     !['company', 'region', 'area', 'warehouse', 'salesman', 'route', 'display-quantity', 'amount'].includes(f.id)
   );
@@ -760,7 +904,7 @@ const data = await response.json();
         <section className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
           <div className="mb-6">
             <h1 className="text-xl lg:text-2xl flex gap-2 lg:gap-4 font-semibold items-center text-gray-900">
-              <Icon icon="lucide:arrow-left" width="20" height="20" className="lg:w-6 lg:h-6" />
+              {/* <Icon icon="lucide:arrow-left" width="20" height="20" className="lg:w-6 lg:h-6" /> */}
               Sales Report Dashboard
             </h1>
           </div>
@@ -771,10 +915,10 @@ const data = await response.json();
               <div className="relative w-full sm:w-auto">
                 <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer w-full sm:w-auto" onClick={() => setShowDatePicker(!showDatePicker)}>
                   <Calendar size={18} className="text-gray-600" />
-                  <input type="text" value={dateRange} className="border-none outline-none text-sm cursor-pointer bg-transparent w-full" readOnly />
+                  <input type="text" value={dateRange} className="border-none outline-none text-sm cursor-pointer bg-transparent w-full sm:w-auto" readOnly />
                 </div>
                 {showDatePicker && (
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 w-full sm:w-80">
+                  <div id="date-picker-dropdown" className="filter-dropdown absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 w-full sm:w-80">
                     <div className="flex flex-col gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
@@ -800,7 +944,6 @@ const data = await response.json();
                     onChange={(e) => setSearchType(e.target.value)}
                     className="px-4 py-2 pr-10 bg-white border border-gray-200 rounded-lg appearance-none cursor-pointer text-sm w-full sm:w-auto"
                   >
-                    <option value="">Search Type</option>
                     <option value="amount"> Amount</option>
                     <option value="quantity"> Quantity</option>
                   </select>
@@ -812,7 +955,6 @@ const data = await response.json();
                     onChange={(e) => setDisplayQuantity(e.target.value)}
                     className="px-4 py-2 pr-10 bg-white border border-gray-200 rounded-lg appearance-none cursor-pointer text-sm w-full sm:w-auto"
                   >
-                    <option value=""> Display Quantity</option>
                     <option value="with_free_good"> With Free Good</option>
                     <option value="without_free_good">Without Free Good</option>
                   </select>
@@ -823,10 +965,7 @@ const data = await response.json();
 
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button 
-                onClick={() => {
-                  setViewType('graph');
-                  fetchDashboardData();
-                }} 
+                onClick={handleDashboardClick}
                 disabled={isLoadingDashboard}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg flex-1 sm:flex-none justify-center ${viewType === 'graph' ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
               >
@@ -890,7 +1029,7 @@ const data = await response.json();
     <div className="h-auto sm:h-[28px] flex justify-center items-center px-3 py-1 bg-red-50 border border-red-200 rounded-lg text-xs sm:text-sm text-red-700">
       <span className="truncate">{filterError}</span>
       <button
-        onClick={fetchFiltersData}
+        onClick={() => fetchFiltersData()}
         className="ml-2 underline hover:text-red-900 font-medium whitespace-nowrap"
       >
         Retry
@@ -914,11 +1053,16 @@ const data = await response.json();
                 
                            {searchby.length > 0 && (
                       <div className="relative">
-                        <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setSearchbyclose(!searchbyopen)}>
+                        <button className="dropdown-trigger flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => {
+                          // Close other dropdowns when opening search by
+                          setOpenDropdown(null);
+                          setShowMoreFilters(false);
+                          setSearchbyclose(!searchbyopen);
+                        }}>
                           Search by <ChevronDown size={14} />
                         </button>
                         {searchbyopen && (
-                          <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+                          <div id="searchby-dropdown" className="filter-dropdown absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
                             <div className="p-2">
                               {searchby.map(filter => (
                                 <div key={filter.id} draggable onDragStart={(e) => handleDragStart(e, filter)} className="flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 cursor-grab">
@@ -936,20 +1080,30 @@ const data = await response.json();
                     )}
  {moreFilters.length > 0 && (
                       <div className="relative">
-                        <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setShowMoreFilters(!showMoreFilters)}>
+                        <button className="dropdown-trigger flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => {
+                          // Close other dropdowns when opening more
+                          setOpenDropdown(null);
+                          setSearchbyclose(false);
+                          setShowMoreFilters(!showMoreFilters);
+                        }}>
                           More <ChevronDown size={14} />
                         </button>
                         {showMoreFilters && (
-                          <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+                          <div id="morefilters-dropdown" className="filter-dropdown absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
                             <div className="p-2">
                               {moreFilters.map(filter => {
-                                const isUndraggable = viewType === 'table' && ['items', 'item-category'].includes(filter.id);
+                                let isUndraggable = viewType === 'table' && droppedFilters.length === 0;
+                                // Disable 'customer' unless 'customer-category' is dropped
+                                if (filter.id === 'customer' && !droppedFilters.some(f => f.id === 'customer-category')) {
+                                  isUndraggable = true;
+                                }
                                 return (
                                   <div 
                                     key={filter.id} 
                                     draggable={!isUndraggable} 
-                                    onDragStart={!isUndraggable ? (e) => handleDragStart(e, filter) : undefined} 
+                                    onDragStart={!isUndraggable ? (e) => { handleDragStart(e, filter);  } : undefined} 
                                     className={`flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 ${isUndraggable ? 'cursor-not-allowed opacity-50' : 'cursor-grab'}`}
+                                    title={filter.id === 'customer' && !droppedFilters.some(f => f.id === 'customer-category') ? 'Select Customer Category first' : ''}
                                   >
                                     <div className='flex gap-2 sm:gap-4 items-center'>
                                       <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
@@ -964,6 +1118,7 @@ const data = await response.json();
                         )}
                       </div>
                     )}
+                    
                     
                   </div>
                 </div>
@@ -980,22 +1135,32 @@ const data = await response.json();
                         <div className="flex flex-wrap gap-2 flex-1 w-full">
                           {droppedFilters.map(filter => {
                             const selectedCount = getSelectedCount(filter.id);
+                            const isLoading = loadingFilterIds.has(filter.id);
                             return (
                               <div key={filter.id} className="relative w-full sm:w-auto">
-                                <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#414651] rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => setOpenDropdown(openDropdown === filter.id ? null : filter.id)}>
-                                  <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                                <div className="dropdown-trigger flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#414651] rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => {
+                                  // Close search by and more filters when opening a filter dropdown
+                                  setSearchbyclose(false);
+                                  setShowMoreFilters(false);
+                                  setOpenDropdown(openDropdown === filter.id ? null : filter.id);
+                                }}>
+                                  {isLoading ? (
+                                    <Icon icon="eos-icons:loading" width="16" height="16" className="sm:w-[18px] sm:h-[18px] text-blue-600" />
+                                  ) : (
+                                    <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                                  )}
                                   <span className="text-xs sm:text-sm font-medium text-[#414651] whitespace-nowrap">
                                     {filter.name}
                                     {selectedCount > 0 && <span className="bg-[#252B37] text-white text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded-full ml-1">{selectedCount}</span>}
                                   </span>
                                   <ChevronDown size={12} className={`sm:w-[14px] sm:h-[14px] text-[#414651] ${openDropdown === filter.id ? 'rotate-180' : ''}`} />
-                                  <button onClick={(e) => { e.stopPropagation(); handleRemoveFilter(filter); }} className="text-[#414651] hover:text-red-600 ml-1">
+                                  <button onClick={(e) => { e.stopPropagation(); handleRemoveFilter(filter); }} className="text-[#414651] hover:text-red-600 ml-1 flex items-center">
                                     <Icon icon="mdi:close" width="14" height="14" className="sm:w-4 sm:h-4" />
                                   </button>
                                 </div>
 
-                                {openDropdown === filter.id && (
-                                  <div className="absolute top-full left-0 mt-1 w-full min-w-[200px] sm:w-[240px] bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                {openDropdown === filter.id && !isLoading && (
+                                  <div id={`filter-dropdown-${filter.id}`} className="filter-dropdown absolute top-full left-0 mt-1 w-full min-w-[200px] sm:w-[240px] bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                                     <div className="p-3">
                                       <input type="text" placeholder="Search here..." value={searchTerms[filter.id] || ''} onChange={(e) => setSearchTerms(prev => ({ ...prev, [filter.id]: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                     </div>
@@ -1004,11 +1169,32 @@ const data = await response.json();
                                         <div className="text-center text-sm text-gray-500 py-4">No items found</div>
                                       ) : (
                                         <div className="space-y-1 p-2">
+                                          {/* Select All checkbox */}
+                                          {(() => {
+                                            const visible = getFilteredChildData(filter.id);
+                                            const visibleIds = visible.map(v => v.id);
+                                            const selected = selectedChildItems[filter.id] || [];
+                                            const allSelected = visibleIds.length > 0 && visibleIds.every(id => selected.includes(id));
+                                            const someSelected = visibleIds.length > 0 && visibleIds.some(id => selected.includes(id));
+                                            return (
+                                              <label key="__select_all__" className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                                <input
+                                                  ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                                                  type="checkbox"
+                                                  checked={allSelected}
+                                                  onChange={() => handleSelectAll(filter.id, visibleIds)}
+                                                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-700 font-medium">Select All</span>
+                                              </label>
+                                            );
+                                          })()}
+
                                           {getFilteredChildData(filter.id).map(childItem => {
                                             const isSelected = (selectedChildItems[filter.id] || []).includes(childItem.id);
                                             return (
                                               <label key={childItem.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                                <input type="checkbox" checked={isSelected} onChange={() => handleChildItemToggle(filter.id, childItem.id)} className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500" />
+                                                <input type="checkbox" checked={isSelected} onChange={() => { handleChildItemToggle(filter.id, childItem.id); }} className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500" />
                                                 <span className="text-sm text-gray-700">{childItem.name}</span>
                                               </label>
                                             );
@@ -1043,9 +1229,8 @@ const data = await response.json();
               ) : (
                 <div className="mt-4">
                   {isLoadingTable ? (
-                    <div className="flex justify-center items-center py-12">
-                      <Icon icon="eos-icons:loading" width="40" height="40" className="text-blue-600" />
-                      <span className="ml-3 text-gray-600">Loading table data...</span>
+                    <div className="flex flex-col justify-center items-center py-20 mt-5 h-80">
+                      <Loading />
                     </div>
                   ) : tableData && (tableData.data || tableData.rows)?.length > 0 ? (
                     (() => {

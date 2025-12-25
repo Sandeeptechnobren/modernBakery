@@ -7,6 +7,7 @@ import { getPlanogramById } from "@/app/services/merchandiserApi";
 import Loading from "@/app/components/Loading";
 import ContainerCard from "@/app/components/containerCard";
 import KeyValueData from "@/app/components/keyValueData";
+import ImagePreviewModal from "@/app/components/ImagePreviewModal";
 
 // --- Type Definitions ---
 type planogramfData = {
@@ -20,6 +21,7 @@ type planogramfData = {
   merchendiser_ids?: number[];
   created_by?: number;
   created_at?: string;
+  images?: string[];
 };
 
 export const OverviewTab = () => {
@@ -30,7 +32,18 @@ export const OverviewTab = () => {
     { shelf_id: number; image: string }[]
   >([]);
   const [images, setImages] = useState<string[]>([]);
+  const [imageModal, setImageModal] = useState<{
+    images: string[];
+    index: number;
+  } | null>(null);
 
+  const openImageModal = (images: string[], index = 0) => {
+    setImageModal({ images, index });
+  };
+
+  const closeImageModal = () => {
+    setImageModal(null);
+  };
 
   useEffect(() => {
     if (!uuid) return;
@@ -53,6 +66,20 @@ export const OverviewTab = () => {
 
     fetchPlanogramfData();
   }, [uuid]);
+
+
+  const getFileView = (files?: string[]) =>
+    files && files.length > 0 ? (
+      <button
+        className="text-blue-600 font-medium hover:underline transition"
+        onClick={() => openImageModal(files, 0)}
+      >
+        View Images ({files.length})
+      </button>
+    ) : (
+      "-"
+    );
+
 
   console.log(imageObjects);
 
@@ -80,24 +107,20 @@ export const OverviewTab = () => {
                   ? planogramData.valid_to.slice(0, 10)
                   : "-",
               },
+              {
+                key: "Images",
+                value: getFileView(planogramData?.images),
+              }
+
             ]}
           />
-        </ContainerCard>
-        <ContainerCard>
-          {images.length > 0 ? (
-            <div className="flex gap-4 flex-wrap">
-              {images.map((url, index) => (
-                <img
-                  key={index}
-                  src={url}
-                  alt={`Planogram image ${index + 1}`}
-                  className="w-48 h-48 object-cover rounded-lg border border-gray-300"
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No images available.</p>
-          )}
+          <ImagePreviewModal
+            images={imageModal?.images ?? []}
+            isOpen={!!imageModal}
+            onClose={closeImageModal}
+            startIndex={imageModal?.index ?? 0}
+          />
+
         </ContainerCard>
 
       </div>

@@ -37,8 +37,9 @@ export default function AddProject() {
     const searchParams = useSearchParams();
     const { showSnackbar } = useSnackbar();
 
-    const id = searchParams.get("id");
-    const isEditMode = Boolean(id);
+    // Backend sends the project identifier as `uuid` (fallback to `id` just in case)
+    const projectId = searchParams.get("uuid") || searchParams.get("id");
+    const isEditMode = Boolean(projectId);
 
     const [loading, setLoading] = useState(false);
 
@@ -49,21 +50,27 @@ export default function AddProject() {
 
     /* ---------------- FETCH PROJECT (EDIT MODE) ---------------- */
     useEffect(() => {
-        if (!isEditMode || !id) return;
+        if (!isEditMode || !projectId) return;
 
         const fetchProject = async () => {
             setLoading(true);
             try {
-                const res = await getProjectById(id);
+                const res = await getProjectById(projectId);
+                // Normalize various possible shapes returned by API
+                const project =
+                    res?.data?.data?.project ??
+                    res?.data?.data ??
+                    res?.data?.project ??
+                    res?.data ??
+                    res;
 
-                // Correcting response handling to fallback
-                const project = res?.data?.data || res?.data || res;
+                const name = project?.name ?? project?.project_name ?? "";
+                const status = project?.status ?? project?.active_status ?? project?.is_active ?? "1";
 
-                // Ensure we have a valid object with at least a name or status
-                if (project && (project.name || project.status)) {
+                if (name || status !== undefined) {
                     setInitialValues({
-                        name: project.name ?? "",
-                        status: String(project.status ?? "1"),
+                        name,
+                        status: String(status ?? "1"),
                     });
                 } else {
                     console.warn("Project data structure mismatch:", res);
@@ -78,7 +85,7 @@ export default function AddProject() {
         };
 
         fetchProject();
-    }, [id, isEditMode, showSnackbar]);
+    }, [projectId, isEditMode, showSnackbar]);
 
 
     /* ---------------- SUBMIT HANDLER ---------------- */
@@ -92,8 +99,8 @@ export default function AddProject() {
         };
 
         try {
-            if (isEditMode && id) {
-                await editProject(id, payload);
+            if (isEditMode && projectId) {
+                await editProject(projectId, payload);
                 showSnackbar("Project updated successfully ✅", "success");
             } else {
                 await addProject(payload);

@@ -27,6 +27,7 @@ import * as Yup from "yup";
 interface Warehouse {
   id: number;
   warehouse_name: string;
+  warehouse_code: string;
 }
 
 interface VehicleFormValues {
@@ -106,13 +107,13 @@ export default function AddEditVehicleWithStepper() {
   const params = useParams();
   const uuid = Array.isArray(params?.uuid) ? params.uuid[0] : params?.uuid;
   const isEditMode = uuid !== undefined && uuid !== "add";
-  const { warehouseOptions , ensureWarehouseLoaded} = useAllDropdownListData();
+  // const { warehouseOptions , ensureWarehouseLoaded} = useAllDropdownListData();
 
   // Load dropdown data
-  useEffect(() => {
-    ensureWarehouseLoaded();
-  }, [ensureWarehouseLoaded]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  // useEffect(() => {
+  //   ensureWarehouseLoaded();
+  // }, [ensureWarehouseLoaded]);
+  const [warehouses, setWarehouses] = useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [isValidNumberPlate, setIsValidNumberPlate] = useState<boolean>(false);
 
@@ -172,14 +173,23 @@ export default function AddEditVehicleWithStepper() {
   useEffect(() => {
     const fetchWarehouses = async () => {
       try {
-        const res = await warehouseList();
-        if (res?.data && Array.isArray(res.data)) setWarehouses(res.data);
+        let res;
+        if (!isEditMode) {
+          res = await warehouseList({ dropdown: "true" });
+        } else {
+          res = await warehouseList();
+        }
+        if (res?.data && Array.isArray(res.data)) {
+          const options = res.data.map((w: Warehouse) => ({ value: w.id?.toString(), label: `${w.warehouse_code} - ${w.warehouse_name}` }));
+          setWarehouses(options);
+        }
+        console.log(res?.data, "Warehouse List");
       } catch (err) {
         showSnackbar("Failed to fetch warehouses", "error");
       }
     };
     fetchWarehouses();
-  }, [showSnackbar]);
+  }, [showSnackbar, isEditMode]);
 
   useEffect(() => {
     if (isEditMode && uuid) {
@@ -501,7 +511,7 @@ export default function AddEditVehicleWithStepper() {
                     searchable={true}
                     onChange={handleChange}
                     name="warehouseId"
-                    options={warehouseOptions}
+                    options={warehouses}
                     error={touched.warehouseId && errors.warehouseId}
                   />
                 </div>

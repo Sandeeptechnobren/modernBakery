@@ -33,7 +33,7 @@ export default function AddPricing() {
 
   // 1. Logic & State Hook
   const {
-    keyCombo, setKeyCombo,
+    keyCombo, setKeyCombo, setRawKeyCombo,
     keyValue, setKeyValue,
     promotion, setPromotion,
     selectedUom, setSelectedUom,
@@ -42,7 +42,7 @@ export default function AddPricing() {
     percentageDiscounts, setPercentageDiscounts,
     updateOrderItem, updateOfferItem, selectItemForOffer
   } = usePromotionForm();
-
+  console.log(percentageDiscounts,"percentageDiscounts")
   // 2. Data Fetching Hook (Dropdowns & Edit Data)
   const {
     companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions,
@@ -53,14 +53,15 @@ export default function AddPricing() {
     ensureProjectLoaded, ensureUomLoaded
   } = useAllDropdownListData();
 
-  const { loading: dataLoading } = usePromotionData({
-    isEditMode, id, setPromotion, setKeyCombo, setKeyValue,
-    setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, fetchItemsCategoryWise, router
-  });
-
   const [itemOptions, setItemOptions] = useState<any[]>([]);
   const [itemLoading, setItemLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
+
+  const { loading: dataLoading } = usePromotionData({
+    isEditMode, id, setPromotion, setKeyCombo: setRawKeyCombo, setKeyValue,
+    setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, 
+    setItemLoading, fetchItemsCategoryWise, router
+  });
 
   // 3. Derived Data (Memoized Maps)
   const locationDropdownMap = useMemo(() => ({
@@ -118,19 +119,19 @@ export default function AddPricing() {
 
     const itemCategories = keyValue["Item Category"];
     if (Array.isArray(itemCategories) && itemCategories.length > 0) {
-      try {
-        fetchItemsCategory(itemCategories ?? []);
-      } catch (err) {
-        console.error("Failed to fetch item options for category", itemCategories, err);
-      }
+      fetchItemsCategory(itemCategories ?? []);
     } else {
       setItemOptions([]);
+      setItemLoading(false); // Ensure loading is false if no fetch is needed
     }
   }, [keyValue["Item Category"], fetchItemsCategoryWise]);
 
   // Filter keyValue["Item"]
   useEffect(() => {
     if (itemLoading) return;
+    const itemCategories = keyValue["Item Category"] || [];
+    if (itemOptions.length === 0 && itemCategories.length > 0) return;
+
     setKeyValue(prev => {
       const currentSelectedItems = prev["Item"] || [];
       if (currentSelectedItems.length === 0) return prev;
@@ -139,11 +140,14 @@ export default function AddPricing() {
       if (newSelectedItems.length === currentSelectedItems.length) return prev;
       return { ...prev, "Item": newSelectedItems };
     });
-  }, [itemOptions, itemLoading, setKeyValue]);
+  }, [itemOptions, itemLoading, setKeyValue, keyValue]);
 
   // Filter offerItems
   useEffect(() => {
     if (itemLoading) return;
+    const itemCategories = keyValue["Item Category"] || [];
+    if (itemOptions.length === 0 && itemCategories.length > 0) return;
+
     setOfferItems((prevOrTables: any) => {
       const tables = (Array.isArray(prevOrTables) && prevOrTables.length > 0 && Array.isArray(prevOrTables[0]))
         ? prevOrTables as OfferItemType[][]
@@ -160,11 +164,16 @@ export default function AddPricing() {
         })
       );
     });
-  }, [itemOptions, itemLoading, setOfferItems]);
+  }, [itemOptions, itemLoading, setOfferItems, keyValue]);
 
   // Filter percentageDiscounts
   useEffect(() => {
     if (itemLoading || keyCombo.Item !== "Item") return;
+    
+    // Prevent clearing keys if options haven't loaded yet but we have categories selected
+    const itemCategories = keyValue["Item Category"] || [];
+    if (itemOptions.length === 0 && itemCategories.length > 0) return;
+
     setPercentageDiscounts(prev => {
       const validValues = new Set(itemOptions.map(o => String(o.value)));
       const hasInvalid = prev.some(p => p.key && !validValues.has(p.key));
@@ -174,7 +183,7 @@ export default function AddPricing() {
         return p;
       });
     });
-  }, [itemOptions, itemLoading, keyCombo.Item, setPercentageDiscounts]);
+  }, [itemOptions, itemLoading, keyCombo.Item, setPercentageDiscounts, keyValue]);
 
   // Prefill orderTables/offerItems category
   useEffect(() => {

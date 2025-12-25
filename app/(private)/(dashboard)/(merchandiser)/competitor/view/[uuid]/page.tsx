@@ -34,7 +34,7 @@ export default function Page() {
   const onTabClick = (index: number) => setActiveTab(index);
 
   const title = "Compititor Information";
-  const backBtnUrl = "/merchandiser/competitor/";
+  const backBtnUrl = "/competitor/";
 
   useEffect(() => {
     if (!uuid) return;
@@ -79,7 +79,7 @@ export default function Page() {
               <h1 className="font-semibold text-xl text-gray-900">
                 {compititor.company_name || "-"}
               </h1>
-            
+
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export default function Page() {
         </div>
       )}
 
-    
+
 
       {/* Tab Content */}
       {tabs[activeTab]?.component}

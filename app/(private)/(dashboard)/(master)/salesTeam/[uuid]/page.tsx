@@ -31,6 +31,7 @@ import {
   routeList,
   saveFinalCode,
   updateSalesman,
+  warehouseList
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
@@ -230,10 +231,17 @@ export default function AddEditSalesman() {
       setFilteredRouteOptions([]);  // or keep it empty
       return;
     }
-
-    const filteredOptions = await routeList({
+     let filteredOptions;
+     if(!isEditMode){
+      filteredOptions = await routeList({
+      warehouse_id: warehouseId,
+      dropdown:"true"
+    });
+  }else{
+       filteredOptions = await routeList({
       warehouse_id: warehouseId,
     });
+    }
 
     if (filteredOptions.error) {
       showSnackbar(
