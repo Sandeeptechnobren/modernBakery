@@ -24,10 +24,10 @@ export default function PromotionDetailsPage() {
   const {
     companyOptions, regionOptions, warehouseOptions, areaOptions,
     channelOptions, customerCategoryOptions, customerSubCategoryOptions, agentCustomerOptions,
-    itemCategoryOptions, itemOptions, salesmanTypeOptions, projectOptions,
+    itemCategoryOptions, itemOptions, salesmanTypeOptions, projectOptions, uomOptions,
     ensureCompanyLoaded, ensureRegionLoaded, ensureWarehouseLoaded, ensureAreaLoaded,
     ensureChannelLoaded, ensureCustomerCategoryLoaded, ensureCustomerSubCategoryLoaded, ensureAgentCustomerLoaded,
-    ensureItemCategoryLoaded, ensureItemLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded
+    ensureItemCategoryLoaded, ensureItemLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureUomLoaded
   } = useAllDropdownListData();
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export default function PromotionDetailsPage() {
     ensureItemLoaded();
     ensureSalesmanTypeLoaded();
     ensureProjectLoaded();
+    ensureUomLoaded();
   }, []);
 
   const getLabel = (value: string | number, options: any[]) => {
@@ -124,9 +125,9 @@ export default function PromotionDetailsPage() {
                 { key: "Active Period", value: `${promotion?.from_date?.split('T')[0] || "-"} to ${promotion?.to_date?.split('T')[0] || "-"}` },
                 { key: "Campaign Mode", value: <span className="capitalize px-2 py-0.5 bg-gray-100 rounded text-gray-700 font-medium">{promotion?.bundle_combination || "-"}</span> },
                 { key: "Logic Type", value: <span className="capitalize font-medium text-gray-700">{promotion?.promotion_type || "-"}</span> },
-                { 
-                  key: "Operational Status", 
-                  value: <StatusBtn isActive={String(promotion?.status) === "1"} /> 
+                {
+                  key: "Operational Status",
+                  value: <StatusBtn isActive={String(promotion?.status) === "1"} />
                 },
               ]}
             />
@@ -195,7 +196,7 @@ export default function PromotionDetailsPage() {
 
           <ContainerCard className="shadow-sm border-[#E9EAEB]">
             <div className="flex items-center justify-between mb-4 border-b border-[#F2F4F7] pb-3">
-              <div className="text-base font-bold text-[#344054]">Item Inclusion</div>
+              <div className="text-base font-bold text-[#344054]">{itemType}</div>
               <span className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
                 {(promotion?.items?.length || 0) + (promotion?.item_category?.length || 0)}
               </span>
@@ -266,11 +267,11 @@ export default function PromotionDetailsPage() {
                       {promotion.percentage_discounts.map((pd: any, i: number) => (
                         <tr key={i} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 font-medium text-[#101828]">
-                            {pd.percentage_item_id ? getLabel(pd.percentage_item_id, itemOptions) : 
-                             pd.percentage_item_category ? getLabel(pd.percentage_item_category, itemCategoryOptions) : "-"}
+                            {pd.percentage_item_id ? getLabel(pd.percentage_item_id, itemOptions) :
+                              pd.percentage_item_category ? getLabel(pd.percentage_item_category, itemCategoryOptions) : "-"}
                           </td>
                           <td className="px-6 py-4">
-                            <span className="font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full border border-green-100">{pd.percentage}% OFF</span>
+                            <span className="font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full border border-green-100">{pd.percentage}%</span>
                           </td>
                         </tr>
                       ))}
@@ -291,7 +292,7 @@ export default function PromotionDetailsPage() {
                     <thead className="bg-[#F9FAFB] text-[#475467] text-xs uppercase font-bold tracking-wider">
                       <tr>
                         <th className="px-6 py-4 border-b border-[#EAECF0]">Gift Product</th>
-                        <th className="px-6 py-4 border-b border-[#EAECF0]">Base UOM</th>
+                        <th className="px-6 py-4 border-b border-[#EAECF0]">UOM</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#EAECF0] bg-white">
@@ -300,7 +301,7 @@ export default function PromotionDetailsPage() {
                           <td className="px-6 py-4 font-bold text-[#101828]">
                             {getLabel(item.item_id, itemOptions)}
                           </td>
-                          <td className="px-6 py-4 font-medium text-[#475467] uppercase">{item.uom}</td>
+                          <td className="px-6 py-4 font-medium text-[#475467] uppercase">{getLabel(item.uom, uomOptions)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -329,8 +330,10 @@ export default function PromotionDetailsPage() {
                   </div>
                 </div>
                 <div className="group">
-                  <div className="text-[10px] text-gray-400 uppercase font-extrabold mb-2 tracking-widest group-hover:text-primary transition-colors">Primary Unit</div>
-                  <div className="inline-flex px-4 py-1.5 bg-[#F2F4F7] rounded-lg font-black text-[#1D2939] border border-[#D0D5DD] uppercase shadow-inner">{promotion?.uom || "-"}</div>
+                  <div className="text-[10px] text-gray-400 uppercase font-extrabold mb-2 tracking-widest group-hover:text-primary transition-colors">UOM</div>
+                  <div className="inline-flex px-4 py-1.5 bg-[#F2F4F7] rounded-lg font-black text-[#1D2939] border border-[#D0D5DD] uppercase shadow-inner">
+                    {getLabel(promotion?.uom, uomOptions)}
+                  </div>
                 </div>
               </div>
             </ContainerCard>
