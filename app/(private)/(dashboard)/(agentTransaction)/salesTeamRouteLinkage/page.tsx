@@ -8,6 +8,7 @@ import Table, {
   listReturnType,
   TableDataType,
 } from "@/app/components/customTable";
+import FilterComponent from "@/app/components/filterComponent";
 
 type SalesmanType = {
   code?: string;
@@ -61,17 +62,20 @@ const columns = [
     key: "warehouse",
     label: "Distributor",
     showByDefault: true,
-    render: (row: TableDataType) =>
-      typeof row.warehouse === "object" &&
-        row.warehouse !== null &&
-        "name" in row.warehouse
-        ? (row.warehouse as { name?: string }).name || "-"
-        : "-",
+    render: (row: TableDataType) => {
+      if (typeof row.warehouse === "object" && row.warehouse !== null) {
+        const code = 'code' in row.warehouse ? row.warehouse.code : '';
+        const name = 'name' in row.warehouse ? row.warehouse.name : '';
+        if (!code && !name) return "-";
+        return `${code}${code && name ? " - " : ""}${name}`;
+      }
+      return "-";
+    },
   },
 
   {
     key: "manager",
-    label: "Salesman Code",
+    label: "SalesTeam Code",
     showByDefault: true,
     render: (row: TableDataType) =>
       typeof row.manager === "object" &&
@@ -184,14 +188,12 @@ export default function CustomerInvoicePage() {
   const filterBy = useCallback(
     async (
       payload: Record<string, string | number | null>,
-      pageSize: number,
+      pageSize: number
     ): Promise<listReturnType> => {
       let result;
-      // setLoading(true);
+      setLoading(true);
       try {
-        const params: Record<string, string> = {
-          per_page: pageSize.toString(),
-        };
+        const params: Record<string, string> = {};
         Object.keys(payload || {}).forEach((k) => {
           const v = payload[k as keyof typeof payload];
           if (v !== null && typeof v !== "undefined" && String(v) !== "") {
@@ -200,25 +202,22 @@ export default function CustomerInvoicePage() {
         });
         result = await linkageList(params);
       } finally {
-        // setLoading(false);
+        setLoading(false);
       }
 
-      if (result?.error)
-        throw new Error(result.data?.message || "Filter failed");
+      if (result?.error) throw new Error(result.data?.message || "Filter failed");
       else {
-        const pagination =
-          result.pagination?.pagination || result.pagination || {};
+        const pagination = result.pagination?.pagination || result.pagination || {};
         return {
           data: result.data || [],
-          total: pagination.totalPages || result.pagination?.totalPages || 1,
-          totalRecords:
-            pagination.totalRecords || result.pagination?.totalRecords || 0,
-          currentPage: pagination.page || result.pagination?.page || 1,
-          pageSize: pagination.limit || pageSize,
+          total: pagination?.last_page || result.pagination?.last_page || 0,
+          totalRecords: pagination?.total || result.pagination?.total || 0,
+          currentPage: pagination?.current_page || result.pagination?.current_page || 0,
+          pageSize: pagination?.per_page || pageSize,
         };
       }
     },
-    [],
+    [setLoading]
   );
 
   //   const exportFile = async (format: "csv" | "xlsx" = "csv") => {
@@ -290,120 +289,12 @@ export default function CustomerInvoicePage() {
               title: "SalesTeam Route Linkage",
               searchBar: false,
               columnFilter: true,
-              //   threeDot: [
-              //     {
-              //       icon: threeDotLoading.csv
-              //         ? "eos-icons:three-dots-loading"
-              //         : "gala:file-document",
-              //       label: "Export CSV",
-              //       labelTw: "text-[12px] hidden sm:block",
-              //       onClick: () => !threeDotLoading.csv && exportFile("csv"),
-              //     },
-              //     {
-              //       icon: threeDotLoading.xlsx
-              //         ? "eos-icons:three-dots-loading"
-              //         : "gala:file-document",
-              //       label: "Export Excel",
-              //       labelTw: "text-[12px] hidden sm:block",
-              //       onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
-              //     },
-              //   ],
-              filterByFields: [
-                {
-                  key: "start_date",
-                  label: "Start Date",
-                  type: "date",
-                  applyWhen: (filters) =>
-                    !!filters.start_date && !!filters.end_date,
-                },
-                {
-                  key: "end_date",
-                  label: "End Date",
-                  type: "date",
-                  applyWhen: (filters) =>
-                    !!filters.start_date && !!filters.end_date,
-                },
-                {
-                  key: "company_id",
-                  label: "Company",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(companyOptions) ? companyOptions : [],
-                },
-                {
-                  key: "warehouse_id",
-                  label: "Warehouse",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(warehouseAllOptions)
-                    ? warehouseAllOptions
-                    : [],
-                },
-                {
-                  key: "region_id",
-                  label: "Region",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(regionOptions) ? regionOptions : [],
-                },
-                {
-                  key: "sub_region_id",
-                  label: "Sub Region",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(areaOptions) ? areaOptions : [],
-                },
-                {
-                  key: "route_id",
-                  label: "Route",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(routeOptions) ? routeOptions : [],
-                },
-                {
-                  key: "salesman_id",
-                  label: "Sales Team",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(salesmanOptions)
-                    ? salesmanOptions
-                    : [],
-                },
-              ],
-              actions: [
-                // <SidebarBtn
-                //     key={0}
-                //     href="#"
-                //     isActive
-                //     leadingIcon="mdi:download"
-                //     label="Download"
-                //     labelTw="hidden lg:block"
-                //     onClick={() => exportFile("csv")}
-                // />,
-                // <SidebarBtn
-                //   key={1}
-                //   href="/distributorsOrder/add"
-                //   isActive
-                //   leadingIcon="mdi:plus"
-                //   label="Add"
-                //   labelTw="hidden lg:block"
-                // />,
-              ],
+              filterRenderer: FilterComponent,
+              actions: [],
             },
             rowSelection: true,
             footer: { nextPrevBtn: true, pagination: true },
             columns,
-            // rowActions: [
-            //   {
-            //     icon: "lucide:eye",
-            //     onClick: (row: TableDataType) =>
-            //       router.push(`/distributorsOrder/details/${row.uuid}`),
-            //   },
-            //   {
-            //     icon: "lucide:download",
-            //     onClick: (row: TableDataType) => downloadPdf(row.uuid),
-            //   },
-            // ],
             pageSize: 10,
           }}
         />

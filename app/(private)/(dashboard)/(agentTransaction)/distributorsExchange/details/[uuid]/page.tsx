@@ -7,13 +7,13 @@ import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef } from "react";
 import { exchangeByUUID } from "@/app/services/agentTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
-
+import PrintButton from "@/app/components/printButton";
 
 interface TableRow {
   id: string;
@@ -51,7 +51,7 @@ export default function OrderDetailPage() {
   const params = useParams();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
-
+   const printRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   interface ExchangeDetail {
     exchange_code?: string;
@@ -97,13 +97,12 @@ export default function OrderDetailPage() {
           setDeliveryData(data);
           // Map invoices to table data
           const goodOptions = [
-            { label: "Near By Expiry", value: "0" },
+            { label: "Near By Expiry", value: "1" },
             { label: "Package Issue", value: "1" },
-            { label: "Not Saleable", value: "2" },
           ];
           const badOptions = [
-            { label: "Damage", value: "0" },
-            { label: "Expiry", value: "1" },
+            { label: "Damage", value: "3" },
+            { label: "Expiry", value: "4" },
           ];
 
           function getReturnTypeLabel(value: string) {
@@ -371,18 +370,13 @@ export default function OrderDetailPage() {
 
         <hr className="text-[#D5D7DA]" />
 
-        <div className="flex flex-wrap justify-end gap-[20px]">
+        <div className="flex flex-wrap justify-end gap-[20px] print:hidden" ref={printRef}>
           {/* <SidebarBtn
             leadingIcon={"lucide:download"}
             leadingIconSize={20}
             label="Download"
           /> */}
-          <SidebarBtn
-            isActive
-            leadingIcon={"lucide:printer"}
-            leadingIconSize={20}
-            label="Print Now"
-          />
+         <PrintButton targetRef={printRef as React.RefObject<HTMLDivElement>} />
         </div>
       </ContainerCard>
     </>

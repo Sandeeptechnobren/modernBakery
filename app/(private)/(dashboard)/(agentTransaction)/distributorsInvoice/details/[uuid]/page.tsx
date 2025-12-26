@@ -151,13 +151,13 @@ export default function OrderDetailPage() {
               itemName: String(detail.item_name ?? "-"),
               UOM: String(detail.uom_name ?? detail.uom ?? "-"),
               Quantity: String(detail.quantity ?? 0),
-              Price: String(detail.itemvalue ?? "0"),
+              Price: String(detail.uom_type === "secondary" ? detail.itemprice : detail.item_price),
               Excise: String(detail.excise ?? "0"),
               Discount: String(detail.discount ?? "0"),
               Net: String(detail.net_total ?? "0"),
               Vat: String(detail.vat ?? "0"),
               preVat: String(detail.pre_vat ?? "0"),
-              Total: String(detail.item_total ?? "0"),
+              Total: String(data.total_amount ?? "0"),
             }));
             setTableData(mappedData);
           }

@@ -4,7 +4,7 @@ import InputFields from "@/app/components/inputFields";
 import React, { useEffect, useState } from "react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table from "@/app/components/customTable";
-import { warehouseStock } from "@/app/services/allApi";
+import { warehouseStockItem } from "@/app/services/allApi";
 import { CustomTableSkelton } from "@/app/components/customSkeleton";
 
 const itemColumns = [
@@ -54,7 +54,7 @@ const OverallPerformance: React.FC = () => {
     setLoading(true);
     try {
   const params: Record<string, string> = { page: String(page), per_page: String(pageSize) };
-  const res = await warehouseStock(warehouseId, params);
+  const res = await warehouseStockItem(warehouseId, params);
       const pagination = res?.pagination || {};
       setTopOrders({
         stocks: Array.isArray(res.data) ? res.data : [],

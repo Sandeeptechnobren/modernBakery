@@ -9,6 +9,7 @@ import Table, {
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
 import { salesmanLoadHeaderList, exportSalesmanLoad, exportSalesmanLoadDownload } from "@/app/services/agentTransaction";
+import { useRef } from "react";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
@@ -136,16 +137,33 @@ export default function SalemanLoad() {
   });
 
 
+  // In-memory cache for salesmanLoadHeaderList API calls
+  const salesmanLoadHeaderCache = useRef<{ [key: string]: any }>({});
+
   const fetchSalesmanLoadHeader = useCallback(
     async (
       page: number = 1,
       pageSize: number = 50
     ): Promise<listReturnType> => {
+      const params: Record<string, string> = {
+        page: page.toString(),
+        pageSize: pageSize.toString(),
+      };
+      const cacheKey = JSON.stringify(params);
+      if (salesmanLoadHeaderCache.current[cacheKey]) {
+        const listRes = salesmanLoadHeaderCache.current[cacheKey];
+        return {
+          data: Array.isArray(listRes.data) ? listRes.data : [],
+          total: listRes?.pagination?.totalPages || 1,
+          currentPage: listRes?.pagination?.page || 1,
+          pageSize: listRes?.pagination?.limit || pageSize,
+        };
+      }
       try {
         setLoading(true);
         const listRes = await salesmanLoadHeaderList({});
+        salesmanLoadHeaderCache.current[cacheKey] = listRes;
         setLoading(false);
-
         return {
           data: Array.isArray(listRes.data) ? listRes.data : [],
           total: listRes?.pagination?.totalPages || 1,
@@ -166,22 +184,38 @@ export default function SalemanLoad() {
     [setLoading, showSnackbar]
   );
 
+  // In-memory cache for filterBy API calls
+  const salesmanLoadHeaderFilterCache = useRef<{ [key: string]: any }>({});
+
   const filterBy = useCallback(
     async (
       payload: Record<string, string | number | null>,
       pageSize: number
     ): Promise<listReturnType> => {
-      let result;
+      const params: Record<string, string> = {};
+      Object.keys(payload || {}).forEach((k) => {
+        const v = payload[k as keyof typeof payload];
+        if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+          params[k] = String(v);
+        }
+      });
+      const cacheKey = JSON.stringify(params);
+      if (salesmanLoadHeaderFilterCache.current[cacheKey]) {
+        const result = salesmanLoadHeaderFilterCache.current[cacheKey];
+        const pagination = result.pagination?.pagination || result.pagination || {};
+        return {
+          data: result.data || [],
+          total: pagination.last_page || result.pagination?.last_page || 0,
+          totalRecords: pagination.total || result.pagination?.total || 0,
+          currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+          pageSize: pagination.limit || pageSize,
+        };
+      }
       setLoading(true);
+      let result;
       try {
-        const params: Record<string, string> = {};
-        Object.keys(payload || {}).forEach((k) => {
-          const v = payload[k as keyof typeof payload];
-          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-            params[k] = String(v);
-          }
-        });
         result = await salesmanLoadHeaderList(params);
+        salesmanLoadHeaderFilterCache.current[cacheKey] = result;
       } finally {
         setLoading(false);
       }

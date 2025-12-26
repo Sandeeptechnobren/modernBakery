@@ -70,7 +70,7 @@ const PaymentDetails = () => {
             recipt_date: responseData.recipt_date || "",
             recipt_image: receiptImageUrl,
             request_step_id: responseData.request_step_id || 0,
-            status: responseData.status === 1 ? "active" : "inactive",
+            status: responseData.status === 1 ? "Active" : "Inactive",
           };
 
           setData(paymentData);
@@ -123,7 +123,7 @@ const PaymentDetails = () => {
             <div className="mt-2">
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                  data.status === "active"
+                  data.status === "Active"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
                 }`}
@@ -180,7 +180,7 @@ const PaymentDetails = () => {
                 <button
                   type="button"
                   onClick={() => setIsImageModalOpen(true)}
-                  className="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50 cursor-pointer"
                   aria-label="View receipt image"
                 >
                   <span className="text-sm font-medium">View Image</span>

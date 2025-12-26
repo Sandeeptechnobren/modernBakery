@@ -249,7 +249,7 @@ export default function AddSalesmanLoadUI() {
                     onClick={() => router.back()}
                 />
                 <h1 className="text-[20px] font-semibold text-[#181D27]">
-                    Add Sales Team Load
+                    Add Sales Team Reconciliation
                 </h1>
             </div>
 

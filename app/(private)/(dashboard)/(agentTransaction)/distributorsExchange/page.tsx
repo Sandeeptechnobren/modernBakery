@@ -11,12 +11,11 @@ import { exchangeList, exportExchangeData } from "@/app/services/agentTransactio
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { downloadFile } from "@/app/services/allApi";
 import FilterComponent from "@/app/components/filterComponent";
 import ApprovalStatus from "@/app/components/approvalStatus";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
-import { useEffect } from "react";
 
 const dropdownDataList = [
     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -84,18 +83,96 @@ export default function CustomerInvoicePage() {
         csv: false,
         xlsx: false,
     });
-    const [filters, setFilters] = useState({
-        fromDate: new Date().toISOString().split("T")[0],
-        toDate: new Date().toISOString().split("T")[0],
-        region: "",
-        routeCode: "",
-    });
+    // Delivery-style filter/search logic
+    const [exchangeDataCache, setExchangeDataCache] = useState<{ [key: string]: any }>({});
+    const [exchangeCacheKey, setExchangeCacheKey] = useState(0);
 
-    const [showDropdown, setShowDropdown] = useState(false);
-
-    const handleChange = (name: string, value: string) => {
-        setFilters((prev) => ({ ...prev, [name]: value }));
+    // Helper to build cache key from params
+    const getCacheKey = (params: Record<string, string | number>) => {
+        return Object.entries(params).sort().map(([k, v]) => `${k}:${v}`).join("|");
     };
+
+    // Unified fetch function
+    const fetchExchangeData = useCallback(async (params: Record<string, string | number>) => {
+        const cacheKey = getCacheKey(params);
+        if (exchangeDataCache[cacheKey]) {
+            return exchangeDataCache[cacheKey];
+        }
+        setLoading(true);
+        try {
+            // Ensure all values are strings for exchangeList
+            const stringParams: Record<string, string> = {};
+            Object.entries(params).forEach(([k, v]) => {
+                stringParams[k] = String(v);
+            });
+            const result = await exchangeList(stringParams);
+            setExchangeDataCache((prev) => ({ ...prev, [cacheKey]: result }));
+            return result;
+        } catch (error) {
+            showSnackbar("Failed to fetch exchange list", "error");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [exchangeDataCache, setLoading, showSnackbar]);
+
+    // Fetch for table (list)
+    const fetchExchange = useCallback(async (
+        page: number = 1,
+        pageSize: number = 10
+    ): Promise<listReturnType> => {
+        const params = { page: page.toString(), per_page: pageSize.toString() };
+        const result = await fetchExchangeData(params);
+        if (!result) {
+            return {
+                data: [],
+                total: 1,
+                currentPage: 1,
+                pageSize: pageSize,
+            };
+        }
+        return {
+            data: Array.isArray(result.data) ? result.data : [],
+            total: result?.pagination?.totalPages || 1,
+            currentPage: result?.pagination?.page || 1,
+            pageSize: result?.pagination?.limit || pageSize,
+        };
+    }, [fetchExchangeData]);
+
+    // Fetch for filter
+    const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            const params: Record<string, string> = { per_page: pageSize.toString() };
+            Object.keys(payload || {}).forEach((k) => {
+                const v = payload[k as keyof typeof payload];
+                if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                    params[k] = String(v);
+                }
+            });
+            const result = await fetchExchangeData(params);
+            if (!result) {
+                return {
+                    data: [],
+                    total: 1,
+                    currentPage: 1,
+                    pageSize: pageSize,
+                };
+            }
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            const pagination = result.pagination || {};
+            return {
+                data: result.data || [],
+                total: pagination?.totalPages || 1,
+                totalRecords: pagination?.total || 0,
+                currentPage: pagination?.page || 1,
+                pageSize: pagination?.limit || pageSize,
+            };
+        },
+        [fetchExchangeData]
+    );
 
     // 🔹 Fetch Invoices
     const fetchInvoices = useCallback(async (
@@ -104,6 +181,7 @@ export default function CustomerInvoicePage() {
     ): Promise<listReturnType> => {
         try {
             setLoading(true);
+            
             const result = await exchangeList({
                 page: page.toString(),
                 per_page: pageSize.toString(),
@@ -175,7 +253,7 @@ export default function CustomerInvoicePage() {
             <Table
                 refreshKey={refreshKey}
                 config={{
-                    api: { list: fetchInvoices, search: searchInvoices },
+                    api: { list: fetchExchange, filterBy },
                     header: {
                         title: "Exchange",
                         columnFilter: true,

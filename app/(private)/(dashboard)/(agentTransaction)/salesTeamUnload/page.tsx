@@ -15,6 +15,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useEffect } from "react";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import FilterComponent from "@/app/components/filterComponent";
 
 export default function SalesmanUnloadPage() {
   const { can, permissions } = usePagePermissions();
@@ -127,30 +128,22 @@ export default function SalesmanUnloadPage() {
 
   const filterBy = useCallback(
     async (
-      payload: Record<string, any>,
+      payload: Record<string, string | number | null>,
       pageSize: number
     ): Promise<listReturnType> => {
       let result;
+      setLoading(true);
       try {
         const params: Record<string, string> = {};
-        // Include pagination + submit flag used by API
-        params.page = String(payload.page ?? 1);
-        params.per_page = String(pageSize);
-        params.submit = "Filter";
-
-        // Normalize and include provided filters
         Object.keys(payload || {}).forEach((k) => {
-          if (k === "page") return; // already handled
           const v = payload[k as keyof typeof payload];
-          if (v === null || typeof v === "undefined") return;
-          if (Array.isArray(v)) {
-            if (v.length > 0) params[k] = v.join(",");
-          } else if (String(v) !== "") {
+          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
             params[k] = String(v);
           }
         });
         result = await salesmanUnloadList(params);
       } finally {
+        setLoading(false);
       }
 
       if (result?.error) throw new Error(result.data?.message || "Filter failed");
@@ -158,10 +151,10 @@ export default function SalesmanUnloadPage() {
         const pagination = result.pagination?.pagination || result.pagination || {};
         return {
           data: result.data || [],
-          total: pagination.last_page || result.pagination?.last_page || pagination.totalPages || 0,
-          totalRecords: pagination.total || result.pagination?.total || pagination.totalRecords || 0,
-          currentPage: pagination.current_page || result.pagination?.currentPage || pagination.page || 1,
-          pageSize: pagination.limit || pageSize,
+          total: pagination?.last_page || result.pagination?.last_page || 0,
+          totalRecords: pagination?.total || result.pagination?.total || 0,
+          currentPage: pagination?.current_page || result.pagination?.current_page || 0,
+          pageSize: pagination?.per_page || pageSize,
         };
       }
     },
@@ -235,68 +228,8 @@ export default function SalesmanUnloadPage() {
           header: {
             searchBar: false,
             columnFilter: true,
-            filterByFields: [
-              {
-                key: "start_date",
-                label: "From Date",
-                type: "date",
-              },
-              {
-                key: "end_date",
-                label: "To Date",
-                type: "date",
-              },
-              {
-                key: "warehouse",
-                label: "Distributor",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(warehouseOptions)
-                  ? warehouseOptions
-                  : [],
-              },
-              {
-                key: "region_id",
-                label: "Region",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(regionOptions)
-                  ? regionOptions
-                  : [{ value: "1", label: "Default Region" }],
-              },
-              {
-                key: "route_id",
-                label: "Route",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(routeOptions) ? routeOptions : [],
-              },
-              {
-                key: "outlet_channel_id",
-                label: "Outlet Channel",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(channelOptions) ? channelOptions : [],
-              },
-              {
-                key: "category_id",
-                label: "Category",
-                options: Array.isArray(itemCategoryOptions)
-                  ? itemCategoryOptions
-                  : [],
-                isSingle: false,
-                multiSelectChips: true,
-              },
-              {
-                key: "subcategory_id",
-                label: "Subcategory",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(customerSubCategoryOptions)
-                  ? customerSubCategoryOptions
-                  : [],
-              },
-            ],
+            filterRenderer: FilterComponent,
+            
             actions: can("create") ? [
               <SidebarBtn
                 key={0}

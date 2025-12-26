@@ -78,7 +78,7 @@ export default function ViewPage() {
   const { setLoading } = useLoading();
 
   const title = `Unload #${customer?.osa_code || "-"}`;
-  const backBtnUrl = "/salesmanUnload";
+  const backBtnUrl = "/salesTeamUnload";
 
   // Tab logic
   const [activeTab, setActiveTab] = useState("overview");
