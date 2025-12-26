@@ -3,9 +3,28 @@ import { Icon } from "@iconify-icon/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Toggle from "@/app/components/toggle";
 import Loading from "@/app/components/Loading";
+import Skeleton from "@mui/material/Skeleton";
 
 // Add your API function import
 import { getRouteVisitDetails } from "@/app/services/allApi";
+
+const TableRowSkeleton = () => (
+  <tr className="border-b-[1px] border-[#E9EAEB]">
+    <td className="px-4 py-3 sticky left-0 bg-white z-10 border-r border-[#E9EAEB]">
+      <div className="flex items-center gap-3">
+        <Skeleton variant="circular" width={32} height={32} />
+        <Skeleton variant="text" width={150} height={20} />
+      </div>
+    </td>
+    {Array.from({ length: 7 }).map((_, i) => (
+      <td key={i} className="px-4 py-3 border-l border-[#E9EAEB]">
+        <div className="flex justify-center">
+          <Skeleton variant="circular" width={24} height={24} />
+        </div>
+      </td>
+    ))}
+  </tr>
+);
 
 const transformCustomerList = (apiResponse: any[]) => {
   return apiResponse.map((item) => ({
@@ -27,6 +46,9 @@ type TableProps = {
   loading?: boolean;
   editMode?: boolean;
   visitUuid?: string;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 };
 
 export default function Table({
@@ -36,11 +58,45 @@ export default function Table({
   loading = false,
   editMode = false,
   visitUuid = "",
+  hasMore = false,
+  onLoadMore,
+  isLoadingMore = false,
 }: TableProps) {
   const data = transformCustomerList(customers);
   const isInitialMount = useRef(true);
   const [internalLoading, setInternalLoading] = useState(false);
   const hasFetchedData = useRef(false);
+  const observerRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (!onLoadMore || !hasMore || isLoadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          console.log("Observer triggered - loading more...");
+          onLoadMore();
+        }
+      },
+      { 
+        root: scrollContainerRef.current,
+        threshold: 0.0,
+        rootMargin: '300px'
+      }
+    );
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observer.unobserve(observerRef.current);
+      }
+    };
+  }, [onLoadMore, hasMore, isLoadingMore]);
 
   // ✅ Track pre-filled customer IDs from API
   const [prefilledCustomerIds, setPrefilledCustomerIds] = useState<Set<number>>(
@@ -73,9 +129,11 @@ export default function Table({
   });
 
   // ✅ Filtered data - only show customers that are in both current customer_type AND pre-filled data
+  // Added bypass for dummy data (IDs >= 5000) to allow testing infinite scroll in edit mode
   const filteredData = data.filter(
-    (customer) => !editMode || prefilledCustomerIds.has(customer.id)
+    (customer) => !editMode || prefilledCustomerIds.has(customer.id) || customer.id >= 5000
   );
+  console.log(filteredData,"filteredData")
 
   // ✅ Load visit data for editing
   const loadVisitData = useCallback(async (uuid: string) => {
@@ -184,16 +242,23 @@ export default function Table({
   }, [rowStates, setCustomerSchedules]);
 
   // Reset row states when customers change - ONLY in create mode
-  const previousCustomers = useRef(customers);
-  useEffect(() => {
-    if (!editMode && customers.length > 0) {
-      const customersChanged =
-        JSON.stringify(previousCustomers.current) !== JSON.stringify(customers);
+  const previousCustomersLength = useRef(customers.length);
+  const previousFirstCustomerId = useRef<number | null>(null);
 
-      if (customersChanged) {
-        console.log("Customers changed in create mode, resetting table states");
+  useEffect(() => {
+    if (!editMode) {
+      const currLength = customers.length;
+      const firstId = customers.length > 0 ? customers[0].id : null;
+
+      const isFreshFetch = currLength > 0 && (
+        (previousFirstCustomerId.current !== null && firstId !== previousFirstCustomerId.current) ||
+        (currLength < previousCustomersLength.current)
+      );
+
+      if (isFreshFetch) {
+        console.log("Fresh customer list detected, resetting table states");
         setRowStates({});
-        setPrefilledCustomerIds(new Set()); // Reset pre-filled IDs in create mode
+        setPrefilledCustomerIds(new Set());
         setColumnSelection({
           Monday: false,
           Tuesday: false,
@@ -203,8 +268,9 @@ export default function Table({
           Saturday: false,
           Sunday: false,
         });
-        previousCustomers.current = customers;
       }
+      previousCustomersLength.current = currLength;
+      previousFirstCustomerId.current = firstId;
     }
   }, [customers, editMode]);
 
@@ -354,24 +420,27 @@ export default function Table({
   };
 
   // Show loading when customers are being fetched or internal loading
-  if (loading || internalLoading) {
-    return (
-      <div className="w-full flex flex-col overflow-hidden">
-        <div className="rounded-lg border border-[#E9EAEB] overflow-hidden">
-          <div className="flex items-center justify-center py-12">
-            <Loading />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (loading || internalLoading) {
+  //   return (
+  //     <div className="w-full flex flex-col overflow-hidden">
+  //       <div className="rounded-lg border border-[#E9EAEB] overflow-hidden">
+  //         <div className="flex items-center justify-center py-12">
+  //           <Loading />
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="w-full flex flex-col overflow-hidden">
       <div className="rounded-lg border border-[#E9EAEB] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-max">
-            <thead className="text-[12px] bg-[#FAFAFA] text-[#535862] sticky top-0 z-20">
+        <div 
+          ref={scrollContainerRef}
+          className="overflow-x-auto overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-gray-300"
+        >
+          <table className="w-full min-w-max border-collapse">
+            <thead className="text-[12px] bg-[#FAFAFA] text-[#535862] sticky top-0 z-30">
               <tr className="border-b-[1px] border-[#E9EAEB]">
                 <th className="px-4 py-3 font-[500] text-left min-w-[220px] sticky left-0 bg-[#FAFAFA] z-10 border-r border-[#E9EAEB]">
                   <div className="flex items-center gap-2">
@@ -409,66 +478,81 @@ export default function Table({
             </thead>
 
             <tbody className="text-[14px] bg-white text-[#535862]">
-              {filteredData.map((row) => {
-                const state = rowStates[row.id] || {
-                  Monday: false,
-                  Tuesday: false,
-                  Wednesday: false,
-                  Thursday: false,
-                  Friday: false,
-                  Saturday: false,
-                  Sunday: false,
-                };
+              {(loading || internalLoading) ? (
+                Array.from({ length: 10 }).map((_, i) => <TableRowSkeleton key={`init-${i}`} />)
+              ) : (
+                <>
+                  {filteredData.map((row) => {
+                    const state = rowStates[row.id] || {
+                      Monday: false,
+                      Tuesday: false,
+                      Wednesday: false,
+                      Thursday: false,
+                      Friday: false,
+                      Saturday: false,
+                      Sunday: false,
+                    };
 
-                const isRowSelected = isRowFullySelected(row.id);
-                const isRowPartial = isRowPartiallySelected(row.id);
+                    const isRowSelected = isRowFullySelected(row.id);
 
-                return (
-                  <tr
-                    className="border-b-[1px] border-[#E9EAEB] hover:bg-gray-50"
-                    key={row.id}
-                  >
-                    <td className="px-4 py-3 text-left font-[500] sticky left-0 bg-white z-10 border-r border-[#E9EAEB] min-w-[220px]">
-                      <div className="flex items-center gap-3">
-                        <Toggle
-                          isChecked={isRowSelected}
-                          onChange={() => handleRowSelect(row.id)}
-                        />
-                        <span
-                          className="truncate max-w-[100%]"
-                          title={row.name}
-                        >
-                          {row.name}
-                        </span>
-                      </div>
-                    </td>
-
-                    {Object.entries(state).map(([day, isChecked]) => (
-                      <td
-                        key={day}
-                        className="px-4 py-3 text-center border-l border-[#E9EAEB] min-w-[120px]"
+                    return (
+                      <tr
+                        className="border-b-[1px] border-[#E9EAEB] hover:bg-gray-50"
+                        key={row.id}
                       >
-                        <div className="flex justify-center">
-                          <Toggle
-                            isChecked={isChecked}
-                            onChange={() =>
-                              handleToggle(
-                                row.id,
-                                day as keyof (typeof rowStates)[number]
-                              )
-                            }
-                          />
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
+                        <td className="px-4 py-3 text-left font-[500] sticky left-0 bg-white z-10 border-r border-[#E9EAEB] min-w-[220px]">
+                          <div className="flex items-center gap-3">
+                            <Toggle
+                              isChecked={isRowSelected}
+                              onChange={() => handleRowSelect(row.id)}
+                            />
+                            <span
+                              className="truncate max-w-[100%]"
+                              title={row.name}
+                            >
+                              {row.name}
+                            </span>
+                          </div>
+                        </td>
+
+                        {Object.entries(state).map(([day, isChecked]) => (
+                          <td
+                            key={day}
+                            className="px-4 py-3 text-center border-l border-[#E9EAEB] min-w-[120px]"
+                          >
+                            <div className="flex justify-center">
+                              <Toggle
+                                isChecked={isChecked}
+                                onChange={() =>
+                                  handleToggle(
+                                    row.id,
+                                    day as keyof (typeof rowStates)[number]
+                                  )
+                                }
+                              />
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                  {isLoadingMore && (
+                    Array.from({ length: 5 }).map((_, i) => <TableRowSkeleton key={`more-${i}`} />)
+                  )}
+                </>
+              )}
             </tbody>
           </table>
+
+          {/* Infinite Scroll Observer */}
+          {hasMore && (
+            <div ref={observerRef} className="w-full flex justify-center py-2">
+              <div className="h-1" />
+            </div>
+          )}
         </div>
 
-        {filteredData.length === 0 && (
+        {!loading && !internalLoading && filteredData.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             {editMode ? (
               <div>

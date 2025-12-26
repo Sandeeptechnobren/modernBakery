@@ -685,42 +685,100 @@ export default function InputFields({
                     const hasSelection = !search && selected.length > 0;
                     // If multiSelectChips is enabled, render chips before the input
                     if (multiSelectChips) {
+                      // Move refs and state outside render for stability
+                      const containerRef = React.useRef<HTMLDivElement>(null);
+                      const [maxChips, setMaxChips] = React.useState(1);
+                      // Resize observer for more reliable width detection
+                      React.useEffect(() => {
+                        if (!containerRef.current) return;
+                        const node = containerRef.current;
+                        function updateChips() {
+                          if (!node) return;
+                          const containerWidth = node.offsetWidth;
+                          const chipWidth = 110; // px, adjust as needed
+                          const inputWidth = 120; // px, reserve for input
+                          const possible = Math.max(1, Math.floor((containerWidth - inputWidth) / chipWidth));
+                          setMaxChips(possible);
+                        }
+                        updateChips();
+                        // Use ResizeObserver if available
+                        let resizeObserver: ResizeObserver | null = null;
+                        if (window.ResizeObserver) {
+                          resizeObserver = new ResizeObserver(updateChips);
+                          resizeObserver.observe(node);
+                        } else {
+                          window.addEventListener('resize', updateChips);
+                        }
+                        return () => {
+                          if (resizeObserver) resizeObserver.disconnect();
+                          else window.removeEventListener('resize', updateChips);
+                        };
+                      }, [selected.length, width]);
                       return (
-                        <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
-                          
+                        <div ref={containerRef} className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
+                          {selected.slice(0, maxChips).map((s) => (
+                            <span
+                              key={s.value}
+                              className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate"
+                            >
+                              <span className="truncate block max-w-[100px]">
+                                {s.label}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!disabled) handleCheckbox(s.value);
+                                }}
+                                className="ml-2 text-gray-500 hover:text-gray-700"
+                                tabIndex={-1}
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                          {selected.length > maxChips && (
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (selectedOptionsDropdownOpen) {
+                                  showSelectedOptionsDropdown(false);
+                                } else {
+                                  setDropdownOpen(false);
+                                  setTimeout(() => {
+                                    computeDropdownProps();
+                                    showSelectedOptionsDropdown(true);
+                                  }, 0);
+                                }
+                              }}
+                              className="inline-flex items-center bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-sm font-medium cursor-pointer hover:bg-gray-300"
+                            >
+                              +{selected.length - maxChips}
+                            </span>
+                          )}
                           <input
                             type="text"
                             placeholder={placeholder ? placeholder : label ? `Search ${label}` : "Search"}
-                            // value={displayValue}
                             onChange={(e) => {
                               const v = (e.target as HTMLInputElement).value;
-                              console.log("Search input changed:", v);
                               setSearch(v);
-                              // onSearch(v);
                               if (!dropdownOpen) {
                                 showSelectedOptionsDropdown(false);
                                 setDropdownOpen(true);
                               }
-                              // if (v === "") {
-                              //   // user cleared the input -> clear selected values for multi-select
-                              //   safeOnChange(createMultiSelectEvent([]));
-                              // }
                             }}
-                            onFocus={(e) => {  
-                              e.stopPropagation(); 
+                            onFocus={(e) => {
+                              e.stopPropagation();
                               showSelectedOptionsDropdown(false);
-                              setDropdownOpen(true); 
+                              setDropdownOpen(true);
                             }}
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
+                            onClick={(e) => {
+                              e.stopPropagation();
                               showSelectedOptionsDropdown(false);
-                              setDropdownOpen(true); 
+                              setDropdownOpen(true);
                             }}
-                            className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? "text-gray-900" : "text-gray-400"
-                              }`}
-                            style={
-                              hasSelection ? { color: "#111827" } : undefined
-                            }
+                            className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? "text-gray-900" : "text-gray-400"}`}
+                            style={hasSelection ? { color: "#111827" } : undefined}
                             onKeyDown={createArrowKeyHandler(
                               filteredOptions,
                               highlightedIndex,
@@ -730,51 +788,6 @@ export default function InputFields({
                               setDropdownOpen
                             )}
                           />
-
-                          {selected.map((s, idx) => {
-                            if (idx >= 1) return null;
-                            return (
-                              <span
-                                key={s.value}
-                                className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate"
-                              >
-                                <span className="truncate block max-w-[100px]">
-                                  {s.label}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!disabled) handleCheckbox(s.value);
-                                  }}
-                                  className="ml-2 text-gray-500 hover:text-gray-700"
-                                  tabIndex={-1}
-                                >
-                                  ×
-                                </button>
-                              </span>
-                            );
-                          })}
-                          {selected.length > 1 && (
-                            <span 
-                              onClick={(e) => { 
-                                e.stopPropagation(); 
-                                if (selectedOptionsDropdownOpen) {
-                                  showSelectedOptionsDropdown(false);
-                                } else {
-                                  setDropdownOpen(false);
-                                  // Wait for state update before computing props
-                                  setTimeout(() => {
-                                    computeDropdownProps();
-                                    showSelectedOptionsDropdown(true);
-                                  }, 0);
-                                }
-                              }}
-                              className="inline-flex items-center bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-sm font-medium cursor-pointer hover:bg-gray-300"
-                            >
-                              +{selected.length - 1}
-                            </span>
-                          )}
                         </div>
                       );
                     } else {

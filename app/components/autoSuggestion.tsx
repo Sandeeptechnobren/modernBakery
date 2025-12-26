@@ -8,8 +8,19 @@ export type Option = {
   label: string;
   [key: string]: any;
 };
+type InfiniteScrollEnabled = {
+  infiniteScroll: true;
+  onLoadMore: (query: string, page: number) => Promise<Option[]>;
+  hasMore: boolean;
+};
 
-type Props = {
+type InfiniteScrollDisabled = {
+  infiniteScroll?: false;
+  onLoadMore?: never;
+  hasMore?: never;
+};
+
+type BaseProps  = {
   placeholder?: string;
   onSearch: (query: string) => Promise<Option[]>;
   onSelect: (option: Option) => void;
@@ -31,7 +42,13 @@ type Props = {
   multiple?: boolean;
   initialSelected?: Option[];
   onChangeSelected?: (selected: Option[]) => void;
+  // Infinite scroll props
+  infiniteScroll?: boolean;
+  onLoadMore?: (query: string, page: number) => Promise<Option[]>;
+  hasMore?: boolean;
 };
+export type Props =
+  BaseProps & (InfiniteScrollEnabled | InfiniteScrollDisabled);
 
 export default function AutoSuggestion({
   placeholder = "Search...",
@@ -54,10 +71,15 @@ export default function AutoSuggestion({
   multiple = false,
   initialSelected = [],
   onChangeSelected,
+  infiniteScroll = false,
+  onLoadMore,
+  hasMore = false,
 }: Props) {
   const [query, setQuery] = useState(initialValue);
   const [options, setOptions] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState<number>(-1);
   const [selectedOptions, setSelectedOptions] = useState<Option[]>(initialSelected || []);
@@ -65,9 +87,11 @@ export default function AutoSuggestion({
   const selectedSingleRef = useRef<Option | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [dropdownProps, setDropdownProps] = useState<{ left: number; top: number; width: number }>({ left: 0, top: 0, width: 0 });
   const debounceRef = useRef<number | null>(null);
   const onSearchRef = useRef(onSearch);
+  const onLoadMoreRef = useRef(onLoadMore);
   const requestIdRef = useRef(0);
   const onClearRef = useRef(onClear);
   const prevQueryRef = useRef<string>(initialValue || "");
@@ -81,6 +105,9 @@ export default function AutoSuggestion({
   useEffect(() => {
     onSearchRef.current = onSearch;
   }, [onSearch]);
+  useEffect(() => {
+    onLoadMoreRef.current = onLoadMore;
+  }, [onLoadMore]);
   useEffect(() => {
     onClearRef.current = onClear;
   }, [onClear]);
@@ -144,6 +171,7 @@ export default function AutoSuggestion({
       setOptions([]);
       setOpen(false);
       setLoading(false);
+      setPage(1);
       return;
     }
 
@@ -177,6 +205,7 @@ export default function AutoSuggestion({
           // when the debounced search starts, show loading and open dropdown
           setLoading(true);
           setOpen(true);
+          setPage(1); // Reset page on new search
           // use the stable ref to call the latest onSearch without making it a dependency
           const res = await onSearchRef.current(query);
           // if a newer request started while we were awaiting, ignore this response
@@ -198,6 +227,29 @@ export default function AutoSuggestion({
       })();
     }, debounceMs);
   }, [query, debounceMs, minSearchLength]);
+
+  const handleDropdownScroll = async (e: React.UIEvent<HTMLDivElement>) => {
+    if (!infiniteScroll || !onLoadMoreRef.current || !hasMore || loadingMore || loading) return;
+
+    const target = e.currentTarget;
+    const isNearBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
+
+    if (isNearBottom) {
+      setLoadingMore(true);
+      try {
+        const nextPage = page + 1;
+        const res = await onLoadMoreRef.current(query, nextPage);
+        if (Array.isArray(res) && res.length > 0) {
+          setOptions(prev => [...prev, ...res]);
+          setPage(nextPage);
+        }
+      } catch (err) {
+        console.error("AutoSuggestion Load More Error:", err);
+      } finally {
+        setLoadingMore(false);
+      }
+    }
+  };
 
   // click outside to close
   useEffect(() => {
@@ -388,7 +440,7 @@ export default function AutoSuggestion({
                 className="truncate outline-none border-none bg-transparent placeholder-gray-400 w-full"
                 placeholder={placeholder}
                 value={query}
-                onChange={e => { const v = e.target.value; setQuery(v); if (v === '') { setOptions([]); setOpen(false); try { onClearRef.current && onClearRef.current(); } catch (err) {} } }}
+                onChange={e => { const v = e.target.value; setQuery(v); if (v === '') { setOptions([]); setOpen(false); setPage(1); try { onClearRef.current && onClearRef.current(); } catch (err) {} } }}
                 onFocus={() => { setShowSelectedOnly(false); if (options.length > 0) setOpen(true); }}
                 onKeyDown={handleKeyDown}
               />
@@ -460,6 +512,7 @@ export default function AutoSuggestion({
             if (v === '') {
               setOptions([]);
               setOpen(false);
+              setPage(1);
               try { onClearRef.current && onClearRef.current(); } catch (err) { }
             }
           }}
@@ -470,6 +523,8 @@ export default function AutoSuggestion({
 
       {open && (
         <div
+          ref={dropdownRef}
+          onScroll={handleDropdownScroll}
           style={{ position: 'fixed', left: dropdownProps.left, top: dropdownProps.top, width: dropdownProps.width }}
           className={`z-50 bg-white border border-gray-300 mt-[6px] rounded-md shadow-lg max-h-60 overflow-auto scrollbar-none`}
         >
@@ -585,6 +640,11 @@ export default function AutoSuggestion({
                 </div>
               );
             })}
+            {loadingMore && (
+              <div className="px-3 py-2 text-sm text-gray-500">
+                <Skeleton ></Skeleton>
+              </div>
+            )}
             </>
           )}
         </div>

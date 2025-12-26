@@ -358,18 +358,18 @@ export default function AddPricing() {
     // preload some channel and categories for better UX
     (async () => {
       try {
-        const ch = await channelList({ dropdown: 'true' });
+        const ch = await channelList({ dropdown: 'true',per_page: "50" });
         setChannelOptions((ch?.data || []).map((c: any) => ({
           label: `${c.outlet_channel || c.outlet_channel_name || c.channel_name || c.name || ''}`,
           value: String(c.id),
         })));
       } catch (e) { }
       try {
-        const cat = await customerCategoryGlobalSearch({ dropdown: 'true' });
+        const cat = await customerCategoryGlobalSearch({ dropdown: 'true',per_page: "50" });
         setCustomerCategoryOptions((cat?.data || []).map((c: any) => ({ label: `${c.customer_category_name || ''}`, value: String(c.id) })));
       } catch (e) { }
       try {
-        const ic = await itemCategory({ dropdown: 'true' });
+        const ic = await itemCategory({ dropdown: 'true',per_page: "50" });
         setItemCategoryOptions((ic?.data || []).map((c: any) => ({ label: c.category_name || c.name || "", value: String(c.id) })));
       } catch (e) { }
     })();
@@ -914,7 +914,7 @@ export default function AddPricing() {
         const handleCompanySearch = async (q: string) => {
           if (!q || q.trim().length === 0) return companyOptions;
           try {
-            const res = await companyListGlobalSearch({ query: q, dropdown: 'true' });
+            const res = await companyListGlobalSearch({ query: q, dropdown: 'true' ,per_page: "50"});
             const data = Array.isArray(res?.data) ? res.data : [];
             return data.map((c: any) => ({ value: String(c.id), label: `${c.company_code || c.name || ""} - ${c.company_name || c.name || ""}` }));
           } catch (err) {
@@ -925,7 +925,7 @@ export default function AddPricing() {
         const handleRegionSearch = async (q: string) => {
           if (!q || q.trim().length === 0) return regionOptions;
           try {
-            const params: any = { query: q, dropdown: 'true' };
+            const params: any = { query: q, dropdown: 'true',per_page: "50" };
             if (keyValue["Company"] && keyValue["Company"].length > 0) params.company_id = keyValue["Company"].join(",");
             const res = await regionGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
@@ -938,7 +938,7 @@ export default function AddPricing() {
         const handleAreaSearch = async (q: string) => {
           if (!q || q.trim().length === 0) return areaOptions;
           try {
-            const params: any = { query: q, dropdown: 'true' };
+            const params: any = { query: q, dropdown: 'true', per_page: "50" };
             if (keyValue["Region"] && keyValue["Region"].length > 0) params.region_id = keyValue["Region"].join(",");
             const res = await subRegionListGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
@@ -951,7 +951,7 @@ export default function AddPricing() {
         const handleWarehouseSearch = async (q: string) => {
           if (!q || q.trim().length === 0) return warehouseOptions;
           try {
-            const params: any = { query: q, dropdown: 'true' };
+            const params: any = { query: q, dropdown: 'true',per_page: "50" };
             if (keyValue["Area"] && keyValue["Area"].length > 0) params.area_id = keyValue["Area"].join(",");
             const res = await warehouseListGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
@@ -964,7 +964,7 @@ export default function AddPricing() {
         const handleRouteSearch = async (q: string) => {
           if (!q || q.trim().length === 0) return routeOptions;
           try {
-            const params: any = { query: q, dropdown: 'true' };
+            const params: any = { query: q, dropdown: 'true',per_page: "50" };
             if (keyValue["Warehouse"] && keyValue["Warehouse"].length > 0) params.warehouse_id = keyValue["Warehouse"].join(",");
             const res = await routeGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
@@ -977,7 +977,7 @@ export default function AddPricing() {
         const handleCustomerCategorySearch = async (q: string) => {
           if (!q || q.trim().length === 0) return customerCategoryOptions || [];
           try {
-            const params: any = { query: q, dropdown: 'true' };
+            const params: any = { query: q, dropdown: 'true', per_page: "50" };
             if (keyValue["Channel"] && keyValue["Channel"].length > 0) {
               params.channel_id = keyValue["Channel"].join(",");
             }
@@ -992,7 +992,7 @@ export default function AddPricing() {
         const handleChannelSearch = async (q: string) => {
           if (!q || q.trim().length === 0) return channelOptions || [];
           try {
-            const res = await channelList({ query: q, dropdown: 'true' });
+            const res = await channelList({ query: q, dropdown: 'true', per_page: "50" });
             const data = Array.isArray(res?.data) ? res.data : [];
             return data.map((c: any) => ({
               value: String(c.id),
@@ -1006,7 +1006,7 @@ export default function AddPricing() {
         const handleItemCategorySearch = async (q: string) => {
           if (!q || q.trim().length === 0) return itemCategoryOptions || [];
           try {
-            const res = await itemCategory({ query: q, dropdown: 'true' });
+            const res = await itemCategory({ query: q, dropdown: 'true', per_page: "50" });
             const data = Array.isArray(res?.data) ? res.data : [];
             return data.map((c: any) => ({ value: String(c.id), label: c.category_name || c.name || "" }));
           } catch (err) {
@@ -1037,7 +1037,7 @@ export default function AddPricing() {
               params.item_category_id = keyValue["Item Category"].join(",");
             }
             params.allData = "true";
-            // params.per_page = "100000";
+            params.per_page = "100000";
             params.dropdown = 'true'
             const res = await itemGlobalSearch(params);
             const data = Array.isArray(res?.data) ? res.data : [];
