@@ -191,6 +191,7 @@ export default function AddEditRoute() {
                         <div className="flex flex-col">
                             <InputFields
                                 required
+                                searchable
                                 label="Item"
                                 value={form.product_id}
                                 onChange={(e) => handleChange("product_id", e.target.value)}
@@ -205,9 +206,7 @@ export default function AddEditRoute() {
                         <div className="flex flex-col">
                             <InputFields
                                 required
-                                searchable={true}
                                 label="Capacity"
-                                // isSingle={false}
                                 value={form.capacity}
                                 onChange={(e) => {
                                     handleChange("capacity", e.target.value);

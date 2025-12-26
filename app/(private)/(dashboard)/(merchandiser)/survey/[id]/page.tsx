@@ -299,12 +299,12 @@ export default function AddSurveyTabs() {
         return;
       }
 
+      // ✅ Validate all questions first (NO API CALL YET)
       for (const [idx, q] of questions.entries()) {
         try {
           await stepSchemas[1].validate(q, { abortEarly: false });
         } catch (err: any) {
           if (err instanceof Yup.ValidationError) {
-            // collect question-level validation errors
             const map: Record<string, string> = {};
             err.inner.forEach((e: any) => {
               if (!e.path) return;
@@ -317,25 +317,21 @@ export default function AddSurveyTabs() {
             setQuestionErrors((prev) => ({ ...prev, [idx]: map }));
             return;
           }
-          return;
         }
-
-        const payload = {
-          survey_id: Number(q.survey_id || createdSurveyId || values.survey_id),
-          question: q.question,
-          survey_question_code: q.survey_question_code || generateSurveyQuestionCode(),
-          question_type: mapQuestionTypeForApi(q.questionType),
-          question_based_selected: typesWithOptions.includes(q.questionType)
-            ? q.options.filter((o) => o.trim() !== "").join(",")
-            : ["textbox", "comment box"].includes(q.questionType)
-              ? ""
-              : undefined,
-        };
-
-        await addSurveyQuestion(payload);
       }
 
-      showSnackbar("All questions added successfully", "success");
+      // ✅ BUILD FINAL PAYLOAD (THIS IS THE MAGIC)
+      const payload = buildSurveyQuestionsPayload(
+        createdSurveyId,
+        questions
+      );
+
+      console.log("FINAL PAYLOAD 🔥", payload);
+
+      // ✅ SINGLE API CALL
+      await addSurveyQuestion(payload as any);
+
+      showSnackbar("Questions added successfully", "success");
       router.push("/survey");
     } catch (err) {
       showSnackbar("Please check all question fields carefully.", "error");
@@ -344,14 +340,21 @@ export default function AddSurveyTabs() {
     }
   };
 
+
   // Save questions without navigating away — used for Save -> Preview flow
-  const handleSaveQuestions = async (values: SurveyFormValues, redirectAfter = false): Promise<boolean> => {
+  const handleSaveQuestions = async (
+    values: SurveyFormValues,
+    redirectAfter = true
+  ): Promise<boolean> => {
     setSavingAll(true);
+
     try {
       if (!createdSurveyId) {
         showSnackbar("Please create a survey first.", "error");
         return false;
       }
+
+      // ✅ Validate all questions
       for (const [idx, q] of questions.entries()) {
         try {
           await stepSchemas[1].validate(q, { abortEarly: false });
@@ -367,39 +370,31 @@ export default function AddSurveyTabs() {
               }
             });
             setQuestionErrors((prev) => ({ ...prev, [idx]: map }));
-            setSavingAll(false);
             return false;
           }
-          setSavingAll(false);
-          return false;
-        }
-
-        const payload = {
-          survey_id: Number(q.survey_id || createdSurveyId || values.survey_id),
-          question: q.question,
-          survey_question_code: q.survey_question_code || generateSurveyQuestionCode(),
-          question_type: mapQuestionTypeForApi(q.questionType),
-          question_based_selected: typesWithOptions.includes(q.questionType)
-            ? q.options.filter((o) => o.trim() !== "").join(",")
-            : ["textbox", "comment box"].includes(q.questionType)
-              ? ""
-              : undefined,
-        };
-
-        if (q.question_id) {
-          await UpdateSurveyQuestion(q.question_id.toString(), payload as any);
-        } else {
-          await addSurveyQuestion(payload as any);
         }
       }
 
-      showSnackbar("Questions saved successfully ", "success");
-      // make all questions read-only after save and switch to preview mode
-      setQuestions((prev) => prev.map((qq) => ({ ...qq, editable: false })));
+      // ✅ FINAL PAYLOAD
+      const payload = buildSurveyQuestionsPayload(
+        createdSurveyId,
+        questions
+      );
+
+      console.log("FINAL PAYLOAD 🔥", payload);
+
+      // ✅ SINGLE API CALL
+      await addSurveyQuestion(payload as any);
+
+      showSnackbar("Questions saved successfully", "success");
+
+      setQuestions((prev) => prev.map((q) => ({ ...q, editable: false })));
       setIsPreviewMode(true);
+
       if (redirectAfter) {
         router.push("/survey");
       }
+
       return true;
     } catch (err) {
       showSnackbar("Please check all question fields carefully.", "error");
@@ -408,6 +403,7 @@ export default function AddSurveyTabs() {
       setSavingAll(false);
     }
   };
+
 
   // Save a single question (per-question Save button)
   const handleSaveSingleQuestion = async (
@@ -526,6 +522,31 @@ export default function AddSurveyTabs() {
       },
     ]);
   };
+
+  // 🔥 BUILD FINAL PAYLOAD (DO NOT CHANGE UI)
+  const buildSurveyQuestionsPayload = (
+    surveyId: string,
+    questions: {
+      question: string;
+      questionType: string;
+      options: string[];
+      survey_question_code?: string;
+    }[]
+  ) => {
+    return {
+      survey_id: Number(surveyId),
+      survey_question_code:
+        questions[0]?.survey_question_code || generateSurveyQuestionCode(),
+      questions: questions.map((q) => ({
+        question: q.question,
+        question_type: mapQuestionTypeForApi(q.questionType),
+        question_based_selected: typesWithOptions.includes(q.questionType)
+          ? q.options.filter((o) => o.trim() !== "").join(",")
+          : "",
+      })),
+    };
+  };
+
 
   //  Dynamic Tab Renderer
   const renderTabContent = (

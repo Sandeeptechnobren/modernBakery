@@ -114,6 +114,7 @@ export default function StockInStoreAddPage() {
             try {
                 const res = await stockInStoreById(id);
                 const data = res.data;
+                console.log(res.data, "res");
 
                 setCode(data.code ?? "");
 
@@ -123,10 +124,7 @@ export default function StockInStoreAddPage() {
                     activity_name: data.activity_name ?? "",
                     from: data.date_range?.from ?? "",
                     to: data.date_range?.to ?? "",
-                    customer: data?.assign_customers?.map((c: any) => ({
-                        label: c.name,
-                        value: c.id,
-                    })) ?? [],
+                    customer: data?.assign_customers?.map((c: any) => c.id.toString()) ?? [],
                 });
 
                 // hydrate table rows + UOMs
@@ -145,7 +143,7 @@ export default function StockInStoreAddPage() {
                             capacity: String(inv.capacity ?? ""),
                             UOM: uoms.map((u: any) => ({
                                 label: u.name,
-                                value: String(u.id),
+                                value: String(u.uom_id),
                             })),
                         };
                     }) || [];
@@ -158,6 +156,7 @@ export default function StockInStoreAddPage() {
             }
         })();
     }, [id, isEditMode]);
+    console.log(itemData, "itemData");
 
     /* -------------------------------------------------------------------------- */
     /*                               ITEM HANDLERS                                */
@@ -182,7 +181,7 @@ export default function StockInStoreAddPage() {
                 uom_id: "",
                 UOM: uoms.map((u: any) => ({
                     label: u.name,
-                    value: String(u.id),
+                    value: String(u.uom_id),
                 })),
             };
             return copy;
@@ -341,11 +340,12 @@ export default function StockInStoreAddPage() {
                                     name="customer"
                                     options={companyCustomersOptions}
                                     value={values.customer}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
                                         handleChange({
                                             target: { name: "customer", value: e.target.value },
-                                        })
-                                    }
+                                        });
+                                        console.log(e.target.value, "e.target.value");
+                                    }}
                                 />
                             </div>
 
@@ -353,6 +353,7 @@ export default function StockInStoreAddPage() {
                                 <Table
                                     data={itemData.map((r, i) => ({ ...r, idx: i }))}
                                     config={{
+                                        showNestedLoading: false,
                                         columns: [
                                             {
                                                 key: "item_id",

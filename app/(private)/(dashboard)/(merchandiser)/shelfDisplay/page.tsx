@@ -8,6 +8,7 @@ import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
 import Table, {
   listReturnType,
+  searchReturnType,
   TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
@@ -20,13 +21,15 @@ import {
 } from "@/app/services/merchandiserApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import { shelfDisplayGlobalSearch } from "@/app/services/assetsApi";
+import { formatDate } from "../../(master)/salesTeam/details/[uuid]/page";
 
 interface ShelfDisplayItem {
   uuid: string;
-  date: string;
-  name: string;
-  customer_code: string;
-  customer_name: string;
+  self_name: string;
+  height: string;
+  width: string;
+  depth: string;
   valid_from: string;
   valid_to: string;
 }
@@ -138,6 +141,43 @@ export default function ShelfDisplay() {
     setLoading(true);
   }, []);
 
+  const searchShelfDisplay = useCallback(
+    async (searchQuery: string): Promise<searchReturnType> => {
+      setLoading(true);
+      try {
+        console.log(searchQuery);
+        // always start from page 1 for a new search
+        const res = await shelfDisplayGlobalSearch({
+          search: searchQuery,
+        });
+
+        setLoading(false);
+        if (res.error) throw new Error(res.message || "Search failed");
+
+        const data: TableDataType[] = res.data.map((item: ShelfDisplayItem) => ({
+          id: item.uuid,
+          self_name: item.self_name,
+          height: item.height,
+          width: item.width,
+          depth: item.depth,
+          valid_from: item.valid_from,
+          valid_to: item.valid_to,
+        }));
+        return {
+          data,
+          total: res.pagination?.total || data.length,
+          currentPage: res.pagination?.current_page || 1,
+          pageSize: res.pagination?.per_page,
+        };
+      } catch (err) {
+        setLoading(false);
+        showSnackbar((err as Error).message, "error");
+        return { data: [], total: 0, currentPage: 1, pageSize: 10 };
+      }
+    },
+    [setLoading, showSnackbar]
+  );
+
   return (
     <>
 
@@ -148,6 +188,7 @@ export default function ShelfDisplay() {
           config={{
             api: {
               list: fetchShelfDisplay,
+              search: searchShelfDisplay,
             },
             header: {
               title: "Shelf Display",
@@ -174,7 +215,7 @@ export default function ShelfDisplay() {
                 // },
                 // }
               ],
-              searchBar: false,
+              searchBar: true,
               columnFilter: true,
               actions: can("create") ? [
                 <SidebarBtn
@@ -197,22 +238,12 @@ export default function ShelfDisplay() {
               {
                 key: "valid_from",
                 label: "Valid From",
-                render: (row: TableDataType) => {
-                  const dateStr = row.valid_from;
-                  if (!dateStr) return "";
-                  const [y, m, d] = dateStr.split("T")[0].split("-");
-                  return `${d}-${m}-${y}`;
-                },
+                render: (row: TableDataType) => formatDate(row.valid_from),
               },
               {
                 key: "valid_to",
                 label: "Valid To",
-                render: (row: TableDataType) => {
-                  const dateStr = row.valid_to;
-                  if (!dateStr) return "";
-                  const [y, m, d] = dateStr.split("T")[0].split("-");
-                  return `${d}-${m}-${y}`;
-                },
+                render: (row: TableDataType) => formatDate(row.valid_to),
               },
             ],
             rowSelection: true,

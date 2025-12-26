@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { searchReturnType, TableDataType } from "@/app/components/customTable";
 import ImagePreviewModal from "@/app/components/ImagePreviewModal";
 
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -13,6 +13,14 @@ import {
   exportCompaignData,
 } from "@/app/services/merchandiserApi";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+
+interface CampaignInformationItem {
+  uuid: string;
+  code: string;
+  merchandiser: string;
+  customer: string;
+  feedback: string;
+}
 
 export default function CampaignPage() {
   const { can, permissions } = usePagePermissions();
@@ -120,6 +128,41 @@ export default function CampaignPage() {
     }
   };
 
+  const searchCampaign = useCallback(
+    async (searchQuery: string): Promise<searchReturnType> => {
+      setLoading(true);
+      try {
+        console.log(searchQuery);
+        // always start from page 1 for a new search
+        const res = await campaignInformationList({
+          search: searchQuery,
+        });
+
+        setLoading(false);
+        if (res.error) throw new Error(res.message || "Search failed");
+
+        const data: TableDataType[] = res.data.map((item: CampaignInformationItem) => ({
+          id: item.uuid,
+          code: item.code,
+          merchandiser: item.merchandiser,
+          customer: item.customer,
+          feedback: item.feedback,
+        }));
+        return {
+          data,
+          total: res.pagination?.last_page || data.length,
+          currentPage: res.pagination?.current_page || 1,
+          pageSize: res.pagination?.per_page,
+        };
+      } catch (err) {
+        setLoading(false);
+        showSnackbar((err as Error).message, "error");
+        return { data: [], total: 0, currentPage: 1, pageSize: 50 };
+      }
+    },
+    [setLoading, showSnackbar]
+  );
+
   /* ================= RENDER ================= */
   return (
     <div className="flex flex-col h-full">
@@ -127,7 +170,7 @@ export default function CampaignPage() {
         <Table
           refreshKey={refreshKey}
           config={{
-            api: { list: fetchComplaintFeedback },
+            api: { list: fetchComplaintFeedback, search: searchCampaign },
             header: {
               title: "Campaigns Information",
               threeDot: [
@@ -142,7 +185,7 @@ export default function CampaignPage() {
                   onClick: () => handleExport("xlsx"),
                 },
               ],
-              searchBar: false,
+              searchBar: true,
             },
             footer: { nextPrevBtn: true, pagination: true },
             rowSelection: true,

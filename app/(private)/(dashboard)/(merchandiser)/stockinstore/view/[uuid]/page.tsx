@@ -19,10 +19,12 @@ import { formatDate } from "@/app/(private)/(dashboard)/(master)/salesTeam/detai
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { customer } from "@/app/(private)/data/customerDetails";
 import Drawer from "@mui/material/Drawer";
+import { inventoryPostByStock } from "@/app/services/assetsApi";
 
 export const tabs = [
   { name: "Overview" },
-  { name: "Inventories" },
+  { name: "Assign Inventory" },
+  { name: "View Inventory Post" },
 ];
 
 interface StockInStoreItem {
@@ -277,6 +279,74 @@ export default function Page() {
             )}
           </div>
         </div>
+      )}
+      {activeTab === 2 && (
+        <Table
+          config={{
+            api: {
+              list: async (page: number = 1, pageSize: number = 50) => {
+                const res = await inventoryPostByStock(uuid, {
+                  page: page.toString(),
+                  per_page: pageSize.toString(),
+                });
+
+                if (res.error) {
+                  throw new Error(res.data?.message || "Unable to fetch inventory post");
+                }
+
+                const list = res.data || [];
+
+                const tableData = list.map((item: any) => ({
+                  id: item.id,
+                  uuid: item.uuid,
+                  date: item.date,
+                  item_code: item?.item_code || "",
+                  item_name: item?.item_name || "",
+                  customer_code: item.customer_code,
+                  customer_name: item.customer_name,
+                  uom: item.uom,
+                  capacity: item.capacity || "0",
+                  good_salable: item.good_salable || "0",
+                  refill_qty: item.refill_qty || "0",
+                  reorder_qty: item.reorder_qty || "0",
+                  fill_qty: item.fill_qty || "0",
+                  is_out_of_stock: item.is_out_of_stock || "0",
+                }));
+
+                return {
+                  data: tableData,
+
+                  // ✅ IMPORTANT FOR PAGINATION
+                  total: res.pagination?.last_page ?? 1,
+                  currentPage: res.pagination?.current_page ?? page,
+                  pageSize: res.pagination?.per_page ?? pageSize,
+                  lastPage: res.pagination?.last_page ?? 1,
+                };
+              }
+
+
+            },
+            footer: { nextPrevBtn: true, pagination: true },
+            table: {
+              height: "400px"
+            },
+            columns: [
+              { key: "date", label: "Date", render: (item: any) => formatDate(item.date) },
+              { key: "item_code", label: "Item Code" },
+              { key: "item_name", label: "Item Name" },
+              { key: "customer_code", label: "Customer Code" },
+              { key: "customer_name", label: "Customer Name" },
+              { key: "uom", label: "UOM" },
+              { key: "capacity", label: "Capacity" },
+              { key: "good_salable", label: "Good Saleable" },
+              { key: "refill_qty", label: "Refill Qty" },
+              { key: "reorder_qty", label: "Reorder Qty" },
+              { key: "fill_qty", label: "Fill Qty" },
+              { key: "is_out_of_stock", label: "Out Of Stock" },
+            ],
+            pageSize: 50
+          }}
+        />
       )}
     </>
   );

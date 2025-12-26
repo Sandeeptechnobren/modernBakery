@@ -803,3 +803,26 @@ export const serviceTerritoryExportAll = async (params?: Params) => {
     return handleError(error);
   }
 };
+
+export const inventoryPostByStock = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/merchendisher/stockinstore/posts/${uuid}`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const shelfDisplayGlobalSearch = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/merchendisher/shelves/global-search`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

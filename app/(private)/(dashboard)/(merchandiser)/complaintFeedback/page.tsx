@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 
-import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
+import Table, { listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
@@ -21,6 +21,14 @@ const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
+
+interface ComplaintFeedbackItem {
+  uuid: string;
+  code: string;
+  merchandiser: string;
+  customer: string;
+  feedback: string;
+}
 
 export default function Complaint() {
   const { can, permissions } = usePagePermissions();
@@ -131,6 +139,41 @@ export default function Complaint() {
     }
   };
 
+  const searchComplaintFeedback = useCallback(
+    async (searchQuery: string): Promise<searchReturnType> => {
+      setLoading(true);
+      try {
+        console.log(searchQuery);
+        // always start from page 1 for a new search
+        const res = await complaintFeedbackList({
+          search: searchQuery,
+        });
+
+        setLoading(false);
+        if (res.error) throw new Error(res.message || "Search failed");
+
+        const data: TableDataType[] = res.data.map((item: ComplaintFeedbackItem) => ({
+          id: item.uuid,
+          code: item.code,
+          merchandiser: item.merchandiser,
+          customer: item.customer,
+          feedback: item.feedback,
+        }));
+        return {
+          data: res?.data || [],
+          currentPage: res?.pagination?.current_page,
+          pageSize: res?.pagination?.per_page,
+          total: res?.pagination?.last_page,
+        };
+      } catch (err) {
+        setLoading(false);
+        showSnackbar((err as Error).message, "error");
+        return { data: [], total: 0, currentPage: 1, pageSize: 10 };
+      }
+    },
+    [setLoading, showSnackbar]
+  );
+
   // Handle image popup open
   //   const BASE_URL ="http://127.0.0.1:8000";
   //   const handleOpenImagePopup = (row: any) => {
@@ -154,7 +197,7 @@ export default function Complaint() {
           refreshKey={refreshKey}
 
           config={{
-            api: { list: fetchComplainedFeedback },
+            api: { list: fetchComplainedFeedback, search: searchComplaintFeedback },
             header: {
               title: "Complaint Feedback",
 
@@ -176,7 +219,7 @@ export default function Complaint() {
 
               ],
 
-              searchBar: false,
+              searchBar: true,
               columnFilter: true,
               // actions: [
               //   <SidebarBtn
