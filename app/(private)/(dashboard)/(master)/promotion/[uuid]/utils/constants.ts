@@ -16,6 +16,7 @@ export const initialKeys: KeyGroup[] = [
     options: [
       { id: "6", label: "Channel", isSelected: false },
       { id: "7", label: "Customer Category", isSelected: false },
+      { id: "11", label: "Customer SubCategory", isSelected: false },
       { id: "8", label: "Customer", isSelected: false },
     ],
   },

@@ -9,17 +9,14 @@ import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
-import AutoSuggestion from "@/app/components/autoSuggestion";
-import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
-import getExcise from "@/app/(private)/utils/excise";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { agentCustomerGlobalSearch, companyCustomersGlobalSearch, genearateCode, itemGlobalSearch, saveFinalCode, warehouseStock, warehouseStockTopOrders } from "@/app/services/allApi";
-import { invoiceBatch, returnCreate, returnWarehouseStockByCustomer } from "@/app/services/companyTransaction";
+import { companyCustomersGlobalSearch, genearateCode, returnWarehouseStock, saveFinalCode } from "@/app/services/allApi";
+import { invoiceBatch, returnCreate } from "@/app/services/companyTransaction";
 import { isValidDate } from "@/app/utils/formatDate";
 
 interface FormData {
@@ -385,7 +382,7 @@ export default function PurchaseOrderAddEditPage() {
         setSkeleton(prev => ({ ...prev, item: true }));
         
         // Fetch warehouse stocks - this API returns all needed data including pricing and UOMs
-        const stockRes = await warehouseStock({warehouse_id: warehouseId});
+        const stockRes = await returnWarehouseStock({warehouse_id: warehouseId});
 
         console.log(stockRes.data)
   
@@ -719,7 +716,7 @@ export default function PurchaseOrderAddEditPage() {
         vat,
         net_total: net,
         total,
-        sap_id: sapIdValue,
+        invoice_sap_id: sapIdValue,
         batch_number: (item as ItemData).Batch ?? "",
         expiry_date: (item as ItemData).Expiry ?? "",
         type: (item as ItemData).Type ?? "",

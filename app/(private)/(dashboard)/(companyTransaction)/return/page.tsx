@@ -23,17 +23,17 @@ import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const columns = [
   { key: "return_code", label: "Return Code", showByDefault: true },
-  {
-    key: "company_name",
-    label: "Company Name",
-    showByDefault: true,
-    render: (row: TableDataType) => {
-      const code = row.company_code ?? "";
-      const name = row.company_name ?? "";
-      if (!code && !name) return "-";
-      return `${code}${code && name ? " - " : ""}${name}`;
-    },
-  },
+  // {
+  //   key: "company_name",
+  //   label: "Company Name",
+  //   showByDefault: true,
+  //   render: (row: TableDataType) => {
+  //     const code = row.company_code ?? "";
+  //     const name = row.company_name ?? "";
+  //     if (!code && !name) return "-";
+  //     return `${code}${code && name ? " - " : ""}${name}`;
+  //   },
+  // },
   {
     key: "customer_name",
     label: "Customer Name",
@@ -182,18 +182,18 @@ export default function CustomerInvoicePage() {
     }
   };
 
-  useEffect(() => {
-    setRefreshKey((k) => k + 1);
-  }, [
-    companyOptions,
-    customerSubCategoryOptions,
-    routeOptions,
-    warehouseAllOptions,
-    channelOptions,
-    salesmanOptions,
-    areaOptions,
-    regionOptions,
-  ]);
+  // useEffect(() => {
+  //   setRefreshKey((k) => k + 1);
+  // }, [
+  //   companyOptions,
+  //   customerSubCategoryOptions,
+  //   routeOptions,
+  //   warehouseAllOptions,
+  //   channelOptions,
+  //   salesmanOptions,
+  //   areaOptions,
+  //   regionOptions,
+  // ]);
 
   return (
     <>
@@ -348,7 +348,7 @@ export default function CustomerInvoicePage() {
                                 { key: "batch_no", label: "Batch No" },
                                 { key: "actual_expiry_date", label: "Expiry Date", render: (value: TableDataType) => <>{value.actual_expiry_date ? formatWithPattern(new Date(value.actual_expiry_date),"DD MMM YYYY","en-GB").toLowerCase() : ""}</> },
                                 { key: "item_name", label: "Item Name", render: (value: TableDataType) => <>{value.item_code ? `${value.item_code}` : ""} {value.item_code && value.item_name ? " - " : ""} {value.item_name ? value.item_name : ""}</> },
-                                { key: "uom", label: "UOM" },
+                                { key: "uom_name", label: "UOM" },
                                 { key: "qty", label: "Quantity", render: (value: TableDataType) => <>{toInternationalNumber(value.qty, { maximumFractionDigits: 0 }) || '0'}</> },
                                 { key: "net", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.net) || '0.00'}</> },
                                 { key: "vat", label: "VAT", render: (value: TableDataType) => <>{toInternationalNumber(value.vat) || '0.00'}</> },

@@ -37,9 +37,9 @@ export default function AddDiscount() {
   // 2. Data Fetching Hook
   const {
     companyOptions, regionOptions, warehouseOptions, areaOptions, channelOptions,
-    customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions,
+    customerCategoryOptions, agentCustomerOptions, itemCategoryOptions, fetchRegionOptions,
     fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions,
-    fetchCompanyCustomersOptions, fetchItemsCategoryWise, discountTypeOptions, salesmanTypeOptions, projectOptions,
+    ensureAgentCustomerLoaded, fetchItemsCategoryWise, discountTypeOptions, salesmanTypeOptions, projectOptions,
     ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureDiscountTypeLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureItemLoaded
   } = useAllDropdownListData();
 
@@ -80,8 +80,8 @@ export default function AddDiscount() {
   const customerDropdownMap = useMemo(() => ({
     Channel: channelOptions,
     "Customer Category": customerCategoryOptions,
-    Customer: companyCustomersOptions,
-  }), [channelOptions, customerCategoryOptions, companyCustomersOptions]);
+    Customer: agentCustomerOptions,
+  }), [channelOptions, customerCategoryOptions, agentCustomerOptions]);
 
   const itemDropdownMap = useMemo(() => ({
     "Item Category": itemCategoryOptions,
@@ -105,8 +105,8 @@ export default function AddDiscount() {
     fetchWarehouseOptions("");
     fetchRouteOptions("")
     fetchCustomerCategoryOptions("");
-    fetchCompanyCustomersOptions("")
-  }, [fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions])
+    ensureAgentCustomerLoaded()
+  }, [fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, ensureAgentCustomerLoaded])
 
   // Item Category -> Items
   useEffect(() => {

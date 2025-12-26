@@ -13,6 +13,7 @@ export type LinkDataType = {
   leadingIcon: IconifyIcon | string;
   trailingIcon?: IconifyIcon | string;
   iconColor?: string;
+  permissions?:[]
   children?: LinkDataType[];
 };
 

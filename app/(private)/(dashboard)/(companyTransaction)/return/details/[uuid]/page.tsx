@@ -25,7 +25,7 @@ const columns = [
     { key: "index", label: "#" },
     { key: "item_name", label: "Item Name", render: (value: TableDataType) => <>{value.item_code ? `${value.item_code}` : ""} {value.item_code && value.item_name ? " - " : ""} {value.item_name ? value.item_name : ""}</> },
     { key: "uom_name", label: "UOM" },
-    { key: "qty", label: "Quantity", render: (value: TableDataType) => <>{toInternationalNumber(value.quantity) || '0'}</> },
+    { key: "qty", label: "Quantity", render: (value: TableDataType) => <>{toInternationalNumber(value.qty, { maximumFractionDigits: 0 }) || '0'}</> },
     { key: "return_type", label: "Return Type"},
     { key: "reason", label: "Return Reason", render: (value: TableDataType) => <>{value.return_type === "good" ? reasonObj.good?.find(it => it.value === value.reason)?.label : reasonObj.bad?.find(it => it.value === value.reason)?.label}</> },
     // { key: "net_total", label: "Net", render: (value: TableDataType) => <>{toInternationalNumber(value.net_total) || '0.00'}</> },
@@ -77,7 +77,7 @@ interface ReturnData {
             uom_id: number,
             uom_name: string,
             item_price: number,
-            quantity: number,
+            qty: number,
             vat: number,
             discount: number,
             excise: number,
@@ -142,8 +142,8 @@ export default function OrderDetailPage() {
 
     const keyValueData = [
         // { key: "Excise", value: CURRENCY + " " + toInternationalNumber(data?. ?? 0) },
-        { key: "VAT", value: CURRENCY + " " + toInternationalNumber(data?.vat ?? 0) },
         { key: "Net Total", value: CURRENCY + " " + toInternationalNumber(data?.net ?? 0) },
+        { key: "VAT", value: CURRENCY + " " + toInternationalNumber(data?.vat ?? 0) },
     ];
 
     // const exportFile = async () => {
@@ -249,7 +249,7 @@ export default function OrderDetailPage() {
                         <div className="flex md:justify-end">
                             <div className="text-primary-bold text-[14px] md:text-right">
                                 <div>
-                                    <span className={"font-bold"}>Driver Name: {" "}</span>
+                                    {data?.driver_code || data?.driver_name && <span className={"font-bold"}>Driver Name: {" "}</span>}
                                     {data?.driver_code && data?.driver_code}
                                     {data?.driver_code && data?.driver_name && " - "}
                                     {data?.driver_code && data?.driver_name}

@@ -224,6 +224,15 @@ export default function Pricing() {
                         rowSelection: true,
                         rowActions: [
                             {
+                                icon: "lucide:eye",
+                                onClick: (row: object) => {
+                                    const r = row as TableDataType & { uuid?: string };
+                                    const targetId = String(r.uuid ?? (r as any).id ?? "");
+                                    if (!targetId) return;
+                                    router.push(`/promotion/details/${encodeURIComponent(targetId)}`);
+                                },
+                            },
+                            ...(can("edit") ? [{
                                 icon: "lucide:edit-2",
                                 onClick: (row: object) => {
                                     const r = row as TableDataType & { uuid?: string };
@@ -231,6 +240,15 @@ export default function Pricing() {
                                     const targetId = String(r.uuid ?? (r as any).id ?? "");
                                     if (!targetId) return;
                                     router.push(`/promotion/${encodeURIComponent(targetId)}`);
+                                },
+                            }] : []),
+                            {
+                                icon: "lucide:copy",
+                                onClick: (row: object) => {
+                                    const r = row as TableDataType & { uuid?: string };
+                                    const targetId = String(r.uuid ?? (r as any).id ?? "");
+                                    if (!targetId) return;
+                                    router.push(`/promotion/add?copy_from=${encodeURIComponent(targetId)}`);
                                 },
                             },
                         ],
