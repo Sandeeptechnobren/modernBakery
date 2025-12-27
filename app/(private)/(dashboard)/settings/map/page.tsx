@@ -20,6 +20,7 @@ import Box from "@mui/material/Box";
 import Skeleton from "@mui/material/Skeleton";
 
 import axios from "axios";
+import ListItemButton from "@mui/material/ListItemButton";
 
 /* ================= TYPES ================= */
 interface Customer {
@@ -147,19 +148,21 @@ export default function SalesMapGoogle() {
 
           return (
             <React.Fragment key={s.id}>
-              <ListItem
-                button="true"
-                selected={selectedSalesman?.id === s.id}
-                onClick={() => handleSalesmanSelect(s)}
-              >
-                <ListItemAvatar>
-                  <Avatar src={s.avatar} />
-                </ListItemAvatar>
-                <ListItemText
-                  primary={s.name}
-                  secondary={`Visited: ${visited}/${s.customers.length}`}
-                />
-              </ListItem>
+             <ListItem disablePadding>
+  <ListItemButton
+    selected={selectedSalesman?.id === s.id}
+    onClick={() => handleSalesmanSelect(s)}
+  >
+    <ListItemAvatar>
+      <Avatar src={s.avatar} />
+    </ListItemAvatar>
+
+    <ListItemText
+      primary={s.name}
+      secondary={`Visited: ${visited}/${s.customers.length}`}
+    />
+  </ListItemButton>
+</ListItem>
               <Divider />
             </React.Fragment>
           );
@@ -180,7 +183,9 @@ export default function SalesMapGoogle() {
         mapContainerStyle={{ flex: 1 }}
         center={mapCenter}
         zoom={mapZoom}
-        onLoad={(map) => (mapRef.current = map)}
+        onLoad={(map) => {
+          (mapRef.current = map)
+        }}
         onZoomChanged={() =>
           mapRef.current && setMapZoom(mapRef.current.getZoom()!)
         }
