@@ -1,3 +1,4 @@
+import { useTheme } from "../../contexts/themeContext";
 import { Icon } from "@iconify-icon/react";
 import SearchBar from "../../components/searchBar";
 import IconButton from "../../components/iconButton";
@@ -91,6 +92,7 @@ export default function TopBar({
         return () => document.removeEventListener("fullscreenchange", handler);
     }, []);
 
+    const { mode } = useTheme();
     return (
         <div
             className={`absolute w-full flex flex-col items-center ${paddingLeft} peer-hover:pl-[250px]`}
@@ -99,20 +101,20 @@ export default function TopBar({
             <div className="w-full h-[60px] flex">
                 {/* Logo on horizontal sidebar */}
                 {horizontalSidebar && (
-                    <div className="w-[230px] px-[16px] py-[14px] bg-white border-b border-[#E9EAEB]">
+                    <div className="w-[230px] px-[16px] py-[14px] bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                         <Logo width={128} height={35} />
                     </div>
                 )}
 
                 {/* Top bar main content */}
-                <div className="w-full h-full px-[16px] py-[14px] flex justify-between items-center gap-1 sm:gap-0 bg-white border-b border-[#E9EAEB]">
+                <div className="w-full h-full px-[16px] py-[14px] flex justify-between items-center gap-1 sm:gap-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                     <div className="flex items-center gap-[20px]">
                         {!horizontalSidebar && (
                             <Icon
                                 icon="heroicons-outline:menu-alt-1"
                                 width={24}
                                 onClick={toggleOpen}
-                                className="cursor-pointer"
+                                className="cursor-pointer text-primary"
                             />
                         )}
                         <div className="w-full hidden sm:w-[320px] sm:block">
@@ -137,7 +139,7 @@ export default function TopBar({
                                 { title: "Payment received" },
                                 { title: "Delivery assigned" },
                             ]}
-                            buttonClassName="bg-[#F5F5F5] text-black"
+                            buttonClassName="bg-primary/10 text-primary dark:bg-primary/20"
                         />
                         <IconButton
                             icon="mi:settings"

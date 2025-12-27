@@ -4,6 +4,7 @@
 
 
 
+
 body {
   margin: 0;
   padding: 0;
@@ -11,6 +12,14 @@ body {
   font-family: "Twemoji Country Flags", "Inter", sans-serif;
   line-height: 20px;
   /* user-select: none; */
+}
+
+:root {
+  --primary-color: #3b82f6; /* Tailwind blue-500 as default */
+}
+
+.dark {
+  --primary-color: #2563eb; /* Tailwind blue-600 for dark mode */
 }
 
 @theme {
