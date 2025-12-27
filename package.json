@@ -27,8 +27,6 @@
     "framer-motion": "^12.23.12",
     "highcharts": "^12.4.0",
     "highcharts-react-official": "^3.2.3",
-    "highcharts": "^12.4.0",
-    "highcharts-react-official": "^3.2.3",
     "leaflet": "^1.9.4",
     "leaflet-polylinedecorator": "^1.6.0",
     "leaflet-routing-machine": "^3.2.12",

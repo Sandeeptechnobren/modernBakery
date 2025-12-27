@@ -339,6 +339,15 @@ export const initialLinkData: SidebarDataType[] = [
           },
         ],
       },
+      {
+        isActive: false,
+        href: "/settings/map",
+        label: "Map",
+        leadingIcon: "pepicons-pop:map",
+        // trailingIcon: "mdi-light:chevron-right",
+        iconColor: "text-yellow-400",
+       
+      }
     ],
   },
 ];

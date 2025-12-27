@@ -2845,6 +2845,16 @@ export const pricingHeaderById = async (uuid: string) => {
   }
 };
 
+export const getPromotionByWherehouses = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/master/promotion-headers/warehouse?warehouse_id=${uuid}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const editPricingHeader = async (uuid: string, payload: object) => {
   try {
     const res = await API.put(
