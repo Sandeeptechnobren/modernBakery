@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import StatusBtn from "@/app/components/statusBtn2";
 import Table, {
@@ -129,13 +129,17 @@ export default function NewCustomer() {
         {
             key: "getWarehouse",
             label: "Distributor ",
-            render: (row: TableDataType) =>
-                typeof row.getWarehouse === "object" &&
-                    row.getWarehouse !== null &&
-                    "warehouse_name" in row.getWarehouse
-                    ? (row.getWarehouse as { warehouse_name?: string })
-                        .warehouse_name || "-"
-                    : "-",
+            render: (row: TableDataType) => {
+                if (typeof row.getWarehouse === "object" && row.getWarehouse !== null) {
+                    const code = (row.getWarehouse as any).warehouse_code || "-";
+                    const name = (row.getWarehouse as any).warehouse_name || "-";
+                    if (!code && !name) return "-";
+                    if (code && !name) return code;
+                    if (!code && name) return name;
+                    return `${code} - ${name}`;
+                }
+                return "-";
+            },
             filter: {
                 isFilterable: true,
                 width: 320,
@@ -145,19 +149,19 @@ export default function NewCustomer() {
                 },
                 selectedValue: warehouseId,
             },
-
             showByDefault: true,
         },
         {
             key: "route",
             label: "Route",
             render: (row: TableDataType) => {
-                if (
-                    typeof row.route === "object" &&
-                    row.route !== null &&
-                    "route_name" in row.route
-                ) {
-                    return (row.route as { route_name?: string }).route_name || "-";
+                if (typeof row.route === "object" && row.route !== null) {
+                    const code = (row.route as any).route_code || "-";
+                    const name = (row.route as any).route_name || "-";
+                    if (!code && !name) return "-";
+                    if (code && !name) return code;
+                    if (!code && name) return name;
+                    return `${code} - ${name}`;
                 }
                 return typeof row.route === 'string' ? row.route : "-";
             },
@@ -170,7 +174,6 @@ export default function NewCustomer() {
                 },
                 selectedValue: routeId,
             },
-
             showByDefault: true,
         },
         { key: "contact_no", label: "Contact No." },
@@ -250,32 +253,46 @@ export default function NewCustomer() {
     const { showSnackbar } = useSnackbar();
     type TableRow = TableDataType & { id?: string };
 
+    // In-memory cache for newCustomerList API calls
+    const newCustomerListCache = useRef<{ [key: string]: any }>({});
+
     const fetchNewCustomers = useCallback(
         async (
             page: number = 1,
             pageSize: number = 5
         ): Promise<listReturnType> => {
+            const params: any = {
+                page: page.toString(),
+            };
+            if (selectedSubCategoryId) {
+                params.subcategory_id = selectedSubCategoryId;
+            }
+            if (warehouseId) {
+                params.warehouse = warehouseId;
+            }
+            if (channelId) {
+                params.outlet_channel_id = channelId;
+            }
+            if (routeId) {
+                params.route_id = routeId;
+            }
+            if (approvalStatus) {
+                params.approval_status = approvalStatus;
+            }
+            const cacheKey = JSON.stringify(params);
+            if (newCustomerListCache.current[cacheKey]) {
+                const listRes = newCustomerListCache.current[cacheKey];
+                return {
+                    data: Array.isArray(listRes.data) ? listRes.data : [],
+                    total: listRes?.pagination?.totalPages || 1,
+                    currentPage: listRes?.pagination?.page || 1,
+                    pageSize: listRes?.pagination?.limit || pageSize,
+                };
+            }
             try {
                 setLoading(true);
-                const params: any = {
-                    page: page.toString(),
-                };
-                if (selectedSubCategoryId) {
-                    params.subcategory_id = selectedSubCategoryId;
-                }
-                if (warehouseId) {
-                    params.warehouse = warehouseId;
-                }
-                if (channelId) {
-                    params.outlet_channel_id = channelId;
-                }
-                if (routeId) {
-                    params.route_id = routeId;
-                }
-                if (approvalStatus) {
-                    params.approval_status = approvalStatus;
-                }
                 const listRes = await newCustomerList(params);
+                newCustomerListCache.current[cacheKey] = listRes;
                 setLoading(false);
                 return {
                     data: Array.isArray(listRes.data) ? listRes.data : [],

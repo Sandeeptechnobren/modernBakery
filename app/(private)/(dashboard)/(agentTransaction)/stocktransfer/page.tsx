@@ -29,10 +29,15 @@ export default function StockTransferPage() {
         channelOptions,
         itemCategoryOptions,
         customerSubCategoryOptions,
+        ensureRegionLoaded,
+        ensureWarehouseLoaded
     } = useAllDropdownListData();
 
     const [refreshKey, setRefreshKey] = useState(0);
-
+    useEffect(() => {
+        ensureRegionLoaded();
+        ensureWarehouseLoaded();
+    }, [ensureRegionLoaded, ensureWarehouseLoaded]);
     // Refresh table when permissions load
     useEffect(() => {
         if (permissions.length > 0) {
@@ -127,6 +132,13 @@ export default function StockTransferPage() {
             key: "transfer_date",
             label: "Transfer Date",
             showByDefault: true,
+            render: (row: TableDataType) => {
+                // Show only date part (YYYY-MM-DD)
+                const val = row.transfer_date;
+                if (!val) return "-";
+                // If value is a string like "2025-12-26 12:15:42.379966"
+                return String(val).split(" ")[0];
+            },
         },
         {
             key: "source_warehouse",
@@ -179,8 +191,8 @@ export default function StockTransferPage() {
                         searchBar: false,
                         columnFilter: true,
                         filterByFields: [
-                            { key: "start_date", label: "From Date", type: "date" },
-                            { key: "end_date", label: "To Date", type: "date" },
+                            { key: "from_date", label: "From Date", type: "date" },
+                            { key: "to_date", label: "To Date", type: "date" },
                             {
                                 key: "source_warehouse",
                                 label: "Source Warehouse",

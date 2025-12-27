@@ -96,7 +96,7 @@ interface ItemData {
   item_name: string;
   // stored human-readable label for a selected item (used when server results don't include it)
   item_label?: string;
-  UOM: { label: string; value: string; price?: string; uom_type?: string }[];
+  UOM: { label: string; value: string; price?: string; uom_type?: string; upc?: string }[];
   uom_id?: string;
   Quantity: string;
   Price: string;
@@ -116,6 +116,8 @@ export default function ExchangeAddEditPage() {
       .typeError("Quantity must be a number")
       .min(1, "Quantity must be at least 1")
       .required("Quantity is required"),
+    region: Yup.string().required("Reason is required"),
+    return_type: Yup.string().required("Reason Type is required"),
   });
 
   const validationSchema = Yup.object({
@@ -125,21 +127,29 @@ export default function ExchangeAddEditPage() {
     items: Yup.array().of(itemRowSchema),
   });
 
-  const goodOptions = [{ label: "Near By Expiry", value: "0" },
-  { label: "Package Issue", value: "1" },
-  { label: "Not Saleable", value: "2" },];
-  const badOptions = [{ label: "Damage", value: "0" },
-  { label: "Expiry", value: "1" },
+  // static fallback options
+  const goodOptions = [
+    { label: "Near By Expiry", value: "0" },
+    { label: "Package Issue", value: "1" },
+    { label: "Not Saleable", value: "2" },
+  ];
+  const badOptions = [
+    { label: "Damage", value: "0" },
+    { label: "Expiry", value: "1" },
   ];
   const router = useRouter();
   const [returnTypeOptions, setReturnTypeOptions] = useState<{ label: string; value: string }[]>([]);
   const [goodReasonOptions, setGoodReasonOptions] = useState<{ label: string; value: string }[]>([]);
   const [rowUomOptions, setRowUomOptions] = useState<Record<string, { value: string; label: string; price?: string }[]>>({});
+  // reason options per row
   const [rowReasonOptions, setRowReasonOptions] = useState<Record<string, { label: string; value: string }[]>>({});
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
-  const { warehouseOptions } = useAllDropdownListData();
+  const { warehouseOptions,ensureWarehouseLoaded } = useAllDropdownListData();
 
+  useEffect(() => {
+    ensureWarehouseLoaded();
+  }, [ensureWarehouseLoaded]);
   // // 🔹 Fetch invoices (for AutoSuggestion multi-select)
   // const fetchInvoices = async (searchText: string) => {
   //   try {
@@ -204,6 +214,48 @@ export default function ExchangeAddEditPage() {
   const [itemLoading, setItemLoading] = useState<Record<number, { uom?: boolean; price?: boolean }>>({});
 
   const warehouseDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  // Helper to calculate remaining stock for an item, considering all rows except the current one
+  const getRemainingStock = (itemId: string, uomType: string, upc: number, currentIndex: number) => {
+    // Find the original stock for this item
+    let originalStock = 0;
+    const selectedItem = orderData?.find((it: any) => String(it.id) === itemId) ?? exchangeData.find((exchange: FormData) => exchange.id.toString() === itemId);
+    if (selectedItem && (selectedItem as any).warehouse_stock) {
+      originalStock = Number((selectedItem as any).warehouse_stock);
+    }
+    // Subtract the quantities from all other rows for this item
+    let usedPrimary = 0;
+    let usedSecondary = 0;
+    itemData.forEach((row, idx) => {
+      if (idx === currentIndex) return;
+      if (String(row.item_id) === String(itemId)) {
+        // Find UOM type for this row
+        let rowUomType = "primary";
+        let rowUpc = 1;
+        if (Array.isArray(row.UOM)) {
+          const uomObj = row.UOM.find((u: any) => String(u.value) === String(row.uom_id));
+          if (uomObj) {
+            rowUomType = uomObj.uom_type || "primary";
+            rowUpc = Number(uomObj.upc) || 1;
+          }
+        }
+        if (rowUomType === "secondary") {
+          usedSecondary += (Number(row.Quantity) || 0) * rowUpc;
+        } else {
+          usedPrimary += Number(row.Quantity) || 0;
+        }
+      }
+    });
+    // If current row is secondary, show remaining as (original - usedPrimary - usedSecondary) / upc
+    // If current row is primary, show remaining as (original - usedPrimary - usedSecondary)
+    if (uomType === "secondary") {
+      const remaining = Math.floor((originalStock - usedPrimary - usedSecondary) / (upc > 0 ? upc : 1));
+      return remaining >= 0 ? remaining : 0;
+    } else {
+      const remaining = originalStock - usedPrimary - usedSecondary;
+      return remaining >= 0 ? remaining : 0;
+    }
+  };
+
   const validateRow = async (index: number, row?: ItemData, options?: { skipUom?: boolean }) => {
     const rowData = row ?? itemData[index];
     if (!rowData) return;
@@ -217,6 +269,26 @@ export default function ExchangeAddEditPage() {
       region: rowData.region ?? "",
     };
     try {
+      // Find UOM type and upc for this row
+      let uomType = "primary";
+      let upc = 1;
+      if (Array.isArray(rowData.UOM)) {
+        const uomObj = rowData.UOM.find((u: any) => String(u.value) === String(rowData.uom_id));
+        if (uomObj) {
+          uomType = uomObj.uom_type || "primary";
+          upc = Number(uomObj.upc) || 1;
+        }
+      }
+      // Calculate remaining stock for this item/UOM
+      const remainingStock = getRemainingStock(String(rowData.item_id), uomType, upc, index);
+      // Stock validation when warehouse stock is available
+      const requestedQty = Number(rowData.Quantity);
+      if (requestedQty > remainingStock) {
+        const validationErrors: Record<string, string> = {};
+        validationErrors["Quantity"] = `Quantity cannot exceed available stock (${remainingStock})`;
+        setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
+        return;
+      }
       if (options?.skipUom) {
         // validate only item_id and Quantity
         const partialErrors: Record<string, string> = {};
@@ -232,15 +304,6 @@ export default function ExchangeAddEditPage() {
           const msg = typeof e === "object" && e !== null && "message" in e ? (e as any).message : undefined;
           if (msg) partialErrors["Quantity"] = String(msg);
         }
-
-        // Stock validation when warehouse stock is available
-        if (rowData?.item_id && rowData?.available_stock && rowData?.Quantity) {
-          const availableStock = Number(rowData.available_stock);
-          const requestedQty = Number(rowData.Quantity);
-          if (requestedQty > availableStock) {
-            partialErrors["Quantity"] = `Quantity cannot exceed available stock (${availableStock})`;
-          }
-        }
         if (Object.keys(partialErrors).length === 0) {
           setItemErrors((prev) => {
             const copy = { ...prev };
@@ -252,18 +315,6 @@ export default function ExchangeAddEditPage() {
         }
       } else {
         await itemRowSchema.validate(toValidate, { abortEarly: false });
-
-        // Stock validation when warehouse stock is available
-        if (rowData?.item_id && rowData?.available_stock && rowData?.Quantity) {
-          const availableStock = Number(rowData.available_stock);
-          const requestedQty = Number(rowData.Quantity);
-          if (requestedQty > availableStock) {
-            const validationErrors: Record<string, string> = {};
-            validationErrors["Quantity"] = `Quantity cannot exceed available stock (${availableStock})`;
-            setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
-            return;
-          }
-        }
         setItemErrors((prev) => {
           const copy = { ...prev };
           delete copy[index];
@@ -425,43 +476,40 @@ export default function ExchangeAddEditPage() {
   //   return options;
   // };
 
+  // ---------- Fetch returnType list ----------
   useEffect(() => {
-    // Fetch reason list on component mount
     (async () => {
       try {
         setLoading(true);
         const res = await returnType();
-        if (res && Array.isArray(res.data)) {
-          const list = res.data as Reason[];
-          const options = list.map((reason: Reason) => ({
-            label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
-            value: String(reason.id),
-          }));
-          setReturnTypeOptions(options);
-        }
-      } catch (error) {
-        console.error("Failed to fetch reason list:", error);
+        const list = Array.isArray(res?.data) ? (res.data as Reason[]) : [];
+        const options = list.map((r) => ({
+          label: r.reson || r.return_reason || r.return_type || String(r.id),
+          value: String(r.id),
+        }));
+        setReturnTypeOptions(options);
+      } catch (err) {
+        console.error("Failed to fetch returnType:", err);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
+
+  // ---------- Fetch reason list (good/bad) ----------
   useEffect(() => {
-    // Fetch reason list on component mount
     (async () => {
       try {
         setLoading(true);
         const res = await reasonList();
-        if (res && Array.isArray(res.data)) {
-          const list = res.data as Reason[];
-          const options = list.map((reason: Reason) => ({
-            label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
-            value: String(reason.id),
-          }));
-          setGoodReasonOptions(options);
-        }
-      } catch (error) {
-        console.error("Failed to fetch reason list:", error);
+        const list = Array.isArray(res?.data) ? (res.data as Reason[]) : [];
+        const options = list.map((reason: Reason) => ({
+          label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+          value: String(reason.id),
+        }));
+        setGoodReasonOptions(options);
+      } catch (err) {
+        console.error("Failed to fetch reason list:", err);
       } finally {
         setLoading(false);
       }
@@ -497,7 +545,7 @@ export default function ExchangeAddEditPage() {
     (item as any)[field] = value;
 
     // If user selects an item, update UI immediately and persist a label so selection survives searches
-    if (field === "item_id") {
+  if (field === "item_id") {
       item.item_id = value;
       if (!value) {
         item.item_name = "";
@@ -536,6 +584,7 @@ export default function ExchangeAddEditPage() {
               value: String(uom.id),
               price: String(price ?? ""),
               uom_type: uom.uom_type,
+              upc: uom.upc,
             };
           });
         } else {
@@ -567,9 +616,13 @@ export default function ExchangeAddEditPage() {
 
         item.Quantity = "1";
 
-        // Set available stock when present
-        if ((selectedItem as any)?.warehouse_stock) {
-          item.available_stock = String((selectedItem as any).warehouse_stock);
+        // Set available stock when present (dynamic, based on other rows)
+        if (selectedItem && (selectedItem as any)?.warehouse_stock) {
+          const firstUom = selectedItem?.item_uoms?.[0];
+          let uomType = firstUom?.uom_type || "primary";
+          let upc = Number(firstUom?.upc) || 1;
+          const remaining = getRemainingStock(String(selectedItem?.id ?? ""), uomType, upc, index);
+          item.available_stock = String(remaining);
         } else {
           item.available_stock = "";
         }
@@ -593,6 +646,16 @@ export default function ExchangeAddEditPage() {
       const selectedUOM = item.UOM.find((uom: any) => uom.value === value);
       if (selectedUOM?.price) {
         item.Price = selectedUOM.price;
+      }
+      // Update available_stock dynamically based on other rows
+      const selectedItem =
+        orderData?.find((it: any) => String(it.id) === item.item_id) ??
+        exchangeData.find((exchange: FormData) => exchange.id.toString() === item.item_id);
+      if (selectedItem && selectedUOM) {
+        let uomType = selectedUOM.uom_type || "primary";
+        let upc = Number(selectedUOM.upc) || 1;
+        const remaining = getRemainingStock(String(selectedItem?.id ?? ""), uomType, upc, index);
+        item.available_stock = String(remaining);
       }
     }
 
@@ -701,8 +764,7 @@ export default function ExchangeAddEditPage() {
       item_quantity: Number(item.Quantity) || null,
       uom_id: Number(item.uom_id) || null,
       total: Number(item.Total) || null,
-      region: item.return_reason ? String(item.return_reason) : null,
-      return_type: String(item.return_type) || null,
+      
     }));
 
     // Returns: only selected items from the collect table (item_id present)
@@ -715,6 +777,8 @@ export default function ExchangeAddEditPage() {
         uom_id: Number(item.uom_id) || null,
         total: Number(item.Total) || null,
         status: 1,
+        region: item.region !== undefined ? String(item.region) : null,
+      return_type: String(item.return_type) || null,
       }));
 
     return {
@@ -1062,35 +1126,6 @@ export default function ExchangeAddEditPage() {
                           },
                         },
                         {
-                          key: "region",
-                          label: "Reason",
-                          width: 150,
-                          render: (row) => {
-                            const idx = Number(row.idx);
-                            const err = itemErrors[idx]?.Quantity;
-                            return (
-                              <div>
-                                <InputFields
-                                  label=""
-                                  name="region"
-                                  placeholder="Enter Reason"
-                                  value={row.region}
-                                  disabled={!row.uom_id || !values.customer}
-                                  onChange={(e) => {
-                                    const raw = (e.target as HTMLInputElement).value;
-                                    const intPart = raw.split(".")[0];
-                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                    recalculateItem(Number(row.idx), "region", sanitized);
-                                  }}
-                                  min={1}
-                                  integerOnly={true}
-                                  error={err && err}
-                                />
-                              </div>
-                            );
-                          },
-                        },
-                        {
                           key: "return_type",
                           label: "Reason Type",
                           width: 150,
@@ -1102,18 +1137,51 @@ export default function ExchangeAddEditPage() {
                                 <InputFields
                                   label=""
                                   name="return_type"
+                                  options={returnTypeOptions}
                                   placeholder="Select Reason Type"
                                   value={row.return_type}
                                   disabled={!row.uom_id || !values.customer}
-                                  onChange={(e) => {
-                                    const raw = (e.target as HTMLInputElement).value;
-                                    const intPart = raw.split(".")[0];
-                                    const sanitized = intPart === "" ? "" : String(Math.max(0, parseInt(intPart, 10) || 0));
-                                    recalculateItem(Number(row.idx), "return_type", sanitized);
+                                  onChange={async (e) => {
+                                    const value = (e.target as HTMLInputElement).value;
+                                    recalculateItem(Number(row.idx), "return_type", value);
+                                    // fetch reasons for this type
+                                    try {
+                                      const res = await reasonList({ return_id: value });
+                                      const list = Array.isArray(res?.data) ? (res.data as Reason[]) : (Array.isArray(res) ? (res as Reason[]) : []);
+                                      const options = list.map((reason) => ({ label: reason.reson || reason.return_reason || reason.reason || reason.return_type || String(reason.id), value: String(reason.id) }));
+                                      setRowReasonOptions((prev) => ({ ...prev, [row.idx]: options }));
+                                    } catch (err) {
+                                      setRowReasonOptions((prev) => ({ ...prev, [row.idx]: [] }));
+                                    }
                                   }}
-                                  min={1}
-                                  integerOnly={true}
-                                  error={err && err}
+                                />
+                              </div>
+                            );
+                          },
+                        },
+                        {
+                          key: "region",
+                          label: "Reason",
+                          width: 150,
+                          render: (row) => {
+                            const idx = Number(row.idx);
+                            const err = itemErrors[idx]?.region;
+                            // Use per-row reason options if available, else fallback
+                            const fetched = rowReasonOptions[row.idx] || [];
+                            const fallback = row.return_type === "1" ? goodOptions : row.return_type === "2" ? badOptions : [];
+                            const options = fetched.length > 0 ? fetched : fallback;
+                            return (
+                              <div>
+                                <InputFields
+                                  label=""
+                                  name="region"
+                                  placeholder="Enter Reason"
+                                  options={options}
+                                  value={row.region}
+                                  disabled={!row.return_type || !row.uom_id || !values.customer}
+                                  onChange={(e) => {
+                                    recalculateItem(Number(row.idx), "region", (e.target as HTMLInputElement).value);
+                                  }}
                                 />
                               </div>
                             );

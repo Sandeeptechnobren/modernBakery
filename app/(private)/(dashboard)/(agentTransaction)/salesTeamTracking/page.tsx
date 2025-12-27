@@ -215,6 +215,7 @@ export default function SalesTrackingMap() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputFields
             label="Distributor"
+            searchable={true}
             value={form.warehouse}
             options={warehouseOptions}
             onChange={(e) => handleChange("warehouse", e)}
@@ -223,6 +224,7 @@ export default function SalesTrackingMap() {
 
           <InputFields
             label="Sales Team"
+            searchable={true}
             value={form.salesman}
             options={salesmanOptions}
             onChange={(e) => handleChange("salesman", e)}

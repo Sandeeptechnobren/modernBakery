@@ -1912,6 +1912,7 @@ function FilterBy() {
                                                 type={f.type === 'dateChange' ? 'dateChange' : f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : f.type === 'select' ? 'select' : 'text'}
                                                 options={f.options}
                                                 width="w-full"
+                                                searchable={true}
                                                 isSingle={typeof f.isSingle === 'boolean' ? f.isSingle : true}
                                                 multiSelectChips={!!f.multiSelectChips}
                                                 filters={filters}

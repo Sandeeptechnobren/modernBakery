@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import StatusBtn from "@/app/components/statusBtn2";
 import Table, {
@@ -17,6 +17,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import ApprovalStatus from "@/app/components/approvalStatus";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import FilterComponent from "@/app/components/filterComponent";
 
 export default function SalemanLoad() {
   const { can, permissions } = usePagePermissions();
@@ -81,17 +82,34 @@ export default function SalemanLoad() {
   });
   type TableRow = TableDataType & { id?: string };
 
+  // Cache for API results
+  const capsCollectionCache = useRef<{ [key: string]: any }>({});
+
+  // Helper to build cache key from params
+  const getCacheKey = (params: Record<string, string | number>) => {
+    return Object.entries(params).sort().map(([k, v]) => `${k}:${v}`).join("|");
+  };
+
   const fetchSalesmanLoadHeader = useCallback(
     async (
       page: number = 1,
       pageSize: number = 50
     ): Promise<listReturnType> => {
+      const params = { page: page.toString(), per_page: pageSize.toString() };
+      const cacheKey = getCacheKey(params);
+      if (capsCollectionCache.current[cacheKey]) {
+        const listRes = capsCollectionCache.current[cacheKey];
+        return {
+          data: Array.isArray(listRes.data) ? listRes.data : [],
+          total: listRes?.pagination?.totalPages || 1,
+          currentPage: listRes?.pagination?.page || 1,
+          pageSize: listRes?.pagination?.limit || pageSize,
+        };
+      }
       try {
         setLoading(true);
-        const listRes = await capsCollectionList({
-          page: page.toString(),
-          per_page: pageSize.toString(),
-        });
+        const listRes = await capsCollectionList(params);
+        capsCollectionCache.current[cacheKey] = listRes;
         setLoading(false);
         return {
           data: Array.isArray(listRes.data) ? listRes.data : [],
@@ -224,17 +242,30 @@ export default function SalemanLoad() {
       payload: Record<string, string | number | null>,
       pageSize: number
     ): Promise<listReturnType> => {
-      let result;
+      const params: Record<string, string> = {};
+      Object.keys(payload || {}).forEach((k) => {
+        const v = payload[k as keyof typeof payload];
+        if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+          params[k] = String(v);
+        }
+      });
+      const cacheKey = getCacheKey(params);
+      if (capsCollectionCache.current[cacheKey]) {
+        const result = capsCollectionCache.current[cacheKey];
+        const pagination = result.pagination?.pagination || result.pagination || {};
+        return {
+          data: result.data || [],
+          total: pagination.totalPages || result.pagination?.totalPages || 0,
+          totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+          currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+          pageSize: pagination.limit || pageSize,
+        };
+      }
       setLoading(true);
+      let result;
       try {
-        const params: Record<string, string> = {};
-        Object.keys(payload || {}).forEach((k) => {
-          const v = payload[k as keyof typeof payload];
-          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-            params[k] = String(v);
-          }
-        });
         result = await capsCollectionList(params);
+        capsCollectionCache.current[cacheKey] = result;
       } finally {
         setLoading(false);
       }
@@ -259,137 +290,69 @@ export default function SalemanLoad() {
   }, [companyOptions, regionOptions, areaOptions, warehouseOptions, routeOptions, salesmanOptions]);
 
   return (
-    <>
-      <div className="flex flex-col h-full">
-        <Table
-          refreshKey={refreshKey}
-          config={{
-            api: {
-              list: fetchSalesmanLoadHeader,
-              filterBy: filterBy,
-            },
-            header: {
-              filterByFields: [
-                {
-                  key: "start_date",
-                  label: "Start Date",
-                  type: "date",
-                  applyWhen: (filters) => !!filters.start_date && !!filters.end_date
-                },
-                {
-                  key: "end_date",
-                  label: "End Date",
-                  type: "date",
-                  applyWhen: (filters) => !!filters.start_date && !!filters.end_date
-                },
-                {
-                  key: "company",
-                  label: "Company",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(companyOptions) ? companyOptions : [],
-                },
-                {
-                  key: "region",
-                  label: "Region",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(regionOptions) ? regionOptions : [],
-                },
-                {
-                  key: "area",
-                  label: "Area",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(areaOptions) ? areaOptions : [],
-                },
-                {
-                  key: "warehouse",
-                  label: "Warehouse",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                },
-                {
-                  key: "route_id",
-                  label: "Route",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(routeOptions) ? routeOptions : [],
-                },
-                {
-                  key: "salesman",
-                  label: "Sales Team",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                },
-
-              ],
-              threeDot: [
-                {
-                  icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
-                  label: "Export CSV",
-                  labelTw: "text-[12px] hidden sm:block",
-                  onClick: () => !threeDotLoading.csv && exportFile("csv"),
-                },
-                {
-                  icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
-                  label: "Export Excel",
-                  labelTw: "text-[12px] hidden sm:block",
-                  onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
-                },
-              ],
-              title: "CAPS Master Collection",
-              searchBar: false,
-              columnFilter: true,
-              actions: can("create") ? [
-                <SidebarBtn
-                  key={0}
-                  href="/capsCollection/add"
-                  isActive
-                  leadingIcon="lucide:plus"
-                  label="Add"
-                  labelTw="hidden sm:block"
-                />
-              ] : [],
-            },
-            footer: { nextPrevBtn: true, pagination: true },
-            columns,
-            localStorageKey: "agent-caps-collection-table",
-            rowSelection: true,
-            rowActions: [
+    <div className="flex flex-col h-full">
+      <Table
+        refreshKey={refreshKey}
+        config={{
+          api: {
+            list: fetchSalesmanLoadHeader,
+            filterBy: filterBy,
+          },
+          header: {
+            title: "CAPS Master Collection",
+            threeDot: [
               {
-                icon: "lucide:eye",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  router.push(`/capsCollection/details/${row.uuid}`);
-                },
+                icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
+                label: "Export CSV",
+                labelTw: "text-[12px] hidden sm:block",
+                onClick: () => !threeDotLoading.csv && exportFile("csv"),
               },
-              // {
-              //     icon: "lucide:edit-2",
-              //     onClick: (data: object) => {
-              //         const row = data as TableRow;
-              //         router.push(
-              //             `/capsCollection/${row.uuid}`
-              //         );
-              //     },
-              // },
+              {
+                icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
+                label: "Export Excel",
+                labelTw: "text-[12px] hidden sm:block",
+                onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
+              },
             ],
-            pageSize: 50,
-          }}
-        />
-      </div>
-
-      {/* {showDeletePopup && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                    <DeleteConfirmPopup
-                        title="Agent Customer"
-                        onClose={() => setShowDeletePopup(false)}
-                        onConfirm={handleConfirmDelete}
-                    />
-                </div>
-            )} */}
-    </>
+            columnFilter: true,
+            filterRenderer: FilterComponent,
+            searchBar: false,
+            actions: can("create") ? [
+              <SidebarBtn
+                key={0}
+                href="/capsCollection/add"
+                isActive
+                leadingIcon="lucide:plus"
+                label="Add"
+                labelTw="hidden sm:block"
+              />
+            ] : [],
+          },
+          footer: { nextPrevBtn: true, pagination: true },
+          columns,
+          localStorageKey: "agent-caps-collection-table",
+          rowSelection: true,
+          rowActions: [
+            {
+              icon: "lucide:eye",
+              onClick: (data: object) => {
+                const row = data as TableRow;
+                router.push(`/capsCollection/details/${row.uuid}`);
+              },
+            },
+            // {
+            //     icon: "lucide:edit-2",
+            //     onClick: (data: object) => {
+            //         const row = data as TableRow;
+            //         router.push(
+            //             `/capsCollection/${row.uuid}`
+            //         );
+            //     },
+            // },
+          ],
+          pageSize: 50,
+        }}
+      />
+    </div>
   );
 }

@@ -14,6 +14,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useEffect } from "react";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 // import 
 
 export default function SalesTeamReconciliationPage() {
@@ -24,7 +25,12 @@ export default function SalesTeamReconciliationPage() {
 
     const {
         warehouseOptions,
+        ensureWarehouseLoaded
     } = useAllDropdownListData();
+
+    useEffect(() => {
+        ensureWarehouseLoaded();
+    }, [ensureWarehouseLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -145,17 +151,17 @@ export default function SalesTeamReconciliationPage() {
         {
             key: "cash_amount",
             label: "Cash Amount",
-            render: (row: any) => row.cash_amount || "0",
+            render: (row: any) => toInternationalNumber(row.cash_amount || "0"),
         },
         {
             key: "credit_amount",
             label: "Credit Amount",
-            render: (row: any) => row.credit_amount || "0",
+            render: (row: any) => toInternationalNumber(row.credit_amount || "0"),
         },
         {
             key: "grand_total_amount",
             label: "Total Amount",
-            render: (row: any) => row.grand_total_amount || "0",
+            render: (row: any) => toInternationalNumber(row.grand_total_amount || "0"),
         },
     ];
 
@@ -176,8 +182,8 @@ export default function SalesTeamReconciliationPage() {
                         searchBar: false,
                         columnFilter: true,
                         filterByFields: [
-                            { key: "start_date", label: "From Date", type: "date" },
-                            { key: "end_date", label: "To Date", type: "date" },
+                            { key: "from_date", label: "From Date", type: "date" },
+                            { key: "to_date", label: "To Date", type: "date" },
                             {
                                 key: "warehouse_id",
                                 label: "Warehouse",
@@ -206,7 +212,7 @@ export default function SalesTeamReconciliationPage() {
                             icon: "lucide:eye",
                             onClick: (row) => {
                                 if (row.uuid) {
-                                    router.push(`/salesTeamRecosite/details/${row.uuid}`);
+                                    router.push(`/salesTeamReconcile/details/${row.uuid}`);
                                 }
                             },
                         },

@@ -11,7 +11,7 @@ import Table from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 
-import { genearateCode, itemGlobalSearch } from "@/app/services/allApi";
+import { genearateCode, itemGlobalSearch, saveFinalCode } from "@/app/services/allApi";
 import {
     addStockInStore,
     stockInStoreById,
@@ -94,20 +94,20 @@ export default function StockInStoreAddPage() {
 
     // Generate code (ADD only)
     useEffect(() => {
-    if (isEditMode || codeGeneratedRef.current) return;
+        if (isEditMode || codeGeneratedRef.current) return;
 
-    codeGeneratedRef.current = true;
+        codeGeneratedRef.current = true;
 
-    (async () => {
-        const res = await genearateCode({ model_name: "code" });
-        if (res?.code) {
-            setInitialFormikValues((prev) => ({
-                ...prev,
-                code: res.code,
-            }));
-        }
-    })();
-}, [isEditMode]);
+        (async () => {
+            const res = await genearateCode({ model_name: "code" });
+            if (res?.code) {
+                setInitialFormikValues((prev) => ({
+                    ...prev,
+                    code: res.code,
+                }));
+            }
+        })();
+    }, [isEditMode]);
 
 
     // Load edit data
@@ -270,19 +270,30 @@ export default function StockInStoreAddPage() {
 
             if (res?.error) {
                 showSnackbar("Failed to save stock", "error");
-            } else {
-                showSnackbar(
-                    isEditMode ? "Stock updated" : "Stock added",
-                    "success"
-                );
-                router.push("/stockinstore");
+                return;
             }
-        } catch {
+
+            // 🔥 FINAL CODE SAVE — ONLY ON ADD
+            if (!isEditMode) {
+                await saveFinalCode({
+                    reserved_code: code,
+                    model_name: "code",
+                });
+            }
+
+            showSnackbar(
+                isEditMode ? "Stock updated" : "Stock added",
+                "success"
+            );
+
+            router.push("/stockinstore");
+        } catch (error) {
             showSnackbar("Something went wrong", "error");
         } finally {
             setLoading(false);
         }
     };
+
 
 
     /* -------------------------------------------------------------------------- */

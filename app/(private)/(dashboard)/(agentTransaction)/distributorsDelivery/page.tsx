@@ -149,70 +149,95 @@ export default function CustomerInvoicePage() {
         ensureWarehouseAllLoaded();
     }, [ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
 
+    // Memoize delivery data to avoid multiple API calls
+    const [deliveryDataCache, setDeliveryDataCache] = useState<{ [key: string]: any }>({});
+    const [deliveryCacheKey, setDeliveryCacheKey] = useState(0);
+
+    // Helper to build cache key from params
+    const getCacheKey = (params: Record<string, string | number>) => {
+        return Object.entries(params).sort().map(([k, v]) => `${k}:${v}`).join("|");
+    };
+
+    // Unified fetch function
+    const fetchDeliveryData = useCallback(async (params: Record<string, string | number>) => {
+        const cacheKey = getCacheKey(params);
+        if (deliveryDataCache[cacheKey]) {
+            return deliveryDataCache[cacheKey];
+        }
+        setLoading(true);
+        try {
+            // Ensure all values are strings for deliveryList
+            const stringParams: Record<string, string> = {};
+            Object.entries(params).forEach(([k, v]) => {
+                stringParams[k] = String(v);
+            });
+            const result = await deliveryList(stringParams);
+            setDeliveryDataCache((prev) => ({ ...prev, [cacheKey]: result }));
+            return result;
+        } catch (error) {
+            showSnackbar("Failed to fetch invoices", "error");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [deliveryDataCache, setLoading, showSnackbar]);
+
+    // Fetch for table (list)
     const fetchDelivery = useCallback(async (
         page: number = 1,
         pageSize: number = 10
     ): Promise<listReturnType> => {
-        try {
-            setLoading(true);
-            const result = await deliveryList({
-                page: page.toString(),
-                per_page: pageSize.toString(),
-            });
-
-            return {
-                data: Array.isArray(result.data) ? result.data : [],
-                total: result?.pagination?.last_page || 1,
-                currentPage: result?.pagination?.current_page || 1,
-                pageSize: result?.pagination?.per_page || pageSize,
-            };
-        } catch (error) {
-            console.error(error);
-            showSnackbar("Failed to fetch invoices", "error");
+        const params = { page: page.toString(), per_page: pageSize.toString() };
+        const result = await fetchDeliveryData(params);
+        if (!result) {
             return {
                 data: [],
                 total: 1,
                 currentPage: 1,
                 pageSize: pageSize,
             };
-        } finally {
-            setLoading(false);
         }
-    }, [setLoading, showSnackbar]);
+        return {
+            data: Array.isArray(result.data) ? result.data : [],
+            total: result?.pagination?.last_page || 1,
+            currentPage: result?.pagination?.current_page || 1,
+            pageSize: result?.pagination?.per_page || pageSize,
+        };
+    }, [fetchDeliveryData]);
 
+    // Fetch for filter
     const filterBy = useCallback(
         async (
             payload: Record<string, string | number | null>,
             pageSize: number
         ): Promise<listReturnType> => {
-            let result;
-            setLoading(true);
-            try {
-                const params: Record<string, string> = { per_page: pageSize.toString() };
-                Object.keys(payload || {}).forEach((k) => {
-                    const v = payload[k as keyof typeof payload];
-                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                        params[k] = String(v);
-                    }
-                });
-                result = await deliveryList(params);
-            } finally {
-                setLoading(false);
-            }
-
-            if (result?.error) throw new Error(result.data?.message || "Filter failed");
-            else {
-                const pagination = result.pagination || {};
+            const params: Record<string, string> = { per_page: pageSize.toString() };
+            Object.keys(payload || {}).forEach((k) => {
+                const v = payload[k as keyof typeof payload];
+                if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                    params[k] = String(v);
+                }
+            });
+            const result = await fetchDeliveryData(params);
+            if (!result) {
                 return {
-                    data: result.data || [],
-                    total: pagination?.last_page || 1,
-                    totalRecords: pagination?.total || 0,
-                    currentPage: pagination?.current_page || 1,
-                    pageSize: pagination?.per_page || pageSize,
+                    data: [],
+                    total: 1,
+                    currentPage: 1,
+                    pageSize: pageSize,
                 };
             }
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            const pagination = result.pagination || {};
+            return {
+                data: result.data || [],
+                total: pagination?.last_page || 1,
+                totalRecords: pagination?.total || 0,
+                currentPage: pagination?.current_page || 1,
+                pageSize: pagination?.per_page || pageSize,
+            };
         },
-        [setLoading]
+        [fetchDeliveryData]
     );
 
     const exportFile = async (format: "csv" | "xlsx" = "csv") => {

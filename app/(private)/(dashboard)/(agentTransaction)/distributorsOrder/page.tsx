@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect ,useRef} from "react";
 import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Table, {
@@ -190,15 +190,27 @@ export default function CustomerInvoicePage() {
     xlsx: false,
   });
 
+  // In-memory cache for agentOrderList API calls
+  const agentOrderListCache = useRef<{ [key: string]: any }>({});
+
   const fetchOrders = useCallback(
     async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {
-      // setLoading(true);
       const params: Record<string, string> = {
         page: page.toString(),
         pageSize: pageSize.toString(),
       };
+      const cacheKey = JSON.stringify(params);
+      if (agentOrderListCache.current[cacheKey]) {
+        const listRes = agentOrderListCache.current[cacheKey];
+        return {
+          data: Array.isArray(listRes.data) ? listRes.data : [],
+          total: listRes?.pagination?.totalPages || 1,
+          currentPage: listRes?.pagination?.page || 1,
+          pageSize: listRes?.pagination?.limit || pageSize,
+        };
+      }
       const listRes = await agentOrderList(params);
-      // setLoading(false);
+      agentOrderListCache.current[cacheKey] = listRes;
       return {
         data: Array.isArray(listRes.data) ? listRes.data : [],
         total: listRes?.pagination?.totalPages || 1,
@@ -209,31 +221,26 @@ export default function CustomerInvoicePage() {
     [showSnackbar],
   );
 
+  // In-memory cache for filterBy API calls
+  const agentOrderFilterCache = useRef<{ [key: string]: any }>({});
+
   const filterBy = useCallback(
     async (
       payload: Record<string, string | number | null>,
       pageSize: number,
     ): Promise<listReturnType> => {
-      let result;
-      // setLoading(true);
-      try {
-        const params: Record<string, string> = {
-          per_page: pageSize.toString(),
-        };
-        Object.keys(payload || {}).forEach((k) => {
-          const v = payload[k as keyof typeof payload];
-          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-            params[k] = String(v);
-          }
-        });
-        result = await agentOrderList(params);
-      } finally {
-        // setLoading(false);
-      }
-
-      if (result?.error)
-        throw new Error(result.data?.message || "Filter failed");
-      else {
+      const params: Record<string, string> = {
+        per_page: pageSize.toString(),
+      };
+      Object.keys(payload || {}).forEach((k) => {
+        const v = payload[k as keyof typeof payload];
+        if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+          params[k] = String(v);
+        }
+      });
+      const cacheKey = JSON.stringify(params);
+      if (agentOrderFilterCache.current[cacheKey]) {
+        const result = agentOrderFilterCache.current[cacheKey];
         const pagination =
           result.pagination?.pagination || result.pagination || {};
         return {
@@ -245,6 +252,18 @@ export default function CustomerInvoicePage() {
           pageSize: pagination.limit || pageSize,
         };
       }
+      const result = await agentOrderList(params);
+      agentOrderFilterCache.current[cacheKey] = result;
+      const pagination =
+        result.pagination?.pagination || result.pagination || {};
+      return {
+        data: result.data || [],
+        total: pagination.totalPages || result.pagination?.totalPages || 1,
+        totalRecords:
+          pagination.totalRecords || result.pagination?.totalRecords || 0,
+        currentPage: pagination.page || result.pagination?.page || 1,
+        pageSize: pagination.limit || pageSize,
+      };
     },
     [],
   );

@@ -82,7 +82,7 @@ export default function StockTransfer() {
                     id: row.id,
                     item_code: row.item?.erp_code || "",
                     name: row.item?.name || "",
-                    uom: row.item?.uom || "N/A",
+                    uom: row.item?.uom || "PCS",
                     available_qty: row.qty,
                     transfer_qty: "",
                     original_data: row,
@@ -207,6 +207,7 @@ export default function StockTransfer() {
                     idx: idx.toString(),
                 }))}
                 config={{
+
                     table: { height: 450 },
                     columns: [
                         {
@@ -215,7 +216,7 @@ export default function StockTransfer() {
                             render: (row) =>
                                 `${row.item_code} - ${row.name}`,
                         },
-                        { key: "uom", label: "UOM" },
+                        { key: "uom", label: "UOM" ,render: (row) => row.uom ? row.uom : "PCS"},
                         { key: "available_qty", label: "Available" },
                         {
                             key: "transfer_qty",
@@ -237,7 +238,7 @@ export default function StockTransfer() {
                         },
                     ],
                     pageSize: itemData.length || 10,
-                    showNestedLoading: true
+                    showNestedLoading: false
                 }} 
 
             />

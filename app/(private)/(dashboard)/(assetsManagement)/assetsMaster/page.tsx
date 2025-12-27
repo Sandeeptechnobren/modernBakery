@@ -10,7 +10,7 @@ import Table, { listReturnType, TableDataType } from "@/app/components/customTab
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { chillerList, deleteChiller, deleteServiceTypes, serviceTypesList } from "@/app/services/assetsApi";
+import { assetsMasterExport, chillerList, deleteChiller, deleteServiceTypes, serviceTypesList } from "@/app/services/assetsApi";
 import StatusBtn from "@/app/components/statusBtn2";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
@@ -24,6 +24,7 @@ export default function ShelfDisplay() {
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   // Refresh table when permissions load
   useEffect(() => {
@@ -57,30 +58,99 @@ export default function ShelfDisplay() {
     }, []
   )
   const searchChiller = useCallback(
-    async (query: string, pageSize: number = 10, columnName?: string): Promise<listReturnType> => {
-      setLoading(true);
-      let res;
-      if (columnName && columnName !== "") {
-        res = await chillerList({
-          query: query,
+    async (
+      query: string,
+      pageSize: number = 10,
+      columnName?: string
+    ): Promise<listReturnType> => {
+      try {
+        setLoading(true);
+
+        // 🔒 Guard clause
+        if (!columnName) {
+          return {
+            data: [],
+            currentPage: 0,
+            pageSize,
+            total: 0,
+          };
+        }
+
+        const res = await chillerList({
+          query,
           per_page: pageSize.toString(),
-          [columnName]: query
+          [columnName]: query,
         });
-      }
-      setLoading(false);
-      if (res.error) {
-        showSnackbar(res.data.message || "failed to search the Chillers", "error");
-        throw new Error("Unable to search the Chillers");
-      } else {
+
+        if (res?.error) {
+          showSnackbar(
+            res?.data?.message || "Failed to search the Chillers",
+            "error"
+          );
+          throw new Error("Unable to search the Chillers");
+        }
+
         return {
-          data: res.data || [],
+          data: res?.data || [],
           currentPage: res?.pagination?.page || 0,
-          pageSize: res?.pagination?.limit || 10,
+          pageSize: res?.pagination?.limit || pageSize,
           total: res?.pagination?.totalPages || 0,
         };
+      } finally {
+        // ✅ always runs (success or error)
+        setLoading(false);
       }
-    }, []
-  )
+    },
+    []
+  );
+
+  const handleExport = async (fileType: "csv" | "xlsx") => {
+    try {
+      setLoading(true);
+
+      const res = await assetsMasterExport({ format: fileType });
+      console.log("Export API Response:", res);
+
+      let downloadUrl = "";
+
+      if (res?.url && res.url.startsWith("blob:")) {
+        downloadUrl = res.url;
+      } else if (res?.url && res.url.startsWith("http")) {
+        downloadUrl = res.url;
+      } else if (typeof res === "string" && res.includes(",")) {
+        const blob = new Blob([res], {
+          type:
+            fileType === "csv"
+              ? "text/csv;charset=utf-8;"
+              : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        downloadUrl = URL.createObjectURL(blob);
+      } else {
+        showSnackbar("No valid file or URL returned from server", "error");
+        return;
+      }
+
+      // ⬇️ Trigger browser download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `assets_export.${fileType}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showSnackbar(
+        `Download started for ${fileType.toUpperCase()} file`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Export error:", error);
+      showSnackbar("Failed to export Assets Master data", "error");
+    } finally {
+      setLoading(false);
+      setShowExportDropdown(false);
+    }
+  };
+
 
   useEffect(() => {
     setLoading(true);
@@ -99,8 +169,23 @@ export default function ShelfDisplay() {
             },
             header: {
               title: "Assets Master",
-
-              searchBar: false,
+              threeDot: [
+                {
+                  icon: "gala:file-document",
+                  label: "Export CSV",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    handleExport("csv");
+                  },
+                },
+                {
+                  icon: "gala:file-document",
+                  label: "Export Excel",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    handleExport("xlsx");
+                  },
+                },
+              ],
+              searchBar: true,
               columnFilter: true,
               actions: can("create") ? [
                 <SidebarBtn

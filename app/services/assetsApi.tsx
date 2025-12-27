@@ -261,7 +261,7 @@ export const chillerRequestGenerateCode = async (params: Params) => {
 
 export const chillerRequestGlobalSearch = async (params: Params) => {
   try {
-    const res = await API.get(`/api/assets/chiller-request/global-search`, {
+    const res = await API.get(`/api/assets/chiller-request/global_search`, {
       params: params,
     });
     return res.data;
@@ -824,5 +824,61 @@ export const shelfDisplayGlobalSearch = async (params: Params) => {
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
+  }
+};
+
+export const assetsMasterExport = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/assets/chiller/export`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const fridgeUpdateCustomerList = async (params: any) => {
+  try {
+    const res = await API.get(`/api/assets/fridge-customer-update/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const fridgeUpdateCustomerByUUID = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/assets/fridge-customer-update/${uuid}`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateFridgeUpdateCustomer = async (
+  uuid: string,
+  formData: FormData
+) => {
+  try {
+    const response = await APIFormData.post(
+      `/api/assets/fridge-customer-update/update/${uuid}`,
+      formData
+    );
+    return response.data;
+  } catch (error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof (error as { response?: unknown })?.response === "object"
+    ) {
+      throw (error as { response?: { data?: unknown } }).response?.data || error;
+    }
+    throw error;
   }
 };

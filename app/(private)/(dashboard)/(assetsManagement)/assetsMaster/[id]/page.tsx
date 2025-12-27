@@ -454,7 +454,6 @@ export default function AddOrEditChiller() {
                 required
                 label="Status"
                 name="status"
-                type="radio"
                 options={assetsStatusOptions}
                 value={values.status}
                 onChange={(e) => setFieldValue("status", e.target.value)}

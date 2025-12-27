@@ -15,6 +15,7 @@ import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import {
+  chillerRequestGlobalSearch,
   chillerRequestList,
   deleteChillerRequest,
 } from "@/app/services/assetsApi";
@@ -25,6 +26,23 @@ const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
+
+interface LocalTableDataType {
+  id?: number | string;
+  uuid?: string;
+  osa_code?: string;
+  owner_name?: string;
+  contact_number?: string;
+  customer?: string;
+  warehouse?: string;
+  outlet?: string;
+  salesman?: string;
+  machine_number?: string;
+  asset_number?: string;
+  model?: string;
+  brand?: string;
+  status?: number | string;
+}
 
 export default function Page() {
   const { can, permissions } = usePagePermissions();
@@ -131,6 +149,36 @@ export default function Page() {
     return "-";
   };
 
+  const searchChillerRequest = useCallback(
+    async (
+      query: string,
+      pageSize: number = 50,
+      columnName?: string,
+      page: number = 1,
+    ): Promise<listReturnType> => {
+      try {
+        // setLoading(true);
+        const res = await chillerRequestGlobalSearch({ search: query, page: page.toString(), per_page: pageSize.toString() });
+        // setLoading(false);
+        const data = res.data.map((item: LocalTableDataType) => ({
+          ...item,
+        }));
+
+        return {
+          data: data || [],
+          total: res.pagination.last_page || 1,
+          currentPage: res.pagination.current_page || page,
+          pageSize: res.pagination.per_page || pageSize,
+        };
+      } catch (error) {
+        setLoading(false);
+        console.error(error);
+        throw error;
+      }
+    },
+    []
+  );
+
   return (
     <>
       {/* Table */}
@@ -140,6 +188,7 @@ export default function Page() {
           config={{
             api: {
               list: fetchTableData,
+              search: searchChillerRequest,
             },
             header: {
               title: "Assets Requests",
@@ -173,18 +222,18 @@ export default function Page() {
                   />
                 </div>,
               ],
-              searchBar: false,
+              searchBar: true,
               columnFilter: true,
-              actions: can("create") ? [
-                <SidebarBtn
-                  key="name"
-                  href="/assetsRequest/add"
-                  leadingIcon="lucide:plus"
-                  label="Add"
-                  labelTw="hidden lg:block"
-                  isActive
-                />,
-              ] : [],
+              // actions: can("create") ? [
+              //   <SidebarBtn
+              //     key="name"
+              //     href="/assetsRequest/add"
+              //     leadingIcon="lucide:plus"
+              //     label="Add"
+              //     labelTw="hidden lg:block"
+              //     isActive
+              //   />,
+              // ] : [],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
@@ -277,7 +326,7 @@ export default function Page() {
               }] : []),
 
             ],
-            pageSize: 10,
+            pageSize: 50,
           }}
         />
       </div>

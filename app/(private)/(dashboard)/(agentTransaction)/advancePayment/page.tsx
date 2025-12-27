@@ -13,9 +13,9 @@ import { allPaymentList, downloadFile } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
-
+import FilterComponent from "@/app/components/filterComponent";
 interface Payment {
   id: number;
   uuid: string;
@@ -127,24 +127,51 @@ export default function PaymentListPage() {
   const [isExporting, setIsExporting] = useState(false);
   type TableRow = TableDataType & { uuid?: string };
 
+  // Cache for API results
+  const paymentCache = useRef<{ [key: string]: any }>({});
+
+  // Helper to build cache key from params
+  const getCacheKey = (params: Record<string, string | number>) => {
+    return Object.entries(params).sort().map(([k, v]) => `${k}:${v}`).join("|");
+  };
+
   const fetchPayments = useCallback(
     async (
       page: number = 1,
       pageSize: number = 50
     ): Promise<listReturnType> => {
+      const params = { page, limit: pageSize };
+      const cacheKey = getCacheKey(params);
+      if (paymentCache.current[cacheKey]) {
+        const listRes = paymentCache.current[cacheKey];
+        if (listRes?.status === "success" || listRes?.success === true) {
+          return {
+            data: Array.isArray(listRes.data) ? listRes.data : [],
+            total:
+              listRes?.pagination?.totalPages ||
+              listRes?.pagination?.totalRecords ||
+              1,
+            currentPage: listRes?.pagination?.page || page,
+            pageSize: listRes?.pagination?.limit || pageSize,
+          };
+        } else {
+          showSnackbar(
+            listRes?.message || "Failed to fetch payment data",
+            "error"
+          );
+          return {
+            data: [],
+            total: 1,
+            currentPage: page,
+            pageSize: pageSize,
+          };
+        }
+      }
       try {
         setLoading(true);
-
-        const listRes = await allPaymentList({
-          page,
-          limit: pageSize,
-        });
-
-        console.log("Payments API Response:", listRes);
-
+        const listRes = await allPaymentList(params);
+        paymentCache.current[cacheKey] = listRes;
         setLoading(false);
-
-        // Handle API response based on your API structure
         if (listRes?.status === "success" || listRes?.success === true) {
           return {
             data: Array.isArray(listRes.data) ? listRes.data : [],
@@ -223,70 +250,12 @@ export default function PaymentListPage() {
             api: { list: fetchPayments },
             header: {
               title: "Advance Payments",
-              filterByFields: [
-                {
-                  key: "start_date",
-                  label: "Start Date",
-                  type: "date"
-                },
-                {
-                  key: "end_date",
-                  label: "End Date",
-                  type: "date"
-                },
-                {
-                  key: "company",
-                  label: "Company",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(companyOptions) ? companyOptions : [],
-                },
-                {
-                  key: "region",
-                  label: "Region",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(regionOptions) ? regionOptions : [],
-                },
-                {
-                  key: "area",
-                  label: "Area",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(areaOptions) ? areaOptions : [],
-                },
-                {
-                  key: "warehouse",
-                  label: "Warehouse",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                },
-                {
-                  key: "route_id",
-                  label: "Route",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(routeOptions) ? routeOptions : [],
-                },
-                {
-                  key: "salesman",
-                  label: "Sales Team",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                },
-
-              ],
               threeDot: [
                 {
                   icon: "gala:file-document",
                   label: isExporting ? "Exporting..." : "Export CSV",
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
                     if (isExporting) return;
-                    const ids = selectedRow?.map((id) => {
-                      return data[id].id;
-                    })
                     exportfile("csv");
                   }
                 },
@@ -295,15 +264,13 @@ export default function PaymentListPage() {
                   label: isExporting ? "Exporting..." : "Export Excel",
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
                     if (isExporting) return;
-                    const ids = selectedRow?.map((id) => {
-                      return data[id].id;
-                    })
                     exportfile("xlsx");
                   }
                 },
               ],
-              searchBar: false,
               columnFilter: true,
+              // filterRenderer: FilterComponent,
+              searchBar: false,
               actions: can("create") ? [
                 <SidebarBtn
                   key={0}

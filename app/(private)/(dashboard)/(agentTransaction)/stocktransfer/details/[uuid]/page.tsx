@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 const title = "Stock Transfer Details";
-const backBtnUrl = "/stockTransfer";
+const backBtnUrl = "/stocktransfer";
 
 export default function ViewPage() {
     const params = useParams();
@@ -68,11 +68,11 @@ export default function ViewPage() {
                             { key: "OSA Code", value: transferData?.osa_code },
                             {
                                 key: "Source Warehouse",
-                                value: transferData?.source_warehouse?.name,
+                                value: `${transferData?.source_warehouse?.code} - ${transferData?.source_warehouse?.name}`,
                             },
                             {
                                 key: "Destination Warehouse",
-                                value: transferData?.destiny_warehouse?.name,
+                                value: `${transferData?.destiny_warehouse?.code} - ${transferData?.destiny_warehouse?.name}`,
                             },
                             {
                                 key: "Transfer Date",

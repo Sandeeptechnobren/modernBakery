@@ -8,8 +8,12 @@ import { Icon } from "@iconify-icon/react";
 import { salesTeamRecontionOrderByUuid } from "@/app/services/agentTransaction";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import KeyValueData from "@/app/components/keyValueData";
+import { formatWithPattern } from "@/app/utils/formatDate";
+import { useLoading } from "@/app/services/loadingContext";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 export default function SalesmanLoadDetailsUI() {
+    const { setLoading } = useLoading();
     const router = useRouter();
     const params = useParams();
     const { showSnackbar } = useSnackbar();
@@ -37,15 +41,20 @@ export default function SalesmanLoadDetailsUI() {
             if (!params.uuid) return;
 
             try {
+                setLoading(true);
                 const res = await salesTeamRecontionOrderByUuid(String(params.uuid));
                 console.log("Details Response:", res);
 
                 if (res?.data) {
                     const d = res.data;
                     setForm({
-                        warehouse: d.warehouse_name || "",
-                        salesman: d.salesman_name || "",
-                        reconsile_date: d.reconsile_date ? d.reconsile_date.split('T')[0] : "",
+                        warehouse: `${d.warehouse_code} - ${d.warehouse_name || ""}`,
+                        salesman: `${d.salesman_code} - ${d.salesman_name || ""}`,
+                        reconsile_date: formatWithPattern(
+                                  new Date(d.reconsile_date),
+                                  "DD MMM YYYY",
+                                  "en-GB",
+                                ).toLowerCase(),
                     });
 
                     setPayment({
@@ -57,7 +66,7 @@ export default function SalesmanLoadDetailsUI() {
                     if (Array.isArray(d.items)) {
                         setItemData(d.items.map((item: any) => ({
                             id: item.item_id,
-                            name: item.item_name || "",
+                            name: `${item.erp_code} - ${item.item_name || ""}`,
                             load_qty: item.load_qty,
                             unload_qty: item.unload_qty,
                             invoice_qty: item.invoice_qty,
@@ -66,6 +75,7 @@ export default function SalesmanLoadDetailsUI() {
                         })));
                     }
                 }
+                setLoading(false);
             } catch (err) {
                 console.error("Failed to fetch details", err);
                 showSnackbar("Failed to load details", "error");
@@ -83,6 +93,8 @@ export default function SalesmanLoadDetailsUI() {
         }));
     }, [itemData]);
 
+
+
     return (
         <div className="flex flex-col">
             {/* -------- HEADER -------- */}
@@ -94,7 +106,7 @@ export default function SalesmanLoadDetailsUI() {
                     onClick={() => router.back()}
                 />
                 <h1 className="text-[20px] font-semibold text-[#181D27]">
-                    Sales Team Load Details
+                    Sales Team Reconciliation Details
                 </h1>
             </div>
 
@@ -113,9 +125,9 @@ export default function SalesmanLoadDetailsUI() {
                     <ContainerCard className="w-full lg:w-[48%]">
                         <KeyValueData
                             data={[
-                                { value: payment.total, key: "Total Amount" },
-                                { value: payment.cash, key: "Cash" },
-                                { value: payment.credit, key: "Credit" },
+                                { value: toInternationalNumber(payment.total), key: "Total Amount" },
+                                { value: toInternationalNumber(payment.cash), key: "Cash" },
+                                { value: toInternationalNumber(payment.credit), key: "Credit" },
                             ]}
                         />
                     </ContainerCard>
@@ -154,16 +166,8 @@ export default function SalesmanLoadDetailsUI() {
                     />
 
                     {/* -------- ACTIONS -------- */}
-                    <hr className="my-6" />
 
-                    <div className="flex justify-end gap-4">
-                        <button
-                            className="px-6 py-2 rounded-lg border border-gray-300"
-                            onClick={() => router.back()}
-                        >
-                            Back
-                        </button>
-                    </div>
+                    
                 </ContainerCard>
             </div>
         </div>
