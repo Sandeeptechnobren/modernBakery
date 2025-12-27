@@ -71,7 +71,7 @@ export default function AddBankPage() {
         console.log("Submitting payload:", payload);
 
         let res;
-        if (isEditMode && params?.id && params.id !== "add") {
+        if (isEditMode && params.id && params.id !== "add") {
           // Update existing bank - body first, then uuid
           res = await updateBankbyId(payload, String(params.id));
         } else {
@@ -117,7 +117,7 @@ export default function AddBankPage() {
 
   // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params.id && params.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -162,7 +162,7 @@ export default function AddBankPage() {
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params?.id]);
+  }, [params.id]);
 
   return (
     <>

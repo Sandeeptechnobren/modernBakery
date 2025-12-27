@@ -78,7 +78,7 @@ export default function AddWarehouseStockPage() {
         };
 
         let res;
-        if (isEditMode && params?.uuid && params.uuid !== "add") {
+        if (isEditMode && params.uuid && params.uuid !== "add") {
           res = await editWarehouseStock(String(params.uuid), payload);
         } else {
           res = await addWarehouseStock(payload);
@@ -96,7 +96,7 @@ export default function AddWarehouseStockPage() {
           );
 
           // Finalize the reserved code only after successful add
-          if (!isEditMode || params?.uuid === "add") {
+          if (!isEditMode || params.uuid === "add") {
             try {
               await saveFinalCode({
                 reserved_code: values.warehouse_stock_code,
@@ -120,7 +120,7 @@ export default function AddWarehouseStockPage() {
 
   // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
-    if (params?.uuid && params.uuid !== "add") {
+    if (params.uuid && params.uuid !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -152,7 +152,7 @@ export default function AddWarehouseStockPage() {
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params?.uuid]);
+  }, [params.uuid]);
 
   return (
     <>

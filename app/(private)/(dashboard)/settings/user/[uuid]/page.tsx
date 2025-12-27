@@ -70,7 +70,7 @@ export default function UserAddEdit() {
   const { setLoading } = useLoading();
   const router = useRouter();
   const params = useParams();
-  const userUUID = params?.uuid as string | undefined;
+  const userUUID = params.uuid as string | undefined;
   const isEditMode = userUUID !== undefined && userUUID !== "add";
   const actionsRef = React.useRef<FormikHelpers<User> | null>(null);
 

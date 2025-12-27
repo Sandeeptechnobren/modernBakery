@@ -48,8 +48,8 @@ export default function Page() {
   const { setLoading } = useLoading();
   useEffect(() => setLoading(false), [setLoading]);
   const params = useParams();
-  const isEditMode = params?.id !== "add" && params?.id !== "";
-  let id = params?.id || "";
+  const isEditMode = params.id !== "add" && params.id !== "";
+  let id = params.id || "";
   if (id && Array.isArray(id)) {
     id = id[0] || "";
   }

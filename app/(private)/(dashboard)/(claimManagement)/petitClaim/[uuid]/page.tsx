@@ -23,7 +23,7 @@ export default function PetitClaimFormPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const params = useParams();
-  const claimId = params?.uuid as string | undefined;
+  const claimId = params.uuid as string | undefined;
   const isEditMode = claimId !== undefined && claimId !== "add";
 
   const [loading, setLoading] = useState(false);

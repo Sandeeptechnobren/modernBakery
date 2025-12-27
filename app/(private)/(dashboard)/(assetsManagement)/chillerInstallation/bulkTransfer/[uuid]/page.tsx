@@ -20,7 +20,7 @@ import * as yup from "yup";
 
 export default function AddRoute() {
   const params = useParams();
-  const uuid = params?.uuid as string;
+  const uuid = params.uuid as string;
   const mode = uuid === "addAllocate" ? "allocate" : "add";
 
   const { regionOptions, warehouseOptions, areaOptions , ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseLoaded, fetchWarehouseOptions, fetchAreaOptions} =

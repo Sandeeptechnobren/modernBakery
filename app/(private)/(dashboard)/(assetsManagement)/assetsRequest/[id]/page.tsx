@@ -294,7 +294,7 @@ export default function AddCompanyWithStepper() {
   const { agentCustomerOptions, channelOptions, ensureAgentCustomerLoaded, ensureChannelLoaded } = useAllDropdownListData();
 
   const params = useParams();
-  const uuid = params?.id;
+  const uuid = params.id;
   console.log("UUID from params:", params);
 
   const steps: StepperStep[] = [

@@ -45,7 +45,7 @@ export default function AddEditServiceTerritory() {
 
     // Get UUID safely
     let uuid = "";
-    if (params?.uuid) uuid = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid;
+    if (params.uuid) uuid = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid;
 
     const isAddMode = uuid === "add" || !uuid;
     const isEditMode = !isAddMode;

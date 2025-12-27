@@ -15,7 +15,7 @@ import ImagePreviewModal from "@/app/components/ImagePreviewModal";
 export const PlanogramPost = () => {
     const router = useRouter();
     const params = useParams();
-    const planogramUuid = params?.uuid as string; // ✅ FIXED
+    const planogramUuid = params.uuid as string; // ✅ FIXED
 
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();

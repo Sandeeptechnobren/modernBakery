@@ -85,7 +85,7 @@ export default function OrderDetailPage() {
   const [invoiceTableData, setInvoiceTableData] = useState<TableRow[]>([]);
   const [returnsTableData, setReturnsTableData] = useState<TableRow[]>([]);
 
-  const uuid = params?.uuid as string;
+  const uuid = params.uuid as string;
 
   useEffect(() => {
     if (uuid) {

@@ -48,7 +48,7 @@ export default function AddEditRoute() {
   }, [ensureWarehouseLoaded]);
   const { showSnackbar } = useSnackbar();
   const params = useParams();
-  const routeId = params?.uuid as string | undefined;
+  const routeId = params.uuid as string | undefined;
   const isEditMode = routeId !== undefined && routeId !== "add";
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);

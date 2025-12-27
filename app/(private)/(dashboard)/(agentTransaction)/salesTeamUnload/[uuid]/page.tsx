@@ -45,7 +45,7 @@ export default function AddEditSalesmanUnload() {
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const params = useParams();
-  const unloadUUID = params?.uuid as string | undefined;
+  const unloadUUID = params.uuid as string | undefined;
   const isEditMode = unloadUUID && unloadUUID !== "add";
 
   const [submitting, setSubmitting] = useState(false);

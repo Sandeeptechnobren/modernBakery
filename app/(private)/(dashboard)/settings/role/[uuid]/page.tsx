@@ -74,7 +74,7 @@ export default function AddEditRole() {
     (async () => {
       setLoading(true);
       try {
-        if (params?.uuid && params.uuid !== "add") {
+        if (params.uuid && params.uuid !== "add") {
           // 🟩 EDIT MODE
           setIsEditMode(true);
           const [roleRes, menuRes, submenuRes] = await Promise.all([
@@ -185,7 +185,7 @@ export default function AddEditRole() {
         setLoading(false);
       }
     })();
-  }, [params?.uuid]);
+  }, [params.uuid]);
 
 
   const handleSubmit = async (
@@ -251,7 +251,7 @@ export default function AddEditRole() {
     let permissionRes;
 
     // 🔄 ADD or EDIT MODE
-    if (isEditMode && params?.uuid !== "add") {
+    if (isEditMode && params.uuid !== "add") {
       // ✏️ EDIT MODE
       res = await editRoles(String(params.uuid), payload);
 

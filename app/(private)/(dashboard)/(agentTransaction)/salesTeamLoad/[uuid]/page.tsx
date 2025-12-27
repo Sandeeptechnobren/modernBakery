@@ -45,7 +45,7 @@ export default function AddEditSalesmanLoad() {
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const params = useParams();
-  const loadUUID = params?.uuid as string | undefined;
+  const loadUUID = params.uuid as string | undefined;
   const isEditMode = loadUUID !== undefined && loadUUID !== "add";
 
   interface FormData {

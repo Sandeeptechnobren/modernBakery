@@ -77,7 +77,7 @@ export default function AddEditSalesman() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams<{ uuid?: string | string[] }>();
-  const salesmanId = params?.uuid as string | undefined;
+  const salesmanId = params.uuid as string | undefined;
   const isEditMode = salesmanId && salesmanId !== "add";
   const codeGeneratedRef = useRef(false);
 

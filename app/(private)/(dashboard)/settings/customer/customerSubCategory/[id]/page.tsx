@@ -95,7 +95,7 @@ export default function AddEditCustomerSubCategory() {
 
   // ✅ Fetch data if editing or generate code if adding
   useEffect(() => {
-    const id = params?.id ?? "";
+    const id = params.id ?? "";
 
     if (id && id !== "add") {
       setIsEditMode(true);
@@ -130,7 +130,7 @@ export default function AddEditCustomerSubCategory() {
         }
       })();
     }
-  }, [params?.id, showSnackbar]);
+  }, [params.id, showSnackbar]);
 
   // ✅ Handle form submission
   const handleSubmit = async (
@@ -146,7 +146,7 @@ export default function AddEditCustomerSubCategory() {
 
     try {
       let res;
-      if (isEditMode && params?.id && params.id !== "add") {
+      if (isEditMode && params.id && params.id !== "add") {
         res = await updateCustomerSubCategory(String(params.id), payload);
       } else {
         res = await addCustomerSubCategory(payload);

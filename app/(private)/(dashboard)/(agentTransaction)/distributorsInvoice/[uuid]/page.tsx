@@ -170,7 +170,7 @@ export default function InvoiceddEditPage() {
     const params = useParams();
     const CURRENCY = localStorage.getItem("country") || "";
 
-    const uuid = params?.uuid as string | undefined;
+    const uuid = params.uuid as string | undefined;
     const isEditMode = uuid !== undefined && uuid !== "add";
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deliveryOptions, setDeliveryOptions] = useState<Option[]>([]);

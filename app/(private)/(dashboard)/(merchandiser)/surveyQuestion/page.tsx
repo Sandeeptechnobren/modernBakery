@@ -25,7 +25,7 @@ const backBtnUrl = "/merchandiser/survey";
 
 export default function ViewPage() {
 const params = useParams();
-const rawId = params?.id || params?.id;
+const rawId = params.id || params.id;
 const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
   const { showSnackbar } = useSnackbar();

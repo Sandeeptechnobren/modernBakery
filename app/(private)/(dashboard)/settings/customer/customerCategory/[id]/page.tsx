@@ -39,7 +39,7 @@ export default function AddCustomerCategory() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
-  const id = params?.id
+  const id = params.id
     ? (Array.isArray(params.id) ? params.id[0] : (params.id as string))
     : "";
   const isEditMode = Boolean(id && id !== "add");

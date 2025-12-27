@@ -196,7 +196,7 @@ export default function AddApprovalFlow() {
     }
     const [stepsProccess, setStepsProcess] = useState<ApprovalStep[]>([]);
     const params = useParams();
-    const uuid = params?.uuid as string;
+    const uuid = params.uuid as string;
 
     const [modulesList, setModulesList] = useState<{ value: string; label: string }[]>([]);
     const [roleListData, setRoleListData] = useState<{ value: string; label: string }[]>([]);

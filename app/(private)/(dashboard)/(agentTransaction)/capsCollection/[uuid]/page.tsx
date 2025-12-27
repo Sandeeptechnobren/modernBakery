@@ -147,7 +147,7 @@ export default function AddEditCapsCollection() {
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const params = useParams();
-  const loadUUID = params?.uuid as string | undefined;
+  const loadUUID = params.uuid as string | undefined;
   const isEditMode = loadUUID && loadUUID !== "add";
 
   const [form, setForm] = useState({

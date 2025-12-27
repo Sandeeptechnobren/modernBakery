@@ -56,7 +56,7 @@ export default function AddEditOutletChannel() {
           status: values.status === "active" ? 1 : 0,
         };
         let res;
-        if (isEditMode && params?.id && params.id !== "add") {
+        if (isEditMode && params.id && params.id !== "add") {
           res = await updateOutletChannel(String(params.id), payload);
         } else {
           res = await addOutletChannel(payload);
@@ -90,7 +90,7 @@ export default function AddEditOutletChannel() {
 
   // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params.id && params.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -126,7 +126,7 @@ export default function AddEditOutletChannel() {
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params?.id]);
+  }, [params.id]);
 
   return (
     <>

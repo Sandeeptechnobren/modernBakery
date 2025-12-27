@@ -44,7 +44,7 @@ export default function AddEditLocation() {
   // ✅ Fetch data if editing
   useEffect(() => {
     // Check if we have a uuid parameter (edit mode)
-    if (params?.uuid && params.uuid !== "add") {
+    if (params.uuid && params.uuid !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -86,7 +86,7 @@ export default function AddEditLocation() {
         }
       })();
     }
-  }, [params?.uuid, showSnackbar]);
+  }, [params.uuid, showSnackbar]);
 
   // ✅ Handle form submit
   const handleSubmit = async (
@@ -100,7 +100,7 @@ export default function AddEditLocation() {
       };
 
       let res;
-      if (isEditMode && params?.uuid !== "add") {
+      if (isEditMode && params.uuid !== "add") {
         res = await editLocation(String(params.uuid), payload);
       } else {
         res = await addLocation(payload);

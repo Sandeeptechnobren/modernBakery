@@ -43,7 +43,7 @@ export default function AddShelfDisplay() {
   const { setLoading } = useLoading();
   useEffect(() => setLoading(false), [setLoading]);
   const params = useParams();
-  const id = params?.id || "";
+  const id = params.id || "";
   const isEditMode = id !== "add" && id !== "";
   let ID = (isEditMode) ? id : null;
   if(ID && Array.isArray(ID)){

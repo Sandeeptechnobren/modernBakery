@@ -78,7 +78,7 @@
 
     const params = useParams();
     let uuid: string = "";
-    if (params?.uuid) {
+    if (params.uuid) {
       uuid = Array.isArray(params.uuid) ? params.uuid[0] : (params.uuid as string);
     }
 

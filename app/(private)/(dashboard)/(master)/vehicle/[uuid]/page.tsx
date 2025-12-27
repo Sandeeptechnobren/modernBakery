@@ -105,7 +105,7 @@ export default function AddEditVehicleWithStepper() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
-  const uuid = Array.isArray(params?.uuid) ? params.uuid[0] : params?.uuid;
+  const uuid = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid;
   const isEditMode = uuid !== undefined && uuid !== "add";
   // const { warehouseOptions , ensureWarehouseLoaded} = useAllDropdownListData();
 

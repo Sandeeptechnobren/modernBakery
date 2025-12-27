@@ -45,7 +45,7 @@ export default function AddEditRegion() {
   }, [ensureCompanyLoaded]);
 
   // Determine if edit mode (edit if id is present and not 'add')
-  const routeId = params?.id ?? "";
+  const routeId = params.id ?? "";
   const isEditMode = routeId && routeId !== "add";
   const queryId = isEditMode ? routeId : "";
 

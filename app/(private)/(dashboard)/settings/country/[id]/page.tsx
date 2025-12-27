@@ -49,7 +49,7 @@ export default function AddEditCountry() {
 
   // ✅ Fetch data if editing
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params.id && params.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -86,7 +86,7 @@ export default function AddEditCountry() {
         }
       })();
     }
-  }, [params?.id]);
+  }, [params.id]);
 
   // ✅ Handle form submit
   const handleSubmit = async (
@@ -99,7 +99,7 @@ export default function AddEditCountry() {
     };
 
     let res;
-    if (isEditMode && params?.id !== "add") {
+    if (isEditMode && params.id !== "add") {
       res = await editCountry(String(params.id), payload); // 👈 API call
     } else {
       res = await addCountry(payload);

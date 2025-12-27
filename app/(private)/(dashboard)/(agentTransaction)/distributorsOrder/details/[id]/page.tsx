@@ -144,7 +144,7 @@ export default function OrderDetailPage() {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [approvalName, setApprovalName] = useState("");
   const params = useParams();
-  const UUID = Array.isArray(params?.id) ? params?.id[0] : params?.id ?? "";
+  const UUID = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
   const CURRENCY = localStorage.getItem("country") || "";
   const PATH = `/distributorsOrder/details/`;
   const backBtnUrl = "/distributorsOrder";

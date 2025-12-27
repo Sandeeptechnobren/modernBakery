@@ -163,7 +163,7 @@ export default function OrderAddEditPage() {
   const router = useRouter();
   const params = useParams() as { uuid?: string } | undefined;
   const CURRENCY = typeof window !== "undefined" ? localStorage.getItem("country") || "" : "";
-  const uuid = params?.uuid as string | undefined;
+  const uuid = params.uuid as string | undefined;
   const isEditMode = uuid !== undefined && uuid !== "add";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const codeGeneratedRef = useRef(false);

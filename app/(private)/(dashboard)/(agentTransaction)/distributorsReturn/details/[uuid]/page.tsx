@@ -123,7 +123,7 @@ export default function OrderDetailPage() {
   const [tableData, setTableData] = useState<TableRow[]>([]);
   const CURRENCY = localStorage.getItem("country") || "";
   const backBtnUrl = "/distributorsReturn";
-  const uuid = params?.uuid as string;
+  const uuid = params.uuid as string;
 
   useEffect(() => {
     if (uuid) {

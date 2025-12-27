@@ -126,7 +126,7 @@ export default function AddEditItem() {
   const router = useRouter();
   const params = useParams();
 
-  const itemId = params?.id as string | undefined;
+  const itemId = params.id as string | undefined;
   const isEditMode = !!(itemId && itemId !== "add");
   const [skeleton, setSkeleton] = useState({
     itemSubCategory: false,

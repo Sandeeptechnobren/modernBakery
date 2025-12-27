@@ -72,7 +72,7 @@ const { showSnackbar } = useSnackbar();
           status: values.status === "active" ? 1 : 0,
         };
         let res;
-        if (isEditMode && params?.id && params.id !== "add") {
+        if (isEditMode && params.id && params.id !== "add") {
           res = await updateRouteTypeById(String(params.id), payload);
         } else {
           res = await addRouteType(payload);
@@ -105,7 +105,7 @@ const { showSnackbar } = useSnackbar();
 
   // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params.id && params.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -141,7 +141,7 @@ const { showSnackbar } = useSnackbar();
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params?.id]);
+  }, [params.id]);
 
   return (
     <>

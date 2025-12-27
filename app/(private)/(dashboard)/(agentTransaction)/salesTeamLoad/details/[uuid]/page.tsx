@@ -48,9 +48,9 @@ const backBtnUrl = "/salesTeamLoad";
 
 export default function ViewPage() {
   const params = useParams();
-  const uuid = Array.isArray(params?.uuid)
+  const uuid = Array.isArray(params.uuid)
     ? params.uuid[0] || ""
-    : (params?.uuid as string) || "";
+    : (params.uuid as string) || "";
 
   const [customer, setCustomer] = useState<CustomerItem | null>(null);
   const { showSnackbar } = useSnackbar();

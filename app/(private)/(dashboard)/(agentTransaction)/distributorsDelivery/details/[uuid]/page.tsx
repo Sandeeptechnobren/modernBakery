@@ -124,7 +124,7 @@ export default function OrderDetailPage() {
   const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
   const [loading, setLoadingState] = useState<boolean>(false);
-  const uuid = params?.uuid as string;
+  const uuid = params.uuid as string;
   const CURRENCY = localStorage.getItem("country") || "";
   const PATH = `/distributorsDelivery/details/`;
 

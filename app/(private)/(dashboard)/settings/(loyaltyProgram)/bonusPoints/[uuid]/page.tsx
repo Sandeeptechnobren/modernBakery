@@ -23,7 +23,7 @@ export default function AddEditTier() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const params = useParams();
-  const routeId = params?.uuid as string | undefined;
+  const routeId = params.uuid as string | undefined;
   const isEditMode = routeId !== undefined && routeId !== "add";
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);

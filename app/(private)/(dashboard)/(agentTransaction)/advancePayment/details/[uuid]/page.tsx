@@ -28,7 +28,7 @@ interface PaymentData {
 
 const PaymentDetails = () => {
   const params = useParams();
-  const id = params?.uuid;
+  const id = params.uuid;
   const [data, setData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(false);
   const [imageError, setImageError] = useState(false);

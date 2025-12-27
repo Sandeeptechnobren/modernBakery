@@ -126,7 +126,7 @@ export default function AddEditRouteVisit() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const params = useParams();
-  const visitId = params?.id as string | undefined;
+  const visitId = params.id as string | undefined;
   const isEditMode = !!(visitId && visitId !== "add");
 
   const { setLoading } = useLoading();

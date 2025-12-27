@@ -79,7 +79,7 @@ export default function AddEditAgentCustomer() {
         // onlyCountryOptions
         ensureChannelLoaded, ensureCustomerTypeLoaded, ensureWarehouseLoaded, ensureWarehouseAllLoaded,ensureAllCustomerTypesLoaded } = useAllDropdownListData();
     const params = useParams();
-    const agentCustomerId = params?.uuid as string | undefined;
+    const agentCustomerId = params.uuid as string | undefined;
     const isEditMode =
         agentCustomerId !== undefined && agentCustomerId !== "new";
     // Load dropdown data
