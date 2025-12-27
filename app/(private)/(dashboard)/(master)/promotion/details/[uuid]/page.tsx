@@ -224,7 +224,7 @@ export default function PromotionDetailsPage() {
               <ContainerCard className="shadow-sm border-[#E9EAEB]">
                 <div className="text-lg font-bold text-[#181D27] mb-4 flex items-center gap-2">
                   <Icon icon="lucide:calculator" className="text-primary" />
-                  Slab & Range Configuration
+                  {promotion?.bundle_combination} Configuration
                 </div>
                 <div className="overflow-hidden rounded-xl border border-[#EAECF0] shadow-xs">
                   <table className="w-full text-sm text-left border-collapse">
@@ -252,15 +252,15 @@ export default function PromotionDetailsPage() {
             {promotion?.percentage_discounts?.length > 0 && (
               <ContainerCard className="shadow-sm border-[#E9EAEB]">
                 <div className="text-lg font-bold text-[#181D27] mb-4 flex items-center gap-2">
-                  <Icon icon="lucide:percent" className="text-green-600" />
-                  Applied Discounts
+                  {/* <Icon icon="lucide:percent" className="text-green-600" /> */}
+                  Applied Slab
                 </div>
                 <div className="overflow-hidden rounded-xl border border-[#EAECF0] shadow-xs">
                   <table className="w-full text-sm text-left border-collapse">
                     <thead className="bg-[#F9FAFB] text-[#475467] text-xs uppercase font-bold tracking-wider">
                       <tr>
                         <th className="px-6 py-4 border-b border-[#EAECF0]">Item / Category Target</th>
-                        <th className="px-6 py-4 border-b border-[#EAECF0]">Discount Benefit</th>
+                        <th className="px-6 py-4 border-b border-[#EAECF0]">Division</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#EAECF0] bg-white">

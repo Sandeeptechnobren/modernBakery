@@ -43,15 +43,16 @@ export default function AddPricing() {
     orderTables, setOrderTables,
     offerItems, setOfferItems,
     percentageDiscounts, setPercentageDiscounts,
-    updateOrderItem, updateOfferItem, selectItemForOffer
+    updateOrderItem, updateOfferItem, selectItemForOffer,
+    extraCustomerOptions, setExtraCustomerOptions
   } = usePromotionForm();
   // 2. Data Fetching Hook (Dropdowns & Edit Data)
   const {
-    agentCustomerOptions, companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions,
+    companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions,
     customerCategoryOptions, customerSubCategoryOptions,  itemCategoryOptions, fetchRegionOptions,
     fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions,
     fetchItemsCategoryWise, salesmanTypeOptions, projectOptions,
-    ensureAgentCustomerLoaded, ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded,
+    ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded,
     ensureProjectLoaded, ensureUomLoaded, ensureCustomerSubCategoryLoaded
   } = useAllDropdownListData();
 
@@ -62,7 +63,7 @@ export default function AddPricing() {
   const { loading: dataLoading } = usePromotionData({
     isEditMode, id, copyFromId, setPromotion, setKeyCombo: setRawKeyCombo, setKeyValue,
     setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems,
-    setItemLoading, fetchItemsCategoryWise, router
+    setItemLoading, fetchItemsCategoryWise, router, setExtraCustomerOptions
   });
 
   // 3. Derived Data (Memoized Maps)
@@ -77,8 +78,8 @@ export default function AddPricing() {
     Channel: channelOptions,
     "Customer Category": customerCategoryOptions,
     "Customer SubCategory": customerSubCategoryOptions,
-    Customer: agentCustomerOptions,
-  }), [channelOptions, customerCategoryOptions, customerSubCategoryOptions, agentCustomerOptions]);
+    Customer: [],
+  }), [channelOptions, customerCategoryOptions, customerSubCategoryOptions]);
 
   const itemDropdownMap = useMemo(() => ({
     "Item Category": itemCategoryOptions,
@@ -103,9 +104,8 @@ export default function AddPricing() {
     fetchWarehouseOptions("");
     fetchRouteOptions("")
     fetchCustomerCategoryOptions("");
-    ensureAgentCustomerLoaded();
     ensureCustomerSubCategoryLoaded();
-  }, [fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, ensureAgentCustomerLoaded, ensureCustomerSubCategoryLoaded])
+  }, [fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, ensureCustomerSubCategoryLoaded])
 
 
   // Item Category -> Items
@@ -446,6 +446,8 @@ export default function AddPricing() {
             setKeyValue={setKeyValue}
             locationDropdownMap={locationDropdownMap}
             customerDropdownMap={customerDropdownMap}
+            extraOptions={extraCustomerOptions}
+            setExtraOptions={setExtraCustomerOptions}
           />
         );
       case 3:

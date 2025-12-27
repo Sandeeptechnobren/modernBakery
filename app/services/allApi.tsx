@@ -1992,6 +1992,26 @@ export const addDiscount = async (body: object) => {
   }
 };
 
+export const importCustomerExcel = async (body: FormData) => {
+  try {
+    const res = await APIFormData.post("api/master/promotion-headers/customers/upload-xlsx", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getPromotionCustomerDetails = async (customerIds: string) => {
+  try {
+    const res = await API.get(`/api/master/promotion-headers/customerdetails`, {
+      params: { customer_id: customerIds },
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const customerCategoryGlobalSearch = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/customer-category/global_search`, {

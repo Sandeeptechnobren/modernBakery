@@ -22,6 +22,7 @@ export function usePromotionForm() {
   ]);
 
   const [percentageDiscounts, setPercentageDiscounts] = useState<PercentageDiscountType[]>([{ key: "", percentage: "", idx: "0" }]);
+  const [extraCustomerOptions, setExtraCustomerOptions] = useState<any[]>([]);
 
   // Handlers
   const handleKeyComboChange = useCallback((newCombo: KeyComboType | ((prev: KeyComboType) => KeyComboType)) => {
@@ -79,6 +80,8 @@ export function usePromotionForm() {
     setPercentageDiscounts,
     updateOrderItem,
     updateOfferItem,
-    selectItemForOffer
+    selectItemForOffer,
+    extraCustomerOptions,
+    setExtraCustomerOptions
   };
 }

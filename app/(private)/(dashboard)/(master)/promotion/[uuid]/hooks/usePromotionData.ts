@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { promotionHeaderById } from "@/app/services/allApi";
+import { promotionHeaderById, getPromotionCustomerDetails } from "@/app/services/allApi";
 import { PromotionState, KeyComboType, PercentageDiscountType, OrderItemType, OfferItemType } from "../types";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
@@ -18,11 +18,13 @@ type UsePromotionDataProps = {
   setItemLoading: React.Dispatch<React.SetStateAction<boolean>>;
   fetchItemsCategoryWise: (categories: string) => Promise<any>;
   router: AppRouterInstance;
+  setExtraCustomerOptions: React.Dispatch<React.SetStateAction<any[]>>;
 };
 
 export function usePromotionData({
   isEditMode, id, copyFromId, setPromotion, setKeyCombo, setKeyValue, 
-  setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, setItemLoading, fetchItemsCategoryWise,router
+  setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, setItemLoading, fetchItemsCategoryWise,router,
+  setExtraCustomerOptions
 }: UsePromotionDataProps) {
   
   const [loading, setLoading] = useState(false);
@@ -84,7 +86,23 @@ export function usePromotionData({
 
           const newKeyValue: Record<string, string[]> = {};
           if (newKeyCombo.Location) newKeyValue[newKeyCombo.Location] = data.location?.map(String) || [];
-          if (newKeyCombo.Customer) newKeyValue[newKeyCombo.Customer] = data.customer?.map(String) || [];
+          if (newKeyCombo.Customer) {
+            const customerIds = data.customer?.map(String) || [];
+            newKeyValue[newKeyCombo.Customer] = customerIds;
+            
+            if (newKeyCombo.Customer === "Customer" && customerIds.length > 0) {
+              getPromotionCustomerDetails(customerIds.join(",")).then(res => {
+                const customerData = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+                if (customerData.length > 0) {
+                  const options = customerData.map((c: any) => ({
+                    value: String(c.id),
+                    label: `${c.osa_code || ""} - ${c.name || ""}`
+                  }));
+                  setExtraCustomerOptions(options);
+                }
+              }).catch(err => console.error("Failed to fetch customer details", err));
+            }
+          }
           
           const isPercentageDriven = Array.isArray(data.percentage_discounts) && data.percentage_discounts.length > 0;
           
