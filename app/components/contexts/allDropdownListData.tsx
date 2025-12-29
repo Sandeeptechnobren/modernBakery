@@ -42,8 +42,9 @@ import {
   vehicleListData,
   warehouseList,
   getUserList,
+
 } from '@/app/services/allApi';
-import { vendorList } from '@/app/services/assetsApi';
+import { vendorList, chillerList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
@@ -82,6 +83,7 @@ interface DropdownDataContextType {
   BrandList: Brand[];
   brandingList: Branding[];
   userList: UserItem[];
+  chillerList: ChillerItem[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -129,6 +131,7 @@ interface DropdownDataContextType {
   allCompanyTypeOptions: { value: string; label: string }[];
   brandingOptions: { value: string; label: string }[];
   userOptions: { value: string; label: string }[];
+  chillerOptions: { value: string; label: string }[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   refreshDropdown: (name: string, params?: any) => Promise<void>;
@@ -197,6 +200,7 @@ interface DropdownDataContextType {
   ensureAllCompanyCustomersLoaded: () => void;
   ensureAllCustomerTypesLoaded: () => void;
   ensureAllCompanyTypesLoaded: () => void;
+  ensureChillerLoaded: () => void;
 }
 
 // Minimal interfaces reflecting the expected fields returned by API for dropdown lists
@@ -342,6 +346,11 @@ interface Item {
   volume?: string;
   status?: string;
   uom?: UomItem[];
+}
+
+interface ChillerItem {
+  id?: number | string;
+  serial_number?: string;
 }
 
 interface UomItem {
@@ -651,6 +660,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [brandList, setBrandList] = useState<Brand[]>([]);
   const [brandingListState, setBrandingList] = useState<Branding[]>([]);
   const [userListState, setUserList] = useState<UserItem[]>([]);
+  const [chillerListState, setChillerList] = useState<ChillerItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Track which dropdowns have been fetched using useRef to avoid re-renders
@@ -1198,6 +1208,19 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     });
   }, [normalizeResponse]);
 
+  const ensureChillerLoaded = useCallback(() => {
+    // if (fetchedRef.current.has('chiller') || fetchingRef.current.has('chiller')) return;
+    // fetchingRef.current.add('chiller');
+    chillerList().then(res => {
+      setChillerList(Array.isArray(res?.data) ? res.data : []);
+      fetchedRef.current.add('chiller');
+      fetchingRef.current.delete('chiller');
+    }).catch(() => {
+      setChillerList([]);
+      fetchingRef.current.delete('chiller');
+    });
+  }, [setChillerList, fetchedRef, fetchingRef]);
+
   // mapped dropdown options (explicit typed mappings)
   const companyOptions = (Array.isArray(companyListData) ? companyListData : []).map((c: CompanyItem) => ({
     value: String(c.id ?? ''),
@@ -1359,6 +1382,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const uomOptions = (Array.isArray(uom) ? uom : []).map((c: UOM) => ({
     value: String(c.id ?? ''),
     label: c.osa_code && c.name ? `${c.name}` : (c.name ?? '')
+  }))
+
+  const chillerOptions = (Array.isArray(chillerListState) ? chillerListState : []).map((c: ChillerItem) => ({
+    value: String(c.id ?? ''),
+    label: c.serial_number ? `${c.serial_number}` : (c.serial_number ?? '')
   }))
 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => (
@@ -1832,6 +1860,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       { run: () => assetsModelList({ dropdown: 'true' }), setter: (v) => setAssetsModel(v as AssetsModel[]) },
       { run: () => BrandList({ dropdown: 'true' }), setter: (v) => setBrandList(v as Brand[]) },
       { run: () => brandingList({ dropdown: 'true' }), setter: (v) => setBrandingList(v as Branding[]) },
+      { run: () => chillerList({ dropdown: 'true' }), setter: (v) => setChillerList(v as ChillerItem[]) },
     ];
 
     try {
@@ -2111,6 +2140,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         BrandList: brandList,
         brandingList: brandingListState,
         userList: userListState,
+        chillerList: chillerListState,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
@@ -2176,6 +2206,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         allCompanyTypeOptions,
         brandingOptions,
         userOptions,
+        chillerOptions,
         loading,
         ensureCompanyLoaded,
         ensureCountryLoaded,
@@ -2223,6 +2254,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         ensureUserLoaded,
         ensureAllAgentCustomersLoaded,
         ensureAllCompanyOptionsLoaded,
+        ensureChillerLoaded,
       }}
     >
       {children}

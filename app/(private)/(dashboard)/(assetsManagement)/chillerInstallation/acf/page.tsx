@@ -19,6 +19,7 @@ import InputFields from "@/app/components/inputFields";
 // import { Icon } from "lucide-react";
 import { Icon } from "@iconify-icon/react";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import { button } from "framer-motion/client";
 
 // Type definitions for the ACF API response
 interface ChillerRequest {
@@ -221,16 +222,16 @@ export default function CustomerInvoicePage() {
         regionOptions,
         areaOptions,
         assetsModelOptions
-    , ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+        , ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureAreaLoaded();
-    ensureAssetsModelLoaded();
-    ensureRegionLoaded();
-    ensureRouteLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureAreaLoaded();
+        ensureAssetsModelLoaded();
+        ensureRegionLoaded();
+        ensureRouteLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -323,7 +324,7 @@ export default function CustomerInvoicePage() {
                 };
             }
         },
-        [],
+        [refreshKey],
     );
 
     // 🔹 Search Invoices (Mock)
@@ -442,20 +443,26 @@ export default function CustomerInvoicePage() {
                             },
                         ],
                         actionsWithData: (data: TableDataType[], selectedRow?: number[]) => {
-                            if (!can("create")) return [];
+                            // if (!can("create")) return [];
                             // gets the ids of the selected rows with type narrowing
                             const ids = selectedRow
                                 ?.map((index) => {
                                     const row = data[index];
-                                    if (hasChillerRequest(row)) {
-                                        return row.chiller_request.id;
-                                    }
-                                    return null;
+                                    console.log("row", row)
+                                    console.log(hasChillerRequest(row))
+                                    // if (hasChillerRequest(row)) {
+                                    //     console.log(row.id)
+                                    return row.id;
+                                    // }
+                                    // return null;
                                 })
                                 .filter((id): id is number => id !== null);
 
+                            console.log(ids);
+
                             return [
                                 <SidebarBtn
+                                    disabled={!ids || ids.length === 0}
                                     key="key-companu-customer-with-data"
                                     onClick={async () => {
                                         if (!ids || ids.length === 0) {

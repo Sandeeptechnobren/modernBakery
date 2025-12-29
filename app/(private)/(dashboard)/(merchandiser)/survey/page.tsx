@@ -16,8 +16,10 @@ import { useEffect } from "react";
 
 interface SurveyItem {
   id: number;
+  uuid: string;
   survey_code: string;
   survey_name: string;
+  survey_type: string;
   start_date: string;
   end_date: string;
   status: number | string;
@@ -62,6 +64,12 @@ export default function Survey() {
     }
   }, [permissions]);
 
+  const SURVEY_TYPE_MAP: Record<string, string> = {
+    "1": "Consumer Survey",
+    "2": "Sensory Survey",
+    "3": "Asset Survey",
+  };
+
   // ✅ Fetch Surveys (List)
   const fetchSurveys = useCallback(
     async (page: number = 1, pageSize: number = 50): Promise<listReturnType> => {
@@ -79,12 +87,9 @@ export default function Survey() {
           id: item.id.toString(),
           survey_code: item.survey_code,
           survey_name: item.survey_name,
+          survey_type: SURVEY_TYPE_MAP[item.survey_type] || "-",
           start_date: item.start_date,
           end_date: item.end_date,
-          status:
-            item.status === 1 || String(item.status).toLowerCase() === "active"
-              ? "Active"
-              : "Inactive",
         }));
 
         return {
@@ -120,6 +125,7 @@ export default function Survey() {
           id: item.id.toString(),
           survey_code: item.survey_code,
           survey_name: item.survey_name,
+          survey_type: SURVEY_TYPE_MAP[item.survey_type] || "-",
           start_date: item.start_date,
           end_date: item.end_date,
           status:
@@ -147,6 +153,7 @@ export default function Survey() {
   const columns = [
     { key: "survey_code", label: "Survey Code" },
     { key: "survey_name", label: "Survey Name" },
+    { key: "survey_type", label: "Survey Type" },
     { key: "start_date", label: "Start Date" },
     { key: "end_date", label: "End Date" },
     {
@@ -212,7 +219,14 @@ export default function Survey() {
           footer: { nextPrevBtn: true, pagination: true },
           columns,
           rowSelection: true,
-
+          rowActions: [
+            {
+              icon: "lucide:eye",
+              onClick: (data: TableDataType) => {
+                router.push(`/survey/view/${data.uuid}`);
+              },
+            },
+          ],
           pageSize: 50,
         }}
       />

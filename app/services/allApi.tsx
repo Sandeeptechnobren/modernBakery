@@ -497,7 +497,7 @@ export const saveRouteVisit = async (body: object) => {
 
 export const merchandiserData = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/route-visits/salesmen",{params});
+    const res = await API.get("/api/master/route-visits/salesmen", { params });
     return res.data;
   } catch (error) {
     return handleError(error);
@@ -2544,9 +2544,9 @@ export const updateSurvey = async (id: string, payload: updateSurvey) => {
     return handleError(error);
   }
 };
-export const getSurveyById = async (id: string) => {
+export const getSurveyById = async (uuid: string) => {
   try {
-    const res = await API.get(`/api/merchendisher/survey/${id}`);
+    const res = await API.get(`/api/merchendisher/survey/${uuid}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3861,7 +3861,7 @@ export const getWarehouseStockDetails = async (id: string) => {
 
 export const getFilters = async (params?: Params) => {
   try {
-    const res =await API.post(`/api/filters`, { params: params });
+    const res = await API.post(`/api/filters`, { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3916,7 +3916,7 @@ export const addRouteTransfer = async (body: object) => {
 
 export const outletChannelList = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/outlet-channels/get-outlet-based`,{params});
+    const res = await API.get(`/api/settings/outlet-channels/get-outlet-based`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3925,7 +3925,7 @@ export const outletChannelList = async (params?: Params) => {
 
 export const custCatByChId = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/outlet-channels/get-outlet-based`,{params});
+    const res = await API.get(`/api/settings/outlet-channels/get-outlet-based`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3934,16 +3934,16 @@ export const custCatByChId = async (params?: Params) => {
 
 export const changePassword = async (body?: object) => {
   try {
-    const res = await API.post(`/api/master/change-password`,body);
+    const res = await API.post(`/api/master/change-password`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const warehouseStockItem = async (id:string,params?: Params) => {
+export const warehouseStockItem = async (id: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/warehouse-stocks/warehouseStockInfo/${id}`,{params});
+    const res = await API.get(`/api/settings/warehouse-stocks/warehouseStockInfo/${id}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

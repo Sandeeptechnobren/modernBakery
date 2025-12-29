@@ -33,6 +33,16 @@ export default function FridgeUpdateCustomer() {
         }
     }, [permissions]);
 
+    const Status: Record<string, string> = {
+        "1": "Sales Team Requested",
+        "2": "Area Sales Manager Accepted",
+        "3": "Area Sales Manager Rejected",
+        "4": "Chiller officer Accepted",
+        "5": "Chiller officer Rejected",
+        "6": "Completed",
+        "7": "Chiller Manager Rejected",
+    };
+
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
 
@@ -213,12 +223,14 @@ export default function FridgeUpdateCustomer() {
                             { key: "asset_number", label: "Asset Number" },
                             { key: "model", label: "Model Number" },
                             { key: "brand", label: "Branding" },
-                            { key: "remarks", label: "Remarks" },
+                            { key: "remark", label: "Remarks" },
                             {
-                                key: "status", label: "Status", render: (data: TableDataType) =>
-                                    typeof data.status === "object" && data.status !== null
-                                        ? `${(data.status as { name?: string }).name || ""}`
-                                        : "-",
+                                key: "status",
+                                label: "Status",
+                                render: (data: TableDataType) => {
+                                    const statusKey = String(data.status);
+                                    return Status[statusKey] ?? "-";
+                                },
                             },
                         ],
                         rowSelection: true,

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -12,17 +12,20 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 // IconButton and SettingPopUp removed - not used in this page
 import {
   addSurvey,
+  updateSurvey,
   addSurveyQuestion,
   getSurveyById,
   getSurveyQuestionBySurveyId,
   UpdateSurveyQuestion,
   deleteSurveyQuestion,
+  merchendiserList,
 } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
 import TabBtn from "@/app/components/tabBtn";
 import CustomCheckbox from "@/app/components/customCheckbox";
+import { shelvesDropdown } from "@/app/services/merchandiserApi";
 
 //  Question type definitions (match update page)
 const typesWithOptions = ["check box", "radio button", "selectbox"];
@@ -85,7 +88,6 @@ const stepSchemas = [
       .required("End Date is required")
       .typeError("Invalid date")
       .min(Yup.ref("startDate"), "End Date cannot be before Start Date"),
-    status: Yup.string().required("Status is required."),
   }),
   Yup.object({
     question: Yup.string().required("Question is required"),
@@ -108,10 +110,28 @@ type SurveyFormValues = {
   startDate: string;
   endDate: string;
   status: string;
+  survey_type?: string;
+  merchendisher_id: number[];
+  customer_id: number[];
+  asset_id: number[];
   question: string;
   questionType: string;
   survey_id: string;
   options: string[];
+};
+
+type MerchandiserResponse = { id: number; name: string };
+type CustomerFromBackend = {
+  id: number;
+  customer_code: string;
+  business_name: string;
+  merchendisher_id?: string;
+};
+type CustomerOption = {
+  value: string;
+  label: string;
+  merchendisher_id: string;
+  id: string;
 };
 
 export default function AddSurveyTabs() {
@@ -131,7 +151,12 @@ export default function AddSurveyTabs() {
   const [isPreviewMode, setIsPreviewMode] = React.useState<boolean>(false);
   const [savingQuestionIndex, setSavingQuestionIndex] = React.useState<number | null>(null);
   const [savingAll, setSavingAll] = React.useState<boolean>(false);
+  const { chillerOptions, ensureChillerLoaded } = useAllDropdownListData();
   const [questionErrors, setQuestionErrors] = React.useState<Record<number, Record<string, string>>>({});
+  const [merchendiserOptions, setMerchendiserOptions] = useState<
+    CustomerOption[]
+  >([]);
+  const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
   const [questions, setQuestions] = React.useState<
     {
       survey_id: string;
@@ -164,11 +189,72 @@ export default function AddSurveyTabs() {
     startDate: "",
     endDate: "",
     status: "",
+    survey_type: "",
+    merchendisher_id: [],
+    customer_id: [],
+    asset_id: [],
     question: "",
     questionType: "",
     survey_id: "",
     options: [],
   });
+
+  useEffect(() => {
+    ensureChillerLoaded();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const merchRes = await merchendiserList();
+        const merchOptions =
+          merchRes.data?.map((m: MerchandiserResponse) => ({
+            value: String(m.id),
+            label: m.name,
+          })) || [];
+
+        setMerchendiserOptions(merchOptions);
+      } catch (err) {
+        showSnackbar("Unable to fetch merchandisers", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [showSnackbar]);
+
+
+  const fetchCustomers = async (merchIds: number[]) => {
+    if (!merchIds.length) {
+      setCustomerOptions([]);
+      return;
+    }
+    try {
+      const response = await shelvesDropdown({
+        merchandiser_id: merchIds.map(String),
+      });
+
+      const customerOptions: CustomerOption[] = response.data.map(
+        (customer: CustomerFromBackend) => ({
+          value: String(customer.id),
+          label: formatCustomerLabel(customer),
+          merchendisher_id: customer.merchendisher_id || "",
+          id: String(customer.id),
+        })
+      );
+
+      setCustomerOptions(customerOptions);
+    } catch (err) {
+      console.error(err);
+      showSnackbar("Unable to fetch customers", "error");
+    }
+  };
+
+  const formatCustomerLabel = (customer: CustomerFromBackend): string => {
+    return `${customer.customer_code || ""} - ${customer.business_name || ""}`;
+  };
 
   // Fetch survey and questions when in edit mode
   React.useEffect(() => {
@@ -187,8 +273,18 @@ export default function AddSurveyTabs() {
               surveyName: surveyData.survey_name || "",
               startDate: surveyData.start_date?.split("T")[0] || "",
               endDate: surveyData.end_date?.split("T")[0] || "",
-              status: normalizeStatusOption(surveyData.status),
+              merchendisher_id: Array.isArray(surveyData.merchendisher_id)
+                ? surveyData.merchendisher_id.map(Number)
+                : [],
+
+              customer_id: Array.isArray(surveyData.customer_id)
+                ? surveyData.customer_id.map(Number)
+                : [],
+              asset_id: Array.isArray(surveyData.asset_id)
+                ? surveyData.asset_id.map(Number)
+                : [],
               survey_id: routeId.toString(),
+              survey_type: surveyData.survey_type || "",
             }));
 
             setCreatedSurveyId(routeId.toString());
@@ -247,46 +343,60 @@ export default function AddSurveyTabs() {
   ) => {
     try {
       await stepSchemas[0].validate(values, { abortEarly: false });
+
       const payload = {
         survey_code: values.surveyCode.trim(),
         survey_name: values.surveyName.trim(),
         start_date: values.startDate,
         end_date: values.endDate,
+        survey_type: values.survey_type,
+        merchendisher_id: values.merchendisher_id,
+        customer_id: values.customer_id,
+        asset_id: values.asset_id,
         status: mapStatusForApi(values.status),
       };
 
       setLoading(true);
-      const res = await addSurvey(payload);
+
+      const res = isEditMode
+        ? await updateSurvey(routeId.toString(), payload)
+        : await addSurvey(payload);
+
       setLoading(false);
 
       if (res?.error) {
-        showSnackbar(Object.values(res.error).flat().join(" | "), "error");
+        showSnackbar("Failed to save survey", "error");
         return;
       }
 
-      setCreatedSurveyId(res.data.id.toString());
+      const surveyId = isEditMode
+        ? routeId.toString()
+        : res.data.id.toString();
 
-      showSnackbar("Survey created successfully ", "success");
+      setCreatedSurveyId(surveyId);
+
+      showSnackbar(
+        isEditMode ? "Survey updated successfully" : "Survey created successfully",
+        "success"
+      );
+
       setActiveTab(2);
-    } catch (err) {
+    } catch (err: any) {
       if (err instanceof Yup.ValidationError) {
         const errors = err.inner.reduce(
-          (acc, curr) => ({ ...acc, [curr.path!]: curr.message }),
-          {} as Record<string, string>
+          (acc: any, curr: any) => ({ ...acc, [curr.path]: curr.message }),
+          {}
         );
         actions.setErrors(errors);
-
-        // Mark all fields with errors as touched so the UI displays them
-        const touchedFields = Object.keys(errors).reduce((acc, key) => {
-          acc[key as keyof SurveyFormValues] = true;
-          return acc;
-        }, {} as Record<keyof SurveyFormValues, boolean>);
-        actions.setTouched(touchedFields);
+        actions.setTouched(
+          Object.keys(errors).reduce((a: any, k) => ({ ...a, [k]: true }), {})
+        );
       }
     } finally {
       actions.setSubmitting(false);
     }
   };
+
 
   //  Add Question API
   const handleAddQuestion = async (
@@ -530,22 +640,18 @@ export default function AddSurveyTabs() {
       question: string;
       questionType: string;
       options: string[];
-      survey_question_code?: string;
     }[]
-  ) => {
-    return {
-      survey_id: Number(surveyId),
-      survey_question_code:
-        questions[0]?.survey_question_code || generateSurveyQuestionCode(),
-      questions: questions.map((q) => ({
-        question: q.question,
-        question_type: mapQuestionTypeForApi(q.questionType),
-        question_based_selected: typesWithOptions.includes(q.questionType)
-          ? q.options.filter((o) => o.trim() !== "").join(",")
-          : "",
-      })),
-    };
-  };
+  ) => ({
+    survey_id: Number(surveyId),
+    questions: questions.map((q) => ({
+      question: q.question,
+      question_type: mapQuestionTypeForApi(q.questionType),
+      question_based_selected: typesWithOptions.includes(q.questionType)
+        ? q.options.filter(Boolean).join(",")
+        : "",
+    })),
+  });
+
 
 
   //  Dynamic Tab Renderer
@@ -594,21 +700,107 @@ export default function AddSurveyTabs() {
                   error={formik.touched.endDate && formik.errors.endDate}
                 />
               </div>
-
               <div>
                 <InputFields
-                  label="Status"
-                  name="status"
-                  type="radio"
-                  value={values.status}
-                  onChange={(e) => setFieldValue("status", e.target.value)}
+                  label="Survey Type"
+                  type="select"
                   options={[
-                    { value: "1", label: "Active" },
-                    { value: "0", label: "Inactive" },
+                    { value: "1", label: "Consumer Survey" },
+                    { value: "2", label: "Sensory Survey" },
+                    { value: "3", label: "Asset Survey" },
                   ]}
-                  error={formik.touched.status && formik.errors.status}
+                  name="survey_type"
+                  value={values.survey_type}
+                  onChange={(e) => setFieldValue("survey_type", e.target.value)}
+                  error={formik.touched.survey_type && formik.errors.survey_type}
                 />
               </div>
+
+              {values.survey_type === "1" && (
+                <>
+                  <div>
+                    <InputFields
+                      width="max-w-[500px]"
+                      required
+                      searchable
+                      label="Merchandisers"
+                      name="merchendisher_id"
+                      value={values.merchendisher_id.map(String)}
+                      options={merchendiserOptions}
+                      isSingle={false}
+                      onChange={(e) => {
+                        const selectedIds = (
+                          Array.isArray(e.target.value) ? e.target.value : []
+                        ).map(Number);
+                        setFieldValue("merchendisher_id", selectedIds);
+                        setFieldValue("customer_id", []);
+                        setFieldValue("images", {});
+                        fetchCustomers(selectedIds);
+                      }}
+                    // error={
+                    //   touched.merchendisher_ids &&
+                    //   (Array.isArray(errors.merchendisher_ids)
+                    //     ? errors.merchendisher_ids[0]
+                    //     : errors.merchendisher_ids)
+                    // }
+                    />
+                  </div>
+                  <div>
+                    <InputFields
+                      width="max-w-[500px]"
+                      searchable
+                      placeholder={
+                        values.merchendisher_id.length === 0
+                          ? "A merchandiser must be selected"
+                          : customerOptions.length === 0
+                            ? "No customer found"
+                            : ""
+                      }
+                      required
+                      label="Customers"
+                      name="customer_id"
+                      value={values.customer_id.map(String)}
+                      options={customerOptions}
+                      isSingle={false}
+                      disabled={
+                        values.merchendisher_id.length === 0 ||
+                        customerOptions.length === 0
+                      }
+                      onChange={(e) => {
+                        const selectedIds = (
+                          Array.isArray(e.target.value) ? e.target.value : []
+                        ).map(Number);
+                        setFieldValue("customer_id", selectedIds);
+                        setFieldValue("images", {});
+                      }}
+                    // error={
+                    //   touched.customer_ids &&
+                    //   (Array.isArray(errors.customer_ids)
+                    //     ? errors.customer_ids[0]
+                    //     : errors.customer_ids)
+                    // }
+                    />
+                  </div>
+                </>
+              )}
+
+              {values.survey_type === "3" && (
+                <div className="flex flex-col w-full">
+                  <InputFields
+                    label="Assets"
+                    searchable
+                    value={values.asset_id.map(String)}
+                    options={chillerOptions}
+                    isSingle={false}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFieldValue("asset_id", value);
+                    }}
+                  // error={touched.asset && errors.asset}
+                  />
+                </div>
+              )}
+
             </div>
 
             <div className="flex justify-end gap-4 mt-6">
@@ -628,8 +820,9 @@ export default function AddSurveyTabs() {
                       values.surveyName !== initialValues.surveyName ||
                       values.startDate !== initialValues.startDate ||
                       values.endDate !== initialValues.endDate ||
-                      values.status !== initialValues.status ||
+                      values.survey_type !== initialValues.survey_type ||
                       values.surveyCode !== initialValues.surveyCode
+
                     );
                   };
 

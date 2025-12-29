@@ -13,7 +13,7 @@ export type LinkDataType = {
   leadingIcon: IconifyIcon | string;
   trailingIcon?: IconifyIcon | string;
   iconColor?: string;
-  permissions?:[]
+  permissions?: []
   children?: LinkDataType[];
 };
 
@@ -486,13 +486,6 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/fridgeUpdateCustomer",
-            label: "Fridge Update Customer",
-            leadingIcon: "si:pull-request-duotone",
-            iconColor: "text-cyan-500",
-          },
-          {
-            isActive: false,
             href: "#",
             label: "Chiller Installation",
             leadingIcon: "streamline-freehand:money-bag",
@@ -528,6 +521,13 @@ export const initialLinkData: SidebarDataType[] = [
                 iconColor: "text-cyan-500",
               },
             ],
+          },
+          {
+            isActive: false,
+            href: "/fridgeUpdateCustomer",
+            label: "Fridge Update Customer",
+            leadingIcon: "si:pull-request-duotone",
+            iconColor: "text-cyan-500",
           },
           {
             isActive: false,

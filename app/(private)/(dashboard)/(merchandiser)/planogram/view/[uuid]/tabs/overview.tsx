@@ -70,60 +70,102 @@ export const OverviewTab = () => {
 
   const getFileView = (files?: string[]) =>
     files && files.length > 0 ? (
-      <button
-        className="text-blue-600 font-medium hover:underline transition"
-        onClick={() => openImageModal(files, 0)}
-      >
-        View Images ({files.length})
-      </button>
+      <div className="flex gap-3 flex-wrap">
+        {files.map((img, index) => (
+          <button
+            key={index}
+            onClick={() => openImageModal(files, index)}
+            className="group relative"
+          >
+            <img
+              src={img}
+              alt={`planogram-${index}`}
+              className="w-20 h-20 object-cover rounded-md border border-gray-200 hover:scale-105 transition"
+            />
+          </button>
+        ))}
+      </div>
     ) : (
       "-"
     );
 
 
-  console.log(imageObjects);
+
+  // console.log(imageObjects);
 
   if (loading) return <Loading />;
   if (!planogramData)
     return <div className="text-red-500">No shelf data available</div>;
 
   return (
-    <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
+    <>
+      <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
+        <div className="w-full flex flex-col gap-y-[20px]">
+          <ContainerCard className="w-full h-fit">
+            <KeyValueData
+              title="Planogram Details"
+              data={[
+                { key: " Name", value: planogramData?.name || "-" },
+                {
+                  key: "Valid From",
+                  value: planogramData?.valid_from
+                    ? planogramData.valid_from.slice(0, 10)
+                    : "-",
+                },
+                {
+                  key: "Valid To",
+                  value: planogramData?.valid_to
+                    ? planogramData.valid_to.slice(0, 10)
+                    : "-",
+                },
+              ]}
+            />
+            <ImagePreviewModal
+              images={imageModal?.images ?? []}
+              isOpen={!!imageModal}
+              onClose={closeImageModal}
+              startIndex={imageModal?.index ?? 0}
+            />
+
+          </ContainerCard>
+
+        </div>
+      </div>
       <div className="w-full flex flex-col gap-y-[20px]">
         <ContainerCard className="w-full h-fit">
-          <KeyValueData
-            title="Planogram Details"
-            data={[
-              { key: " Name", value: planogramData?.name || "-" },
-              {
-                key: "Valid From",
-                value: planogramData?.valid_from
-                  ? planogramData.valid_from.slice(0, 10)
-                  : "-",
-              },
-              {
-                key: "Valid To",
-                value: planogramData?.valid_to
-                  ? planogramData.valid_to.slice(0, 10)
-                  : "-",
-              },
-              {
-                key: "Images",
-                value: getFileView(planogramData?.images),
-              }
+          <h3 className="text-base font-semibold mb-4">Images</h3>
 
-            ]}
-          />
+          {planogramData?.images && planogramData.images.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {planogramData.images.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => openImageModal(planogramData.images!, index)}
+                  className="group"
+                >
+                  <img
+                    src={img}
+                    alt={`planogram-${index}`}
+                    className="w-full h-70 object-cover rounded-lg
+                       hover:scale-105 transition"
+                  />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400">No images available</p>
+          )}
+
           <ImagePreviewModal
             images={imageModal?.images ?? []}
             isOpen={!!imageModal}
             onClose={closeImageModal}
             startIndex={imageModal?.index ?? 0}
           />
-
         </ContainerCard>
 
+
       </div>
-    </div>
+    </>
   );
 };

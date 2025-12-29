@@ -12,7 +12,7 @@ import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import {downloadFile} from "@/app/services/allApi";
+import { downloadFile } from "@/app/services/allApi";
 import Skeleton from "@mui/material/Skeleton";
 import { formatDate } from "../../../salesTeam/details/[uuid]/page";
 
@@ -21,7 +21,7 @@ interface CustomerItem {
   sap_code: string;
   osa_code: string;
   business_name: string;
-  company_type: { id: number; code: string; name: string; }
+  company_type: string;
   language: string;
   contact_number?: string;
   business_type: string;
@@ -80,34 +80,34 @@ export default function ViewPage() {
   // const IconComponentData2 = ({row}:{row:TableDataType})=>{
   //   const [smallLoading, setSmallLoading] = useState(false)
   //   const { showSnackbar } = useSnackbar();
-  
+
   //   const exportOrderFile = async (uuid: string, format: string) => {
   //     try {
   //       setSmallLoading(true)
   //       const response = await exportOrderInvoice({ uuid, format }); // send proper body object
-  
+
   //       if (response && typeof response === "object" && response.download_url) {
   //         await downloadFile(response.download_url);
   //         showSnackbar("File downloaded successfully", "success");
   //       setSmallLoading(false)
-  
-  
+
+
   //       } else {
   //         showSnackbar("Failed to get download URL", "error");
   //       setSmallLoading(false)
-  
+
   //       }
   //     } catch (error) {
   //       console.error(error);
   //       showSnackbar("Failed to download data", "error");
   //       setSmallLoading(false)
-  
+
   //     }
   //   };
-  
+
   //   return(smallLoading?<Skeleton/>:<div className="cursor-pointer" onClick={()=>{
   //                       exportOrderFile(row.uuid, "pdf"); // or "excel", "csv" etc.
-  
+
   //       }}><Icon  icon="material-symbols:download"/></div>)
   // }
   useEffect(() => {
@@ -169,8 +169,8 @@ export default function ViewPage() {
       }
     },
     //  { key: "action", label: "Action",sticky:"right", render: (row: TableDataType) => {
-                         
-    
+
+
     //       return(<IconComponentData2 row={row} />)
     //     } }
   ];
@@ -246,7 +246,7 @@ export default function ViewPage() {
                   { key: "SAP Code", value: customer?.sap_code || "-" },
                   { key: "Language", value: customer?.language || "-" },
                   { key: "Contact No.", value: customer?.contact_number || "-" },
-                  { key: "Company Type", value: customer?.company_type?.code ? `${customer?.company_type?.code} - ${customer?.company_type?.name}` : "-" },
+                  { key: "Company Type", value: customer?.company_type || "-" },
                   {
                     key: "Business Type",
                     value:
