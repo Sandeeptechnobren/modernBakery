@@ -85,6 +85,7 @@ export default function Survey() {
 
         const data: TableDataType[] = res.data.map((item) => ({
           id: item.id.toString(),
+          uuid: item.uuid, // Add uuid for navigation
           survey_code: item.survey_code,
           survey_name: item.survey_name,
           survey_type: SURVEY_TYPE_MAP[item.survey_type] || "-",
@@ -123,6 +124,7 @@ export default function Survey() {
 
         const data: TableDataType[] = res.data.map((item) => ({
           id: item.id.toString(),
+          uuid: item.uuid, // Add uuid for navigation
           survey_code: item.survey_code,
           survey_name: item.survey_name,
           survey_type: SURVEY_TYPE_MAP[item.survey_type] || "-",

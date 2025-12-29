@@ -126,16 +126,16 @@ export default function ServiceTerritoryListPage() {
     const { setLoading } = useLoading();
     const router = useRouter();
 
-    const { warehouseAllOptions, regionOptions, areaOptions, assetsModelOptions , ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded} =
+    const { warehouseAllOptions, regionOptions, areaOptions, assetsModelOptions, ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded } =
         useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureAreaLoaded();
-    ensureAssetsModelLoaded();
-    ensureRegionLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureAreaLoaded();
+        ensureAssetsModelLoaded();
+        ensureRegionLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -335,7 +335,7 @@ export default function ServiceTerritoryListPage() {
                 onClose={() => setDrawerOpen(false)}
                 sx={{
                     '& .MuiDrawer-paper': {
-                        width: '33.333%',
+                        width: '45.333%',
                         minWidth: '400px',
                         maxWidth: '600px',
                     },

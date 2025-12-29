@@ -2552,6 +2552,14 @@ export const getSurveyById = async (uuid: string) => {
     return handleError(error);
   }
 };
+export const getSurveyShowById = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/merchendisher/survey-header/show/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 // export const SurveyListGlobalSearch = async (params?: Params) => {
 //   try{
