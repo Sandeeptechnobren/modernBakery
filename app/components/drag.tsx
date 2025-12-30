@@ -200,13 +200,13 @@ const SalesReportDashboard = () => {
   };
 
   // Fetch filters from API
-  const fetchFiltersData = async (currentFilterId?: string) => {
+  const fetchFiltersData = async (currentFilterId?: string, onDrop?: boolean) => {
     setFilterError(null);
 
     // Determine which filters need to be loaded based on selections
     const filtersToLoad = new Set<string>();
     let hierarchyReached = false;
-    hierarchyOrder.filter(filterId => {
+    hierarchyOrder.filter((filterId, index) => {
       if (!hierarchyReached && currentFilterId && filterId === currentFilterId) {
         hierarchyReached = true;
         return false;
@@ -218,6 +218,11 @@ const SalesReportDashboard = () => {
         return true;
       }
     });
+
+    console.log(filtersToLoad, currentFilterId);
+    if(onDrop && currentFilterId) {
+      filtersToLoad.add(currentFilterId);
+    }
 
     if(availableFilters.length > 0 && filtersToLoad.size === 0) return;
     // Set loading state for specific filters
@@ -741,18 +746,18 @@ const SalesReportDashboard = () => {
     e.preventDefault();
     if (draggedFilter) {
       // setAvailableFilters(prev => prev.filter(f => f.id !== draggedFilter.id));
-      
+
       setDroppedFilters(prev => [...prev, draggedFilter]);
       setSelectedChildItems(prev => ({ ...prev, [draggedFilter.id]: [] }));
       setSearchTerms(prev => ({ ...prev, [draggedFilter.id]: '' }));
       setDraggedFilter(null);
-      
+
       // Close the dropdowns after dropping
       setShowMoreFilters(false);
       setSearchbyclose(false);
 
-      const index = hierarchyOrder.findIndex(id => id === draggedFilter.id) - 1;
-      fetchFiltersData( index >= 0 ? hierarchyOrder[index] : undefined );
+      // Load data for the newly dropped filter
+      fetchFiltersData(draggedFilter.id, true);
     }
   };
 

@@ -121,7 +121,7 @@ export default function AddAssetsCategory() {
         showSnackbar(res?.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar("Asset Type Added Successfully ✅", "success");
-        router.push("/settings/manageAssets/assetsType");
+        router.push("../assetsCategory");
       }
     } catch (error) {
       console.error("Form submission error:", error);

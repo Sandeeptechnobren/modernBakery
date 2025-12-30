@@ -57,7 +57,8 @@ export default function CreateUpdate({
       if (type === "create") {
         const res = await createItemCategory(
           values.categoryName,
-          values.status as 0 | 1
+          values.status as 0 | 1,
+          values.category_code
         );
         if (res.error) return showSnackbar(res.data.message, "error");
         await saveFinalCode({

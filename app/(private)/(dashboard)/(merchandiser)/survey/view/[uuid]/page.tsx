@@ -1,4 +1,35 @@
+// ...existing code...
+
 "use client";
+
+// Sidebar component for answers (must be after 'use client')
+const AnswerSidebar = ({ open, onClose, answers }: { open: boolean; onClose: () => void; answers: any[] }) => (
+  <div
+    className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-lg z-50 transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
+    style={{ maxWidth: 400 }}
+  >
+    <div className="flex items-center justify-between p-4 border-b">
+      <h2 className="text-lg font-semibold">Answers</h2>
+      <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
+        <Icon icon="lucide:x" width={24} />
+      </button>
+    </div>
+    <div className="p-4 overflow-y-auto h-[calc(100%-56px)]">
+      {answers && answers.length > 0 ? (
+        <ul className="space-y-3">
+          {answers.map((d: any, i: number) => (
+            <li key={d.id || i} className="border-b pb-2">
+              <span className="font-semibold">Q:</span> {d.question_id} <br />
+              <span className="font-semibold">A:</span> {d.answer}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="text-gray-500">No answers found.</div>
+      )}
+    </div>
+  </div>
+);
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,13 +49,11 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import { formatDate } from "@/app/(private)/(dashboard)/(master)/salesTeam/details/[uuid]/page";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { customer } from "@/app/(private)/data/customerDetails";
-import { getSurveyById } from "@/app/services/allApi";
+import { getSurveyById, updateSurvey, getSurveyShowById } from "@/app/services/allApi";
 
-export const tabs = [
-  { name: "Overview" },
-  { name: "Customer" },
-  // { name: "Model Stock" },
-];
+// ...existing code...
+// Sidebar state for viewing answers
+
 
 interface Customer {
   customer_code: string;
@@ -34,6 +63,13 @@ interface Customer {
 interface Merchandiser {
   osa_code: string;
   name: string;
+}
+
+interface SurveyQuestion {
+  id: number;
+  question: string;
+  question_type: string;
+  question_based_selected: string | null;
 }
 
 interface Survey {
@@ -46,17 +82,21 @@ interface Survey {
   customers?: Customer[];
   merchandisers?: Merchandiser[];
   assets?: any[];
+  questions?: SurveyQuestion[]; // 👈 add this
 }
+
 
 export default function Page() {
   const params = useParams();
+  console.log('Route params:', params); // Debug log
   const uuid = params.uuid;
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [surveyData, setSurveyData] = useState<Survey | null>(null);
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedAnswers, setSelectedAnswers] = useState<any[]>([]);
   const onTabClick = (index: number) => setActiveTab(index);
 
   const backBtnUrl = "/survey";
@@ -75,16 +115,37 @@ export default function Page() {
     surveyData?.customers && surveyData.customers.length > 0;
   const showCustomerTab = !hasAssets && (hasCustomers || hasMerchandisers);
 
+  // Add Survey Post tab always for now
   const tabs = [
     { name: "Overview" },
     ...(showCustomerTab ? [{ name: "Customer" }] : []),
+    { name: "Survey Post" },
   ];
+  // Survey Post state
+  const [surveyPostLoading, setSurveyPostLoading] = useState(false);
+  const [surveyPostData, setSurveyPostData] = useState<any[]>([]);
+
+  // Fetch Survey Post data when tab is active
+  useEffect(() => {
+    if (tabs[activeTab]?.name !== "Survey Post" || !uuid) return;
+    setSurveyPostLoading(true);
+    getSurveyShowById(uuid as string)
+      .then((res) => {
+        // API returns { data: [...] }
+        setSurveyPostData(res?.data || []);
+      })
+      .catch(() => {
+        showSnackbar("Unable to fetch survey post data", "error");
+      })
+      .finally(() => setSurveyPostLoading(false));
+  }, [activeTab, uuid]);
 
 
   // ✅ FETCH SHELF DATA (clean + single)
   useEffect(() => {
     if (!uuid) {
       setLoading(false);
+      showSnackbar("Survey ID is missing from the URL. Please check the link.", "error");
       return;
     }
 
@@ -117,6 +178,8 @@ export default function Page() {
               customer_code: c.osa_code,
               owner_name: c.business_name,
             })) || [],
+
+          questions: rawData?.questions || [],
         };
 
         setSurveyData(normalizedData);
@@ -186,6 +249,38 @@ export default function Page() {
                 ]}
               />
             </ContainerCard>
+            <ContainerCard>
+              <h1 className="text-lg font-semibold text-gray-800 mb-3">
+                Survey Questions
+              </h1>
+
+              {surveyData?.questions && surveyData.questions.length > 0 ? (
+                <ul className="space-y-3">
+                  {surveyData.questions.map((q, index) => (
+                    <li
+                      key={q.id}
+                      className="border-gray-300 border rounded-lg p-3 hover:bg-gray-100 transition"
+                    >
+                      <div className="font-semibold">
+                        Q{index + 1}. {q.question}
+                      </div>
+
+                      <div className="text-sm text-gray-600 mt-1">
+                        Type: <span className="capitalize">{q.question_type}</span>
+                      </div>
+
+                      {q.question_based_selected && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          Options: {q.question_based_selected}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-gray-500">No questions added.</div>
+              )}
+            </ContainerCard>
           </div>
         </div>
       )}
@@ -248,6 +343,65 @@ export default function Page() {
             </div>
           )}
         </div>
+      )}
+
+      {tabs[activeTab]?.name === "Survey Post" && (
+        <>
+          <div className="flex flex-col gap-6">
+            <ContainerCard>
+              <h1 className="text-lg font-semibold text-gray-800 mb-3">Survey Post Data</h1>
+              {surveyPostLoading ? (
+                <Loading />
+              ) : surveyPostData.length === 0 ? (
+                <div className="text-gray-500">No survey post data found.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                    <thead className="bg-gray-50 text-gray-700 font-semibold">
+                      <tr>
+                        {/* <th className="px-4 py-2 border-b">ID</th> */}
+                        <th className="px-4 py-2 border-b">Date</th>
+                        <th className="px-4 py-2 border-b">Answerer Name</th>
+                        <th className="px-4 py-2 border-b">Address</th>
+                        <th className="px-4 py-2 border-b">Phone</th>
+                        <th className="px-4 py-2 border-b">Merchandiser</th>
+                        <th className="px-4 py-2 border-b">Survey</th>
+                        <th className="px-4 py-2 border-b">Answers</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {surveyPostData.map((item: any, idx: number) => (
+                        <tr key={item.id || idx} className="border-b hover:bg-gray-50 transition">
+                          {/* <td className="px-4 py-2">{item.id}</td> */}
+                          <td className="px-4 py-2">{item.date ? formatDate(item.date) : '-'}</td>
+                          <td className="px-4 py-2">{item.answerer_name}</td>
+                          <td className="px-4 py-2">{item.address}</td>
+                          <td className="px-4 py-2">{item.phone}</td>
+                          <td className="px-4 py-2">{item.merchandiser?.details?.name || '-'}</td>
+                          <td className="px-4 py-2">{item.survey?.details?.name || '-'}</td>
+                          <td className="px-4 py-2 text-center">
+                            <button
+                              className="hover:text-red-600"
+                              title="View Answers"
+                              onClick={() => {
+                                setSelectedAnswers(item.details || []);
+                                setSidebarOpen(true);
+                              }}
+                            >
+                              <Icon icon="lucide:eye" width={22} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </ContainerCard>
+          </div>
+          {/* Sidebar for answers */}
+          <AnswerSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} answers={selectedAnswers} />
+        </>
       )}
     </>
   );

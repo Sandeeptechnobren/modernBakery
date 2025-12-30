@@ -46,18 +46,18 @@ const SUPPORTED_FORMATS = [
 
 const fileValidation = Yup.mixed()
     .test("fileSize", "File too large (max 10MB)", (value) => {
-        if (!value) return true; // No file is valid (optional field)
+        if (!value) return true;
         if (value instanceof File) {
             return value.size <= FILE_SIZE;
         }
-        return true; // If it's a string (existing file), it's valid
+        return true;
     })
     .test("fileFormat", "Unsupported Format", (value) => {
-        if (!value) return true; // No file is valid (optional field)
+        if (!value) return true;
         if (value instanceof File) {
             return SUPPORTED_FORMATS.includes(value.type);
         }
-        return true; // If it's a string (existing file), it's valid
+        return true;
     });
 
 const validationSchema = Yup.object({
@@ -75,12 +75,9 @@ const validationSchema = Yup.object({
     landmark: Yup.string()
         .trim()
         .max(255, "Landmark cannot exceed 255 characters"),
-    existing_coolers: Yup.string()
-        .trim()
-        .max(100, "Existing coolers cannot exceed 100 characters"),
-    outlet_weekly_sale_volume_current: Yup.string()
-        .trim()
-        .max(100, "Outlet weekly sale volume cannot exceed 100 characters"),
+    existing_coolers: Yup.array()
+        .of(Yup.string())
+        .min(1, "Select at least one cooler"),
     outlet_weekly_sale_volume: Yup.string()
         .trim()
         .max(100, "Outlet weekly sale volume cannot exceed 100 characters"),
@@ -158,7 +155,7 @@ type Chiller = {
     landmark: string;
     location: string;
     postal_address: string;
-    existing_coolers: string;
+    existing_coolers: string[];
     outlet_weekly_sale_volume: string;
     outlet_weekly_sales: string;
     stock_share_with_competitor: string;
@@ -645,7 +642,7 @@ export default function AddCompanyWithStepper() {
         landmark: "",
         location: "",
         postal_address: "",
-        existing_coolers: "",
+        existing_coolers: [],
         outlet_weekly_sale_volume: "",
         outlet_weekly_sales: "",
         stock_share_with_competitor: "",
@@ -975,7 +972,7 @@ export default function AddCompanyWithStepper() {
                                         { value: "Other", label: "Other" },
                                     ]}
                                     onChange={(e) =>
-                                        setFieldValue("existing_coolers", e.target.value)
+                                        setFieldValue("existing_coolers", e.target.value as string[])
                                     }
                                 // error={touched.existing_coolers && errors.existing_coolers}
                                 />

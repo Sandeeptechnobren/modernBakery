@@ -32,7 +32,7 @@ export default function Home() {
     }, []);
         return (
             <div className="min-h-screen w-full bg-primary/10 dark:bg-primary/20 transition-colors">
-                <ThemeSwitcherBar />
+                {/* <ThemeSwitcherBar /> */}
                 {isLoading ? <Loading /> : <LoginPage />}
             </div>
         );

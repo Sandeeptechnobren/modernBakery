@@ -8,6 +8,7 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
     listReturnType,
+    searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
@@ -15,6 +16,7 @@ import {
     discountList,
     deleteDiscount,
     updateDiscountStatus,
+    discountGlobalSearch,
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -122,6 +124,30 @@ const DiscountPage = () => {
         [showSnackbar, setLoading]
     );
 
+    const searchDiscounts = useCallback(
+        async (
+            searchQuery: string,
+            pageSize: number
+        ): Promise<searchReturnType> => {
+            setLoading(true);
+            const result = await discountGlobalSearch({
+                query: searchQuery,
+                per_page: pageSize.toString(),
+            });
+            setLoading(false);
+            if (result.error) throw new Error(result.data.message);
+            else {
+                return {
+                    data: result.data || [],
+                    total: result.pagination.pagination.totalPages || 0,
+                    currentPage: result.pagination.pagination.current_page || 0,
+                    pageSize: result.pagination.pagination.limit || pageSize,
+                };
+            }
+        },
+        []
+    );
+
     const handleStatusChange = async (
                 data: TableDataType[],
                 selectedRow: number[] | undefined,
@@ -191,6 +217,7 @@ const DiscountPage = () => {
                     config={{
                         api: {
                             list: fetchDiscounts,
+                            search: searchDiscounts
                         },
                         header: {
                             title: "Discount",

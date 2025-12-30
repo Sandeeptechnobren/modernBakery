@@ -145,8 +145,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           depth: 50,
           viewDistance: 50
         },
-        
-        height: height
+        height: height,
+        marginTop: 100, 
+        spacingTop: 10,
       },
       title: {
         text: title,
@@ -164,6 +165,20 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         align: 'center',
         verticalAlign: 'top',
         layout: 'horizontal',
+        maxHeight: 80,
+        margin: 30,
+        navigation: {
+          activeColor: '#3E576F',
+          animation: true,
+          arrowSize: 10,
+          inactiveColor: '#CCC',
+          style: {
+            align: 'right',
+            fontWeight: 'bold',
+            color: '#4b5563',
+            fontSize: '11px'
+          }
+        },
         itemStyle: {
           fontSize: '9px',
           fontWeight: 'normal',
@@ -176,9 +191,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           color: '#9ca3af'
         },
         y: 0,
-        margin: 15,
-        // Add a custom class for Tailwind min-h-[40px]
-        className: 'min-h-[40px]',
+        className: 'min-h-[60px]',
       },
       xAxis: {
         categories: data.map((item: any) => item[xAxisKey]),
@@ -410,7 +423,6 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
     };
 
     const visibleSeriesData = seriesData.filter(s => !hiddenNames.includes(s.name));
-
     const isQuantity = searchType === 'quantity';
 
     const options: any = {
@@ -418,12 +430,15 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         type: 'pie',
         options3d: { enabled: true, alpha: 45, beta: 0, depth: 45 },
         backgroundColor: null,
-        height,
+        height: height, // Use the passed height prop
+        spacingTop: 20,
       },
       credits: { enabled: false },
-      title: { text: title || null },
-      // Disable the built-in Highcharts legend (we render a custom interactive legend above)
-      legend: { enabled: false },
+      title: { 
+        text: title || null,
+        style: { fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }
+      },
+      legend: { enabled: false }, // Keep custom legend
       tooltip: { pointFormat: isQuantity ? '<b>{point.percentage:.1f}%</b><br/>{point.y:,.0f} Qty' : '<b>{point.percentage:.1f}%</b><br/> {point.y:,.0f}' },
       plotOptions: {
         pie: {
@@ -432,34 +447,39 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           depth: 45,
           size: size,
           innerSize: innerRadius && outerRadius ? `${Math.round((innerRadius / outerRadius) * 100)}%` : undefined,
-          dataLabels: {
-            enabled: false
-          },
+          dataLabels: { enabled: false },
           showInLegend: true,
         },
       },
       series: [{ name: title || 'Data', data: visibleSeriesData }],
     };
 
-    const legendItems = seriesData;
-
     return (
       <div style={{ width: '100%' }}>
-        {/* Interactive legend at top with small font and min-h-[40px] */}
-        {legendItems.length > 0 && (
-          <div className="mb-2 w-full min-h-[40px]">
-            <div className="flex flex-wrap gap-x-2 gap-y-1 items-center text-[10px] text-gray-700">
-              {legendItems.map((item: any, idx: number) => {
+        {seriesData.length > 0 && (
+          <div 
+            className="mb-4 w-full overflow-y-auto border-b border-gray-100" 
+            style={{ height: '80px' }}
+          >
+            <div className="flex flex-wrap gap-x-4 gap-y-2 items-center text-[10px] text-gray-700 p-1">
+              {seriesData.map((item: any, idx: number) => {
                 const hidden = hiddenNames.includes(item.name);
                 return (
                   <button
                     key={idx}
                     onClick={() => toggleLegend(item.name)}
-                    className={`inline-flex items-center gap-2 px-1 py-0.5 truncate focus:outline-none ${hidden ? 'opacity-40' : ''}`}
+                    className={`inline-flex items-center gap-2 px-1 py-0.5 focus:outline-none transition-opacity ${hidden ? 'opacity-40' : 'opacity-100'}`}
                     title={item.name}
                   >
-                    <span style={{ width: 10, height: 10, borderRadius: 6, backgroundColor: item.color || '#ccc', display: 'inline-block', flex: '0 0 auto' }} />
-                    <span className="truncate max-w-[140px]">{item.name}</span>
+                    <span style={{ 
+                        width: 10, 
+                        height: 10, 
+                        borderRadius: '50%', 
+                        backgroundColor: item.color || '#ccc', 
+                        display: 'inline-block', 
+                        flex: '0 0 auto' 
+                    }} />
+                    <span className="truncate max-w-[150px]">{item.name}</span>
                   </button>
                 );
               })}
@@ -467,7 +487,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           </div>
         )}
 
-        <div style={{ height: '100%' }}>
+        <div style={{ height: height }}>
           <HighchartsReact highcharts={Highcharts} options={options} />
         </div>
       </div>
@@ -731,13 +751,13 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
 
     return (
       <div ref={containerRef} className="w-full h-full relative">
-        <Highcharts3DPie data={chartData} innerRadius={innerRadius} outerRadius={outerRadius} />
+        <Highcharts3DPie data={chartData} innerRadius={innerRadius} outerRadius={outerRadius} size={Math.min(dimensions.width, dimensions.height) - 200} />
       </div>
     );
   };
 
   // Donut Chart with exploded effect
-  const ExplodedDonutChart = ({ data, innerRadius = 60, outerRadius = 100, labelType = 'percentage', size = '75%' }: any) => {
+  const ExplodedDonutChart = ({ data, innerRadius = 60, outerRadius = 100, labelType = 'percentage', size = '100%' }: any) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -2052,7 +2072,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Region Performance</h3>
               <button onClick={() => setSelectedMaxView('region')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-[420px]">
+            <div className="w-full h-full">
               <ExplodedDonutChart 
                 data={regionPerformanceData}
                 innerRadius={60}
@@ -2325,7 +2345,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Region Contribution</h3>
               <button onClick={() => setSelectedMaxView('regionItems')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-[370px]">
+            <div className="w-full h-full">
               {regionContributionPieData.length === 0 ? (
                 <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
                   <AlertCircle size={16} className="mr-2" /> No data available
@@ -2824,7 +2844,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                 <Maximize2 size={16} />
               </button>
             </div>
-            <div className="w-full h-[350px]">
+            <div className="w-full h-full">
               <ExplodedPieChart data={companyData} outerRadius={80} />
             </div>
           </div>
@@ -2842,7 +2862,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                 <Maximize2 size={16} />
               </button>
             </div>
-            <div className="w-full h-[350px]">
+            <div className="w-full h-full">
               <ExplodedDonutChart data={regionData} innerRadius={50} outerRadius={80} />
             </div>
           </div>
